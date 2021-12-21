@@ -1,0 +1,120 @@
+{% extends "layouts/default_ext.html" %}
+
+{% block title %} Case Tasks {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/assets/css/suggestags.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+{% endblock stylesheets %}
+
+{% block content %}
+
+{% include 'includes/navigation_ext.html' %}
+
+
+{% include 'includes/sidenav.html' %}
+<div class="main-panel">
+
+    <div class="content">
+
+
+        {% if current_user.is_authenticated %}
+        {{ form.hidden_tag() }}
+            <nav class="navbar navbar-header navbar-expand-lg pt-2 pb-2 bg-primary-gradient">
+                <div class="container-fluid">
+                    <div class="collapse" id="search-nav">
+                        <div id="tables_button"></div>
+                     </div>
+					<ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
+                        <li class="nav-item ml-2">
+                            <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
+                        </li>
+                        <li class="nav-item">
+                            <button class="btn btn-primary btn-sm" onclick="get_tasks();">
+                                <span class="menu-title">Refresh</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="btn btn-dark btn-sm" onclick="add_task();">
+                                <span class="menu-title">Add task</span>
+                            </button>
+                        </li>
+					</ul>
+                </div>
+			</nav>
+        <div class="page-inner ">
+            <div class="row ">
+
+                <div class="row col-12">
+                    <div class="col-md-12">
+                        <div class="col-md-12">
+                            <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
+                            <section class="card" id="card_main_load" style="display:none;">
+
+                                <div class="card-body">
+                                    <div class="table-responsive" id="tasks_table_wrapper">
+                                        <table class="table display table-striped table-hover" width="100%"
+                                            cellspacing="0" id="tasks_table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Title</th>
+                                                    <th>Description</th>
+                                                    <th>Status</th>
+                                                    <th>Assigned to</th>
+                                                    <th>Open date</th>
+                                                    <th>Tags</th>
+                                                </tr>
+                                            </thead>
+                                            <tfoot>
+                                                <tr>
+                                                    <th>Title</th>
+                                                    <th>Description</th>
+                                                    <th>Status</th>
+                                                    <th>Assigned to</th>
+                                                    <th>Open date</th>
+                                                    <th>Tags</th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal " tabindex="-1" role="dialog" id="modal_add_task" data-backdrop="true">
+            <div class="modal-xl modal-dialog" role="document">
+                <div class="modal-content" id="modal_add_task_content">
+
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+        {% endif %}
+
+    </div>
+
+    {% include 'includes/footer.html' %}
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script src="/static/assets/js/core/jquery.validate.js"></script>
+<script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
+
+<script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
+<script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
+<script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
+<script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
+
+<script src="/static/assets/js/iris/case.js"></script>
+<script src="/static/assets/js/iris/case.tasks.js"></script>
+<script>
+</script>
+
+{% endblock javascripts %}

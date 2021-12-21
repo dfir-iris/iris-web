@@ -1,0 +1,146 @@
+.loader, .is-loading:after {
+	display: block;
+	width: 1.5rem;
+	height: 1.5rem;
+	background: transparent;
+	border: 3px solid $secondary-color;
+	border-bottom-color: transparent;
+	border-radius: 50%;
+	animation: 1s spin linear infinite;
+}
+
+.loader-lg, .is-loading-lg:after {
+	width: 2rem;
+	height: 2rem;
+	border-width: 5px;
+}
+
+.loader-sm, .is-loading-sm:after {
+	width: 1rem;
+	height: 1rem;
+	border-width: 2px;
+}
+
+.is-loading {
+	position: relative;
+	color: transparent !important;
+	> * {
+		opacity: 0.2 !important;
+	}
+	&:after {
+		position: absolute;
+		top: calc(50% - 1.5rem/2);
+		left: calc(50% - 1.5rem/2);
+		content: '';
+	}
+}
+
+.is-loading-lg:after {
+	top: calc(50% - 2rem/2);
+	left: calc(50% - 2rem/2);
+}
+
+.is-loading-sm:after {
+	top: calc(50% - 1rem/2);
+	left: calc(50% - 1rem/2);
+}
+
+%loader-borderbottom-color {
+	border-bottom-color: transparent !important;
+}
+
+@mixin loader-state($color) {
+	border-color: $color;
+	@extend %loader-borderbottom-color;
+}
+
+%loader-btn-and-card-bgnotwhite {
+	border-color: #fff;
+	@extend %loader-borderbottom-color;
+}
+
+.loader-default,
+.is-loading-default:after {
+	@include loader-state($dark-color);
+}
+
+.loader-primary,
+.is-loading-primary:after {
+	@include loader-state($primary-color);
+}
+
+.loader-secondary,
+.is-loading-secondary:after {
+	@include loader-state($secondary-color);
+}
+
+.loader-info,
+.is-loading-info:after {
+	@include loader-state($info-color);
+}
+
+.loader-success,
+.is-loading-success:after {
+	@include loader-state($success-color);
+}
+
+.loader-warning,
+.is-loading-warning:after {
+	@include loader-state($warning-color);
+}
+
+.loader-danger,
+.is-loading-danger:after {
+	@include loader-state($danger-color);
+}
+
+.btn-default, .card-default {
+	&.is-loading:after {
+		@extend %loader-btn-and-card-bgnotwhite;
+	}
+}
+
+.btn-primary, .card-primary {
+	&.is-loading:after {
+		@extend %loader-btn-and-card-bgnotwhite;
+	}
+}
+
+.btn-secondary, .card-secondary {
+	&.is-loading:after {
+		@extend %loader-btn-and-card-bgnotwhite;
+	}
+}
+
+.btn-info, .card-info {
+	&.is-loading:after {
+		@extend %loader-btn-and-card-bgnotwhite;
+	}
+}
+
+.btn-success, .card-success {
+	&.is-loading:after {
+		@extend %loader-btn-and-card-bgnotwhite;
+	}
+}
+
+.btn-warning, .card-warning {
+	&.is-loading:after {
+		@extend %loader-btn-and-card-bgnotwhite;
+	}
+}
+
+.btn-danger, .card-danger {
+	&.is-loading:after {
+		@extend %loader-btn-and-card-bgnotwhite;
+	}
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}

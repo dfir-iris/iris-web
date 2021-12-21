@@ -1,0 +1,66 @@
+{% extends "layouts/default_ext.html" %}
+
+{% block title %} Case Graph Timeline {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/assets/css/bootstrap-datetime.css">
+<link rel="stylesheet" href="/static/assets/css/suggestags.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+<link rel="stylesheet" href="/static/assets/css/select2.css">
+<link title="timeline-styles" rel="stylesheet" href="/static/assets/css/timeline.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+{% include 'includes/navigation_ext.html' %}
+
+
+{% include 'includes/sidenav.html' %}
+<div class="main-panel">
+    <div class="content">
+        <div class="row">
+            <div class="col-md-12">
+
+                <div id='timeline-embed' style="width: 100%; height: 600px"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+
+<script src="/static/assets/js/core/moments.min.js"></script>
+<script src="/static/assets/js/core/bootstrap-datetimepicker.min.js"></script>
+
+<script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
+<script src="/static/assets/js/plugin/select/select2.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+
+<script src="/static/assets/js/iris/case.js"></script>
+<script src="/static/assets/js/timeline.js"></script>
+<script>
+    var options = {
+       hash_bookmark: true,
+       scale_factor: 2,
+       initial_zoom: 4,
+       zoom_sequence:  [0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 100, 120]
+    };
+    $.ajax({
+        url: '/case/timeline/visualize/data',
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+            if (data.status == 'success') {
+                window.timeline = new TL.Timeline('timeline-embed', data.data, options);
+            }
+        },
+        error: function (error) {
+            notify_error(error.message);
+        }
+    });
+</script>
+
+{% endblock javascripts %}

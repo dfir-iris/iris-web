@@ -1,0 +1,29 @@
+/*     Slider     */
+
+.slider-default .ui-slider-range {
+  background: $dark-color;
+}
+
+.slider-primary .ui-slider-range {
+  background: $primary-color;
+}
+
+.slider-secondary .ui-slider-range {
+  background: $secondary-color;
+}
+
+.slider-info .ui-slider-range {
+  background: $info-color;
+}
+
+.slider-success .ui-slider-range {
+  background: $success-color;
+}
+
+.slider-warning .ui-slider-range {
+  background: $warning-color;
+}
+
+.slider-danger .ui-slider-range {
+  background: $danger-color;
+}

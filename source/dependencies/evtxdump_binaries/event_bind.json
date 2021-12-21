@@ -1,0 +1,10 @@
+{
+  "configuration": {
+    "evtx_dump": {
+      "linux": "/iriswebapp/dependencies/evtxdump_binaries/linux/x64/evtx_dump"
+    },
+    "fdfind": {
+      "linux": "/iriswebapp/dependencies/evtxdump_binaries/linux/x64/fd"
+    }
+  }
+}

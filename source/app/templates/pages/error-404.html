@@ -1,0 +1,26 @@
+
+{% extends "layouts/default.html" %}
+
+{% block title %} 404 Error {% endblock title %}
+
+{% block stylesheets %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <br />
+    <br />
+    
+    <h2 class="mx-5">SORRY!</h2>
+    <h3 class="font-weight-light mx-5">The page you’re looking for was not found.</h3>
+    {% if msg %}
+        <h3 class="text-warning mx-5">
+            {{ msg }}
+        </h3>
+    {% endif %}
+{% endblock content %}
+
+{% block javascripts %}
+
+{% endblock javascripts %}

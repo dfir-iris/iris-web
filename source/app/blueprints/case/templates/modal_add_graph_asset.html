@@ -1,0 +1,33 @@
+
+  <div class="modal-content">
+    <form method="post" action="" id="form_add_asset">
+          <div class="modal-header">
+          <h5>Add asset to graph</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body">
+              <div class="form-group">
+                    <label for="asset" class="mr-4">Add an existing asset to the case graph.<br>If you want to create a new asset, please go to the Asset tab.
+                    </label>
+
+                  <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="asset">
+                        {% for asset in assets_list %}
+                              <option value="{{ asset.IP }}">{{ asset.Name }} </option>
+                        {% endfor %}
+                  </select>
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-success float-right" id="submit_add_asset">Add</button>
+          </div>
+    </form>
+  </div><!-- /.modal-content -->
+  <script>
+    $('#asset').selectpicker({
+        liveSearch: true,
+        title: "None",
+        style: "Bootstrap 4: 'btn-outline-primary'",
+
+    });
+  </script>

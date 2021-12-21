@@ -1,0 +1,177 @@
+/*     Table    */
+
+.table {
+  > {
+    thead > tr > th, tbody > tr > th, tfoot > tr > th, thead > tr > td, tbody > tr > td, tfoot > tr > td {
+      vertical-align: middle;
+    }
+    tbody > tr > {
+      td, th {
+        padding: 8px;
+      }
+    }
+    tfoot > tr > {
+      td, th {
+        padding: 8px;
+      }
+    }
+  }
+  thead th {
+    border-bottom-width: 2px;
+    font-weight: $font-weight-bold;
+  }
+  td, th {
+    font-size: 14px;
+    border-top-width: 0px;
+    border-bottom: 1px solid;
+    border-color: #ebedf2 !important;
+    padding: 0 25px !important;
+    height: 60px;
+    vertical-align: middle !important;
+  }
+}
+
+/* table full-width */
+
+.table-full-width {
+  margin-left: -15px;
+  margin-right: -15px;
+}
+
+/* table bordered states */
+
+.table-bordered-bd-default {
+  td, th {
+    border: 1px solid $dark-color !important;
+  }
+}
+
+.table-bordered-bd-primary {
+  td, th {
+    border: 1px solid $primary-color !important;
+  }
+}
+
+.table-bordered-bd-secondary {
+  td, th {
+    border: 1px solid $secondary-color !important;
+  }
+}
+
+.table-bordered-bd-info {
+  td, th {
+    border: 1px solid $info-color !important;
+  }
+}
+
+.table-bordered-bd-success {
+  td, th {
+    border: 1px solid $success-color !important;
+  }
+}
+
+.table-bordered-bd-warning {
+  td, th {
+    border: 1px solid $warning-color !important;
+  }
+}
+
+.table-bordered-bd-danger {
+  td, th {
+    border: 1px solid $danger-color !important;
+  }
+}
+
+.table-striped {
+  td, th {
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+  }
+}
+
+/* table head background states*/
+
+.table-head-bg-default {
+  thead {
+    border: 1px solid $dark-color !important;
+  }
+}
+
+.table-head-bg-primary {
+  thead {
+    border: 1px solid $primary-color !important;
+  }
+}
+
+.table-head-bg-secondary {
+  thead {
+    border: 1px solid $secondary-color !important;
+  }
+}
+
+.table-head-bg-info {
+  thead {
+    border: 1px solid $info-color !important;
+  }
+}
+
+.table-head-bg-success {
+  thead {
+    border: 1px solid $success-color !important;
+  }
+}
+
+.table-head-bg-warning {
+  thead {
+    border: 1px solid $warning-color !important;
+  }
+}
+
+.table-head-bg-danger {
+  thead {
+    border: 1px solid $danger-color !important;
+  }
+}
+
+@mixin table-bg-state($color){
+  background: $color !important;
+  color: $white-color !important;
+  border: 0px !important;  
+}
+
+.table-head-bg-default thead th, .table-striped-bg-default tbody tr:nth-of-type(odd) {
+  @include table-bg-state($dark-color);
+}
+
+.table-head-bg-primary thead th, .table-striped-bg-primary tbody tr:nth-of-type(odd) {
+  @include table-bg-state($primary-color);
+}
+
+.table-head-bg-secondary thead th, .table-striped-bg-secondary tbody tr:nth-of-type(odd) {
+  @include table-bg-state($secondary-color);
+}
+
+.table-head-bg-info thead th, .table-striped-bg-info tbody tr:nth-of-type(odd) {
+  @include table-bg-state($info-color);
+}
+
+.table-head-bg-success thead th, .table-striped-bg-success tbody tr:nth-of-type(odd) {
+  @include table-bg-state($success-color);
+}
+
+.table-head-bg-warning thead th, .table-striped-bg-warning tbody tr:nth-of-type(odd) {
+  @include table-bg-state($warning-color);
+}
+
+.table-head-bg-danger thead th, .table-striped-bg-danger tbody tr:nth-of-type(odd) {
+  @include table-bg-state($danger-color);
+}
+
+/* table-responsive */
+
+.table-responsive {
+  width: 100% !important;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+}

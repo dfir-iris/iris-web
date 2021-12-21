@@ -1,0 +1,225 @@
+/* 	 Background Body */
+body {
+	background: $grey2-color;
+	&[data-background-color="bg1"] {
+		background: $grey2-color;
+	}
+	&[data-background-color="bg2"] {
+		background: $white-color;
+	}
+	&[data-background-color="bg3"] {
+		background: $grey-color;
+	}
+	&[data-background-color="dark"] {
+		background: $dark-color;
+		.main-header {
+			box-shadow: 0px 0px 5px #121727;
+		}
+		.main-panel {
+			color: rgba(169, 175, 187, 0.82) !important;
+			label {
+				color: #fff !important;
+			}
+		}
+		.card, .row-card-no-pd, .list-group-item, .timeline > li > .timeline-panel {
+			background: #202940;
+		}
+		.card-pricing2 {
+			background: #202940 !important;
+		}
+		.row-card-no-pd {
+			[class*=col] .card:before {
+				background: rgba(181, 181, 181, 0.1) !important;
+			}
+		}
+		.card .card-header, .card .card-footer, .card .card-action, .card-profile .user-stats [class^="col"], .timeline > li > .timeline-panel, .table td, .table th, .breadcrumbs, .separator-dashed, .separator-solid, .separator-dot, .list-group .list-group-item, .conversations .messages-form, .mail-wrapper .mail-content .inbox-body .email-list .email-list-item, .page-with-aside .page-aside, .mail-wrapper .mail-content .email-head, .mail-wrapper .mail-content .email-sender, .main-panel .page-divider { 
+			border-color: hsla(0,0%,71%,.1) !important;
+		}
+		.timeline > li > .timeline-panel {
+			&:before {
+				border-left-color: hsla(0,0%,71%,.1);
+				border-right-color: hsla(0,0%,71%,.1);
+			}
+			&:after {
+				border-left-color: #202940;
+				border-right-color: #202940;
+			}
+		}
+		.page-title, .breadcrumbs li a {
+			color: rgba(169, 175, 187, 0.82);
+		}
+		.page-category {
+			color: #828282;
+		}
+		.card-title, .card-title a, .card-title a:hover, .card-title a:focus {
+			color: #fff;
+		}
+		.card-category {
+			color: #8b92a9;
+		}
+		.card-default, .card-primary, .card-secondary, .card-info, .card-success, .card-warning, .card-danger {
+			color: #fff;
+			.card-title, .card-category {
+				color: #fff;
+			}
+		}
+		.nav-pills .nav-link:not(.active) {
+			background: #fff;
+		}
+		.card-pricing .specification-list li {
+			border-color: #373d4c;
+		}
+		.input-group-text {
+			border-color: #2f374b !important;
+			background-color: #1f283e;
+			color: #fff;
+		}
+		.input-solid {
+			background: #363b4c !important;
+			border-color: #363b4c !important;
+		}
+		.list-group-messages .list-group-item-title a, .list-group .list-group-item-text {
+			color: inherit;
+		}
+		.footer {
+			border-top: 1px solid #293247;
+			background: #1f283e;
+		}
+		.form-control, .form-group-default, .select2-container--bootstrap .select2-selection {
+			background-color: #1a2035;
+			color: #fff;
+			border-color: #2f374b;
+		}
+		.bootstrap-tagsinput {
+			background: transparent;
+		}
+		.selectgroup-button {
+			border: 1px solid #2f374b;
+		}
+		.conversations {
+			.message-header {
+				background: #1a2035;
+				box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.07);
+			}
+			.conversations-content {
+				color: #575962;
+				border-color: #2e364a;
+			}
+		}
+		.mail-wrapper .mail-content .inbox-body .email-list .email-list-item.unread {
+			background: $dark2-color !important;
+		}
+		.mail-wrapper .mail-content .inbox-body .email-list .email-list-item:hover {
+			background: #171e2f !important;
+		}
+		.page-with-aside .page-aside .aside-nav .nav > li:hover, .page-with-aside .page-aside .aside-nav .nav > li:focus, .page-with-aside .page-aside .aside-nav .nav > li.active {
+			background: rgba(0, 0, 0, 0.03);
+		}
+		.page-with-aside .page-aside .aside-nav .nav > li.active > a {
+			color: #b9babf !important;
+		}
+		.board {
+			color: #575962;
+		}
+	}
+}
+
+/*   Background   */
+
+.bg-dark {
+	background-color: $dark-color !important;
+}
+
+.bg-dark2 {
+	background-color: $dark2-color !important;
+}
+
+.bg-primary {
+	background-color: $primary-color !important;
+}
+
+.bg-primary2 {
+	background-color: $primary2-color !important;
+}
+
+.bg-secondary {
+	background-color: $secondary-color !important;
+}
+
+.bg-secondary2 {
+	background-color: $secondary2-color !important;
+}
+
+.bg-info {
+	background-color: $info-color !important;
+}
+
+.bg-info2 {
+	background-color: $info2-color !important;
+}
+
+.bg-success {
+	background-color: $success-color !important;
+}
+
+.bg-success2 {
+	background-color: $success2-color !important;
+}
+
+.bg-warning {
+	background-color: $warning-color !important;
+}
+
+.bg-warning2 {
+	background-color: $warning2-color !important;
+}
+
+.bg-danger {
+	background-color: $danger-color !important;
+}
+
+.bg-danger2 {
+	background-color: $danger2-color !important;
+}
+
+.bg-grey1 {
+	background: $grey2-color !important;
+}
+
+.bg-grey2 {
+	background: $grey-color;
+}
+
+@mixin linear-gradient($direction, $color-stops...) {
+	background: nth(nth($color-stops, 2), 1) !important;
+	background: -webkit-linear-gradient(legacy-direction($direction), $color-stops) !important;
+	background: linear-gradient($direction, $color-stops) !important;
+}
+
+.bg-dark-gradient {
+	@include linear-gradient(-45deg, #0A0B11, $dark2-color);
+}
+
+.bg-primary-gradient {
+	@include linear-gradient(-45deg, #06418E, $primary-color);
+}
+
+.bg-secondary-gradient {
+	@include linear-gradient(-45deg, #2A20AC, $secondary-color);
+}
+
+.bg-info-gradient {
+	@include linear-gradient(-45deg, #0A5A97, $info-color);
+}
+
+.bg-success-gradient {
+	@include linear-gradient(-45deg, #179D08, $success-color);
+}
+
+.bg-warning-gradient {
+	@include linear-gradient(-45deg, #E1810B, $warning-color);
+}
+
+.bg-danger-gradient {
+	@include linear-gradient(-45deg, #E80A15, $danger-color);
+}

@@ -1,0 +1,137 @@
+#  IRIS Source Code
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
+#  ir@cyberactionlab.net
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 3 of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+version: "3.5"
+services:
+  rabbitmq:
+      image: rabbitmq:3-management-alpine
+      container_name: rabbitmq
+      ports:
+          - "127.0.0.1:5672:5672"
+          - "127.0.0.1:15672:15672"
+      networks:
+        - iris_backend
+
+  db:
+    build:
+      context: docker/db
+    restart: always
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - DB_USER
+      - DB_PASS
+    networks:
+      - iris_backend
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/webApp/Dockerfile
+    image: iriswebapp_app:latest
+    command: ['./iris-entrypoint.sh', 'iriswebapp']
+    volumes:
+      - iris-downloads:/home/iris/downloads
+      - user_templates:/home/iris/user_templates
+    restart: always
+    depends_on:
+      - "rabbitmq"
+      - "db"
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - DB_USER
+      - DB_PASS
+      - DB_HOST
+      - DB_PORT
+      - DOCKERIZED
+      - SECRET_KEY
+      - SECURITY_PASSWORD_SALT
+    networks:
+      - iris_backend
+      - iris_frontend
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/webApp/Dockerfile
+    image: iriswebapp_app:latest
+    command: ['./wait-for-iriswebapp.sh', 'app:8000', './iris-entrypoint.sh', 'iris-worker']
+    volumes:
+      - iris-downloads:/home/iris/downloads
+      - user_templates:/home/iris/user_templates
+    depends_on:
+      - "rabbitmq"
+      - "db"
+      - "app"
+    environment:
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - DB_USER
+      - DB_PASS
+      - DB_HOST
+      - DB_PORT
+      - DOCKERIZED
+      - IRIS_WORKER
+    networks:
+      - iris_frontend
+      - iris_backend
+
+  nginx:
+    build:
+      context: ./docker/nginx
+      args:
+        NGINX_CONF_GID: 1234
+    image: iriswebapp_nginx:latest
+    container_name: iriswebapp_nginx
+    environment:
+      - APP_HOST
+      - APP_PORT
+      - SERVER_NAME
+      - CERT_FILENAME
+      - KEY_FILENAME
+    networks:
+      - iris_frontend
+      - iris_backend
+    ports:
+      - "4433:8443"
+    volumes:
+      - "./docker/dev_certs/:/www/certs/:ro"
+    restart: on-failure:5
+    depends_on:
+      - "app"
+
+volumes:
+  iris-downloads:
+  user_templates:
+
+networks:
+  iris_backend:
+    name: iris_backend
+    driver: bridge
+  iris_frontend:
+    name: iris_frontend
+    driver: bridge

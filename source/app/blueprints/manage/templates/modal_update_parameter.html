@@ -1,0 +1,27 @@
+<div class="modal-header">
+    <h4>Update {{ parameter["param_human_name"] }} of {{ mod_name }} </h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+
+        <div class="container col-md-12">
+        <form method="post" action="" id="form_update_param">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    <b>Description :</b> {{ parameter["param_description"] }}<br/>
+                    <b>Default :</b> {{ parameter["default"] }} <br/>
+                    <b>Mandatory :</b> {{ parameter["mandatory"] }}<br/>
+                    <b>Expected type :</b> {{ parameter["type"] }}<br/>
+                </div>
+                <div class="form-group mt-3
+                    <label class="placeholder"><b>Value</b></label>
+                    <input class="form-control required" name="param_value" type="text" value="{{ parameter["value"] }}">
+                </div>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                id="submit_save_parameter">Save</button>
+        </form>
+    </div>
+
+</div>

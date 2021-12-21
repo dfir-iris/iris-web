@@ -1,0 +1,74 @@
+{% extends "layouts/default.html" %}
+
+{% block title %} Manage Assets Types {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/assets/css/suggestags.css">
+{% endblock stylesheets %}
+
+{% block content %}
+
+{% if current_user.is_authenticated %}
+<div class="page-inner">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col">
+                            <div class="card-title">Assets types management</div>
+                        </div>
+                        <div class="col">
+                           <button class="btn btn-sm btn-icon btn-round btn-primary-success float-right ml-3" onclick="add_asset_type();"><i class="fas fa-plus-circle"></i></button>
+                            <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_asset_table();">
+                                <i class="fas fa-sync rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <div class="table-responsive" id="assets_table_wrapper">
+                        <div class="selectgroup">
+                            <span id="table_buttons"></span>
+                        </div>
+                        <table class="table display table table-striped table-hover" width="100%"
+                            cellspacing="0" id="assets_table">
+                            <thead>
+                                <tr>
+
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade " tabindex="-1" role="dialog" id="modal_add_type" data-backdrop="true">
+        <div class="modal-lg modal-dialog" role="document">
+            <div class="modal-content" id="modal_add_type_content">
+    
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div>
+    {% endif %}
+
+    {% endblock content %}
+
+    {% block javascripts %}
+
+    <script src="/static/assets/js/iris/manage_assets.js"></script>
+    <script src="/static/assets/js/iris/common.js"></script>
+    <script>
+
+    </script>
+    {% endblock javascripts %}

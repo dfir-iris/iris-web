@@ -1,0 +1,31 @@
+<script>
+function notify_error(message) {
+    $.notify({
+        icon: 'flaticon-alarm-1',
+        title: 'Error',
+        message: message
+    }, {
+        type: 'danger',
+        placement: {
+            from: 'top',
+            align: 'right'
+        },
+        time: 3000,
+    });
+}
+
+function notify_success(message) {
+    $.notify({
+        icon: 'flaticon-alarm-1',
+        title: 'Done',
+        message: message
+    }, {
+        type: 'success',
+        placement: {
+            from: 'top',
+            align: 'right'
+        },
+        time: 3000,
+    });
+}
+</script>

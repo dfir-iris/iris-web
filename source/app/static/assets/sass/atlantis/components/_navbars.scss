@@ -1,0 +1,208 @@
+/*     Navbar     */
+
+.navbar .navbar-nav .nav-item {
+  margin-right: 7px;
+  &:last-child {
+    margin-right: 0px;
+  }
+  .nav-link {
+    display: inline-block;
+    vertical-align: middle;
+    color: #666;
+    letter-spacing: 0.04em;
+    padding: 10px;
+    border-radius: 3px;
+    position: relative;
+    font-size: 12px;
+    font-weight: $font-weight-normal;
+    text-align: center;
+    &:hover, &:focus {
+      background: #eee !important;
+    }
+    i {
+      font-size: 18px;
+      vertical-align: middle;
+      line-height: 1 !important;
+    }
+  }
+  &.active {
+    .nav-link {
+      background: #eee !important;
+    }
+  }
+}
+
+.navbar-expand-lg .navbar-nav .dropdown-menu {
+  left: auto;
+  right: 0;
+}
+
+.dropdown-item {
+  font-size: 13px;
+}
+
+.navbar .navbar-nav .notification {
+  position: absolute;
+  background-color: $success-color;
+  text-align: center;
+  border-radius: 10px;
+  min-width: 17px;
+  height: 17px;
+  font-size: 10px;
+  color: $white-color;
+  font-weight: $font-weight-light;
+  line-height: 17px;
+  top: 3px;
+  right: 3px;
+  letter-spacing: -1px;
+}
+
+.navbar-header {
+  padding: 0px 15px;
+  .dropdown-toggle {
+    &::after {
+      margin-left: 0;
+    }
+  }
+}
+
+.profile-pic {
+  &:hover, &:focus {
+    text-decoration: none;
+  }
+}
+
+.navbar-header .dropdown-toggle::after {
+  vertical-align: middle;
+  color: #555;
+}
+
+.hidden-caret .dropdown-toggle::after {
+  display: none !important;
+}
+
+.profile-pic {
+  span {
+    font-size: 13px;
+    font-weight: $font-weight-light;
+    padding: 0 10px;
+    color: #555;
+  }
+}
+
+.navbar {
+  &[class*="bg-"] {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+    .navbar-brand {
+      color: $white-color;
+    }
+    .navbar-toggler-icon{
+      background-image:url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(255, 255, 255, 0.5)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+    }
+    .navbar-nav {
+      > .nav-item {
+        > .nav-link {
+          color: $white-color;
+          &.disabled {
+            color: #d8d8d8 !important;
+          }
+          &:hover {
+            background: rgba(255,255,255,0.22) !important;
+          }
+        }
+        &.active {
+          > .nav-link {
+            background: rgba(255,255,255,0.22) !important;
+          }
+        }
+      }
+    }
+    .btn-toggle {
+      background: rgba(19, 19, 19, 0.25) !important;
+      color: $white-color !important;
+    }
+    .nav-search{
+      .input-group {
+        border: 0;
+        background: rgba(19, 19, 19, 0.25) !important;
+        .form-control {
+          color: $white-color !important
+        }
+      }
+      .search-icon {
+        color: $white-color !important;
+      }
+    }
+  }
+}
+
+.row-nav-line {
+  margin-left: -20px;
+  margin-right: -20px;
+}
+
+.nav{
+  &.nav-line {
+    width: 100%;
+    border-bottom: 1px solid $grey-color;
+    .nav-link {
+      padding: 15px 20px;
+      color: $body-text-color;
+      border-width: 0px;
+      font-size: 14px;
+      font-weight: 600;
+      &:hover, &:focus{
+        color: $primary-color;
+        border-width: 0px;
+      }
+      &.active {
+        border-width: 0;
+        background-color: $transparent-bg;
+        color: $primary-color;
+        border-bottom: 2px solid $primary-color;
+        border-radius: 0px;
+      }
+    }
+
+    @mixin nav-line-color-style($color){
+      .nav-link{
+        &:hover, &:focus{
+          color: $color;
+        }
+        &.active{
+          color: $color;
+          border-color: $color;
+        }
+      }
+    }
+
+    &.nav-color-default {
+      @include nav-line-color-style($dark-color);
+    }
+    &.nav-color-primary {
+      @include nav-line-color-style($primary-color);
+    }
+    &.nav-color-secondary {
+      @include nav-line-color-style($secondary-color);
+    }
+    &.nav-color-info {
+      @include nav-line-color-style($info-color);
+    }
+    &.nav-color-success {
+      @include nav-line-color-style($success-color);
+    }
+    &.nav-color-danger {
+      @include nav-line-color-style($danger-color);
+    }
+    &.nav-color-warning {
+      @include nav-line-color-style($warning-color);
+    }
+    &.nav-color-light {
+      @include nav-line-color-style($white-color);
+      .nav-link {
+        color: $grey-color;
+      }
+    }
+  }
+}

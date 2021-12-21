@@ -1,0 +1,255 @@
+{% extends "layouts/default_ext.html" %} {% block title %} Case notes {% endblock title %} {% block stylesheets %}
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css"> {% endblock stylesheets %}
+{% block content %}
+
+		<div class="main-header">
+
+			<!-- Logo Header -->
+			<div class="logo-header" data-background-color="blue">
+
+				<a href="/" class="logo">
+					<img src="/static/assets/img/iris-small-logo-white.png" alt="navbar brand" class="navbar-brand">
+
+				</a>
+				<button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse" data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon">
+						<i class="icon-menu"></i>
+					</span>
+				</button>
+				<button class="topbar-toggler more"><i class="icon-options-vertical"></i></button>
+				<div class="nav-toggle">
+					<button class="btn btn-toggle toggle-sidebar">
+						<i class="icon-menu"></i>
+					</button>
+				</div>
+			</div>
+			<!-- End Logo Header -->
+
+			<!-- Navbar Header -->
+			<nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient">
+
+				{% if current_user.is_authenticated %}
+                {{ form.hidden_tag() }}
+				<div class="container-fluid">
+                        <div class="collapse" id="search-nav">
+                                <div class="input-group">
+                                    {% if current_user.ctx_human_case %}
+                                        <div class="text-light"><span class="text-info">Current case :</span> {{ current_user.ctx_human_case }}</div>
+                                    {% else %}
+                                    <div class="text-warning">No context</div>
+                                    {% endif %}
+                                </div>
+                        </div>
+                        <div class="nav-bottom mr-auto ml-auto bg-primary rounded">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col">
+                                    <ul class="nav navbar-nav page-navigation page-navigation-style-2 page-navigation-secondary" id="h_nav_tab">
+                                        <li class="nav-item {{ active if page == 'case' }}">
+                                            <a class="nav-link" href="/case?cid={{case_name[2]}}">
+                                                <span class="menu-title">Summary</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/case/notes?cid={{case_name[2]}}">
+                                                <span class="menu-title">Notes</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/case/assets?cid={{case_name[2]}}">
+                                                <span class="menu-title">Assets</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/case/ioc?cid={{case_name[2]}}">
+                                                <span class="menu-title">IOC</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/case/timeline?cid={{case_name[2]}}">
+                                                <span class="menu-title">Timeline</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/case/graph?cid={{case_name[2]}}">
+                                                <span class="menu-title">Graph</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/case/tasks?cid={{case_name[2]}}">
+                                                <span class="menu-title">Tasks</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/case/rfiles?cid={{case_name[2]}}">
+                                                <span class="menu-title">Register</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                        <ul class="navbar-nav topbar-nav ml-md-auto align-items-center ">
+                            <li class="nav-item toggle-nav-search hidden-caret">
+                                <a class="nav-link" data-toggle="collapse" href="#search-nav" role="button" aria-expanded="false" aria-controls="search-nav">
+                                    <i class="fa fa-search"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item hidden-caret">
+                                <a class="nav-link" data-toggle="modal" title="Switch case" data-target="#modal_switch_context" href="#" role="button">
+                                    <i class="flaticon-repeat"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item hidden-caret">
+                                <a class="nav-link" data-toggle="modal" title="Add task log" data-target="#modal_add_tasklog" href="#">
+                                    <i class="flaticon-interface-1"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item hidden-caret">
+                                <a href="#" class="nav-link quick-sidebar-toggler">
+                                    <i class="fa fa-th"></i>
+                                </a>
+                            </li>
+					    </ul>
+                    </div>
+                {% endif %}
+            </nav>
+
+
+			<!-- End Navbar -->
+
+		</div>
+
+
+{% include 'includes/sidenav.html' %}
+<div class="main-panel">
+
+    <div class="content">
+
+        {% if current_user.is_authenticated %}
+            <nav class="navbar navbar-header navbar-expand-lg pt-2 pb-2 bg-primary-gradient">
+                <div class="container-fluid">
+                     <div class="collapse search-flex" id="search-nav">
+                         <ul class="list-group list-group-bordered hidden-caret" id="notes_search_list"></ul>
+                         <input type="text" class="form-control mr-3" id="search_note_input" onkeyup="search_notes()" placeholder="Search in notes..">
+                     </div>
+					<ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
+                        <li class="nav-item ml-2">
+                            <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
+                        </li>
+                        <li class="nav-item">
+                            <button class="btn btn-primary btn-sm" onclick="draw_kanban();">
+                                <span class="menu-title">Refresh</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="btn btn-dark btn-sm" onclick="add_remote_groupnote();">
+                                <span class="menu-title">Add note group</span>
+                            </button>
+                        </li>
+					</ul>
+            </div>
+
+
+			</nav>
+        <div class="page-inner">
+            <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
+            <div class="row" id="card_main_load" style="display:none;">
+                    <div class="container-fluid">
+                            <div class="float-right mt-2 col">
+
+                             </div>
+                    </div>
+            </div>
+            <div class="row">
+                    <div id="myKanban" class="board">
+                    </div>
+            </div>
+            <div id="side_timeline">
+                <button class="btn btn-round btn-primary-success btn_over_page_c" onclick="add_remote_groupnote();"><i class="fas fa-plus-circle"></i></button>
+            </div>
+        </div>
+
+        <div class="kanban-item" id="_subnote_" style="display: none;" onclick="edit_note(this);">
+            <a href="#" class="kanban-title" draggable="false">New note</a><br />
+            <em><small href="#" class="text-sm text-muted kanban-info" draggable="false"><i
+                        class="flaticon-tool mr-1"></i>Hello</small></em>
+            <iris_note style="display: none;" id="xqx00qxq">New note</iris_note>
+
+            <div class="kanban-badges">
+                <div class="kanban-badge">
+                    <i class="far fa-comment-alt"></i>
+                    <span class="badge-text">Edit me !</span>
+                </div>
+            </div>
+        </div>
+
+
+        <div data-id="_todo" class="kanban-board" id="group_" draggable="false" style="display: none;">
+            <header class="kanban-board-header">
+                <div class="row">
+                    <div class="col">
+                        <div contenteditable="true" maxlength="25" class="kanban-title-board" onclick="">Note group</div>
+                    </div>
+                    <div class="col">
+                        <div class="kanban-title-button">
+                            <div class="row mr-1">
+                                <button class="mr-2" onclick="" style="display: none;"><i
+                                        class="fas fa-check-circle text-success"></i></button>
+                                <button class="mr-2" onclick=""><i class="fas fa-plus-circle "></i></button>
+                                <div class="dropdown dropdown-kanban ">
+
+                                    <button class="dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false">
+                                        <i class="icon-options-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton ">
+                                        <a class="dropdown-item" href="#" draggable="false">Delete</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main class="kanban-drag" id="_main">
+            </main>
+        </div>
+
+        <div class="modal" tabindex="-1" role="dialog" id="modal_note_detail" data-backdrop="true">
+            <div class="modal-dialog modal-xxl modal-xl" role="document">
+                <div class="modal-content" id="info_note_modal_content">
+
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div>
+
+        {% endif %}
+    </div>
+
+    {% include 'includes/footer.html' %}
+</div>
+{% endblock content %} {% block javascripts %}
+
+<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
+    charset="utf-8"></script>
+
+<script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
+
+<script src="/static/assets/js/plugin/sortable/sortable.js "></script>
+<script src="/static/assets/js/iris/case.js "></script>
+<script src="/static/assets/js/iris/case.notes.js "></script>
+
+<script>
+    /* Wait for document to be ready before loading the kanban board */
+    $(document).ready(function () {
+        /* load board */
+        boardNotes.init();
+        setInterval(function() { check_update('notes/state'); }, 3000);
+        draw_kanban();
+    });
+</script>
+
+{% endblock javascripts %}

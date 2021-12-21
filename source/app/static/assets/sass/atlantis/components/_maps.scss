@@ -1,0 +1,63 @@
+/*      Google Maps      */
+.full-screen-maps {
+  height: 100vh !important;
+}
+
+/*      jQVMap     */
+.vmap {
+  width: 100%;
+  min-height: 265px;
+  > svg {
+    margin: auto;
+    display: flex;
+    > g {
+      transition: all ease-in-out .2s;
+    }
+  }
+}
+
+.jqvmap-label, .jqvmap-pin {
+  pointer-events: none;
+}
+
+.jqvmap-label {
+  position: absolute;
+  display: none;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  background: #292929;
+  color: $white-color;
+  font-size: smaller;
+  padding: 3px;
+}
+
+.jqvmap-zoomin, .jqvmap-zoomout {
+  position: absolute;
+  left: 10px;
+  border-radius: 13px;
+  background: #35cd3a;
+  padding: 6px 7px;
+  color: #ffffff;
+  cursor: pointer;
+  line-height: 10px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.jqvmap-zoomin {
+  top: 15px;
+}
+
+.jqvmap-zoomout {
+  top: 45px;
+}
+
+.jqvmap-region {
+  cursor: pointer;
+}
+
+.jqvmap-ajax_response {
+  width: 100%;
+  height: 500px;
+}

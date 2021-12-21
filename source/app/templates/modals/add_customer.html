@@ -1,0 +1,22 @@
+<script>
+    function submit_new_customer() {
+    $.ajax({
+        url: '/customer/add',
+        type: "POST",
+        data: $('form#form_new_customer').serialize(),
+        dataType: "json",
+        success: function (data) {
+            jsdata = data;
+            if (jsdata.status == "success") {
+                $('#modal_add_customer').modal();
+                notify_success(jsdata.message);
+            } else {
+                $('#modal_customer_message').text(jsdata.message);
+            }
+        },
+        error: function (error) {
+            notify_error(error);
+        }
+    });
+    }
+</script>

@@ -1,0 +1,79 @@
+<div class="modal-header">
+    <h4>{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+
+    <div class="container col-md-12">
+        <form method="post" action="" id="form_new_ioc">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                {{ form.hidden_tag() }}
+                <div class="form-group row">
+                    <div class="col">
+                        <label for="ioc_type" class="mr-4">Type
+                        </label>
+                        {{ form.ioc_type(class="selectpicker pl--6") }}
+                    </div>
+                    <div class="col">
+                        <label for="ioc_type" class="mr-4">TLP
+                        </label>
+                        {{ form.ioc_tlp_id(class="selectpicker pl--6") }}
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="ioc_value" class="placeholder">{{ form.ioc_value.label.text }}</label>
+                    {{ form.ioc_value(class='form-control col-md-12 col-sm-12 sizable-textarea',  autocomplete="off") }}
+                </div>
+                <div class="form-group mt-3">
+                    <label for="ioc_description" class="placeholder">{{ form.ioc_description.label.text }}</label>
+                    {{ form.ioc_description(class='form-control sizable-textarea',  autocomplete="off") }}
+                </div>
+                <div class="form-group mt-3">
+                    <label for="ioc_tags">IOC tags
+                    </label>
+                    <input type="text" id="ioc_tags"
+                        class="form-control col-md-12" {% if ioc.ioc_tags %} value="{{ ioc.ioc_tags }}" {% endif %}/>
+                </div>
+            <div class='invalid-feedback' id='ioc-invalid-msg'></div>
+            {% if ioc.ioc_id %}
+                <button type="button" class="btn btn-outline-danger mt-5"
+                onclick="delete_ioc('{{ ioc.ioc_id }}');">Delete</button>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                onclick="update_ioc('{{ ioc.ioc_id }}');">Update</button>
+
+            {% else %}
+
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                id="submit_new_ioc">Save</button>
+
+            {% endif %}
+        </form>
+    </div>
+</div>
+<script>
+    $('form#form_new_ioc').validate();
+    $('#ioc_tags').amsifySuggestags({
+        printValues: false,
+        suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
+    });
+
+    $('#ioc_type').selectpicker({
+        liveSearch: true,
+        title: "None",
+        style: "Bootstrap 4: 'btn-outline-primary'",
+    });
+
+    $('#ioc_tlp_id').selectpicker({
+        liveSearch: true,
+        title: "None",
+        style: "Bootstrap 4: 'btn-outline-primary'",
+    });
+
+    {% if ioc.ioc_id %}
+        $('#ioc_type').selectpicker('val', '{{ioc.ioc_type}}');
+        $('#ioc_tlp_id').selectpicker('val', '{{ioc.ioc_tlp_id}}');
+    {% else %}
+        $('#ioc_tlp_id').selectpicker('val', '2');
+    {% endif %}
+</script>

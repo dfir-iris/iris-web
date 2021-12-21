@@ -1,0 +1,11 @@
+/*     	Modal     */
+.modal {
+  .bg-default .modal-title, .bg-primary .modal-title, .bg-secondary .modal-title, .bg-info .modal-title, .bg-success .modal-title, .bg-warning .modal-title, .bg-danger .modal-title {
+    color: $white-color !important;
+  }
+}
+
+.modal-content {
+  border-radius: .4rem !important;
+  border: 0 !important;
+}

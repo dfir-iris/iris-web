@@ -1,0 +1,37 @@
+<div class="modal-header">
+    <h4>Add Asset Type</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+
+        <div class="container col-md-12">
+        <form method="post" action="" id="form_new_asset_type" enctype="multipart/form-data">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    <label for="asset_type" class="mr-4">Type
+                    </label>
+                    {{ form.asset_name(class='form-control',  autocomplete="off") }}
+                </div>
+                <div class="form-group mt-3">
+                    <label for="asset_description" class="placeholder">Type description</label>
+                    {{ form.asset_description(class='form-control',  autocomplete="off") }}
+                </div>
+
+            {% if assettype.asset_id %}
+                <button type="button" class="btn btn-outline-danger mt-5"
+                onclick="delete_asset_type('{{ assettype.asset_id }}');">Delete</button>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                id="submit_new_assettype">Update</button>
+
+            {% else %}
+
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                id="submit_new_assettype">Save</button>
+
+            {% endif %}
+        </form>
+    </div>
+
+</div>

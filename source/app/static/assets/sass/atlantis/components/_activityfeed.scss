@@ -1,0 +1,71 @@
+.activity-feed {
+  padding: 15px;
+  list-style: none;
+  .feed-item {
+    position: relative;
+    padding-bottom: 20px;
+    padding-left: 30px;
+    border-left: 2px solid #e4e8eb;
+    &:last-child {
+      border-color: transparent;
+    }
+    &::after {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 0;
+      left: -7px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #177dff;
+    }
+  }
+}
+
+@mixin feed-item-state($color) {
+  background: $color !important;
+}
+
+.feed-item-default::after {
+  @include feed-item-state($dark-color);
+}
+
+.feed-item-primary::after {
+  @include feed-item-state($primary-color);
+}
+
+.feed-item-secondary::after {
+  @include feed-item-state($secondary-color);
+}
+
+.feed-item-success::after {
+  @include feed-item-state($success-color);
+}
+
+.feed-item-danger::after {
+  @include feed-item-state($danger-color);
+}
+
+.feed-item-info::after {
+  @include feed-item-state($info-color);
+}
+
+.feed-item-warning::after {
+  @include feed-item-state($warning-color);
+}
+
+.activity-feed .feed-item {
+  .date {
+    display: block;
+    position: relative;
+    top: -5px;
+    color: #8c96a3;
+    text-transform: uppercase;
+    font-size: 13px;
+  }
+  .text {
+    position: relative;
+    top: -3px;
+  }
+}

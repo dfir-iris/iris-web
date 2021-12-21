@@ -1,0 +1,117 @@
+{% extends "layouts/default.html" %}
+
+{% block title %} Dashboard {% endblock title %}
+
+{% block stylesheets %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+{% if current_user.is_authenticated %}
+
+<div class="page-inner">
+    <div class="row ">
+        <div class="col-md-12">
+            <div class="card card-profile">
+                <div class="card-header" style="background-image: url('/assets/img/blogpost.jpg')">
+                    <div class="profile-picture">
+                        <div class="avatar avatar-xl">
+                            <img src="/static/assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="user-profile text-center">
+                        <div class="name">{{ current_user.name }}</div>
+                        <div class="desc">Forensicator</div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="form-group col">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="icon-token"></i>
+                                        Name
+                                    </span>
+                                </div>
+                                <input class="form-control" value="{{ current_user.name }}" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group col">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="icon-token"></i>
+                                        Username
+                                    </span>
+                                </div>
+                                <input class="form-control disable" value="{{ current_user.user }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="icon-token"></i>
+                                        Email
+                                    </span>
+                                </div>
+                                <input class="form-control disable" value="{{ current_user.email }}" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group col">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="icon-token"></i>
+                                        #ID
+                                    </span>
+                                </div>
+                                <input class="form-control disable" value="{{ current_user.id }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="form-group col">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="icon-token"></i>
+                                        API Key
+                                    </span>
+                                </div>
+                                <input class="form-control disable" value="{{ current_user.api_key }}" readonly>
+                                <div class="input-group-append">
+                                    <button class="btn btn-sm btn-dark" type="button" onclick="renew_api()">Renew</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="float-right mt-4">
+                        <button class="btn btn-primary" type="button" onclick="update_password()">Change password</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" tabindex="-1" role="dialog" id="modal_pwd_user" data-backdrop="true">
+    <div class="modal-lg modal-dialog" role="document">
+        <div class="modal-content" id="modal_pwd_user_content">
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+{% endif %}
+
+{% endblock content %}
+
+{% block javascripts %}
+    <script src="/static/assets/js/iris/user.js"></script>
+
+{% endblock javascripts %}

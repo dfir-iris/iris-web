@@ -1,0 +1,40 @@
+<div class="modal-header">
+    <h4>{{ note.title }}</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form method="post" action="" id="form_note">
+        <iris_notein style="display: none;">{{ note.note_id if note.note_id|length else id }}</iris_notein>
+
+    {{ note.hidden_tag() }}
+        <div class="container col-md-12">
+            <div class="form-group">
+                <label>Note name</label>
+                {{ note.note_title(class='form-control input') }}
+            </div>
+            <div class="form-group mt-3">
+                <div class="row"></div>
+                    <span id="last_saved" class="badge"></span>
+                    <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();">
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6" id="container_note_content">
+                        <div style="display: none" id="fetched_crc"></div>
+                        <div id="editor_detail">{{ note.content }}</div>
+                        <textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
+                    </div>
+                    <div class="col-md-6" id="ctrd_notesum">
+                        <div id="targetDiv"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-danger mr-auto" onclick="delete_note(this);">Delete note</button>
+    <button type="button" class="btn btn-default" onclick="save_note( this );" id="btn_save_note">Save</button>
+</div>
