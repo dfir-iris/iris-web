@@ -44,13 +44,14 @@ openssl req -new -newkey rsa:2048 -sha256 -days 365 -nodes -x509 -keyout certifi
 
 **To run:**
 1. Clone the repo and cd into it
-2. (Optional if you juste want to try) If used in production, please configure the .env file at 
+2. Copy `.env.model` into `.env`
+3. (Optional if you juste want to try) If used in production, please configure the .env file at 
 the root of the project:
    1. Nginx: you might want to specify your own certificate as specified above
    2. Database credentials: **POSTGRES_PASSWORD** and **DB_PASS** (you can also customise the usernames)
    3. IRIS secrets: **SECRET_KEY** and **SECURITY_PASSWORD_SALT**
-3. Build `docker-compose build`
-4. Run `docker-compose up` 
+4. Build `docker-compose build`
+5. Run `docker-compose up` 
 
 A first account called **administrator** is created by default, the password is randomly 
 created and **output in the docker `app` service**. If you want to define an admin password
