@@ -45,7 +45,7 @@ openssl req -new -newkey rsa:2048 -sha256 -days 365 -nodes -x509 -keyout certifi
 **To run:**
 1. Clone the repo and cd into it
 2. Copy `.env.model` into `.env`
-3. (Optional if you juste want to try) If used in production, please configure the .env file at 
+3. (Optional if you just want to try) If used in production, please configure the .env file at 
 the root of the project:
    1. Nginx: you might want to specify your own certificate as specified above
    2. Database credentials: **POSTGRES_PASSWORD** and **DB_PASS** (you can also customise the usernames)
@@ -63,7 +63,7 @@ We also recommend immediately changing your administrator's password, either on 
 
 ### Documentation
 
-A more comprehensive documentation is available in iris.github.io or build 
+A more comprehensive documentation is available in dfir-iris.github.io or build 
 the documentation available in [here](https://github.com/dfir-iris/iris-doc-src).
 
 ## API
