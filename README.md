@@ -25,7 +25,7 @@ IrisWeb can work without any modules and by default none are enabled.
 
 A first module called [IrisEVTXModule](https://github.com/dfir-iris/iris-evtx-module) is provided and installed in 
 IRIS's Python environment when using the docker-compose building process. 
-In order to be added to IRIS and configured, see the [documentation](https://github.com/dfir-iris/iris-doc-src).
+In order to be added to IRIS and configured, see the [documentation](https://dfir-iris.github.io).
 
 ### Run IrisWeb 
 The app has 5 dockers: 
@@ -61,14 +61,18 @@ in the `app` docker instance (see [webApp Dockerfile](./docker/webApp/Dockerfile
 Once it is up, go to https://<your_instance>:4433, login as administrator, and start using IRIS!
 We also recommend immediately changing your administrator's password, either on its profile page or in the *Users* management page.
 
-### Documentation
+# Documentation
 
-A more comprehensive documentation is available in dfir-iris.github.io or build 
+A more comprehensive documentation is available on [dfir-iris.github.io](https://dfir-iris.github.io), or one can build 
 the documentation available in [here](https://github.com/dfir-iris/iris-doc-src).
 
 ## API
 
-The API reference is available in the [documentation repository](https://github.com/dfir-iris/iris-doc-src).
+The API reference is available in the [documentation](https://dfir-iris.github.io) or [documentation repository](https://github.com/dfir-iris/iris-doc-src).
+
+## Help 
+
+You can reach us on [Discord](https://discord.gg/fwuXkpBHGz) if you have any question, issue or idea !
 
 ## License
 
