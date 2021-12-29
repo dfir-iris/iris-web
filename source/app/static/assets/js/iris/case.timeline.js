@@ -285,7 +285,7 @@ function draw_timeline() {
                                     </div>
                                 </div>
                                 <div class="timeline-body text-faded" style="color: rgb(130, 130, 130);">
-                                    <p>` + formatted_content + `</p>
+                                    <span>` + formatted_content + `</span>
                                 </div>
                                 <div class="bottom-hour">
                                     <span class="float-right">`+ asset + tags +`</span>
