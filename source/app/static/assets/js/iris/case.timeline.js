@@ -251,10 +251,10 @@ function draw_timeline() {
 
                     if (content_parsed.length > 150) {
                         short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
-                        formatted_content = short_content + `<a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>
-                        <div class="collapse" id="collapseContent">
-                            `+ match_replace_ioc(content_parsed.slice(150), reap); +`
-                        </div>`;
+                        formatted_content = short_content + `<div class="collapse" id="collapseContent">
+                            `+ match_replace_ioc(content_parsed.slice(150), reap) +`
+                        </div>
+                        <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
                     } else {
                         formatted_content = match_replace_ioc(content_parsed, reap);
                     }
