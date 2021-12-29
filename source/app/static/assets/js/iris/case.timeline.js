@@ -246,17 +246,16 @@ function draw_timeline() {
                     }
 
                     title_parsed = match_replace_ioc(evt.event_title, reap);
-                    content_parsed = match_replace_ioc(evt.event_content, reap);
-                    content_parsed = content_parsed.replace(/\n/g, '<br/>');
+                    content_parsed = evt.event_content.replace(/\n/g, '<br/>');
 
                     if (content_parsed.length > 150) {
-                        short_content = content_parsed.slice(0, 150);
+                        short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
                         formatted_content = short_content + `</br><a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>
                         <div class="collapse" id="collapseContent">
-                            `+ content_parsed.slice(150) +`
+                            `+ match_replace_ioc(content_parsed.slice(150), reap); +`
                         </div>`;
                     } else {
-                        formatted_content = content_parsed;
+                        formatted_content = match_replace_ioc(content_parsed, reap);
                     }
 
                     entry = `<li class="timeline-inverted">
