@@ -115,14 +115,20 @@ def create_safe_languages():
 
 def create_safe_events_cats():
     create_safe(db.session, EventCategory, name="Unspecified")
-    create_safe(db.session, EventCategory, name="Lateral movement")
-    create_safe(db.session, EventCategory, name="Engagement")
-    create_safe(db.session, EventCategory, name="Initial access")
-    create_safe(db.session, EventCategory, name="Malware")
-    create_safe(db.session, EventCategory, name="Credential harvesting")
-    create_safe(db.session, EventCategory, name="Privilege escalation")
     create_safe(db.session, EventCategory, name="Legitimate")
-    create_safe(db.session, EventCategory, name="Remediation")
+    create_safe(db.session, EventCategory, name="Remediation") 
+    create_safe(db.session, EventCategory, name="Initial Access")
+    create_safe(db.session, EventCategory, name="Execution")
+    create_safe(db.session, EventCategory, name="Persistence")
+    create_safe(db.session, EventCategory, name="Privilege Escalation")
+    create_safe(db.session, EventCategory, name="Defense Evasion")
+    create_safe(db.session, EventCategory, name="Credential Access")
+    create_safe(db.session, EventCategory, name="Discovery")
+    create_safe(db.session, EventCategory, name="Lateral Movement")
+    create_safe(db.session, EventCategory, name="Collection")
+    create_safe(db.session, EventCategory, name="Command and Control")
+    create_safe(db.session, EventCategory, name="Exfiltration")
+    create_safe(db.session, EventCategory, name="Impact")
 
 
 def create_safe_roles():
