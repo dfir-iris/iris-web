@@ -6,8 +6,11 @@ Table = $("#tasks_table").DataTable({
         "data": "task_title",
         "render": function (data, type, row, meta) {
           if (type === 'display') {
+
             if (isWhiteSpace(data)) {
                 data = '#' + row['task_id'];
+            } else {
+                datat = sanitizeHTML(data);
             }
             data = '<a href="#" onclick="edit_task(\'' + row['task_id'] + '\');">' + data +'</a>';
           }
@@ -17,6 +20,7 @@ Table = $("#tasks_table").DataTable({
       { "data": "task_description",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
+            data = sanitizeHTML(data);
             datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="click" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
@@ -42,6 +46,7 @@ Table = $("#tasks_table").DataTable({
             } else {
                 flag = 'muted';
             }
+              data = sanitizeHTML(data);
               data = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
           }
           return data;
@@ -59,7 +64,7 @@ Table = $("#tasks_table").DataTable({
               tags = "";
               de = data.split(',');
               for (tag in de) {
-                tags += '<span class="badge badge-primary ml-2">' + de[tag] + '</span>';
+                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
               }
               return tags;
           }
@@ -77,7 +82,7 @@ Table = $("#tasks_table").DataTable({
         } else {
             flag = 'muted';
         }
-        nRow = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
+        nRow = '<span class="badge ml-2 badge-'+ flag +'">' + sanitizeHTML(data['task_status']) + '</span>';
     },
     filter: true,
     info: true,
