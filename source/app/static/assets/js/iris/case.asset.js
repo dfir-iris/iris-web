@@ -126,7 +126,7 @@ Table = $("#assets_table").DataTable({
       },
       { "data": "asset_description",
        "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
             datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="focus" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
