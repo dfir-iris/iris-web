@@ -14,6 +14,8 @@
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](./LICENSE.txt)   
 IRIS is a web collaborative platform for incident response analysts allowing to share investigations at a technical level. 
 
+![demo_timeline](img/demo_timeline.png)
+
 ## Getting started
 It is divided in two main parts, IrisWeb and IrisModules.   
  - IrisWeb is the web application which contains the core of
@@ -61,7 +63,12 @@ in the `app` docker instance (see [webApp Dockerfile](./docker/webApp/Dockerfile
 Once it is up, go to https://<your_instance>:4433, login as administrator, and start using IRIS!
 We also recommend immediately changing your administrator's password, either on its profile page or in the *Users* management page.
 
-# Documentation
+## Showcase
+For a more comprehensive overview of the case features, 
+you can head to [tutorials](https://dfir-iris.github.io/operations/tutorials.html), we've put some videos there.  
+
+
+## Documentation
 
 A more comprehensive documentation is available on [dfir-iris.github.io](https://dfir-iris.github.io), or one can build 
 the documentation available in [here](https://github.com/dfir-iris/iris-doc-src).
