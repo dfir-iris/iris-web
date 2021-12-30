@@ -212,7 +212,7 @@ function draw_timeline() {
                             cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                             cpn = sanitizeHTML(cpn)
                             if (evt.assets[ide]["compromised"]) {
-                                asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ evt.assets[ide]["name"] + '</span>|';
+                                asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
                             } else {
                                 asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '">'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
                             }
