@@ -65,7 +65,7 @@ We also recommend immediately changing your administrator's password, either on 
 
 ## Showcase
 For a more comprehensive overview of the case features, 
-you can head to [tutorials](https://dfir-iris.github.io), we've put some videos there.  
+you can head to [tutorials](https://dfir-iris.github.io/operations/tutorials.html), we've put some videos there.  
 
 
 ## Documentation
