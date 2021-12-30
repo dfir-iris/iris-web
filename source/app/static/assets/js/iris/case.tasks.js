@@ -53,10 +53,12 @@ Table = $("#tasks_table").DataTable({
         }
       },
       {
-        "data": "user_name"
+        "data": "user_name",
+        "render": function (data, type, row, meta) { return sanitizeHTML(data);}
       },
       {
-        "data": "task_open_date"
+        "data": "task_open_date",
+        "render": function (data, type, row, meta) { return sanitizeHTML(data);}
       },
       { "data": "task_tags",
         "render": function (data, type, row, meta) {

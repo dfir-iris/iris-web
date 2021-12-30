@@ -65,6 +65,7 @@ $('#customers_table').dataTable({
         "columnDefs": [
             {
                 "render": function (data, type, row) {
+                    data = sanitizeHTML(data);
                     return '<a href="#" onclick="customer_detail(\'' + row[1] + '\');">' + data + '</a>';
                 },
                 "targets": 0

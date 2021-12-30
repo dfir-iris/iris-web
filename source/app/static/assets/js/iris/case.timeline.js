@@ -156,7 +156,7 @@ function draw_timeline() {
                 /* Build the filter list */
                 $('#assets_timeline_select').append('<option value="0">All assets</options>');
                 for (rid in data.data.assets) {
-                    $('#assets_timeline_select').append('<option value="'+rid+'">' + data.data.assets[rid] + '</options>');
+                    $('#assets_timeline_select').append('<option value="'+sanitizeHTML(rid)+'">' + sanitizeHTML(data.data.assets[rid]) + '</options>');
                 }
                 $('#assets_timeline_select').selectpicker('val', reid);
 

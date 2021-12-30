@@ -153,10 +153,18 @@ Table = $("#assets_table").DataTable({
           return data;
         }
       },
-      { "data": "asset_ip"
+      { "data": "asset_ip",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
       },
       {
-        "data": "asset_type"
+        "data": "asset_type",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
       },
       {
         "data": "analysis_status",
