@@ -61,7 +61,13 @@ in the `app` docker instance (see [webApp Dockerfile](./docker/webApp/Dockerfile
 Once it is up, go to https://<your_instance>:4433, login as administrator, and start using IRIS!
 We also recommend immediately changing your administrator's password, either on its profile page or in the *Users* management page.
 
-# Documentation
+## Demo
+Below is a screenshot of the timeline capabilities. For a more comprehensive overview of the case features, 
+you can head to [tutorials](https://dfir-iris.github.io), we've put some videos there.  
+
+![demo_timeline](img/demo_timeline.png)
+
+## Documentation
 
 A more comprehensive documentation is available on [dfir-iris.github.io](https://dfir-iris.github.io), or one can build 
 the documentation available in [here](https://github.com/dfir-iris/iris-doc-src).
