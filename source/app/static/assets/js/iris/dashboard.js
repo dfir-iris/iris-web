@@ -1,7 +1,7 @@
 $('#form_new_customer').submit(function () {
     event.preventDefault();
     $.ajax({
-        url: '/customer/add' + case_param(),
+        url: '/manage/customers/add' + case_param(),
         type: "POST",
         data: JSON.stringify($('form#form_new_customer').serializeObject()),
         contentType: "application/json;charset=UTF-8",
