@@ -15,6 +15,8 @@ Table = $("#rfiles_table").DataTable({
           if (type === 'display') {
             if (isWhiteSpace(data)) {
                 data = '#' + row['id'];
+            } else {
+                data = sanitizeHTML(data);
             }
             data = '<a  data-toggle="tooltip" href="#" title="' + data + '" onclick="edit_rfiles(\'' + row['id'] + '\');">' + data +'</a>';
           }
@@ -22,10 +24,27 @@ Table = $("#rfiles_table").DataTable({
         }
       },
       { "data": "date_added" },
-      { "data": "file_hash" },
-      { "data": "file_size" },
-      { "data": "file_description" },
-      { "data": "username" }
+      { "data": "file_hash",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
+      },
+      { "data": "file_size",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }},
+      { "data": "file_description",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }},
+      { "data": "username",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }}
     ],
     filter: true,
     info: true,
