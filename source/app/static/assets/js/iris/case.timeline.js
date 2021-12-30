@@ -173,7 +173,7 @@ function draw_timeline() {
                            + " " + escapeRegExp(ioc_list[ioc][1]) + " "
                            + avoid_inception_end
                            ,"g");
-                    replacement = '<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc][2]) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc][1]) + '</span>';
+                    replacement = ' <span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc][2]) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc][1]) + '</span> ';
                     reap.push([re, replacement]);
                 }
                 idx = 0;
@@ -287,7 +287,7 @@ function draw_timeline() {
                                 <div class="timeline-body text-faded" style="color: rgb(130, 130, 130);">
                                     <span>` + formatted_content + `</span>
                                 </div>
-                                <div class="bottom-hour">
+                                <div class="bottom-hour mt-2">
                                     <span class="float-right">`+ asset + tags +`</span>
                                     <span class="text-muted text-sm float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>`+ evt.event_date + ori_date + `</small></span>
                                 <div>
