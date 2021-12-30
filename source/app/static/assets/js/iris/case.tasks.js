@@ -10,7 +10,7 @@ Table = $("#tasks_table").DataTable({
             if (isWhiteSpace(data)) {
                 data = '#' + row['task_id'];
             } else {
-                datat = sanitizeHTML(data);
+                data = sanitizeHTML(data);
             }
             data = '<a href="#" onclick="edit_task(\'' + row['task_id'] + '\');">' + data +'</a>';
           }
