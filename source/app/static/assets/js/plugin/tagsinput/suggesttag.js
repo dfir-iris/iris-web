@@ -237,9 +237,14 @@
               return listHTML;
             },
 
+            getVal : function(value) {
+                var innerVal = '<span></span>';
+                return $(innerVal).text(value).prop('outerHTML');;
+            },
+
             addTag : function(value) {
               if(!value) return;
-              var html  = '<span class="'+this.classes.tagItem.substring(1)+'" data-val="'+value+'">'+value+' '+this.setIcon()+'</span>';
+              var html  = '<span class="'+this.classes.tagItem.substring(1)+'">'+ this.getVal(value) +' '+this.setIcon()+'</span>';
               $item = $(html).insertBefore($(this.selectors.sTagsInput));
               if(settings.tagLimit != -1 && settings.tagLimit > 0 && this.tagNames.length >= settings.tagLimit) {
               	this.animateRemove($item, true);

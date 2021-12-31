@@ -145,6 +145,7 @@ $('#reports_table').dataTable( {
       "type": "GET",
       "data": function ( d ) {
         if (d.status == 'success') {
+
           return JSON.stringify( d.data );
         } else {
           return [];
@@ -156,12 +157,26 @@ $('#reports_table').dataTable( {
     "columnDefs": [
         {
             "render": function ( data, type, row ) {
+                data = sanitizeHTML(data);
                 return '<a href="#" onclick="delete_report(\'' + row[7] + '\');">' + data +'</a>';
             },
             "targets": 0
         },
         {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+            "targets": 1
+        },
+        {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+            "targets": 2
+        },
+        {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+            "targets": 4
+        },
+        {
             "render": function ( data, type, row ) {
+                data = sanitizeHTML(data);
                 return '<a href="templates/download/' + row[7] + case_param() + '"><i class="fas fa-download"></i></a>';
             },
             "targets": 7

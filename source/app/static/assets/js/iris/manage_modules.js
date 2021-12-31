@@ -162,18 +162,40 @@ $('#modules_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
     "columns": [
-                            { 'data': 'id' },
-                            { 'data': 'module_human_name' },
-                            { 'data': 'has_pipeline' },
-                            { 'data': 'module_version' },
-                            { 'data': 'interface_version' },
-                            { 'data': 'date_added' },
-                            { 'data': 'name' },
-                            { 'data': 'is_active' }
+      { 'data': 'id'},
+      { 'data': 'module_human_name'},
+      { 'data': 'has_pipeline',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'module_version',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'interface_version',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'date_added',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'name',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'is_active'},
+
                         ],
     "columnDefs": [
         {
             "render": function ( data, type, row ) {
+                data = sanitizeHTML(data);
                 return '<a href="#" onclick="module_detail(\'' + row['id'] + '\');">' + data +'</a>';
             },
             "targets": [0, 1]

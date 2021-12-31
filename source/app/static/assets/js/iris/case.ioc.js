@@ -17,7 +17,7 @@ Table = $("#ioc_table").DataTable({
         "data": "ioc_value",
         "render": function (data, type, row, meta) {
           if (type === 'display') {
-            datak= data;
+            datak= sanitizeHTML(data);
             if (data.length > 60) {
                 datak = data.slice(0, 60) + " (..)";
             }
@@ -40,6 +40,7 @@ Table = $("#ioc_table").DataTable({
       { "data": "ioc_description",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
+          data = sanitizeHTML(data);
             datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="focus" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
@@ -58,7 +59,7 @@ Table = $("#ioc_table").DataTable({
               tags = "";
               de = data.split(',');
               for (tag in de) {
-                tags += '<span class="badge badge-light ml-2">' + de[tag] + '</span>';
+                tags += '<span class="badge badge-light ml-2">' + sanitizeHTML(de[tag]) + '</span>';
               }
               return tags;
           }
@@ -70,8 +71,8 @@ Table = $("#ioc_table").DataTable({
           if (type === 'display') {
               links = "";
               for (link in data) {
-                links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="focus" class="text-primary mr-3" href="#" title="Case info" data-content="' + data[link]['case_name'] +
-                 ' (' + data[link]['client_name'] + ')' + '">#' + data[link]['case_id'] + '</span>'
+                links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="focus" class="text-primary mr-3" href="#" title="Case info" data-content="' + sanitizeHTML(data[link]['case_name']) +
+                 ' (' + sanitizeHTML(data[link]['client_name']) + ')' + '">#' + data[link]['case_id'] + '</span>'
               }
               return links;
           }
@@ -82,6 +83,7 @@ Table = $("#ioc_table").DataTable({
         "data": "tlp_name",
         "render": function(data, type, row, meta) {
            if (type === 'display') {
+                data = sanitizeHTML(data);
               data = '<span class="badge badge-'+ row['tlp_bscolor'] +' ml-2">tlp:' + data + '</span>';
           }
           return data;
