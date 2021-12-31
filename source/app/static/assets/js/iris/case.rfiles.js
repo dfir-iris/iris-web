@@ -4,6 +4,10 @@ function reload_rfiles() {
     notify_success("Refreshed");
 }
 
+/* add filtering fields for each table of the page (must be done before datatable initialization) */
+$.each($.find("table"), function(index, element){
+    addFilterFields($(element).attr("id"));
+});
 
 Table = $("#rfiles_table").DataTable({
     dom: 'Blfrtip',
@@ -33,7 +37,11 @@ Table = $("#rfiles_table").DataTable({
     processing: true,
     retrieve: true,
     buttons: [
-    ]
+    ],
+    orderCellsTop: true,
+    initComplete: function () {
+        tableFiltering(this.api());
+    }
 });
 $("#rfiles_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {

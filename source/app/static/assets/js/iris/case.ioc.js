@@ -3,9 +3,14 @@ function reload_iocs() {
     get_case_ioc();
 }
 
+/* add filtering fields for each table of the page (must be done before datatable initialization) */
+$.each($.find("table"), function(index, element){
+    addFilterFields($(element).attr("id"));
+});
 
 Table = $("#ioc_table").DataTable({
     dom: 'Blfrtip',
+    fixedHeader: true,
     aaData: [],
     aoColumns: [
       {
@@ -88,9 +93,14 @@ Table = $("#ioc_table").DataTable({
     ordering: true,
     processing: true,
     retrieve: true,
-    buttons: []
+    buttons: [],
+    orderCellsTop: true,
+    initComplete: function () {
+        tableFiltering(this.api());
+    }
 });
 $("#ioc_table").css("font-size", 12);
+
 var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
         { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
