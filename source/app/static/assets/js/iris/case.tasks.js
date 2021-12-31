@@ -1,3 +1,9 @@
+
+/* add filtering fields for each table of the page (must be done before datatable initialization) */
+$.each($.find("table"), function(index, element){
+    addFilterFields($(element).attr("id"));
+});
+
 Table = $("#tasks_table").DataTable({
     dom: 'Blfrtip',
     aaData: [],
@@ -94,7 +100,11 @@ Table = $("#tasks_table").DataTable({
     pageLength: 50,
     order: [[ 2, "desc" ]],
     buttons: [
-    ]
+    ],
+    orderCellsTop: true,
+    initComplete: function () {
+        tableFiltering(this.api());
+    }
 });
 $("#tasks_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {

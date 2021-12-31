@@ -69,6 +69,11 @@ function add_asset() {
     $('#modal_add_asset').modal({ show: true });
 }
 
+/* add filtering fields for each table of the page (must be done before datatable initialization) */
+$.each($.find("table"), function(index, element){
+    addFilterFields($(element).attr("id"));
+});
+
 Table = $("#assets_table").DataTable({
     dom: 'Blfrtip',
     aaData: [],
@@ -194,7 +199,11 @@ Table = $("#assets_table").DataTable({
                     "processing": '<i class="fa fa-spinner fa-spin" style="font-size:24px;color:rgb(75, 183, 245);"></i>'
                  },
     retrieve: true,
-    buttons: []
+    buttons: [],
+    orderCellsTop: true,
+    initComplete: function () {
+        tableFiltering(this.api());
+    }
 });
 $("#assets_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {
