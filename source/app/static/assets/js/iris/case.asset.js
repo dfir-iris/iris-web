@@ -69,6 +69,11 @@ function add_asset() {
     $('#modal_add_asset').modal({ show: true });
 }
 
+/* add filtering fields for each table of the page (must be done before datatable initialization) */
+$.each($.find("table"), function(index, element){
+    addFilterFields($(element).attr("id"));
+});
+
 Table = $("#assets_table").DataTable({
     dom: 'Blfrtip',
     aaData: [],
@@ -77,7 +82,8 @@ Table = $("#assets_table").DataTable({
         "data": "asset_name",
         "render": function (data, type, row, meta) {
           if (type === 'display') {
-            datak= data;
+            datak= sanitizeHTML(data);
+
             if (data.length > 60) {
                 datak = data.slice(0, 60) + " (..)";
             }
@@ -93,13 +99,13 @@ Table = $("#assets_table").DataTable({
                     if (row.link[idx]['asset_compromised']) {
                         has_compro = true;
                         datacontent += `Observed as <b class=\'text-danger\'>compromised</b><br/>
-                        on investigation <b>`+ row.link[idx]['case_name'] + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.
-                        <br/><b>Asset description</b> :` + row.link[idx]['asset_description'] + "<br/><br/>";
+                        on investigation <b>`+ sanitizeHTML(row.link[idx]['case_name']) + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.
+                        <br/><b>Asset description</b> :` + sanitizeHTML(row.link[idx]['asset_description']) + "<br/><br/>";
                     } else {
 
                         datacontent += `Observed as <b class=\'text-success\'>not compromised</b><br/>
-                        on investigation <b>`+ row.link[idx]['case_name'] + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.
-                        <br/><b>Asset description</b> :` + row.link[idx]['asset_description'] + "<br/><br/>";
+                        on investigation <b>`+ sanitizeHTML(row.link[idx]['case_name']) + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.
+                        <br/><b>Asset description</b> :` + sanitizeHTML(row.link[idx]['asset_description']) + "<br/><br/>";
                     }
                 }
                 if (has_compro) {
@@ -126,7 +132,8 @@ Table = $("#assets_table").DataTable({
       },
       { "data": "asset_description",
        "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
+            data = sanitizeHTML(data);
             datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="focus" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
@@ -144,22 +151,31 @@ Table = $("#assets_table").DataTable({
           if (type === 'display' && data != undefined) {
             datas = "";
             for (ds in data) {
-                datas += '<span class="badge badge-light">'+ data[ds][0] + '</span>';
+                datas += '<span class="badge badge-light">'+ sanitizeHTML(data[ds][0]) + '</span>';
             }
             return datas;
           }
           return data;
         }
       },
-      { "data": "asset_ip"
+      { "data": "asset_ip",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
       },
       {
-        "data": "asset_type"
+        "data": "asset_type",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
       },
       {
         "data": "analysis_status",
         "render": function(data, type, row, meta) {
            if (type === 'display') {
+            data = sanitizeHTML(data);
             if (data == 'To be done') {
                 flag = 'danger';
             } else if (data == 'Started') {
@@ -183,7 +199,11 @@ Table = $("#assets_table").DataTable({
                     "processing": '<i class="fa fa-spinner fa-spin" style="font-size:24px;color:rgb(75, 183, 245);"></i>'
                  },
     retrieve: true,
-    buttons: []
+    buttons: [],
+    orderCellsTop: true,
+    initComplete: function () {
+        tableFiltering(this.api());
+    }
 });
 $("#assets_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {

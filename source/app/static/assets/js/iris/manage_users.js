@@ -63,6 +63,7 @@ $('#users_table').dataTable( {
             "data": "user_id",
             "render": function ( data, type, row ) {
                 if (type === 'display') {
+                    data = sanitizeHTML(data)
                     return '<a href="#" onclick="user_detail(\'' + row["user_id"] + '\');">' + data +'</a>';
                 }
                 return data;
@@ -71,14 +72,30 @@ $('#users_table').dataTable( {
         { "data": "user_fullname",
           "render": function ( data, type, row ) {
                 if (type === 'display') {
+                    data = sanitizeHTML(data)
                     return '<a href="#" onclick="user_detail(\'' + row["user_id"] + '\');">' + data +'</a>';
                 }
                 return data;
             }
         },
-        { "data": "user_surname" },
-        { "data": "user_roles" },
-        { "data": "user_active" }
+        { "data": "user_surname",
+          "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
+        },
+        { "data": "user_roles",
+          "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }
+          },
+            { "data": "user_active",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }
+            }
       ]
     }
 );

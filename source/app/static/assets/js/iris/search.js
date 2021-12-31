@@ -79,6 +79,7 @@ Table_1 = $("#file_search_table_1").DataTable({
       { "data": "ioc_name",
        "render": function (data, type, row, meta) {
             if (type === 'display') {
+                data = sanitizeHTML(data);
                 if (row['ioc_misp'] != null) {
                     jse = JSON.parse(row['ioc_misp']);
                     data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
@@ -91,6 +92,7 @@ Table_1 = $("#file_search_table_1").DataTable({
       { "data": "ioc_description",
         "render": function (data, type, row, meta) {
             if (type === 'display') {
+                 data = sanitizeHTML(data);
                 datas = '<span data-toggle="popover" style="cursor: pointer;" data-trigger="focus" title="Description" data-content="' + data + '">' + data.slice(0, 70);
 
                 if (data.length > 70) {
@@ -103,12 +105,25 @@ Table_1 = $("#file_search_table_1").DataTable({
             return data;
           }
       },
-      { "data": "ioc_type" },
-      { "data": "case_name" },
-      { "data": "customer_name" },
+      { "data": "ioc_type",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }},
+      { "data": "case_name",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }},
+      { "data": "customer_name",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
       { "data": "tlp_name",
         "render": function(data, type, row, meta) {
             if (type === 'display') {
+                data = sanitizeHTML(data);
                 data = '<span class="badge badge-'+ row['tlp_bscolor'] +' ml-2">tlp:' + data + '</span>';
             }
             return data;
@@ -210,7 +225,7 @@ function search() {
                 else if (val == "notes") {
                     for (e in data.data) {
                         li = `<li class="list-group-item">
-                        <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_detail(`+ data.data[e][0] +`);">`+ data.data[e][3] + ` - ` + data.data[e][2] + ` - ` + data.data[e][1] +`</span>
+                        <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_detail(`+ data.data[e][0] +`);">`+ sanitizeHTML(data.data[e][3]) + ` - ` + sanitizeHTML(data.data[e][2]) + ` - ` + sanitizeHTML(data.data[e][1]) +`</span>
                         </li>`
                         $('#notes_msearch_list').append(li);
                     }

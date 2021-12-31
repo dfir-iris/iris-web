@@ -1,3 +1,9 @@
+
+/* add filtering fields for each table of the page (must be done before datatable initialization) */
+$.each($.find("table"), function(index, element){
+    addFilterFields($(element).attr("id"));
+});
+
 Table = $("#tasks_table").DataTable({
     dom: 'Blfrtip',
     aaData: [],
@@ -6,8 +12,11 @@ Table = $("#tasks_table").DataTable({
         "data": "task_title",
         "render": function (data, type, row, meta) {
           if (type === 'display') {
+
             if (isWhiteSpace(data)) {
                 data = '#' + row['task_id'];
+            } else {
+                data = sanitizeHTML(data);
             }
             data = '<a href="#" onclick="edit_task(\'' + row['task_id'] + '\');">' + data +'</a>';
           }
@@ -17,6 +26,7 @@ Table = $("#tasks_table").DataTable({
       { "data": "task_description",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
+            data = sanitizeHTML(data);
             datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="click" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
@@ -42,16 +52,19 @@ Table = $("#tasks_table").DataTable({
             } else {
                 flag = 'muted';
             }
+              data = sanitizeHTML(data);
               data = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
           }
           return data;
         }
       },
       {
-        "data": "user_name"
+        "data": "user_name",
+        "render": function (data, type, row, meta) { return sanitizeHTML(data);}
       },
       {
-        "data": "task_open_date"
+        "data": "task_open_date",
+        "render": function (data, type, row, meta) { return sanitizeHTML(data);}
       },
       { "data": "task_tags",
         "render": function (data, type, row, meta) {
@@ -59,7 +72,7 @@ Table = $("#tasks_table").DataTable({
               tags = "";
               de = data.split(',');
               for (tag in de) {
-                tags += '<span class="badge badge-primary ml-2">' + de[tag] + '</span>';
+                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
               }
               return tags;
           }
@@ -77,7 +90,7 @@ Table = $("#tasks_table").DataTable({
         } else {
             flag = 'muted';
         }
-        nRow = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
+        nRow = '<span class="badge ml-2 badge-'+ flag +'">' + sanitizeHTML(data['task_status']) + '</span>';
     },
     filter: true,
     info: true,
@@ -87,7 +100,11 @@ Table = $("#tasks_table").DataTable({
     pageLength: 50,
     order: [[ 2, "desc" ]],
     buttons: [
-    ]
+    ],
+    orderCellsTop: true,
+    initComplete: function () {
+        tableFiltering(this.api());
+    }
 });
 $("#tasks_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {

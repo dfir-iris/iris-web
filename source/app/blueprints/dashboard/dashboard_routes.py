@@ -33,7 +33,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import FileContentHash, GlobalTasks, User, Ioc, CaseTasks
-from app.schema.marshables import GlobalTasksSchema, CustomerSchema
+from app.schema.marshables import GlobalTasksSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
 # CONTENT ------------------------------------------------
@@ -87,30 +87,6 @@ def get_cases_charts(caseid):
         retr = [list(rk.keys()), list(rk.values())]
 
     return response_success("", retr)
-
-
-@dashboard_blueprint.route('/customer/add', methods=['POST'])
-@api_login_required
-def add_customer(caseid):
-    """
-    Add a customer. Check if the customer exists before. If not, inject into DB.
-    :return: JSON
-    """
-
-    try:
-
-        customer_schema = CustomerSchema()
-        customer = customer_schema.load(request.json)
-
-        db.session.add(customer)
-        db.session.commit()
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
-
-    track_activity("added customer '{}'".format(customer.name), caseid=caseid, ctx_less=True)
-
-    return response_success("Customer added", data=customer_schema.dump(customer))
 
 
 @dashboard_blueprint.route('/')

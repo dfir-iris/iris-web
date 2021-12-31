@@ -272,6 +272,7 @@ $('#cases_table').dataTable({
     "columns": [
         {
             "render": function (data, type, row) {
+                data = sanitizeHTML(data);
                 return '<a href="#" onclick="case_detail(\'' + row['case_id'] + '\');">' + decodeURIComponent(data) + '</a>';
             },
             "data": "case_name"
@@ -279,30 +280,50 @@ $('#cases_table').dataTable({
         {
             "render": function (data, type, row) {
                 if (row["case_description"].length > 50){
-                    return row["case_description"].slice(0,50) + " ... " ;
+                    return sanitizeHTML(row["case_description"].slice(0,50)) + " ... " ;
                 }
                 else {
-                    return row["case_description"];
+                    return sanitizeHTML(row["case_description"]);
                 }
             },
             "case_description": 1
         },
         {
-            "data": "client_name"
+            "data": "client_name",
+            "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
         },
         {
             "data": "case_open_date",
+            "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+            },
             "type": "date"
         },
         {
             "data": "case_close_date",
-            "type": "date"
+            "type": "date",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }
         },
         {
-            "data": "case_soc_id"
+            "data": "case_soc_id",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }
         },
         {
-            "data": "opened_by"
+            "data": "opened_by",
+            "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
         }
     ]
 });
@@ -318,35 +339,6 @@ function refresh_case_table() {
 function case_detail(id) {
     url = 'cases/details/' + id + case_param();
     $('#info_case_modal_content').load(url, function () {
-        $('#datatable_db_list').dataTable({
-            "columnDefs": [
-                {
-                    "render": function (data, type, row) {
-                        if (row[4] == 1) {
-                            return '<a href="#" onclick="db_action(\'' + decodeURIComponent(data) + '\');">' + decodeURIComponent(data) + '</a>';
-                        } else {
-                            return decodeURIComponent(data)
-                        }
-                    },
-                    "targets": 0
-                },
-                {
-                    "render": function (data, type, row) {
-                        if (data == 0 && row[0]) {
-                            return "<span class='text-danger'>Unlinked / Deleted</span>";
-                        } else if (data == 1) {
-                            return "<span class='text-success'>Linked</span>";
-                        } else if (row[0]) {
-                            return "<span class='text-danger'>Unknown (" + data + ")</span>";
-                        } else {
-                            return data;
-                        }
-                    },
-                    "targets": 4
-                },
-            ],
-            "paging": false,
-        });
         $('#modal_case_detail').modal({ show: true });
     });
 }

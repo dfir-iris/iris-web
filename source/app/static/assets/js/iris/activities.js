@@ -3,11 +3,31 @@ Table = $("#activities_table").DataTable({
     aaData: [],
     bSort: false,
     aoColumns: [
-      { "data": "activity_date" },
-      { "data": "user_name" },
-      { "data": "case_name" },
-      { "data": "user_input" },
-      { "data": "activity_desc" }
+      { "data": "activity_date",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { "data": "user_name",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { "data": "case_name",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { "data": "user_input",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { "data": "activity_desc",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } }
     ],
     filter: true,
     info: true,

@@ -88,7 +88,7 @@ class CeleryConfig():
 class Config():
 
     # Handled by bumpversion
-    IRIS_VERSION = "v1.2.0"
+    IRIS_VERSION = "v1.2.1"
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True

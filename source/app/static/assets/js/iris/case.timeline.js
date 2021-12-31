@@ -156,7 +156,7 @@ function draw_timeline() {
                 /* Build the filter list */
                 $('#assets_timeline_select').append('<option value="0">All assets</options>');
                 for (rid in data.data.assets) {
-                    $('#assets_timeline_select').append('<option value="'+rid+'">' + data.data.assets[rid] + '</options>');
+                    $('#assets_timeline_select').append('<option value="'+sanitizeHTML(rid)+'">' + sanitizeHTML(data.data.assets[rid]) + '</options>');
                 }
                 $('#assets_timeline_select').selectpicker('val', reid);
 
@@ -170,10 +170,10 @@ function draw_timeline() {
                     var avoid_inception_start = "(?!<span[^>]*?>)("
                     var avoid_inception_end = ")(?![^<]*?</span>)"
                     var re = new RegExp(avoid_inception_start
-                           + escapeRegExp(ioc_list[ioc][1])
+                           + " " + escapeRegExp(ioc_list[ioc][1]) + " "
                            + avoid_inception_end
                            ,"g");
-                    replacement = '<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ ioc_list[ioc][2] + '" title="IOC">'+ ioc_list[ioc][1] + '</span>';
+                    replacement = ' <span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc][2]) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc][1]) + '</span> ';
                     reap.push([re, replacement]);
                 }
                 idx = 0;
@@ -187,7 +187,7 @@ function draw_timeline() {
 
                     /* If IOC then build a tag */ 
                     if(evt.category_name && evt.category_name != 'Unspecified') {
-                        tags += '<span class="badge badge-light ml-2 mb-1">' + evt.category_name +'</span>';
+                        tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
                     }
 
                     /* Do we have a border color to set ? */
@@ -201,7 +201,7 @@ function draw_timeline() {
 
                         
                     if (evt.event_color != null) {
-                            style += "border-left: 2px groove " + evt.event_color;
+                            style += "border-left: 2px groove " + sanitizeHTML(evt.event_color);
                     }
 
                     style += ";'";
@@ -210,10 +210,11 @@ function draw_timeline() {
                     if (evt.assets != null) {
                         for (ide in evt.assets) {
                             cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
+                            cpn = sanitizeHTML(cpn)
                             if (evt.assets[ide]["compromised"]) {
-                                asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + evt.assets[ide]["name"] + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ evt.assets[ide]["name"] + '</span>|';
+                                asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
                             } else {
-                                asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + evt.assets[ide]["name"] + '">'+ evt.assets[ide]["name"] + '</span>|';
+                                asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '">'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
                             }
                         }
                     }
@@ -234,7 +235,7 @@ function draw_timeline() {
                     if (evt.event_tags != null) {
                     sp_tag = evt.event_tags.split(',');
                     for (tag_i in sp_tag) {
-                            tags += '<span class="badge badge-light ml-2 mb-1">' + sp_tag[tag_i] + '</span>';
+                            tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(sp_tag[tag_i]) + '</span>';
                         }
                     }
 
@@ -245,18 +246,17 @@ function draw_timeline() {
                         idx += 1;
                     }
 
-                    title_parsed = match_replace_ioc(evt.event_title, reap);
-                    content_parsed = match_replace_ioc(evt.event_content, reap);
-                    content_parsed = content_parsed.replace(/\n/g, '<br/>');
+                    title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
+                    content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
 
                     if (content_parsed.length > 150) {
-                        short_content = content_parsed.slice(0, 150);
-                        formatted_content = short_content + `</br><a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>
-                        <div class="collapse" id="collapseContent">
-                            `+ content_parsed.slice(150) +`
-                        </div>`;
+                        short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
+                        formatted_content = short_content + `<div class="collapse" id="collapseContent">
+                            `+ match_replace_ioc(content_parsed.slice(150), reap) +`
+                        </div>
+                        <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
                     } else {
-                        formatted_content = content_parsed;
+                        formatted_content = match_replace_ioc(content_parsed, reap);
                     }
 
                     entry = `<li class="timeline-inverted">
@@ -285,9 +285,9 @@ function draw_timeline() {
                                     </div>
                                 </div>
                                 <div class="timeline-body text-faded" style="color: rgb(130, 130, 130);">
-                                    <p>` + formatted_content + `</p>
+                                    <span>` + formatted_content + `</span>
                                 </div>
-                                <div class="bottom-hour">
+                                <div class="bottom-hour mt-2">
                                     <span class="float-right">`+ asset + tags +`</span>
                                     <span class="text-muted text-sm float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>`+ evt.event_date + ori_date + `</small></span>
                                 <div>

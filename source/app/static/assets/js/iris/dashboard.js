@@ -1,7 +1,7 @@
 $('#form_new_customer').submit(function () {
     event.preventDefault();
     $.ajax({
-        url: '/customer/add' + case_param(),
+        url: '/manage/customers/add' + case_param(),
         type: "POST",
         data: JSON.stringify($('form#form_new_customer').serializeObject()),
         contentType: "application/json;charset=UTF-8",
@@ -83,6 +83,8 @@ Table = $("#gtasks_table").DataTable({
           if (type === 'display') {
             if (isWhiteSpace(data)) {
                 data = '#' + row['task_id'];
+            } else {
+                data = sanitizeHTML(data);
             }
             data = '<a href="#" onclick="edit_gtask(\'' + row['task_id'] + '\');">' + data +'</a>';
           }
@@ -92,6 +94,7 @@ Table = $("#gtasks_table").DataTable({
       { "data": "task_description",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
+            data = sanitizeHTML(data);
             datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="click" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
@@ -119,18 +122,24 @@ Table = $("#gtasks_table").DataTable({
             } else {
                 flag = 'muted';
             }
-              data = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
+            data = sanitizeHTML(data);
+            data = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
           }
           return data;
         }
       },
       {
-        "data": "user_name"
+        "data": "user_name",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
       },
       {
         "data": "task_last_update",
         "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
+              data = sanitizeHTML(data);
               data = data.replace(/GMT/g, "");
           }
           return data;
@@ -142,7 +151,7 @@ Table = $("#gtasks_table").DataTable({
               tags = "";
               de = data.split(',');
               for (tag in de) {
-                tags += '<span class="badge badge-primary ml-2">' + de[tag] + '</span>';
+                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
               }
               return tags;
           }
@@ -160,6 +169,7 @@ Table = $("#gtasks_table").DataTable({
         } else {
             flag = 'muted';
         }
+        data = sanitizeHTML(data);
         nRow = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
     },
     filter: true,

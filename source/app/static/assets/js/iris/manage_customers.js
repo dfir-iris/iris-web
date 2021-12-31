@@ -37,7 +37,7 @@ function add_customer() {
                     }
                 },
                 error: function (error) {
-                    notify_error(error.responseJSON.message);
+                    propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
@@ -65,6 +65,7 @@ $('#customers_table').dataTable({
         "columnDefs": [
             {
                 "render": function (data, type, row) {
+                    data = sanitizeHTML(data);
                     return '<a href="#" onclick="customer_detail(\'' + row[1] + '\');">' + data + '</a>';
                 },
                 "targets": 0

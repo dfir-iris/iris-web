@@ -381,6 +381,15 @@ function getMD5(blob, cbProgress) {
   });
 }
 
+var sanitizeHTML = function (str) {
+    if (typeof str === 'string') {
+        return str.replace(/[^\w. ]/gi, function (c) {
+            return '&#' + c.charCodeAt(0) + ';';
+        });
+    } else {
+        return str;
+    }
+};
 
 function isWhiteSpace(s) {
   return /^\s+$/.test(s);

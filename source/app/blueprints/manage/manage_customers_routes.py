@@ -29,6 +29,7 @@ from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException, 
 from app.forms import AddCustomerForm
 from app.iris_engine.utils.tracker import track_activity
 from app.util import response_success, response_error, login_required, admin_required, api_admin_required
+from app.schema.marshables import CustomerSchema
 
 manage_customers_blueprint = Blueprint(
     'manage_customers',
@@ -87,9 +88,9 @@ def view_customers(cur_id, caseid):
     except ValidationError as e:
         return response_error(str(e))
     except Exception:
-        return response_error('An error occured during Customer update ...')
+        return response_error('An error occurred during Customer update ...')
 
-    return response_success("Asset type updated")
+    return response_success("Customer updated")
 
 
 @manage_customers_blueprint.route('/manage/customers/add/modal', methods=['GET'])
@@ -111,13 +112,15 @@ def add_customers(caseid):
     try:
         client = create_client(request.json.get('customer_name'))
     except ValidationError as e:
-        return response_error(str(e))
+        return response_error(msg='Error adding customer', data=e.messages, status=400)
     except Exception:
-        return response_error('An error occured during Customer update ...')
+        return response_error('An error occurred during customer addition')
 
     track_activity(f"Added customer {client.name}", caseid=caseid, ctx_less=True)
+
     # Return the customer
-    return response_success("Added successfully")
+    client_schema = CustomerSchema()
+    return response_success("Added successfully", data=client_schema.dump(client))
 
 
 @manage_customers_blueprint.route('/manage/customers/delete/<int:cur_id>', methods=['GET'])
