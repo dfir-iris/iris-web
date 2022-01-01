@@ -39,7 +39,7 @@ misp_http_proxy = config.get('MISP', 'MISP_PROXY_HTTP')
 misp_https_proxy = config.get('MISP', 'MISP_PROXY_HTTPS')
 
 PG_ACCOUNT_ = os.environ.get('DB_USER', config.get('POSTGRES', 'PG_ACCOUNT'))
-PG_PASSWD_ = os.environ.get('DB_PASS', config.get('POSTGRES', 'PG_ACCOUNT'))
+PG_PASSWD_ = os.environ.get('DB_PASS', config.get('POSTGRES', 'PG_PASSWD'))
 PGA_ACCOUNT_ = os.environ.get('POSTGRES_USER', config.get('POSTGRES', 'PGA_ACCOUNT'))
 PGA_PASSWD_ = os.environ.get('POSTGRES_PASSWORD', config.get('POSTGRES', 'PGA_PASSWD'))
 PG_SERVER_ = os.environ.get('DB_HOST', config.get('POSTGRES', 'PG_SERVER'))
