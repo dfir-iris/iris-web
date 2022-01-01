@@ -88,7 +88,7 @@ def case_list_assets(caseid):
         asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
                         asset['asset_name'], asset['asset_type_id'], caseid, customer_id)]
 
-        ret['assets'] .append(asset)
+        ret['assets'].append(asset)
 
     ret['state'] = get_assets_state(caseid=caseid)
 

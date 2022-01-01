@@ -31,13 +31,13 @@ api_blueprint = Blueprint(
 
 
 # CONTENT ------------------------------------------------
-@api_blueprint.route('/api/ping')
+@api_blueprint.route('/api/ping', methods=['GET'])
 @api_login_required
 def api_ping(caseid):
     return response_success("pong")
 
 
-@api_blueprint.route('/api/versions')
+@api_blueprint.route('/api/versions', methods=['GET'])
 @api_login_required
 def api_version(caseid):
     versions = {

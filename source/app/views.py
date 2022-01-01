@@ -48,6 +48,7 @@ from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.activities.activities_routes import activities_blueprint
 
 from app.blueprints.api.api_routes import api_blueprint
+from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
 
 from app.models.models import User
 
@@ -65,6 +66,7 @@ app.register_blueprint(manage_users_blueprint)
 app.register_blueprint(manage_templates_blueprint)
 app.register_blueprint(manage_modules_blueprint)
 app.register_blueprint(manage_customers_blueprint)
+app.register_blueprint(manage_anastatus_blueprint)
 
 app.register_blueprint(tasks_blueprint)
 app.register_blueprint(ctx_blueprint)
