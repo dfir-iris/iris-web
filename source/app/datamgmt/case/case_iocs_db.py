@@ -183,3 +183,10 @@ def add_ioc_link(ioc_id, caseid):
 
 def get_tlps():
     return [(tlp.tlp_id, tlp.tlp_name) for tlp in Tlp.query.all()]
+
+
+def get_tlps_dict():
+    tlpDict = {}
+    for tlp in Tlp.query.all():
+        tlpDict[tlp.tlp_name]=tlp.tlp_id 
+    return tlpDict

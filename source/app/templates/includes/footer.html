@@ -101,5 +101,43 @@
       </div><!-- /.modal-dialog -->
     </div>
 
+    <div class="modal fade " tabindex="-1" role="dialog" id="modal_upload_ioc" data-backdrop="true">
+      <div class="modal-lg modal-dialog" role="document">
+        <form method="post" action="" id="form_upload_ioc">
+
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5>Upload IOC list (CSV format)</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                  aria-hidden="true">&times;</span></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="rfile_desc" class="placeholder">File description</label>
+                    <p>The expected CSV must be in this format : </p>
+                    <p>&lt;Value&gt;,&lt;Type&gt;,&lt;Description&gt;,&lt;TLP&gt;,Tags separated with &quot;|&quot;</p>
+                    <p>Example : </p>
+                    <pre>
+                      <code>
+1.1.1.1,IP,This is a description,green,DontWorryThisIsAnExample|Cloudfare|DNS
+8.8.8.8,IP,This is a description,green,DontWorryThisIsAnExample|Google|DNS
+9.9.9.9,IP,This is a description,green,DontWorryThisIsAnExample|Quad9|DNS
+                    </code>
+                    </pre>
+                </div>
+                  <div class="form-group">
+                      <input id="input_upload_ioc" type="file" accept="text/csv">
+                  </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-success" onclick="upload_ioc();">Upload</button>
+            </div>
+          </div><!-- /.modal-content -->
+        </form>
+      </div><!-- /.modal-dialog -->
+    </div>
+
 
 {% endif %}

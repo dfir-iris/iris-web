@@ -29,7 +29,7 @@ from app.configuration import misp_url
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add_ioc, add_ioc_link, \
-    get_tlps, get_ioc, delete_ioc
+    get_tlps, get_tlps_dict, get_ioc, delete_ioc
 from app.datamgmt.states import get_ioc_state, update_ioc_state
 from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
 from app.iris_engine.utils.tracker import track_activity
@@ -69,6 +69,7 @@ def case_list_ioc(caseid):
     ret['ioc'] = []
     for ioc in iocs:
         out = ioc._asdict()
+
         # Get links of the IoCs seen in other cases
         ial = get_ioc_links(ioc.ioc_id, caseid)
 
@@ -115,13 +116,62 @@ def case_add_ioc(caseid):
             return response_error("IOC already exists and linked to this case")
 
         if ioc:
-            track_activity("added ioc {}".format(ioc.ioc_value), caseid=caseid)
+            track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
 
             msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
 
             return response_success(msg=msg, data=add_ioc_schema.dump(ioc))
 
         return response_error("Unable to create IOC for internal reasons")
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+@case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])
+@api_login_required
+def case_upload_ioc(caseid):
+
+    try:
+        # validate before saving
+        add_ioc_schema = IocSchema()
+        jsdata = request.get_json()
+
+        # get IOC list from request
+        csv_data=jsdata["CSVData"].split("\n")
+        ioc_list = []
+        tlp_Dict  = get_tlps_dict()
+        for csv_line in csv_data:
+            line = csv_line.split(",")
+            if len(line) >= 3:
+                ioc_list.append({"ioc_value": line[0], 
+                                "ioc_type": line[1], 
+                                "ioc_description": line[2],
+                                "ioc_tags": "",
+                                "ioc_tlp_id": tlp_Dict[line[3]]})
+
+        for ioc_element in ioc_list:
+
+            ioc = add_ioc_schema.load(ioc_element)
+
+            if ioc.ioc_type not in choices_ioc_types:
+                return response_error("Not a valid IOC type")
+
+            ioc, existed = add_ioc(ioc=ioc,
+                                user_id=current_user.id,
+                                caseid=caseid
+                                )
+            link_existed = add_ioc_link(ioc.ioc_id, caseid)
+
+            if link_existed:
+                return response_error("IOC already exists and linked to this case")
+
+            if ioc:
+                track_activity("added ioc {}".format(ioc.ioc_value), caseid=caseid)
+                msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
+            else:
+                return response_error("Unable to create IOC for internal reasons")
+
+        return response_success(msg=msg, data="")
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
