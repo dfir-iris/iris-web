@@ -47,6 +47,8 @@ from app.blueprints.context.context import ctx_blueprint
 from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.activities.activities_routes import activities_blueprint
 
+from app.blueprints.api.api_routes import api_blueprint
+
 from app.models.models import User
 
 from app.post_init import run_post_init
@@ -69,6 +71,8 @@ app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
 app.register_blueprint(reports_blueprint)
 app.register_blueprint(activities_blueprint)
+
+app.register_blueprint(api_blueprint)
 
 run_post_init(development=app.config["DEVELOPMENT"])
 
