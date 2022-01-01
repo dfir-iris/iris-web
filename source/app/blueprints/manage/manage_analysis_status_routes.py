@@ -18,19 +18,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
+from app.util import response_success
 
-from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AssetsType
-from app.forms import AddAssetForm
-from app import db
-
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required
-
-from source.app.datamgmt.case.case_assets_db import get_analysis_status_list
-from source.app.util import api_login_required
+from app.models.models import AnalysisStatus
+from app.util import api_login_required
 
 manage_anastatus_blueprint = Blueprint('manage_anastatus',
                                     __name__,
@@ -41,7 +33,13 @@ manage_anastatus_blueprint = Blueprint('manage_anastatus',
 @manage_anastatus_blueprint.route('/manage/analysis-status/list', methods=['GET'])
 @api_login_required
 def list_anastatus(caseid):
-    lstatus = get_analysis_status_list()
-    return response_success("", data=lstatus)
+    lstatus = AnalysisStatus.query.with_entities(
+        AnalysisStatus.id,
+        AnalysisStatus.name
+    ).all()
+
+    data = [row._asdict() for row in lstatus]
+
+    return response_success("", data=data)
 
 # TODO : Add management of analysis status
