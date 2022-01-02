@@ -21,7 +21,7 @@
 from flask import Blueprint
 from app import app
 
-from source.app.util import api_login_required, response_success
+from app.util import api_login_required, response_success
 
 api_blueprint = Blueprint(
     'api',

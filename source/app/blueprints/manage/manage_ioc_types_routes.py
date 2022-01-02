@@ -21,8 +21,8 @@
 from flask import Blueprint
 from app.util import response_success
 
-from source.app.datamgmt.case.case_iocs_db import get_ioc_types_list
-from source.app.util import api_login_required
+from app.datamgmt.case.case_iocs_db import get_ioc_types_list
+from app.util import api_login_required
 
 manage_ioc_type_blueprint = Blueprint('manage_ioc_types',
                                       __name__,
