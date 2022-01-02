@@ -47,6 +47,10 @@ from app.blueprints.context.context import ctx_blueprint
 from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.activities.activities_routes import activities_blueprint
 
+from app.blueprints.api.api_routes import api_blueprint
+from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
+from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
+
 from app.models.models import User
 
 from app.post_init import run_post_init
@@ -63,12 +67,16 @@ app.register_blueprint(manage_users_blueprint)
 app.register_blueprint(manage_templates_blueprint)
 app.register_blueprint(manage_modules_blueprint)
 app.register_blueprint(manage_customers_blueprint)
+app.register_blueprint(manage_anastatus_blueprint)
+app.register_blueprint(manage_ioc_type_blueprint)
 
 app.register_blueprint(tasks_blueprint)
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
 app.register_blueprint(reports_blueprint)
 app.register_blueprint(activities_blueprint)
+
+app.register_blueprint(api_blueprint)
 
 run_post_init(development=app.config["DEVELOPMENT"])
 

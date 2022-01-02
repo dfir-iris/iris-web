@@ -181,6 +181,20 @@ def add_ioc_link(ioc_id, caseid):
         return False
 
 
+def get_ioc_types_list():
+    # TODO: Fetch from DB when management of ioc types is done
+    ioc_types = [
+        {"type_id": 1,"type_name": "IP"},
+        {"type_id": 2, "type_name": "Domain"},
+        {"type_id": 3, "type_name": "Hash"},
+        {"type_id": 4, "type_name": "File"},
+        {"type_id": 5, "type_name": "Path"},
+        {"type_id": 6, "type_name": "Account"},
+        {"type_id": 7, "type_name": "Other"}
+    ]
+    return ioc_types
+
+
 def get_tlps():
     return [(tlp.tlp_id, tlp.tlp_name) for tlp in Tlp.query.all()]
 
