@@ -1,7 +1,7 @@
 """Add IOC type
 
 Revision ID: 6a3b3b627d45
-Revises: 
+Revises:
 Create Date: 2022-01-01 23:40:35.283005
 
 """
@@ -97,9 +97,10 @@ def _table_has_column(table, column):
     engine = engine_from_config(
         config.get_section(config.config_ini_section), prefix='sqlalchemy.')
     insp = reflection.Inspector.from_engine(engine)
+    has_column = False
 
     for col in insp.get_columns(table):
-        if column == col['name']:
-            return True
-
-    return False
+        if column != col['name']:
+            continue
+        has_column = True
+    return has_column
