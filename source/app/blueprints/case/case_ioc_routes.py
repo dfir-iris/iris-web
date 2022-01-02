@@ -29,15 +29,13 @@ from app.configuration import misp_url
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add_ioc, add_ioc_link, \
-    get_tlps, get_ioc, delete_ioc
+    get_tlps, get_ioc, delete_ioc, get_ioc_types_list, check_ioc_type_id
 from app.datamgmt.states import get_ioc_state, update_ioc_state
 from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import Ioc
 from app.schema.marshables import IocSchema
 from app.util import response_success, response_error, login_required, api_login_required
-
-from app.datamgmt.case.case_iocs_db import get_ioc_types_list
 
 case_ioc_blueprint = Blueprint('case_ioc',
                                __name__,
@@ -103,7 +101,7 @@ def case_add_ioc(caseid):
         jsdata = request.get_json()
         ioc = add_ioc_schema.load(jsdata)
 
-        if ioc.ioc_type not in choices_ioc_types:
+        if not check_ioc_type_id(type_id=ioc.ioc_type_id):
             return response_error("Not a valid IOC type")
 
         ioc, existed = add_ioc(ioc=ioc,
@@ -135,7 +133,7 @@ def case_add_ioc_modal(caseid, url_redir):
         return redirect(url_for('case_ioc.case_ioc', cid=caseid))
 
     form = ModalAddCaseIOCForm()
-    form.ioc_type.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
+    form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
     form.ioc_tlp_id.choices = get_tlps()
 
     return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc())
@@ -169,7 +167,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     if not ioc:
         return response_error("Invalid IOC ID for this case")
 
-    form.ioc_type.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
+    form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
     form.ioc_tlp_id.choices = get_tlps()
 
     # Render the IOC

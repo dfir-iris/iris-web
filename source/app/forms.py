@@ -147,7 +147,7 @@ class ModalAddCaseIOCForm(FlaskForm):
     ioc_tags = StringField(u'IOC Tags')
     ioc_value = TextAreaField(u'IOC Value', validators=[DataRequired()])
     ioc_description = TextAreaField(u'IOC Description')
-    ioc_type = SelectField(u'IOC Type', validators=[DataRequired()])
+    ioc_type_id = SelectField(u'IOC Type', validators=[DataRequired()])
     ioc_tlp_id = SelectField(u'IOC TLP', validators=[DataRequired()])
 
 

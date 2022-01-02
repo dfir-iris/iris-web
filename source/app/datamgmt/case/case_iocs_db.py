@@ -197,5 +197,13 @@ def get_ioc_types_list():
     return l_types
 
 
+def check_ioc_type_id(type_id: int):
+    type_id = IocType.query.filter(
+        IocType.type_id == type_id
+    ).first()
+
+    return type_id is not None
+
+
 def get_tlps():
     return [(tlp.tlp_id, tlp.tlp_name) for tlp in Tlp.query.all()]
