@@ -80,10 +80,10 @@ def upgrade():
                         ioc_type_id=domain_id
                     ))
 
-            op.drop_column(
-                table_name='ioc',
-                column_name='ioc_type'
-            )
+        op.drop_column(
+            table_name='ioc',
+            column_name='ioc_type'
+        )
 
     pass
 
