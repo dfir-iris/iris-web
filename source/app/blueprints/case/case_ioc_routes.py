@@ -37,11 +37,11 @@ from app.models.models import Ioc
 from app.schema.marshables import IocSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
+from app.datamgmt.case.case_iocs_db import get_ioc_types_list
+
 case_ioc_blueprint = Blueprint('case_ioc',
                                __name__,
                                template_folder='templates')
-
-choices_ioc_types = ["IP", "Domain", "Hash", "File", "Path", "Account", "Other"]
 
 
 # CONTENT ------------------------------------------------
@@ -64,9 +64,10 @@ def case_ioc(caseid, url_redir):
 @api_login_required
 def case_list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
-    print(iocs)
+
     ret = {}
     ret['ioc'] = []
+
     for ioc in iocs:
         out = ioc._asdict()
         # Get links of the IoCs seen in other cases
@@ -134,7 +135,7 @@ def case_add_ioc_modal(caseid, url_redir):
         return redirect(url_for('case_ioc.case_ioc', cid=caseid))
 
     form = ModalAddCaseIOCForm()
-    form.ioc_type.choices = [(row, row) for row in choices_ioc_types]
+    form.ioc_type.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
     form.ioc_tlp_id.choices = get_tlps()
 
     return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc())
@@ -168,7 +169,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     if not ioc:
         return response_error("Invalid IOC ID for this case")
 
-    form.ioc_type.choices = [(row, row) for row in choices_ioc_types]
+    form.ioc_type.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
     form.ioc_tlp_id.choices = get_tlps()
 
     # Render the IOC
