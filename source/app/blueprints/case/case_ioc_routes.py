@@ -64,7 +64,7 @@ def case_ioc(caseid, url_redir):
 @api_login_required
 def case_list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
-
+    print(iocs)
     ret = {}
     ret['ioc'] = []
     for ioc in iocs:

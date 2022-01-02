@@ -101,15 +101,19 @@ def get_detailed_iocs(caseid):
     detailed_iocs = IocLink.query.with_entities(
         Ioc.ioc_id,
         Ioc.ioc_value,
-        Ioc.ioc_type,
+        IocType.type_name.label('ioc_type'),
         Ioc.ioc_description,
         Ioc.ioc_tags,
         Ioc.ioc_misp,
         Tlp.tlp_name,
         Tlp.tlp_bscolor
     ).filter(
-        IocLink.case_id == caseid
-    ).join(IocLink.ioc, Ioc.tlp).order_by(Ioc.ioc_type).all()
+        and_(IocLink.case_id == caseid,
+             IocLink.ioc_id == Ioc.ioc_id)
+    ).join(IocLink.ioc,
+           Ioc.tlp,
+           Ioc.ioc_type
+    ).order_by(IocType.type_name).all()
 
     return detailed_iocs
 
