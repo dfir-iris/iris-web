@@ -276,28 +276,17 @@ def create_safe_ioctypes():
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="authentihash",
                 type_description="Authenticode executable signature hash", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="bank-account-nr",
-                type_description="Bank account number without any routing number", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="bic",
-                type_description="Bank Identifier Code Number also known as SWIFT-BIC, SWIFT code or ISO 9362 code",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="bin", type_description="Bank Identification Number", type_taxonomy="")
     create_safe(db.session, IocType, type_name="boolean", type_description="Boolean value - to be used in objects",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="bro", type_description="An NIDS rule in the Bro rule-format",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="btc", type_description="Bitcoin Address", type_taxonomy="")
     create_safe(db.session, IocType, type_name="campaign-id", type_description="Associated campaign ID",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="campaign-name", type_description="Associated campaign name",
                 type_taxonomy="")
-    create_safe(db.session, IocType, type_name="cc-number", type_description="Credit-Card Number", type_taxonomy="")
     create_safe(db.session, IocType, type_name="cdhash",
                 type_description="An Apple Code Directory Hash, identifying a code-signed Mach-O executable file",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="chrome-extension-id", type_description="Chrome extension id",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="comment", type_description="Comment or description in a human language",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="community-id",
                 type_description="a community ID flow hashing algorithm to map multiple traffic monitors into common flow id",
@@ -305,17 +294,7 @@ def create_safe_ioctypes():
     create_safe(db.session, IocType, type_name="cookie",
                 type_description="HTTP cookie as often stored on the user web client. This can include authentication cookie or session cookie.",
                 type_taxonomy="")
-    create_safe(db.session, IocType, type_name="cortex", type_description="Cortex analysis result", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="counter",
-                type_description="An integer counter, generally to be used in objects", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="country-of-residence",
-                type_description="The country of residence of a natural person", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="cpe",
-                type_description="Common Platform Enumeration - structured naming scheme for information technology systems, software, and packages.",
-                type_taxonomy="")
     create_safe(db.session, IocType, type_name="dash", type_description="Dash Address", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="date-of-birth",
-                type_description="Date of birth of a natural person (in YYYY-MM-DD format)", type_taxonomy="")
     create_safe(db.session, IocType, type_name="datetime", type_description="Datetime in the ISO 8601 format",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="dkim", type_description="DKIM public key", type_taxonomy="")
@@ -354,9 +333,6 @@ def create_safe_ioctypes():
     create_safe(db.session, IocType, type_name="email-thread-index", type_description="The email thread index header",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="email-x-mailer", type_description="Email x-mailer header",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="eppn",
-                type_description="eduPersonPrincipalName - eppn - the NetId of the person for the purposes of inter-institutional authentication. Should be stored in the form of user@univ.edu, where univ.edu is the name of the local security domain.",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="favicon-mmh3",
                 type_description="favicon-mmh3 is the murmur3 hash of a favicon as used in Shodan.", type_taxonomy="")
@@ -406,12 +382,7 @@ def create_safe_ioctypes():
     create_safe(db.session, IocType, type_name="first-name", type_description="First name of a natural person",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="float", type_description="A floating point value.", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="frequent-flyer-number",
-                type_description="The frequent flyer number of a passenger", type_taxonomy="")
     create_safe(db.session, IocType, type_name="full-name", type_description="Full name of a natural person",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="gender",
-                type_description="The gender of a natural person (Male, Female, Other, Prefer not to say)",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="gene", type_description="GENE - Go Evtx sigNature Engine",
                 type_taxonomy="")
@@ -454,8 +425,6 @@ def create_safe_ioctypes():
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="ip-src|port",
                 type_description="IP source and port number separated by a |", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="issue-date-of-the-visa",
-                type_description="The date on which the visa was issued", type_taxonomy="")
     create_safe(db.session, IocType, type_name="ja3-fingerprint-md5",
                 type_description="JA3 is a method for creating SSL/TLS client fingerprints that should be easy to produce on any platform and can be easily shared for threat intelligence.",
                 type_taxonomy="")
@@ -464,8 +433,6 @@ def create_safe_ioctypes():
                 type_description="JARM is a method for creating SSL/TLS server fingerprints.", type_taxonomy="")
     create_safe(db.session, IocType, type_name="kusto-query",
                 type_description="Kusto query - Kusto from Microsoft Azure is a service for storing and running interactive analytics over Big Data.",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="last-name", type_description="Last name of a natural person",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="link", type_description="Link to an external information",
                 type_taxonomy="")
@@ -486,27 +453,15 @@ def create_safe_ioctypes():
                 type_description="Mutex, use the format \BaseNamedObjects<Mutex>", type_taxonomy="")
     create_safe(db.session, IocType, type_name="named pipe",
                 type_description="Named pipe, use the format .\pipe<PipeName>", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="nationality", type_description="The nationality of a natural person",
-                type_taxonomy="")
     create_safe(db.session, IocType, type_name="other", type_description="Other attribute", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="passenger-name-record-locator-number",
-                type_description="The Passenger Name Record Locator is a key under which the reservation for a trip is stored in the system. The PNR contains, among other data, the name, flight segments and address of the passenger. It is defined by a combination of five or six letters and numbers.",
-                type_taxonomy="")
     create_safe(db.session, IocType, type_name="file-path",
                 type_description="Path of file", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="passport-country",
-                type_description="The country in which the passport was issued", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="passport-expiration",
-                type_description="The expiration date of a passport", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="passport-number",
-                type_description="The passport number of a natural person", type_taxonomy="")
     create_safe(db.session, IocType, type_name="pattern-in-file",
                 type_description="Pattern in file that identifies the malware", type_taxonomy="")
     create_safe(db.session, IocType, type_name="pattern-in-memory",
                 type_description="Pattern in memory dump that identifies the malware", type_taxonomy="")
     create_safe(db.session, IocType, type_name="pattern-in-traffic",
                 type_description="Pattern in network traffic that identifies the malware", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="payment-details", type_description="Payment details", type_taxonomy="")
     create_safe(db.session, IocType, type_name="pdb",
                 type_description="Microsoft Program database (PDB) path information", type_taxonomy="")
     create_safe(db.session, IocType, type_name="pehash",
@@ -516,22 +471,9 @@ def create_safe_ioctypes():
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="pgp-public-key", type_description="A PGP public key", type_taxonomy="")
     create_safe(db.session, IocType, type_name="phone-number", type_description="Telephone Number", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="place-of-birth", type_description="Place of birth of a natural person",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="place-port-of-clearance", type_description="The port of clearance",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="place-port-of-onward-foreign-destination",
-                type_description="A Port where the passenger is transiting to", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="place-port-of-original-embarkation",
-                type_description="The original port of embarkation", type_taxonomy="")
     create_safe(db.session, IocType, type_name="port", type_description="Port number", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="primary-residence",
-                type_description="The primary residence of a natural person", type_taxonomy="")
     create_safe(db.session, IocType, type_name="process-state", type_description="State of a process", type_taxonomy="")
     create_safe(db.session, IocType, type_name="prtn", type_description="Premium-Rate Telephone Number",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="redress-number",
-                type_description="The Redress Control Number is the record identifier for people who apply for redress through the DHS Travel Redress Inquiry Program (DHS TRIP). DHS TRIP is for travelers who have been repeatedly identified for additional screening and who want to file an inquiry to have erroneous information corrected in DHS systems",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="regkey", type_description="Registry key or value", type_taxonomy="")
     create_safe(db.session, IocType, type_name="regkey|value", type_description="Registry value + data separated by |",
@@ -562,9 +504,6 @@ def create_safe_ioctypes():
     create_safe(db.session, IocType, type_name="size-in-bytes", type_description="Size expressed in bytes",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="snort", type_description="An IDS rule in Snort rule-format",
-                type_taxonomy="")
-    create_safe(db.session, IocType, type_name="special-service-request",
-                type_description="A Special Service Request is a function to an airline to provide a particular facility for A Passenger or passengers.",
                 type_taxonomy="")
     create_safe(db.session, IocType, type_name="ssdeep", type_description="A checksum in ssdeep format",
                 type_taxonomy="")
@@ -598,7 +537,6 @@ def create_safe_ioctypes():
     create_safe(db.session, IocType, type_name="user-agent",
                 type_description="The user-agent used by the malware in the HTTP request.", type_taxonomy="")
     create_safe(db.session, IocType, type_name="vhash", type_description="A VirusTotal checksum", type_taxonomy="")
-    create_safe(db.session, IocType, type_name="visa-number", type_description="Visa number", type_taxonomy="")
     create_safe(db.session, IocType, type_name="vulnerability",
                 type_description="A reference to the vulnerability used in the exploit", type_taxonomy="")
     create_safe(db.session, IocType, type_name="weakness",
