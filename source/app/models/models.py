@@ -385,8 +385,8 @@ class Ioc(db.Model):
 
     ioc_id = Column(Integer, primary_key=True)
     ioc_value = Column(Text)
-    ioc_type = Column(String(255))
-    ioc_description = Column(String(512))
+    ioc_type_id = Column(ForeignKey('ioc_type.type_id'))
+    ioc_description = Column(Text)
     ioc_tags = Column(String(512))
     user_id = Column(ForeignKey('user.id'))
     ioc_misp = Column(Text)
@@ -394,6 +394,16 @@ class Ioc(db.Model):
 
     user = relationship('User')
     tlp = relationship('Tlp')
+    ioc_type = relationship('IocType')
+
+
+class IocType(db.Model):
+    __tablename__ = 'ioc_type'
+
+    type_id = Column(Integer, primary_key=True)
+    type_name = Column(Text)
+    type_description = Column(Text)
+    type_taxonomy = Column(Text)
 
 
 class IocLink(db.Model):
