@@ -302,6 +302,23 @@ function upload_ioc() {
     return false;
 }
 
+function generate_sample_csv(){
+    csv_data = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp\n"
+    csv_data += "1.1.1.1,IP,Cloudfare DNS IP address,Cloudfare|DNS,green\n"
+    csv_data += "wannacry.exe,File,Wannacry sample found,Wannacry|Malware|PE,amber"
+    download_file("sample.csv", "text/csv", csv_data);
+}
+
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
 var last_state = null;
 var need_check = true;
 function update_last_resfresh() {

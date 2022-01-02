@@ -114,24 +114,24 @@
 
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="rfile_desc" class="placeholder">File description</label>
-                    <p>The expected CSV must be in this format : </p>
-                    <p>&lt;Value&gt;,&lt;Type&gt;,&lt;Description&gt;,&lt;TLP&gt;,Tags separated with &quot;|&quot;</p>
-                    <p>Example : </p>
-                    <pre>
-                      <code>
-1.1.1.1,IP,This is a description,green,DontWorryThisIsAnExample|Cloudfare|DNS
-8.8.8.8,IP,This is a description,green,DontWorryThisIsAnExample|Google|DNS
-9.9.9.9,IP,This is a description,green,DontWorryThisIsAnExample|Quad9|DNS
-                    </code>
-                    </pre>
+                    <label for="ioc_format" class="placeholder">Expected CSV File format</label>
+                    <textarea class="form-control col-md-12 col-sm-12 sizable-textarea" rows="2" disabled>ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp
+&lt;Value&gt;,&lt;Type&gt;,&lt;Description&gt;,&lt;TLP&gt;,Tags separated with &quot;|&quot;</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="placeholder">CSV File format example</label>
+                    <textarea class="form-control col-md-12 col-sm-12 sizable-textarea" rows="3" disabled>ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp
+1.1.1.1,IP,Cloudfare DNS IP address,Cloudfare|DNS,green
+wannacry.exe,File,Wannacry sample found,Wannacry|Malware|PE,amber</textarea> 
                 </div>
                   <div class="form-group">
+                      <label class="placeholder">Choose CSV file to import : </label>
                       <input id="input_upload_ioc" type="file" accept="text/csv">
                   </div>
             </div>
 
             <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="generate_sample_csv();">Download sample CSV</button>
               <button type="button" class="btn btn-success" onclick="upload_ioc();">Upload</button>
             </div>
           </div><!-- /.modal-content -->

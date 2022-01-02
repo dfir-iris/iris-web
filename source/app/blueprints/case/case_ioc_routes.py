@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import csv
 import marshmallow
 from flask import Blueprint, request
 from flask import render_template, url_for, redirect
@@ -137,21 +138,26 @@ def case_upload_ioc(caseid):
         jsdata = request.get_json()
 
         # get IOC list from request
-        csv_data=jsdata["CSVData"].split("\n")
-        ioc_list = []
-        tlp_Dict  = get_tlps_dict()
-        for csv_line in csv_data:
-            line = csv_line.split(",")
-            if len(line) >= 3:
-                ioc_list.append({"ioc_value": line[0], 
-                                "ioc_type": line[1], 
-                                "ioc_description": line[2],
-                                "ioc_tags": "",
-                                "ioc_tlp_id": tlp_Dict[line[3]]})
+        csv_lines=jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
+        if csv_lines[0].lower() != "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp":
+            csv_lines.insert(0, "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp")
+        # convert list of strings into CSV
+        csv_data = csv.DictReader(csv_lines)
 
-        for ioc_element in ioc_list:
+        # build a Dict of possible TLP
+        tlp_dict  = get_tlps_dict()
+        ret = []
 
-            ioc = add_ioc_schema.load(ioc_element)
+        for row in csv_data:
+            row["ioc_tags"] = row["ioc_tags"].replace("|", ",") # Reformat Tags
+
+            # Convert TLP into TLP id
+            if row["ioc_tlp"] in tlp_dict:
+                row["ioc_tlp_id"] = tlp_dict[row["ioc_tlp"]]
+            else: row["ioc_tlp_id"] = ""
+            row.pop("ioc_tlp", None)
+
+            ioc = add_ioc_schema.load(row)
 
             if ioc.ioc_type not in choices_ioc_types:
                 return response_error("Not a valid IOC type")
@@ -166,12 +172,13 @@ def case_upload_ioc(caseid):
                 return response_error("IOC already exists and linked to this case")
 
             if ioc:
+                ret.append(row)
                 track_activity("added ioc {}".format(ioc.ioc_value), caseid=caseid)
                 msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
             else:
                 return response_error("Unable to create IOC for internal reasons")
 
-        return response_success(msg=msg, data="")
+        return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
