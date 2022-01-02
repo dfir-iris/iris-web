@@ -36,7 +36,14 @@ Table = $("#ioc_table").DataTable({
           return data;
         }
       },
-      { "data": "ioc_type" },
+      { "data": "ioc_type",
+       "render": function (data, type, row, meta) {
+          if (type === 'display') {
+            data = sanitizeHTML(data);
+          }
+          return data;
+          }
+      },
       { "data": "ioc_description",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
