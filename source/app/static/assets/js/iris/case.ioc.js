@@ -36,7 +36,14 @@ Table = $("#ioc_table").DataTable({
           return data;
         }
       },
-      { "data": "ioc_type" },
+      { "data": "ioc_type",
+       "render": function (data, type, row, meta) {
+          if (type === 'display') {
+            data = sanitizeHTML(data);
+          }
+          return data;
+          }
+      },
       { "data": "ioc_description",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
@@ -306,6 +313,59 @@ function delete_ioc(ioc_id) {
     });
 }
 
+function upload_ioc() {
+
+    var file = $("#input_upload_ioc").get(0).files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        fileData = e.target.result
+        var data = new Object();
+        data['csrf_token'] = $('#csrf_token').val();
+        data['CSVData'] = fileData;
+        $.ajax({
+            url: '/case/ioc/upload' + case_param(),
+            type: "POST",
+            data: JSON.stringify(data),
+            contentType: "application/json;charset=UTF-8",
+            dataType: "json",
+            success: function (data) {
+                jsdata = data;
+                if (jsdata.status == "success") {
+                    reload_iocs();
+                    $('#modal_upload_ioc').modal('hide');
+                    swal("Got news for you", data.message, "success");
+
+                } else {
+                    swal("Got bad news for you", data.message, "error");
+                }
+            },
+            error: function (error) {
+                notify_error(error.responseJSON.message);
+                propagate_form_api_errors(error.responseJSON.data);
+            }
+        });
+    };
+    reader.readAsText(file)
+
+    return false;
+}
+
+function generate_sample_csv(){
+    csv_data = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp\n"
+    csv_data += "1.1.1.1,ip-dst,Cloudflare DNS IP address,Cloudflare|DNS,green\n"
+    csv_data += "wannacry.exe,filename,Wannacry sample found,Wannacry|Malware|PE,amber"
+    download_file("sample.csv", "text/csv", csv_data);
+}
+
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
 
 /* Page is ready, fetch the iocs of the case */
 $(document).ready(function(){

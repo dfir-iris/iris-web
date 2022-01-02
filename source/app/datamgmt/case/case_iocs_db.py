@@ -21,7 +21,7 @@
 from sqlalchemy import and_
 
 from app.datamgmt.states import update_ioc_state
-from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client
+from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType
 from app import db
 
 
@@ -101,15 +101,19 @@ def get_detailed_iocs(caseid):
     detailed_iocs = IocLink.query.with_entities(
         Ioc.ioc_id,
         Ioc.ioc_value,
-        Ioc.ioc_type,
+        IocType.type_name.label('ioc_type'),
         Ioc.ioc_description,
         Ioc.ioc_tags,
         Ioc.ioc_misp,
         Tlp.tlp_name,
         Tlp.tlp_bscolor
     ).filter(
-        IocLink.case_id == caseid
-    ).join(IocLink.ioc, Ioc.tlp).order_by(Ioc.ioc_type).all()
+        and_(IocLink.case_id == caseid,
+             IocLink.ioc_id == Ioc.ioc_id)
+    ).join(IocLink.ioc,
+           Ioc.tlp,
+           Ioc.ioc_type
+    ).order_by(IocType.type_name).all()
 
     return detailed_iocs
 
@@ -127,9 +131,9 @@ def get_ioc_links(ioc_id, caseid):
     return ioc_link
 
 
-def find_ioc(ioc_value, ioc_type):
+def find_ioc(ioc_value, ioc_type_id):
     ioc = Ioc.query.filter(Ioc.ioc_value == ioc_value,
-                           Ioc.ioc_type == ioc_type).first()
+                           Ioc.ioc_type_id == ioc_type_id).first()
 
     return ioc
 
@@ -140,7 +144,7 @@ def add_ioc(ioc, user_id, caseid):
 
     ioc.user_id = user_id
 
-    db_ioc = find_ioc(ioc.ioc_value, ioc.ioc_type)
+    db_ioc = find_ioc(ioc.ioc_value, ioc.ioc_type_id)
 
     if not db_ioc:
 
@@ -182,17 +186,31 @@ def add_ioc_link(ioc_id, caseid):
 
 
 def get_ioc_types_list():
-    # TODO: Fetch from DB when management of ioc types is done
-    ioc_types = [
-        {"type_id": 1,"type_name": "IP"},
-        {"type_id": 2, "type_name": "Domain"},
-        {"type_id": 3, "type_name": "Hash"},
-        {"type_id": 4, "type_name": "File"},
-        {"type_id": 5, "type_name": "Path"},
-        {"type_id": 6, "type_name": "Account"},
-        {"type_id": 7, "type_name": "Other"}
-    ]
-    return ioc_types
+    ioc_types = IocType.query.with_entities(
+        IocType.type_id,
+        IocType.type_name,
+        IocType.type_description,
+        IocType.type_taxonomy,
+    ).all()
+
+    l_types = [row._asdict() for row in ioc_types]
+    return l_types
+
+
+def check_ioc_type_id(type_id: int):
+    type_id = IocType.query.filter(
+        IocType.type_id == type_id
+    ).first()
+
+    return type_id is not None
+
+
+def get_ioc_type_id(type_name: str):
+    type_id = IocType.query.filter(
+        IocType.type_name == type_name
+    ).first()
+
+    return type_id if type_id else None
 
 
 def get_tlps():

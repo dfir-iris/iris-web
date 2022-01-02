@@ -79,6 +79,7 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
 
 class IocSchema(ma.SQLAlchemyAutoSchema):
     ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1))
+    ioc_type = auto_field('ioc_type', required=False)
 
     class Meta:
         model = Ioc

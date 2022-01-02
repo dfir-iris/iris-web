@@ -21,6 +21,7 @@ Werkzeug==1.0.1
 WTForms==2.2.1
 flask-socketio
 eventlet==0.30.2
+alembic==1.7.5
 
 dependencies/docx_generator-0.6.1-py37-none-any.whl
 dependencies/iris_interface-0.1-py3-none-any.whl

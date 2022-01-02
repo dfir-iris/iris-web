@@ -101,43 +101,7 @@
       </div><!-- /.modal-dialog -->
     </div>
 
-    <div class="modal fade " tabindex="-1" role="dialog" id="modal_upload_ioc" data-backdrop="true">
-      <div class="modal-lg modal-dialog" role="document">
-        <form method="post" action="" id="form_upload_ioc">
 
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5>Upload IOC list (CSV format)</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                  aria-hidden="true">&times;</span></button>
-            </div>
-
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="ioc_format" class="placeholder">Expected CSV File format</label>
-                    <textarea class="form-control col-md-12 col-sm-12 sizable-textarea" rows="2" disabled>ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp
-&lt;Value&gt;,&lt;Type&gt;,&lt;Description&gt;,&lt;TLP&gt;,Tags separated with &quot;|&quot;</textarea>
-                </div>
-                <div class="form-group">
-                    <label class="placeholder">CSV File format example</label>
-                    <textarea class="form-control col-md-12 col-sm-12 sizable-textarea" rows="3" disabled>ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp
-1.1.1.1,IP,Cloudfare DNS IP address,Cloudfare|DNS,green
-wannacry.exe,File,Wannacry sample found,Wannacry|Malware|PE,amber</textarea> 
-                </div>
-                  <div class="form-group">
-                      <label class="placeholder">Choose CSV file to import : </label>
-                      <input id="input_upload_ioc" type="file" accept="text/csv">
-                  </div>
-            </div>
-
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" onclick="generate_sample_csv();">Download sample CSV</button>
-              <button type="button" class="btn btn-success" onclick="upload_ioc();">Upload</button>
-            </div>
-          </div><!-- /.modal-content -->
-        </form>
-      </div><!-- /.modal-dialog -->
-    </div>
 
 
 {% endif %}

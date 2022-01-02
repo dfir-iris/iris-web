@@ -13,7 +13,7 @@
                     <div class="col">
                         <label for="ioc_type" class="mr-4">Type
                         </label>
-                        {{ form.ioc_type(class="selectpicker pl--6") }}
+                        {{ form.ioc_type_id(class="selectpicker pl--6") }}
                     </div>
                     <div class="col">
                         <label for="ioc_type" class="mr-4">TLP
@@ -59,10 +59,11 @@
         suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
     });
 
-    $('#ioc_type').selectpicker({
+    $('#ioc_type_id').selectpicker({
         liveSearch: true,
         title: "None",
         style: "Bootstrap 4: 'btn-outline-primary'",
+        size: 10
     });
 
     $('#ioc_tlp_id').selectpicker({
@@ -72,7 +73,7 @@
     });
 
     {% if ioc.ioc_id %}
-        $('#ioc_type').selectpicker('val', '{{ioc.ioc_type}}');
+        $('#ioc_type_id').selectpicker('val', '{{ioc.ioc_type_id}}');
         $('#ioc_tlp_id').selectpicker('val', '{{ioc.ioc_tlp_id}}');
     {% else %}
         $('#ioc_tlp_id').selectpicker('val', '2');
