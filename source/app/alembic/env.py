@@ -76,8 +76,8 @@ def run_migrations_online():
             connection=connection, target_metadata=target_metadata
         )
 
-        with context.begin_transaction():
-            context.run_migrations()
+        #with context.begin_transaction(): -- Fixes stuck transaction. Need more info on that
+        context.run_migrations()
 
 
 if context.is_offline_mode():

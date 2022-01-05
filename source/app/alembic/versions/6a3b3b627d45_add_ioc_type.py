@@ -19,20 +19,8 @@ depends_on = None
 
 
 def upgrade():
-    # Create the new IOC type if not existing
-
-    conn = op.get_bind()
-    inspector = Inspector.from_engine(conn)
-    tables = inspector.get_table_names()
-    if 'ioc_type' not in tables:
-        op.create_table(
-            'ioc_type',
-            sa.Column('type_id', sa.Integer, primary_key=True),
-            sa.Column('type_name', sa.Text, nullable=False),
-            sa.Column('type_taxonomy', sa.Text),
-            sa.Column('type_description', sa.Text)
-        )
-
+    # IOC types is created by post init if not existing
+    # Now issue changes on existing tables and migrate IOC types
     # Add column ioc_type_id to IOC if not existing
     if not _table_has_column('ioc', 'ioc_type_id'):
         op.add_column('ioc',
