@@ -221,7 +221,8 @@ function report_detail(report_id) {
                     }
                 },
                 error: function (error) {
-                    swal("Oh no !", error.statusText, "error")
+                    notify_error(error.responseJSON.message);
+                    propagate_form_api_errors(data.data);
                 }
             });
 
@@ -265,7 +266,8 @@ function delete_report(id) {
                   }
               },
               error: function (error) {
-                  swal ( "Oh no !" ,  error ,  "error" );                
+                notify_error(error.responseJSON.message);
+                propagate_form_api_errors(data.data);
               }
           });
       } else {

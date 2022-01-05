@@ -155,28 +155,22 @@ def download_template(report_id, caseid):
         return response_error("Unable to download file")
 
 
-@manage_templates_blueprint.route('/manage/templates/delete/<report_id>', methods=['POST'])
+@manage_templates_blueprint.route('/manage/templates/delete/<report_id>', methods=['GET'])
 @api_admin_required
 def delete_template(report_id, caseid):
-    form = FlaskForm()
     error = ""
 
-    if form.is_submitted():
+    report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
 
-        if report_id != 0:
-            report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
+    try:
 
-            try:
+        os.unlink(os.path.join(app.config['TEMPLATES_PATH'], report_template.internal_reference))
 
-                os.unlink(os.path.join(app.config['TEMPLATES_PATH'], report_template.internal_reference))
+    except Exception as e:
+        return response_error(f"Unable to delete {e}")
 
-            except Exception as e:
-                error = str(e)
+    CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).delete()
 
-            CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).delete()
+    db.session.commit()
 
-            db.session.commit()
-
-            return response_success("Deleted successfully", data=error)
-
-    return response_error("Unable to delete")
+    return response_success("Deleted successfully", data=error)
