@@ -22,6 +22,7 @@
 import marshmallow
 from flask import Blueprint, request, redirect, url_for
 from flask import render_template
+from flask_wtf import FlaskForm
 
 from app import db
 from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user
@@ -43,7 +44,9 @@ def manage_users_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.manage_users', cid=caseid))
 
-    return render_template("manage_users.html")
+    form = FlaskForm()
+
+    return render_template("manage_users.html", form=form)
 
 
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])

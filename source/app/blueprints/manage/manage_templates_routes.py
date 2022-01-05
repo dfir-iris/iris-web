@@ -118,7 +118,13 @@ def add_template(caseid):
         if file and allowed_file(file.filename):
             filename = get_random_string(18)
 
-            file.save(os.path.join(app.config['TEMPLATES_PATH'], filename))
+            try:
+
+                file.save(os.path.join(app.config['TEMPLATES_PATH'], filename))
+
+            except Exception as e:
+                return response_error(f"Unable to add template {e}")
+
             report_template.internal_reference = filename
 
             db.session.add(report_template)

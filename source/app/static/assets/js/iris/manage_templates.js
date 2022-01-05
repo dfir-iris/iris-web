@@ -249,7 +249,7 @@ function delete_report(id) {
       if (willDelete) {
           $.ajax({
               url: '/manage/templates/delete/' + id + case_param(),
-              type: "POST",
+              type: "GET",
               dataType: 'JSON',
               success: function (data) {
                   if (data.status == 'success') {
