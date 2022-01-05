@@ -212,6 +212,7 @@ function case_param() {
 
 $('#form_add_tasklog').submit(function () {
     event.preventDefault();
+    event.stopImmediatePropagation();
     var data = $('form#form_add_tasklog').serializeObject();
     data['csrf_token'] = $('#csrf_token').val();
     $.ajax({
