@@ -25,6 +25,7 @@ import marshmallow
 from flask import Blueprint
 from flask import render_template, url_for, redirect, request
 from flask_login import current_user
+from flask_wtf import FlaskForm
 from sqlalchemy import and_
 
 from app import db
@@ -54,8 +55,9 @@ def case_timeline(caseid, url_redir):
         return redirect(url_for('case_timeline.case_timeline', cid=caseid))
 
     case = Cases.query.filter(Cases.case_id == caseid).first()
+    form = FlaskForm()
 
-    return render_template("case_timeline.html", case=case)
+    return render_template("case_timeline.html", case=case, form=form)
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize', methods=['GET'])

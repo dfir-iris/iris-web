@@ -23,6 +23,7 @@ from datetime import datetime
 
 from flask import Blueprint
 from flask import render_template, url_for, redirect
+from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_events_db import get_case_events_graph
@@ -41,8 +42,9 @@ def case_graph(caseid, url_redir):
         return redirect(url_for('case_graph.case_graph', cid=caseid))
 
     case = get_case(caseid)
+    form = FlaskForm()
 
-    return render_template("case_graph.html", case=case)
+    return render_template("case_graph.html", case=case, form=form)
 
 
 @case_graph_blueprint.route('/case/graph/getdata', methods=['GET'])
