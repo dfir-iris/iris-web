@@ -1,5 +1,6 @@
 {% extends "layouts/default_ext.html" %} {% block title %} Case Assets {% endblock title %} {% block stylesheets %}
 <link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+<link rel="stylesheet" href="/static/assets/css/suggestags.css">
 <link rel="stylesheet" href="/static/assets/css/select2.css">
 <link href="/static/assets/css/dataTables.buttons.min.css" rel="stylesheet"> {% endblock stylesheets %}
 {% block content %}
@@ -47,22 +48,24 @@
                                 <thead>
                                   <tr>
                                       <th>Name</th>
-                                      <th>Compromised</th>
-                                      <th>Description</th>
-                                      <th>IOC</th>
-                                      <th>IP</th>
                                       <th>Type</th>
+                                      <th>Description</th>
+                                      <th>IP</th>
+                                      <th>Compromised</th>
+                                      <th>IOC</th>
+                                      <th>Tags</th>
                                       <th>Analysis</th>
                                   </tr>
                                 </thead>
                                 <tfoot>
                                   <tr>
                                       <th>Name</th>
-                                      <th>Compromised</th>
-                                      <th>Description</th>
-                                      <th>IOC</th>
-                                      <th>IP</th>
                                       <th>Type</th>
+                                      <th>Description</th>
+                                      <th>IP</th>
+                                      <th>Compromised</th>
+                                      <th>IOC</th>
+                                      <th>Tags</th>
                                       <th>Analysis</th>
                                   </tr>
                                 </tfoot>
@@ -92,6 +95,7 @@
 {% block javascripts %}
 
 <script src="/static/assets/js/core/jquery.validate.js"></script>
+<script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
 <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
 <script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>

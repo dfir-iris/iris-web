@@ -65,6 +65,12 @@
                         {{ form.analysis_status_id(class="selectpicker pl--6  col-md-12") }}
                     </div>
                 </div>
+                <div class="form-group mt-3">
+                    <label for="asset_tags">Asset tags
+                    </label>
+                    <input type="text" id="asset_tags"
+                        class="form-control col-md-12" {% if asset.asset_tags %} value="{{ asset.asset_tags }}" {% endif %}/>
+                </div>
                 <div class="form-group" data-select2-id="7">
                     <label>Linked IOC</label>
                     <div class="select2-input ml-12" data-select2-id="6">
@@ -84,6 +90,10 @@
 </div>
     <script>
     $('form#form_new_case').validate();
+    $('#asset_tags').amsifySuggestags({
+        printValues: false,
+        suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
+    });
     $('#asset_type_id').selectpicker({
         liveSearch: true,
         title: "None",

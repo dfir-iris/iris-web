@@ -97,6 +97,7 @@ class AssetBasicForm(FlaskForm):
     asset_compromised = BooleanField(u'Is Compromised')
     asset_type_id = SelectField(u'Asset Type', validators=[DataRequired()])
     analysis_status_id = SelectField(u'Analysis Status', validators=[DataRequired()])
+    asset_tags = StringField(u'Asset Tags')
 
 
 class AssetComputerForm(AssetBasicForm):

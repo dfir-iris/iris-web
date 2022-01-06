@@ -20,6 +20,7 @@ function add_asset() {
             if (typeof data["ioc_links"] == "string") {
                 data["ioc_links"] = [data["ioc_links"]]
             }
+            data['asset_tags'] = $('#asset_tags').val();
 
             $.ajax({
                 url: 'assets/add' + case_param(),
@@ -124,11 +125,12 @@ Table = $("#assets_table").DataTable({
           return data;
         }
       },
-      { "data": "asset_compromised",
-       "render": function(data, type, row) {
-            if (data == true) { ret = '<span class="badge badge-danger">Yes</span>';} else { ret = '<span class="badge badge-success">No</span>'}
-            return ret;
-        }
+      {
+        "data": "asset_type",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
       },
       { "data": "asset_description",
        "render": function (data, type, row, meta) {
@@ -146,6 +148,18 @@ Table = $("#assets_table").DataTable({
           return data;
         }
       },
+      { "data": "asset_ip",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
+      },
+      { "data": "asset_compromised",
+       "render": function(data, type, row) {
+            if (data == true) { ret = '<span class="badge badge-danger">Yes</span>';} else { ret = '<span class="badge badge-success">No</span>'}
+            return ret;
+        }
+      },
       { "data": "ioc",
         "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
@@ -158,18 +172,18 @@ Table = $("#assets_table").DataTable({
           return data;
         }
       },
-      { "data": "asset_ip",
-         "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
+      { "data": "asset_tags",
+        "render": function (data, type, row, meta) {
+          if (type === 'display') {
+              tags = "";
+              de = data.split(',');
+              for (tag in de) {
+                tags += '<span class="badge badge-light ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+              }
+              return tags;
           }
-      },
-      {
-        "data": "asset_type",
-         "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          }
+          return data;
+        }
       },
       {
         "data": "analysis_status",
@@ -300,6 +314,7 @@ function asset_details(asset_id) {
             if (typeof data["ioc_links"] == "string") {
                 data["ioc_links"] = [data["ioc_links"]]
             }
+            data['asset_tags'] = $('#asset_tags').val();
 
             $.ajax({
                 url: 'assets/update/' + asset_id + case_param(),

@@ -50,7 +50,8 @@ def get_assets(caseid):
         CaseAssets.asset_compromised,
         CaseAssets.asset_ip,
         CaseAssets.asset_type_id,
-        AnalysisStatus.name.label('analysis_status')
+        AnalysisStatus.name.label('analysis_status'),
+        CaseAssets.asset_tags
     ).filter(
         CaseAssets.case_id == caseid
     ).join(
@@ -80,7 +81,7 @@ def get_asset(asset_id, caseid):
 
 
 def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_domain,
-                 asset_compromised, asset_type, asset_id, caseid, analysis_status):
+                 asset_compromised, asset_type, asset_id, caseid, analysis_status, asset_tags):
     asset = get_asset(asset_id, caseid)
     asset.asset_name = asset_name
     asset.asset_description = asset_description
@@ -90,6 +91,7 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
     asset.asset_compromised = asset_compromised
     asset.asset_type_id = asset_type
     asset.analysis_status_id = analysis_status
+    asset.asset_tags = asset_tags
 
     update_assets_state(caseid=caseid)
 

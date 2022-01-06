@@ -208,6 +208,7 @@ def asset_view_modal(cur_id, caseid, url_redir):
     form.asset_compromised.data = True if asset.asset_compromised else False
     form.asset_type_id.choices = get_assets_types()
     form.analysis_status_id.choices = get_analysis_status_list()
+    form.asset_tags.render_kw = {'value': asset.asset_tags}
 
     return render_template("modal_add_case_asset.html", form=form, asset=asset, map={}, ioc=case_iocs,
                            ioc_prefill=ioc_prefill)
