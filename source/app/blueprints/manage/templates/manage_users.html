@@ -9,6 +9,7 @@
 {% block content %}
 
 {% if current_user.is_authenticated %}
+{{ form.hidden_tag() }}
 <div class="page-inner">
     <div class="row">
         <div class="col-md-12">

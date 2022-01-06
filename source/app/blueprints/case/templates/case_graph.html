@@ -14,6 +14,7 @@
 
 
         {% if current_user.is_authenticated %}
+        {{ form.hidden_tag() }}
         <div class="page-inner">
             <div class="row">
                 <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
