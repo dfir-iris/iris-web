@@ -27,7 +27,7 @@ function tableFiltering(api) {
                 $(api.column(colIdx).header()).index()
             );
             var title = $(cell).text();
-            $(cell).html('<div  class="form-group mb-4 has-feedback"><input type="text" class="form-control" placeholder="Filter ' + title + '"><i class="fas fa-times-circle form-control-feedback" onclick="removeFilter(this);"></i></div>');
+            $(cell).html('<div  class="form-group has-feedback"><input type="text" class="form-control" placeholder="Filter"><i class="fas fa-times-circle form-control-feedback" onclick="removeFilter(this);"></i></div>');
             // On every keypress in this input
             $(
                 'input',
