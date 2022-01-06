@@ -267,6 +267,7 @@ def event_view(cur_id, caseid):
 
     output = event_schema.dump(event)
     output['event_assets'] = [asset[0] for asset in linked_assets]
+    output['event_category'] = event.category[0].id
 
     return response_success(data=output)
 
