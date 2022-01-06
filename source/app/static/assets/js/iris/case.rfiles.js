@@ -16,7 +16,7 @@ Table = $("#rfiles_table").DataTable({
       {
         "data": "filename",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
             if (isWhiteSpace(data)) {
                 data = '#' + row['id'];
             } else {

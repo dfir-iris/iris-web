@@ -62,7 +62,7 @@ Table = $("#ioc_table").DataTable({
       },
       { "data": "ioc_tags",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
               tags = "";
               de = data.split(',');
               for (tag in de) {
@@ -75,7 +75,7 @@ Table = $("#ioc_table").DataTable({
       },
       { "data": "link",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
               links = "";
               for (link in data) {
                 links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="focus" class="text-primary mr-3" href="#" title="Case info" data-content="' + sanitizeHTML(data[link]['case_name']) +

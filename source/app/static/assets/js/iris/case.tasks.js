@@ -11,7 +11,7 @@ Table = $("#tasks_table").DataTable({
       {
         "data": "task_title",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
 
             if (isWhiteSpace(data)) {
                 data = '#' + row['task_id'];
