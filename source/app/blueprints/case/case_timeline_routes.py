@@ -258,7 +258,17 @@ def event_view(cur_id, caseid):
 
     event_schema = EventSchema()
 
-    return response_success(data=event_schema.dump(event))
+    linked_assets = CaseEventsAssets.query.with_entities(
+        CaseEventsAssets.asset_id
+    ).filter(
+        CaseEventsAssets.event_id == cur_id,
+        CaseEventsAssets.case_id == caseid
+    ).all()
+
+    output = event_schema.dump(event)
+    output['event_assets'] = [asset[0] for asset in linked_assets]
+
+    return response_success(data=output)
 
 
 @case_timeline_blueprint.route('/case/timeline/event/<int:cur_id>/modal', methods=['GET'])
