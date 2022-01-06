@@ -91,6 +91,7 @@ class CaseAssets(db.Model):
     asset_info = Column(Text)
     asset_compromised = Column(Boolean)
     asset_type_id = Column(ForeignKey('assets_type.asset_id'))
+    asset_tags = Column(Text)
     case_id = Column(ForeignKey('cases.case_id'))
     date_added = Column(DateTime)
     date_update = Column(DateTime)
