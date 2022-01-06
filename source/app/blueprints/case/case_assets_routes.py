@@ -171,8 +171,10 @@ def asset_view(cur_id, caseid):
 
     ioc_prefill = [row._asdict() for row in asset_iocs]
 
-    # Build the form
     asset = get_asset(cur_id, caseid)
+    if not asset:
+        return response_error("Invalid asset ID for this case")
+
     asset_schema = CaseAssetsSchema()
     data = asset_schema.dump(asset)
     data['linked_ioc'] = ioc_prefill
