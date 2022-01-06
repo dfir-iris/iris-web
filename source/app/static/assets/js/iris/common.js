@@ -395,3 +395,28 @@ var sanitizeHTML = function (str) {
 function isWhiteSpace(s) {
   return /^\s+$/.test(s);
 }
+
+function exportInnerPng()
+{
+    close_sid_var = document.querySelector(".close-quick-sidebar");
+    close_sid_var.click();
+    div = document.querySelector(".page-inner");
+    html2canvas(div, {
+        useCORS: true,
+        scale: 3,
+        backgroundColor: "#f9fbfd"
+        }).then(canvas => {
+        downloadURI(canvas.toDataURL(), 'iris'+location.pathname.replace('/', '_') + '.png')
+    });
+}
+
+function downloadURI(uri, name) {
+    var link = document.createElement("a");
+
+    link.download = name;
+    link.href = uri;
+    document.body.appendChild(link);
+    console.log(link);
+    link.click();
+    link.remove();
+}
