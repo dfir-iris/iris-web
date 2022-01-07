@@ -27,6 +27,29 @@ def get_user(user_id):
     return user
 
 
+def get_user_details(user_id):
+
+    user = User.query.filter(User.id == user_id).first()
+
+    if not user:
+        return None
+
+    row = {}
+    row['user_id'] = user.id
+    row['user_fullname'] = user.name
+    row['user_surname'] = user.user
+    roles = []
+    for role in user.roles:
+        roles.append({
+            'role_name': role.name,
+            'role_id': role.id
+        })
+
+    row['user_roles'] = roles
+    row['user_active'] = user.active
+
+    return row
+
 def get_user_by_username(username):
     user = User.query.filter(User.user == username).first()
     return user

@@ -23,11 +23,14 @@ import marshmallow
 from flask import Blueprint, request, redirect, url_for
 from flask import render_template
 from flask_wtf import FlaskForm
+from sqlalchemy import and_
 
 from app import db
-from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, get_user_by_username
+from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, \
+    get_user_by_username, get_user_details
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
+from app.models import User, Role, UserRoles
 from app.schema.marshables import UserSchema
 from app.util import admin_required, login_required, response_error, response_success, api_admin_required, \
     api_login_required
@@ -101,15 +104,12 @@ def add_user(caseid):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def view_user(cur_id, caseid):
-    user = get_user(cur_id)
+    user = get_user_details(user_id=cur_id)
+
     if not user:
         return response_error("Invalid user ID")
 
-    user_schema = UserSchema()
-    cuser = user_schema.load({}, instance=user)
-    cuser.user_roles_str = [role.name for role in user.roles]
-
-    return response_success(data=user_schema.dump(cuser))
+    return response_success(data=user)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/modal', methods=['GET'])
