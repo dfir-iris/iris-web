@@ -85,15 +85,15 @@ def search_file_post(caseid: int):
             ).with_entities(
                 Notes.note_id,
                 Notes.note_title,
-                Cases.name,
-                Client.name
+                Cases.name.label('case_name'),
+                Client.name.label('client_name')
             ).join(
                 Notes.case
             ).order_by(
                 Client.name
             ).all()
 
-            ns = [row for row in ns]
+            ns = [row._asdict() for row in ns]
 
         files = ns
 
