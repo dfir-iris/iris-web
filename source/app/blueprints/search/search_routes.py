@@ -28,7 +28,7 @@ from app import db
 from app.forms import SearchForm
 
 from app.models.models import HashLink, FileName, PathName, CasesDatum, FileContentHash, Ioc, IocLink, Client, Tlp, \
-    Notes
+    Notes, IocType
 from app.models.cases import Cases
 
 from app.iris_engine.utils.tracker import track_activity
@@ -57,7 +57,7 @@ def search_file_post(caseid: int):
                             Ioc.ioc_value.label('ioc_name'),
                             Ioc.ioc_description.label('ioc_description'),
                             Ioc.ioc_misp,
-                            Ioc.ioc_type,
+                            IocType.type_name,
                             Tlp.tlp_name,
                             Tlp.tlp_bscolor,
                             Cases.name.label('case_name'),
@@ -70,7 +70,7 @@ def search_file_post(caseid: int):
                             Client.client_id == Cases.client_id,
                             Ioc.ioc_tlp_id == Tlp.tlp_id
                         )
-                    ).all()
+                    ).join(Ioc.ioc_type).all()
 
         files = [row._asdict() for row in res]
 

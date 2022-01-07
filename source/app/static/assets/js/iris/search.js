@@ -42,7 +42,7 @@ Table_1 = $("#file_search_table_1").DataTable({
             return data;
           }
       },
-      { "data": "ioc_type",
+      { "data": "type_name",
         "render": function (data, type, row, meta) {
             if (type === 'display') { data = sanitizeHTML(data);}
             return data;
