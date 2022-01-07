@@ -22,7 +22,7 @@ Table = $("#rfiles_table").DataTable({
             } else {
                 data = sanitizeHTML(data);
             }
-            data = '<a  data-toggle="tooltip" href="#" title="' + data + '" onclick="edit_rfiles(\'' + row['id'] + '\');">' + data +'</a>';
+            data = '<a  data-toggle="tooltip" href="#" title="Evidence ID #' + row['id'] + '" onclick="edit_rfiles(\'' + row['id'] + '\');">' + data +'</a>';
           }
           return data;
         }

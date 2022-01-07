@@ -26,7 +26,7 @@ Table = $("#ioc_table").DataTable({
                 datak = '#' + row['ioc_id'];
             }
 
-            data = '<a href="#"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');">' + datak +'</a>';
+            data = '<a href="#" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');">' + datak +'</a>';
             if (row['ioc_misp'] != null) {
                 jse = JSON.parse(row['ioc_misp']);
                 data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"

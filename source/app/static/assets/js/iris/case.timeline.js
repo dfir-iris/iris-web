@@ -259,7 +259,7 @@ function draw_timeline() {
                         formatted_content = match_replace_ioc(content_parsed, reap);
                     }
 
-                    entry = `<li class="timeline-inverted">
+                    entry = `<li class="timeline-inverted" title="Event ID #`+ evt.event_id + `">
                         ` + tmb_d + `
                             <div class="timeline-panel" `+ style +` id="event_`+ evt.event_id + `" >
                                 <div class="timeline-heading">
