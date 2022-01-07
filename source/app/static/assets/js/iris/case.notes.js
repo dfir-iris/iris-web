@@ -74,6 +74,7 @@ function nextGroupNote(title="", rid=0) {
         title = "Untitled group";
     }
     newElement.attr("id", "group-" + rid);
+    newElement.attr("title", "Group ID #" + rid);
 
     var fa = $(newElement).find('button')[0];
     var fb = $(newElement).find('button')[1];
@@ -108,6 +109,7 @@ function add_subnote(_item, tr=0, title='', last_up, user) {
         newElement.attr("id", element.attr("id").split("_")[0] + "_" + id);
         var field = $(newElement).attr("id");
         $(newElement).attr("id", field.split("_")[0] + "_" + id);
+        $(newElement).attr("title", 'Note #' + id);
         $(newElement).find('iris_note').attr('id', tr);
         $(newElement).find('iris_note').text(title);
         $(newElement).find('a.kanban-title').text(title);
