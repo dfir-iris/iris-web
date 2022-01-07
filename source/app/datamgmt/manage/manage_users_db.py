@@ -27,6 +27,11 @@ def get_user(user_id):
     return user
 
 
+def get_user_by_username(username):
+    user = User.query.filter(User.user == username).first()
+    return user
+
+
 def get_users_list():
     users = User.query.all()
 

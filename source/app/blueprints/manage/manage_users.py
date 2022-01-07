@@ -25,12 +25,12 @@ from flask import render_template
 from flask_wtf import FlaskForm
 
 from app import db
-from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user
+from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, get_user_by_username
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
-from app.util import admin_required, login_required, response_error, response_success, api_admin_required
-
+from app.util import admin_required, login_required, response_error, response_success, api_admin_required, \
+    api_login_required
 
 manage_users_blueprint = Blueprint('manage_users',
                                    __name__,
@@ -180,3 +180,35 @@ def view_delete_user(cur_id, caseid):
         db.session.rollback()
         track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid)
         return response_error("Cannot delete active user")
+
+
+@manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])
+@api_login_required
+def exists_user(cur_id, caseid):
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    output = {
+        "username": user.user,
+        "user_id": user.id,
+        "name": user.name
+    }
+
+    return response_success(data=output)
+
+
+@manage_users_blueprint.route('/manage/users/lookup/username/<string:user_name>', methods=['GET'])
+@api_login_required
+def lookup_name(user_name, caseid):
+    user = get_user_by_username(user_name)
+    if not user:
+        return response_error("Invalid username")
+
+    output = {
+        "username": user.user,
+        "user_id": user.id,
+        "name": user.name
+    }
+
+    return response_success(data=output)
