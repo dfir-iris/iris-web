@@ -190,25 +190,25 @@ def exists_user(cur_id, caseid):
         return response_error("Invalid user ID")
 
     output = {
-        "username": user.user,
+        "user_login": user.user,
         "user_id": user.id,
-        "name": user.name
+        "user_name": user.name
     }
 
     return response_success(data=output)
 
 
-@manage_users_blueprint.route('/manage/users/lookup/username/<string:user_name>', methods=['GET'])
+@manage_users_blueprint.route('/manage/users/lookup/login/<string:login>', methods=['GET'])
 @api_login_required
-def lookup_name(user_name, caseid):
-    user = get_user_by_username(user_name)
+def lookup_name(login, caseid):
+    user = get_user_by_username(login)
     if not user:
-        return response_error("Invalid username")
+        return response_error("Invalid login")
 
     output = {
-        "username": user.user,
+        "user_login": user.user,
         "user_id": user.id,
-        "name": user.name
+        "user_name": user.name
     }
 
     return response_success(data=output)

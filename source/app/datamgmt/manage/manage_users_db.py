@@ -36,8 +36,8 @@ def get_user_details(user_id):
 
     row = {}
     row['user_id'] = user.id
-    row['user_fullname'] = user.name
-    row['user_surname'] = user.user
+    row['user_name'] = user.name
+    row['user_login'] = user.user
     roles = []
     for role in user.roles:
         roles.append({
@@ -49,6 +49,7 @@ def get_user_details(user_id):
     row['user_active'] = user.active
 
     return row
+
 
 def get_user_by_username(username):
     user = User.query.filter(User.user == username).first()
@@ -62,8 +63,8 @@ def get_users_list():
     for user in users:
         row = {}
         row['user_id'] = user.id
-        row['user_fullname'] = user.name
-        row['user_surname'] = user.user
+        row['user_name'] = user.name
+        row['user_login'] = user.user
         roles = []
         for role in user.roles:
             roles.append(role.name)

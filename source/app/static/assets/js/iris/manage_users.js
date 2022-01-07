@@ -69,7 +69,7 @@ $('#users_table').dataTable( {
                 return data;
             }
         },
-        { "data": "user_fullname",
+        { "data": "user_name",
           "render": function ( data, type, row ) {
                 if (type === 'display') {
                     data = sanitizeHTML(data)
@@ -78,7 +78,7 @@ $('#users_table').dataTable( {
                 return data;
             }
         },
-        { "data": "user_surname",
+        { "data": "user_login",
           "render": function (data, type, row, meta) {
             if (type === 'display') { data = sanitizeHTML(data);}
             return data;
