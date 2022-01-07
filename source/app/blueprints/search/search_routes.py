@@ -45,8 +45,9 @@ search_blueprint = Blueprint('search',
 @api_login_required
 def search_file_post(caseid: int):
 
-    search_value = request.form.get('search_value', '', type=str)
-    search_type = request.form.get('search_type', '', type=str)
+    jsdata = request.get_json()
+    search_value = jsdata.get('search_value')
+    search_type = jsdata.get('search_type')
     files = []
 
     track_activity("started a search for {} on {}".format(search_value, search_type))

@@ -8,69 +8,6 @@ $('#search_value').keypress(function(event){
     }
 });
 
-Table = $("#file_search_table").DataTable({
-    dom: 'Bfrtip',
-    aaData: [],
-    aoColumns: [
-      {
-        "data": "content_hash",
-        "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            data = '<a  data-toggle="tooltip" title="' + data + '"href="details/hash=' + data + '">Hash detail</a>';
-          }
-          return data;
-        }
-      },
-      { "data": "filename" },
-      { "data": "path" },
-      { "data": "vt_score" },
-      { "data": "case_name" },
-      { "data": "seen_count" },
-      { "data": "flag" },
-      { "data": "comment" },
-      {
-        "data": "vt_url",
-        "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            data = '<a href="' + data + '">Link</a>';
-          }
-          return data;
-        }
-      }
-    ],
-    createdRow: function (row, data, dataIndex) {
-      if (data[6] > 2) {
-        $(row).addClass('redClass');
-      }
-    },
-    rowCallback: function (nRow, data) {
-      if (data.flag == 1) {
-        $(nRow).removeClass('table-danger').removeClass('table-warning').removeClass('table-success');
-        $(nRow).addClass('table-danger');
-      } else if (data.flag == 2) {
-        $(nRow).removeClass('table-danger').removeClass('table-warning').removeClass('table-success');
-        $(nRow).addClass('table-warning');
-      }
-      else if (data.flag == 3) {
-        $(nRow).removeClass('table-danger').removeClass('table-warning').removeClass('table-success');
-        $(nRow).addClass('table-success');
-      }
-      else {
-        $(nRow).removeClass('table-danger').removeClass('table-warning').removeClass('table-success');
-      }
-    },
-    filter: true,
-    info: true,
-    ordering: true,
-    processing: true,
-    retrieve: true,
-    buttons: [
-    { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    ]
-});
-$("#file_search_table").css("font-size", 12);
-
 
 Table_1 = $("#file_search_table_1").DataTable({
     dom: 'Bfrtip',
@@ -150,10 +87,14 @@ $('#submit_search').click(function () {
 
 
 function search() {
+    var data_sent = $('form#form_search').serializeObject();
+    data_sent['csrf_token'] = $('#csrf_token').val();
+
     $.ajax({
         url: '/search' + case_param(),
         type: "POST",
-        data: $('form#form_search').serialize(),
+        data: JSON.stringify(data_sent),
+        contentType: "application/json;charset=UTF-8",
         dataType: "json",
         beforeSend: function (data) {
             $('#submit_search').text("Searching...");
@@ -165,53 +106,11 @@ function search() {
             jsdata = data;
             if (jsdata.status == "success") {
                   $('#notes_msearch_list').empty();
-                  //Table.destroy();
-                  //Table_1.destroy();
-                  Table.clear();
                   Table_1.clear();
                   $('#search_table_wrapper_1').hide();
                   $('#search_table_wrapper_2').hide();
                 val = $("input[type='radio']:checked").val();
-                if (val == "hashes" || val == "files") {
-                      Table.MakeCellsEditable("destroy");
-
-                      Table.rows.add(JSON.parse(data.data));
-                      Table.columns.adjust().draw();
-                      Table.MakeCellsEditable({
-                        "onUpdate": '',
-                        "inputCss": 'form-control',
-                        "columns": [6, 7],
-                        "allowNulls": {
-                          "columns": [6, 7],
-                          "errorClass": 'error'
-                        },
-                        "confirmationButton": {
-                          "confirmCss": 'my-confirm-class',
-                          "cancelCss": 'my-cancel-class'
-                        },
-                        "inputTypes": [
-                          {
-                            "column": 6,
-                            "type": "text",
-                            "options": null
-                          },
-                          {
-                            "column": 7,
-                            "type": "list",
-                            "options": [
-                              { "value": "1", "display": "Malicious" },
-                              { "value": "2", "display": "Suspicious" },
-                              { "value": "3", "display": "Healthy" },
-                              { "value": "", "display": "Not flagged" }
-                            ]
-                          }
-                        ]
-                      });
-                      $('#search_table_wrapper').show();
-                      Table.buttons().container().appendTo($('#file_search_table_info'));
-
-                }
-                else if (val == "ioc") {
+                if (val == "ioc") {
                     Table_1.rows.add(data.data);
                     Table_1.columns.adjust().draw();
                     $('#search_table_wrapper_1').show();
