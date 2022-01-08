@@ -57,7 +57,7 @@ def list_assets(caseid):
         AssetsType.asset_id
     ).all()
 
-    data = [row for row in assets]
+    data = [row._asdict() for row in assets]
 
     # Return the assets
     return response_success("", data=data)

@@ -53,7 +53,7 @@ def get_ioc_type(cur_id, caseid):
     return response_success("", data=ioc_type)
 
 
-@manage_ioc_type_blueprint.route('/manage/ioc-type/add', methods=['POST'])
+@manage_ioc_type_blueprint.route('/manage/ioc-types/add', methods=['POST'])
 @api_admin_required
 def add_ioc_type_api(caseid):
     if not request.is_json:
@@ -76,7 +76,7 @@ def add_ioc_type_api(caseid):
     return response_success("Added successfully", data=ioct)
 
 
-@manage_ioc_type_blueprint.route('/manage/ioc-type/delete/<int:cur_id>', methods=['GET'])
+@manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def remove_ioc_type(cur_id, caseid):
     if not request.is_json:
@@ -101,7 +101,7 @@ def remove_ioc_type(cur_id, caseid):
     return response_error("Attempted to delete ioc type ID {type_id}, but was not found".format(type_id=cur_id))
 
 
-@manage_ioc_type_blueprint.route('/manage/ioc-type/update/<int:cur_id>', methods=['POST'])
+@manage_ioc_type_blueprint.route('/manage/ioc-types/update/<int:cur_id>', methods=['POST'])
 @api_admin_required
 def update_ioc(cur_id, caseid):
     if not request.is_json:

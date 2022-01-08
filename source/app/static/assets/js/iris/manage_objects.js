@@ -171,7 +171,7 @@ function add_asset_type() {
             var form = $('form#form_new_ioc_type').serializeObject();
 
             $.ajax({
-                url: '/manage/ioc-type/add' + case_param(),
+                url: '/manage/ioc-types/add' + case_param(),
                 type: "POST",
                 data: JSON.stringify(form),
                 dataType: "json",
@@ -208,9 +208,9 @@ function add_asset_type() {
     $('#modal_add_type').modal({ show: true });
 }
 
-$('#ioc_table').dataTable( {
+$('#ioc_table').dataTable({
     "ajax": {
-      "url": "/manage/ioc-type/list" + case_param(),
+      "url": "/manage/ioc-types/list" + case_param(),
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -223,16 +223,29 @@ $('#ioc_table').dataTable( {
     },
     "order": [[ 0, "desc" ]],
     "autoWidth": false,
-    "columnDefs": [
+    "columns": [
         {
+            "data": "type_name",
             "render": function ( data, type, row ) {
-                return '<a href="#" onclick="ioc_type_detail(\'' + row[2] + '\');">' + data +'</a>';
-            },
-            "targets": 0
+                return '<a href="#" onclick="ioc_type_detail(\'' + row['type_id'] + '\');">' + sanitizeHTML(data) +'</a>';
+            }
+        },
+        {
+            "data": "type_description",
+            "render": function ( data, type, row ) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+            }
+        },
+        {
+            "data": "type_taxonomy",
+            "render": function ( data, type, row ) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+            }
         }
-      ]
-    }
-);
+    ]
+ });
 
 function refresh_ioc_table() {
   $('#ioc_table').DataTable().ajax.reload();
@@ -242,7 +255,7 @@ function refresh_ioc_table() {
 
 /* Fetch the details of an asset and allow modification */
 function ioc_type_detail(ioc_id) {
-    url = '/mamage/ioc-type/update/' + ioc_id + '/modal' + case_param();
+    url = '/mamage/ioc-types/update/' + ioc_id + '/modal' + case_param();
     $('#modal_add_type_content').load(url, function () {
 
         $('#submit_new_ioc_type').on("click", function () {
@@ -300,7 +313,7 @@ function delete_ioc_type(id) {
     .then((willDelete) => {
       if (willDelete) {
           $.ajax({
-              url: '/manage/ioc-type/delete/' + id + case_param(),
+              url: '/manage/ioc-types/delete/' + id + case_param(),
               type: "GET",
               dataType: 'JSON',
               success: function (data) {
