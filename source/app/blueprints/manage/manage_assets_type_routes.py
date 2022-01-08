@@ -126,7 +126,7 @@ def add_assets(caseid):
 
     track_activity("Added asset type {asset_name}".format(asset_name=asset.asset_name), caseid=caseid, ctx_less=True)
     # Return the assets
-    return response_success("Added successfully")
+    return response_success("Added successfully", data=asset)
 
 
 @manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])

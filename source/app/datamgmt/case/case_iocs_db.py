@@ -197,6 +197,17 @@ def get_ioc_types_list():
     return l_types
 
 
+def add_ioc_type(name:str, description:str, taxonomy:str):
+    ioct = IocType(type_name=name,
+                   type_description=description,
+                   type_taxonomy=taxonomy
+                )
+
+    db.session.add(ioct)
+    db.session.commit()
+    return ioct
+
+
 def check_ioc_type_id(type_id: int):
     type_id = IocType.query.filter(
         IocType.type_id == type_id
