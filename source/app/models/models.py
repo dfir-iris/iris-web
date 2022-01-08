@@ -21,7 +21,6 @@
 # IMPORTS ------------------------------------------------
 import secrets
 
-
 from app import db, app
 from flask_login import UserMixin
 

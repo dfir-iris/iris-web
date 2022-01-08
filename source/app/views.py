@@ -51,6 +51,7 @@ from app.blueprints.api.api_routes import api_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
 from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
 from app.blueprints.manage.manage_event_categories_routes import manage_event_cat_blueprint
+from app.blueprints.manage.manage_objects_routes import manage_objects_blueprint
 
 from app.models.models import User
 
@@ -71,6 +72,7 @@ app.register_blueprint(manage_customers_blueprint)
 app.register_blueprint(manage_anastatus_blueprint)
 app.register_blueprint(manage_ioc_type_blueprint)
 app.register_blueprint(manage_event_cat_blueprint)
+app.register_blueprint(manage_objects_blueprint)
 
 app.register_blueprint(tasks_blueprint)
 app.register_blueprint(ctx_blueprint)

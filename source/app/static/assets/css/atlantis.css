@@ -15527,3 +15527,14 @@ div.dataTables_processing { z-index: 1; }
 #holder.hover {
   border: 10px dashed #333;
 }
+
+.card-header:not(.collapsed) .rotate-icon {
+  transform: rotate(180deg);
+}
+
+.card-header .accicon {
+  float: right;
+  font-size: 20px;
+  width: 1.2em;
+}
+

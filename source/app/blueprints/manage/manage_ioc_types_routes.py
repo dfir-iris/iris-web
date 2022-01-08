@@ -18,7 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 
 from app import db
 from app.iris_engine.utils.tracker import track_activity
