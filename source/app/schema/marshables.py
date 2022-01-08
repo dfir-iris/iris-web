@@ -133,7 +133,7 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
         if client:
             raise marshmallow.exceptions.ValidationError(
                 "Asset type name already exists",
-                field_name="type_name"
+                field_name="asset_name"
             )
 
         return data

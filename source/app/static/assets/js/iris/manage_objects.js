@@ -3,6 +3,7 @@ function add_asset_type() {
     $('#modal_add_type_content').load(url, function () {
 
         $('#submit_new_assettype').on("click", function () {
+            event.preventDefault();
             var form = $('#form_new_asset_type').serializeObject();
 
             $.ajax({
@@ -88,6 +89,7 @@ function assettype_detail(asset_id) {
     $('#modal_add_type_content').load(url, function () {
 
         $('#submit_new_assettype').on("click", function () {
+            event.preventDefault();
             var form = $('#form_new_asset_type').serializeObject();
 
             $.ajax({
