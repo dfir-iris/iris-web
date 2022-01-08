@@ -36,19 +36,6 @@ manage_assets_blueprint = Blueprint('manage_assets',
                                     template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
-@manage_assets_blueprint.route('/manage/asset-type')
-@admin_required
-def manage_assets(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('manage_assets.manage_assets', cid=caseid))
-
-    form = AddAssetForm()
-
-    # Return default page of case management
-    return render_template('manage_assets.html', form=form)
-
-
 @manage_assets_blueprint.route('/manage/asset-type/list')
 @api_admin_required
 def list_assets(caseid):
