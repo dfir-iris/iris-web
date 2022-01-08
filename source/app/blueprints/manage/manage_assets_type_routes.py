@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import marshmallow
 from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 
@@ -26,6 +27,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.models import AssetsType, CaseAssets
 from app.forms import AddAssetForm
 from app import db
+from app.schema.marshables import AssetSchema
 
 from app.util import response_success, response_error, login_required, admin_required, api_admin_required
 
@@ -90,8 +92,18 @@ def view_assets(cur_id, caseid):
     if not asset:
         return response_error("Invalid asset type ID")
 
-    asset.asset_name = request.json.get('asset_name')
-    asset.asset_description = request.json.get('asset_description')
+    asset_schema = AssetSchema()
+
+    try:
+
+        asset_sc = asset_schema.load(request.get_json(), instance=asset)
+
+        if asset_sc:
+            track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
+            return response_success("Asset type updated", asset_sc)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
 
     db.session.commit()
 

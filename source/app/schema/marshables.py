@@ -29,7 +29,7 @@ from sqlalchemy import func
 
 from app import ma
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile
+    CaseReceivedFile, AssetsType
 
 task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
 
@@ -114,6 +114,15 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
                                                          field_name="event_date")
 
         return self.event_date, event_date_wtz
+
+
+class AssetSchema(ma.SQLAlchemyAutoSchema):
+    asset_name = auto_field('asset_name', required=True, validate=Length(min=2))
+    asset_description = auto_field('asset_description', required=True, validate=Length(min=2))
+
+    class Meta:
+        model = AssetsType
+        load_instance = True
 
 
 class CaseSchema(ma.SQLAlchemyAutoSchema):

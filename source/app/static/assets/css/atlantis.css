@@ -15528,12 +15528,12 @@ div.dataTables_processing { z-index: 1; }
   border: 10px dashed #333;
 }
 
-.card-header:not(.collapsed) .rotate-icon {
-  transform: rotate(180deg);
+.col-heading:not(.collapsed) .rotate-icon {
+  transform: rotate(90deg);
 }
 
-.card-header .accicon {
-  float: right;
+.col-heading .accicon {
+  float: left;
   font-size: 20px;
   width: 1.2em;
 }
