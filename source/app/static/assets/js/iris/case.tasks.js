@@ -18,7 +18,7 @@ Table = $("#tasks_table").DataTable({
             } else {
                 data = sanitizeHTML(data);
             }
-            data = '<a href="#" title="Task ID #'+ row['task_id'] +'"  onclick="edit_task(\'' + row['task_id'] + '\');">' + data +'</a>';
+            data = '<a href="#" data-selector="true" title="Task ID #'+ row['task_id'] +'"  onclick="edit_task(\'' + row['task_id'] + '\');">' + data +'</a>';
           }
           return data;
         }

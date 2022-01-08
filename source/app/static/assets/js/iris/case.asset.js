@@ -91,7 +91,7 @@ Table = $("#assets_table").DataTable({
             if (isWhiteSpace(data)) {
                 datak = '#' + row['asset_id'];
             }
-            ret = '<a href="#" title="Asset ID #'+ row['asset_id'] +'" onclick="asset_details(\'' + row['asset_id'] + '\');">' + datak +'</a>';
+            ret = '<a href="#" data-selector="true" title="Asset ID #'+ row['asset_id'] +'" onclick="asset_details(\'' + row['asset_id'] + '\');">' + datak +'</a>';
 
             if (row.link.length > 0) {
                 var has_compro = false;

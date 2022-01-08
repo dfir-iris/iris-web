@@ -174,7 +174,7 @@ $(".rotate").click(function () {
 
 $(function () {
     $('[data-toggle="popover"]').popover({
-        trigger: 'hover',
+        trigger: 'focus',
         placement: 'auto',
         container: 'body',
         html: true
