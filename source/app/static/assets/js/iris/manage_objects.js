@@ -3,7 +3,6 @@ function add_asset_type() {
     $('#modal_add_type_content').load(url, function () {
 
         $('#submit_new_assettype').on("click", function () {
-            event.preventDefault();
             var form = $('#form_new_asset_type').serializeObject();
 
             $.ajax({
@@ -12,7 +11,6 @@ function add_asset_type() {
                 data: JSON.stringify(form),
                 dataType: "json",
                 contentType: "application/json;charset=UTF-8",
-                cache: false,
                 success: function (data) {
                     console.log(data);
                     if (data.status == 'success') {
@@ -33,7 +31,6 @@ function add_asset_type() {
                     }
                 },
                 error: function (error) {
-                    $('#modal_add_type').text('Save');
                     propagate_form_api_errors(error.responseJSON.data);
                 }
             });
