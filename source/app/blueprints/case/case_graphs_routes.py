@@ -75,10 +75,10 @@ def case_graph_get_data(caseid):
             img = 'server.png'
             is_master_atype = True
 
-        if 'windows' in atype:
+        elif 'windows' in atype:
             img = "windows_{}".format(img)
 
-        if 'account' in atype:
+        elif 'account' in atype:
             img = 'user.png'
 
         elif 'vpn' in atype:
@@ -96,6 +96,9 @@ def case_graph_get_data(caseid):
         elif 'router' in atype:
             img = 'router.png'
             is_master_atype = True
+
+        else:
+            img = 'question-mark.png'
 
         try:
             date = "{}-{}-{}".format(event.event_date.day, event.event_date.month, event.event_date.year)
