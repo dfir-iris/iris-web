@@ -16,7 +16,7 @@ function add_asset_type() {
                     console.log(data);
                     if (data.status == 'success') {
                         swal("Done !",
-                        "Your asset has been created successfully",
+                            data.message,
                             {
                                 icon: "success",
                                 timer: 2000
@@ -33,7 +33,7 @@ function add_asset_type() {
                 },
                 error: function (error) {
                     $('#modal_add_type').text('Save');
-                    notify_error(error.responseJSON.message);
+                    propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
@@ -99,7 +99,7 @@ function assettype_detail(asset_id) {
                 success: function (data) {
                     if (data.status == 'success') {
                         swal("You're set !",
-                            "The asset has been updated successfully",
+                            data.message,
                             {
                                 icon: "success",
                                 timer: 1500
@@ -116,6 +116,7 @@ function assettype_detail(asset_id) {
                 },
                 error: function (error) {
                     notify_error(error.responseJSON.message);
+                    propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
@@ -147,7 +148,7 @@ function delete_asset_type(id) {
               dataType: 'JSON',
               success: function (data) {
                   if (data.status == 'success') {
-                      swal("Asset type deleted !", {
+                      swal(data.message, {
                           icon: "success",
                           timer: 500
                       }).then((value) => {
@@ -171,7 +172,7 @@ function delete_asset_type(id) {
 /***    IOC Type     ***/
 
 function add_ioc_type() {
-    url = 'ioc-type/add/modal' + case_param();
+    url = '/manage/ioc-types/add/modal' + case_param();
     $('#modal_add_type_content').load(url, function () {
 
         $('#submit_new_ioc_type').on("click", function () {
@@ -188,13 +189,13 @@ function add_ioc_type() {
                     console.log(data);
                     if (data.status == 'success') {
                         swal("Done !",
-                        "Your IOC has been created successfully",
+                            data.message,
                             {
                                 icon: "success",
                                 timer: 2000
                             }
                         ).then((value) => {
-                            refresh_asset_table();
+                            refresh_ioc_table();
                             $('#modal_add_type').modal('hide');
 
                         });
@@ -205,7 +206,7 @@ function add_ioc_type() {
                 },
                 error: function (error) {
                     $('#modal_add_type').text('Save');
-                    notify_error(error.responseJSON.message);
+                    propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
@@ -269,7 +270,7 @@ function ioc_type_detail(ioc_id) {
             var form = $('form#form_new_ioc_type').serializeObject();
 
             $.ajax({
-                url:  '/manage/ioc-type/update/' + ioc_id + case_param(),
+                url:  '/manage/ioc-types/update/' + ioc_id + case_param(),
                 type: "POST",
                 data: JSON.stringify(form),
                 dataType: "json",
@@ -277,13 +278,13 @@ function ioc_type_detail(ioc_id) {
                 success: function (data) {
                     if (data.status == 'success') {
                         swal("You're set !",
-                            "The IOC has been updated successfully",
+                            data.message,
                             {
                                 icon: "success",
                                 timer: 1500
                             }
                         ).then((value) => {
-                            refresh_asset_table();
+                            refresh_ioc_table();
                             $('#modal_add_type').modal('hide');
                         });
 
@@ -294,6 +295,7 @@ function ioc_type_detail(ioc_id) {
                 },
                 error: function (error) {
                     notify_error(error.responseJSON.message);
+                    propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
@@ -325,7 +327,7 @@ function delete_ioc_type(id) {
               dataType: 'JSON',
               success: function (data) {
                   if (data.status == 'success') {
-                      swal("IOC type deleted !", {
+                      swal(data.message, {
                           icon: "success",
                           timer: 500
                       }).then((value) => {

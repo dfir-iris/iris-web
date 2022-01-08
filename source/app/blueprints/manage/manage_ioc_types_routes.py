@@ -73,6 +73,17 @@ def view_ioc_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_ioc_type.html", form=form, ioc_type=ioct)
 
 
+@manage_ioc_type_blueprint.route('/manage/ioc-types/add/modal', methods=['GET'])
+@admin_required
+def add_ioc_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_ioc_types.view_ioc_modal', cid=caseid))
+
+    form = AddIocTypeForm()
+
+    return render_template("modal_add_ioc_type.html", form=form, ioc_type=None)
+
+
 @manage_ioc_type_blueprint.route('/manage/ioc-types/add', methods=['POST'])
 @api_admin_required
 def add_ioc_type_api(caseid):
@@ -99,8 +110,6 @@ def add_ioc_type_api(caseid):
 @manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def remove_ioc_type(cur_id, caseid):
-    if not request.is_json:
-        return response_error("Invalid request")
 
     type_id = IocType.query.filter(
         IocType.type_id == cur_id

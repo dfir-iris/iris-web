@@ -126,19 +126,20 @@ def add_assets(caseid):
     if not request.is_json:
         return response_error("Invalid request")
 
-    asset_name = request.json.get('asset_name')
-    asset_description = request.json.get('asset_description')
+    asset_schema = AssetSchema()
 
-    asset = AssetsType(asset_name=asset_name,
-                       asset_description=asset_description
-                       )
+    try:
 
-    db.session.add(asset)
-    db.session.commit()
+        asset_sc = asset_schema.load(request.get_json())
+        db.session.add(asset_sc)
+        db.session.commit()
 
-    track_activity("Added asset type {asset_name}".format(asset_name=asset.asset_name), caseid=caseid, ctx_less=True)
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    track_activity("Added asset type {asset_name}".format(asset_name=asset_sc.asset_name), caseid=caseid, ctx_less=True)
     # Return the assets
-    return response_success("Added successfully", data=asset)
+    return response_success("Added successfully", data=asset_sc)
 
 
 @manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])
