@@ -91,21 +91,20 @@ def add_ioc_type_api(caseid):
     if not request.is_json:
         return response_error("Invalid request")
 
-    ioc_type_name = request.json.get('type_name')
-    ioc_type_description = request.json.get('type_description')
-    ioc_taxonomy = request.json.get('type_taxonomy')
+    ioct_schema = IocTypeSchema()
 
-    ioc_type = IocType.query.filter(IocType.type_name == ioc_type_name).first()
-    if ioc_type:
-        return response_error("An IOC type with this name already exists")
+    try:
 
-    ioct = add_ioc_type(name=ioc_type_name,
-                        description=ioc_type_description,
-                        taxonomy=ioc_taxonomy)
+        ioct_sc = ioct_schema.load(request.get_json())
+        db.session.add(ioct_sc)
+        db.session.commit()
 
-    track_activity("Added ioc type {ioc_type_name}".format(ioc_type_name=ioct.type_name), caseid=caseid, ctx_less=True)
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    track_activity("Added ioc type {ioc_type_name}".format(ioc_type_name=ioct_sc.type_name), caseid=caseid, ctx_less=True)
     # Return the assets
-    return response_success("Added successfully", data=ioct)
+    return response_success("Added successfully", data=ioct_sc)
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['GET'])

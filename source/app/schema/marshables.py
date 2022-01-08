@@ -134,6 +134,20 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
         model = IocType
         load_instance = True
 
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        client = IocType.query.filter(
+            IocType.type_name == data.type_name,
+            IocType.type_id != data.type_id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "IOC type name already exists",
+                field_name="type_name"
+            )
+
+        return data
+
 
 class CaseSchema(ma.SQLAlchemyAutoSchema):
     case_name = auto_field('name', required=True, validate=Length(min=2))
@@ -190,10 +204,13 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
 
     @post_load
     def verify_unique(self, data, **kwargs):
-        client = Client.query.filter(func.upper(Client.name) == data.name.upper()).first()
+        client = Client.query.filter(
+            func.upper(Client.name) == data.name.upper(),
+            Client.client_id != data.client_id
+        ).first()
         if client:
             raise marshmallow.exceptions.ValidationError(
-                "Customer already exists with this particular name",
+                "Customer already exists",
                 field_name="customer_name"
             )
 
