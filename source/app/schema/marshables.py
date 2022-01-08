@@ -124,6 +124,20 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
         model = AssetsType
         load_instance = True
 
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        client = AssetsType.query.filter(
+            AssetsType.asset_name == data.asset_name,
+            AssetsType.asset_id != data.asset_id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "Asset type name already exists",
+                field_name="type_name"
+            )
+
+        return data
+
 
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
     type_name = auto_field('type_name', required=True, validate=Length(min=2))
