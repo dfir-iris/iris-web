@@ -19,7 +19,7 @@ function add_asset_type() {
                             data.message,
                             {
                                 icon: "success",
-                                timer: 2000
+                                timer: 500
                             }
                         ).then((value) => {
                             refresh_asset_table();
@@ -84,7 +84,7 @@ function refresh_asset_table() {
 
 /* Fetch the details of an asset and allow modification */
 function assettype_detail(asset_id) {
-    url = 'asset-type/update/' + asset_id + '/modal' + case_param();
+    url = '/manage/asset-type/update/' + asset_id + '/modal' + case_param();
     $('#modal_add_type_content').load(url, function () {
 
         $('#submit_new_assettype').on("click", function () {
@@ -102,7 +102,7 @@ function assettype_detail(asset_id) {
                             data.message,
                             {
                                 icon: "success",
-                                timer: 1500
+                                timer: 500
                             }
                         ).then((value) => {
                             refresh_asset_table();
@@ -115,7 +115,6 @@ function assettype_detail(asset_id) {
                     }
                 },
                 error: function (error) {
-                    notify_error(error.responseJSON.message);
                     propagate_form_api_errors(error.responseJSON.data);
                 }
             });
@@ -184,7 +183,6 @@ function add_ioc_type() {
                 data: JSON.stringify(form),
                 dataType: "json",
                 contentType: "application/json;charset=UTF-8",
-                cache: false,
                 success: function (data) {
                     console.log(data);
                     if (data.status == 'success') {
@@ -192,7 +190,7 @@ function add_ioc_type() {
                             data.message,
                             {
                                 icon: "success",
-                                timer: 2000
+                                timer: 500
                             }
                         ).then((value) => {
                             refresh_ioc_table();
@@ -205,7 +203,6 @@ function add_ioc_type() {
                     }
                 },
                 error: function (error) {
-                    $('#modal_add_type').text('Save');
                     propagate_form_api_errors(error.responseJSON.data);
                 }
             });
@@ -281,7 +278,7 @@ function ioc_type_detail(ioc_id) {
                             data.message,
                             {
                                 icon: "success",
-                                timer: 1500
+                                timer: 500
                             }
                         ).then((value) => {
                             refresh_ioc_table();
@@ -294,7 +291,6 @@ function ioc_type_detail(ioc_id) {
                     }
                 },
                 error: function (error) {
-                    notify_error(error.responseJSON.message);
                     propagate_form_api_errors(error.responseJSON.data);
                 }
             });
@@ -331,7 +327,7 @@ function delete_ioc_type(id) {
                           icon: "success",
                           timer: 500
                       }).then((value) => {
-                          refresh_asset_table();
+                          refresh_ioc_table();
                           $('#modal_add_type').modal('hide');
                       });
                   } else {
