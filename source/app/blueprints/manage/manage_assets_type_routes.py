@@ -72,7 +72,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
     form = AddAssetForm()
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset:
-        response_error("Invalid asset type ID")
+        return response_error("Invalid asset type ID")
 
     form.asset_name.render_kw = {'value': asset.asset_name}
     form.asset_description.render_kw = {'value': asset.asset_description}
@@ -88,14 +88,14 @@ def view_assets(cur_id, caseid):
 
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset:
-        response_error("Invalid asset type ID")
+        return response_error("Invalid asset type ID")
 
     asset.asset_name = request.json.get('asset_name')
     asset.asset_description = request.json.get('asset_description')
 
     db.session.commit()
 
-    return response_success("Asset type updated")
+    return response_success("Asset type updated", data=asset)
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
@@ -138,9 +138,9 @@ def delete_assets(cur_id, caseid):
 
     case_linked = CaseAssets.query.filter(CaseAssets.asset_type_id == cur_id).first()
     if case_linked:
-        return response_error("Cannot delete a reference asset type. Please delete any assets of this type first.")
+        return response_error("Cannot delete a referenced asset type. Please delete any assets of this type first.")
 
     db.session.delete(asset)
     track_activity("Deleted asset type ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)
 
-    return response_success("Deleted successfully")
+    return response_success("Deleted asset type ID {cur_id} successfully".format(cur_id=cur_id))

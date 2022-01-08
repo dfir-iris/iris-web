@@ -22,7 +22,7 @@ from flask import Blueprint, request
 
 from app import db
 from app.iris_engine.utils.tracker import track_activity
-from app.models import IocType
+from app.models import IocType, IocLink, Ioc
 from app.util import response_success, api_admin_required, response_error
 
 from app.datamgmt.case.case_iocs_db import get_ioc_types_list, add_ioc_type
@@ -40,6 +40,17 @@ def list_ioc_types(caseid):
     lstatus = get_ioc_types_list()
 
     return response_success("", data=lstatus)
+
+
+@manage_ioc_type_blueprint.route('/manage/ioc-types/<int:cur_id>', methods=['GET'])
+@api_login_required
+def get_ioc_type(cur_id, caseid):
+
+    ioc_type = IocType.query.filter(IocType.type_id == cur_id).first()
+    if not ioc_type:
+        return response_error("Invalid ioc type ID {type_id}".format(type_id=cur_id))
+
+    return response_success("", data=ioc_type)
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-type/add', methods=['POST'])
@@ -75,6 +86,10 @@ def remove_ioc_type(cur_id, caseid):
         IocType.type_id == cur_id
     ).first()
 
+    is_referenced = Ioc.query.filter(Ioc.ioc_type_id == cur_id).first()
+    if is_referenced:
+        return response_error("Cannot delete a referenced ioc type. Please delete any ioc of this type first.")
+
     if type_id:
         db.session.delete(type_id)
         track_activity("Deleted ioc type ID {type_id}".format(type_id=cur_id), caseid=caseid, ctx_less=True)
@@ -86,3 +101,20 @@ def remove_ioc_type(cur_id, caseid):
     return response_error("Attempted to delete ioc type ID {type_id}, but was not found".format(type_id=cur_id))
 
 
+@manage_ioc_type_blueprint.route('/manage/ioc-type/update/<int:cur_id>', methods=['POST'])
+@api_admin_required
+def update_ioc(cur_id, caseid):
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    ioc_type = IocType.query.filter(IocType.type_id == cur_id).first()
+    if not ioc_type:
+        return response_error("Invalid ioc type ID {type_id}".format(type_id=cur_id))
+
+    ioc_type.type_name = request.json.get('type_name')
+    ioc_type.type_description = request.json.get('type_description')
+    ioc_type.type_taxonomy = request.json.get('type_taxonomy')
+
+    db.session.commit()
+
+    return response_success("IOC type updated", data=ioc_type)
