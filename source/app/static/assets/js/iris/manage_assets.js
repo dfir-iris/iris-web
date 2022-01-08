@@ -1,12 +1,12 @@
 function add_asset_type() {
-    url = 'assettype/add/modal' + case_param();
+    url = 'asset-type/add/modal' + case_param();
     $('#modal_add_type_content').load(url, function () {
 
         $('#submit_new_assettype').on("click", function () {
             var form = $('#form_new_asset_type').serializeObject();
 
             $.ajax({
-                url: 'assettype/add' + case_param(),
+                url: 'asset-type/add' + case_param(),
                 type: "POST",
                 data: JSON.stringify(form),
                 dataType: "json",
@@ -45,7 +45,7 @@ function add_asset_type() {
 
 $('#assets_table').dataTable( {
     "ajax": {
-      "url": "assettype/list" + case_param(),
+      "url": "asset-type/list" + case_param(),
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -77,14 +77,14 @@ function refresh_asset_table() {
 
 /* Fetch the details of an asset and allow modification */
 function assettype_detail(asset_id) {
-    url = 'assettype/update/' + asset_id + '/modal' + case_param();
+    url = 'asset-type/update/' + asset_id + '/modal' + case_param();
     $('#modal_add_type_content').load(url, function () {
 
         $('#submit_new_assettype').on("click", function () {
             var form = $('#form_new_asset_type').serializeObject();
 
             $.ajax({
-                url:  'assettype/update/' + asset_id + case_param(),
+                url:  'asset-type/update/' + asset_id + case_param(),
                 type: "POST",
                 data: JSON.stringify(form),
                 dataType: "json",
@@ -135,7 +135,7 @@ function delete_asset_type(id) {
     .then((willDelete) => {
       if (willDelete) {
           $.ajax({
-              url: '/manage/assettype/delete/' + id + case_param(),
+              url: '/manage/asset-type/delete/' + id + case_param(),
               type: "GET",
               dataType: 'JSON',
               success: function (data) {
@@ -152,7 +152,7 @@ function delete_asset_type(id) {
                   }
               },
               error: function (error) {
-                  swal ( "Oh no !" ,  error ,  "error" );                
+                  swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
               }
           });
       } else {

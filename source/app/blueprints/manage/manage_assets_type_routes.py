@@ -23,7 +23,7 @@ from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AssetsType
+from app.models.models import AssetsType, CaseAssets
 from app.forms import AddAssetForm
 from app import db
 
@@ -35,7 +35,7 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 # CONTENT ------------------------------------------------
-@manage_assets_blueprint.route('/manage/assettype')
+@manage_assets_blueprint.route('/manage/asset-type')
 @admin_required
 def manage_assets(caseid, url_redir):
     if url_redir:
@@ -47,7 +47,7 @@ def manage_assets(caseid, url_redir):
     return render_template('manage_assets.html', form=form)
 
 
-@manage_assets_blueprint.route('/manage/assettype/list')
+@manage_assets_blueprint.route('/manage/asset-type/list')
 @api_admin_required
 def list_assets(caseid):
     # Get all assets
@@ -63,7 +63,7 @@ def list_assets(caseid):
     return response_success("", data=data)
 
 
-@manage_assets_blueprint.route('/manage/assettype/update/<int:cur_id>/modal', methods=['GET'])
+@manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])
 @login_required
 def view_assets_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -80,7 +80,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_asset_type.html", form=form, assettype=asset)
 
 
-@manage_assets_blueprint.route('/manage/assettype/update/<int:cur_id>', methods=['POST'])
+@manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
 @api_admin_required
 def view_assets(cur_id, caseid):
     if not request.is_json:
@@ -98,7 +98,7 @@ def view_assets(cur_id, caseid):
     return response_success("Asset type updated")
 
 
-@manage_assets_blueprint.route('/manage/assettype/add/modal', methods=['GET'])
+@manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
 @admin_required
 def add_assets_modal(caseid, url_redir):
     if url_redir:
@@ -108,7 +108,7 @@ def add_assets_modal(caseid, url_redir):
     return render_template("modal_add_asset_type.html", form=form, assettype=None)
 
 
-@manage_assets_blueprint.route('/manage/assettype/add', methods=['POST'])
+@manage_assets_blueprint.route('/manage/asset-type/add', methods=['POST'])
 @api_admin_required
 def add_assets(caseid):
     if not request.is_json:
@@ -129,12 +129,16 @@ def add_assets(caseid):
     return response_success("Added successfully")
 
 
-@manage_assets_blueprint.route('/manage/assettype/delete/<int:cur_id>', methods=['GET'])
+@manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def delete_assets(cur_id, caseid):
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset:
-        return response_success("Invalid asset ID")
+        return response_error("Invalid asset ID")
+
+    case_linked = CaseAssets.query.filter(CaseAssets.asset_type_id == cur_id).first()
+    if case_linked:
+        return response_error("Cannot delete a reference asset type. Please delete any assets of this type first.")
 
     db.session.delete(asset)
     track_activity("Deleted asset type ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)

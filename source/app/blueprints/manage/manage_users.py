@@ -23,14 +23,12 @@ import marshmallow
 from flask import Blueprint, request, redirect, url_for
 from flask import render_template
 from flask_wtf import FlaskForm
-from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, \
     get_user_by_username, get_user_details
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
-from app.models import User, Role, UserRoles
 from app.schema.marshables import UserSchema
 from app.util import admin_required, login_required, response_error, response_success, api_admin_required, \
     api_login_required
