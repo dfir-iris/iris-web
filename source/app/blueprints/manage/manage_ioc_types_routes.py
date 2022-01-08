@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import marshmallow
 from flask import Blueprint, request, jsonify, url_for, render_template
 from werkzeug.utils import redirect
 
@@ -25,6 +25,7 @@ from app import db
 from app.forms import AddIocTypeForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models import IocType, IocLink, Ioc
+from app.schema.marshables import IocTypeSchema
 from app.util import response_success, api_admin_required, response_error, admin_required
 
 from app.datamgmt.case.case_iocs_db import get_ioc_types_list, add_ioc_type
@@ -140,10 +141,17 @@ def update_ioc(cur_id, caseid):
     if not ioc_type:
         return response_error("Invalid ioc type ID {type_id}".format(type_id=cur_id))
 
-    ioc_type.type_name = request.json.get('type_name')
-    ioc_type.type_description = request.json.get('type_description')
-    ioc_type.type_taxonomy = request.json.get('type_taxonomy')
+    ioct_schema = IocTypeSchema()
 
-    db.session.commit()
+    try:
 
-    return response_success("IOC type updated", data=ioc_type)
+        ioct_sc = ioct_schema.load(request.get_json(), instance=ioc_type)
+
+        if ioct_sc:
+            track_activity("updated ioc type type {}".format(ioct_sc.type_name), caseid=caseid)
+            return response_success("IOC type updated", ioct_sc)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    return response_success("Unexpected error server-side. Nothing updated", data=ioc_type)

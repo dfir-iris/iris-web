@@ -29,7 +29,7 @@ from sqlalchemy import func
 
 from app import ma
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile, AssetsType
+    CaseReceivedFile, AssetsType, IocType
 
 task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
 
@@ -122,6 +122,16 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = AssetsType
+        load_instance = True
+
+
+class IocTypeSchema(ma.SQLAlchemyAutoSchema):
+    type_name = auto_field('type_name', required=True, validate=Length(min=2))
+    type_description = auto_field('type_description', required=True, validate=Length(min=2))
+    type_taxonomy = auto_field('type_taxonomy')
+
+    class Meta:
+        model = IocType
         load_instance = True
 
 

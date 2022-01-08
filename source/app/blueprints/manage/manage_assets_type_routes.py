@@ -105,9 +105,7 @@ def view_assets(cur_id, caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    db.session.commit()
-
-    return response_success("Asset type updated", data=asset)
+    return response_success("Unexpected error server-side. Nothing updated", data=asset)
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
