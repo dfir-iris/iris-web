@@ -22,7 +22,8 @@ Table = $("#rfiles_table").DataTable({
             } else {
                 data = sanitizeHTML(data);
             }
-            data = '<a  data-toggle="tooltip" data-selector="true" href="#" title="Evidence ID #' + row['id'] + '" onclick="edit_rfiles(\'' + row['id'] + '\');">' + data +'</a>';
+            share_link = buildShareLink(row['id']);
+            data = '<a data-toggle="tooltip" data-selector="true" href="' + share_link + '" title="Evidence ID #' + row['id'] + '" onclick="edit_rfiles(\'' + row['id'] + '\');return false;">' + data +'</a>';
           }
           return data;
         }
@@ -187,5 +188,10 @@ $('.modal').on('hidden.bs.modal', function () {
 $(document).ready(function(){
     get_case_rfiles();
     setInterval(function() { check_update('evidences/state'); }, 3000);
+
+    shared_id = getSharedLink();
+    if (shared_id) {
+        edit_rfiles(shared_id);
+    }
 
 });

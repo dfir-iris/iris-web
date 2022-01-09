@@ -18,7 +18,8 @@ Table = $("#tasks_table").DataTable({
             } else {
                 data = sanitizeHTML(data);
             }
-            data = '<a href="#" data-selector="true" title="Task ID #'+ row['task_id'] +'"  onclick="edit_task(\'' + row['task_id'] + '\');">' + data +'</a>';
+            share_link = buildShareLink(row['task_id']);
+            data = '<a href="'+ share_link + '" data-selector="true" title="Task ID #'+ row['task_id'] +'"  onclick="edit_task(\'' + row['task_id'] + '\');return false;">' + data +'</a>';
           }
           return data;
         }
@@ -333,4 +334,9 @@ function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {
 $(document).ready(function(){
     get_tasks();
     setInterval(function() { check_update('tasks/state'); }, 3000);
+
+    shared_id = getSharedLink();
+    if (shared_id) {
+        edit_task(shared_id);
+    }
 });
