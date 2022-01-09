@@ -260,14 +260,21 @@ function draw_timeline() {
                         formatted_content = match_replace_ioc(content_parsed, reap);
                     }
 
+                    shared_link = buildShareLink(evt.event_id);
                     entry = `<li class="timeline-inverted" title="Event ID #`+ evt.event_id + `">
                         ` + tmb_d + `
                             <div class="timeline-panel" `+ style +` id="event_`+ evt.event_id + `" >
                                 <div class="timeline-heading">
                                     <div class="btn-group dropdown float-right">
-                                        <button type="button" class="btn btn-xs" onclick="edit_event(`+ evt.event_id +`)">
+
+                                        <button type="button" class="btn btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
                                             <span class="btn-label">
                                                 <i class="fa fa-pen"></i>
+                                            </span>
+                                        </button>
+                                        <button type="button" class="btn btn-xs" onclick="copy_event_link(`+ evt.event_id +`);return false;" title="Copy shared link" href="` + shared_link + `">
+                                            <span class="btn-label">
+                                                <i class="fa fa-share"></i>
                                             </span>
                                         </button>
                                         <button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -277,7 +284,7 @@ function draw_timeline() {
                                         </button>
                                         <ul class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                                             <li>
-                                                <a class="dropdown-item" onclick="delete_event(`+ evt.event_id +`);">Delete</a>
+                                                <a href= "#" class="dropdown-item" onclick="delete_event(`+ evt.event_id +`);">Delete</a>
                                             </li>
                                         </ul>
                                     </div>
@@ -370,6 +377,15 @@ function goToSharedLink(){
         console.log('161');
         $('#event_'+shared_id).addClass('fade-it');
     }
+}
+
+function copy_event_link(evend_id) {
+    link = buildShareLink(evend_id);
+    navigator.clipboard.writeText(link).then(function() {
+          notify_success('Link to event copied')
+    }, function(err) {
+        console.error('Unable to copy event link. Right click on button to get it', err);
+    });
 }
 
 
