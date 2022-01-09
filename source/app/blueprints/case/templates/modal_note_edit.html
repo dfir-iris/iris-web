@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h4>{{ note.title }}</h4>
+    <h4 class="ml-2 mt-1">{{ note.title }}</h4>
     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true">&times;</span></button>
 </div>
@@ -16,9 +16,16 @@
             <div class="form-group mt-3">
                 <div class="row"></div>
                     <span id="last_saved" class="badge"></span>
+                    <button type="button" class="btn btn-sm float-right ml-3" onclick="copy_note_link({{note.note_id if note.note_id|length else id}});return false;" title="Copy shared link">
+                        <span class="btn-label">
+                            <i class="fa fa-share"></i>
+                        </span>
+                    </button>
                     <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();">
                     </button>
+
                 </div>
+
                 <div class="row">
                     <div class="col-md-6" id="container_note_content">
                         <div style="display: none" id="fetched_crc"></div>

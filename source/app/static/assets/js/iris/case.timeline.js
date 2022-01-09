@@ -382,9 +382,9 @@ function goToSharedLink(){
 function copy_event_link(evend_id) {
     link = buildShareLink(evend_id);
     navigator.clipboard.writeText(link).then(function() {
-          notify_success('Link to event copied')
+          notify_success('Event share link copied')
     }, function(err) {
-        console.error('Unable to copy event link. Right click on button to get it', err);
+        console.error('Unable to copy event share link', err);
     });
 }
 
