@@ -289,7 +289,7 @@ function draw_timeline() {
                                         </ul>
                                     </div>
                                     <div class="row mb-2">
-                                        <a class="timeline-title" style="color: rgb(75, 79, 87);">` + title_parsed + `</a>
+                                        <a class="timeline-title" style="color: rgb(75, 79, 87);" href="` + shared_link + `" onclick="return false;">` + title_parsed + `</a>
                                     </div>
                                 </div>
                                 <div class="timeline-body text-faded" style="color: rgb(130, 130, 130);">
