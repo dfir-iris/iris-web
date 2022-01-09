@@ -91,7 +91,8 @@ Table = $("#assets_table").DataTable({
             if (isWhiteSpace(data)) {
                 datak = '#' + row['asset_id'];
             }
-            ret = '<a href="#" data-selector="true" title="Asset ID #'+ row['asset_id'] +'" onclick="asset_details(\'' + row['asset_id'] + '\');">' + datak +'</a>';
+            share_link = buildShareLink(row['asset_id']);
+            ret = '<a href="' + share_link + '" data-selector="true" title="Asset ID #'+ row['asset_id'] +'" onclick="asset_details(\'' + row['asset_id'] + '\');">' + datak +'</a>';
 
             if (row.link.length > 0) {
                 var has_compro = false;
@@ -358,4 +359,9 @@ function asset_details(asset_id) {
 $(document).ready(function(){
     get_case_assets();
     setInterval(function() { check_update('assets/state'); }, 3000);
+
+    shared_id = getSharedLink();
+    if (shared_id) {
+        asset_details(shared_id);
+    }
 });

@@ -11,46 +11,6 @@ $(function(){
     })
 })
 
-function remove_case(id) {
-
-    swal({
-      title: "Are you sure?",
-      text: "You won't be able to revert this !\nAll associated data - except Pigger DBs - will be deleted",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    })
-    .then((willDelete) => {
-      if (willDelete) {
-          $.ajax({
-              url: '/manage/cases/delete/' + id,
-              type: "POST",
-              dataType: 'JSON',
-              success: function (data) {
-                  if (data.status == 'success') {
-                      swal("Case has been deleted !", {
-                          icon: "success",
-                      }).then((value) => {
-                          refresh_case_table();
-                          $('#modal_case_detail').modal('hide');
-                      });
-                  } else {
-                      swal ( "Oh no !" ,  data.message ,  "error" );
-                  }
-              },
-              error: function (error) {
-                  swal ( "Oh no !" ,  error ,  "error" );                
-              }
-          });
-      } else {
-        swal("Pfew, that's was close");
-      }
-    });
-}
-
 function close_case(id) {
   swal({
     title: "Are you sure?",
@@ -86,4 +46,18 @@ function close_case(id) {
       });
     }
   });
+}
+
+function buildShareLink(lookup_id) {
+    var current_path = location.pathname;
+    current_path = current_path + case_param() + '&shared=' + lookup_id;
+    console.log(current_path);
+    return current_path;
+}
+
+function getSharedLink(){
+    queryString = window.location.search;
+    urlParams = new URLSearchParams(queryString);
+
+    return urlParams.get('shared');
 }
