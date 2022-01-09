@@ -132,12 +132,13 @@ function edit_event(id) {
   });
 }
 
-/* Fetch and draw the timeline */ 
+/* Fetch and draw the timeline */
 function draw_timeline() {
     $('#timeline_list').empty();
     show_loader();
     rid = $('#assets_timeline_select').val();
     if (rid == null) { rid = 0; }
+
     $.ajax({
         url: "timeline/get/" + rid + case_param(),
         type: "GET",
@@ -162,7 +163,7 @@ function draw_timeline() {
 
                 $('#assets_timeline_select').selectpicker("refresh");
                 var tesk = false;
-                // Prepare replacement mod 
+                // Prepare replacement mod
                 var reap = [];
                 ioc_list = data.data.iocs;
                 for (ioc in ioc_list) {
@@ -185,7 +186,7 @@ function draw_timeline() {
                     style = '';
                     asset = '';
 
-                    /* If IOC then build a tag */ 
+                    /* If IOC then build a tag */
                     if(evt.category_name && evt.category_name != 'Unspecified') {
                         tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
                     }
@@ -199,14 +200,14 @@ function draw_timeline() {
                         tesk = true;
                     }
 
-                        
+
                     if (evt.event_color != null) {
                             style += "border-left: 2px groove " + sanitizeHTML(evt.event_color);
                     }
 
                     style += ";'";
 
-                    /* For every assets linked to the event, build a link tag */ 
+                    /* For every assets linked to the event, build a link tag */
                     if (evt.assets != null) {
                         for (ide in evt.assets) {
                             cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
@@ -281,7 +282,7 @@ function draw_timeline() {
                                         </ul>
                                     </div>
                                     <div class="row mb-2">
-                                        <a class="timeline-title" style="color: rgb(75, 79, 87);">` + title_parsed + `</a> 
+                                        <a class="timeline-title" style="color: rgb(75, 79, 87);">` + title_parsed + `</a>
                                     </div>
                                 </div>
                                 <div class="timeline-body text-faded" style="color: rgb(130, 130, 130);">
@@ -294,7 +295,7 @@ function draw_timeline() {
                             </div>
                         </li>`
                     is_i = false;
-                    
+
                     //entry = match_replace_ioc(entry, reap);
                     $('#timeline_list').append(entry);
 
@@ -302,17 +303,17 @@ function draw_timeline() {
 
                 //match_replace_ioc(data.data.iocs, "timeline_list");
                 $('[data-toggle="popover"]').popover();
-                
+
                 if (location.href.indexOf("#") != -1) {
                     var current_url = window.location.href;
                     // Capture the string after #
-                    
+
                     var id = current_url.substr(current_url.indexOf("#") + 1);
                     if ($('#event_'+id).offset() != undefined) {
                         $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
                     }
                 }
-                
+
                 for (tm in tmb) {
                     $('#time_timeline_select').append('<option value="'+ tm +'">' +tmb[tm] + '</options>');
                 }
@@ -320,13 +321,11 @@ function draw_timeline() {
                 $('#time_timeline_select').selectpicker("refresh");
                 last_state = data.data.state.object_state;
                 hide_loader();
-                
 
             } else {
                 swal.close();
                 $('#submit_new_event').text('Save again');
                 swal("Oh no !", data.message, "error")
-                
             }
         },
         error: function (error) {
@@ -334,8 +333,7 @@ function draw_timeline() {
             $('#submit_new_event').text('Save');
             swal("Oh no !", error.statusText, "error")
         }
-    });
-    
+    }).done(function() {goToSharedLink()});
 }
 
 function escapeRegExp(text) {
@@ -364,10 +362,22 @@ $('#time_timeline_select').on('change', function(e){
 });
 
 
+function goToSharedLink(){
+   shared_id = getSharedLink();
+   console.log('161');
+   if (shared_id) {
+        $('html, body').animate({ scrollTop: $('#event_'+shared_id).offset().top - 80 });
+        console.log('161');
+        $('#event_'+shared_id).addClass('fade-it');
+    }
+}
+
+
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
     draw_timeline();
+
     setInterval(function() { check_update('timeline/state'); }, 3000);
 
     if (location.href.indexOf("#") != -1) {
@@ -378,5 +388,4 @@ $(document).ready(function(){
             $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
         }
     }
-
 });

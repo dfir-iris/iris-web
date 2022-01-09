@@ -15538,3 +15538,35 @@ div.dataTables_processing { z-index: 1; }
   width: 1.2em;
 }
 
+
+@-webkit-keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #fff;
+  }
+}
+@-moz-keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #fff;
+  }
+}
+@keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #fff;
+  }
+}
+.fade-it {
+  -webkit-animation: yellow-fade 2s ease-in-out 0s;
+  -moz-animation: yellow-fade 2s ease-in-out 0s;
+  -o-animation: yellow-fade 2s ease-in-out 0s;
+  animation: yellow-fade 2s ease-in-out 0s;
+}
+
