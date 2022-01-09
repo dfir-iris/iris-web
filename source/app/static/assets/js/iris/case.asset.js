@@ -92,7 +92,7 @@ Table = $("#assets_table").DataTable({
                 datak = '#' + row['asset_id'];
             }
             share_link = buildShareLink(row['asset_id']);
-            ret = '<a href="' + share_link + '" data-selector="true" title="Asset ID #'+ row['asset_id'] +'" onclick="asset_details(\'' + row['asset_id'] + '\');">' + datak +'</a>';
+            ret = '<a href="' + share_link + '" data-selector="true" title="Asset ID #'+ row['asset_id'] +'" onclick="asset_details(\'' + row['asset_id'] + '\');return false;">' + datak +'</a>';
 
             if (row.link.length > 0) {
                 var has_compro = false;
@@ -352,6 +352,7 @@ function asset_details(asset_id) {
 
     });
     $('#modal_add_asset').modal({ show: true });
+    return false;
 }
 
 

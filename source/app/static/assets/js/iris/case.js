@@ -51,7 +51,7 @@ function close_case(id) {
 function buildShareLink(lookup_id) {
     var current_path = location.pathname;
     current_path = current_path + case_param() + '&shared=' + lookup_id;
-    console.log(current_path);
+
     return current_path;
 }
 

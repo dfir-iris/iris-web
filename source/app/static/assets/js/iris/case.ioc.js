@@ -26,7 +26,8 @@ Table = $("#ioc_table").DataTable({
                 datak = '#' + row['ioc_id'];
             }
 
-            data = '<a href="#" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');">' + datak +'</a>';
+            share_link = buildShareLink(row['ioc_id']);
+            data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
             if (row['ioc_misp'] != null) {
                 jse = JSON.parse(row['ioc_misp']);
                 data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
@@ -371,4 +372,9 @@ function download_file(filename, contentType, data) {
 $(document).ready(function(){
     get_case_ioc();
     setInterval(function() { check_update('ioc/state'); }, 3000);
+
+    shared_id = getSharedLink();
+    if (shared_id) {
+        edit_ioc(shared_id);
+    }
 });
