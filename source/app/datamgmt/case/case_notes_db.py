@@ -107,6 +107,23 @@ def get_groups_short(caseid):
     return groups_short
 
 
+def get_notes_from_group(caseid, group_id):
+    notes = NotesGroupLink.query.with_entities(
+        Notes.note_id,
+        Notes.note_title,
+        User.user,
+        Notes.note_lastupdate
+    ).filter(
+        NotesGroupLink.case_id == caseid,
+        NotesGroupLink.group_id == group_id,
+    ).join(
+        NotesGroupLink.note,
+        Notes.user
+    ).all()
+
+    return notes
+
+
 def get_groups_detail(caseid):
     groups = NotesGroupLink.query.with_entities(
         NotesGroup.group_id,

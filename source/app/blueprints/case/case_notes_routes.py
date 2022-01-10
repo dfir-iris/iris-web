@@ -18,7 +18,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import json
 # IMPORTS ------------------------------------------------
 from datetime import datetime
 
@@ -30,12 +29,12 @@ from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case, case_get_desc_crc
 from app.datamgmt.case.case_notes_db import get_note, delete_note, add_note, update_note, get_groups_detail, \
-    get_groups_short, find_pattern_in_notes, add_note_group, delete_note_group, update_note_group
+    get_groups_short, find_pattern_in_notes, add_note_group, delete_note_group, update_note_group, get_notes_from_group
 from app.datamgmt.states import get_notes_state
 from app.forms import CaseNoteForm
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseNoteSchema, CaseAddNoteSchema, CaseGroupNoteSchema
-from app.util import response_success, response_error, get_urlcase, login_required, api_login_required
+from app.util import response_success, response_error, login_required, api_login_required
 
 case_notes_blueprint = Blueprint('case_notes',
                                  __name__,
@@ -177,20 +176,19 @@ def case_load_notes_groups(caseid):
 
     groups_short = get_groups_short(caseid)
 
-    groups = get_groups_detail(caseid)
-
-    gpl = [row._asdict() for row in groups]
     sta = []
 
     for group in groups_short:
-        if not next((item for item in gpl if item["group_id"] == group.group_id), None):
-            sta.append(group._asdict())
+        notes = get_notes_from_group(caseid=caseid, group_id=group.group_id)
+        group_d = group._asdict()
+        group_d['notes'] = [note._asdict() for note in notes]
 
-    gpl += sta
+        sta.append(group_d)
 
-    gpl = sorted(gpl, key=lambda i: i['group_id'])
+    sta = sorted(sta, key=lambda i: i['group_id'])
+
     ret = {
-        'groups': gpl,
+        'groups': sta,
         'state': get_notes_state(caseid=caseid)
     }
 

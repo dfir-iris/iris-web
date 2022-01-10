@@ -481,12 +481,15 @@ function draw_kanban() {
                         nextGroupNote(group.group_title, group.group_id);
                         gidl.push(group.group_id);
                     }
-                    add_subnote(group.group_id,
-                            group.note_id,
-                            group.note_title,
-                            group.note_lastupdate,
-                            group.user
-                        );
+                    for  (ikd in group.notes) {
+                        note = group.notes[ikd];
+                        add_subnote(group.group_id,
+                                note.note_id,
+                                note.note_title,
+                                note.note_lastupdate,
+                                note.user
+                            );
+                    }
                 }
             set_last_state(data.data.state);
             hide_loader();
