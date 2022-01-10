@@ -22,7 +22,7 @@ import datetime
 
 from app import db
 from app.datamgmt.states import update_assets_state
-from app.models import AssetsType, IocAssetLink, CaseAssets, Cases, Ioc, AnalysisStatus, CaseEventsAssets
+from app.models import AssetsType, IocAssetLink, CaseAssets, Cases, Ioc, AnalysisStatus, CaseEventsAssets, IocType
 from sqlalchemy import and_
 
 
@@ -216,10 +216,12 @@ def get_linked_iocs_finfo_from_asset(asset_id):
     iocs = IocAssetLink.query.with_entities(
         Ioc.ioc_value,
         Ioc.ioc_tags,
-        Ioc.ioc_type,
+        Ioc.ioc_type_id,
+        IocType.type_name,
         Ioc.ioc_description
-    ).filter(
+    ).filter(and_(
         IocAssetLink.asset_id == asset_id,
-    ).join(IocAssetLink.ioc).all()
+        IocAssetLink.ioc_id == Ioc.ioc_id
+    )).join(Ioc.ioc_type).all()
 
     return iocs
