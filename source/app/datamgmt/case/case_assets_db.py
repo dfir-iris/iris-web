@@ -174,6 +174,7 @@ def delete_ioc_asset_link(asset_id):
 
 def get_linked_iocs_from_asset(asset_id):
     iocs = IocAssetLink.query.with_entities(
+        Ioc.ioc_id,
         Ioc.ioc_value
     ).filter(
         IocAssetLink.asset_id == asset_id,

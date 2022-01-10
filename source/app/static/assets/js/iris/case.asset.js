@@ -161,12 +161,12 @@ Table = $("#assets_table").DataTable({
             return ret;
         }
       },
-      { "data": "ioc",
+      { "data": "ioc_links",
         "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
             datas = "";
             for (ds in data) {
-                datas += '<span class="badge badge-light">'+ sanitizeHTML(data[ds][0]) + '</span>';
+                datas += '<span class="badge badge-light">'+ sanitizeHTML(data[ds]['ioc_value']) + '</span>';
             }
             return datas;
           }

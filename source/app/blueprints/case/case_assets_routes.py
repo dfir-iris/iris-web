@@ -82,7 +82,7 @@ def case_list_assets(caseid):
 
         # Find linked IoC
         iocs = get_linked_iocs_from_asset(asset["asset_id"])
-        asset['ioc'] = [ioc for ioc in iocs]
+        asset['ioc_links'] = [ioc._asdict() for ioc in iocs]
 
         # Find similar assets from other cases with the same customer
         asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
