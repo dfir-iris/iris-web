@@ -179,7 +179,8 @@ def get_linked_iocs_from_asset(asset_id):
         Ioc.ioc_value
     ).filter(
         IocAssetLink.asset_id == asset_id,
-    ).join(IocAssetLink.ioc).all()
+        Ioc.ioc_id == IocAssetLink.ioc_id
+    ).all()
 
     return iocs
 
