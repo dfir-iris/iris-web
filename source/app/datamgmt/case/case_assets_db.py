@@ -51,6 +51,7 @@ def get_assets(caseid):
         CaseAssets.asset_ip,
         CaseAssets.asset_type_id,
         AnalysisStatus.name.label('analysis_status'),
+        CaseAssets.analysis_status_id,
         CaseAssets.asset_tags
     ).filter(
         CaseAssets.case_id == caseid
