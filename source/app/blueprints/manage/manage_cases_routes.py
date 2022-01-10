@@ -69,6 +69,17 @@ def details_case(cur_id, caseid, url_redir):
         return response_error("Unknown case")
 
 
+@manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
+@api_login_required
+def get_case(cur_id, caseid):
+
+    res = get_case_details_rt(cur_id)
+    if res:
+        return response_success(data=res._asdict())
+
+    return response_error(f'Case ID {res} not found')
+
+
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def api_delete_case(cur_id, caseid):

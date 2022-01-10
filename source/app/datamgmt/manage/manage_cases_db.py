@@ -94,7 +94,7 @@ def get_case_details_rt(case_id):
             Cases.case_id == case_id,
             Cases.user_id == User.id,
             Client.client_id == Cases.client_id
-        ))
+        )).first()
 
     else:
         res = None
