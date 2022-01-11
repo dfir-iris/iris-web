@@ -18,10 +18,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from sqlalchemy import desc
+from sqlalchemy import desc, and_
 
 from app import db
-from app.models import GlobalTasks, User
+from app.models import GlobalTasks, User, Cases, CaseTasks
 
 task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
 
@@ -40,6 +40,29 @@ def list_global_tasks():
     ).order_by(
         desc(GlobalTasks.task_status)
     ).all()
+    output = [c._asdict() for c in ct]
+
+    return output
+
+
+def list_user_tasks():
+    ct = CaseTasks.query.with_entities(
+        CaseTasks.id.label("task_id"),
+        CaseTasks.task_title,
+        CaseTasks.task_description,
+        CaseTasks.task_last_update,
+        CaseTasks.task_tags,
+        Cases.name.label('task_case'),
+        CaseTasks.task_case_id.label('case_id'),
+        CaseTasks.task_status
+    ).join(
+        CaseTasks.case
+    ).order_by(
+        desc(CaseTasks.task_status)
+    ).filter(and_(
+        CaseTasks.task_status != 'Done',
+        CaseTasks.task_status != 'Canceled'
+    )).all()
     output = [c._asdict() for c in ct]
 
     return output

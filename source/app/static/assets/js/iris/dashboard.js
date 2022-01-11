@@ -25,9 +25,15 @@ $('#form_new_customer').submit(function () {
 $(document).ready(function() {
     update_tasks_list();
     update_gtasks_list();
-    setInterval(update_tasks_list,30000);
-    setInterval(update_gtasks_list, 33000)
+    update_utasks_list();
+    setInterval(check_page_update,30000);
 });
+
+function check_page_update(){
+    update_tasks_list();
+    update_gtasks_list();
+    update_utasks_list();
+}
 
 function update_tasks_list() {
     $(this).toggleClass("down");
@@ -73,6 +79,177 @@ function task_status(id) {
     });
 }
 
+UserTaskTable = $("#utasks_table").DataTable({
+    dom: 'Blfrtip',
+    aaData: [],
+    aoColumns: [
+      {
+        "data": "task_title",
+        "render": function (data, type, row, meta) {
+          if (type === 'display') {
+            if (isWhiteSpace(data)) {
+                data = '#' + row['task_id'];
+            } else {
+                data = sanitizeHTML(data);
+            }
+            data = '<a href="#" onclick="edit_utask(\'' + row['task_id'] + '\');">' + data +'</a>';
+          }
+          return data;
+        }
+      },
+      { "data": "task_description",
+       "render": function (data, type, row, meta) {
+          if (type === 'display') {
+            data = sanitizeHTML(data);
+            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="click" href="#" data-content="' + data + '">' + data.slice(0, 70);
+
+            if (data.length > 70) {
+                datas += ' (..)</span>';
+            } else {
+                datas += '</span>';
+            }
+            return datas;
+          }
+          return data;
+        }
+      },
+      {
+        "data": "task_status",
+        "render": function(data, type, row, meta) {
+           if (type === 'display') {
+            if (row['task_status'] == 'To do') {
+                flag = 'danger';
+            } else if (row['task_status'] == 'In progress') {
+                flag = 'warning';
+            } else if (row['task_status'] == 'Done') {
+                flag = 'success';
+            } else if (row['task_status'] == 'On hold') {
+                flag = 'dark';
+            } else {
+                flag = 'muted';
+            }
+            data = sanitizeHTML(data);
+            data = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
+          }
+          return data;
+        }
+      },
+      {
+        "data": "task_case",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') {
+                data = sanitizeHTML(data);
+                data = '<a href="/case?cid='+ row['case_id'] +'">' + data +'</a>';
+            }
+            return data;
+          }
+      },
+      {
+        "data": "task_last_update",
+        "render": function (data, type, row, meta) {
+          if (type === 'display' && data != null) {
+              data = sanitizeHTML(data);
+              data = data.replace(/GMT/g, "");
+          }
+          return data;
+        }
+      },
+      { "data": "task_tags",
+        "render": function (data, type, row, meta) {
+          if (type === 'display' && data != null) {
+              tags = "";
+              de = data.split(',');
+              for (tag in de) {
+                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+              }
+              return tags;
+          }
+          return data;
+        }
+      }
+    ],
+    rowCallback: function (nRow, data) {
+        if (data['task_status'] == 'To do') {
+            flag = 'danger';
+        } else if (data['task_status'] == 'In progress') {
+            flag = 'warning';
+        } else if (data['task_status'] == 'Done') {
+            flag = 'success';
+        } else {
+            flag = 'muted';
+        }
+        data = sanitizeHTML(data);
+        nRow = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
+    },
+    filter: true,
+    info: true,
+    ordering: true,
+    processing: true,
+    retrieve: true,
+    lengthChange: false,
+    pageLength: 10,
+    order: [[ 2, "desc" ]],
+    buttons: [
+        { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+        { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+    ]
+});
+$("#utasks_table").css("font-size", 12);
+
+function update_utasks_list() {
+    $('#utasks_list').empty();
+    $.ajax({
+        url: "/user/tasks/list" + case_param(),
+        type: "GET",
+        success: function (data) {
+            if (data.status == 'success') {
+                    UserTaskTable.MakeCellsEditable("destroy");
+                    tasks_list = data.data;
+                    UserTaskTable.clear();
+                    UserTaskTable.rows.add(tasks_list);
+                    UserTaskTable.MakeCellsEditable({
+                        "onUpdate": callBackEditTaskStatus,
+                        "inputCss": 'form-control col-12',
+                        "columns": [2],
+                        "allowNulls": {
+                          "columns": [2],
+                          "errorClass": 'error'
+                        },
+                        "confirmationButton": {
+                          "confirmCss": 'my-confirm-class',
+                          "cancelCss": 'my-cancel-class'
+                        },
+                        "inputTypes": [
+                          {
+                            "column": 2,
+                            "type": "list",
+                            "options": [
+                              { "value": "To do", "display": "To do" },
+                              { "value": "In progress", "display": "In progress" },
+                              { "value": "On hold", "display": "On hold" },
+                              { "value": "Done", "display": "Done" },
+                              { "value": "Canceled", "display": "Canceled" }
+                            ]
+                          }
+                        ]
+                      });
+
+                    UserTaskTable.columns.adjust().draw();
+                    UserTaskTable.buttons().container().appendTo($('#utasks_table_info'));
+                       $('[data-toggle="popover"]').popover();
+                    $('#utasks_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
+                }
+
+        },
+        error: function (error) {
+            notify_error(error.responseJSON.message);
+        }
+    });
+
+}
+
+
+/**** GTASKS ****/
 Table = $("#gtasks_table").DataTable({
     dom: 'Blfrtip',
     aaData: [],

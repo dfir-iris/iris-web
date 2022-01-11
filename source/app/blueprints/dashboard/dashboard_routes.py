@@ -27,7 +27,7 @@ from flask import render_template, request, url_for, redirect
 from flask_login import logout_user, current_user
 
 from app import db
-from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_status
+from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_status, list_user_tasks
 from app.forms import CustomerForm, CaseGlobalTaskForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
@@ -133,6 +133,15 @@ def index(caseid, url_redir):
 def get_gtasks(caseid):
 
     tasks_list = list_global_tasks()
+
+    return response_success("", data=tasks_list)
+
+
+@dashboard_blueprint.route('/user/tasks/list', methods=['GET'])
+@api_login_required
+def get_utasks(caseid):
+
+    tasks_list = list_user_tasks()
 
     return response_success("", data=tasks_list)
 
