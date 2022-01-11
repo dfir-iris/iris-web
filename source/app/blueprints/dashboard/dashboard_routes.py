@@ -25,6 +25,7 @@ import marshmallow
 from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 from flask_login import logout_user, current_user
+from sqlalchemy import distinct
 
 from app import db
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_status, list_user_tasks, \
@@ -32,7 +33,7 @@ from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_
 from app.forms import CustomerForm, CaseGlobalTaskForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.models.models import Client
+from app.models.models import Client, UserActivity
 from app.models.models import FileContentHash, GlobalTasks, User, Ioc, CaseTasks
 from app.schema.marshables import GlobalTasksSchema
 from app.util import response_success, response_error, login_required, api_login_required
@@ -113,8 +114,16 @@ def index(caseid, url_redir):
 
     # Retrieve the dashboard data from multiple sources.
     # Quite fast as it is only counts.
+    user_open_case = UserActivity.query.with_entities(
+        distinct(Cases.case_id)
+    ).filter(
+        UserActivity.user_id == current_user.id,
+        UserActivity.case_id == Cases.case_id,
+        Cases.close_date == None
+    ).count()
+
     data = {
-        "db_count": db.session.query(FileContentHash).count(),
+        "user_open_count": user_open_case,
         "ioc_count": db.session.query(Ioc).count(),
         "cases_open_count": db.session.query(Cases).filter(Cases.close_date == None).count(),
         "cases_count": db.session.query(Cases).count(),

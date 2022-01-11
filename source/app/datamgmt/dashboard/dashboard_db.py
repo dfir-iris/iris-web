@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from flask_login import current_user
 from sqlalchemy import desc, and_
 
 from app import db
@@ -61,7 +61,8 @@ def list_user_tasks():
         desc(CaseTasks.task_status)
     ).filter(and_(
         CaseTasks.task_status != 'Done',
-        CaseTasks.task_status != 'Canceled'
+        CaseTasks.task_status != 'Canceled',
+        CaseTasks.task_assignee_id == current_user.id
     )).all()
     output = [c._asdict() for c in ct]
 
