@@ -311,16 +311,6 @@ function draw_timeline() {
                 //match_replace_ioc(data.data.iocs, "timeline_list");
                 $('[data-toggle="popover"]').popover();
 
-                if (location.href.indexOf("#") != -1) {
-                    var current_url = window.location.href;
-                    // Capture the string after #
-
-                    var id = current_url.substr(current_url.indexOf("#") + 1);
-                    if ($('#event_'+id).offset() != undefined) {
-                        $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
-                    }
-                }
-
                 for (tm in tmb) {
                     $('#time_timeline_select').append('<option value="'+ tm +'">' +tmb[tm] + '</options>');
                 }
@@ -328,6 +318,15 @@ function draw_timeline() {
                 $('#time_timeline_select').selectpicker("refresh");
                 last_state = data.data.state.object_state;
                 hide_loader();
+
+                if (location.href.indexOf("#") != -1) {
+                    var current_url = window.location.href;
+                    var id = current_url.substr(current_url.indexOf("#") + 1);
+                    if ($('#event_'+id).offset() != undefined) {
+                        $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
+                        $('#event_'+id).addClass('fade-it');
+                    }
+                }
 
             } else {
                 swal.close();
@@ -371,10 +370,8 @@ $('#time_timeline_select').on('change', function(e){
 
 function goToSharedLink(){
    shared_id = getSharedLink();
-   console.log('161');
    if (shared_id) {
         $('html, body').animate({ scrollTop: $('#event_'+shared_id).offset().top - 80 });
-        console.log('161');
         $('#event_'+shared_id).addClass('fade-it');
     }
 }
@@ -396,12 +393,4 @@ $(document).ready(function(){
 
     setInterval(function() { check_update('timeline/state'); }, 3000);
 
-    if (location.href.indexOf("#") != -1) {
-        var current_url = window.location.href;
-        // Capture the string after #
-        var id = current_url.substr(current_url.indexOf("#") + 1);
-        if ($('#event_'+id).offset() != undefined) {
-            $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
-        }
-    }
 });
