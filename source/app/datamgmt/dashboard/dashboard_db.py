@@ -81,3 +81,19 @@ def update_gtask_status(task_id, status):
             return True
 
     return False
+
+
+def update_utask_status(task_id, status, case_id):
+    if task_id != 0:
+        task = CaseTasks.query.filter(
+                CaseTasks.id == task_id,
+                CaseTasks.task_case_id == case_id
+        ).first()
+
+        if task and status in task_status:
+            task.task_status = status
+            db.session.commit()
+
+            return task
+
+    return None

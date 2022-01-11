@@ -92,7 +92,7 @@ UserTaskTable = $("#utasks_table").DataTable({
             } else {
                 data = sanitizeHTML(data);
             }
-            data = '<a href="#" onclick="edit_utask(\'' + row['task_id'] + '\');">' + data +'</a>';
+            data = '<a href="case/tasks?cid='+ row['case_id'] + '&shared=' + row['task_id'] + '">' + data +'</a>';
           }
           return data;
         }
@@ -208,7 +208,7 @@ function update_utasks_list() {
                     UserTaskTable.clear();
                     UserTaskTable.rows.add(tasks_list);
                     UserTaskTable.MakeCellsEditable({
-                        "onUpdate": callBackEditTaskStatus,
+                        "onUpdate": callBackEditUserTaskStatus,
                         "inputCss": 'form-control col-12',
                         "columns": [2],
                         "allowNulls": {
@@ -246,6 +246,29 @@ function update_utasks_list() {
         }
     });
 
+}
+
+function callBackEditUserTaskStatus(updatedCell, updatedRow, oldValue) {
+  data_send = updatedRow.data()
+  data_send['csrf_token'] = $('#csrf_token').val();
+  $.ajax({
+    url: "user/tasks/update-status" + case_param(),
+    type: "POST",
+    data: JSON.stringify(data_send),
+    contentType: "application/json;charset=UTF-8",
+    dataType: 'json',
+    success: function (response) {
+      if (response.status == 'success') {
+           notify_success("Changes saved");
+          UserTaskTable.columns.adjust().draw();
+      } else {
+        notify_error('Error :' + response.message)
+      }
+    },
+    error: function (error) {
+        notify_error(error.responseJSON.message);
+    }
+  });
 }
 
 
