@@ -159,7 +159,7 @@ function sync_editor(no_check) {
                     editor.getSession().setValue(data.data.case_description);
 
                     // Set the CRC in page 
-                    $('#fetched_crc').val(data.data.crc32);
+                    $('#fetched_crc').val(data.data.crc32.toString());
                     $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
                     $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
                 }
@@ -169,37 +169,36 @@ function sync_editor(no_check) {
                     if (data.data.crc32 != $('#fetched_crc').val()) {
                         // Content has changed remotely 
                         // Check if we have changes locally 
-                        local_crc = CRC32.str(st);
-                        //if (local_crc == $('#fetched_crc').val()) {
+                        local_crc = CRC32(st).toString();
+                        if (local_crc == $('#fetched_crc').val()) {
                             // No local change, we can sync and update local CRC
-                        editor.getSession().setValue(data.data.case_description);
-                        $('#fetched_crc').val(data.data.crc32);
-                        $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
-                        $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
-
-//                        } else {
-//                            // We have a conflict
-//                            $('#last_saved').text('Conflict !').addClass('badge-danger').removeClass('badge-success');
-//                            swal ( "Oh no !" ,
-//                            "We have a conflict with the remote content.\nSomeone may just have changed the description at the same time.\nThe local content will be copied into clipboard and content will be updated with remote." ,
-//                            "error"
-//                            ).then((value) => {
-//                                // Old fashion trick
-//                                editor.selectAll();
-//                                editor.focus();
-//                                document.execCommand('copy');
-//                                editor.getSession().setValue(data.data.desc);
-//                                $('#fetched_crc').val(data.data.crc32);
-//                                notify_success('Content updated with remote. Local changes copied to clipboard.');
-//                                $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
-//                            });
-//                        }
+                            editor.getSession().setValue(data.data.case_description);
+                            $('#fetched_crc').val(data.data.crc32);
+                            $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
+                            $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
+                        } else {
+                            // We have a conflict
+                            $('#last_saved').text('Conflict !').addClass('badge-danger').removeClass('badge-success');
+                            swal ( "Oh no !" ,
+                            "We have a conflict with the remote content.\nSomeone may just have changed the description at the same time.\nThe local content will be copied into clipboard and content will be updated with remote." ,
+                            "error"
+                            ).then((value) => {
+                                // Old fashion trick
+                                editor.selectAll();
+                                editor.focus();
+                                document.execCommand('copy');
+                                editor.getSession().setValue(data.data.desc);
+                                $('#fetched_crc').val(data.data.crc32);
+                                notify_success('Content updated with remote. Local changes copied to clipboard.');
+                                $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
+                            });
+                        }
                     } else {
                         // Content did not change remotely
                         // Check local change 
-                        local_crc = CRC32.str(st);
+                        local_crc = crc32(st).toString();
                         if (local_crc != $('#fetched_crc').val()) {
-
+                            console.log('Updating with CRC ' + local_crc);
                             var data = Object();
                             data['case_description'] = st;
                             data['csrf_token'] = $('#csrf_token').val();
