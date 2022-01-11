@@ -30,7 +30,7 @@
 					<div class="collapse" id="search-nav">
 							<div class="input-group">
 								{% if current_user.ctx_human_case %}
-									<div class="text-light"><span class="text-info">Current case :</span> {{ current_user.ctx_human_case|unquote }}</div>
+								<div class="text-light"><span class="text-info">Current case :</span> <a class="text-light" data-toggle="modal" title="Switch case" data-target="#modal_switch_context" href="#">{{ current_user.ctx_human_case|unquote }}</a></div>
 								{% else %}
 								<div class="text-warning">No context</div>
 								{% endif %}
