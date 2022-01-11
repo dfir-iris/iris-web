@@ -23,7 +23,7 @@ import datetime
 from sqlalchemy import desc
 
 from app.models import User, Cases, Client, CaseReceivedFile, CasesEvent, CaseEventsAssets, CaseAssets, \
-    AssetsType, IocLink, Ioc, IocAssetLink, AnalysisStatus, CaseTasks, Notes, EventCategory
+    AssetsType, IocLink, Ioc, IocAssetLink, AnalysisStatus, CaseTasks, Notes, EventCategory, IocType
 
 
 def export_case_json(case_id):
@@ -113,6 +113,8 @@ def export_case_tm_json(case_id):
         CasesEvent.event_id,
         CasesEvent.event_title,
         CasesEvent.event_date,
+        CasesEvent.event_tz,
+        CasesEvent.event_date_wtz,
         CasesEvent.event_content,
         CasesEvent.event_tags,
         CasesEvent.event_source,
@@ -156,15 +158,16 @@ def export_case_tm_json(case_id):
 def export_case_iocs_json(case_id):
     res = IocLink.query.distinct().with_entities(
         Ioc.ioc_value,
-        Ioc.ioc_type,
+        IocType.type_name,
         Ioc.ioc_tags,
         Ioc.ioc_description
     ).filter(
         IocLink.case_id == case_id
     ).join(
-        IocLink.ioc
-    ).order_by(
+        IocLink.ioc,
         Ioc.ioc_type
+    ).order_by(
+        IocType.type_name
     ).all()
 
     if res:
@@ -208,7 +211,8 @@ def export_case_assets_json(case_id):
         CaseAssets.date_added,
         CaseAssets.asset_domain,
         CaseAssets.asset_ip,
-        CaseAssets.asset_info
+        CaseAssets.asset_info,
+        CaseAssets.asset_tags
     ).filter(
         CaseAssets.case_id == case_id
     ).join(
@@ -221,12 +225,13 @@ def export_case_assets_json(case_id):
 
         ial = IocAssetLink.query.with_entities(
             Ioc.ioc_value,
-            Ioc.ioc_type,
+            IocType.type_name,
             Ioc.ioc_description
         ).filter(
             IocAssetLink.asset_id == row['asset_id']
         ).join(
-            IocAssetLink.ioc
+            IocAssetLink.ioc,
+            Ioc.ioc_type
         ).all()
 
         if ial:
