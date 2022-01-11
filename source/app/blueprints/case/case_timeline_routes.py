@@ -156,39 +156,36 @@ def case_gettimeline(asset_id, caseid):
             CasesEvent.category
         ).all()
 
+    assets_cache = CaseAssets.query.with_entities(
+        CaseEventsAssets.event_id,
+        CaseAssets.asset_id,
+        CaseAssets.asset_name,
+        AssetsType.asset_name.label('type'),
+        CaseAssets.asset_ip,
+        CaseAssets.asset_description,
+        CaseAssets.asset_compromised
+    ).filter(
+        CaseEventsAssets.case_id == caseid
+    ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
 
     tim = []
-    cache_id = {}
     resp = {}
     for row in timeline:
         ras = row._asdict()
         ras['event_date'] = ras['event_date'].isoformat()
         ras['event_date_wtz'] = ras['event_date_wtz'].isoformat()
 
-        as_list = CaseEventsAssets.query.with_entities(
-            CaseAssets.asset_id,
-            CaseAssets.asset_name,
-            AssetsType.asset_name.label('type'),
-            CaseAssets.asset_ip,
-            CaseAssets.asset_description,
-            CaseAssets.asset_compromised
-        ).filter(
-            CaseEventsAssets.event_id == row.event_id
-        ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
-
         alki = []
-        for asset in as_list:
-            alki.append(
-                {
-                    "name": "{} ({})".format(asset.asset_name, asset.type),
-                    "ip": asset.asset_ip,
-                    "description": asset.asset_description,
-                    "compromised": asset.asset_compromised
-                }
-            )
-
-            if asset.asset_id not in cache_id:
-                cache_id.update({asset.asset_id: "{} ({})".format(asset.asset_name, asset.type)})
+        for asset in assets_cache:
+            if asset.event_id == ras['event_id']:
+                alki.append(
+                    {
+                        "name": "{} ({})".format(asset.asset_name, asset.type),
+                        "ip": asset.asset_ip,
+                        "description": asset.asset_description,
+                        "compromised": asset.asset_compromised
+                    }
+                )
 
         ras['assets'] = alki
 
@@ -207,7 +204,7 @@ def case_gettimeline(asset_id, caseid):
 
         resp = {
             "tim": tim,
-            "assets": cache_id,
+            "assets": assets_cache,
             "iocs": iocs,
             "state": get_timeline_state(caseid=caseid)
         }
