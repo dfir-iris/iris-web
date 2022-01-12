@@ -114,7 +114,7 @@ def case_add_ioc(caseid):
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
         if link_existed:
-            return response_error("IOC already exists and linked to this case")
+            return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
 
         if ioc:
             track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
