@@ -191,3 +191,49 @@ function delete_user(id) {
       }
     });
 }
+
+function activate_user(id) {
+  $.ajax({
+      url: '/manage/users/activate/' + id + case_param(),
+      type: "GET",
+      success: function (data) {
+          if (data.status == 'success') {
+              swal("User activated !", {
+                  icon: "success",
+                  timer: 500
+              }).then((value) => {
+                  refresh_users();
+                  $('#modal_add_user').modal('hide');
+              });
+          } else {
+              swal ( "Oh no !" ,  data.message ,  "error" );
+          }
+      },
+      error: function (error) {
+          swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
+      }
+  });
+}
+
+function deactivate_user(id) {
+  $.ajax({
+      url: '/manage/users/deactivate/' + id + case_param(),
+      type: "GET",
+      success: function (data) {
+          if (data.status == 'success') {
+              swal("User deactivated !", {
+                  icon: "success",
+                  timer: 500
+              }).then((value) => {
+                  refresh_users();
+                  $('#modal_add_user').modal('hide');
+              });
+          } else {
+              swal ( "Oh no !" ,  data.message ,  "error" );
+          }
+      },
+      error: function (error) {
+          swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
+      }
+  });
+}
