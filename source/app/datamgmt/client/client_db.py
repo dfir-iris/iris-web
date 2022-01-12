@@ -29,16 +29,13 @@ from app.schema.marshables import CustomerSchema
 client_schema = CustomerSchema()
 
 
-def get_client_list(is_api: bool = False) -> Union[List[Dict], List[Client]]:
+def get_client_list() -> List[Client]:
     client_list = Client.query.with_entities(
-        Client.name,
-        Client.client_id
+        Client.name.label('customer_name'),
+        Client.client_id.label('customer_id')
     ).all()
 
-    if is_api is False:
-        output = [c._asdict() for c in client_list]
-    else:
-        output = client_list
+    output = [c._asdict() for c in client_list]
 
     return output
 
@@ -46,6 +43,17 @@ def get_client_list(is_api: bool = False) -> Union[List[Dict], List[Client]]:
 def get_client(client_id: str) -> Client:
     client = Client.query.filter(Client.client_id == client_id).first()
     return client
+
+
+def get_client_api(client_id: str) -> Client:
+    client = Client.query.with_entities(
+        Client.name.label('customer_name'),
+        Client.client_id.label('customer_id')
+    ).filter(Client.client_id == client_id).first()
+
+    output = client._asdict()
+
+    return output
 
 
 def create_client(client_name: str) -> Client:

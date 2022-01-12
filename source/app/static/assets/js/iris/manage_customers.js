@@ -62,13 +62,13 @@ $('#customers_table').dataTable({
         },
         "order": [[0, "desc"]],
         "autoWidth": false,
-        "columnDefs": [
+        "columns": [
             {
+                "data": "customer_name",
                 "render": function (data, type, row) {
                     data = sanitizeHTML(data);
-                    return '<a href="#" onclick="customer_detail(\'' + row[1] + '\');">' + data + '</a>';
-                },
-                "targets": 0
+                    return '<a href="#" onclick="customer_detail(\'' + row['customer_id'] + '\');">' + data + '</a>';
+                }
             }
         ]
     }

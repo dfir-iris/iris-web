@@ -24,11 +24,13 @@ from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 from marshmallow import ValidationError
 
-from app.datamgmt.client.client_db import get_client_list, get_client, update_client, create_client, delete_client
+from app.datamgmt.client.client_db import get_client_list, get_client, update_client, create_client, delete_client, \
+    get_client_api
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException, ElementInUseException
 from app.forms import AddCustomerForm
 from app.iris_engine.utils.tracker import track_activity
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required
+from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
+    api_login_required
 from app.schema.marshables import CustomerSchema
 
 manage_customers_blueprint = Blueprint(
@@ -52,11 +54,22 @@ def manage_customers(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/list')
-@api_admin_required
+@api_login_required
 def list_customers(caseid):
-    client_list = get_client_list(is_api=True)
+    client_list = get_client_list()
 
     return response_success("", data=client_list)
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>', methods=['GET'])
+@api_login_required
+def view_customer(cur_id, caseid):
+
+    customer = get_client_api(cur_id)
+    if not customer:
+        return response_error(f"Invalid Customer ID {cur_id}")
+
+    return response_success(data=customer)
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>/modal', methods=['GET'])
@@ -68,7 +81,7 @@ def view_customer_modal(cur_id, caseid, url_redir):
     form = AddCustomerForm()
     customer = get_client(cur_id)
     if not customer:
-        response_error("Invalid Customer ID")
+        return response_error("Invalid Customer ID")
 
     form.customer_name.render_kw = {'value': customer.name}
 
