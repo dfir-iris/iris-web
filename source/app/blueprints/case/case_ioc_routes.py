@@ -288,7 +288,7 @@ def case_update_ioc(cur_id, caseid):
 
         if ioc_sc:
             track_activity("updated ioc {}".format(ioc_sc.ioc_value), caseid=caseid)
-            return response_success("Updated ioc {}".format(ioc_sc.ioc_value))
+            return response_success("Updated ioc {}".format(ioc_sc.ioc_value), data=ioc_schema.dump(ioc))
 
         return response_error("Unable to update ioc for internal reasons")
 
