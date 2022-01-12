@@ -60,8 +60,8 @@ def login():
 
         # filter User out of database through username
         user = User.query.filter(
-            User.user==username,
-            User.active==True
+            User.user == username,
+            User.active == True
         ).first()
 
         if user:
