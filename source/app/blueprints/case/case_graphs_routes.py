@@ -75,6 +75,14 @@ def case_graph_get_data(caseid):
             img = 'server.png'
             is_master_atype = True
 
+        elif 'domain controller' in atype:
+            img = 'windows_server.png'
+            is_master_atype = True
+
+        elif 'windows - dc' in atype:
+            img = 'windows_server.png'
+            is_master_atype = True
+
         elif 'windows' in atype:
             img = "windows_{}".format(img)
 
@@ -85,16 +93,24 @@ def case_graph_get_data(caseid):
             img = 'vpn.png'
             is_master_atype = True
 
-        elif 'domain controller' in atype:
-            img = 'windows_server.png'
-            is_master_atype = True
-
         elif 'firewall' in atype:
             img = 'firewall.png'
             is_master_atype = True
 
         elif 'router' in atype:
             img = 'router.png'
+            is_master_atype = True
+
+        elif 'WAF' in atype:
+            img = 'firewall.png'
+            is_master_atype = True
+
+        elif 'switch' in atype:
+            img = 'switch.png'
+            is_master_atype = True
+
+        elif 'phone' in atype:
+            img = 'phone.png'
             is_master_atype = True
 
         else:

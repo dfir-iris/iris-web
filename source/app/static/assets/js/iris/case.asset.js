@@ -316,6 +316,9 @@ function asset_details(asset_id) {
                 data["ioc_links"] = [data["ioc_links"]]
             }
             data['asset_tags'] = $('#asset_tags').val();
+            if (!data.hasOwnProperty('asset_compromised')) {
+                data['asset_compromised'] = 'false';
+            }
 
             $.ajax({
                 url: 'assets/update/' + asset_id + case_param(),
