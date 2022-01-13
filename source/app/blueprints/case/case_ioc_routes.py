@@ -139,9 +139,10 @@ def case_upload_ioc(caseid):
         jsdata = request.get_json()
 
         # get IOC list from request
+        headers = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp"
         csv_lines=jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
-        if csv_lines[0].lower() != "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp":
-            csv_lines.insert(0, "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp")
+        if csv_lines[0].lower() != headers:
+            csv_lines.insert(0, headers)
 
         # convert list of strings into CSV
         csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
@@ -152,6 +153,13 @@ def case_upload_ioc(caseid):
         errors = []
 
         for row in csv_data:
+            index = 0
+            for e in headers.split(','):
+                if not row.get(e):
+                    errors.append(f"{e} is missing for row {index}")
+                    continue
+                index += 1
+
             row["ioc_tags"] = row["ioc_tags"].replace("|", ",")  # Reformat Tags
 
             # Convert TLP into TLP id

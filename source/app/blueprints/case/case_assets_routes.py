@@ -176,8 +176,11 @@ def case_upload_ioc(caseid):
 
         # get IOC list from request
         csv_lines = jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
-        if csv_lines[0].lower() != "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags":
-            csv_lines.insert(0, "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags")
+
+        headers = "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags"
+
+        if csv_lines[0].lower() != headers:
+            csv_lines.insert(0, headers)
 
         # convert list of strings into CSV
         csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
@@ -189,7 +192,15 @@ def case_upload_ioc(caseid):
         analysis_status_id = analysis_status.id
 
         for row in csv_data:
-            row["asset_tags"] = row["asset_tags"].replace("|", ",")  # Reformat Tags
+            index = 0
+            for e in headers.split(','):
+                if not row.get(e):
+                    errors.append(f"{e} is missing for row {index}")
+                    continue
+                index += 1
+
+            if row.get("asset_tags"):
+                row["asset_tags"] = row.get("asset_tags").replace("|", ",")  # Reformat Tags
 
             type_id = get_asset_type_id(row['asset_type_name'].lower())
             if not type_id:
