@@ -165,11 +165,11 @@ def case_gettimeline(asset_id, caseid):
         CaseAssets.asset_description,
         CaseAssets.asset_compromised
     ).filter(
-        CaseEventsAssets.case_id == caseid
+        CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
 
     tim = []
-    resp = {}
+    cache = {}
     for row in timeline:
         ras = row._asdict()
         ras['event_date'] = ras['event_date'].isoformat()
@@ -178,6 +178,9 @@ def case_gettimeline(asset_id, caseid):
         alki = []
         for asset in assets_cache:
             if asset.event_id == ras['event_id']:
+                if asset.asset_id not in cache:
+                    cache[asset.asset_id] = "{} ({})".format(asset.asset_name, asset.type)
+
                 alki.append(
                     {
                         "name": "{} ({})".format(asset.asset_name, asset.type),
@@ -204,7 +207,7 @@ def case_gettimeline(asset_id, caseid):
 
         resp = {
             "tim": tim,
-            "assets": assets_cache,
+            "assets": cache,
             "iocs": iocs,
             "state": get_timeline_state(caseid=caseid)
         }

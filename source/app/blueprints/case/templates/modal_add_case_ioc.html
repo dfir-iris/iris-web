@@ -1,5 +1,12 @@
 <div class="modal-header">
     <h4>{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
+    {% if ioc.ioc_id %}
+        <button type="button" class="mt--1 btn btn-sm float-right ml-3 btn-light btn-outline" onclick="copy_object_link({{ioc.ioc_id }});return false;" title="Copy shared link">
+            <span class="btn-label text-dark">
+                <i class="fa fa-share"></i>
+            </span>
+        </button>
+    {% endif %}
     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true">&times;</span></button>
 </div>
@@ -11,18 +18,18 @@
                 {{ form.hidden_tag() }}
                 <div class="form-group row">
                     <div class="col">
-                        <label for="ioc_type" class="mr-4">Type
+                        <label for="ioc_type" class="mr-4">Type *
                         </label>
                         {{ form.ioc_type_id(class="selectpicker pl--6") }}
                     </div>
                     <div class="col">
-                        <label for="ioc_type" class="mr-4">TLP
+                        <label for="ioc_type" class="mr-4">TLP *
                         </label>
                         {{ form.ioc_tlp_id(class="selectpicker pl--6") }}
                     </div>
                 </div>
                 <div class="form-group mt-3">
-                    <label for="ioc_value" class="placeholder">{{ form.ioc_value.label.text }}</label>
+                    <label for="ioc_value" class="placeholder">{{ form.ioc_value.label.text }} *</label>
                     {{ form.ioc_value(class='form-control col-md-12 col-sm-12 sizable-textarea',  autocomplete="off") }}
                 </div>
                 <div class="form-group mt-3">

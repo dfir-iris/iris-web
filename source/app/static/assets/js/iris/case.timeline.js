@@ -157,7 +157,7 @@ function draw_timeline() {
                 /* Build the filter list */
                 $('#assets_timeline_select').append('<option value="0">All assets</options>');
                 for (rid in data.data.assets) {
-                    $('#assets_timeline_select').append('<option value="'+sanitizeHTML(rid)+'">' + sanitizeHTML(data.data.assets[rid]) + '</options>');
+                    $('#assets_timeline_select').append('<option value="'+rid+'">' + sanitizeHTML(data.data.assets[rid]) + '</options>');
                 }
                 $('#assets_timeline_select').selectpicker('val', reid);
 
@@ -249,11 +249,19 @@ function draw_timeline() {
 
                     title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
                     content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
-
-                    if (content_parsed.length > 150) {
-                        short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
+                    content_split = content_parsed.split('<br/>');
+                    console.log(content_split);
+                    lines = content_split.length;
+                    if (content_parsed.length > 150 || lines > 2) {
+                        if (lines > 2) {
+                            short_content = match_replace_ioc(content_split.slice(0,2).join('<br/>'), reap);
+                            long_content = match_replace_ioc(content_split.slice(2).join('<br/>'), reap);
+                        } else {
+                            short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
+                            long_content = match_replace_ioc(content_parsed.slice(150), reap);
+                        }
                         formatted_content = short_content + `<div class="collapse" id="collapseContent">
-                            `+ match_replace_ioc(content_parsed.slice(150), reap) +`
+                            `+ long_content +`
                         </div>
                         <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
                     } else {
@@ -272,24 +280,19 @@ function draw_timeline() {
                                                 <i class="fa fa-pen"></i>
                                             </span>
                                         </button>
-                                        <button type="button" class="btn btn-xs" onclick="copy_event_link(`+ evt.event_id +`);return false;" title="Copy shared link" href="` + shared_link + `">
-                                            <span class="btn-label">
-                                                <i class="fa fa-share"></i>
-                                            </span>
-                                        </button>
                                         <button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                             <span class="btn-label">
                                                 <i class="fa fa-cog"></i>
                                             </span>
                                         </button>
-                                        <ul class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                            <li>
-                                                <a href= "#" class="dropdown-item" onclick="delete_event(`+ evt.event_id +`);">Delete</a>
-                                            </li>
-                                        </ul>
+                                        <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                                <div class="dropdown-divider">Danger zone</div>
+                                                <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                                        </div>
                                     </div>
                                     <div class="row mb-2">
-                                        <a class="timeline-title" style="color: rgb(75, 79, 87);" href="` + shared_link + `" onclick="return false;">` + title_parsed + `</a>
+                                        <a class="timeline-title" style="color: rgb(75, 79, 87);" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
                                     </div>
                                 </div>
                                 <div class="timeline-body text-faded" style="color: rgb(130, 130, 130);">
@@ -369,22 +372,19 @@ $('#time_timeline_select').on('change', function(e){
 
 
 function goToSharedLink(){
+    if (location.href.indexOf("#") != -1) {
+        var current_url = window.location.href;
+        var id = current_url.substr(current_url.indexOf("#") + 1);
+        if ($('#event_'+id).offset() != undefined) {
+            return;
+        }
+   }
    shared_id = getSharedLink();
    if (shared_id) {
         $('html, body').animate({ scrollTop: $('#event_'+shared_id).offset().top - 80 });
         $('#event_'+shared_id).addClass('fade-it');
     }
 }
-
-function copy_event_link(evend_id) {
-    link = buildShareLink(evend_id);
-    navigator.clipboard.writeText(link).then(function() {
-          notify_success('Event share link copied')
-    }, function(err) {
-        console.error('Unable to copy event share link', err);
-    });
-}
-
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){

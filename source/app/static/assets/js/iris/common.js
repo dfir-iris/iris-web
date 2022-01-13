@@ -422,3 +422,12 @@ function downloadURI(uri, name) {
     link.click();
     link.remove();
 }
+
+function copy_object_link(node_id) {
+    link = buildShareLink(node_id);
+    navigator.clipboard.writeText(link).then(function() {
+          notify_success('Shared link copied')
+    }, function(err) {
+        console.error('Shared link', err);
+    });
+}
