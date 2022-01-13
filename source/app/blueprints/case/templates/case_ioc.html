@@ -39,9 +39,14 @@
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button data-toggle="modal" class="btn btn-dark btn-sm" data-target="#modal_upload_ioc" class="btn btn-dark btn-sm">
-                                <span class="menu-title">Upload IOCs</span>
-                           </button>
+                            <div class="dropdown">
+                              <button class="btn btn-sm btn-border btn-black" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  <span class="menu-title"><i class="fas fa-ellipsis-v"></i></span>
+                              </button>
+                              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="#" onclick="upload_iocs();">Upload CSV of IOCs</a>
+                              </div>
+                            </div>
                         </li>
 					</ul>
             </div>
