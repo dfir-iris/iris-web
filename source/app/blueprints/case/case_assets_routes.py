@@ -36,6 +36,7 @@ from app.datamgmt.states import get_assets_state, update_assets_state
 from app.forms import ModalAddCaseAssetForm, AssetBasicForm
 
 from app.iris_engine.utils.tracker import track_activity
+from app.models import AnalysisStatus
 from app.schema.marshables import CaseAssetsSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
@@ -175,17 +176,20 @@ def case_upload_ioc(caseid):
 
         # get IOC list from request
         csv_lines = jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
-        if csv_lines[0].lower() != "asset_title,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags":
-            csv_lines.insert(0, "asset_title,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags")
+        if csv_lines[0].lower() != "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags":
+            csv_lines.insert(0, "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags")
 
         # convert list of strings into CSV
-        csv_data = csv.DictReader(csv_lines)
+        csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
 
         ret = []
         errors = []
 
+        analysis_status = AnalysisStatus.query.filter(AnalysisStatus.name == 'Unspecified').first()
+        analysis_status_id = analysis_status.id
+
         for row in csv_data:
-            row["asset_tags"] = row["ioc_tags"].replace("|", ",")  # Reformat Tags
+            row["asset_tags"] = row["asset_tags"].replace("|", ",")  # Reformat Tags
 
             type_id = get_asset_type_id(row['asset_type_name'].lower())
             if not type_id:
@@ -193,10 +197,13 @@ def case_upload_ioc(caseid):
                 track_activity(f'Attempted to upload unrecognized asset type {row["asset_type_name"]}')
                 continue
 
-            row['asset_type_id'] = type_id
-            row.pop('asset_type', None)
+            row['asset_type_id'] = type_id.asset_id
+            row.pop('asset_type_name', None)
+
+            row['analysis_status_id'] = analysis_status_id
 
             asset_sc = add_asset_schema.load(row)
+
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
                                  user_id=current_user.id
@@ -207,7 +214,7 @@ def case_upload_ioc(caseid):
                 continue
 
             ret.append(row)
-            track_activity(f"added ioc {asset.asset_name}", caseid=caseid)
+            track_activity(f"added asset {asset.asset_name}", caseid=caseid)
 
         if len(errors) == 0:
             msg = "Successfully imported data."

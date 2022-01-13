@@ -144,7 +144,7 @@ def case_upload_ioc(caseid):
             csv_lines.insert(0, "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp")
 
         # convert list of strings into CSV
-        csv_data = csv.DictReader(csv_lines)
+        csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
 
         # build a Dict of possible TLP
         tlp_dict = get_tlps_dict()
