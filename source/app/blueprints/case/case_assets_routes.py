@@ -199,6 +199,12 @@ def case_upload_ioc(caseid):
                     continue
                 index += 1
 
+            # Asset name must not be empty
+            if not row.get("asset_name"):
+                errors.append(f"Empty asset name for row {index}")
+                track_activity(f"Attempted to upload an empty asset name")
+                continue
+
             if row.get("asset_tags"):
                 row["asset_tags"] = row.get("asset_tags").replace("|", ",")  # Reformat Tags
 
