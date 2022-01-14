@@ -191,18 +191,20 @@ def case_upload_ioc(caseid):
         analysis_status = AnalysisStatus.query.filter(AnalysisStatus.name == 'Unspecified').first()
         analysis_status_id = analysis_status.id
 
+        index = 0
         for row in csv_data:
-            index = 0
+
             for e in headers.split(','):
                 if row.get(e) is None:
                     errors.append(f"{e} is missing for row {index}")
+                    index += 1
                     continue
-                index += 1
 
             # Asset name must not be empty
             if not row.get("asset_name"):
                 errors.append(f"Empty asset name for row {index}")
                 track_activity(f"Attempted to upload an empty asset name")
+                index += 1
                 continue
 
             if row.get("asset_tags"):
@@ -212,6 +214,7 @@ def case_upload_ioc(caseid):
             if not type_id:
                 errors.append(f"{row['asset_type_name']} (invalid asset type: {row['asset_type_name']}) for row {index}")
                 track_activity(f'Attempted to upload unrecognized asset type {row["asset_type_name"]}')
+                index += 1
                 continue
 
             row['asset_type_id'] = type_id.asset_id
@@ -228,10 +231,13 @@ def case_upload_ioc(caseid):
 
             if not asset:
                 errors.append(f"Unable to add asset for internal reason")
+                index += 1
                 continue
 
             ret.append(row)
             track_activity(f"added asset {asset.asset_name}", caseid=caseid)
+
+            index += 1
 
         if len(errors) == 0:
             msg = "Successfully imported data."
