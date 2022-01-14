@@ -132,6 +132,7 @@ function edit_event(id) {
   });
 }
 
+var current_timeline;
 /* Fetch and draw the timeline */
 function draw_timeline() {
     $('#timeline_list').empty();
@@ -146,6 +147,7 @@ function draw_timeline() {
         success: function (data) {
             if (data.status == 'success') {
                 var is_i = false;
+                current_timeline = data.data.tim;
                 tmb = [];
                 reid = $('#assets_timeline_select').val();
                 if (reid == null) { reid = 0; }
@@ -384,6 +386,33 @@ function goToSharedLink(){
         $('html, body').animate({ scrollTop: $('#event_'+shared_id).offset().top - 80 });
         $('#event_'+shared_id).addClass('fade-it');
     }
+}
+
+function timelineToCsv(){
+    csv_data = "event_date(UTC),event_title,event_description,event_tz,event_date_wtz,event_category,event_tags,linked_assets\n";
+    for (index in current_timeline) {
+        item = current_timeline[index];
+        content = item.event_content.replace('"', '\"');
+        content = content.replace(/[\r\n]/g, ' - ');
+        title = item.event_title.replace('"', '\"');
+        tags = item.event_tags.replace('"', '\"');
+        assets = "";
+        for (k in item.assets) {
+            assets += `${item.assets[k].name.replace('"', '\"')};`;
+        }
+        csv_data += `"${item.event_date}","${title}","${content}","${item.event_tz}","${item.event_date_wtz}","${item.category_name}","${tags}","${assets}"\n`;
+    }
+    download_file("sample.csv", "text/csv", csv_data);
+}
+
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }
 
 /* Page is ready, fetch the assets of the case */
