@@ -38,11 +38,6 @@
                             <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
                         </li>
                         <li class="nav-item hidden-caret">
-                            <a href="timeline/visualize" class="btn btn-primary btn-sm active" role="button" aria-pressed="true">
-                                <span class="menu-title">Visualize</span>
-                            </a>
-                        </li>
-                        <li class="nav-item hidden-caret">
                             <button class="btn btn-primary btn-sm" onclick="draw_timeline();">
                                 <span class="menu-title">Refresh</span>
                             </button>
@@ -52,6 +47,17 @@
                             <button class="btn btn-dark btn-sm" onclick="add_event();">
                                 <span class="menu-title">Add event</span>
                             </button>
+                        </li>
+                        <li class="nav-item">
+                            <div class="dropdown">
+                              <button class="btn btn-sm btn-border btn-black" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  <span class="menu-title"><i class="fas fa-ellipsis-v"></i></span>
+                              </button>
+                              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="timeline/visualize"><small class="fa fa-chalkboard-teacher mr-2"></small> Visualize timeline</a>
+                                <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
+                              </div>
+                            </div>
                         </li>
                     </ul>
 			</nav>
