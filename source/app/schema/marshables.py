@@ -44,7 +44,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
 class CaseAddNoteSchema(ma.Schema):
     note_id = fields.Integer(required=False)
-    note_title = fields.String(required=True, validate=Length(min=1))
+    note_title = fields.String(required=True, validate=Length(min=1), allow_none=False)
     note_content = fields.String(required=False, validate=Length(min=1))
     group_id = fields.Integer(required=True)
     csrf_token = fields.String(required=False)
@@ -68,7 +68,7 @@ class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
-    asset_name = auto_field('asset_name', required=True, validate=Length(min=2))
+    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     ioc_links = fields.List(fields.String, required=False)
 
     class Meta:
@@ -78,7 +78,7 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
 
 
 class IocSchema(ma.SQLAlchemyAutoSchema):
-    ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1))
+    ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
     ioc_type = auto_field('ioc_type', required=False)
 
     class Meta:
@@ -88,12 +88,12 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 
 
 class EventSchema(ma.SQLAlchemyAutoSchema):
-    event_title = auto_field('event_title', required=True, validate=Length(min=2))
-    event_category = fields.Integer(required=True)
+    event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
+    event_category = fields.Integer(required=True, allow_none=False)
     event_assets = fields.List(fields.Integer, required=True)
-    event_date = fields.String(required=True)
-    event_time = fields.String(required=True)
-    event_tz = fields.String(required=True)
+    event_date = fields.String(required=True, allow_none=False)
+    event_time = fields.String(required=True, allow_none=False)
+    event_tz = fields.String(required=True, allow_none=False)
 
     class Meta:
         model = CasesEvent
@@ -117,7 +117,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
 
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):
-    asset_name = auto_field('asset_name', required=True, validate=Length(min=2))
+    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     asset_description = auto_field('asset_description', required=True, validate=Length(min=2))
 
     class Meta:
@@ -140,7 +140,7 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
 
 
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
-    type_name = auto_field('type_name', required=True, validate=Length(min=2))
+    type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
     type_description = auto_field('type_description', required=True, validate=Length(min=2))
     type_taxonomy = auto_field('type_taxonomy')
 
@@ -164,7 +164,7 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseSchema(ma.SQLAlchemyAutoSchema):
-    case_name = auto_field('name', required=True, validate=Length(min=2))
+    case_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
     case_description = auto_field('description', required=True, validate=Length(min=2))
     case_soc_id = auto_field('soc_id', required=True)
     case_customer = auto_field('client_id', required=True)
@@ -180,7 +180,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
     task_id = auto_field('id')
     task_assignee = auto_field('task_assignee_id', required=True)
-    task_title = auto_field('task_title', required=True, validate=Length(min=2))
+    task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     csrf_token = fields.String(required=False)
 
     class Meta:
@@ -208,7 +208,7 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
-    customer_name = auto_field('name', required=True, validate=Length(min=2))
+    customer_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
     customer_id = auto_field('client_id')
     csrf_token = fields.String(required=False)
 
@@ -239,7 +239,7 @@ class TaskLogSchema(ma.Schema):
 
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     task_assignee_id = fields.Integer(required=True)
-    task_title = auto_field('task_title', required=True, validate=Length(min=2))
+    task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
 
     class Meta:
         model = CaseTasks
@@ -247,7 +247,7 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
-    filename = auto_field('filename', required=True, validate=Length(min=2))
+    filename = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
 
     class Meta:
         model = CaseReceivedFile
