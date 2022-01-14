@@ -152,18 +152,20 @@ def case_upload_ioc(caseid):
         ret = []
         errors = []
 
+        index = 0
         for row in csv_data:
-            index = 0
+
             for e in headers.split(','):
                 if row.get(e) is None:
                     errors.append(f"{e} is missing for row {index}")
+                    index += 1
                     continue
-                index += 1
 
             # IOC value must not be empty
             if not row.get("ioc_value"):
                 errors.append(f"Empty IOC value for row {index}")
                 track_activity(f"Attempted to upload an empty IOC value")
+                index += 1
                 continue
 
             row["ioc_tags"] = row["ioc_tags"].replace("|", ",")  # Reformat Tags
@@ -179,6 +181,7 @@ def case_upload_ioc(caseid):
             if not type_id:
                 errors.append(f"{row['ioc_value']} (invalid ioc type: {row['ioc_type']}) for row {index}")
                 log.error(f'Unrecognised IOC type {row["ioc_type"]}')
+                index += 1
                 continue
 
             row['ioc_type_id'] = type_id.type_id
@@ -195,6 +198,7 @@ def case_upload_ioc(caseid):
             if link_existed:
                 errors.append(f"{ioc.ioc_value} (already exists and linked to this case)")
                 log.error(f"IOC {ioc.ioc_value} already exists and linked to this case")
+                index += 1
                 continue
 
             if ioc:
@@ -204,6 +208,8 @@ def case_upload_ioc(caseid):
             else:
                 errors.append(f"{ioc.ioc_value} (internal reasons)")
                 log.error(f"Unable to create IOC {ioc.ioc_value} for internal reasons")
+
+            index += 1
 
         if len(errors) == 0:
             msg = "Successfully imported data."
