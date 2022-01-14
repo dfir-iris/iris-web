@@ -158,11 +158,16 @@ def case_graph_get_data(caseid):
                 'color': event.event_color
             }
 
+    node_dedup = {}
     for event_id in tmp:
         if tmp[event_id]['master_node']:
             for master_node in tmp[event_id]['master_node']:
+                node_dedup[master_node] = []
                 for subset in tmp[event_id]['list']:
                     if subset['node_id'] != master_node:
+                        if subset['node_id'] in node_dedup and master_node in node_dedup.get(subset['node_id']):
+                            continue
+
                         edge = {
                             'from': master_node,
                             'to': subset['node_id'],
@@ -170,6 +175,7 @@ def case_graph_get_data(caseid):
                             'color': tmp[event_id]['color']
                         }
                         edges.append(edge)
+                        node_dedup[master_node].append(subset['node_id'])
         else:
             for subset in itertools.combinations(tmp[event_id]['list'], 2):
                 edge = {

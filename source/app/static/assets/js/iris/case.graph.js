@@ -29,9 +29,9 @@ function redrawAll(data) {
   var options = {
     edges: {
       smooth: {
-            enabled: false,
-            type: 'discrete',
-            roundness: 0
+            enabled: true,
+            type: 'continuous',
+            roundness: 0.5
         }
     },
     layout: {
