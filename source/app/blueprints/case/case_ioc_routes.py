@@ -155,7 +155,7 @@ def case_upload_ioc(caseid):
         for row in csv_data:
             index = 0
             for e in headers.split(','):
-                if not row.get(e):
+                if row.get(e) is None:
                     errors.append(f"{e} is missing for row {index}")
                     continue
                 index += 1
@@ -171,7 +171,7 @@ def case_upload_ioc(caseid):
 
             type_id = get_ioc_type_id(row['ioc_type'].lower())
             if not type_id:
-                errors.append(f"{row['ioc_value']} (invalid ioc type: {row['ioc_type']})")
+                errors.append(f"{row['ioc_value']} (invalid ioc type: {row['ioc_type']}) for row {index}")
                 log.error(f'Unrecognised IOC type {row["ioc_type"]}')
                 continue
 
