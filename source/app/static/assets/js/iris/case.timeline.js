@@ -261,10 +261,12 @@ function draw_timeline() {
                             short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
                             long_content = match_replace_ioc(content_parsed.slice(150), reap);
                         }
-                        formatted_content = short_content + `<div class="collapse" id="collapseContent">
+                        formatted_content = short_content + `<div class="collapse" id="collapseContent-`
+                            + evt.event_id + `">
                             `+ long_content +`
                         </div>
-                        <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
+                        <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-`
+                            + evt.event_id + `" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
                     } else {
                         formatted_content = match_replace_ioc(content_parsed, reap);
                     }
