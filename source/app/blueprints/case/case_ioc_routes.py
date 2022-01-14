@@ -160,6 +160,12 @@ def case_upload_ioc(caseid):
                     continue
                 index += 1
 
+            # IOC value must not be empty
+            if not row.get("ioc_value"):
+                errors.append(f"Empty IOC value for row {index}")
+                track_activity(f"Attempted to upload an empty IOC value")
+                continue
+
             row["ioc_tags"] = row["ioc_tags"].replace("|", ",")  # Reformat Tags
 
             # Convert TLP into TLP id
