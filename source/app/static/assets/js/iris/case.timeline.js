@@ -132,6 +132,7 @@ function edit_event(id) {
   });
 }
 
+var current_timeline;
 /* Fetch and draw the timeline */
 function draw_timeline() {
     $('#timeline_list').empty();
@@ -146,6 +147,7 @@ function draw_timeline() {
         success: function (data) {
             if (data.status == 'success') {
                 var is_i = false;
+                current_timeline = data.data.tim;
                 tmb = [];
                 reid = $('#assets_timeline_select').val();
                 if (reid == null) { reid = 0; }
@@ -250,7 +252,6 @@ function draw_timeline() {
                     title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
                     content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
                     content_split = content_parsed.split('<br/>');
-                    console.log(content_split);
                     lines = content_split.length;
                     if (content_parsed.length > 150 || lines > 2) {
                         if (lines > 2) {
@@ -287,7 +288,6 @@ function draw_timeline() {
                                         </button>
                                         <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                                                 <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                                                <div class="dropdown-divider">Danger zone</div>
                                                 <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
                                         </div>
                                     </div>
@@ -384,6 +384,34 @@ function goToSharedLink(){
         $('html, body').animate({ scrollTop: $('#event_'+shared_id).offset().top - 80 });
         $('#event_'+shared_id).addClass('fade-it');
     }
+}
+
+function timelineToCsv(){
+    csv_data = "event_date(UTC),event_title,event_description,event_tz,event_date_wtz,event_category,event_tags,linked_assets\n";
+    for (index in current_timeline) {
+        item = current_timeline[index];
+        content = item.event_content.replace(/"/g, '\"');
+        content_parsed = content.replace(/(\r?\n)+/g, ' - ');
+        title = item.event_title.replace(/"/g, '\"');
+        tags = item.event_tags.replace(/"/g, '\"');
+        assets = "";
+        for (k in item.assets) {
+            asset = item.assets[k].name.replace(/"/g, '\"');
+            assets += `${asset};`;
+        }
+        csv_data += `"${item.event_date}","${title}","${content_parsed}","${item.event_tz}","${item.event_date_wtz}","${item.category_name}","${tags}","${assets}"\n`;
+    }
+    download_file("iris_timeline.csv", "text/csv", csv_data);
+}
+
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }
 
 /* Page is ready, fetch the assets of the case */
