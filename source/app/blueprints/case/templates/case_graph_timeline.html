@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/static/assets/css/suggestags.css">
 <link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 <link rel="stylesheet" href="/static/assets/css/select2.css">
-<link title="timeline-styles" rel="stylesheet" href="/static/assets/css/timeline.css">
+<link rel="stylesheet" href="/static/assets/css/vis.graph.css">
 
 {% endblock stylesheets %}
 
@@ -19,10 +19,17 @@
 {% include 'includes/sidenav.html' %}
 <div class="main-panel">
     <div class="content">
-        <div class="row">
-            <div class="col-md-12">
+        <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
+        <div class="page-inner">
+            <div class="row">
+                <div class="col-12">
 
-                <div id='timeline-embed' style="width: 100%; height: 600px"></div>
+                     <div class="card" id="card_main_load" style="display:none;">
+                            <div class="card-body">
+                                <div id='visualization'></div>
+                            </div>
+                     </div>
+                </div>
             </div>
         </div>
     </div>
@@ -40,27 +47,18 @@
 <script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
 
 <script src="/static/assets/js/iris/case.js"></script>
-<script src="/static/assets/js/timeline.js"></script>
+<script src="/static/assets/js/iris/case.timeline.visu.js"></script>
+<script src="/static/assets/js/plugin/vis/vis.graph.js"></script>
 <script>
-    var options = {
-       hash_bookmark: true,
-       scale_factor: 2,
-       initial_zoom: 4,
-       zoom_sequence:  [0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 100, 120]
-    };
-    $.ajax({
-        url: '/case/timeline/visualize/data',
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                window.timeline = new TL.Timeline('timeline-embed', data.data, options);
-            }
-        },
-        error: function (error) {
-            notify_error(error.message);
-        }
-    });
+$(document).ready(function(){
+   show_loader();
+
+    queryString = window.location.search;
+    urlParams = new URLSearchParams(queryString);
+    group = urlParams.get('group-by');
+    visualizeTimeline(group);
+
+});
 </script>
 
 {% endblock javascripts %}
