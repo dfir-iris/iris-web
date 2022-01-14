@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import csv
+
 import marshmallow
 from flask import Blueprint
 from flask import render_template, url_for, redirect, request
@@ -27,13 +29,14 @@ from flask_login import current_user
 from app import db
 from app.datamgmt.case.case_assets_db import get_assets_types, delete_asset, get_assets, get_asset, \
     get_similar_assets, get_linked_iocs_from_asset, set_ioc_links, get_linked_iocs_id_from_asset, \
-    create_asset, get_analysis_status_list, get_linked_iocs_finfo_from_asset
+    create_asset, get_analysis_status_list, get_linked_iocs_finfo_from_asset, get_asset_type_id
 from app.datamgmt.case.case_db import get_case, get_case_client_id
 from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.states import get_assets_state, update_assets_state
 from app.forms import ModalAddCaseAssetForm, AssetBasicForm
 
 from app.iris_engine.utils.tracker import track_activity
+from app.models import AnalysisStatus
 from app.schema.marshables import CaseAssetsSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
@@ -157,6 +160,91 @@ def add_asset(caseid):
             return response_success(data=add_asset_schema.dump(asset))
 
         return response_error("Unable to create asset for internal reasons")
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@case_assets_blueprint.route('/case/assets/upload', methods=['POST'])
+@api_login_required
+def case_upload_ioc(caseid):
+
+    try:
+        # validate before saving
+        add_asset_schema = CaseAssetsSchema()
+        jsdata = request.get_json()
+
+        # get IOC list from request
+        csv_lines = jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
+
+        headers = "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags"
+
+        if csv_lines[0].lower() != headers:
+            csv_lines.insert(0, headers)
+
+        # convert list of strings into CSV
+        csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
+
+        ret = []
+        errors = []
+
+        analysis_status = AnalysisStatus.query.filter(AnalysisStatus.name == 'Unspecified').first()
+        analysis_status_id = analysis_status.id
+
+        index = 0
+        for row in csv_data:
+
+            for e in headers.split(','):
+                if row.get(e) is None:
+                    errors.append(f"{e} is missing for row {index}")
+                    index += 1
+                    continue
+
+            # Asset name must not be empty
+            if not row.get("asset_name"):
+                errors.append(f"Empty asset name for row {index}")
+                track_activity(f"Attempted to upload an empty asset name")
+                index += 1
+                continue
+
+            if row.get("asset_tags"):
+                row["asset_tags"] = row.get("asset_tags").replace("|", ",")  # Reformat Tags
+
+            type_id = get_asset_type_id(row['asset_type_name'].lower())
+            if not type_id:
+                errors.append(f"{row['asset_type_name']} (invalid asset type: {row['asset_type_name']}) for row {index}")
+                track_activity(f'Attempted to upload unrecognized asset type {row["asset_type_name"]}')
+                index += 1
+                continue
+
+            row['asset_type_id'] = type_id.asset_id
+            row.pop('asset_type_name', None)
+
+            row['analysis_status_id'] = analysis_status_id
+
+            asset_sc = add_asset_schema.load(row)
+
+            asset = create_asset(asset=asset_sc,
+                                 caseid=caseid,
+                                 user_id=current_user.id
+                                 )
+
+            if not asset:
+                errors.append(f"Unable to add asset for internal reason")
+                index += 1
+                continue
+
+            ret.append(row)
+            track_activity(f"added asset {asset.asset_name}", caseid=caseid)
+
+            index += 1
+
+        if len(errors) == 0:
+            msg = "Successfully imported data."
+        else:
+            msg = "Data is imported but we got errors with the following rows:\n- " + "\n- ".join(errors)
+
+        return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
