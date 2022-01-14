@@ -194,7 +194,7 @@ def case_upload_ioc(caseid):
         for row in csv_data:
             index = 0
             for e in headers.split(','):
-                if not row.get(e):
+                if row.get(e) is None:
                     errors.append(f"{e} is missing for row {index}")
                     continue
                 index += 1
@@ -204,7 +204,7 @@ def case_upload_ioc(caseid):
 
             type_id = get_asset_type_id(row['asset_type_name'].lower())
             if not type_id:
-                errors.append(f"{row['asset_type_name']} (invalid asset type: {row['asset_type_name']})")
+                errors.append(f"{row['asset_type_name']} (invalid asset type: {row['asset_type_name']}) for row {index}")
                 track_activity(f'Attempted to upload unrecognized asset type {row["asset_type_name"]}')
                 continue
 
