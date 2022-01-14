@@ -90,7 +90,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 class EventSchema(ma.SQLAlchemyAutoSchema):
     event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
     event_category = fields.Integer(required=True, allow_none=False)
-    event_assets = fields.List(fields.Integer, required=True)
+    event_assets = fields.List(fields.Integer, required=True, allow_none=False)
     event_date = fields.String(required=True, allow_none=False)
     event_time = fields.String(required=True, allow_none=False)
     event_tz = fields.String(required=True, allow_none=False)
@@ -118,7 +118,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
-    asset_description = auto_field('asset_description', required=True, validate=Length(min=2))
+    asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
 
     class Meta:
         model = AssetsType
@@ -141,7 +141,7 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
 
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
     type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
-    type_description = auto_field('type_description', required=True, validate=Length(min=2))
+    type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
     type_taxonomy = auto_field('type_taxonomy')
 
     class Meta:
@@ -179,7 +179,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
     task_id = auto_field('id')
-    task_assignee = auto_field('task_assignee_id', required=True)
+    task_assignee = auto_field('task_assignee_id', required=True, allow_None=False)
     task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     csrf_token = fields.String(required=False)
 

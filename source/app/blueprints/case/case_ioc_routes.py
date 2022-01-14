@@ -102,7 +102,6 @@ def case_add_ioc(caseid):
         # validate before saving
         add_ioc_schema = IocSchema()
         jsdata = request.get_json()
-        print(jsdata)
         ioc = add_ioc_schema.load(jsdata)
 
         if not check_ioc_type_id(type_id=ioc.ioc_type_id):
