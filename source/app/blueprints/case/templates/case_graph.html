@@ -11,8 +11,21 @@
 <div class="main-panel">
 
     <div class="content">
+        <nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient">
+            <ul class="container-fluid mt-3 mb--2">
 
-
+                <ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
+                    <li class="nav-item ml-2">
+                            <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
+                    </li>
+                    <li class="nav-item hidden-caret">
+                        <button class="btn btn-primary btn-sm" onclick="get_case_graph();">
+                            <span class="menu-title">Refresh</span>
+                        </button>
+                    </li>
+                </ul>
+            </ul>
+        </nav>
         {% if current_user.is_authenticated %}
         {{ form.hidden_tag() }}
         <div class="page-inner">

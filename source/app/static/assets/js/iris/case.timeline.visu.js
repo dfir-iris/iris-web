@@ -1,6 +1,6 @@
 function visualizeTimeline(group) {
-    ggr = ['assets', 'category']
-    if (group == 'assets') {
+    ggr = ['asset', 'category']
+    if (group == 'asset') {
         src = '/case/timeline/visualize/data/by-asset';
     } else {
         src = '/case/timeline/visualize/data/by-category';
@@ -48,6 +48,7 @@ function visualizeTimeline(group) {
                   // create a Timeline
 
                   var container = document.getElementById('visualization');
+                  container.innerHTML = '';
                   $('#card_main_load').show();
                   timeline = new vis.Timeline(container, null, options);
                   if (ggr.includes(group)) {
@@ -62,4 +63,11 @@ function visualizeTimeline(group) {
             notify_error(error.message);
         }
     });
+}
+
+function refresh_timeline_graph(){
+    queryString = window.location.search;
+    urlParams = new URLSearchParams(queryString);
+    group = urlParams.get('group-by');
+    visualizeTimeline(group);
 }

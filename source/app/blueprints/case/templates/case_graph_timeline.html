@@ -19,6 +19,32 @@
 {% include 'includes/sidenav.html' %}
 <div class="main-panel">
     <div class="content">
+        <nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient">
+            <ul class="container-fluid mt-3 mb--2">
+                <ul class="navbar-nav">
+                    <li class="nav-item hidden-caret">
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{case_name[2]}}">No group</a>
+                    </li>
+                    <li class="nav-item hidden-caret">
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{case_name[2]}}&group-by=asset"><span class="text-decoration-none">Group by asset</span></a>
+                    </li>
+                    <li class="nav-item hidden-caret">
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{case_name[2]}}&group-by=category">Group by category</a>
+                    </li>
+                 </ul>
+                <ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
+                    <li class="nav-item ml-2">
+                            <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
+                    </li>
+                    <li class="nav-item hidden-caret">
+                        <button class="btn btn-primary btn-sm" onclick="refresh_timeline_graph();">
+                            <span class="menu-title">Refresh</span>
+                        </button>
+                    </li>
+                </ul>
+            </ul>
+        </nav>
+
         <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
         <div class="page-inner">
             <div class="row">
@@ -52,12 +78,7 @@
 <script>
 $(document).ready(function(){
    show_loader();
-
-    queryString = window.location.search;
-    urlParams = new URLSearchParams(queryString);
-    group = urlParams.get('group-by');
-    visualizeTimeline(group);
-
+   refresh_timeline_graph();
 });
 </script>
 

@@ -54,8 +54,11 @@
                                   <span class="menu-title"><i class="fas fa-ellipsis-v"></i></span>
                               </button>
                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <a class="dropdown-item" href="timeline/visualize"><small class="fa fa-chalkboard-teacher mr-2"></small> Visualize timeline</a>
-                                <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}"> Visualize</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}&group-by=asset"> Visualize by asset</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}&group-by=category">Visualize by category</a>
+                                  <div class="dropdown-divider"></div>
+                                  <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
                               </div>
                             </div>
                         </li>
