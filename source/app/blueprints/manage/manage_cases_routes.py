@@ -71,7 +71,7 @@ def details_case(cur_id, caseid, url_redir):
 
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
 @api_login_required
-def get_case(cur_id, caseid):
+def get_case_api(cur_id, caseid):
 
     res = get_case_details_rt(cur_id)
     if res:
