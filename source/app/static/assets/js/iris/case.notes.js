@@ -234,7 +234,7 @@ function edit_remote_groupnote(group_id) {
     data["csrf_token"] = $('#csrf_token').val();
 
     $.ajax({
-        url: '/case/notes/groups/edit' + case_param(),
+        url: '/case/notes/groups/update' + case_param(),
         type: "POST",
         data: data,
         dataType: 'JSON',
@@ -431,7 +431,7 @@ function save_note(this_item) {
     data_sent['note_content'] = $('#note_content').val();
 
     $.ajax({
-        url: '/case/notes/save/'+ n_id + case_param(),
+        url: '/case/notes/update/'+ n_id + case_param(),
         type: "POST",
         dataType: "json",
         contentType: "application/json;charset=UTF-8",

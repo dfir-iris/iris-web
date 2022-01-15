@@ -112,7 +112,7 @@ def case_note_delete(cur_id, caseid):
     return response_success("Deleted")
 
 
-@case_notes_blueprint.route('/case/notes/save/<int:cur_id>', methods=['POST'])
+@case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
 @api_login_required
 def case_note_save(cur_id, caseid):
 
@@ -259,7 +259,7 @@ def case_delete_notes_groups(cur_id, caseid):
     return response_success("Group ID {} deleted".format(cur_id))
 
 
-@case_notes_blueprint.route('/case/notes/groups/edit', methods=['POST'])
+@case_notes_blueprint.route('/case/notes/groups/update', methods=['POST'])
 @api_login_required
 def case_edit_notes_groups(caseid):
     form = FlaskForm()
@@ -270,12 +270,13 @@ def case_edit_notes_groups(caseid):
         group_title = request.form.get('group_title', '', type=str)
 
         if group_id != 0:
-            update_ret = update_note_group(group_title, group_id, caseid)
+            ng = update_note_group(group_title, group_id, caseid)
 
-            if update_ret:
+            if ng:
                 # Note group has been properly found and updated in db
                 track_activity("updated group note {}".format(group_title), caseid=caseid)
-                return response_success("Updated title of group ID {}".format(group_id))
+                group_schema = CaseGroupNoteSchema()
+                return response_success("Updated title of group ID {}".format(group_id), data=group_schema.dump(ng))
 
             else:
                 response_error("Group ID {} not found".format(group_id))

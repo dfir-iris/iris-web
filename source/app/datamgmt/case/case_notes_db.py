@@ -222,9 +222,10 @@ def update_note_group(group_title, group_id, caseid):
 
         update_notes_state(caseid=caseid)
         db.session.commit()
-        return True
+        return ng
+
     else:
-        return False
+        return None
 
 
 def find_pattern_in_notes(pattern, caseid):
