@@ -147,6 +147,26 @@ def get_groups_detail(caseid):
     return groups
 
 
+def get_group_details(group_id, caseid):
+    group_l = NotesGroup.query.with_entities(
+        NotesGroup.group_id,
+        NotesGroup.group_title,
+        NotesGroup.group_creationdate,
+        NotesGroup.group_lastupdate
+    ).filter(
+        NotesGroup.group_case_id == caseid
+    ).filter(
+        NotesGroup.group_id == group_id
+    ).first()
+
+    group = None
+    if group_l:
+        group = group_l._asdict()
+        group['notes'] = [note._asdict() for note in get_notes_from_group(caseid=caseid, group_id=group_id)]
+
+    return group
+
+
 def add_note_group(group_title, caseid, userid, creationdate):
     ng = NotesGroup()
     ng.group_title = group_title
@@ -226,7 +246,6 @@ def update_note_group(group_title, group_id, caseid):
 
     else:
         return None
-
 
 def find_pattern_in_notes(pattern, caseid):
     notes = Notes.query.filter(

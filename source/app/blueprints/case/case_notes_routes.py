@@ -29,7 +29,8 @@ from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case, case_get_desc_crc
 from app.datamgmt.case.case_notes_db import get_note, delete_note, add_note, update_note, get_groups_detail, \
-    get_groups_short, find_pattern_in_notes, add_note_group, delete_note_group, update_note_group, get_notes_from_group
+    get_groups_short, find_pattern_in_notes, add_note_group, delete_note_group, update_note_group, get_notes_from_group, \
+    get_group_details
 from app.datamgmt.states import get_notes_state
 from app.forms import CaseNoteForm
 from app.iris_engine.utils.tracker import track_activity
@@ -257,6 +258,17 @@ def case_delete_notes_groups(cur_id, caseid):
     track_activity("deleted group note ID {}".format(cur_id), caseid=caseid)
 
     return response_success("Group ID {} deleted".format(cur_id))
+
+
+@case_notes_blueprint.route('/case/notes/groups/<int:cur_id>', methods=['GET'])
+@api_login_required
+def case_get_notes_group(cur_id, caseid):
+
+    group = get_group_details(cur_id, caseid)
+    if not group:
+        return response_error(f"Group ID {cur_id} not found")
+
+    return response_success("", data=group)
 
 
 @case_notes_blueprint.route('/case/notes/groups/update', methods=['POST'])
