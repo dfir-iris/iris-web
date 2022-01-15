@@ -77,7 +77,7 @@ def get_case(cur_id, caseid):
     if res:
         return response_success(data=res._asdict())
 
-    return response_error(f'Case ID {res} not found')
+    return response_error(f'Case ID {cur_id} not found')
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['GET'])
