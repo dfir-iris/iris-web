@@ -312,7 +312,7 @@ function hide_loader() {
 function get_hash() {
   getMD5(
     document.getElementById("input_autofill").files[0],
-    prog => $('#btn_rfile_proc').text("Processing "+ prog * 100 + "%")
+    prog => $('#btn_rfile_proc').text("Processing "+ (prog * 100).toFixed(2) + "%")
   ).then(
     res => on_done_hash(res),
     err => console.error(err)
