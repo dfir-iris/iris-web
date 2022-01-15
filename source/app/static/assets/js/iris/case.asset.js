@@ -175,7 +175,7 @@ Table = $("#assets_table").DataTable({
       },
       { "data": "asset_tags",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
               tags = "";
               de = data.split(',');
               for (tag in de) {
