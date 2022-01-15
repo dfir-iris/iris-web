@@ -65,8 +65,11 @@ def view_asset_api(cur_id, caseid):
         AssetsType.asset_id == cur_id
     ).first()
 
+    if not asset_type:
+        return response_error(f'Invalid asset type ID {cur_id}')
+
     # Return the assets
-    return response_success("", data=asset_type)
+    return response_success("", data=asset_type._asdict())
 
 
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])
