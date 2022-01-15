@@ -127,7 +127,7 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def verify_unique(self, data, **kwargs):
         client = AssetsType.query.filter(
-            AssetsType.asset_name == data.asset_name,
+            func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
             AssetsType.asset_id != data.asset_id
         ).first()
         if client:
@@ -151,7 +151,7 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def verify_unique(self, data, **kwargs):
         client = IocType.query.filter(
-            IocType.type_name == data.type_name,
+            func.lower(IocType.type_name) == func.lower(data.type_name),
             IocType.type_id != data.type_id
         ).first()
         if client:
