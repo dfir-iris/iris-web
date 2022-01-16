@@ -168,7 +168,7 @@ def case_note_add(caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@case_notes_blueprint.route('/case/notes/groups', methods=['GET'])
+@case_notes_blueprint.route('/case/notes/groups/list', methods=['GET'])
 @api_login_required
 def case_load_notes_groups(caseid):
 

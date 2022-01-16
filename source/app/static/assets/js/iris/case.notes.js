@@ -469,7 +469,7 @@ function draw_kanban() {
     show_loader();
 
     $.ajax({
-        url: '/case/notes/groups' + case_param(),
+        url: '/case/notes/groups/list' + case_param(),
         type: "GET",
         dataType: 'JSON',
         success: function (data) {
