@@ -36,6 +36,8 @@ task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     csrf_token = fields.String(required=False)
+    group_id = fields.Integer()
+    group_title = fields.String()
 
     class Meta:
         model = Notes

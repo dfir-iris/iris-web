@@ -26,16 +26,30 @@ from app.models import Notes, NotesGroupLink, NotesGroup, User
 
 
 def get_note(note_id, caseid=None):
-    if caseid:
-        note = Notes.query.filter(and_(
-            Notes.note_id == note_id,
-            Notes.note_case_id == caseid
-        )).first()
-    else:
-        note = Notes.query.filter(
-            Notes.note_id == note_id
-        ).first()
+    note = Notes.query.with_entities(
+        Notes.note_id,
+        Notes.note_title,
+        Notes.note_content,
+        Notes.note_creationdate,
+        Notes.note_lastupdate,
+        NotesGroupLink.group_id,
+        NotesGroup.group_title
+    ).filter(and_(
+        Notes.note_id == note_id,
+        Notes.note_case_id == caseid
+    )).join(
+        NotesGroupLink.note,
+        NotesGroupLink.note_group
+    ).first()
 
+    return note
+
+
+def get_note_raw(note_id, caseid):
+    note = Notes.query.filter(
+        Notes.note_case_id == caseid,
+        Notes.note_id == note_id
+    ).first()
     return note
 
 
@@ -53,7 +67,7 @@ def delete_note(note_id, caseid):
 
 
 def update_note(note_content, note_title, update_date, user_id, note_id, caseid):
-    note = get_note(note_id, caseid=caseid)
+    note = get_note_raw(note_id, caseid=caseid)
 
     if note:
         note.note_content = note_content
@@ -246,6 +260,7 @@ def update_note_group(group_title, group_id, caseid):
 
     else:
         return None
+
 
 def find_pattern_in_notes(pattern, caseid):
     notes = Notes.query.filter(

@@ -65,7 +65,7 @@ def case_notes(caseid, url_redir):
 @api_login_required
 def case_note_detail(cur_id, caseid):
     try:
-        note = get_note(cur_id)
+        note = get_note(cur_id, caseid=caseid)
         if not note:
             return response_error(msg="Invalid note ID")
         note_schema = CaseNoteSchema()
@@ -84,7 +84,7 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
 
     form = CaseNoteForm()
 
-    note = get_note(cur_id)
+    note = get_note(cur_id, caseid)
 
     if note:
         form.content = note.note_content
@@ -98,7 +98,7 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
 @api_login_required
 def case_note_delete(cur_id, caseid):
 
-    note = get_note(cur_id)
+    note = get_note(cur_id, caseid)
     if not note:
         return response_error("Invalid note ID for this case")
 
