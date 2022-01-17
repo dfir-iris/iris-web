@@ -92,9 +92,10 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 class EventSchema(ma.SQLAlchemyAutoSchema):
     event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
     event_assets = fields.List(fields.Integer, required=True, allow_none=False)
-    event_date = fields.DateTime(required=True, allow_none=False)
+    event_date = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=True, allow_none=False)
     event_tz = fields.String(required=True, allow_none=False)
     event_category_id = fields.Integer(required=True, allow_none=False)
+    event_date_wtz = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
 
     class Meta:
         model = CasesEvent
@@ -108,13 +109,13 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         try:
 
             self.event_date = dateutil.parser.isoparse(date_time)
-            event_date_wtz = dateutil.parser.isoparse(date_time_wtz)
+            self.event_date_wtz = dateutil.parser.isoparse(date_time_wtz)
 
         except Exception as e:
             raise marshmallow.exceptions.ValidationError("Invalid date time",
                                                          field_name="event_date")
 
-        return self.event_date, event_date_wtz
+        return self.event_date, self.event_date_wtz
 
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):

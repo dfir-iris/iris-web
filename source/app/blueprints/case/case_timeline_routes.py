@@ -203,8 +203,8 @@ def case_gettimeline_api(asset_id, caseid):
     tim = []
     for row in timeline:
         ras = row._asdict()
-        ras['event_date'] = ras['event_date'].isoformat()
-        ras['event_date_wtz'] = ras['event_date_wtz'].isoformat()
+        ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
 
         alki = []
         cache = {}
@@ -274,8 +274,8 @@ def case_gettimeline(asset_id, caseid):
     cache = {}
     for row in timeline:
         ras = row._asdict()
-        ras['event_date'] = ras['event_date'].isoformat()
-        ras['event_date_wtz'] = ras['event_date_wtz'].isoformat()
+        ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
 
         alki = []
         for asset in assets_cache:
