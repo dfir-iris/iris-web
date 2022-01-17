@@ -439,6 +439,8 @@ def case_edit_event(cur_id, caseid):
 
         save_event_category(event.event_id, jsdata.get('event_category_id'))
 
+        setattr(event, 'event_category_id', jsdata.get('event_category_id'))
+
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,
                             assets_list=jsdata.get('event_assets'))
@@ -490,6 +492,8 @@ def case_add_event(caseid):
         db.session.commit()
 
         save_event_category(event.event_id, jsdata.get('event_category_id'))
+
+        setattr(event, 'event_category_id', jsdata.get('event_category_id'))
 
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,
