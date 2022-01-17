@@ -34,8 +34,15 @@
                 </div>
             </div>
             {% if user.id %}
-                <button type="button" class="btn btn-outline-danger mt-5"
+                <button type="button" class="btn btn-danger mt-5"
                 onclick="delete_user('{{ user.id }}');">Delete</button>
+                {% if user.active %}
+                <button type="button" class="btn btn-outline-danger mt-5"
+                onclick="deactivate_user('{{ user.id }}');">Deactivate</button>
+                {% else %}
+                <button type="button" class="btn btn-outline-success mt-5"
+                onclick="activate_user('{{ user.id }}');">Activate</button>
+                {% endif %}
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
                 id="submit_new_user">Update</button>
 

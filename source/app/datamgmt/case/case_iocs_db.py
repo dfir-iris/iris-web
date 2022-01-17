@@ -101,6 +101,7 @@ def get_detailed_iocs(caseid):
     detailed_iocs = IocLink.query.with_entities(
         Ioc.ioc_id,
         Ioc.ioc_value,
+        Ioc.ioc_type_id,
         IocType.type_name.label('ioc_type'),
         Ioc.ioc_type_id,
         Ioc.ioc_description,

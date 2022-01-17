@@ -316,6 +316,9 @@ function asset_details(asset_id) {
                 data["ioc_links"] = [data["ioc_links"]]
             }
             data['asset_tags'] = $('#asset_tags').val();
+            if (!data.hasOwnProperty('asset_compromised')) {
+                data['asset_compromised'] = 'false';
+            }
 
             $.ajax({
                 url: 'assets/update/' + asset_id + case_param(),
@@ -353,6 +356,66 @@ function asset_details(asset_id) {
     });
     $('#modal_add_asset').modal({ show: true });
     return false;
+}
+
+function fire_upload_assets() {
+    $('#modal_upload_assets').modal('show');
+}
+
+
+function upload_assets() {
+
+    var file = $("#input_upload_assets").get(0).files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        fileData = e.target.result
+        var data = new Object();
+        data['csrf_token'] = $('#csrf_token').val();
+        data['CSVData'] = fileData;
+        $.ajax({
+            url: '/case/assets/upload' + case_param(),
+            type: "POST",
+            data: JSON.stringify(data),
+            contentType: "application/json;charset=UTF-8",
+            dataType: "json",
+            success: function (data) {
+                jsdata = data;
+                if (jsdata.status == "success") {
+                    reload_assets();
+                    $('#modal_upload_assets').modal('hide');
+                    swal("Got news for you", data.message, "success");
+
+                } else {
+                    swal("Got bad news for you", data.message, "error");
+                }
+            },
+            error: function (error) {
+                notify_error(error.responseJSON.message);
+                propagate_form_api_errors(error.responseJSON.data);
+            }
+        });
+    };
+    reader.readAsText(file)
+
+    return false;
+}
+
+function generate_sample_csv(){
+    csv_data = "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags\n"
+    csv_data += '"My computer","Mac - Computer","Computer of Mme Michu","192.168.15.5","iris.local","Compta|Mac"\n'
+    csv_data += '"XCAS","Windows - Server","Xcas server","192.168.15.48","iris.local",""'
+    download_file("sample_assets.csv", "text/csv", csv_data);
+}
+
+
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }
 
 

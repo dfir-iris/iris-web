@@ -99,7 +99,10 @@ def load_user_from_request(request):
     # first, try to login using the api_key url arg
     api_key = request.args.get('api_key')
     if api_key:
-        user = User.query.filter_by(api_key=api_key).first()
+        user = User.query.filter(
+            User.api_key == api_key,
+            User.active == True
+        ).first()
         if user:
             return user
 
@@ -108,7 +111,11 @@ def load_user_from_request(request):
     if api_key:
         api_key = api_key.replace('Bearer ', '', 1)
 
-        user = User.query.filter(User.api_key == api_key).first()
+        user = User.query.filter(
+            User.api_key == api_key,
+            User.active == True
+        ).first()
+
         if user:
             return user
 

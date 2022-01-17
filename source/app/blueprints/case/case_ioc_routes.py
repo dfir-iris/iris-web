@@ -139,19 +139,35 @@ def case_upload_ioc(caseid):
         jsdata = request.get_json()
 
         # get IOC list from request
+        headers = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp"
         csv_lines=jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
-        if csv_lines[0].lower() != "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp":
-            csv_lines.insert(0, "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp")
+        if csv_lines[0].lower() != headers:
+            csv_lines.insert(0, headers)
 
         # convert list of strings into CSV
-        csv_data = csv.DictReader(csv_lines)
+        csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
 
         # build a Dict of possible TLP
         tlp_dict = get_tlps_dict()
         ret = []
         errors = []
 
+        index = 0
         for row in csv_data:
+
+            for e in headers.split(','):
+                if row.get(e) is None:
+                    errors.append(f"{e} is missing for row {index}")
+                    index += 1
+                    continue
+
+            # IOC value must not be empty
+            if not row.get("ioc_value"):
+                errors.append(f"Empty IOC value for row {index}")
+                track_activity(f"Attempted to upload an empty IOC value")
+                index += 1
+                continue
+
             row["ioc_tags"] = row["ioc_tags"].replace("|", ",")  # Reformat Tags
 
             # Convert TLP into TLP id
@@ -163,8 +179,9 @@ def case_upload_ioc(caseid):
 
             type_id = get_ioc_type_id(row['ioc_type'].lower())
             if not type_id:
-                errors.append(f"{row['ioc_value']} (invalid ioc type: {row['ioc_type']})")
+                errors.append(f"{row['ioc_value']} (invalid ioc type: {row['ioc_type']}) for row {index}")
                 log.error(f'Unrecognised IOC type {row["ioc_type"]}')
+                index += 1
                 continue
 
             row['ioc_type_id'] = type_id.type_id
@@ -181,6 +198,7 @@ def case_upload_ioc(caseid):
             if link_existed:
                 errors.append(f"{ioc.ioc_value} (already exists and linked to this case)")
                 log.error(f"IOC {ioc.ioc_value} already exists and linked to this case")
+                index += 1
                 continue
 
             if ioc:
@@ -190,6 +208,8 @@ def case_upload_ioc(caseid):
             else:
                 errors.append(f"{ioc.ioc_value} (internal reasons)")
                 log.error(f"Unable to create IOC {ioc.ioc_value} for internal reasons")
+
+            index += 1
 
         if len(errors) == 0:
             msg = "Successfully imported data."

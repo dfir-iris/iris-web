@@ -79,7 +79,48 @@ def case_get_timeline_state(caseid):
         return response_error('No timeline state for this case. Add an event to begin')
 
 
-@case_timeline_blueprint.route('/case/timeline/visualize/data', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])
+@api_login_required
+def case_getgraph_assets(caseid):
+
+    assets_cache = CaseAssets.query.with_entities(
+        CaseEventsAssets.event_id,
+        CaseAssets.asset_name
+    ).filter(
+        CaseEventsAssets.case_id == caseid,
+    ).join(CaseEventsAssets.asset).all()
+
+    timeline = CasesEvent.query.filter(and_(
+                CasesEvent.case_id == caseid,
+                CasesEvent.event_in_summary
+            )).order_by(
+            CasesEvent.event_date
+        ).all()
+
+    tim = []
+    for row in timeline:
+        for asset in assets_cache:
+            if asset.event_id == row.event_id:
+                tmp = {}
+                tmp['date'] = row.event_date.timestamp()
+                tmp['group'] = asset.asset_name
+                tmp['content'] = row.event_title
+                tmp['title'] = f"{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')} - {row.event_content}"
+
+                if row.event_color:
+                    tmp['style'] = f'background-color: {row.event_color};'
+
+                tmp['unique_id'] = row.event_id
+                tim.append(tmp)
+
+    res = {
+        "events": tim
+    }
+
+    return response_success("", data=res)
+
+
+@case_timeline_blueprint.route('/case/timeline/visualize/data/by-category', methods=['GET'])
 @api_login_required
 def case_getgraph(caseid):
 
@@ -95,30 +136,19 @@ def case_getgraph(caseid):
         tmp = {}
         ras = row
 
-        dates = row.event_date
-        tmp['start_date'] = {
-            "year" : dates.year,
-            "month": dates.month,
-            "day": dates.day,
-            "hour": dates.hour,
-            "minute": dates.minute,
-            "second": dates.second
-        }
+        tmp['date'] = row.event_date.timestamp()
+        tmp['group'] = row.category[0].name
+        tmp['content'] = row.event_title
+        content = row.event_content.replace('\n', '<br/>')
+        tmp['title'] = f"<small>{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')}</small><br/>{content}"
 
-        tmp['text'] = {
-            "headline": row.event_title,
-            "text": row.event_content
-        }
+        if row.event_color:
+            tmp['style'] = f'background-color: {row.event_color};'
+
         tmp['unique_id'] = row.event_id
         tim.append(tmp)
 
     res = {
-        "title": {
-            "text": {
-                "headline": "Incident timeline",
-                "text": "Incident timeline"
-            }
-        },
         "events": tim
     }
 
@@ -218,39 +248,39 @@ def case_gettimeline(asset_id, caseid):
             CasesEvent.category
         ).all()
 
+    assets_cache = CaseAssets.query.with_entities(
+        CaseEventsAssets.event_id,
+        CaseAssets.asset_id,
+        CaseAssets.asset_name,
+        AssetsType.asset_name.label('type'),
+        CaseAssets.asset_ip,
+        CaseAssets.asset_description,
+        CaseAssets.asset_compromised
+    ).filter(
+        CaseEventsAssets.case_id == caseid,
+    ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
 
     tim = []
-    cache_id = {}
-    resp = {}
+    cache = {}
     for row in timeline:
         ras = row._asdict()
         ras['event_date'] = ras['event_date'].isoformat()
         ras['event_date_wtz'] = ras['event_date_wtz'].isoformat()
 
-        as_list = CaseEventsAssets.query.with_entities(
-            CaseAssets.asset_id,
-            CaseAssets.asset_name,
-            AssetsType.asset_name.label('type'),
-            CaseAssets.asset_ip,
-            CaseAssets.asset_description,
-            CaseAssets.asset_compromised
-        ).filter(
-            CaseEventsAssets.event_id == row.event_id
-        ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
-
         alki = []
-        for asset in as_list:
-            alki.append(
-                {
-                    "name": "{} ({})".format(asset.asset_name, asset.type),
-                    "ip": asset.asset_ip,
-                    "description": asset.asset_description,
-                    "compromised": asset.asset_compromised
-                }
-            )
+        for asset in assets_cache:
+            if asset.event_id == ras['event_id']:
+                if asset.asset_id not in cache:
+                    cache[asset.asset_id] = "{} ({})".format(asset.asset_name, asset.type)
 
-            if asset.asset_id not in cache_id:
-                cache_id.update({asset.asset_id: "{} ({})".format(asset.asset_name, asset.type)})
+                alki.append(
+                    {
+                        "name": "{} ({})".format(asset.asset_name, asset.type),
+                        "ip": asset.asset_ip,
+                        "description": asset.asset_description,
+                        "compromised": asset.asset_compromised
+                    }
+                )
 
         ras['assets'] = alki
 
@@ -269,7 +299,7 @@ def case_gettimeline(asset_id, caseid):
 
         resp = {
             "tim": tim,
-            "assets": cache_id,
+            "assets": cache,
             "iocs": iocs,
             "state": get_timeline_state(caseid=caseid)
         }

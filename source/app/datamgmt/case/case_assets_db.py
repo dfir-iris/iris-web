@@ -23,7 +23,7 @@ import datetime
 from app import db
 from app.datamgmt.states import update_assets_state
 from app.models import AssetsType, IocAssetLink, CaseAssets, Cases, Ioc, AnalysisStatus, CaseEventsAssets, IocType
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 
 
 def create_asset(asset, caseid, user_id):
@@ -143,7 +143,7 @@ def get_asset_type_id(asset_type_name):
     assets_type_id = AssetsType.query.with_entities(
         AssetsType.asset_id
     ).filter(
-        AssetsType.asset_name == asset_type_name
+        func.lower(AssetsType.asset_name) == asset_type_name
     ).first()
 
     return assets_type_id

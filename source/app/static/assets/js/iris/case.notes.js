@@ -506,15 +506,6 @@ function draw_kanban() {
 }
 
 
-function copy_note_link(node_id) {
-    link = buildShareLink(node_id);
-    navigator.clipboard.writeText(link).then(function() {
-          notify_success('Note share link copied')
-    }, function(err) {
-        console.error('Unable to copy note share link', err);
-    });
-}
-
 $(document).ready(function(){
     shared_id = getSharedLink();
     if (shared_id) {

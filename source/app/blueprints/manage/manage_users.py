@@ -160,6 +160,38 @@ def update_user_api(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
+@manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])
+@api_admin_required
+def deactivate_user_api(cur_id, caseid):
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID for this case")
+
+    user.active = False
+    db.session.commit()
+    user_schema = UserSchema()
+
+    track_activity("user {} deactivated".format(user.user), caseid=caseid)
+    return response_success("User deactivated", data=user_schema.dump(user))
+
+
+@manage_users_blueprint.route('/manage/users/activate/<int:cur_id>', methods=['GET'])
+@api_admin_required
+def activate_user_api(cur_id, caseid):
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID for this case")
+
+    user.active = True
+    db.session.commit()
+    user_schema = UserSchema()
+
+    track_activity("user {} activated".format(user.user), caseid=caseid)
+    return response_success("User activated", data=user_schema.dump(user))
+
+
 @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def view_delete_user(cur_id, caseid):

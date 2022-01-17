@@ -314,6 +314,10 @@ function delete_ioc(ioc_id) {
     });
 }
 
+function fire_upload_iocs() {
+    $('#modal_upload_ioc').modal('show');
+}
+
 function upload_ioc() {
 
     var file = $("#input_upload_ioc").get(0).files[0];
@@ -355,7 +359,7 @@ function generate_sample_csv(){
     csv_data = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp\n"
     csv_data += "1.1.1.1,ip-dst,Cloudflare DNS IP address,Cloudflare|DNS,green\n"
     csv_data += "wannacry.exe,filename,Wannacry sample found,Wannacry|Malware|PE,amber"
-    download_file("sample.csv", "text/csv", csv_data);
+    download_file("sample_iocs.csv", "text/csv", csv_data);
 }
 
 function download_file(filename, contentType, data) {
