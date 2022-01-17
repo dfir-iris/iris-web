@@ -125,7 +125,69 @@ def case_getgraph(caseid):
     return response_success("", data=res)
 
 
-@case_timeline_blueprint.route('/case/timeline/get/<int:asset_id>', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/list', methods=['GET'])
+@api_login_required
+def case_gettimeline_api_nofilter(caseid):
+    return case_gettimeline_api(0)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/list/filter/<int:asset_id>', methods=['GET'])
+@api_login_required
+def case_gettimeline_api(asset_id, caseid):
+    if asset_id:
+        condition = and_(
+                CasesEvent.case_id == caseid,
+                CaseEventsAssets.asset_id == asset_id,
+                CaseEventsAssets.event_id == CasesEvent.event_id
+        )
+    else:
+        condition = CasesEvent.case_id == caseid
+
+    timeline = CasesEvent.query.with_entities(
+            CasesEvent.event_id,
+            CasesEvent.event_date,
+            CasesEvent.event_date_wtz,
+            CasesEvent.event_tz,
+            CasesEvent.event_title,
+            CasesEvent.event_color,
+            CasesEvent.event_tags,
+            CasesEvent.event_content,
+            CasesEvent.event_in_summary,
+            CasesEvent.event_in_graph,
+            EventCategory.name.label("category_name"),
+            EventCategory.id.label("event_category_id")
+        ).filter(condition).order_by(
+            CasesEvent.event_date
+        ).outerjoin(
+            CasesEvent.category
+        ).all()
+
+    tim = []
+    for row in timeline:
+        ras = row._asdict()
+        ras['event_date'] = ras['event_date'].isoformat()
+        ras['event_date_wtz'] = ras['event_date_wtz'].isoformat()
+
+        as_list = CaseEventsAssets.query.with_entities(
+            CaseAssets.asset_id,
+            CaseAssets.asset_name
+        ).filter(
+            CaseEventsAssets.event_id == row.event_id
+        ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+
+        ras['assets'] = [asset._asdict() for asset in as_list]
+
+        tim.append(ras)
+
+    resp = {
+        "timeline": tim,
+        "state": get_timeline_state(caseid=caseid)
+    }
+
+    return response_success("", data=resp)
+
+
+@case_timeline_blueprint.route('/case/timeline/filter/<int:asset_id>', methods=['GET'])
 @api_login_required
 def case_gettimeline(asset_id, caseid):
 
@@ -221,7 +283,7 @@ def case_gettimeline(asset_id, caseid):
     return response_success("", data=resp)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/delete/<int:cur_id>', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_delete_event(cur_id, caseid):
 
@@ -248,7 +310,7 @@ def case_delete_event(cur_id, caseid):
     return response_success('Event ID {} deleted'.format(cur_id))
 
 
-@case_timeline_blueprint.route('/case/timeline/event/<int:cur_id>', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
 @api_login_required
 def event_view(cur_id, caseid):
 
@@ -272,7 +334,7 @@ def event_view(cur_id, caseid):
     return response_success(data=output)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/<int:cur_id>/modal', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/modal', methods=['GET'])
 @login_required
 def event_view_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -310,7 +372,7 @@ def event_view_modal(cur_id, caseid, url_redir):
                            assets_prefill=assets_prefill, category=event.category)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/update/<int:cur_id>', methods=["POST"])
+@case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
 @api_login_required
 def case_edit_event(cur_id, caseid):
 
@@ -333,7 +395,6 @@ def case_edit_event(cur_id, caseid):
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
 
-        #db.session.add(event)
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
@@ -349,7 +410,7 @@ def case_edit_event(cur_id, caseid):
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/add/modal', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
 @login_required
 def case_add_event_modal(caseid, url_redir):
     if url_redir:
@@ -367,7 +428,7 @@ def case_add_event_modal(caseid, url_redir):
                            tags=event_tags, assets=assets, assets_prefill=None, category=def_cat)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/add', methods=['POST'])
+@case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
 @api_login_required
 def case_add_event(caseid):
 
