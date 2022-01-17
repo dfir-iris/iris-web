@@ -194,7 +194,8 @@ def case_gettimeline_api(asset_id, caseid):
 
     assets_cache = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
-        CaseAssets.asset_name
+        CaseAssets.asset_name,
+        CaseEventsAssets.event_id
     ).filter(
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset).all()
@@ -212,7 +213,7 @@ def case_gettimeline_api(asset_id, caseid):
                 if asset.asset_id not in cache:
                     cache[asset.asset_id] = asset.asset_name
 
-                alki.append(asset._asdcit())
+                alki.append(asset._asdict())
 
         ras['assets'] = alki
 
@@ -426,7 +427,6 @@ def case_edit_event(cur_id, caseid):
 
         event.event_date, event.event_date_wtz = event_schema.validate_date(
             jsdata.get(u'event_date'),
-            jsdata.get(u'event_time'),
             jsdata.get(u'event_tz')
             )
 
@@ -480,7 +480,6 @@ def case_add_event(caseid):
         event = event_schema.load(jsdata)
 
         event.event_date, event.event_date_wtz = event_schema.validate_date(jsdata.get(u'event_date'),
-                                                                            jsdata.get(u'event_time'),
                                                                             jsdata.get(u'event_tz'))
 
         event.case_id = caseid

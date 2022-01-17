@@ -92,8 +92,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 class EventSchema(ma.SQLAlchemyAutoSchema):
     event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
     event_assets = fields.List(fields.Integer, required=True, allow_none=False)
-    event_date = fields.String(required=True, allow_none=False)
-    event_time = fields.String(required=True, allow_none=False)
+    event_date = fields.DateTime(required=True, allow_none=False)
     event_tz = fields.String(required=True, allow_none=False)
     event_category_id = fields.Integer(required=True, allow_none=False)
 
@@ -102,9 +101,9 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
-    def validate_date(self, event_date, event_time, event_tz):
-        date_time = "{}T{}{}".format(event_date, event_time, event_tz)
-        date_time_wtz = "{}T{}".format(event_date, event_time)
+    def validate_date(self, event_date, event_tz):
+        date_time = "{}{}".format(event_date, event_tz)
+        date_time_wtz = "{}".format(event_date)
 
         try:
 

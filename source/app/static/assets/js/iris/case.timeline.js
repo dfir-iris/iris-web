@@ -5,8 +5,7 @@ function add_event() {
         $('#submit_new_event').on("click", function () {
             clear_api_error();
             var data_sent = $('#form_new_event').serializeObject();
-            data_sent['event_date'] = $('#event_date').val();
-            data_sent['event_time'] = $('#event_time').val();
+            data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
             data_sent['event_in_summary'] = $('#event_in_summary').is(':checked');
             data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
             data_sent['event_tags'] = $('#event_tags').val();
@@ -55,8 +54,7 @@ function update_event(id) {
     window.location.hash = id;
     clear_api_error();
     var data_sent = $('#form_new_event').serializeObject();
-    data_sent['event_date'] = $('#event_date').val();
-    data_sent['event_time'] = $('#event_time').val();
+    data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
     data_sent['event_in_summary'] = $('#event_in_summary').is(':checked');
     data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
     data_sent['event_tags'] = $('#event_tags').val();
