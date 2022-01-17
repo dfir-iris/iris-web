@@ -393,7 +393,7 @@ def event_view_modal(cur_id, caseid, url_redir):
     form.event_in_summary.data = event.event_in_summary
 
     categories = get_events_categories()
-    form.event_category.choices = categories
+    form.event_category_id.choices = categories
 
     assets_prefill = CaseEventsAssets.query.with_entities(
         CaseEventsAssets.asset_id
@@ -437,7 +437,7 @@ def case_edit_event(cur_id, caseid):
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
-        save_event_category(event.event_id, jsdata.get('event_category'))
+        save_event_category(event.event_id, jsdata.get('event_category_id'))
 
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,
@@ -460,7 +460,7 @@ def case_add_event_modal(caseid, url_redir):
     assets = get_case_assets(caseid)
     def_cat = get_default_cat()
     categories = get_events_categories()
-    form.event_category.choices = categories
+    form.event_category_id.choices = categories
     form.event_in_graph.data = True
 
     return render_template("modal_add_case_event.html", form=form, event=event,
@@ -489,7 +489,7 @@ def case_add_event(caseid):
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
-        save_event_category(event.event_id, jsdata.get('event_category'))
+        save_event_category(event.event_id, jsdata.get('event_category_id'))
 
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,

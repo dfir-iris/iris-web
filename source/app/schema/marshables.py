@@ -91,11 +91,11 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 
 class EventSchema(ma.SQLAlchemyAutoSchema):
     event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
-    event_category = fields.Integer(required=True, allow_none=False)
     event_assets = fields.List(fields.Integer, required=True, allow_none=False)
     event_date = fields.String(required=True, allow_none=False)
     event_time = fields.String(required=True, allow_none=False)
     event_tz = fields.String(required=True, allow_none=False)
+    event_category_id = fields.Integer(required=True, allow_none=False)
 
     class Meta:
         model = CasesEvent

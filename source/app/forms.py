@@ -128,7 +128,7 @@ class CaseEventForm(FlaskForm):
     event_content = TextAreaField(u'Event Description')
     event_raw = TextAreaField(u'Event Raw data')
     event_assets = SelectField(u'Event Asset')
-    event_category = SelectField(u'Event Category')
+    event_category_id = SelectField(u'Event Category')
     event_tz = StringField(u'Event Timezone', validators=[DataRequired()])
     event_in_summary = BooleanField(u'Add to summary')
     event_in_graph = BooleanField(u'Display in graph')
