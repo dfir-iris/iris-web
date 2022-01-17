@@ -16,6 +16,12 @@ function visualizeTimeline(group) {
 
                   groups = new vis.DataSet();
                   groups_l = []
+                  if (data.data.events.length == 0) {
+                        $('#card_main_load').show();
+                        $('#visualization').text('No events in summary');
+                        hide_loader();
+                        return true;
+                  }
                   for (index in data.data.events) {
                         event = data.data.events[index];
                         if (!groups_l.includes(event.group)){

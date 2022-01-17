@@ -19,7 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
-from app.util import response_success
+from app.util import response_success, response_error
 
 from app.models.models import AnalysisStatus, EventCategory
 from app.util import api_login_required
@@ -42,4 +42,20 @@ def list_event_categories(caseid):
 
     return response_success("", data=data)
 
-# TODO : Add management of event categories
+
+@manage_event_cat_blueprint.route('/manage/event-categories/<int:cur_id>', methods=['GET'])
+@api_login_required
+def get_event_category(cur_id, caseid):
+    lcat = EventCategory.query.with_entities(
+        EventCategory.id,
+        EventCategory.name
+    ).filter(
+        EventCategory.id == cur_id
+    ).first()
+
+    if not lcat:
+        return response_error(f"Event category ID {cur_id} not found")
+
+    data = lcat._asdict()
+
+    return response_success("", data=data)

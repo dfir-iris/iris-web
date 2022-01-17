@@ -136,7 +136,7 @@ def case_getgraph(caseid):
         tmp = {}
         ras = row
 
-        tmp['date'] = row.event_date.timestamp()
+        tmp['date'] = row.event_date
         tmp['group'] = row.category[0].name
         tmp['content'] = row.event_title
         content = row.event_content.replace('\n', '<br/>')
@@ -192,20 +192,29 @@ def case_gettimeline_api(asset_id, caseid):
             CasesEvent.category
         ).all()
 
+    assets_cache = CaseAssets.query.with_entities(
+        CaseAssets.asset_id,
+        CaseAssets.asset_name
+    ).filter(
+        CaseEventsAssets.case_id == caseid,
+    ).join(CaseEventsAssets.asset).all()
+
     tim = []
     for row in timeline:
         ras = row._asdict()
         ras['event_date'] = ras['event_date'].isoformat()
         ras['event_date_wtz'] = ras['event_date_wtz'].isoformat()
 
-        as_list = CaseEventsAssets.query.with_entities(
-            CaseAssets.asset_id,
-            CaseAssets.asset_name
-        ).filter(
-            CaseEventsAssets.event_id == row.event_id
-        ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+        alki = []
+        cache = {}
+        for asset in assets_cache:
+            if asset.event_id == ras['event_id']:
+                if asset.asset_id not in cache:
+                    cache[asset.asset_id] = asset.asset_name
 
-        ras['assets'] = [asset._asdict() for asset in as_list]
+                alki.append(asset._asdcit())
+
+        ras['assets'] = alki
 
         tim.append(ras)
 
