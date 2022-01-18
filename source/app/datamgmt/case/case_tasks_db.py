@@ -24,7 +24,11 @@ from sqlalchemy import desc
 
 from app import db
 from app.datamgmt.states import update_tasks_state
-from app.models import CaseTasks, User
+from app.models import CaseTasks, User, TaskStatus
+
+
+def get_tasks_status():
+    return TaskStatus.query.all()
 
 
 def get_tasks(caseid):
@@ -35,13 +39,14 @@ def get_tasks(caseid):
         CaseTasks.task_open_date,
         CaseTasks.task_tags,
         User.name.label('user_name'),
-        CaseTasks.task_status
+        CaseTasks.task_status_id,
+        TaskStatus.status_name
     ).filter(
         CaseTasks.task_case_id == caseid
     ).join(
-        CaseTasks.user_assigned
+        CaseTasks.user_assigned, CaseTasks.status
     ).order_by(
-        desc(CaseTasks.task_status)
+        desc(TaskStatus.id)
     ).all()
 
 
@@ -52,7 +57,7 @@ def get_task(task_id, caseid):
 def update_task_status(task_status, task_id, caseid):
     task = get_task(task_id, caseid)
     if task:
-        task.task_status = task_status
+        task.task_status_id = task_status
 
         update_tasks_state(caseid=caseid)
         db.session.commit()
