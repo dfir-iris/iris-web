@@ -94,12 +94,10 @@ def case_task_statusupdate(cur_id, caseid):
 
     if request.is_json:
 
-        task_status = [a.id for a in get_tasks_status()]
-        if request.json.get('task_status') in task_status:
+        if update_task_status(request.json.get('task_status_id'), cur_id, caseid):
+            task_schema = CaseTaskSchema()
 
-            update_task_status(request.json.get('task_status'), cur_id, caseid)
-
-            return response_success("Task status updated")
+            return response_success("Task status updated", data=task_schema.dump(task))
         else:
             return response_error("Invalid status")
 

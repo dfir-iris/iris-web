@@ -31,8 +31,6 @@ from app import ma
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
     CaseReceivedFile, AssetsType, IocType
 
-task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
-
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     csrf_token = fields.String(required=False)
@@ -200,14 +198,6 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
         raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
                                                      field_name="task_assignee")
 
-    @pre_load
-    def verify_status(self, data, **kwargs):
-        if data.get('task_status') in task_status:
-            return data
-
-        raise marshmallow.exceptions.ValidationError("Invalid status string",
-                                                     field_name="task_status")
-
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
     customer_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
@@ -246,6 +236,7 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = CaseTasks
         load_instance = True
+        include_fk = True
 
 
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):

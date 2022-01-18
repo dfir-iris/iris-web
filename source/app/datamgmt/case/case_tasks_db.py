@@ -58,11 +58,15 @@ def get_task(task_id, caseid):
 def update_task_status(task_status, task_id, caseid):
     task = get_task(task_id, caseid)
     if task:
-        task.task_status_id = task_status
+        try:
+            task.task_status_id = task_status
 
-        update_tasks_state(caseid=caseid)
-        db.session.commit()
-        return True
+            update_tasks_state(caseid=caseid)
+            db.session.commit()
+            return True
+
+        except:
+            return False
     else:
         return False
 

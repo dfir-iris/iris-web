@@ -41,11 +41,11 @@ Table = $("#tasks_table").DataTable({
         }
       },
       {
-        "data": "status_name",
+        "data": "task_status_id",
         "render": function(data, type, row, meta) {
            if (type === 'display') {
               data = sanitizeHTML(data);
-              data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + data + '</span>';
+              data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
           }
           return data;
         }
@@ -73,8 +73,7 @@ Table = $("#tasks_table").DataTable({
       }
     ],
     rowCallback: function (nRow, data) {
-        data = sanitizeHTML(data);
-        data = '<span class="badge ml-2 badge-'+ data['status_bscolor'] +'">' + sanitizeHTML(data['status_name']) + '</span>';
+        nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
     },
     filter: true,
     info: true,
@@ -304,7 +303,8 @@ function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {
     contentType: "application/json;charset=UTF-8",
     success: function (response) {
       if (response.status == 'success') {
-           notify_success("Changes saved");
+            get_tasks();
+            notify_success("Changes saved");
       } else {
         notify_error('Error :' + response.message)
       }
