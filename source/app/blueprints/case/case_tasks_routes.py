@@ -66,6 +66,7 @@ def case_get_tasks(caseid):
         output = []
 
     ret = {
+        "tasks_status": get_tasks_status(),
         "tasks": output,
         "state": get_tasks_state(caseid=caseid)
     }

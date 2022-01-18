@@ -40,7 +40,8 @@ def get_tasks(caseid):
         CaseTasks.task_tags,
         User.name.label('user_name'),
         CaseTasks.task_status_id,
-        TaskStatus.status_name
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor
     ).filter(
         CaseTasks.task_case_id == caseid
     ).join(

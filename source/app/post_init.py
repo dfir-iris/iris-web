@@ -162,11 +162,11 @@ def create_safe_analysis_status():
 
 
 def create_safe_task_status():
-    create_safe(db.session, TaskStatus, status_name='To do', status_description="")
-    create_safe(db.session, TaskStatus, status_name='In progress', status_description="")
-    create_safe(db.session, TaskStatus, status_name='On hold', status_description="")
-    create_safe(db.session, TaskStatus, status_name='Done', status_description="")
-    create_safe(db.session, TaskStatus, status_name='Canceled', status_description="")
+    create_safe(db.session, TaskStatus, status_name='To do', status_description="", status_bscolor="danger")
+    create_safe(db.session, TaskStatus, status_name='In progress', status_description="", status_bscolor="warning")
+    create_safe(db.session, TaskStatus, status_name='On hold', status_description="", status_bscolor="muted")
+    create_safe(db.session, TaskStatus, status_name='Done', status_description="", status_bscolor="success")
+    create_safe(db.session, TaskStatus, status_name='Canceled', status_description="", status_bscolor="muted")
 
 
 def create_safe_assets():
