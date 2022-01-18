@@ -412,7 +412,7 @@ function update_gtask(id) {
     data_sent['csrf_token'] = $('#csrf_token').val();
 
     $.ajax({
-        url: '/global/tasks/udpate/' + id + case_param(),
+        url: '/global/tasks/update/' + id + case_param(),
         type: "POST",
         data: JSON.stringify(data_sent),
         dataType: "json",
