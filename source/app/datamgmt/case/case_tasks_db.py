@@ -47,7 +47,7 @@ def get_tasks(caseid):
     ).join(
         CaseTasks.user_assigned, CaseTasks.status
     ).order_by(
-        desc(TaskStatus.id)
+        desc(TaskStatus.status_name)
     ).all()
 
 
@@ -79,6 +79,8 @@ def add_task(task, user_id, caseid):
     task.task_userid_update = user_id
     task.task_open_date = now
     task.task_last_update = now
+
+    update_task_status(task.task_status_id, task.id, caseid)
 
     db.session.add(task)
 

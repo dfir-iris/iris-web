@@ -138,7 +138,7 @@ class CaseTaskForm(FlaskForm):
     task_title = StringField(u'Task Title', validators=[DataRequired()])
     task_description = TextAreaField(u'Task description')
     task_assignee_id = SelectField(u'Task assignee', validators=[DataRequired()])
-    task_status = SelectField(u'Task status')
+    task_status_id = SelectField(u'Task status', validators=[DataRequired()])
     task_tags = StringField(u'Task Tags')
 
 
@@ -146,7 +146,7 @@ class CaseGlobalTaskForm(FlaskForm):
     task_title = StringField(u'Task Title')
     task_description = TextAreaField(u'Task description')
     task_assignee = SelectField(u'Task assignee')
-    task_status = SelectField(u'Task status')
+    task_status_id = SelectField(u'Task status')
     task_tags = StringField(u'Task Tags')
 
 

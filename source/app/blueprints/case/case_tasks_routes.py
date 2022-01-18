@@ -116,7 +116,7 @@ def case_add_task_modal(caseid, url_redir):
     form = CaseTaskForm()
     form.task_assignee_id.choices = [(user.id, user.name) for user in
                                      User.query.filter(User.active == True).order_by(User.name).all()]
-    form.task_status.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+    form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None)
 
@@ -168,7 +168,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     task = get_task(task_id=cur_id, caseid=caseid)
     form.task_assignee_id.choices = [(user.id, user.name) for user in
                                      User.query.filter(User.active == True).order_by(User.name).all()]
-    form.task_status.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+    form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     if not task:
         return response_error("Invalid task ID for this case")
@@ -203,7 +203,7 @@ def case_edit_task(cur_id, caseid):
         db.session.commit()
 
         if task:
-            track_activity("updated task {} (status {})".format(task.task_title, task.task_status), caseid=caseid)
+            track_activity("updated task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
             return response_success(data=task_schema.dump(task))
 
         return response_error("Unable to update task for internal reasons")

@@ -33,7 +33,7 @@ def upgrade():
             local_cols=["task_status_id"],
             remote_cols=["id"])
 
-    if _table_has_column('case_tasks', 'task_status_id'):
+    if _table_has_column('case_tasks', 'task_status'):
         # Set schema and make migration of data
         t_tasks = sa.Table(
             'case_tasks',
@@ -63,6 +63,52 @@ def upgrade():
 
         op.drop_column(
             table_name='case_tasks',
+            column_name='task_status'
+        )
+
+    if not _table_has_column('global_tasks', 'task_status_id'):
+        op.add_column('global_tasks',
+                      sa.Column('task_status_id', sa.Integer, sa.ForeignKey('task_status.id'))
+                      )
+
+        # Add the foreign key of ioc_type to ioc
+        op.create_foreign_key(
+            constraint_name='global_task_status_id',
+            source_table="global_tasks",
+            referent_table="task_status",
+            local_cols=["task_status_id"],
+            remote_cols=["id"])
+
+    if _table_has_column('global_tasks', 'task_status'):
+        # Set schema and make migration of data
+        tg_tasks = sa.Table(
+            'global_tasks',
+            sa.MetaData(),
+            sa.Column('id', sa.Integer, primary_key=True),
+            sa.Column('task_title', sa.Text),
+            sa.Column('task_status', sa.Text),
+            sa.Column('task_status_id', sa.ForeignKey('task_status.id')),
+        )
+        to_update = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
+
+        # Migrate existing IOCs
+        for update in to_update:
+            conn = op.get_bind()
+            res = conn.execute(f"select id from global_tasks where task_status = '{update}';")
+            results = res.fetchall()
+            res = conn.execute(f"select id from task_status where status_name = '{update}';")
+            e_info = res.fetchall()
+
+            if e_info:
+                status_id = e_info[0][0]
+
+                for res in results:
+                    conn.execute(tg_tasks.update().where(tg_tasks.c.id == res[0]).values(
+                        task_status_id=status_id
+                    ))
+
+        op.drop_column(
+            table_name='global_tasks',
             column_name='task_status'
         )
 

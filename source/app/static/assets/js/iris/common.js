@@ -431,3 +431,33 @@ function copy_object_link(node_id) {
         console.error('Shared link', err);
     });
 }
+
+function load_case_activity(){
+    $.ajax({
+        url: '/case/activities/list' + case_param(),
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+                js_data = data.data;
+
+                for (index in js_data) {
+                    console.log(index)
+
+                    entry =	`<li class="feed-item feed-item-default">
+							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
+							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</a></span>
+						    </li>`
+                    $('#case_activities').append(entry);
+                }
+            }
+    });
+}
+
+function update_time() {
+    $('#current_date').text((new Date()).toLocaleString().slice(0, 17));
+}
+
+$(document).ready(function(){
+    update_time();
+    setInterval(function() { update_time(); }, 30000);
+});

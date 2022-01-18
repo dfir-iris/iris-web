@@ -113,7 +113,7 @@ function add_task() {
             var data_sent = $('#form_new_task').serializeObject();
             data_sent['task_tags'] = $('#task_tags').val();
             data_sent['task_assignee'] = $('#task_assignee').val();
-            data_sent['task_status_id'] = $('#task_status').val();
+            data_sent['task_status_id'] = $('#task_status_id').val();
 
             $.ajax({
                 url: 'tasks/add' + case_param(),
@@ -163,7 +163,7 @@ function update_task(id) {
     var data_sent = $('#form_new_task').serializeObject();
     data_sent['task_tags'] = $('#task_tags').val();
     data_sent['task_assignee'] = $('#task_assignee').val();
-    data_sent['task_status_id'] = $('#task_status').val();
+    data_sent['task_status_id'] = $('#task_status_id').val();
 
     $.ajax({
         url: 'tasks/update/' + id + case_param(),

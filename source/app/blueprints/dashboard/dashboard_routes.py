@@ -28,8 +28,9 @@ from flask_login import logout_user, current_user
 from sqlalchemy import distinct
 
 from app import db
+#from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_status, list_user_tasks, \
-    update_utask_status
+    update_utask_status, get_tasks_status
 from app.forms import CustomerForm, CaseGlobalTaskForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
@@ -44,8 +45,6 @@ dashboard_blueprint = Blueprint(
     __name__,
     template_folder='templates'
 )
-
-task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
 
 
 # Logout user
@@ -124,12 +123,8 @@ def index(caseid, url_redir):
 
     data = {
         "user_open_count": user_open_case,
-        "ioc_count": db.session.query(Ioc).count(),
         "cases_open_count": db.session.query(Cases).filter(Cases.close_date == None).count(),
         "cases_count": db.session.query(Cases).count(),
-        "client_count": db.session.query(Client).count(),
-        "tasks_count": db.session.query(CaseTasks).filter(CaseTasks.task_status != "Done").count(),
-        "date": now.strftime("%d %b, %Y")
     }
 
     # Create the customer form to be able to quickly add a customer
@@ -144,19 +139,39 @@ def get_gtasks(caseid):
 
     tasks_list = list_global_tasks()
 
-    return response_success("", data=tasks_list)
+    if tasks_list:
+        output = [c._asdict() for c in tasks_list]
+    else:
+        output = []
+
+    ret = {
+        "tasks_status": get_tasks_status(),
+        "tasks": output
+    }
+
+    return response_success("", data=ret)
 
 
 @dashboard_blueprint.route('/user/tasks/list', methods=['GET'])
 @api_login_required
 def get_utasks(caseid):
 
-    tasks_list = list_user_tasks()
+    ct = list_user_tasks()
 
-    return response_success("", data=tasks_list)
+    if ct:
+        output = [c._asdict() for c in ct]
+    else:
+        output = []
+
+    ret = {
+        "tasks_status": get_tasks_status(),
+        "tasks": output
+    }
+
+    return response_success("", data=ret)
 
 
-@dashboard_blueprint.route('/user/tasks/update-status', methods=['POST'])
+@dashboard_blueprint.route('/user/tasks/status/update', methods=['POST'])
 @api_login_required
 def utask_statusupdate(caseid):
     jsdata = request.get_json()
@@ -164,11 +179,8 @@ def utask_statusupdate(caseid):
         return response_error("Invalid request")
 
     task_id = jsdata.get('task_id')
-    status = jsdata.get('task_status')
+    status = jsdata.get('task_status_id')
     case_id = jsdata.get('case_id')
-
-    if not status or not task_id:
-        return response_error("Missing parameter")
 
     task = update_utask_status(task_id, status, case_id)
 
@@ -178,7 +190,7 @@ def utask_statusupdate(caseid):
     return response_error("Invalid data")
 
 
-@dashboard_blueprint.route('/global/tasks/update-status', methods=['POST'])
+@dashboard_blueprint.route('/global/tasks/status/update', methods=['POST'])
 @api_login_required
 def gtask_statusupdate(caseid):
 
@@ -187,10 +199,7 @@ def gtask_statusupdate(caseid):
         return response_error("Invalid request")
 
     task_id = jsdata.get('task_id')
-    status = jsdata.get('task_status')
-
-    if not status or not task_id:
-        return response_error("Missing parameter")
+    status = jsdata.get('task_status_id')
 
     success = update_gtask_status(task_id, status)
 
@@ -236,12 +245,12 @@ def add_gtask(caseid):
 
     else:
         form.task_assignee.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
-        form.task_status.choices = [(a, a) for a in task_status]
+        form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
         return render_template("modal_add_global_task.html", form=form, task=task, uid=current_user.id, user_name=None)
 
 
-@dashboard_blueprint.route('/global/tasks/edit/<int:cur_id>', methods=['GET', 'POST'])
+@dashboard_blueprint.route('/global/tasks/update/<int:cur_id>', methods=['GET', 'POST'])
 @api_login_required
 def edit_gtask(cur_id, caseid):
 
@@ -249,7 +258,7 @@ def edit_gtask(cur_id, caseid):
         form = CaseGlobalTaskForm()
         task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
         form.task_assignee.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
-        form.task_status.choices = [(a, a) for a in task_status]
+        form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
         if task:
 
@@ -266,7 +275,7 @@ def edit_gtask(cur_id, caseid):
                 except marshmallow.exceptions.ValidationError as e:
                     return response_error(msg="Data error", data=e.messages, status=400)
 
-                track_activity("updated global task {} (status {})".format(task.task_title, task.task_status), caseid=caseid)
+                track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
 
                 return response_success('Updated !')
 

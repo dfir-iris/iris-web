@@ -232,6 +232,7 @@ class TaskLogSchema(ma.Schema):
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     task_assignee_id = fields.Integer(required=True)
     task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
+    task_status_id = auto_field('task_status_id', required=True)
 
     class Meta:
         model = CaseTasks
