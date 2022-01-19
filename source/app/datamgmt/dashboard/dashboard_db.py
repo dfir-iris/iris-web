@@ -33,6 +33,7 @@ def list_global_tasks():
         GlobalTasks.task_last_update,
         GlobalTasks.task_tags,
         User.name.label('user_name'),
+        GlobalTasks.task_assignee_id,
         GlobalTasks.task_status_id,
         TaskStatus.status_name,
         TaskStatus.status_bscolor
@@ -46,6 +47,29 @@ def list_global_tasks():
 
     return ct
 
+
+def get_global_task(task_id):
+    ct = GlobalTasks.query.with_entities(
+        GlobalTasks.id.label("task_id"),
+        GlobalTasks.task_title,
+        GlobalTasks.task_description,
+        GlobalTasks.task_last_update,
+        GlobalTasks.task_tags,
+        User.name.label('user_name'),
+        GlobalTasks.task_assignee_id,
+        GlobalTasks.task_status_id,
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor
+    ).filter(
+        GlobalTasks.id == task_id
+    ).join(
+        GlobalTasks.user_assigned,
+        GlobalTasks.status
+    ).order_by(
+        desc(TaskStatus.status_name)
+    ).first()
+
+    return ct
 
 def get_tasks_status():
     return TaskStatus.query.all()

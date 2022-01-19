@@ -27,6 +27,7 @@ function add_event() {
                                 timer: 400
                             }
                         ).then((value) => {
+                            window.location.hash = data.data.event_id;
                             draw_timeline();
                             $('#modal_add_event').modal('hide');
 

@@ -439,7 +439,7 @@ function load_case_activity(){
         dataType: "json",
         success: function (data) {
                 js_data = data.data;
-
+                $('#case_activities').empty();
                 for (index in js_data) {
                     console.log(index)
 

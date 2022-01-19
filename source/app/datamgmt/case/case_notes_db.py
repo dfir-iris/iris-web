@@ -76,10 +76,10 @@ def update_note(note_content, note_title, update_date, user_id, note_id, caseid)
         note.note_user = user_id
 
         db.session.commit()
-        return True
+        return note
 
     else:
-        return False
+        return None
 
 
 def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=""):

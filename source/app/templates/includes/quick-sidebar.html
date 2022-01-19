@@ -9,8 +9,15 @@
 			</ul>
 			<div class="tab-content mt-3">
 				<div class="tab-chat tab-pane fade" id="activities" role="tabpanel">
-					<ol class="activity-feed" id="case_activities">
-					</ol>
+					<div class="row float-right">
+						<button type="button" class="float-right btn btn-round btn-xs btn-icon btn-outline-default mr-3 ml-3" onclick="load_case_activity();">
+							<i class="fas fa-sync rotate"></i>
+						</button>
+					</div>
+					<div class="row">
+						<ol class="activity-feed" id="case_activities">
+						</ol>
+					</div>
 				</div>
 				<div class="tab-chat tab-pane fade show active" id="case" role="tabpanel">
 					<div class="messages-contact">
@@ -19,12 +26,12 @@
 							<span class="category-title mt-0">Shortcuts</span>
 							<div class="quick-actions quick-actions-primary">
 								<div class="quick-actions-items">
-                                    <div class="quick-actions quick-actions-success">
+                                    <div class="quick-actions quick-actions-black">
                                         <div class="row m-0">
                                             <a class="col-12 col-md-12 p-0" title="Export page as PNG" href="#" onclick="exportInnerPng();" role="button">
                                                 <div class="quick-actions-item">
                                                     <i class="flaticon-photo-camera"></i>
-                                                    <span class="text">Take screenshot of content</span>
+                                                    <span class="text-dark">Take screenshot of content</span>
                                                 </div>
                                             </a>
                                         </div>
@@ -67,7 +74,7 @@
 													<span class="text">Upload evidence</span>
 												</div>
 											</a>
-											<a class="col-6 col-md-6 p-0" data-toggle="modal" title="Add task log" data-target="#modal_add_tasklog" href="#">
+											<a class="col-6 col-md-6 p-0" data-toggle="modal" data-target="#modal_add_tasklog" href="#">
 												<div class="quick-actions-item">
 													<i class="flaticon-interface-1"></i>
 													<span class="text">Add task log</span>
@@ -75,7 +82,7 @@
 											</a>
 										</div>
                                         <div class="row m-0">
-											<a class="col-6 col-md-6 p-0" data-toggle="modal" title="Register evidence" data-target="#modal_add_receivedfile" href="#">
+											<a class="col-6 col-md-6 p-0" data-toggle="modal" data-target="#modal_add_receivedfile" href="#">
 												<div class="quick-actions-item">
 													<i class="flaticon-price-tag"></i>
 													<span class="text">Register evidence</span>

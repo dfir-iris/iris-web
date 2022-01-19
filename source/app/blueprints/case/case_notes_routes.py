@@ -123,13 +123,14 @@ def case_note_save(cur_id, caseid):
         jsdata = request.get_json()
         addnote_schema.load(jsdata, partial=['group_id'])
 
-        if not update_note(note_content=jsdata.get('note_content'),
+        note = update_note(note_content=jsdata.get('note_content'),
                            note_title=jsdata.get('note_title'),
                            update_date=datetime.utcnow(),
                            user_id=current_user.id,
                            note_id=cur_id,
                            caseid=caseid
-                           ):
+                           )
+        if not note:
 
             return response_error("Invalid note ID for this case")
 
@@ -137,7 +138,7 @@ def case_note_save(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
     track_activity("updated note {}".format(jsdata.get('note_title')), caseid=caseid)
-    return response_success("Note ID {} saved".format(cur_id))
+    return response_success("Note ID {} saved".format(cur_id), data=addnote_schema.dump(note))
 
 
 @case_notes_blueprint.route('/case/notes/add', methods=['POST'])

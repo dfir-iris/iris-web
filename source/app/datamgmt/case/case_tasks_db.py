@@ -38,7 +38,8 @@ def get_tasks(caseid):
         CaseTasks.task_description,
         CaseTasks.task_open_date,
         CaseTasks.task_tags,
-        User.name.label('user_name'),
+        User.name.label('assignee_name'),
+        CaseTasks.task_assignee_id,
         CaseTasks.task_status_id,
         TaskStatus.status_name,
         TaskStatus.status_bscolor

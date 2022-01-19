@@ -157,7 +157,7 @@ def add_asset(caseid):
 
         if asset:
             track_activity("added asset {}".format(asset.asset_name), caseid=caseid)
-            return response_success(data=add_asset_schema.dump(asset))
+            return response_success("Asset added", data=add_asset_schema.dump(asset))
 
         return response_error("Unable to create asset for internal reasons")
 
@@ -183,7 +183,7 @@ def case_upload_ioc(caseid):
             csv_lines.insert(0, headers)
 
         # convert list of strings into CSV
-        csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
+        csv_data = csv.DictReader(csv_lines, delimiter=',')
 
         ret = []
         errors = []
@@ -193,12 +193,17 @@ def case_upload_ioc(caseid):
 
         index = 0
         for row in csv_data:
-
+            print(row)
+            missing_field = False
             for e in headers.split(','):
                 if row.get(e) is None:
                     errors.append(f"{e} is missing for row {index}")
-                    index += 1
+                    missing_field = True
                     continue
+
+            if missing_field:
+                index += 1
+                continue
 
             # Asset name must not be empty
             if not row.get("asset_name"):
@@ -210,10 +215,17 @@ def case_upload_ioc(caseid):
             if row.get("asset_tags"):
                 row["asset_tags"] = row.get("asset_tags").replace("|", ",")  # Reformat Tags
 
+            print(row.get('asset_type_name'))
+            if not row.get('asset_type_name'):
+                errors.append(f"Empty asset type for row {index}")
+                track_activity(f"Attempted to upload an empty asset type")
+                index += 1
+                continue
+
             type_id = get_asset_type_id(row['asset_type_name'].lower())
             if not type_id:
-                errors.append(f"{row['asset_type_name']} (invalid asset type: {row['asset_type_name']}) for row {index}")
-                track_activity(f'Attempted to upload unrecognized asset type {row["asset_type_name"]}')
+                errors.append(f"{row.get('asset_name')} (invalid asset type: {row.get('asset_type_name')}) for row {index}")
+                track_activity(f"Attempted to upload unrecognized asset type {row.get('asset_type_name')}")
                 index += 1
                 continue
 
@@ -323,7 +335,7 @@ def asset_update(cur_id, caseid):
 
         if asset:
             track_activity("updated asset {}".format(asset.asset_name), caseid=caseid)
-            return response_success("Updated asset {}".format(asset.asset_name))
+            return response_success("Updated asset {}".format(asset.asset_name), add_asset_schema.dump(asset))
 
         return response_error("Unable to update asset for internal reasons")
 

@@ -179,7 +179,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
     task_id = auto_field('id')
-    task_assignee = auto_field('task_assignee_id', required=True, allow_None=False)
+    task_assignee_id = auto_field('task_assignee_id', required=True, allow_None=False)
     task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     csrf_token = fields.String(required=False)
 
@@ -187,16 +187,16 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
         model = GlobalTasks
         include_fk = True
         load_instance = True
-        exclude = ['id', 'task_assignee_id']
+        exclude = ['id']
 
     @pre_load
     def verify_assignee(self, data, **kwargs):
-        user = User.query.filter(User.id == data.get('task_assignee')).first()
+        user = User.query.filter(User.id == data.get('task_assignee_id')).first()
         if user:
             return data
 
         raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
-                                                     field_name="task_assignee")
+                                                     field_name="task_assignee_id")
 
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):

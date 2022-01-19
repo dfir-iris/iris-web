@@ -54,7 +54,7 @@ def view_anastatus(cur_id, caseid):
     ).first()
 
     if not lstatus:
-        return response_error(f"Statsu ID {cur_id} not found")
+        return response_error(f"Analysis status ID {cur_id} not found")
 
     return response_success("", data=lstatus._asdict())
 

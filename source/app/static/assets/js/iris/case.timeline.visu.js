@@ -46,7 +46,7 @@ function visualizeTimeline(group) {
                   var options = {
                     stack: true,
                     minHeight: '400px',
-                    maxHeight: '100%',
+                    maxHeight: $(window).height() - 250,
                     start: data.data.events[0].date,
                     end: data.data.events[data.data.events.length - 1].date,
                   };
@@ -72,6 +72,7 @@ function visualizeTimeline(group) {
 }
 
 function refresh_timeline_graph(){
+    show_loader();
     queryString = window.location.search;
     urlParams = new URLSearchParams(queryString);
     group = urlParams.get('group-by');

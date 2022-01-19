@@ -51,7 +51,7 @@ Table = $("#tasks_table").DataTable({
         }
       },
       {
-        "data": "user_name",
+        "data": "assignee_name",
         "render": function (data, type, row, meta) { return sanitizeHTML(data);}
       },
       {

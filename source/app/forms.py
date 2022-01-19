@@ -145,7 +145,7 @@ class CaseTaskForm(FlaskForm):
 class CaseGlobalTaskForm(FlaskForm):
     task_title = StringField(u'Task Title')
     task_description = TextAreaField(u'Task description')
-    task_assignee = SelectField(u'Task assignee')
+    task_assignee_id = SelectField(u'Task assignee')
     task_status_id = SelectField(u'Task status')
     task_tags = StringField(u'Task Tags')
 

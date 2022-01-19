@@ -95,7 +95,7 @@ def view_customers(cur_id, caseid):
         return response_error("Invalid request")
 
     try:
-        update_client(cur_id, request.json.get('customer_name'))
+        client = update_client(cur_id, request.json.get('customer_name'))
     except ElementNotFoundException:
         return response_error('Invalid Customer ID')
     except ValidationError as e:
@@ -103,7 +103,8 @@ def view_customers(cur_id, caseid):
     except Exception:
         return response_error('An error occurred during Customer update ...')
 
-    return response_success("Customer updated")
+    client_schema = CustomerSchema()
+    return response_success("Customer updated", client_schema.dump(client))
 
 
 @manage_customers_blueprint.route('/manage/customers/add/modal', methods=['GET'])

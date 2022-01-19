@@ -30,7 +30,7 @@ from sqlalchemy import distinct
 from app import db
 #from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_status, list_user_tasks, \
-    update_utask_status, get_tasks_status
+    update_utask_status, get_tasks_status, get_global_task
 from app.forms import CustomerForm, CaseGlobalTaskForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
@@ -152,6 +152,17 @@ def get_gtasks(caseid):
     return response_success("", data=ret)
 
 
+@dashboard_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
+@api_login_required
+def view_gtask(cur_id, caseid):
+
+    task = get_global_task(task_id=cur_id)
+    if not task:
+        return response_error(f'Global task ID {cur_id} not found')
+
+    return response_success("", data=task._asdict())
+
+
 @dashboard_blueprint.route('/user/tasks/list', methods=['GET'])
 @api_login_required
 def get_utasks(caseid):
@@ -241,10 +252,10 @@ def add_gtask(caseid):
 
         track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
 
-        return response_success('Saved !')
+        return response_success('Saved !', data=gtask_schema.dump(gtask))
 
     else:
-        form.task_assignee.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
+        form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
         form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
         return render_template("modal_add_global_task.html", form=form, task=task, uid=current_user.id, user_name=None)
@@ -257,7 +268,7 @@ def edit_gtask(cur_id, caseid):
     if cur_id:
         form = CaseGlobalTaskForm()
         task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
-        form.task_assignee.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
+        form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
         form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
         if task:
@@ -277,7 +288,7 @@ def edit_gtask(cur_id, caseid):
 
                 track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
 
-                return response_success('Updated !')
+                return response_success('Updated !', data=gtask_schema.dump(gtask))
 
             else:
                 # Render the IOC
