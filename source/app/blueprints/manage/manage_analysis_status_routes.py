@@ -19,7 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
-from app.util import response_success
+from app.util import response_success, response_error
 
 from app.models.models import AnalysisStatus
 from app.util import api_login_required
@@ -41,5 +41,22 @@ def list_anastatus(caseid):
     data = [row._asdict() for row in lstatus]
 
     return response_success("", data=data)
+
+
+@manage_anastatus_blueprint.route('/manage/analysis-status/<int:cur_id>', methods=['GET'])
+@api_login_required
+def view_anastatus(cur_id, caseid):
+    lstatus = AnalysisStatus.query.with_entities(
+        AnalysisStatus.id,
+        AnalysisStatus.name
+    ).filter(
+        AnalysisStatus.id == cur_id
+    ).first()
+
+    if not lstatus:
+        return response_error(f"Statsu ID {cur_id} not found")
+
+    return response_success("", data=lstatus._asdict())
+
 
 # TODO : Add management of analysis status
