@@ -168,7 +168,7 @@ def activity_fetch(caseid):
         UserActivity.user
     ).order_by(
         desc(UserActivity.activity_date)
-    ).limit(15).all()
+    ).limit(40).all()
 
     output = [a._asdict() for a in ua]
 
