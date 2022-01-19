@@ -101,7 +101,7 @@ UserTaskTable = $("#utasks_table").DataTable({
        "render": function (data, type, row, meta) {
           if (type === 'display') {
             data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="click" href="#" data-content="' + data + '">' + data.slice(0, 70);
+            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
                 datas += ' (..)</span>';
@@ -284,7 +284,7 @@ Table = $("#gtasks_table").DataTable({
        "render": function (data, type, row, meta) {
           if (type === 'display') {
             data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="click" href="#" data-content="' + data + '">' + data.slice(0, 70);
+            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
                 datas += ' (..)</span>';
