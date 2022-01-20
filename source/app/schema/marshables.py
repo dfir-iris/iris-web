@@ -176,6 +176,15 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         exclude = ['name', 'description', 'soc_id', 'client_id']
 
+    @pre_load
+    def verify_customer(self, data, **kwargs):
+        client = Client.query.filter(Client.client_id == data.get('case_customer')).first()
+        if client:
+            return data
+
+        raise marshmallow.exceptions.ValidationError("Invalid client id",
+                                                     field_name="case_customer")
+
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
     task_id = auto_field('id')
