@@ -111,11 +111,11 @@ def update_gtask_status(task_id, status):
         try:
             task.task_status_id = status
             db.session.commit()
-            return True
+            return task
         except:
             pass
 
-    return False
+    return None
 
 
 def update_utask_status(task_id, status, case_id):

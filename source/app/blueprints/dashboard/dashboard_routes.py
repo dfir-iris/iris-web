@@ -212,12 +212,13 @@ def gtask_statusupdate(caseid):
     task_id = jsdata.get('task_id')
     status = jsdata.get('task_status_id')
 
-    success = update_gtask_status(task_id, status)
+    task = update_gtask_status(task_id, status)
 
-    if success:
-        return response_success("Updated")
+    if task:
+        gtask_schema = GlobalTasksSchema()
+        return response_success("Updated", data=gtask_schema.dump(task))
 
-    return response_error("Invalid data")
+    return response_error("Invalid task ID or task status")
 
 
 @dashboard_blueprint.route('/global/tasks/add', methods=['GET', 'POST'])
