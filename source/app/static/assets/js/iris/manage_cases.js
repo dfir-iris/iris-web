@@ -98,8 +98,7 @@ function submit_new_case() {
         },
         error: function (error) {
             $('#submit_new_case_btn').text('Save');
-            notify_error(error.responseJSON.message);
-            propagate_form_api_errors(data.data);
+            propagate_form_api_errors(error.responseJSON.data);
             return false;
         }
     });
