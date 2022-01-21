@@ -30,7 +30,7 @@ from sqlalchemy import func
 from app import ma
 from app.datamgmt.dashboard.dashboard_db import get_task_status
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus
+    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp
 
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
@@ -100,6 +100,20 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         model = Ioc
         load_instance = True
         include_fk = True
+
+    @pre_load
+    def verify_data(self, data, **kwargs):
+        ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
+        if not ioc_type:
+            raise marshmallow.exceptions.ValidationError("Invalid ioc type ID",
+                                                         field_name="ioc_type_id")
+
+        tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).first()
+        if not tlp_id:
+            raise marshmallow.exceptions.ValidationError("Invalid TLP ID",
+                                                         field_name="ioc_tlp_id")
+
+        return data
 
 
 class EventSchema(ma.SQLAlchemyAutoSchema):

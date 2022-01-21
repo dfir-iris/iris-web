@@ -281,6 +281,8 @@ def case_edit_notes_groups(cur_id, caseid):
         return response_error("Invalid data")
 
     group_title = js_data.get('group_title')
+    if not group_title:
+        return response_error("Missing field group_title")
 
     ng = update_note_group(group_title, cur_id, caseid)
 

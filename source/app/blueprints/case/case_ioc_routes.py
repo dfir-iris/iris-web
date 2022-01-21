@@ -293,7 +293,7 @@ def case_update_ioc(cur_id, caseid):
     try:
         ioc = get_ioc(cur_id, caseid)
         if not ioc:
-            return response_error("Invalid note ID for this case")
+            return response_error("Invalid IOC ID for this case")
 
         # validate before saving
         ioc_schema = IocSchema()

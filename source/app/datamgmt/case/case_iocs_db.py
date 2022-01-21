@@ -216,7 +216,7 @@ def check_ioc_type_id(type_id: int):
         IocType.type_id == type_id
     ).first()
 
-    return type_id is not None
+    return type_id
 
 
 def get_ioc_type_id(type_name: str):
