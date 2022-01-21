@@ -272,26 +272,23 @@ def case_get_notes_group(cur_id, caseid):
     return response_success("", data=group)
 
 
-@case_notes_blueprint.route('/case/notes/groups/update', methods=['POST'])
+@case_notes_blueprint.route('/case/notes/groups/update/<int:cur_id>', methods=['POST'])
 @api_login_required
-def case_edit_notes_groups(caseid):
-    form = FlaskForm()
+def case_edit_notes_groups(cur_id, caseid):
 
-    if form.is_submitted():
+    js_data = request.get_json()
+    if not js_data:
+        return response_error("Invalid data")
 
-        group_id = request.form.get('group_id', 0, type=int)
-        group_title = request.form.get('group_title', '', type=str)
+    group_title = js_data.get('group_title')
 
-        if group_id != 0:
-            ng = update_note_group(group_title, group_id, caseid)
+    ng = update_note_group(group_title, cur_id, caseid)
 
-            if ng:
-                # Note group has been properly found and updated in db
-                track_activity("updated group note {}".format(group_title), caseid=caseid)
-                group_schema = CaseGroupNoteSchema()
-                return response_success("Updated title of group ID {}".format(group_id), data=group_schema.dump(ng))
+    if ng:
+        # Note group has been properly found and updated in db
+        track_activity("updated group note {}".format(group_title), caseid=caseid)
+        group_schema = CaseGroupNoteSchema()
+        return response_success("Updated title of group ID {}".format(cur_id), data=group_schema.dump(ng))
 
-            else:
-                response_error("Group ID {} not found".format(group_id))
+    return response_error("Group ID {} not found".format(cur_id))
 
-    return response_error("Invalid request")
