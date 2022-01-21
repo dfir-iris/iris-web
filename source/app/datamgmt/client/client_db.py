@@ -97,7 +97,7 @@ def update_client(client_id: str, client_name: str) -> Client:
 def delete_client(client_id: str) -> None:
     client = Client.query.filter(
         Client.client_id == client_id
-    ).first
+    ).first()
 
     if not client:
         raise ElementNotFoundException('No Customer found with this uuid.')

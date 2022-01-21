@@ -96,10 +96,13 @@ def view_customers(cur_id, caseid):
 
     try:
         client = update_client(cur_id, request.json.get('customer_name'))
+
     except ElementNotFoundException:
         return response_error('Invalid Customer ID')
+
     except ValidationError as e:
-        return response_error(str(e))
+        return response_error("", data=e.messages)
+
     except Exception:
         return response_error('An error occurred during Customer update ...')
 
@@ -141,13 +144,17 @@ def add_customers(caseid):
 @api_admin_required
 def delete_customers(cur_id, caseid):
     try:
+
         delete_client(cur_id)
+
     except ElementNotFoundException:
         return response_error('Invalid Customer ID')
+
     except ElementInUseException:
         return response_error('Cannot delete a referenced customer')
+
     except Exception:
-        return response_error('An error occurred during customer deletion ...')
+        return response_error('An error occurred during customer deletion')
 
     track_activity("Deleted Customer with ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)
 

@@ -61,7 +61,7 @@ event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "Us
 # CONTENT ------------------------------------------------
 @case_blueprint.route('/case', methods=['GET'])
 @login_required
-def case(caseid, url_redir):
+def case_r(caseid, url_redir):
 
     if url_redir:
         return redirect(url_for('case.case', cid=caseid))
@@ -124,25 +124,23 @@ def get_message(data):
 @api_login_required
 def desc_fetch(caseid):
 
-    case_schema = CaseSchema(partial=True)
-    try:
+    js_data = request.get_json()
+    case = get_case(caseid)
+    if not case:
+        return response_error('Invalid case ID')
 
-        case = get_case(caseid)
-        case_schema.load(request.get_json(), instance=case)
+    case.description = js_data.get('case_description')
 
-        db.session.commit()
-        track_activity("updated summary", caseid)
+    db.session.commit()
+    track_activity("updated summary", caseid)
 
-        if not request.cookies.get('session'):
-            # API call so we propagate the message to everyone
-            data = {
-                "case_description": case.description,
-                "last_saved": current_user.user
-            }
-            socket_io.emit('save', data, to=f"case-{caseid}")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+    if not request.cookies.get('session'):
+        # API call so we propagate the message to everyone
+        data = {
+            "case_description": case.description,
+            "last_saved": current_user.user
+        }
+        socket_io.emit('save', data, to=f"case-{caseid}")
 
     return response_success("Summary updated")
 
