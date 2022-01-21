@@ -84,14 +84,15 @@ class AuthenticationType(Enum):
 
 
 authentication_type = getattr(
-    getattr(AuthenticationType, config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback=""), None), 'name',
-    'local')
+    getattr(AuthenticationType, config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback=""), None),
+    'name',
+    'local'
+)
 
 tls_root_ca = config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None)
 
 app_public_url = config.get("IRIS", "APP_PUBLIC_URL", fallback=None)
 
-# TODO: cette variable pourra être instanciée avec l'url pour le logout local
 authentication_logout_url = None
 authentication_account_service_url = None
 authentication_token_introspection_url = None
