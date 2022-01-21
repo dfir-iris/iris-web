@@ -72,6 +72,8 @@ def case_get_desc_crc(caseid):
 
     if partial_case:
         desc = partial_case.description
+        if not desc:
+            desc = ""
         desc_crc32 = binascii.crc32(desc.encode('utf-8'))
     else:
         desc = None
@@ -84,6 +86,8 @@ def case_set_desc_crc(desc, caseid):
     lcase = get_case(caseid)
 
     if lcase:
+        if not desc:
+            desc = ""
         lcase.description = desc
         db.session.commit()
         return True

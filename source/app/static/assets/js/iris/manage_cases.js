@@ -277,15 +277,18 @@ $('#cases_table').dataTable({
             "data": "case_name"
         },
         {
+            "data": "case_description",
             "render": function (data, type, row) {
-                if (row["case_description"].length > 50){
-                    return sanitizeHTML(row["case_description"].slice(0,50)) + " ... " ;
+                if (type === 'display' && data != null) {
+                    if (row["case_description"].length > 50){
+                        return sanitizeHTML(row["case_description"].slice(0,50)) + " ... " ;
+                    }
+                    else {
+                        return sanitizeHTML(row["case_description"]);
+                    }
                 }
-                else {
-                    return sanitizeHTML(row["case_description"]);
-                }
+                return data;
             },
-            "case_description": 1
         },
         {
             "data": "client_name",
