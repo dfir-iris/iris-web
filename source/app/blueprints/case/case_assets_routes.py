@@ -193,7 +193,6 @@ def case_upload_ioc(caseid):
 
         index = 0
         for row in csv_data:
-            print(row)
             missing_field = False
             for e in headers.split(','):
                 if row.get(e) is None:
@@ -202,7 +201,6 @@ def case_upload_ioc(caseid):
                     continue
 
             if missing_field:
-                index += 1
                 continue
 
             # Asset name must not be empty
@@ -215,7 +213,6 @@ def case_upload_ioc(caseid):
             if row.get("asset_tags"):
                 row["asset_tags"] = row.get("asset_tags").replace("|", ",")  # Reformat Tags
 
-            print(row.get('asset_type_name'))
             if not row.get('asset_type_name'):
                 errors.append(f"Empty asset type for row {index}")
                 track_activity(f"Attempted to upload an empty asset type")

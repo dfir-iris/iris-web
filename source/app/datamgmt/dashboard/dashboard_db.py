@@ -135,3 +135,11 @@ def update_utask_status(task_id, status, case_id):
                 pass
 
     return False
+
+
+def get_task_status(task_status_id):
+    ret = TaskStatus.query.filter(
+        TaskStatus.id == task_status_id
+    ).first()
+
+    return ret

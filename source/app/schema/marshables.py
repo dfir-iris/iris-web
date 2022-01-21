@@ -28,6 +28,7 @@ from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
 
 from app import ma
+from app.datamgmt.dashboard.dashboard_db import get_task_status
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
     CaseReceivedFile, AssetsType, IocType
 
@@ -199,13 +200,18 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
         exclude = ['id']
 
     @pre_load
-    def verify_assignee(self, data, **kwargs):
+    def verify_data(self, data, **kwargs):
         user = User.query.filter(User.id == data.get('task_assignee_id')).first()
-        if user:
-            return data
+        if not user:
+            raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
+                                                         field_name="task_assignee_id")
 
-        raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
-                                                     field_name="task_assignee_id")
+        status = get_task_status(data.get('task_status_id'))
+        if not status:
+            raise marshmallow.exceptions.ValidationError("Invalid task status ID",
+                                                         field_name="task_status_id")
+
+        return data
 
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
