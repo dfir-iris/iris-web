@@ -22,8 +22,8 @@ from app import bc, db
 from app.models import User, UserRoles, Role
 
 
-def get_user(user_id):
-    user = User.query.filter(User.id == user_id).first()
+def get_user(user_id, id_key: str = 'id'):
+    user = User.query.filter(getattr(User, id_key) == user_id).first()
     return user
 
 
@@ -76,10 +76,10 @@ def get_users_list():
     return output
 
 
-def create_user(user_name, user_login, user_password, user_email, user_isadmin):
+def create_user(user_name, user_login, user_password, user_email, user_isadmin, user_external_id: str = None):
     pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
 
-    user = User(user_login, user_name, user_email, pw_hash, True)
+    user = User(user_login, user_name, user_email, pw_hash, True, external_id=user_external_id)
     user.save()
 
     if user_isadmin:
@@ -92,11 +92,15 @@ def create_user(user_name, user_login, user_password, user_email, user_isadmin):
     return user
 
 
-def update_user(password, user_isadmin, user):
+def update_user(user: User, name: str = None, email: str = None, password: str = None, user_isadmin: bool = None):
 
-    if password:
+    if password is not None:
         pw_hash = bc.generate_password_hash(password.encode('utf8')).decode('utf8')
         user.password = pw_hash
+
+    for key, value in [('name', name,), ('email', email,)]:
+        if value is not None:
+            setattr(user, key, value)
 
     if user_isadmin != None:
         if user_isadmin:

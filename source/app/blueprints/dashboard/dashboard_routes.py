@@ -36,7 +36,7 @@ from app.models.cases import Cases
 from app.models.models import Client, UserActivity
 from app.models.models import FileContentHash, GlobalTasks, User, Ioc, CaseTasks
 from app.schema.marshables import GlobalTasksSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.util import response_success, response_error, login_required, api_login_required, not_authenticated_redirection_url
 
 # CONTENT ------------------------------------------------
 dashboard_blueprint = Blueprint(
@@ -58,7 +58,7 @@ def logout():
     track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True)
     logout_user()
 
-    return redirect(url_for('index.index'))
+    return redirect(not_authenticated_redirection_url())
 
 
 @dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])
@@ -93,10 +93,7 @@ def get_cases_charts(caseid):
 
 @dashboard_blueprint.route('/')
 def root():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login.login'))
-    else:
-        return redirect(url_for('index.index'))
+    return redirect(url_for('index.index'))
 
 
 @dashboard_blueprint.route('/dashboard')

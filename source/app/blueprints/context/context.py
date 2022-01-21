@@ -18,22 +18,23 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from flask import Blueprint
+from flask import request, redirect
+from flask_login import current_user
+
 # IMPORTS ------------------------------------------------
 from app import app
 from app import db
 from app.models.cases import Cases
 from app.models.models import Client
-from app.util import response_success, get_urlcasename
-
-from flask_login import current_user
-from flask import request, url_for, redirect
-from flask import Blueprint
-
+from app.util import response_success, get_urlcasename, not_authenticated_redirection_url
 
 # CONTENT ------------------------------------------------
-ctx_blueprint = Blueprint('context',
-                                __name__,
-                                template_folder='templates')
+ctx_blueprint = Blueprint(
+    'context',
+    __name__,
+    template_folder='templates'
+)
 
 
 @ctx_blueprint.route('/context/set', methods=['POST'])
@@ -43,7 +44,7 @@ def set_ctx():
     :return: Page
     """
     if not current_user.is_authenticated:
-        return redirect(url_for('login.login'))
+        return redirect(not_authenticated_redirection_url())
 
     ctx = request.form.get('ctx')
     ctx_h = request.form.get('ctx_h')
@@ -75,10 +76,10 @@ def cases_context():
         Cases.name,
         Client.name,
         Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .filter(Cases.close_date == None)\
-        .order_by(Cases.name)\
+        Cases.close_date) \
+        .join(Cases.client) \
+        .filter(Cases.close_date == None) \
+        .order_by(Cases.name) \
         .all()
 
     datao = [row for row in res]
@@ -87,15 +88,15 @@ def cases_context():
         Cases.name,
         Client.name,
         Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .filter(Cases.close_date != None)\
-        .order_by(Cases.name)\
+        Cases.close_date) \
+        .join(Cases.client) \
+        .filter(Cases.close_date != None) \
+        .order_by(Cases.name) \
         .all()
 
     datac = [row for row in res]
 
-    return dict(cases_context_selector=datao,cases_close_context_selector=datac)
+    return dict(cases_context_selector=datao, cases_close_context_selector=datac)
 
 
 def update_user_case_ctx():
@@ -108,9 +109,9 @@ def update_user_case_ctx():
         Cases.name,
         Client.name,
         Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .order_by(Cases.open_date)\
+        Cases.close_date) \
+        .join(Cases.client) \
+        .order_by(Cases.open_date) \
         .all()
 
     data = [row for row in res]
@@ -131,11 +132,10 @@ def update_user_case_ctx():
             current_user.ctx_case = None
             current_user.ctx_human_case = "Not set"
             db.session.commit()
-            #current_user.save()
+            # current_user.save()
 
     app.jinja_env.globals.update({
         'cases_context_selector': data
     })
 
     return data
-

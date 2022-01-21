@@ -316,15 +316,17 @@ class User(UserMixin, db.Model):
     ctx_human_case = db.Column(db.String(256))
     active = db.Column(db.Boolean())
     api_key = db.Column(db.Text(), unique=True)
+    external_id = db.Column(db.Text, unique=True)
 
     roles = db.relationship('Role', secondary='user_roles')
 
-    def __init__(self, user, name, email, password, active):
+    def __init__(self, user, name, email, password, active, external_id):
         self.user = user
         self.name = name
         self.password = password
         self.email = email
         self.active = active
+        self.external_id = external_id
         self.roles = []
 
     def __repr__(self):
@@ -694,3 +696,4 @@ class CeleryTaskMeta(db.Model):
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
+

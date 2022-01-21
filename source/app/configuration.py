@@ -18,12 +18,16 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import os
-import logging as log
 import configparser
-
+import logging as log
+import os
 # --------- Configuration ---------
 # read the private configuration file
+import sys
+from enum import Enum
+
+import requests
+
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
@@ -50,7 +54,6 @@ if os.environ.get('IRIS_WORKER') is None:
     SECRET_KEY_ = os.environ.get('SECRET_KEY', config.get('IRIS', 'SECRET_KEY'))
     SECURITY_PASSWORD_SALT_ = os.environ.get('SECURITY_PASSWORD_SALT', config.get('IRIS', 'SECURITY_PASSWORD_SALT'))
 
-
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -59,17 +62,66 @@ LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(me
 LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
-
 # Build of SQLAlchemy connectors. One is admin and the other is only for iris. Admin is needed to create new DB
-SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PG_ACCOUNT_,
-                                                                                      passwd=PG_PASSWD_,
-                                                                                      server=PG_SERVER_,
-                                                                                      port=PG_PORT_)
+SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
+    user=PG_ACCOUNT_,
+    passwd=PG_PASSWD_,
+    server=PG_SERVER_,
+    port=PG_PORT_
+)
 
-SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PGA_ACCOUNT_,
-                                                                                       passwd=PGA_PASSWD_,
-                                                                                       server=PG_SERVER_,
-                                                                                       port=PG_PORT_)
+SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
+    user=PGA_ACCOUNT_,
+    passwd=PGA_PASSWD_,
+    server=PG_SERVER_,
+    port=PG_PORT_
+)
+
+
+class AuthenticationType(Enum):
+    local = 1
+    oidc_proxy = 2
+
+
+authentication_type = getattr(
+    getattr(AuthenticationType, config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback=""), None), 'name',
+    'local')
+
+tls_root_ca = config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None)
+
+app_public_url = config.get("IRIS", "APP_PUBLIC_URL", fallback=None)
+
+# TODO: cette variable pourra être instanciée avec l'url pour le logout local
+authentication_logout_url = None
+authentication_account_service_url = None
+authentication_token_introspection_url = None
+authentication_client_id = None
+authentication_client_secret = None
+authentication_app_admin_role_name = None
+
+if authentication_type == 'oidc_proxy':
+    oidc_discovery_url = config.get('AUTHENTICATION', 'OIDC_DISCOVERY_URL', fallback="")
+    try:
+        oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
+
+        if oidc_discovery_response.status_code == 200:
+            response_json = oidc_discovery_response.json()
+
+            authentication_logout_url = response_json.get('end_session_endpoint')
+            authentication_account_service_url = f"{response_json.get('issuer')}/account"
+            authentication_token_introspection_url = response_json.get('introspection_endpoint')
+        else:
+            raise Exception("Unsuccessful authN server discovery")
+
+        authentication_client_id = config.get('AUTHENTICATION', 'OIDC_IRIS_CLIENT_ID')
+        authentication_client_secret = config.get('AUTHENTICATION', 'OIDC_IRIS_CLIENT_SECRET')
+        authentication_app_admin_role_name = config.get('AUTHENTICATION', 'OIDC_IRIS_ADMIN_ROLE_NAME')
+    except Exception as e:
+        log.error(f"OIDC ERROR - {e}")
+        exit(0)
+        pass
+    else:
+        log.info("OIDC configuration properly parsed")
 
 
 # --------- CELERY ---------
@@ -78,15 +130,16 @@ class CeleryConfig():
     broker_url = "amqp://localhost" if not os.getenv('DOCKERIZED') else "amqp://rabbitmq"
     result_extended = True
     result_serializer = "json"
-    task_routes = ([
-        ('app.iris_engine.tasker.tasks.task_kbh_import', { 'route' : 'case_import'}),
-        ('app.iris_engine.tasker.tasks.task_feed_iris', { 'route' : 'case_import'})
-    ],)
+    task_routes = (
+        [
+            ('app.iris_engine.tasker.tasks.task_kbh_import', {'route': 'case_import'}),
+            ('app.iris_engine.tasker.tasks.task_feed_iris', {'route': 'case_import'})
+        ],
+    )
 
 
 # --------- APP ---------
 class Config():
-
     # Handled by bumpversion
     IRIS_VERSION = "v1.2.1"
 
@@ -144,3 +197,20 @@ class Config():
         DEVELOPMENT = True
     else:
         DEVELOPMENT = config.get('DEVELOPMENT', 'IS_DEV_INSTANCE') == "True"
+
+    """
+        Authentication configuration
+    """
+    TLS_ROOT_CA = tls_root_ca
+
+    APP_PUBLIC_URL = app_public_url
+
+    AUTHENTICATION_TYPE = authentication_type
+    AUTHENTICATION_LOGOUT_URL = authentication_logout_url
+    AUTHENTICATION_ACCOUNT_SERVICE_URL = authentication_account_service_url
+    AUTHENTICATION_PROXY_LOGOUT_URL = f"/oauth2/sign_out?rd={AUTHENTICATION_LOGOUT_URL}?redirect_uri={APP_PUBLIC_URL}"
+    AUTHENTICATION_TOKEN_INTROSPECTION_URL = authentication_token_introspection_url
+    AUTHENTICATION_CLIENT_ID = authentication_client_id
+    AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
+
+    AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name

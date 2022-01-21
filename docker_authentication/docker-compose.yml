@@ -44,7 +44,7 @@ services:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.2.0
     container_name: oauth2_proxy
     volumes:
-      - ./proxy/oauth2-proxy.cfg:/etc/oauth2-proxy.cfg:ro
+      - ./proxy/oauth2-proxy_iris-web-app.cfg:/etc/oauth2-proxy.cfg:ro
       - ./certificates/irisAuthDev.key:/etc/authProxy.key:ro
       - ./certificates/irisAuthDev.crt:/etc/authProxy.crt:ro
       - ./rootCA/irisRootCACert.pem:/etc/rootCA.pem:ro
@@ -56,7 +56,7 @@ services:
       - "auth_iris.app.dev:172.17.0.1"
     networks:
       - test_app_network
-#      - app_network
+      - app_network
 
   # TEST WEB APPLICATION
   test_web_application:

@@ -31,11 +31,13 @@ from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
 from app.util import admin_required, login_required, response_error, response_success, api_admin_required, \
-    api_login_required
+    api_login_required, is_authentication_local
 
-manage_users_blueprint = Blueprint('manage_users',
-                                   __name__,
-                                   template_folder='templates')
+manage_users_blueprint = Blueprint(
+    'manage_users',
+    __name__,
+    template_folder='templates'
+)
 
 
 # CONTENT ------------------------------------------------
@@ -58,45 +60,46 @@ def manage_users_list(caseid):
     return response_success('', data=users)
 
 
-@manage_users_blueprint.route('/manage/users/add/modal', methods=['GET'])
-@admin_required
-def add_user_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('manage_users.add_user', cid=caseid))
+if is_authentication_local():
+    @manage_users_blueprint.route('/manage/users/add/modal', methods=['GET'])
+    @admin_required
+    def add_user_modal(caseid, url_redir):
+        if url_redir:
+            return redirect(url_for('manage_users.add_user', cid=caseid))
 
-    user = None
-    form = AddUserForm()
+        user = None
+        form = AddUserForm()
 
-    return render_template("modal_add_user.html", form=form, user=user)
+        return render_template("modal_add_user.html", form=form, user=user)
 
+if is_authentication_local():
+    @manage_users_blueprint.route('/manage/users/add', methods=['POST'])
+    @api_admin_required
+    def add_user(caseid):
+        try:
 
-@manage_users_blueprint.route('/manage/users/add', methods=['POST'])
-@api_admin_required
-def add_user(caseid):
-    try:
+            # validate before saving
+            user_schema = UserSchema()
+            jsdata = request.get_json()
+            jsdata['user_id'] = 0
+            jsdata['active'] = True
+            cuser = user_schema.load(jsdata, partial=True)
+            user = create_user(user_name=cuser.name,
+                               user_login=cuser.user,
+                               user_email=cuser.email,
+                               user_password=cuser.password,
+                               user_isadmin=jsdata.get('user_isadmin'))
 
-        # validate before saving
-        user_schema = UserSchema()
-        jsdata = request.get_json()
-        jsdata['user_id'] = 0
-        jsdata['active'] = True
-        cuser = user_schema.load(jsdata, partial=True)
-        user = create_user(user_name=cuser.name,
-                    user_login=cuser.user,
-                    user_email=cuser.email,
-                    user_password=cuser.password,
-                    user_isadmin=jsdata.get('user_isadmin'))
+            db.session.commit()
 
-        db.session.commit()
+            if cuser:
+                track_activity("created user {}".format(user.user), caseid=caseid)
+                return response_success("user created", data=user_schema.dump(user))
 
-        if cuser:
-            track_activity("created user {}".format(user.user), caseid=caseid)
-            return response_success("user created", data=user_schema.dump(user))
+            return response_error("Unable to create user for internal reasons")
 
-        return response_error("Unable to create user for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        except marshmallow.exceptions.ValidationError as e:
+            return response_error(msg="Data error", data=e.messages, status=400)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
@@ -131,39 +134,40 @@ def view_user_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_user.html", form=form, user=user)
 
 
-@manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])
-@api_admin_required
-def update_user_api(cur_id, caseid):
-    try:
-        user = get_user(cur_id)
-        if not user:
-            return response_error("Invalid user ID for this case")
+if is_authentication_local():
+    @manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])
+    @api_admin_required
+    def update_user_api(cur_id, caseid):
+        try:
+            user = get_user(cur_id)
+            if not user:
+                return response_error("Invalid user ID for this case")
 
-        # validate before saving
-        user_schema = UserSchema()
-        jsdata = request.get_json()
-        jsdata['user_id'] = cur_id
-        cuser = user_schema.load(jsdata, instance=user, partial=True)
-        uadm = jsdata.get('user_isadmin') or False
-        update_user(password=jsdata.get('user_password'),
-                    user_isadmin=uadm,
-                    user=user)
-        db.session.commit()
+            # validate before saving
+            user_schema = UserSchema()
+            jsdata = request.get_json()
+            jsdata['user_id'] = cur_id
+            cuser = user_schema.load(jsdata, instance=user, partial=True)
+            uadm = jsdata.get('user_isadmin') or False
+            update_user(password=jsdata.get('user_password'),
+                        user_isadmin=uadm,
+                        user=user)
+            db.session.commit()
 
-        if cuser:
-            track_activity("updated user {}".format(user.user), caseid=caseid)
-            return response_success("User updated", data=user_schema.dump(user))
+            if cuser:
+                track_activity("updated user {}".format(user.user), caseid=caseid)
+                return response_success("User updated", data=user_schema.dump(user))
 
-        return response_error("Unable to update user for internal reasons")
+            return response_error("Unable to update user for internal reasons")
 
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        except marshmallow.exceptions.ValidationError as e:
+            return response_error(msg="Data error", data=e.messages, status=400)
 
 
+# TODO: might also need to be conditional to local authentication
 @manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def deactivate_user_api(cur_id, caseid):
-
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID for this case")
@@ -179,7 +183,6 @@ def deactivate_user_api(cur_id, caseid):
 @manage_users_blueprint.route('/manage/users/activate/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def activate_user_api(cur_id, caseid):
-
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID for this case")
@@ -192,24 +195,25 @@ def activate_user_api(cur_id, caseid):
     return response_success("User activated", data=user_schema.dump(user))
 
 
-@manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['GET'])
-@api_admin_required
-def view_delete_user(cur_id, caseid):
-    try:
-        user = get_user(cur_id)
-        if not user:
-            return response_error("Invalid user ID")
+if is_authentication_local():
+    @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['GET'])
+    @api_admin_required
+    def view_delete_user(cur_id, caseid):
+        try:
+            user = get_user(cur_id)
+            if not user:
+                return response_error("Invalid user ID")
 
-        db.session.delete(user)
-        db.session.commit()
+            db.session.delete(user)
+            db.session.commit()
 
-        track_activity(message="deleted user ID {}".format(cur_id), caseid=caseid)
-        return response_success("Deleted user ID {}".format(cur_id))
+            track_activity(message="deleted user ID {}".format(cur_id), caseid=caseid)
+            return response_success("Deleted user ID {}".format(cur_id))
 
-    except Exception as e:
-        db.session.rollback()
-        track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid)
-        return response_error("Cannot delete active user")
+        except Exception as e:
+            db.session.rollback()
+            track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid)
+            return response_error("Cannot delete active user")
 
 
 @manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])

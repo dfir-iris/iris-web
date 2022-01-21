@@ -29,11 +29,13 @@ import weakref
 import logging as log
 from pathlib import Path
 
+import requests
 from flask_wtf import FlaskForm
 from pyunpack import Archive
 
-from flask import json, url_for, request, render_template
-from flask_login import current_user
+from flask import json, url_for, request, render_template, Request
+from flask_login import current_user, logout_user, login_user
+from requests.auth import HTTPBasicAuth
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from werkzeug.utils import redirect
 
@@ -43,6 +45,8 @@ from app import app, db, TEMPLATE_PATH
 
 # build a Json response
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.manage.manage_users_db import get_user, create_user, update_user
+from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 
 
@@ -245,13 +249,111 @@ def get_urlcasename():
     return [case_name, case_info, caseid]
 
 
+def _local_authentication_process(incoming_request: Request):
+    return current_user.is_authenticated
+
+
+def _oidc_proxy_authentication_process(incoming_request: Request):
+    # Get the OIDC JWT authentication token from the request header
+    authentication_token = incoming_request.headers.get('X-Forwarded-Access-Token', '')
+
+    # Use the authentication server's token introspection endpoint in order to determine if the request is valid / authenticated
+    # The TLS_ROOT_CA is used to validate the authentication server's certificate.
+    # The other solution was to skip the certificate verification, BUT as the authentication server might be located on another server, this check is necessary.
+    # TODO: Add conditional verification methods. Choose between token introspection and just signature check. In the second case, all the additional information should be passed inside the JWT
+    introspection_body = {"token": authentication_token}
+    introspection = requests.post(
+        app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"),
+        auth=HTTPBasicAuth(app.config.get('AUTHENTICATION_CLIENT_ID'), app.config.get('AUTHENTICATION_CLIENT_SECRET')),
+        data=introspection_body,
+        verify=app.config.get("TLS_ROOT_CA")
+    )
+
+    if introspection.status_code == 200:
+        response_json = introspection.json()
+
+        if response_json.get("active", False) is True:
+            user_keycloak_id = response_json.get("sub")
+
+            # Checks if a user exists with external_id having keycloak id as value
+            linked_user = get_user(user_keycloak_id, "external_id")
+
+            is_admin = app.config.get('AUTHENTICATION_APP_ADMIN_ROLE_NAME', '___not_admin___') in response_json \
+                .get('resource_access', {}) \
+                .get(app.config.get('AUTHENTICATION_CLIENT_ID', ''), {}) \
+                .get('roles', [])
+            name = response_json.get("name")
+            email = response_json.get("email")
+
+            if linked_user is None:
+                # Creates a new user with a random password and other properties being set to the corresponding JWT values
+
+                username = response_json.get("preferred_username")
+                password = ''.join(random.sample(string.ascii_lowercase+string.digits, 20))
+
+                linked_user = create_user(
+                    name,
+                    username,
+                    password,
+                    email,
+                    is_admin,
+                    user_keycloak_id
+                )
+            else:
+                if not linked_user.is_admin() == is_admin \
+                        or not linked_user.name == name \
+                        or not linked_user.email == email:
+                    update_user(linked_user, name=name, email=email, user_isadmin=is_admin)
+                    track_activity(f"User '{linked_user.id}' updated: (name: {not linked_user.name == name} - email: {not linked_user.email == email} - isadmin: {not linked_user.is_admin() == is_admin})", ctx_less=True)
+                    logout_user()
+
+            if not current_user.is_authenticated or not current_user.id == linked_user.id:
+                login_user(linked_user)
+
+                track_activity(f"User '{linked_user.id}' successfully logged-in", ctx_less=True)
+                caseid = linked_user.ctx_case
+                if caseid is None:
+                    case = Cases.query.order_by(Cases.case_id).first()
+                    linked_user.ctx_case = case.case_id
+                    linked_user.ctx_human_case = case.name
+                    db.session.commit()
+
+            return True
+        else:
+            log.info("USER IS NOT AUTHENTICATED")
+            return False
+    else:
+        log.error("ERROR DURING TOKEN INTROSPECTION PROCESS")
+        return False
+
+
+def not_authenticated_redirection_url():
+    redirection_mapper = {
+        "oidc_proxy": lambda: app.config.get("AUTHENTICATION_PROXY_LOGOUT_URL"),
+        "local": lambda: url_for('login.login')
+    }
+
+    return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
+
+
+def is_user_authenticated(incoming_request: Request):
+    authentication_mapper = {
+        "oidc_proxy": _oidc_proxy_authentication_process,
+        "local": _local_authentication_process
+    }
+
+    return authentication_mapper.get(app.config.get("AUTHENTICATION_TYPE"))(incoming_request)
+
+
+def is_authentication_local():
+    return app.config.get("AUTHENTICATION_TYPE") == "local"
+
+
 def login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
-
-        if not current_user.is_authenticated:
-            return redirect(url_for('login.login'))
-
+        if not is_user_authenticated(request):
+            return redirect(not_authenticated_redirection_url())
         else:
             redir, caseid = get_urlcase(request=request)
             kwargs.update({"caseid": caseid, "url_redir": redir})
@@ -266,7 +368,7 @@ def admin_required(f):
     def wrap(*args, **kwargs):
 
         if not current_user.is_authenticated:
-            return redirect(url_for('login.login'))
+            return redirect(not_authenticated_redirection_url())
         else:
             redir, caseid = get_urlcase(request=request)
             kwargs.update({"caseid": caseid, "url_redir": redir})

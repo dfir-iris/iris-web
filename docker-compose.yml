@@ -50,6 +50,8 @@ services:
     image: iriswebapp_app:latest
     command: ['./iris-entrypoint.sh', 'iriswebapp']
     volumes:
+      # RootCA necessary when dealing with a auth server without a trusted CA signed certificate
+      - ./docker_authentication/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
     restart: always
@@ -58,6 +60,8 @@ services:
       - "db"
     ports:
       - "127.0.0.1:8000:8000"
+    extra_hosts:
+      - "auth_iris.app.dev:172.17.0.1"
     environment:
       - POSTGRES_PASSWORD
       - POSTGRES_USER
