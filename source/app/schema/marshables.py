@@ -30,7 +30,7 @@ from sqlalchemy import func
 from app import ma
 from app.datamgmt.dashboard.dashboard_db import get_task_status
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile, AssetsType, IocType
+    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus
 
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
@@ -76,6 +76,20 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         model = CaseAssets
         include_fk = True
         load_instance = True
+
+    @pre_load
+    def verify_data(self, data, **kwargs):
+        asset_type = AssetsType.query.filter(AssetsType.asset_id == data.get('asset_type_id')).first()
+        if not asset_type:
+            raise marshmallow.exceptions.ValidationError("Invalid asset type ID",
+                                                         field_name="asset_type_id")
+
+        status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).first()
+        if not status:
+            raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
+                                                         field_name="analysis_status_id")
+
+        return data
 
 
 class IocSchema(ma.SQLAlchemyAutoSchema):
