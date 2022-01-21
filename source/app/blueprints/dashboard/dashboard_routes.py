@@ -34,9 +34,9 @@ from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_
 from app.forms import CustomerForm, CaseGlobalTaskForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.models.models import Client, UserActivity
+from app.models.models import Client, UserActivity, TaskStatus
 from app.models.models import FileContentHash, GlobalTasks, User, Ioc, CaseTasks
-from app.schema.marshables import GlobalTasksSchema
+from app.schema.marshables import GlobalTasksSchema, CaseTaskSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
 # CONTENT ------------------------------------------------
@@ -189,36 +189,31 @@ def utask_statusupdate(caseid):
     if not jsdata:
         return response_error("Invalid request")
 
-    task_id = jsdata.get('task_id')
-    status = jsdata.get('task_status_id')
-    case_id = jsdata.get('case_id')
-
-    task = update_utask_status(task_id, status, case_id)
-
-    if task:
-        return response_success("Updated", data=task)
-
-    return response_error("Invalid data")
-
-
-@dashboard_blueprint.route('/global/tasks/status/update', methods=['POST'])
-@api_login_required
-def gtask_statusupdate(caseid):
-
     jsdata = request.get_json()
     if not jsdata:
         return response_error("Invalid request")
 
+    case_id = jsdata.get('case_id') if jsdata.get('case_id') else caseid
     task_id = jsdata.get('task_id')
-    status = jsdata.get('task_status_id')
+    task = CaseTasks.query.filter(CaseTasks.id == task_id, CaseTasks.task_case_id == case_id).first()
+    if not task:
+        return response_error(f"Invalid case task ID {task_id} for case {case_id}")
 
-    task = update_gtask_status(task_id, status)
+    status_id = jsdata.get('task_status_id')
+    status = TaskStatus.query.filter(TaskStatus.id == status_id).first()
+    if not status:
+        return response_error(f"Invalid task status ID {status_id}")
 
-    if task:
-        gtask_schema = GlobalTasksSchema()
-        return response_success("Updated", data=gtask_schema.dump(task))
+    task.task_status_id = status_id
+    try:
 
-    return response_error("Invalid task ID or task status")
+        db.session.commit()
+
+    except Exception as e:
+        return response_error(f"Unable to update task. Error {e}")
+
+    task_schema = CaseTaskSchema()
+    return response_success("Updated", data=task_schema.dump(task))
 
 
 @dashboard_blueprint.route('/global/tasks/add', methods=['GET', 'POST'])
