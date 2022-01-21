@@ -30,7 +30,7 @@ from sqlalchemy import func
 from app import ma
 from app.datamgmt.dashboard.dashboard_db import get_task_status
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp
+    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp, EventCategory
 
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
@@ -79,12 +79,12 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
-        asset_type = AssetsType.query.filter(AssetsType.asset_id == data.get('asset_type_id')).first()
+        asset_type = AssetsType.query.filter(AssetsType.asset_id == data.get('asset_type_id')).count()
         if not asset_type:
             raise marshmallow.exceptions.ValidationError("Invalid asset type ID",
                                                          field_name="asset_type_id")
 
-        status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).first()
+        status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).count()
         if not status:
             raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
                                                          field_name="analysis_status_id")
@@ -103,12 +103,12 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
-        ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
+        ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).count()
         if not ioc_type:
             raise marshmallow.exceptions.ValidationError("Invalid ioc type ID",
                                                          field_name="ioc_type_id")
 
-        tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).first()
+        tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
         if not tlp_id:
             raise marshmallow.exceptions.ValidationError("Invalid TLP ID",
                                                          field_name="ioc_tlp_id")
@@ -143,6 +143,21 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
                                                          field_name="event_date")
 
         return self.event_date, self.event_date_wtz
+
+    @pre_load
+    def verify_data(self, data, **kwargs):
+        event_cat = EventCategory.query.filter(EventCategory.id == data.get('event_category_id')).count()
+        if not event_cat:
+            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
+                                                         field_name="event_category_id")
+
+        for asset in data.get('event_assets'):
+            ast = CaseAssets.query.filter(CaseAssets.asset_id == asset).count()
+            if not ast:
+                raise marshmallow.exceptions.ValidationError("Invalid assets ID",
+                                                             field_name="event_assets")
+
+        return data
 
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):
