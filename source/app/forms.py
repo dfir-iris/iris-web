@@ -128,7 +128,7 @@ class CaseEventForm(FlaskForm):
     event_content = TextAreaField(u'Event Description')
     event_raw = TextAreaField(u'Event Raw data')
     event_assets = SelectField(u'Event Asset')
-    event_category = SelectField(u'Event Category')
+    event_category_id = SelectField(u'Event Category')
     event_tz = StringField(u'Event Timezone', validators=[DataRequired()])
     event_in_summary = BooleanField(u'Add to summary')
     event_in_graph = BooleanField(u'Display in graph')
@@ -138,15 +138,15 @@ class CaseTaskForm(FlaskForm):
     task_title = StringField(u'Task Title', validators=[DataRequired()])
     task_description = TextAreaField(u'Task description')
     task_assignee_id = SelectField(u'Task assignee', validators=[DataRequired()])
-    task_status = SelectField(u'Task status')
+    task_status_id = SelectField(u'Task status', validators=[DataRequired()])
     task_tags = StringField(u'Task Tags')
 
 
 class CaseGlobalTaskForm(FlaskForm):
     task_title = StringField(u'Task Title')
     task_description = TextAreaField(u'Task description')
-    task_assignee = SelectField(u'Task assignee')
-    task_status = SelectField(u'Task status')
+    task_assignee_id = SelectField(u'Task assignee')
+    task_status_id = SelectField(u'Task status')
     task_tags = StringField(u'Task Tags')
 
 

@@ -90,8 +90,8 @@ class Config():
     # Handled by bumpversion
     IRIS_VERSION = "v1.2.1"
 
-    API_MIN_VERSION = "1.0.0"
-    API_MAX_VERSION = "1.0.0"
+    API_MIN_VERSION = "1.0.1"
+    API_MAX_VERSION = "1.0.2"
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True

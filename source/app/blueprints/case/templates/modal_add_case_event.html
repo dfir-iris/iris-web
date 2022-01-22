@@ -76,9 +76,9 @@
                 </div>
                 <div class="row">
                     <div class="form-group col-5">
-                        <label for="event_category" class="form-label">{{ form.event_category.label.text }}</label>
+                        <label for="event_category_id" class="form-label">{{ form.event_category_id.label.text }}</label>
                         <div class="row col-12">
-                            {{ form.event_category(class="selectpicker col-12") }}
+                            {{ form.event_category_id(class="selectpicker col-12") }}
                         </div>
                     </div>
                     <div class="form-group col-2">
@@ -169,7 +169,7 @@
         suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
     });
 $('[data-toggle="popover"]').popover();
-$('#event_category').select2({width:"100%"});
+$('#event_category_id').select2({width:"100%"});
 </script>
 
 {% if assets %}
@@ -188,10 +188,10 @@ $('#event_category').select2({width:"100%"});
 
 {% if category %}
     <script>
-        $('#event_category').val([
+        $('#event_category_id').val([
             {{ category[0].id }},
         ]);
-        $('#event_category').trigger('change');
+        $('#event_category_id').trigger('change');
     </script>
 {% endif %}
 

@@ -25,6 +25,12 @@ function get_case_graph() {
 var network;
 
 function redrawAll(data) {
+  if (data.nodes.length == 0) {
+        $('#card_main_load').show();
+        $('#graph-container').text('No events in graph');
+        hide_loader();
+        return true;
+  }
   var container = document.getElementById("graph-container");
   var options = {
     edges: {

@@ -12,7 +12,7 @@
         </div>
         <div class="form-group mt--3">
             <label>Case description :</label>
-            <span type="text" class="">{{ data.description[0:50] }}</span>
+            <span type="text" class="">{{ data.case_description[0:50] }}</span>
         </div>
         <div class="form-group mt--3">
             <label>Customer :</label>
@@ -38,11 +38,11 @@
         {% endif %}
         <div class="form-group mt--3">
             <label>Opening user :</label>
-            <span type="text" class="">{{ data.user_name }} ({{ data.user }}) </span>
+            <span type="text" class="">{{ data.open_by_user }}</span>
         </div>
         <div class="form-group mt--3">
             <label>SOC ID :</label>
-            <span type="text" class="text-faded">{{ data.soc_id }}</span>
+            <span type="text" class="text-faded">{{ data.case_soc_id }}</span>
         </div>
         <div class="form-group mt--3">
             <label>Case ID :</label>

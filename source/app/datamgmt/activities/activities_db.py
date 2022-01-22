@@ -84,6 +84,8 @@ def get_all_user_activities():
     user_activities = UserActivity.query.with_entities(
         Cases.name.label("case_name"),
         User.name.label("user_name"),
+        UserActivity.user_id,
+        UserActivity.case_id,
         UserActivity.activity_date,
         UserActivity.activity_desc,
         UserActivity.user_input

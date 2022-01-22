@@ -553,6 +553,15 @@ class CaseReceivedFile(db.Model):
     user = relationship('User')
 
 
+class TaskStatus(db.Model):
+    __tablename__ = 'task_status'
+
+    id = Column(Integer, primary_key=True)
+    status_name = Column(Text)
+    status_description = Column(Text)
+    status_bscolor = Column(Text)
+
+
 class CaseTasks(db.Model):
     __tablename__ = 'case_tasks'
 
@@ -567,7 +576,7 @@ class CaseTasks(db.Model):
     task_userid_close = Column(ForeignKey('user.id'))
     task_userid_update = Column(ForeignKey('user.id'))
     task_assignee_id = Column(ForeignKey('user.id'))
-    task_status = Column(Text)
+    task_status_id = Column(ForeignKey('task_status.id'))
     task_case_id = Column(ForeignKey('cases.case_id'))
 
     case = relationship('Cases')
@@ -575,6 +584,7 @@ class CaseTasks(db.Model):
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
     user_assigned = relationship('User', foreign_keys=[task_assignee_id])
+    status = relationship('TaskStatus', foreign_keys=[task_status_id])
 
 
 class GlobalTasks(db.Model):
@@ -591,12 +601,13 @@ class GlobalTasks(db.Model):
     task_userid_close = Column(ForeignKey('user.id'))
     task_userid_update = Column(ForeignKey('user.id'))
     task_assignee_id = Column(ForeignKey('user.id'), nullable=True)
-    task_status = Column(Text)
+    task_status_id = Column(ForeignKey('task_status.id'))
 
     user_open = relationship('User', foreign_keys=[task_userid_open])
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
     user_assigned = relationship('User', foreign_keys=[task_assignee_id])
+    status = relationship('TaskStatus', foreign_keys=[task_status_id])
 
 
 class UserActivity(db.Model):

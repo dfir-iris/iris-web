@@ -29,7 +29,8 @@ from app.forms import AddAssetForm
 from app import db
 from app.schema.marshables import AssetSchema
 
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required
+from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
+    api_login_required
 
 manage_assets_blueprint = Blueprint('manage_assets',
                                     __name__,
@@ -37,7 +38,7 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 @manage_assets_blueprint.route('/manage/asset-type/list')
-@api_admin_required
+@api_login_required
 def list_assets(caseid):
     # Get all assets
     assets = AssetsType.query.with_entities(
@@ -50,6 +51,25 @@ def list_assets(caseid):
 
     # Return the assets
     return response_success("", data=data)
+
+
+@manage_assets_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
+@api_login_required
+def view_asset_api(cur_id, caseid):
+    # Get all assets
+    asset_type = AssetsType.query.with_entities(
+        AssetsType.asset_name,
+        AssetsType.asset_description,
+        AssetsType.asset_id
+    ).filter(
+        AssetsType.asset_id == cur_id
+    ).first()
+
+    if not asset_type:
+        return response_error(f'Invalid asset type ID {cur_id}')
+
+    # Return the assets
+    return response_success("", data=asset_type._asdict())
 
 
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])

@@ -23,7 +23,7 @@ import datetime
 from sqlalchemy import desc
 
 from app.models import User, Cases, Client, CaseReceivedFile, CasesEvent, CaseEventsAssets, CaseAssets, \
-    AssetsType, IocLink, Ioc, IocAssetLink, AnalysisStatus, CaseTasks, Notes, EventCategory, IocType
+    AssetsType, IocLink, Ioc, IocAssetLink, AnalysisStatus, CaseTasks, Notes, EventCategory, IocType, TaskStatus
 
 
 def export_case_json(case_id):
@@ -179,7 +179,7 @@ def export_case_iocs_json(case_id):
 def export_case_tasks_json(case_id):
     res = CaseTasks.query.with_entities(
         CaseTasks.task_title,
-        CaseTasks.task_status,
+        TaskStatus.status_name.label('task_status'),
         CaseTasks.task_tags,
         CaseTasks.task_open_date,
         CaseTasks.task_close_date,
@@ -189,7 +189,7 @@ def export_case_tasks_json(case_id):
     ).filter(
         CaseTasks.task_case_id == case_id
     ).join(
-        CaseTasks.user_assigned
+        CaseTasks.user_assigned, CaseTasks.status
     ).all()
 
     if res:

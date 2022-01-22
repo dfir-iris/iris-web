@@ -26,8 +26,8 @@
                     <label for="task_assignee" class="placeholder">Assigned to</label>
                     {{ form.task_assignee_id(class="selectpicker pl--6  col-5") }}
 
-                    <label for="task_status" class="placeholder">Status</label>
-                    {{ form.task_status(class="selectpicker pl--6  col-5") }}
+                    <label for="task_status_id" class="placeholder">Status</label>
+                    {{ form.task_status_id(class="selectpicker pl--6  col-5") }}
                 </div>
                 <div class="form-group">
                     <label for="task_title" class="placeholder">{{ form.task_title.label.text }} *</label>
@@ -74,7 +74,7 @@
         title: "None",
         style: "Bootstrap 4: 'btn-outline-primary'",
     });
-    $('#task_status').selectpicker({
+    $('#task_status_id').selectpicker({
         liveSearch: true,
         title: "None",
         style: "Bootstrap 4: 'btn-outline-primary'",
@@ -83,10 +83,10 @@
         $('#task_assignee_id').selectpicker('val', '{{uid}}');
     {% endif %}
 
-    {% if task.task_status %}
-        $('#task_status').selectpicker('val', '{{task.task_status}}');
+    {% if task.task_status_id %}
+        $('#task_status_id').selectpicker('val', '{{task.task_status_id}}');
      {% else %}
-        $('#task_status').selectpicker('val', 'To do');
+        $('#task_status_id').selectpicker('val', 'To do');
     {% endif %}
     $('[data-toggle="popover"]').popover();
 </script>

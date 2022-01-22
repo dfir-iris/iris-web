@@ -1,12 +1,11 @@
 /* Fetch a modal that allows to add an event */ 
 function add_event() {
-    url = 'timeline/event/add/modal' + case_param();
+    url = 'timeline/events/add/modal' + case_param();
     $('#modal_add_event_content').load(url, function () {   
         $('#submit_new_event').on("click", function () {
             clear_api_error();
             var data_sent = $('#form_new_event').serializeObject();
-            data_sent['event_date'] = $('#event_date').val();
-            data_sent['event_time'] = $('#event_time').val();
+            data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
             data_sent['event_in_summary'] = $('#event_in_summary').is(':checked');
             data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
             data_sent['event_tags'] = $('#event_tags').val();
@@ -14,7 +13,7 @@ function add_event() {
             data_sent['event_tz'] = $('#event_tz').val();
 
             $.ajax({
-                url: 'timeline/event/add' + case_param(),
+                url: 'timeline/events/add' + case_param(),
                 type: "POST",
                 data: JSON.stringify(data_sent),
                 contentType: "application/json;charset=UTF-8",
@@ -28,6 +27,7 @@ function add_event() {
                                 timer: 400
                             }
                         ).then((value) => {
+                            window.location.hash = data.data.event_id;
                             draw_timeline();
                             $('#modal_add_event').modal('hide');
 
@@ -55,8 +55,7 @@ function update_event(id) {
     window.location.hash = id;
     clear_api_error();
     var data_sent = $('#form_new_event').serializeObject();
-    data_sent['event_date'] = $('#event_date').val();
-    data_sent['event_time'] = $('#event_time').val();
+    data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
     data_sent['event_in_summary'] = $('#event_in_summary').is(':checked');
     data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
     data_sent['event_tags'] = $('#event_tags').val();
@@ -64,7 +63,7 @@ function update_event(id) {
     data_sent['event_tz'] = $('#event_tz').val();
 
     $.ajax({
-        url: 'timeline/event/update/' + id + case_param(),
+        url: 'timeline/events/update/' + id + case_param(),
         type: "POST",
         data: JSON.stringify(data_sent),
         contentType: "application/json;charset=UTF-8",
@@ -99,7 +98,7 @@ function update_event(id) {
 function delete_event(id) {
     window.location.hash = id;
     $.ajax({
-        url: "timeline/event/delete/" + id + case_param(),
+        url: "timeline/events/delete/" + id + case_param(),
         type: "GET",
         dataType: "json",
         success: function (data) {
@@ -125,7 +124,7 @@ function delete_event(id) {
 
 /* Edit and event from the timeline thanks to its ID */
 function edit_event(id) {
-  url = '/case/timeline/event/' + id + '/modal' + case_param();
+  url = '/case/timeline/events/' + id + '/modal' + case_param();
   window.location.hash = id;
   $('#modal_add_event_content').load(url, function(){
         $('#modal_add_event').modal({show:true});
@@ -141,7 +140,7 @@ function draw_timeline() {
     if (rid == null) { rid = 0; }
 
     $.ajax({
-        url: "timeline/get/" + rid + case_param(),
+        url: "timeline/filter/" + rid + case_param(),
         type: "GET",
         dataType: "json",
         success: function (data) {
@@ -215,9 +214,9 @@ function draw_timeline() {
                             cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                             cpn = sanitizeHTML(cpn)
                             if (evt.assets[ide]["compromised"]) {
-                                asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
+                                asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
                             } else {
-                                asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '">'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
+                                asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '">'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
                             }
                         }
                     }

@@ -61,3 +61,5 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False):
 
     db.session.add(ua)
     db.session.commit()
+
+    return ua

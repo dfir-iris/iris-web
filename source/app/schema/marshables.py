@@ -28,14 +28,15 @@ from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
 
 from app import ma
+from app.datamgmt.dashboard.dashboard_db import get_task_status
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile, AssetsType, IocType
-
-task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
+    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp, EventCategory
 
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     csrf_token = fields.String(required=False)
+    group_id = fields.Integer()
+    group_title = fields.String()
 
     class Meta:
         model = Notes
@@ -44,7 +45,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
 class CaseAddNoteSchema(ma.Schema):
     note_id = fields.Integer(required=False)
-    note_title = fields.String(required=True, validate=Length(min=1))
+    note_title = fields.String(required=True, validate=Length(min=1), allow_none=False)
     note_content = fields.String(required=False, validate=Length(min=1))
     group_id = fields.Integer(required=True)
     csrf_token = fields.String(required=False)
@@ -68,7 +69,7 @@ class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
-    asset_name = auto_field('asset_name', required=True, validate=Length(min=2))
+    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     ioc_links = fields.List(fields.String, required=False)
 
     class Meta:
@@ -76,9 +77,23 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
 
+    @pre_load
+    def verify_data(self, data, **kwargs):
+        asset_type = AssetsType.query.filter(AssetsType.asset_id == data.get('asset_type_id')).count()
+        if not asset_type:
+            raise marshmallow.exceptions.ValidationError("Invalid asset type ID",
+                                                         field_name="asset_type_id")
+
+        status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).count()
+        if not status:
+            raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
+                                                         field_name="analysis_status_id")
+
+        return data
+
 
 class IocSchema(ma.SQLAlchemyAutoSchema):
-    ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1))
+    ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
     ioc_type = auto_field('ioc_type', required=False)
 
     class Meta:
@@ -86,39 +101,68 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
+    @pre_load
+    def verify_data(self, data, **kwargs):
+        ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).count()
+        if not ioc_type:
+            raise marshmallow.exceptions.ValidationError("Invalid ioc type ID",
+                                                         field_name="ioc_type_id")
+
+        tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
+        if not tlp_id:
+            raise marshmallow.exceptions.ValidationError("Invalid TLP ID",
+                                                         field_name="ioc_tlp_id")
+
+        return data
+
 
 class EventSchema(ma.SQLAlchemyAutoSchema):
-    event_title = auto_field('event_title', required=True, validate=Length(min=2))
-    event_category = fields.Integer(required=True)
-    event_assets = fields.List(fields.Integer, required=True)
-    event_date = fields.String(required=True)
-    event_time = fields.String(required=True)
-    event_tz = fields.String(required=True)
+    event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
+    event_assets = fields.List(fields.Integer, required=True, allow_none=False)
+    event_date = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=True, allow_none=False)
+    event_tz = fields.String(required=True, allow_none=False)
+    event_category_id = fields.Integer(required=True, allow_none=False)
+    event_date_wtz = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
 
     class Meta:
         model = CasesEvent
         load_instance = True
         include_fk = True
 
-    def validate_date(self, event_date, event_time, event_tz):
-        date_time = "{}T{}{}".format(event_date, event_time, event_tz)
-        date_time_wtz = "{}T{}".format(event_date, event_time)
+    def validate_date(self, event_date, event_tz):
+        date_time = "{}{}".format(event_date, event_tz)
+        date_time_wtz = "{}".format(event_date)
 
         try:
 
             self.event_date = dateutil.parser.isoparse(date_time)
-            event_date_wtz = dateutil.parser.isoparse(date_time_wtz)
+            self.event_date_wtz = dateutil.parser.isoparse(date_time_wtz)
 
         except Exception as e:
             raise marshmallow.exceptions.ValidationError("Invalid date time",
                                                          field_name="event_date")
 
-        return self.event_date, event_date_wtz
+        return self.event_date, self.event_date_wtz
+
+    @pre_load
+    def verify_data(self, data, **kwargs):
+        event_cat = EventCategory.query.filter(EventCategory.id == data.get('event_category_id')).count()
+        if not event_cat:
+            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
+                                                         field_name="event_category_id")
+
+        for asset in data.get('event_assets'):
+            ast = CaseAssets.query.filter(CaseAssets.asset_id == asset).count()
+            if not ast:
+                raise marshmallow.exceptions.ValidationError("Invalid assets ID",
+                                                             field_name="event_assets")
+
+        return data
 
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):
-    asset_name = auto_field('asset_name', required=True, validate=Length(min=2))
-    asset_description = auto_field('asset_description', required=True, validate=Length(min=2))
+    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
+    asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
 
     class Meta:
         model = AssetsType
@@ -127,7 +171,7 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def verify_unique(self, data, **kwargs):
         client = AssetsType.query.filter(
-            AssetsType.asset_name == data.asset_name,
+            func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
             AssetsType.asset_id != data.asset_id
         ).first()
         if client:
@@ -140,8 +184,8 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
 
 
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
-    type_name = auto_field('type_name', required=True, validate=Length(min=2))
-    type_description = auto_field('type_description', required=True, validate=Length(min=2))
+    type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
+    type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
     type_taxonomy = auto_field('type_taxonomy')
 
     class Meta:
@@ -151,7 +195,7 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def verify_unique(self, data, **kwargs):
         client = IocType.query.filter(
-            IocType.type_name == data.type_name,
+            func.lower(IocType.type_name) == func.lower(data.type_name),
             IocType.type_id != data.type_id
         ).first()
         if client:
@@ -164,7 +208,7 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseSchema(ma.SQLAlchemyAutoSchema):
-    case_name = auto_field('name', required=True, validate=Length(min=2))
+    case_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
     case_description = auto_field('description', required=True, validate=Length(min=2))
     case_soc_id = auto_field('soc_id', required=True)
     case_customer = auto_field('client_id', required=True)
@@ -176,45 +220,52 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         exclude = ['name', 'description', 'soc_id', 'client_id']
 
+    @pre_load
+    def verify_customer(self, data, **kwargs):
+        client = Client.query.filter(Client.client_id == data.get('case_customer')).first()
+        if client:
+            return data
+
+        raise marshmallow.exceptions.ValidationError("Invalid client id",
+                                                     field_name="case_customer")
+
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
     task_id = auto_field('id')
-    task_assignee = auto_field('task_assignee_id', required=True)
-    task_title = auto_field('task_title', required=True, validate=Length(min=2))
+    task_assignee_id = auto_field('task_assignee_id', required=True, allow_None=False)
+    task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     csrf_token = fields.String(required=False)
 
     class Meta:
         model = GlobalTasks
         include_fk = True
         load_instance = True
-        exclude = ['id', 'task_assignee_id']
+        exclude = ['id']
 
     @pre_load
-    def verify_assignee(self, data, **kwargs):
-        user = User.query.filter(User.id == data.get('task_assignee')).first()
-        if user:
-            return data
+    def verify_data(self, data, **kwargs):
+        user = User.query.filter(User.id == data.get('task_assignee_id')).count()
+        if not user:
+            raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
+                                                         field_name="task_assignee_id")
 
-        raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
-                                                     field_name="task_assignee")
+        status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
+        if not status:
+            raise marshmallow.exceptions.ValidationError("Invalid task status ID",
+                                                         field_name="task_status_id")
 
-    @pre_load
-    def verify_status(self, data, **kwargs):
-        if data.get('task_status') in task_status:
-            return data
-
-        raise marshmallow.exceptions.ValidationError("Invalid status string",
-                                                     field_name="task_status")
+        return data
 
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
-    customer_name = auto_field('name', required=True, validate=Length(min=2))
+    customer_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    customer_id = auto_field('client_id')
     csrf_token = fields.String(required=False)
 
     class Meta:
         model = Client
         load_instance = True
-        exclude = ['name']
+        exclude = ['name', 'client_id']
 
     @post_load
     def verify_unique(self, data, **kwargs):
@@ -238,15 +289,31 @@ class TaskLogSchema(ma.Schema):
 
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     task_assignee_id = fields.Integer(required=True)
-    task_title = auto_field('task_title', required=True, validate=Length(min=2))
+    task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
+    task_status_id = auto_field('task_status_id', required=True)
 
     class Meta:
         model = CaseTasks
         load_instance = True
+        include_fk = True
+
+    @pre_load
+    def verify_data(self, data, **kwargs):
+        user = User.query.filter(User.id == data.get('task_assignee_id')).count()
+        if not user:
+            raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
+                                                         field_name="task_assignee_id")
+
+        status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
+        if not status:
+            raise marshmallow.exceptions.ValidationError("Invalid task status ID",
+                                                         field_name="task_status_id")
+
+        return data
 
 
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
-    filename = auto_field('filename', required=True, validate=Length(min=2))
+    filename = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
 
     class Meta:
         model = CaseReceivedFile

@@ -214,11 +214,13 @@ def get_linked_iocs_id_from_asset(asset_id):
 
 def get_linked_iocs_finfo_from_asset(asset_id):
     iocs = IocAssetLink.query.with_entities(
+        Ioc.ioc_id,
         Ioc.ioc_value,
         Ioc.ioc_tags,
         Ioc.ioc_type_id,
         IocType.type_name,
-        Ioc.ioc_description
+        Ioc.ioc_description,
+        Ioc.ioc_tlp_id
     ).filter(and_(
         IocAssetLink.asset_id == asset_id,
         IocAssetLink.ioc_id == Ioc.ioc_id

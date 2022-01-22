@@ -34,7 +34,7 @@ from app.configuration import SQLALCHEMY_BASE_URI
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.models.cases import Cases, Client
 from app.models.models import Role, Languages, User, get_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
-    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType
+    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus
 
 
 def run_post_init(development=False):
@@ -78,6 +78,9 @@ def run_post_init(development=False):
         log.info("Creating base analysis status")
         create_safe_analysis_status()
 
+        log.info("Creating base tasks status")
+        create_safe_task_status()
+
         log.info("Running DB migration")
 
         alembic_cfg = Config(file_='app/alembic.ini')
@@ -119,13 +122,6 @@ def create_safe_db(db_name):
     engine.dispose()
 
 
-def check_db_compatibility():
-    db_version = get_db_version()
-
-    if db_version == app.config.get('DB_VERSION'):
-        return True
-
-
 def create_safe_languages():
     create_safe(db.session, Languages, name="french", code="FR")
     create_safe(db.session, Languages, name="english", code="EN")
@@ -163,6 +159,14 @@ def create_safe_analysis_status():
     create_safe(db.session, AnalysisStatus, name='Pending')
     create_safe(db.session, AnalysisStatus, name='Canceled')
     create_safe(db.session, AnalysisStatus, name='Done')
+
+
+def create_safe_task_status():
+    create_safe(db.session, TaskStatus, status_name='To do', status_description="", status_bscolor="danger")
+    create_safe(db.session, TaskStatus, status_name='In progress', status_description="", status_bscolor="warning")
+    create_safe(db.session, TaskStatus, status_name='On hold', status_description="", status_bscolor="muted")
+    create_safe(db.session, TaskStatus, status_name='Done', status_description="", status_bscolor="success")
+    create_safe(db.session, TaskStatus, status_name='Canceled', status_description="", status_bscolor="muted")
 
 
 def create_safe_assets():
