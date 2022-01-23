@@ -81,7 +81,7 @@ Table = $("#tasks_table").DataTable({
     processing: true,
     retrieve: true,
     pageLength: 50,
-    order: [[ 2, "desc" ]],
+    order: [[ 2, "asc" ]],
     buttons: [
     ],
     orderCellsTop: true,

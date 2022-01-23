@@ -168,7 +168,7 @@ UserTaskTable = $("#utasks_table").DataTable({
     retrieve: true,
     lengthChange: false,
     pageLength: 10,
-    order: [[ 2, "desc" ]],
+    order: [[ 2, "asc" ]],
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
@@ -347,7 +347,7 @@ Table = $("#gtasks_table").DataTable({
     retrieve: true,
     lengthChange: false,
     pageLength: 10,
-    order: [[ 2, "desc" ]],
+    order: [[ 2, "asc" ]],
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
