@@ -371,6 +371,46 @@ $('#time_timeline_select').on('change', function(e){
     $('html, body').animate({ scrollTop: $('#time_'+id).offset().top - 180 });
 });
 
+function show_time_converter(){
+    $('#event_date_convert').show();
+    $('#event_date_convert_input').focus();
+    $('#event_date_inputs').hide();
+}
+
+function hide_time_converter(){
+    $('#event_date_convert').hide();
+    $('#event_date_inputs').show();
+    $('#event_date').focus();
+}
+
+function time_converter(){
+    date_val = $('#event_date_convert_input').val();
+
+    var data_sent = Object();
+    data_sent['date_value'] = date_val;
+    data_sent['csrf_token'] = $('#csrf_token').val();
+
+    $.ajax({
+        url: 'timeline/events/convert-date' + case_param(),
+        type: "POST",
+        data: JSON.stringify(data_sent),
+        contentType: "application/json;charset=UTF-8",
+        dataType: "json",
+        success: function (data) {
+            if (data.status == 'success') {
+                $('#event_date').val(data.data.date);
+                $('#event_time').val(data.data.time);
+                $('#event_tz').val(data.data.tz);
+                hide_time_converter();
+                $('#convert_bad_feedback').text('');
+            }
+        },
+        error: function (error) {
+            $('#convert_bad_feedback').text('Unable to find a matching pattern for the date');
+        }
+    });
+}
+
 
 function goToSharedLink(){
     if (location.href.indexOf("#") != -1) {
@@ -423,3 +463,4 @@ $(document).ready(function(){
     setInterval(function() { check_update('timeline/state'); }, 3000);
 
 });
+

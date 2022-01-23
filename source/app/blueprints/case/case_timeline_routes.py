@@ -504,6 +504,85 @@ def case_add_event(caseid):
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
 
+@case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
+@api_login_required
+def case_event_date_convert(caseid):
 
+    jsdata = request.get_json()
+
+    date_value = jsdata.get('date_value')
+    if not date_value:
+        return response_error("Invalid request")
+
+    date_value = date_value.strip()
+
+    if len(date_value) == 10 and '-' not in date_value and '.' not in date_value and '/' not in date_value:
+        # Assume linux timestamp, from 1966 to 2286
+        date = datetime.fromtimestamp(int(date_value))
+        tz = date.strftime("%z")
+        data = {
+            "date": date.strftime("%Y-%m-%d"),
+            "time": date.strftime("%H:%M:%S.%f")[:-3],
+            "tz": tz if tz else "+00:00"
+        }
+        return response_success("Date parsed", data=data)
+
+    elif len(date_value) == 13 and '-' not in date_value and '.' not in date_value and '/' not in date_value:
+        # Assume microsecond timestamp
+        date = datetime.fromtimestamp(int(date_value) / 1000)
+        tz = date.strftime("%z")
+        data = {
+            "date": date.strftime("%Y-%m-%d"),
+            "time": date.strftime("%H:%M:%S.%f")[:-3],
+            "tz": tz if tz else "+00:00"
+        }
+        return response_success("Date parsed", data=data)
+
+    else:
+
+        # brute force formats
+        for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
+                    '%Y-%m-%d %H:%M%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S.%f%z',
+                    '%Y-%m-%d %H:%M %Z', '%Y-%m-%d %H:%M:%S %Z', '%Y-%m-%d %H:%M:%S.%f %Z',
+
+                    '%b %d %H:%M:%S', '%Y %b %d %H:%M:%S', '%b %d %H:%M:%S %Y', '%b %d %Y %H:%M:%S',
+                    '%y %b %d %H:%M:%S', '%b %d %H:%M:%S %y', '%b %d %y %H:%M:%S',
+
+                    '%Y-%m-%d', '%Y-%m-%dT%H:%M', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f',
+                    '%Y-%m-%dT%H:%M%z', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z',
+                    '%Y-%m-%dT%H:%M %Z', '%Y-%m-%dT%H:%M:%S %Z', '%Y-%m-%dT%H:%M:%S.%f %Z',
+
+                    '%Y-%d-%m', '%Y-%d-%m %H:%M', '%Y-%d-%m %H:%M:%S', '%Y-%d-%m %H:%M:%S.%f',
+                    '%Y-%d-%m %H:%M%z', '%Y-%d-%m %H:%M:%S%z', '%Y-%d-%m %H:%M:%S.%f%z',
+                    '%Y-%d-%m %H:%M %Z', '%Y-%d-%m %H:%M:%S %Z', '%Y-%d-%m %H:%M:%S.%f %Z',
+
+                    '%d/%m/%Y %H:%M', '%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M:%S.%f',
+                    '%d.%m.%Y %H:%M', '%d.%m.%Y %H:%M:%S', '%d.%m.%Y %H:%M:%S.%f',
+                    '%d-%m-%Y %H:%M', '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M:%S.%f',
+
+                    '%b %d %Y %H:%M', '%b %d %Y %H:%M:%S', '%b %d %Y %H:%M:%S',
+
+                    '%a, %d %b %Y %H:%M:%S', '%a, %d %b %Y %H:%M:%S %Z', '%a, %d %b %Y %H:%M:%S.%f',
+                    '%a, %d %b %y %H:%M:%S', '%a, %d %b %y %H:%M:%S %Z', '%a, %d %b %y %H:%M:%S.%f',
+
+                    '%d %b %Y %H:%M', '%d %b %Y %H:%M:%S', '%d %b %Y %H:%M:%S.%f',
+                    '%d %b %y %H:%M', '%d %b %y %H:%M:%S', '%d %b %y %H:%M:%S.%f',
+
+                    '%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y', "%A, %B %d, %Y", "%A %B %d, %Y", "%A %B %d %Y",
+                    '%d %B %Y'):
+
+            try:
+                date = datetime.strptime(date_value, fmt)
+                tz = date.strftime("%z")
+                data = {
+                    "date": date.strftime("%Y-%m-%d"),
+                    "time": date.strftime("%H:%M:%S.%f")[:-3],
+                    "tz": tz if tz else "+00:00"
+                }
+                return response_success("Event added", data=data)
+            except ValueError:
+                pass
+
+    return response_error("Unable to find a matching date format")
 
 
