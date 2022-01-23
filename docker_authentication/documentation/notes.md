@@ -55,6 +55,9 @@ Once created, activate *Always Display in Console* and set the *Access Type* to 
 
 ![set_access_type.png](images/set_access_type.png)
 
+In the *Themes* tab, it is possible to configure the look and feel of the Keycloak interface for the standard users.
+Several themes are available to use. A IRIS specific theme has been created under the name *iris_custom*.
+
 After doing this, a new tab called *Credentials* should appear.  
 It contains a very important information: the **client secret**  
 

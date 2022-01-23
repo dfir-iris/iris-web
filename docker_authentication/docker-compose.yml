@@ -23,6 +23,10 @@ services:
       - DB_USER
       - DB_PASSWORD
       - PROXY_ADDRESS_FORWARDING=true
+    volumes:
+      # The following file must only be passed to container when working on themes. Comment otherwise.
+      # - ./keycloak/scripts/disable-theme-cache.cli:/opt/jboss/startup-scripts/disable-theme-cache.cli:ro
+      - ./keycloak/themes/iris_custom:/opt/jboss/keycloak/themes/iris_custom:ro
     ports:
       - "8080:8080"
     networks:
