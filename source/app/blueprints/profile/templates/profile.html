@@ -96,7 +96,7 @@
                         {% if config['AUTHENTICATION_TYPE'] == 'local' %}
                             <button class="btn btn-primary" type="button" onclick="update_password()">Change password</button>
                         {% elif config['AUTHENTICATION_TYPE'] == 'oidc_proxy' %}
-                            <button class="btn btn-primary" type="button" onclick="($(location).attr('href', '{{ config['AUTHENTICATION_ACCOUNT_SERVICE_URL'] }}'))"><span class="btn-label"><i class="flaticon-arrow"></i></span>Access account</button>
+                            <button class="btn btn-primary" type="button" onclick="(window.open('{{ config['AUTHENTICATION_ACCOUNT_SERVICE_URL'] }}'))"><span class="btn-label"><i class="flaticon-arrow"></i></span>Access account</button>
                         {% endif %}
                     </div>
                 </div>
@@ -117,5 +117,4 @@
 
 {% block javascripts %}
     <script src="/static/assets/js/iris/user.js"></script>
-
 {% endblock javascripts %}

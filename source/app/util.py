@@ -367,7 +367,7 @@ def admin_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
 
-        if not current_user.is_authenticated:
+        if not is_user_authenticated(request):
             return redirect(not_authenticated_redirection_url())
         else:
             redir, caseid = get_urlcase(request=request)
@@ -396,7 +396,7 @@ def api_login_required(f):
                 elif request.is_json:
                     request.json.pop('csrf_token')
 
-        if not current_user.is_authenticated:
+        if not is_user_authenticated(request):
             return response_error("Authentication required", status=401)
 
         else:
@@ -423,7 +423,7 @@ def api_admin_required(f):
                 elif request.is_json:
                     request.json.pop('csrf_token')
 
-        if not current_user.is_authenticated:
+        if not is_user_authenticated(request):
             return response_error("Authentication required", status=401)
 
         else:
