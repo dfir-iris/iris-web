@@ -445,6 +445,7 @@ def case_edit_event(cur_id, caseid):
                             caseid=caseid,
                             assets_list=jsdata.get('event_assets'))
 
+        track_activity("updated event {}".format(cur_id), caseid=caseid)
         return response_success("Event added", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -498,6 +499,7 @@ def case_add_event(caseid):
                             caseid=caseid,
                             assets_list=jsdata.get('event_assets'))
 
+        track_activity("added event {}".format(event.event_id), caseid=caseid)
         return response_success("Event added", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
