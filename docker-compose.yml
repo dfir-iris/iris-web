@@ -31,6 +31,7 @@ services:
   db:
     build:
       context: docker/db
+    container_name: iriswebapp_db
     restart: always
     ports:
       - "127.0.0.1:5432:5432"
@@ -48,10 +49,11 @@ services:
       context: .
       dockerfile: docker/webApp/Dockerfile
     image: iriswebapp_app:latest
+    container_name: iriswebapp_app
     command: ['./iris-entrypoint.sh', 'iriswebapp']
     volumes:
-      # RootCA necessary when dealing with a auth server without a trusted CA signed certificate
-      - ./docker_authentication/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
+      # RootCA necessary when dealing with an auth server without a trusted CA signed certificate
+      - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
     restart: always
@@ -82,8 +84,10 @@ services:
       context: .
       dockerfile: docker/webApp/Dockerfile
     image: iriswebapp_app:latest
+    container_name: iriswebapp_worker
     command: ['./wait-for-iriswebapp.sh', 'app:8000', './iris-entrypoint.sh', 'iris-worker']
     volumes:
+      - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
     depends_on:

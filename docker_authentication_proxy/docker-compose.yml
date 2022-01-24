@@ -17,7 +17,7 @@ services:
     extra_hosts:
       - "auth_iris.app.dev:172.17.0.1"
     networks:
-      - test_app_network
+#      - test_app_network
       - app_network
 
   # TEST WEB APPLICATION

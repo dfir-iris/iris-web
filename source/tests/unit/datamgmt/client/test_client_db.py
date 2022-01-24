@@ -21,7 +21,7 @@
 
 from unittest import TestCase
 
-from app.datamgmt.client.client_db import create_client, get_client, get_client_list, update_client, delete_client
+from app.datamgmt.client.client_db import get_client, get_client_list, update_client, delete_client
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from tests.clean_database import clean_db
 from tests.test_helper import TestHelper
@@ -115,4 +115,3 @@ class TestClientDB(TestCase):
     def test_delete_client_should_raise_error_if_client_id_not_found(self):
         with self.assertRaises(ElementNotFoundException):
             delete_client(0)
-

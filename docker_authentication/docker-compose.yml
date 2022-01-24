@@ -14,7 +14,7 @@ services:
       - ${NGINX_CONF_PATH}:/etc/nginx/nginx.conf:ro
   keycloak:
     image: quay.io/keycloak/keycloak:16.1.0
-    container_name: iriswebapp_authentication_keycloak
+    container_name: keycloak
     environment:
       - KEYCLOAK_USER
       - KEYCLOAK_PASSWORD
