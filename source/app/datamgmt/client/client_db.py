@@ -43,7 +43,7 @@ def get_client_list(is_api: bool = False) -> Union[List[Dict], List[Client]]:
     return output
 
 
-def get_client(client_id: str) -> Client:
+def get_client(client_id: int) -> Client:
     client = Client.query.filter(Client.client_id == client_id).first()
     return client
 
@@ -61,7 +61,7 @@ def create_client(client_name: str) -> Client:
     return client
 
 
-def update_client(client_id: str, client_name: str) -> Client:
+def update_client(client_id: int, client_name: str) -> Client:
     # TODO: Possible reuse somewhere else ...
     client = get_client(client_id)
 

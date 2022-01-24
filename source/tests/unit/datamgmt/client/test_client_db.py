@@ -21,7 +21,65 @@
 
 from unittest import TestCase
 
+from app.datamgmt.client.client_db import create_client, get_client, get_client_list
+from tests.clean_database import clean_db
+from tests.test_helper import TestHelper
+
 
 class TestClientDB(TestCase):
-    def test_should_create_a_new_user(self):
-        self.assertEqual(True, False)
+    def setUp(self) -> None:
+        self._test_helper = TestHelper()
+        clean_db()
+
+    def tearDown(self) -> None:
+        clean_db()
+
+    # CREATE CLIENT
+    def test_create_client_should_return_client_object(self):
+        new_client = self._test_helper.create_client("new_client_name")
+
+        self.assertIsNotNone(new_client)
+        self.assertEqual("new_client_name", new_client.name)
+
+    # GET CLIENT
+    def test_get_client_should_return_client_object(self):
+        # Create 2 clients
+        client1 = self._test_helper.create_client()
+        self._test_helper.create_client()
+
+        # Get client1
+        returned_client = get_client(client1.client_id)
+
+        self.assertIsNotNone(returned_client)
+        self.assertEqual(returned_client.client_id, client1.client_id)
+
+    # GET CLIENT LIST
+    def test_get_client_list_should_return_list_of_client_object(self):
+        # Create 3 clients
+        client1 = self._test_helper.create_client()
+        client2 = self._test_helper.create_client()
+        client3 = self._test_helper.create_client()
+
+        # Get client list
+        returned_client_list = get_client_list()
+
+        self.assertEqual(3, len(returned_client_list))
+        returned_client_id_list = [el['client_id'] for el in returned_client_list]
+        self.assertTrue(client1.client_id in returned_client_id_list)
+        self.assertTrue(client2.client_id in returned_client_id_list)
+        self.assertTrue(client3.client_id in returned_client_id_list)
+
+    def test_get_client_list_should_return_list_of_client_object_for_api(self):
+        # Create 3 clients
+        client1 = self._test_helper.create_client()
+        client2 = self._test_helper.create_client()
+        client3 = self._test_helper.create_client()
+
+        # Get client list
+        returned_client_list = get_client_list(True)
+
+        self.assertEqual(3, len(returned_client_list))
+        returned_client_id_list = [client_id for _, client_id in returned_client_list]
+        self.assertTrue(client1.client_id in returned_client_id_list)
+        self.assertTrue(client2.client_id in returned_client_id_list)
+        self.assertTrue(client3.client_id in returned_client_id_list)

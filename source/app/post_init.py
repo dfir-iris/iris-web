@@ -81,7 +81,7 @@ def run_post_init(development=False):
         log.info("Running DB migration")
 
         alembic_cfg = Config(file_='app/alembic.ini')
-        alembic_cfg.set_main_option('sqlalchemy.url',  SQLALCHEMY_BASE_URI + 'iris_db')
+        alembic_cfg.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_URI + 'iris_db')
         command.upgrade(alembic_cfg, 'head')
 
     log.info("Registering modules pipeline tasks")
@@ -135,7 +135,7 @@ def create_safe_languages():
 def create_safe_events_cats():
     create_safe(db.session, EventCategory, name="Unspecified")
     create_safe(db.session, EventCategory, name="Legitimate")
-    create_safe(db.session, EventCategory, name="Remediation") 
+    create_safe(db.session, EventCategory, name="Remediation")
     create_safe(db.session, EventCategory, name="Initial Access")
     create_safe(db.session, EventCategory, name="Execution")
     create_safe(db.session, EventCategory, name="Persistence")
@@ -182,17 +182,17 @@ def create_safe_assets():
     get_or_create(db.session, AssetsType, asset_name="VPN", asset_description="VPN")
     get_or_create(db.session, AssetsType, asset_name="WAF", asset_description="WAF")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - Local",
-                                          asset_description="Windows Account - Local")
+                  asset_description="Windows Account - Local")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - Local - Admin",
-                                          asset_description="Windows Account - Local - Admin")
+                  asset_description="Windows Account - Local - Admin")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - AD",
-                                          asset_description="Windows Account - AD")
+                  asset_description="Windows Account - AD")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - Admin",
-                                          asset_description="Windows Account - AD - Admin")
+                  asset_description="Windows Account - AD - Admin")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - krbtgt",
-                                          asset_description="Windows Account - AD - krbtgt")
+                  asset_description="Windows Account - AD - krbtgt")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - Service",
-                                          asset_description="Windows Account - AD - krbtgt")
+                  asset_description="Windows Account - AD - krbtgt")
 
 
 def create_safe_client():
@@ -210,12 +210,13 @@ def create_safe_admin():
     ).first()
     if not user:
         password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choice(string.printable[:-6]) for i in range(16)))
-        user = User(user="administrator",
-                    name="administrator",
-                    email="administrator@iris.local",
-                    password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
-                    active=True
-                    )
+        user = User(
+            user="administrator",
+            name="administrator",
+            email="administrator@iris.local",
+            password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
+            active=True
+        )
         user.api_key = secrets.token_urlsafe(nbytes=64)
         db.session.add(user)
 
@@ -237,7 +238,7 @@ def create_safe_admin():
 
 def create_safe_case(user, client):
     case = Cases.query.filter(
-            Cases.client_id == client.client_id
+        Cases.client_id == client.client_id
     ).first()
 
     if not case:
@@ -619,4 +620,3 @@ def register_modules_pipelines():
         tasks = status.get_data()
         for task in tasks:
             celery.register_task(task)
-

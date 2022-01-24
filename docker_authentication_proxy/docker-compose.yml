@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+    # AUTHENTICATION PROXY
+  proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.2.0
+    container_name: oauth2_proxy
+    volumes:
+      - ./proxy/oauth2-proxy_iris-web-app.cfg:/etc/oauth2-proxy.cfg:ro
+      - ${CERTIFICATE_KEY_PATH}:/etc/authProxy.key:ro
+      - ${CERTIFICATE_CRT_PATH}:/etc/authProxy.crt:ro
+      # Following volume is necessary if the provider uses a certificate signed by a non-trusted CA
+      - ${ROOT_CA_CRT_PATH}:/etc/rootCA.pem:ro
+    command: oauth2-proxy --config=/etc/oauth2-proxy.cfg
+    ports:
+      - "4180:4180"
+      - "4443:4433"
+    extra_hosts:
+      - "auth_iris.app.dev:172.17.0.1"
+    networks:
+      - test_app_network
+      - app_network
+
+  # TEST WEB APPLICATION
+  test_web_application:
+    image: nginx:1.21.5
+    container_name: test_web_application
+    volumes:
+      - ./test_web_application/:/usr/share/nginx/html/:ro
+      - ./test_web_application/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8081:80"
+    networks:
+      - test_app_network
+
+networks:
+  test_app_network:
+    driver: bridge
+  app_network:
+    external: true
+    name: iris_frontend

@@ -320,7 +320,7 @@ class User(UserMixin, db.Model):
 
     roles = db.relationship('Role', secondary='user_roles')
 
-    def __init__(self, user, name, email, password, active, external_id):
+    def __init__(self, user: str, name: str, email: str, password: str, active: str, external_id: str = None):
         self.user = user
         self.name = name
         self.password = password
