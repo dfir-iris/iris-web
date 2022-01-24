@@ -36,7 +36,7 @@ from app.datamgmt.states import get_assets_state, update_assets_state
 from app.forms import ModalAddCaseAssetForm, AssetBasicForm
 
 from app.iris_engine.utils.tracker import track_activity
-from app.models import AnalysisStatus
+from app.models import AnalysisStatus, IocAssetLink, Ioc, IocLink
 from app.schema.marshables import CaseAssetsSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
@@ -80,16 +80,36 @@ def case_list_assets(caseid):
     ret = {}
     ret['assets'] = []
 
+    ioc_links_req = IocAssetLink.query.with_entities(
+        Ioc.ioc_id,
+        Ioc.ioc_value,
+        IocAssetLink.asset_id
+    ).filter(
+        Ioc.ioc_id == IocAssetLink.ioc_id,
+        IocLink.case_id == caseid,
+        IocLink.ioc_id == Ioc.ioc_id
+    ).all()
+
+    cache_ioc_link = {}
+    for ioc in ioc_links_req:
+
+        if ioc.asset_id not in cache_ioc_link:
+            cache_ioc_link[ioc.asset_id] = [ioc._asdict()]
+        else:
+            cache_ioc_link[ioc.asset_id].append(ioc._asdict())
+
     for asset in assets:
         asset = asset._asdict()
 
         # Find linked IoC
-        iocs = get_linked_iocs_from_asset(asset["asset_id"])
-        asset['ioc_links'] = [ioc._asdict() for ioc in iocs]
+        if len(assets) < 300:
+            # Find similar assets from other cases with the same customer
+            asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
+                            asset['asset_name'], asset['asset_type_id'], caseid, customer_id)]
+        else:
+            asset['link'] = []
 
-        # Find similar assets from other cases with the same customer
-        asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
-                        asset['asset_name'], asset['asset_type_id'], caseid, customer_id)]
+        asset['ioc_links'] = cache_ioc_link.get(asset['asset_id'])
 
         ret['assets'].append(asset)
 

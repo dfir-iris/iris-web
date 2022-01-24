@@ -314,6 +314,8 @@ function asset_details(asset_id) {
             var data = $('#form_new_asset').serializeObject();
             if (typeof data["ioc_links"] == "string") {
                 data["ioc_links"] = [data["ioc_links"]]
+            } else {
+                data["ioc_links"] = [];
             }
             data['asset_tags'] = $('#asset_tags').val();
             if (!data.hasOwnProperty('asset_compromised')) {

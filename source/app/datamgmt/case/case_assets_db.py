@@ -54,7 +54,7 @@ def get_assets(caseid):
         CaseAssets.analysis_status_id,
         CaseAssets.asset_tags
     ).filter(
-        CaseAssets.case_id == caseid
+        CaseAssets.case_id == caseid,
     ).join(
         CaseAssets.asset_type, CaseAssets.analysis_status
     ).all()
@@ -186,7 +186,7 @@ def get_linked_iocs_from_asset(asset_id):
 
 
 def set_ioc_links(ioc_list, asset_id):
-    if not ioc_list:
+    if ioc_list is None:
         return
 
     # Reset IOC list
