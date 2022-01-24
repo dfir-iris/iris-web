@@ -312,9 +312,18 @@ function asset_details(asset_id) {
             }
 
             var data = $('#form_new_asset').serializeObject();
-            if (typeof data["ioc_links"] == "string") {
+            if (typeof data["ioc_links"] === "string") {
                 data["ioc_links"] = [data["ioc_links"]]
-            } else {
+            } else if (typeof data["ioc_links"] === "object") {
+                tmp_data = [];
+                for (ioc_link in data["ioc_links"]) {
+                    if (typeof ioc_link === "string") {
+                        tmp_data.push(data["ioc_links"][ioc_link]);
+                    }
+                }
+                data["ioc_links"] = tmp_data;
+            }
+            else {
                 data["ioc_links"] = [];
             }
             data['asset_tags'] = $('#asset_tags').val();
