@@ -21,7 +21,8 @@
 
 from unittest import TestCase
 
-from app.datamgmt.client.client_db import create_client, get_client, get_client_list
+from app.datamgmt.client.client_db import create_client, get_client, get_client_list, update_client, delete_client
+from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from tests.clean_database import clean_db
 from tests.test_helper import TestHelper
 
@@ -83,3 +84,35 @@ class TestClientDB(TestCase):
         self.assertTrue(client1.client_id in returned_client_id_list)
         self.assertTrue(client2.client_id in returned_client_id_list)
         self.assertTrue(client3.client_id in returned_client_id_list)
+
+    # UPDATE CLIENT
+    def test_update_client_should_correctly_modify_client(self):
+        client1 = self._test_helper.create_client()
+
+        new_name = 'updated name'
+        update_client(client1.client_id, new_name)
+
+        returned_client = get_client(client1.client_id)
+
+        self.assertEqual(returned_client.name, new_name)
+
+    def test_update_client_should_raise_error_if_client_id_not_found(self):
+        with self.assertRaises(ElementNotFoundException):
+            update_client(0, 'new_name')
+
+    # DELETE CLIENT
+    def test_delete_client_should_correctly_remove_client(self):
+        client1 = self._test_helper.create_client()
+        client2 = self._test_helper.create_client()
+
+        delete_client(client1.client_id)
+
+        client_list = get_client_list()
+
+        self.assertEqual(1, len(client_list))
+        self.assertEqual(client2.client_id, client_list[0]['client_id'])
+
+    def test_delete_client_should_raise_error_if_client_id_not_found(self):
+        with self.assertRaises(ElementNotFoundException):
+            delete_client(0)
+
