@@ -22,14 +22,16 @@
 import marshmallow
 from flask import Blueprint, request, redirect, url_for
 from flask import render_template
+from flask_wtf import FlaskForm
 
 from app import db
-from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user
+from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, \
+    get_user_by_username, get_user_details, get_users_list_restricted
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
-from app.util import admin_required, login_required, response_error, response_success, api_admin_required
-
+from app.util import admin_required, login_required, response_error, response_success, api_admin_required, \
+    api_login_required
 
 manage_users_blueprint = Blueprint('manage_users',
                                    __name__,
@@ -43,7 +45,9 @@ def manage_users_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.manage_users', cid=caseid))
 
-    return render_template("manage_users.html")
+    form = FlaskForm()
+
+    return render_template("manage_users.html", form=form)
 
 
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])
@@ -98,15 +102,12 @@ def add_user(caseid):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def view_user(cur_id, caseid):
-    user = get_user(cur_id)
+    user = get_user_details(user_id=cur_id)
+
     if not user:
         return response_error("Invalid user ID")
 
-    user_schema = UserSchema()
-    cuser = user_schema.load({}, instance=user)
-    cuser.user_roles_str = [role.name for role in user.roles]
-
-    return response_success(data=user_schema.dump(cuser))
+    return response_success(data=user)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/modal', methods=['GET'])
@@ -159,6 +160,38 @@ def update_user_api(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
+@manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])
+@api_admin_required
+def deactivate_user_api(cur_id, caseid):
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID for this case")
+
+    user.active = False
+    db.session.commit()
+    user_schema = UserSchema()
+
+    track_activity("user {} deactivated".format(user.user), caseid=caseid)
+    return response_success("User deactivated", data=user_schema.dump(user))
+
+
+@manage_users_blueprint.route('/manage/users/activate/<int:cur_id>', methods=['GET'])
+@api_admin_required
+def activate_user_api(cur_id, caseid):
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID for this case")
+
+    user.active = True
+    db.session.commit()
+    user_schema = UserSchema()
+
+    track_activity("user {} activated".format(user.user), caseid=caseid)
+    return response_success("User activated", data=user_schema.dump(user))
+
+
 @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def view_delete_user(cur_id, caseid):
@@ -177,3 +210,45 @@ def view_delete_user(cur_id, caseid):
         db.session.rollback()
         track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid)
         return response_error("Cannot delete active user")
+
+
+# Unrestricted section - non admin available
+@manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])
+@api_login_required
+def exists_user_restricted(cur_id, caseid):
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    output = {
+        "user_login": user.user,
+        "user_id": user.id,
+        "user_name": user.name
+    }
+
+    return response_success(data=output)
+
+
+@manage_users_blueprint.route('/manage/users/lookup/login/<string:login>', methods=['GET'])
+@api_login_required
+def lookup_name_restricted(login, caseid):
+    user = get_user_by_username(login)
+    if not user:
+        return response_error("Invalid login")
+
+    output = {
+        "user_login": user.user,
+        "user_id": user.id,
+        "user_name": user.name
+    }
+
+    return response_success(data=output)
+
+
+@manage_users_blueprint.route('/manage/users/restricted/list', methods=['GET'])
+@api_login_required
+def manage_users_list_restricted(caseid):
+    users = get_users_list_restricted()
+
+    return response_success('', data=users)
+

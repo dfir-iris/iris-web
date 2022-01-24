@@ -112,7 +112,8 @@ class AlchemyEncoder(json.JSONEncoder):
 
             # an SQLAlchemy class
             fields = {}
-            for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata']:
+            for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata'
+                                                 and x != 'query' and x != 'query_class']:
                 data = obj.__getattribute__(field)
                 try:
                     json.dumps(data)  # this will fail on non-encodable values, like other classes
@@ -370,5 +371,5 @@ def page_not_found(e):
     if request.content_type and 'application/json' in request.content_type:
         return response_error("Resource not found", status=404)
 
-    return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH)
+    return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH), 404
 

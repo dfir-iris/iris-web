@@ -74,6 +74,7 @@ function nextGroupNote(title="", rid=0) {
         title = "Untitled group";
     }
     newElement.attr("id", "group-" + rid);
+    newElement.attr("title", "Group ID #" + rid);
 
     var fa = $(newElement).find('button')[0];
     var fb = $(newElement).find('button')[1];
@@ -108,6 +109,7 @@ function add_subnote(_item, tr=0, title='', last_up, user) {
         newElement.attr("id", element.attr("id").split("_")[0] + "_" + id);
         var field = $(newElement).attr("id");
         $(newElement).attr("id", field.split("_")[0] + "_" + id);
+        $(newElement).attr("title", 'Note #' + id);
         $(newElement).find('iris_note').attr('id', tr);
         $(newElement).find('iris_note').text(title);
         $(newElement).find('a.kanban-title').text(title);
@@ -228,14 +230,16 @@ function edit_add_save(group_id) {
 /* Delete a group of the dashboard */
 function edit_remote_groupnote(group_id) {
 
-    var data = {'group_title': $("#group-" + group_id).find('div.kanban-title-board').text(), 'group_id': group_id};
+    var data = Object();
+    data['group_title'] = $("#group-" + group_id).find('div.kanban-title-board').text();
     data["csrf_token"] = $('#csrf_token').val();
 
     $.ajax({
-        url: '/case/notes/groups/edit' + case_param(),
+        url: '/case/notes/groups/update/'+ group_id + case_param(),
         type: "POST",
-        data: data,
+        data: JSON.stringify(data),
         dataType: 'JSON',
+        contentType: "application/json;charset=UTF-8",
         success: function (data) {
             if (data.status == 'success') {
                 notify_success("Changes saved");
@@ -429,7 +433,7 @@ function save_note(this_item) {
     data_sent['note_content'] = $('#note_content').val();
 
     $.ajax({
-        url: '/case/notes/save/'+ n_id + case_param(),
+        url: '/case/notes/update/'+ n_id + case_param(),
         type: "POST",
         dataType: "json",
         contentType: "application/json;charset=UTF-8",
@@ -467,7 +471,7 @@ function draw_kanban() {
     show_loader();
 
     $.ajax({
-        url: '/case/notes/groups' + case_param(),
+        url: '/case/notes/groups/list' + case_param(),
         type: "GET",
         dataType: 'JSON',
         success: function (data) {
@@ -479,12 +483,15 @@ function draw_kanban() {
                         nextGroupNote(group.group_title, group.group_id);
                         gidl.push(group.group_id);
                     }
-                    add_subnote(group.group_id,
-                            group.note_id,
-                            group.note_title,
-                            group.note_lastupdate,
-                            group.user
-                        );
+                    for  (ikd in group.notes) {
+                        note = group.notes[ikd];
+                        add_subnote(group.group_id,
+                                note.note_id,
+                                note.note_title,
+                                note.note_lastupdate,
+                                note.user
+                            );
+                    }
                 }
             set_last_state(data.data.state);
             hide_loader();
@@ -501,3 +508,9 @@ function draw_kanban() {
 }
 
 
+$(document).ready(function(){
+    shared_id = getSharedLink();
+    if (shared_id) {
+        note_detail(shared_id);
+    }
+});

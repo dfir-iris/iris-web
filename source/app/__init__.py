@@ -83,4 +83,11 @@ app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
 
 socket_io = SocketIO(app, cors_allowed_origins="*")
 
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
+
 from app import views
+
+

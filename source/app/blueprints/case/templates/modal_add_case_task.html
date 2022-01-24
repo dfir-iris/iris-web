@@ -1,9 +1,15 @@
     <div class="modal-header">
         <h4>{% if task.id %} Task ID #{{ task.id }}{% else %} Add task {% endif %}</h4>
         {% if task.id %}
-         <i class="fas fa-info-circle ml-3" data-toggle="popover"
+
+         <i class="fas fa-info-circle ml-3 mt-1" data-toggle="popover"
                         title="Task info"
                         data-content="Last updated {{ task.task_last_update }} by {{ user_name }}."></i>
+        <button type="button" class="mt--1 btn btn-sm float-right ml-3 btn-light btn-outline" onclick="copy_object_link({{task.id}});return false;" title="Copy shared link">
+            <span class="btn-label text-dark">
+                <i class="fa fa-share"></i>
+            </span>
+        </button>
         {% endif %}
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
         aria-hidden="true">&times;</span></button>
@@ -20,11 +26,11 @@
                     <label for="task_assignee" class="placeholder">Assigned to</label>
                     {{ form.task_assignee_id(class="selectpicker pl--6  col-5") }}
 
-                    <label for="task_status" class="placeholder">Status</label>
-                    {{ form.task_status(class="selectpicker pl--6  col-5") }}
+                    <label for="task_status_id" class="placeholder">Status</label>
+                    {{ form.task_status_id(class="selectpicker pl--6  col-5") }}
                 </div>
                 <div class="form-group">
-                    <label for="task_title" class="placeholder">{{ form.task_title.label.text }}</label>
+                    <label for="task_title" class="placeholder">{{ form.task_title.label.text }} *</label>
                     {{ form.task_title(class='form-control col-md-12 col-sm-12',  autocomplete="off") }}
                 </div>
                 <div class="form-group mt-3">
@@ -68,7 +74,7 @@
         title: "None",
         style: "Bootstrap 4: 'btn-outline-primary'",
     });
-    $('#task_status').selectpicker({
+    $('#task_status_id').selectpicker({
         liveSearch: true,
         title: "None",
         style: "Bootstrap 4: 'btn-outline-primary'",
@@ -77,10 +83,10 @@
         $('#task_assignee_id').selectpicker('val', '{{uid}}');
     {% endif %}
 
-    {% if task.task_status %}
-        $('#task_status').selectpicker('val', '{{task.task_status}}');
+    {% if task.task_status_id %}
+        $('#task_status_id').selectpicker('val', '{{task.task_status_id}}');
      {% else %}
-        $('#task_status').selectpicker('val', 'To do');
+        $('#task_status_id').selectpicker('val', 'To do');
     {% endif %}
     $('[data-toggle="popover"]').popover();
 </script>

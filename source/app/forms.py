@@ -55,6 +55,12 @@ class AddAssetForm(FlaskForm):
     asset_description = StringField(u'Asset description', validators=[DataRequired()])
 
 
+class AddIocTypeForm(FlaskForm):
+    type_name = StringField(u'Type name', validators=[DataRequired()])
+    type_description = StringField(u'Type description', validators=[DataRequired()])
+    type_taxonomy = TextAreaField(u'Type taxonomy')
+
+
 class AddCustomerForm(FlaskForm):
     customer_name = StringField(u'Customer name', validators=[DataRequired()])
 
@@ -97,6 +103,7 @@ class AssetBasicForm(FlaskForm):
     asset_compromised = BooleanField(u'Is Compromised')
     asset_type_id = SelectField(u'Asset Type', validators=[DataRequired()])
     analysis_status_id = SelectField(u'Analysis Status', validators=[DataRequired()])
+    asset_tags = StringField(u'Asset Tags')
 
 
 class AssetComputerForm(AssetBasicForm):
@@ -121,7 +128,7 @@ class CaseEventForm(FlaskForm):
     event_content = TextAreaField(u'Event Description')
     event_raw = TextAreaField(u'Event Raw data')
     event_assets = SelectField(u'Event Asset')
-    event_category = SelectField(u'Event Category')
+    event_category_id = SelectField(u'Event Category')
     event_tz = StringField(u'Event Timezone', validators=[DataRequired()])
     event_in_summary = BooleanField(u'Add to summary')
     event_in_graph = BooleanField(u'Display in graph')
@@ -131,15 +138,15 @@ class CaseTaskForm(FlaskForm):
     task_title = StringField(u'Task Title', validators=[DataRequired()])
     task_description = TextAreaField(u'Task description')
     task_assignee_id = SelectField(u'Task assignee', validators=[DataRequired()])
-    task_status = SelectField(u'Task status')
+    task_status_id = SelectField(u'Task status', validators=[DataRequired()])
     task_tags = StringField(u'Task Tags')
 
 
 class CaseGlobalTaskForm(FlaskForm):
     task_title = StringField(u'Task Title')
     task_description = TextAreaField(u'Task description')
-    task_assignee = SelectField(u'Task assignee')
-    task_status = SelectField(u'Task status')
+    task_assignee_id = SelectField(u'Task assignee')
+    task_status_id = SelectField(u'Task status')
     task_tags = StringField(u'Task Tags')
 
 
@@ -147,7 +154,7 @@ class ModalAddCaseIOCForm(FlaskForm):
     ioc_tags = StringField(u'IOC Tags')
     ioc_value = TextAreaField(u'IOC Value', validators=[DataRequired()])
     ioc_description = TextAreaField(u'IOC Description')
-    ioc_type = SelectField(u'IOC Type', validators=[DataRequired()])
+    ioc_type_id = SelectField(u'IOC Type', validators=[DataRequired()])
     ioc_tlp_id = SelectField(u'IOC TLP', validators=[DataRequired()])
 
 

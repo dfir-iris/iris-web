@@ -25,13 +25,19 @@ function get_case_graph() {
 var network;
 
 function redrawAll(data) {
+  if (data.nodes.length == 0) {
+        $('#card_main_load').show();
+        $('#graph-container').text('No events in graph');
+        hide_loader();
+        return true;
+  }
   var container = document.getElementById("graph-container");
   var options = {
     edges: {
       smooth: {
-            enabled: false,
-            type: 'discrete',
-            roundness: 0
+            enabled: true,
+            type: 'continuous',
+            roundness: 0.5
         }
     },
     layout: {

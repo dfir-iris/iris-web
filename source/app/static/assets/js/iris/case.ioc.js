@@ -26,22 +26,30 @@ Table = $("#ioc_table").DataTable({
                 datak = '#' + row['ioc_id'];
             }
 
-            data = '<a href="#"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');">' + datak +'</a>';
+            share_link = buildShareLink(row['ioc_id']);
+            data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
             if (row['ioc_misp'] != null) {
                 jse = JSON.parse(row['ioc_misp']);
                 data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
-                   data-toggle="popover" data-trigger="focus" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
+                   data-toggle="popover" data-trigger="hover" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
             }
           }
           return data;
         }
       },
-      { "data": "ioc_type" },
+      { "data": "ioc_type",
+       "render": function (data, type, row, meta) {
+          if (type === 'display') {
+            data = sanitizeHTML(data);
+          }
+          return data;
+          }
+      },
       { "data": "ioc_description",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
           data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="focus" href="#" data-content="' + data + '">' + data.slice(0, 70);
+            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
                 datas += ' (..)</span>';
@@ -55,7 +63,7 @@ Table = $("#ioc_table").DataTable({
       },
       { "data": "ioc_tags",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
               tags = "";
               de = data.split(',');
               for (tag in de) {
@@ -68,10 +76,10 @@ Table = $("#ioc_table").DataTable({
       },
       { "data": "link",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
+          if (type === 'display' && data != null) {
               links = "";
               for (link in data) {
-                links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="focus" class="text-primary mr-3" href="#" title="Case info" data-content="' + sanitizeHTML(data[link]['case_name']) +
+                links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="hover" class="text-primary mr-3" href="#" title="Case info" data-content="' + sanitizeHTML(data[link]['case_name']) +
                  ' (' + sanitizeHTML(data[link]['client_name']) + ')' + '">#' + data[link]['case_id'] + '</span>'
               }
               return links;
@@ -306,9 +314,71 @@ function delete_ioc(ioc_id) {
     });
 }
 
+function fire_upload_iocs() {
+    $('#modal_upload_ioc').modal('show');
+}
+
+function upload_ioc() {
+
+    var file = $("#input_upload_ioc").get(0).files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        fileData = e.target.result
+        var data = new Object();
+        data['csrf_token'] = $('#csrf_token').val();
+        data['CSVData'] = fileData;
+        $.ajax({
+            url: '/case/ioc/upload' + case_param(),
+            type: "POST",
+            data: JSON.stringify(data),
+            contentType: "application/json;charset=UTF-8",
+            dataType: "json",
+            success: function (data) {
+                jsdata = data;
+                if (jsdata.status == "success") {
+                    reload_iocs();
+                    $('#modal_upload_ioc').modal('hide');
+                    swal("Got news for you", data.message, "success");
+
+                } else {
+                    swal("Got bad news for you", data.message, "error");
+                }
+            },
+            error: function (error) {
+                notify_error(error.responseJSON.message);
+                propagate_form_api_errors(error.responseJSON.data);
+            }
+        });
+    };
+    reader.readAsText(file)
+
+    return false;
+}
+
+function generate_sample_csv(){
+    csv_data = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp\n"
+    csv_data += "1.1.1.1,ip-dst,Cloudflare DNS IP address,Cloudflare|DNS,green\n"
+    csv_data += "wannacry.exe,filename,Wannacry sample found,Wannacry|Malware|PE,amber"
+    download_file("sample_iocs.csv", "text/csv", csv_data);
+}
+
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
 
 /* Page is ready, fetch the iocs of the case */
 $(document).ready(function(){
     get_case_ioc();
     setInterval(function() { check_update('ioc/state'); }, 3000);
+
+    shared_id = getSharedLink();
+    if (shared_id) {
+        edit_ioc(shared_id);
+    }
 });

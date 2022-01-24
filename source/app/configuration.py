@@ -39,7 +39,7 @@ misp_http_proxy = config.get('MISP', 'MISP_PROXY_HTTP')
 misp_https_proxy = config.get('MISP', 'MISP_PROXY_HTTPS')
 
 PG_ACCOUNT_ = os.environ.get('DB_USER', config.get('POSTGRES', 'PG_ACCOUNT'))
-PG_PASSWD_ = os.environ.get('DB_PASS', config.get('POSTGRES', 'PG_ACCOUNT'))
+PG_PASSWD_ = os.environ.get('DB_PASS', config.get('POSTGRES', 'PG_PASSWD'))
 PGA_ACCOUNT_ = os.environ.get('POSTGRES_USER', config.get('POSTGRES', 'PGA_ACCOUNT'))
 PGA_PASSWD_ = os.environ.get('POSTGRES_PASSWORD', config.get('POSTGRES', 'PGA_PASSWD'))
 PG_SERVER_ = os.environ.get('DB_HOST', config.get('POSTGRES', 'PG_SERVER'))
@@ -89,6 +89,9 @@ class Config():
 
     # Handled by bumpversion
     IRIS_VERSION = "v1.2.1"
+
+    API_MIN_VERSION = "1.0.1"
+    API_MAX_VERSION = "1.0.2"
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True

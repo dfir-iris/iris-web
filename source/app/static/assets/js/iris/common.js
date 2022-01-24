@@ -174,7 +174,7 @@ $(".rotate").click(function () {
 
 $(function () {
     $('[data-toggle="popover"]').popover({
-        trigger: 'hover',
+        trigger: 'focus',
         placement: 'auto',
         container: 'body',
         html: true
@@ -212,6 +212,7 @@ function case_param() {
 
 $('#form_add_tasklog').submit(function () {
     event.preventDefault();
+    event.stopImmediatePropagation();
     var data = $('form#form_add_tasklog').serializeObject();
     data['csrf_token'] = $('#csrf_token').val();
     $.ajax({
@@ -311,7 +312,7 @@ function hide_loader() {
 function get_hash() {
   getMD5(
     document.getElementById("input_autofill").files[0],
-    prog => $('#btn_rfile_proc').text("Processing "+ prog * 100 + "%")
+    prog => $('#btn_rfile_proc').text("Processing "+ (prog * 100).toFixed(2) + "%")
   ).then(
     res => on_done_hash(res),
     err => console.error(err)
@@ -386,6 +387,8 @@ var sanitizeHTML = function (str) {
         return str.replace(/[^\w. ]/gi, function (c) {
             return '&#' + c.charCodeAt(0) + ';';
         });
+    } else if (str == null) {
+        return '';
     } else {
         return str;
     }
@@ -394,3 +397,67 @@ var sanitizeHTML = function (str) {
 function isWhiteSpace(s) {
   return /^\s+$/.test(s);
 }
+
+function exportInnerPng()
+{
+    close_sid_var = document.querySelector(".close-quick-sidebar");
+    close_sid_var.click();
+    div = document.querySelector(".page-inner");
+    html2canvas(div, {
+        useCORS: true,
+        scale: 3,
+        backgroundColor: "#f9fbfd"
+        }).then(canvas => {
+        downloadURI(canvas.toDataURL(), 'iris'+location.pathname.replace('/', '_') + '.png')
+    });
+}
+
+function downloadURI(uri, name) {
+    var link = document.createElement("a");
+
+    link.download = name;
+    link.href = uri;
+    document.body.appendChild(link);
+    console.log(link);
+    link.click();
+    link.remove();
+}
+
+function copy_object_link(node_id) {
+    link = buildShareLink(node_id);
+    navigator.clipboard.writeText(link).then(function() {
+          notify_success('Shared link copied')
+    }, function(err) {
+        console.error('Shared link', err);
+    });
+}
+
+function load_case_activity(){
+    $.ajax({
+        url: '/case/activities/list' + case_param(),
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+                js_data = data.data;
+                $('#case_activities').empty();
+                for (index in js_data) {
+                    console.log(index)
+
+                    entry =	`<li class="feed-item feed-item-default">
+							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
+							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</a></span>
+						    </li>`
+                    $('#case_activities').append(entry);
+                }
+            }
+    });
+}
+
+function update_time() {
+    $('#current_date').text((new Date()).toLocaleString().slice(0, 17));
+}
+
+$(document).ready(function(){
+    update_time();
+    setInterval(function() { update_time(); }, 30000);
+});

@@ -59,7 +59,10 @@ def login():
         password = request.form.get('password', '', type=str)
 
         # filter User out of database through username
-        user = User.query.filter_by(user=username).first()
+        user = User.query.filter(
+            User.user == username,
+            User.active == True
+        ).first()
 
         if user:
             if bc.check_password_hash(user.password, password):

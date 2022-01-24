@@ -60,6 +60,17 @@ def user_renew_api(caseid):
     return response_success("Token renewed")
 
 
+@profile_blueprint.route('/user/is-admin', methods=['GET'])
+@api_login_required
+def user_is_admin(caseid):
+
+    roles = [role.name for role in current_user.roles]
+    if "administrator" not in roles:
+        return response_error('User is not administrator', status=401)
+
+    return response_success("User is administrator")
+
+
 @profile_blueprint.route('/user/update/modal', methods=['GET'])
 @login_required
 def update_pwd_modal(caseid, url_redir):

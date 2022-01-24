@@ -19,7 +19,9 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import csv
 import marshmallow
+import logging as log
 from flask import Blueprint, request
 from flask import render_template, url_for, redirect
 from flask_login import current_user
@@ -29,7 +31,7 @@ from app.configuration import misp_url
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add_ioc, add_ioc_link, \
-    get_tlps, get_ioc, delete_ioc
+    get_tlps, get_ioc, delete_ioc, get_ioc_types_list, check_ioc_type_id, get_tlps_dict, get_ioc_type_id
 from app.datamgmt.states import get_ioc_state, update_ioc_state
 from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
 from app.iris_engine.utils.tracker import track_activity
@@ -40,8 +42,6 @@ from app.util import response_success, response_error, login_required, api_login
 case_ioc_blueprint = Blueprint('case_ioc',
                                __name__,
                                template_folder='templates')
-
-choices_ioc_types = ["IP", "Domain", "Hash", "File", "Path", "Account", "Other"]
 
 
 # CONTENT ------------------------------------------------
@@ -67,8 +67,10 @@ def case_list_ioc(caseid):
 
     ret = {}
     ret['ioc'] = []
+
     for ioc in iocs:
         out = ioc._asdict()
+
         # Get links of the IoCs seen in other cases
         ial = get_ioc_links(ioc.ioc_id, caseid)
 
@@ -102,7 +104,7 @@ def case_add_ioc(caseid):
         jsdata = request.get_json()
         ioc = add_ioc_schema.load(jsdata)
 
-        if ioc.ioc_type not in choices_ioc_types:
+        if not check_ioc_type_id(type_id=ioc.ioc_type_id):
             return response_error("Not a valid IOC type")
 
         ioc, existed = add_ioc(ioc=ioc,
@@ -112,16 +114,109 @@ def case_add_ioc(caseid):
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
         if link_existed:
-            return response_error("IOC already exists and linked to this case")
+            return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
 
         if ioc:
-            track_activity("added ioc {}".format(ioc.ioc_value), caseid=caseid)
+            track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
 
             msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
 
             return response_success(msg=msg, data=add_ioc_schema.dump(ioc))
 
         return response_error("Unable to create IOC for internal reasons")
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])
+@api_login_required
+def case_upload_ioc(caseid):
+
+    try:
+        # validate before saving
+        add_ioc_schema = IocSchema()
+        jsdata = request.get_json()
+
+        # get IOC list from request
+        headers = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp"
+        csv_lines=jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
+        if csv_lines[0].lower() != headers:
+            csv_lines.insert(0, headers)
+
+        # convert list of strings into CSV
+        csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
+
+        # build a Dict of possible TLP
+        tlp_dict = get_tlps_dict()
+        ret = []
+        errors = []
+
+        index = 0
+        for row in csv_data:
+
+            for e in headers.split(','):
+                if row.get(e) is None:
+                    errors.append(f"{e} is missing for row {index}")
+                    index += 1
+                    continue
+
+            # IOC value must not be empty
+            if not row.get("ioc_value"):
+                errors.append(f"Empty IOC value for row {index}")
+                track_activity(f"Attempted to upload an empty IOC value")
+                index += 1
+                continue
+
+            row["ioc_tags"] = row["ioc_tags"].replace("|", ",")  # Reformat Tags
+
+            # Convert TLP into TLP id
+            if row["ioc_tlp"] in tlp_dict:
+                row["ioc_tlp_id"] = tlp_dict[row["ioc_tlp"]]
+            else:
+                row["ioc_tlp_id"] = ""
+            row.pop("ioc_tlp", None)
+
+            type_id = get_ioc_type_id(row['ioc_type'].lower())
+            if not type_id:
+                errors.append(f"{row['ioc_value']} (invalid ioc type: {row['ioc_type']}) for row {index}")
+                log.error(f'Unrecognised IOC type {row["ioc_type"]}')
+                index += 1
+                continue
+
+            row['ioc_type_id'] = type_id.type_id
+            row.pop('ioc_type', None)
+
+            ioc = add_ioc_schema.load(row)
+
+            ioc, existed = add_ioc(ioc=ioc,
+                                   user_id=current_user.id,
+                                   caseid=caseid
+                                )
+            link_existed = add_ioc_link(ioc.ioc_id, caseid)
+
+            if link_existed:
+                errors.append(f"{ioc.ioc_value} (already exists and linked to this case)")
+                log.error(f"IOC {ioc.ioc_value} already exists and linked to this case")
+                index += 1
+                continue
+
+            if ioc:
+                ret.append(row)
+                track_activity(f"added ioc {ioc.ioc_value}", caseid=caseid)
+
+            else:
+                errors.append(f"{ioc.ioc_value} (internal reasons)")
+                log.error(f"Unable to create IOC {ioc.ioc_value} for internal reasons")
+
+            index += 1
+
+        if len(errors) == 0:
+            msg = "Successfully imported data."
+        else:
+            msg = "Data is imported but we got errors with the following rows:\n- " + "\n- ".join(errors)
+
+        return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
@@ -134,7 +229,7 @@ def case_add_ioc_modal(caseid, url_redir):
         return redirect(url_for('case_ioc.case_ioc', cid=caseid))
 
     form = ModalAddCaseIOCForm()
-    form.ioc_type.choices = [(row, row) for row in choices_ioc_types]
+    form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
     form.ioc_tlp_id.choices = get_tlps()
 
     return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc())
@@ -168,7 +263,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     if not ioc:
         return response_error("Invalid IOC ID for this case")
 
-    form.ioc_type.choices = [(row, row) for row in choices_ioc_types]
+    form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
     form.ioc_tlp_id.choices = get_tlps()
 
     # Render the IOC
@@ -198,19 +293,22 @@ def case_update_ioc(cur_id, caseid):
     try:
         ioc = get_ioc(cur_id, caseid)
         if not ioc:
-            return response_error("Invalid note ID for this case")
+            return response_error("Invalid IOC ID for this case")
 
         # validate before saving
         ioc_schema = IocSchema()
         ioc_sc = ioc_schema.load(request.get_json(), instance=ioc)
         ioc_sc.user_id = current_user.id
 
+        if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
+            return response_error("Not a valid IOC type")
+
         update_ioc_state(caseid=caseid)
         db.session.commit()
 
         if ioc_sc:
             track_activity("updated ioc {}".format(ioc_sc.ioc_value), caseid=caseid)
-            return response_success("Updated ioc {}".format(ioc_sc.ioc_value))
+            return response_success("Updated ioc {}".format(ioc_sc.ioc_value), data=ioc_schema.dump(ioc))
 
         return response_error("Unable to update ioc for internal reasons")
 

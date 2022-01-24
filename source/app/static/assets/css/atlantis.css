@@ -2347,7 +2347,7 @@ body {
 }
 
 .logo-header[data-background-color="blue"] {
-    background: #1572E8 !important;
+    background: #0963D5 !important;
 }
 
 .logo-header[data-background-color="blue2"] {
@@ -6607,11 +6607,6 @@ label.error {
     color: #555;
 }
 
-.navbar[class*="bg-"] {
-    //border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
 .navbar[class*="bg-"] .navbar-brand {
     color: #ffffff;
 }
@@ -8287,7 +8282,7 @@ label.error {
 }
 
 .feed-item-default::after {
-    background: #1a2035 !important;
+    background: #7a84a6 !important;
 }
 
 .feed-item-primary::after {
@@ -8378,10 +8373,10 @@ label.error {
     width: 87%;
     float: left;
     margin-left: 8%;
-    margin-bottom: 1%;
+    margin-bottom: 0.8%;
     background: #ffffff;
-    border-radius: 17px;
-    padding: 20px 20px 7px 20px;
+    border-radius: 12px;
+    padding: 12px;
     position: relative;
     box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
 }
@@ -14373,8 +14368,9 @@ body[data-background-color="dark"] .board {
 
 .bg-primary-gradient {
     background: #1572E8 !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #06418E, #1572E8) !important;
-    background: linear-gradient(-45deg, #06418E, #1572E8) !important;
+
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #05316A, #0963D5) !important;
+    background: linear-gradient(-45deg, #05316A, #0963D5)  !important;
 }
 
 .bg-secondary-gradient {
@@ -15389,6 +15385,14 @@ body[data-background-color="dark"] .board {
     cursor: pointer; /* Add a mouse pointer on hover */
 }
 
+.btn_over_page_d {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 170px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
 .badge-light {
     color: #212529;
     background-color: #d7d7d7;
@@ -15526,4 +15530,46 @@ div.dataTables_processing { z-index: 1; }
 
 #holder.hover {
   border: 10px dashed #333;
+}
+
+.col-heading:not(.collapsed) .rotate-icon {
+  transform: rotate(90deg);
+}
+
+.col-heading .accicon {
+  float: left;
+  font-size: 20px;
+  width: 1.2em;
+}
+
+
+@-webkit-keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #fff;
+  }
+}
+@-moz-keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #fff;
+  }
+}
+@keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #fff;
+  }
+}
+.fade-it {
+  -webkit-animation: yellow-fade 2s ease-in-out 0s;
+  -moz-animation: yellow-fade 2s ease-in-out 0s;
+  -o-animation: yellow-fade 2s ease-in-out 0s;
+  animation: yellow-fade 2s ease-in-out 0s;
 }

@@ -25,6 +25,7 @@ import traceback
 
 from flask import Blueprint, request, redirect, url_for
 from flask import render_template
+from flask_wtf import FlaskForm
 
 from app import app
 from app.datamgmt.iris_engine.modules_db import iris_modules_list, get_module_from_id, delete_module_from_id, \
@@ -70,7 +71,9 @@ def manage_modules_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_module.manage_modules_index', cid=caseid))
 
-    return render_template("manage_modules.html")
+    form = FlaskForm()
+
+    return render_template("manage_modules.html", form=form)
 
 
 @manage_modules_blueprint.route('/manage/modules/list', methods=['GET'])

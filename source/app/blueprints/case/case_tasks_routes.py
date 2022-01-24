@@ -29,7 +29,7 @@ from flask_wtf import FlaskForm
 
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_tasks_db import get_tasks, get_task, update_task_status, add_task
+from app.datamgmt.case.case_tasks_db import get_tasks, get_task, update_task_status, add_task, get_tasks_status
 from app.datamgmt.states import get_tasks_state, update_tasks_state
 from app.forms import CaseTaskForm
 from app.models.models import User, CaseTasks
@@ -40,8 +40,6 @@ from app.iris_engine.utils.tracker import track_activity
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
                                  template_folder='templates')
-
-task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
 
 
 # CONTENT ------------------------------------------------
@@ -68,6 +66,7 @@ def case_get_tasks(caseid):
         output = []
 
     ret = {
+        "tasks_status": get_tasks_status(),
         "tasks": output,
         "state": get_tasks_state(caseid=caseid)
     }
@@ -95,11 +94,10 @@ def case_task_statusupdate(cur_id, caseid):
 
     if request.is_json:
 
-        if request.json.get('task_status') in task_status:
+        if update_task_status(request.json.get('task_status_id'), cur_id, caseid):
+            task_schema = CaseTaskSchema()
 
-            update_task_status(request.json.get('task_status'), cur_id, caseid)
-
-            return response_success("Task status updated")
+            return response_success("Task status updated", data=task_schema.dump(task))
         else:
             return response_error("Invalid status")
 
@@ -118,7 +116,7 @@ def case_add_task_modal(caseid, url_redir):
     form = CaseTaskForm()
     form.task_assignee_id.choices = [(user.id, user.name) for user in
                                      User.query.filter(User.active == True).order_by(User.name).all()]
-    form.task_status.choices = [(a, a) for a in task_status]
+    form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None)
 
@@ -170,7 +168,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     task = get_task(task_id=cur_id, caseid=caseid)
     form.task_assignee_id.choices = [(user.id, user.name) for user in
                                      User.query.filter(User.active == True).order_by(User.name).all()]
-    form.task_status.choices = [(a, a) for a in task_status]
+    form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     if not task:
         return response_error("Invalid task ID for this case")
@@ -205,7 +203,7 @@ def case_edit_task(cur_id, caseid):
         db.session.commit()
 
         if task:
-            track_activity("updated task {} (status {})".format(task.task_title, task.task_status), caseid=caseid)
+            track_activity("updated task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
             return response_success(data=task_schema.dump(task))
 
         return response_error("Unable to update task for internal reasons")

@@ -20,6 +20,7 @@ function add_asset() {
             if (typeof data["ioc_links"] == "string") {
                 data["ioc_links"] = [data["ioc_links"]]
             }
+            data['asset_tags'] = $('#asset_tags').val();
 
             $.ajax({
                 url: 'assets/add' + case_param(),
@@ -90,7 +91,8 @@ Table = $("#assets_table").DataTable({
             if (isWhiteSpace(data)) {
                 datak = '#' + row['asset_id'];
             }
-            ret = '<a href="#"  onclick="asset_details(\'' + row['asset_id'] + '\');">' + datak +'</a>';
+            share_link = buildShareLink(row['asset_id']);
+            ret = '<a href="' + share_link + '" data-selector="true" title="Asset ID #'+ row['asset_id'] +'" onclick="asset_details(\'' + row['asset_id'] + '\');return false;">' + datak +'</a>';
 
             if (row.link.length > 0) {
                 var has_compro = false;
@@ -110,10 +112,10 @@ Table = $("#assets_table").DataTable({
                 }
                 if (has_compro) {
                    ret += `<i class="fas fa-skull ml-2 text-danger" style="cursor: pointer;" data-html="true"
-                        data-toggle="popover" data-trigger="focus" title="Observed on previous case" `;
+                        data-toggle="popover" data-trigger="hover" title="Observed on previous case" `;
                 } else {
                     ret += `<i class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
-                    data-toggle="popover" data-trigger="focus" title="Observed on previous case" `;
+                    data-toggle="popover" data-trigger="hover" title="Observed on previous case" `;
                 }
 
                 ret += datacontent;
@@ -124,34 +126,23 @@ Table = $("#assets_table").DataTable({
           return data;
         }
       },
-      { "data": "asset_compromised",
-       "render": function(data, type, row) {
-            if (data == true) { ret = '<span class="badge badge-danger">Yes</span>';} else { ret = '<span class="badge badge-success">No</span>'}
-            return ret;
-        }
+      {
+        "data": "asset_type",
+         "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
       },
       { "data": "asset_description",
        "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
             data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="focus" href="#" data-content="' + data + '">' + data.slice(0, 70);
+            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
                 datas += ' (..)</span>';
             } else {
                 datas += '</span>';
-            }
-            return datas;
-          }
-          return data;
-        }
-      },
-      { "data": "ioc",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != undefined) {
-            datas = "";
-            for (ds in data) {
-                datas += '<span class="badge badge-light">'+ sanitizeHTML(data[ds][0]) + '</span>';
             }
             return datas;
           }
@@ -164,12 +155,36 @@ Table = $("#assets_table").DataTable({
             return data;
           }
       },
-      {
-        "data": "asset_type",
-         "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
+      { "data": "asset_compromised",
+       "render": function(data, type, row) {
+            if (data == true) { ret = '<span class="badge badge-danger">Yes</span>';} else { ret = '<span class="badge badge-success">No</span>'}
+            return ret;
+        }
+      },
+      { "data": "ioc_links",
+        "render": function (data, type, row, meta) {
+          if (type === 'display' && data != null) {
+            datas = "";
+            for (ds in data) {
+                datas += '<span class="badge badge-light">'+ sanitizeHTML(data[ds]['ioc_value']) + '</span>';
+            }
+            return datas;
           }
+          return data;
+        }
+      },
+      { "data": "asset_tags",
+        "render": function (data, type, row, meta) {
+          if (type === 'display' && data != null) {
+              tags = "";
+              de = data.split(',');
+              for (tag in de) {
+                tags += '<span class="badge badge-light ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+              }
+              return tags;
+          }
+          return data;
+        }
       },
       {
         "data": "analysis_status",
@@ -297,8 +312,23 @@ function asset_details(asset_id) {
             }
 
             var data = $('#form_new_asset').serializeObject();
-            if (typeof data["ioc_links"] == "string") {
+            if (typeof data["ioc_links"] === "string") {
                 data["ioc_links"] = [data["ioc_links"]]
+            } else if (typeof data["ioc_links"] === "object") {
+                tmp_data = [];
+                for (ioc_link in data["ioc_links"]) {
+                    if (typeof ioc_link === "string") {
+                        tmp_data.push(data["ioc_links"][ioc_link]);
+                    }
+                }
+                data["ioc_links"] = tmp_data;
+            }
+            else {
+                data["ioc_links"] = [];
+            }
+            data['asset_tags'] = $('#asset_tags').val();
+            if (!data.hasOwnProperty('asset_compromised')) {
+                data['asset_compromised'] = 'false';
             }
 
             $.ajax({
@@ -336,6 +366,67 @@ function asset_details(asset_id) {
 
     });
     $('#modal_add_asset').modal({ show: true });
+    return false;
+}
+
+function fire_upload_assets() {
+    $('#modal_upload_assets').modal('show');
+}
+
+
+function upload_assets() {
+
+    var file = $("#input_upload_assets").get(0).files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        fileData = e.target.result
+        var data = new Object();
+        data['csrf_token'] = $('#csrf_token').val();
+        data['CSVData'] = fileData;
+        $.ajax({
+            url: '/case/assets/upload' + case_param(),
+            type: "POST",
+            data: JSON.stringify(data),
+            contentType: "application/json;charset=UTF-8",
+            dataType: "json",
+            success: function (data) {
+                jsdata = data;
+                if (jsdata.status == "success") {
+                    reload_assets();
+                    $('#modal_upload_assets').modal('hide');
+                    swal("Got news for you", data.message, "success");
+
+                } else {
+                    swal("Got bad news for you", data.message, "error");
+                }
+            },
+            error: function (error) {
+                notify_error(error.responseJSON.message);
+                propagate_form_api_errors(error.responseJSON.data);
+            }
+        });
+    };
+    reader.readAsText(file)
+
+    return false;
+}
+
+function generate_sample_csv(){
+    csv_data = "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags\n"
+    csv_data += '"My computer","Mac - Computer","Computer of Mme Michu","192.168.15.5","iris.local","Compta|Mac"\n'
+    csv_data += '"XCAS","Windows - Server","Xcas server","192.168.15.48","iris.local",""'
+    download_file("sample_assets.csv", "text/csv", csv_data);
+}
+
+
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }
 
 
@@ -343,4 +434,9 @@ function asset_details(asset_id) {
 $(document).ready(function(){
     get_case_assets();
     setInterval(function() { check_update('assets/state'); }, 3000);
+
+    shared_id = getSharedLink();
+    if (shared_id) {
+        asset_details(shared_id);
+    }
 });

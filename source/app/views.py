@@ -47,6 +47,14 @@ from app.blueprints.context.context import ctx_blueprint
 from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.activities.activities_routes import activities_blueprint
 
+from app.blueprints.api.api_routes import api_blueprint
+from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
+from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
+from app.blueprints.manage.manage_event_categories_routes import manage_event_cat_blueprint
+from app.blueprints.manage.manage_objects_routes import manage_objects_blueprint
+from app.blueprints.manage.manage_tlps_routes import manage_tlp_type_blueprint
+from app.blueprints.manage.manage_task_status_routes import manage_task_status_blueprint
+
 from app.models.models import User
 
 from app.post_init import run_post_init
@@ -63,12 +71,20 @@ app.register_blueprint(manage_users_blueprint)
 app.register_blueprint(manage_templates_blueprint)
 app.register_blueprint(manage_modules_blueprint)
 app.register_blueprint(manage_customers_blueprint)
+app.register_blueprint(manage_anastatus_blueprint)
+app.register_blueprint(manage_ioc_type_blueprint)
+app.register_blueprint(manage_event_cat_blueprint)
+app.register_blueprint(manage_objects_blueprint)
+app.register_blueprint(manage_tlp_type_blueprint)
+app.register_blueprint(manage_task_status_blueprint)
 
 app.register_blueprint(tasks_blueprint)
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
 app.register_blueprint(reports_blueprint)
 app.register_blueprint(activities_blueprint)
+
+app.register_blueprint(api_blueprint)
 
 run_post_init(development=app.config["DEVELOPMENT"])
 
@@ -85,7 +101,10 @@ def load_user_from_request(request):
     # first, try to login using the api_key url arg
     api_key = request.args.get('api_key')
     if api_key:
-        user = User.query.filter_by(api_key=api_key).first()
+        user = User.query.filter(
+            User.api_key == api_key,
+            User.active == True
+        ).first()
         if user:
             return user
 
@@ -94,7 +113,11 @@ def load_user_from_request(request):
     if api_key:
         api_key = api_key.replace('Bearer ', '', 1)
 
-        user = User.query.filter(User.api_key == api_key).first()
+        user = User.query.filter(
+            User.api_key == api_key,
+            User.active == True
+        ).first()
+
         if user:
             return user
 

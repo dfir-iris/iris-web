@@ -69,7 +69,7 @@ $('#users_table').dataTable( {
                 return data;
             }
         },
-        { "data": "user_fullname",
+        { "data": "user_name",
           "render": function ( data, type, row ) {
                 if (type === 'display') {
                     data = sanitizeHTML(data)
@@ -78,7 +78,7 @@ $('#users_table').dataTable( {
                 return data;
             }
         },
-        { "data": "user_surname",
+        { "data": "user_login",
           "render": function (data, type, row, meta) {
             if (type === 'display') { data = sanitizeHTML(data);}
             return data;
@@ -92,7 +92,14 @@ $('#users_table').dataTable( {
           },
             { "data": "user_active",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') {
+                    data = sanitizeHTML(data);
+                    if (data == true) {
+                        data = '<span class="badge ml-2 badge-success">Active</span>';
+                    } else {
+                        data = '<span class="badge ml-2 badge-warning">Disabled</span>';
+                    }
+                }
                 return data;
               }
             }
@@ -190,4 +197,50 @@ function delete_user(id) {
         swal("Pfew, that's was close");
       }
     });
+}
+
+function activate_user(id) {
+  $.ajax({
+      url: '/manage/users/activate/' + id + case_param(),
+      type: "GET",
+      success: function (data) {
+          if (data.status == 'success') {
+              swal("User activated !", {
+                  icon: "success",
+                  timer: 500
+              }).then((value) => {
+                  refresh_users();
+                  $('#modal_add_user').modal('hide');
+              });
+          } else {
+              swal ( "Oh no !" ,  data.message ,  "error" );
+          }
+      },
+      error: function (error) {
+          swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
+      }
+  });
+}
+
+function deactivate_user(id) {
+  $.ajax({
+      url: '/manage/users/deactivate/' + id + case_param(),
+      type: "GET",
+      success: function (data) {
+          if (data.status == 'success') {
+              swal("User deactivated !", {
+                  icon: "success",
+                  timer: 500
+              }).then((value) => {
+                  refresh_users();
+                  $('#modal_add_user').modal('hide');
+              });
+          } else {
+              swal ( "Oh no !" ,  data.message ,  "error" );
+          }
+      },
+      error: function (error) {
+          swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
+      }
+  });
 }

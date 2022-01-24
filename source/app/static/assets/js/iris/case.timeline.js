@@ -1,12 +1,11 @@
 /* Fetch a modal that allows to add an event */ 
 function add_event() {
-    url = 'timeline/event/add/modal' + case_param();
+    url = 'timeline/events/add/modal' + case_param();
     $('#modal_add_event_content').load(url, function () {   
         $('#submit_new_event').on("click", function () {
             clear_api_error();
             var data_sent = $('#form_new_event').serializeObject();
-            data_sent['event_date'] = $('#event_date').val();
-            data_sent['event_time'] = $('#event_time').val();
+            data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
             data_sent['event_in_summary'] = $('#event_in_summary').is(':checked');
             data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
             data_sent['event_tags'] = $('#event_tags').val();
@@ -14,7 +13,7 @@ function add_event() {
             data_sent['event_tz'] = $('#event_tz').val();
 
             $.ajax({
-                url: 'timeline/event/add' + case_param(),
+                url: 'timeline/events/add' + case_param(),
                 type: "POST",
                 data: JSON.stringify(data_sent),
                 contentType: "application/json;charset=UTF-8",
@@ -28,6 +27,7 @@ function add_event() {
                                 timer: 400
                             }
                         ).then((value) => {
+                            window.location.hash = data.data.event_id;
                             draw_timeline();
                             $('#modal_add_event').modal('hide');
 
@@ -55,8 +55,7 @@ function update_event(id) {
     window.location.hash = id;
     clear_api_error();
     var data_sent = $('#form_new_event').serializeObject();
-    data_sent['event_date'] = $('#event_date').val();
-    data_sent['event_time'] = $('#event_time').val();
+    data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
     data_sent['event_in_summary'] = $('#event_in_summary').is(':checked');
     data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
     data_sent['event_tags'] = $('#event_tags').val();
@@ -64,7 +63,7 @@ function update_event(id) {
     data_sent['event_tz'] = $('#event_tz').val();
 
     $.ajax({
-        url: 'timeline/event/update/' + id + case_param(),
+        url: 'timeline/events/update/' + id + case_param(),
         type: "POST",
         data: JSON.stringify(data_sent),
         contentType: "application/json;charset=UTF-8",
@@ -99,7 +98,7 @@ function update_event(id) {
 function delete_event(id) {
     window.location.hash = id;
     $.ajax({
-        url: "timeline/event/delete/" + id + case_param(),
+        url: "timeline/events/delete/" + id + case_param(),
         type: "GET",
         dataType: "json",
         success: function (data) {
@@ -125,26 +124,29 @@ function delete_event(id) {
 
 /* Edit and event from the timeline thanks to its ID */
 function edit_event(id) {
-  url = '/case/timeline/event/' + id + '/modal' + case_param();
+  url = '/case/timeline/events/' + id + '/modal' + case_param();
   window.location.hash = id;
   $('#modal_add_event_content').load(url, function(){
         $('#modal_add_event').modal({show:true});
   });
 }
 
-/* Fetch and draw the timeline */ 
+var current_timeline;
+/* Fetch and draw the timeline */
 function draw_timeline() {
     $('#timeline_list').empty();
     show_loader();
     rid = $('#assets_timeline_select').val();
     if (rid == null) { rid = 0; }
+
     $.ajax({
-        url: "timeline/get/" + rid + case_param(),
+        url: "timeline/filter/" + rid + case_param(),
         type: "GET",
         dataType: "json",
         success: function (data) {
             if (data.status == 'success') {
                 var is_i = false;
+                current_timeline = data.data.tim;
                 tmb = [];
                 reid = $('#assets_timeline_select').val();
                 if (reid == null) { reid = 0; }
@@ -156,13 +158,13 @@ function draw_timeline() {
                 /* Build the filter list */
                 $('#assets_timeline_select').append('<option value="0">All assets</options>');
                 for (rid in data.data.assets) {
-                    $('#assets_timeline_select').append('<option value="'+sanitizeHTML(rid)+'">' + sanitizeHTML(data.data.assets[rid]) + '</options>');
+                    $('#assets_timeline_select').append('<option value="'+rid+'">' + sanitizeHTML(data.data.assets[rid]) + '</options>');
                 }
                 $('#assets_timeline_select').selectpicker('val', reid);
 
                 $('#assets_timeline_select').selectpicker("refresh");
                 var tesk = false;
-                // Prepare replacement mod 
+                // Prepare replacement mod
                 var reap = [];
                 ioc_list = data.data.iocs;
                 for (ioc in ioc_list) {
@@ -185,7 +187,7 @@ function draw_timeline() {
                     style = '';
                     asset = '';
 
-                    /* If IOC then build a tag */ 
+                    /* If IOC then build a tag */
                     if(evt.category_name && evt.category_name != 'Unspecified') {
                         tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
                     }
@@ -199,22 +201,22 @@ function draw_timeline() {
                         tesk = true;
                     }
 
-                        
+
                     if (evt.event_color != null) {
                             style += "border-left: 2px groove " + sanitizeHTML(evt.event_color);
                     }
 
                     style += ";'";
 
-                    /* For every assets linked to the event, build a link tag */ 
+                    /* For every assets linked to the event, build a link tag */
                     if (evt.assets != null) {
                         for (ide in evt.assets) {
                             cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                             cpn = sanitizeHTML(cpn)
                             if (evt.assets[ide]["compromised"]) {
-                                asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
+                                asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
                             } else {
-                                asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '">'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
+                                asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '">'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
                             }
                         }
                     }
@@ -248,23 +250,34 @@ function draw_timeline() {
 
                     title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
                     content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
-
-                    if (content_parsed.length > 150) {
-                        short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
-                        formatted_content = short_content + `<div class="collapse" id="collapseContent">
-                            `+ match_replace_ioc(content_parsed.slice(150), reap) +`
+                    content_split = content_parsed.split('<br/>');
+                    lines = content_split.length;
+                    if (content_parsed.length > 150 || lines > 2) {
+                        if (lines > 2) {
+                            short_content = match_replace_ioc(content_split.slice(0,2).join('<br/>'), reap);
+                            long_content = match_replace_ioc(content_split.slice(2).join('<br/>'), reap);
+                        } else {
+                            short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
+                            long_content = match_replace_ioc(content_parsed.slice(150), reap);
+                        }
+                        formatted_content = short_content + `<div class="collapse" id="collapseContent-`
+                            + evt.event_id + `">
+                            `+ long_content +`
                         </div>
-                        <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
+                        <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-`
+                            + evt.event_id + `" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
                     } else {
                         formatted_content = match_replace_ioc(content_parsed, reap);
                     }
 
-                    entry = `<li class="timeline-inverted">
+                    shared_link = buildShareLink(evt.event_id);
+                    entry = `<li class="timeline-inverted" title="Event ID #`+ evt.event_id + `">
                         ` + tmb_d + `
                             <div class="timeline-panel" `+ style +` id="event_`+ evt.event_id + `" >
                                 <div class="timeline-heading">
                                     <div class="btn-group dropdown float-right">
-                                        <button type="button" class="btn btn-xs" onclick="edit_event(`+ evt.event_id +`)">
+
+                                        <button type="button" class="btn btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
                                             <span class="btn-label">
                                                 <i class="fa fa-pen"></i>
                                             </span>
@@ -274,14 +287,13 @@ function draw_timeline() {
                                                 <i class="fa fa-cog"></i>
                                             </span>
                                         </button>
-                                        <ul class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                            <li>
-                                                <a class="dropdown-item" onclick="delete_event(`+ evt.event_id +`);">Delete</a>
-                                            </li>
-                                        </ul>
+                                        <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                                <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                                        </div>
                                     </div>
                                     <div class="row mb-2">
-                                        <a class="timeline-title" style="color: rgb(75, 79, 87);">` + title_parsed + `</a> 
+                                        <a class="timeline-title" style="color: rgb(75, 79, 87);" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
                                     </div>
                                 </div>
                                 <div class="timeline-body text-faded" style="color: rgb(130, 130, 130);">
@@ -294,7 +306,7 @@ function draw_timeline() {
                             </div>
                         </li>`
                     is_i = false;
-                    
+
                     //entry = match_replace_ioc(entry, reap);
                     $('#timeline_list').append(entry);
 
@@ -302,17 +314,7 @@ function draw_timeline() {
 
                 //match_replace_ioc(data.data.iocs, "timeline_list");
                 $('[data-toggle="popover"]').popover();
-                
-                if (location.href.indexOf("#") != -1) {
-                    var current_url = window.location.href;
-                    // Capture the string after #
-                    
-                    var id = current_url.substr(current_url.indexOf("#") + 1);
-                    if ($('#event_'+id).offset() != undefined) {
-                        $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
-                    }
-                }
-                
+
                 for (tm in tmb) {
                     $('#time_timeline_select').append('<option value="'+ tm +'">' +tmb[tm] + '</options>');
                 }
@@ -320,13 +322,20 @@ function draw_timeline() {
                 $('#time_timeline_select').selectpicker("refresh");
                 last_state = data.data.state.object_state;
                 hide_loader();
-                
+
+                if (location.href.indexOf("#") != -1) {
+                    var current_url = window.location.href;
+                    var id = current_url.substr(current_url.indexOf("#") + 1);
+                    if ($('#event_'+id).offset() != undefined) {
+                        $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
+                        $('#event_'+id).addClass('fade-it');
+                    }
+                }
 
             } else {
                 swal.close();
                 $('#submit_new_event').text('Save again');
                 swal("Oh no !", data.message, "error")
-                
             }
         },
         error: function (error) {
@@ -334,8 +343,7 @@ function draw_timeline() {
             $('#submit_new_event').text('Save');
             swal("Oh no !", error.statusText, "error")
         }
-    });
-    
+    }).done(function() {goToSharedLink()});
 }
 
 function escapeRegExp(text) {
@@ -363,20 +371,96 @@ $('#time_timeline_select').on('change', function(e){
     $('html, body').animate({ scrollTop: $('#time_'+id).offset().top - 180 });
 });
 
+function show_time_converter(){
+    $('#event_date_convert').show();
+    $('#event_date_convert_input').focus();
+    $('#event_date_inputs').hide();
+}
+
+function hide_time_converter(){
+    $('#event_date_convert').hide();
+    $('#event_date_inputs').show();
+    $('#event_date').focus();
+}
+
+function time_converter(){
+    date_val = $('#event_date_convert_input').val();
+
+    var data_sent = Object();
+    data_sent['date_value'] = date_val;
+    data_sent['csrf_token'] = $('#csrf_token').val();
+
+    $.ajax({
+        url: 'timeline/events/convert-date' + case_param(),
+        type: "POST",
+        data: JSON.stringify(data_sent),
+        contentType: "application/json;charset=UTF-8",
+        dataType: "json",
+        success: function (data) {
+            if (data.status == 'success') {
+                $('#event_date').val(data.data.date);
+                $('#event_time').val(data.data.time);
+                $('#event_tz').val(data.data.tz);
+                hide_time_converter();
+                $('#convert_bad_feedback').text('');
+            }
+        },
+        error: function (error) {
+            $('#convert_bad_feedback').text('Unable to find a matching pattern for the date');
+        }
+    });
+}
+
+
+function goToSharedLink(){
+    if (location.href.indexOf("#") != -1) {
+        var current_url = window.location.href;
+        var id = current_url.substr(current_url.indexOf("#") + 1);
+        if ($('#event_'+id).offset() != undefined) {
+            return;
+        }
+   }
+   shared_id = getSharedLink();
+   if (shared_id) {
+        $('html, body').animate({ scrollTop: $('#event_'+shared_id).offset().top - 80 });
+        $('#event_'+shared_id).addClass('fade-it');
+    }
+}
+
+function timelineToCsv(){
+    csv_data = "event_date(UTC),event_title,event_description,event_tz,event_date_wtz,event_category,event_tags,linked_assets\n";
+    for (index in current_timeline) {
+        item = current_timeline[index];
+        content = item.event_content.replace(/"/g, '\"');
+        content_parsed = content.replace(/(\r?\n)+/g, ' - ');
+        title = item.event_title.replace(/"/g, '\"');
+        tags = item.event_tags.replace(/"/g, '\"');
+        assets = "";
+        for (k in item.assets) {
+            asset = item.assets[k].name.replace(/"/g, '\"');
+            assets += `${asset};`;
+        }
+        csv_data += `"${item.event_date}","${title}","${content_parsed}","${item.event_tz}","${item.event_date_wtz}","${item.category_name}","${tags}","${assets}"\n`;
+    }
+    download_file("iris_timeline.csv", "text/csv", csv_data);
+}
+
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
     draw_timeline();
+
     setInterval(function() { check_update('timeline/state'); }, 3000);
 
-    if (location.href.indexOf("#") != -1) {
-        var current_url = window.location.href;
-        // Capture the string after #
-        var id = current_url.substr(current_url.indexOf("#") + 1);
-        if ($('#event_'+id).offset() != undefined) {
-            $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
-        }
-    }
-
 });
+

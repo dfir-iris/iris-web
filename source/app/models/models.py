@@ -21,7 +21,6 @@
 # IMPORTS ------------------------------------------------
 import secrets
 
-
 from app import db, app
 from flask_login import UserMixin
 
@@ -91,6 +90,7 @@ class CaseAssets(db.Model):
     asset_info = Column(Text)
     asset_compromised = Column(Boolean)
     asset_type_id = Column(ForeignKey('assets_type.asset_id'))
+    asset_tags = Column(Text)
     case_id = Column(ForeignKey('cases.case_id'))
     date_added = Column(DateTime)
     date_update = Column(DateTime)
@@ -385,8 +385,8 @@ class Ioc(db.Model):
 
     ioc_id = Column(Integer, primary_key=True)
     ioc_value = Column(Text)
-    ioc_type = Column(String(255))
-    ioc_description = Column(String(512))
+    ioc_type_id = Column(ForeignKey('ioc_type.type_id'))
+    ioc_description = Column(Text)
     ioc_tags = Column(String(512))
     user_id = Column(ForeignKey('user.id'))
     ioc_misp = Column(Text)
@@ -394,6 +394,16 @@ class Ioc(db.Model):
 
     user = relationship('User')
     tlp = relationship('Tlp')
+    ioc_type = relationship('IocType')
+
+
+class IocType(db.Model):
+    __tablename__ = 'ioc_type'
+
+    type_id = Column(Integer, primary_key=True)
+    type_name = Column(Text)
+    type_description = Column(Text)
+    type_taxonomy = Column(Text)
 
 
 class IocLink(db.Model):
@@ -543,6 +553,15 @@ class CaseReceivedFile(db.Model):
     user = relationship('User')
 
 
+class TaskStatus(db.Model):
+    __tablename__ = 'task_status'
+
+    id = Column(Integer, primary_key=True)
+    status_name = Column(Text)
+    status_description = Column(Text)
+    status_bscolor = Column(Text)
+
+
 class CaseTasks(db.Model):
     __tablename__ = 'case_tasks'
 
@@ -557,7 +576,7 @@ class CaseTasks(db.Model):
     task_userid_close = Column(ForeignKey('user.id'))
     task_userid_update = Column(ForeignKey('user.id'))
     task_assignee_id = Column(ForeignKey('user.id'))
-    task_status = Column(Text)
+    task_status_id = Column(ForeignKey('task_status.id'))
     task_case_id = Column(ForeignKey('cases.case_id'))
 
     case = relationship('Cases')
@@ -565,6 +584,7 @@ class CaseTasks(db.Model):
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
     user_assigned = relationship('User', foreign_keys=[task_assignee_id])
+    status = relationship('TaskStatus', foreign_keys=[task_status_id])
 
 
 class GlobalTasks(db.Model):
@@ -581,12 +601,13 @@ class GlobalTasks(db.Model):
     task_userid_close = Column(ForeignKey('user.id'))
     task_userid_update = Column(ForeignKey('user.id'))
     task_assignee_id = Column(ForeignKey('user.id'), nullable=True)
-    task_status = Column(Text)
+    task_status_id = Column(ForeignKey('task_status.id'))
 
     user_open = relationship('User', foreign_keys=[task_userid_open])
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
     user_assigned = relationship('User', foreign_keys=[task_assignee_id])
+    status = relationship('TaskStatus', foreign_keys=[task_status_id])
 
 
 class UserActivity(db.Model):

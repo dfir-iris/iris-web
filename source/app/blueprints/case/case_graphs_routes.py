@@ -23,6 +23,7 @@ from datetime import datetime
 
 from flask import Blueprint
 from flask import render_template, url_for, redirect
+from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_events_db import get_case_events_graph
@@ -41,8 +42,9 @@ def case_graph(caseid, url_redir):
         return redirect(url_for('case_graph.case_graph', cid=caseid))
 
     case = get_case(caseid)
+    form = FlaskForm()
 
-    return render_template("case_graph.html", case=case)
+    return render_template("case_graph.html", case=case, form=form)
 
 
 @case_graph_blueprint.route('/case/graph/getdata', methods=['GET'])
@@ -73,18 +75,22 @@ def case_graph_get_data(caseid):
             img = 'server.png'
             is_master_atype = True
 
-        if 'windows' in atype:
+        elif 'domain controller' in atype:
+            img = 'windows_server.png'
+            is_master_atype = True
+
+        elif 'windows - dc' in atype:
+            img = 'windows_server.png'
+            is_master_atype = True
+
+        elif 'windows' in atype:
             img = "windows_{}".format(img)
 
-        if 'account' in atype:
+        elif 'account' in atype:
             img = 'user.png'
 
         elif 'vpn' in atype:
             img = 'vpn.png'
-            is_master_atype = True
-
-        elif 'domain controller' in atype:
-            img = 'windows_server.png'
             is_master_atype = True
 
         elif 'firewall' in atype:
@@ -94,6 +100,21 @@ def case_graph_get_data(caseid):
         elif 'router' in atype:
             img = 'router.png'
             is_master_atype = True
+
+        elif 'WAF' in atype:
+            img = 'firewall.png'
+            is_master_atype = True
+
+        elif 'switch' in atype:
+            img = 'switch.png'
+            is_master_atype = True
+
+        elif 'phone' in atype:
+            img = 'phone.png'
+            is_master_atype = True
+
+        else:
+            img = 'question-mark.png'
 
         try:
             date = "{}-{}-{}".format(event.event_date.day, event.event_date.month, event.event_date.year)
@@ -137,11 +158,16 @@ def case_graph_get_data(caseid):
                 'color': event.event_color
             }
 
+    node_dedup = {}
     for event_id in tmp:
         if tmp[event_id]['master_node']:
             for master_node in tmp[event_id]['master_node']:
+                node_dedup[master_node] = []
                 for subset in tmp[event_id]['list']:
                     if subset['node_id'] != master_node:
+                        if subset['node_id'] in node_dedup and master_node in node_dedup.get(subset['node_id']):
+                            continue
+
                         edge = {
                             'from': master_node,
                             'to': subset['node_id'],
@@ -149,6 +175,7 @@ def case_graph_get_data(caseid):
                             'color': tmp[event_id]['color']
                         }
                         edges.append(edge)
+                        node_dedup[master_node].append(subset['node_id'])
         else:
             for subset in itertools.combinations(tmp[event_id]['list'], 2):
                 edge = {

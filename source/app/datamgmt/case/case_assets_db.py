@@ -22,8 +22,8 @@ import datetime
 
 from app import db
 from app.datamgmt.states import update_assets_state
-from app.models import AssetsType, IocAssetLink, CaseAssets, Cases, Ioc, AnalysisStatus, CaseEventsAssets
-from sqlalchemy import and_
+from app.models import AssetsType, IocAssetLink, CaseAssets, Cases, Ioc, AnalysisStatus, CaseEventsAssets, IocType
+from sqlalchemy import and_, func
 
 
 def create_asset(asset, caseid, user_id):
@@ -50,9 +50,11 @@ def get_assets(caseid):
         CaseAssets.asset_compromised,
         CaseAssets.asset_ip,
         CaseAssets.asset_type_id,
-        AnalysisStatus.name.label('analysis_status')
+        AnalysisStatus.name.label('analysis_status'),
+        CaseAssets.analysis_status_id,
+        CaseAssets.asset_tags
     ).filter(
-        CaseAssets.case_id == caseid
+        CaseAssets.case_id == caseid,
     ).join(
         CaseAssets.asset_type, CaseAssets.analysis_status
     ).all()
@@ -80,7 +82,7 @@ def get_asset(asset_id, caseid):
 
 
 def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_domain,
-                 asset_compromised, asset_type, asset_id, caseid, analysis_status):
+                 asset_compromised, asset_type, asset_id, caseid, analysis_status, asset_tags):
     asset = get_asset(asset_id, caseid)
     asset.asset_name = asset_name
     asset.asset_description = asset_description
@@ -90,6 +92,7 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
     asset.asset_compromised = asset_compromised
     asset.asset_type_id = asset_type
     asset.analysis_status_id = analysis_status
+    asset.asset_tags = asset_tags
 
     update_assets_state(caseid=caseid)
 
@@ -140,7 +143,7 @@ def get_asset_type_id(asset_type_name):
     assets_type_id = AssetsType.query.with_entities(
         AssetsType.asset_id
     ).filter(
-        AssetsType.asset_name == asset_type_name
+        func.lower(AssetsType.asset_name) == asset_type_name
     ).first()
 
     return assets_type_id
@@ -172,16 +175,18 @@ def delete_ioc_asset_link(asset_id):
 
 def get_linked_iocs_from_asset(asset_id):
     iocs = IocAssetLink.query.with_entities(
+        Ioc.ioc_id,
         Ioc.ioc_value
     ).filter(
         IocAssetLink.asset_id == asset_id,
-    ).join(IocAssetLink.ioc).all()
+        Ioc.ioc_id == IocAssetLink.ioc_id
+    ).all()
 
     return iocs
 
 
 def set_ioc_links(ioc_list, asset_id):
-    if not ioc_list:
+    if ioc_list is None:
         return
 
     # Reset IOC list
@@ -209,12 +214,16 @@ def get_linked_iocs_id_from_asset(asset_id):
 
 def get_linked_iocs_finfo_from_asset(asset_id):
     iocs = IocAssetLink.query.with_entities(
+        Ioc.ioc_id,
         Ioc.ioc_value,
         Ioc.ioc_tags,
-        Ioc.ioc_type,
-        Ioc.ioc_description
-    ).filter(
+        Ioc.ioc_type_id,
+        IocType.type_name,
+        Ioc.ioc_description,
+        Ioc.ioc_tlp_id
+    ).filter(and_(
         IocAssetLink.asset_id == asset_id,
-    ).join(IocAssetLink.ioc).all()
+        IocAssetLink.ioc_id == Ioc.ioc_id
+    )).join(Ioc.ioc_type).all()
 
     return iocs

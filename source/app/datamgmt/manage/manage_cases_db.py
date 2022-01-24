@@ -86,15 +86,18 @@ def reopen_case(case_id):
 def get_case_details_rt(case_id):
     if Cases.query.filter(Cases.case_id == case_id).first():
         res = db.session.query(Cases, Client, User).with_entities(
-            Cases.name.label('case_name'), Cases.description, Cases.open_date, Cases.close_date,
-            Cases.soc_id, Cases.case_id,
+            Cases.name.label('case_name'),
+            Cases.description.label('case_description'),
+            Cases.open_date, Cases.close_date,
+            Cases.soc_id.label('case_soc_id'),
+            Cases.case_id,
             Client.name.label('customer_name'),
-            User.name.label('user_name'), User.user
+            User.user.label('open_by_user')
         ).filter(and_(
             Cases.case_id == case_id,
             Cases.user_id == User.id,
             Client.client_id == Cases.client_id
-        ))
+        )).first()
 
     else:
         res = None
