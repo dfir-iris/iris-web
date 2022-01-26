@@ -20,7 +20,7 @@ from setuptools import setup
 
 setup(
     name='IrisWebApp',
-    version='v1.2.1',
+    version='v1.3.0',
     packages=['app', 'app.models', 'app.blueprints', 'app.blueprints.case', 'app.blueprints.login',
               'app.blueprints.tasks', 'app.blueprints.manage', 'app.blueprints.search',
               'app.blueprints.context', 'app.blueprints.profile', 'app.blueprints.reports',

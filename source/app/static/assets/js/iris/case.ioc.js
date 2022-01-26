@@ -31,7 +31,7 @@ Table = $("#ioc_table").DataTable({
             if (row['ioc_misp'] != null) {
                 jse = JSON.parse(row['ioc_misp']);
                 data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
-                   data-toggle="popover" data-trigger="focus" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
+                   data-toggle="popover" data-trigger="hover" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
             }
           }
           return data;
@@ -49,7 +49,7 @@ Table = $("#ioc_table").DataTable({
        "render": function (data, type, row, meta) {
           if (type === 'display') {
           data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="focus" href="#" data-content="' + data + '">' + data.slice(0, 70);
+            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
                 datas += ' (..)</span>';
@@ -79,7 +79,7 @@ Table = $("#ioc_table").DataTable({
           if (type === 'display' && data != null) {
               links = "";
               for (link in data) {
-                links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="focus" class="text-primary mr-3" href="#" title="Case info" data-content="' + sanitizeHTML(data[link]['case_name']) +
+                links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="hover" class="text-primary mr-3" href="#" title="Case info" data-content="' + sanitizeHTML(data[link]['case_name']) +
                  ' (' + sanitizeHTML(data[link]['client_name']) + ')' + '">#' + data[link]['case_id'] + '</span>'
               }
               return links;

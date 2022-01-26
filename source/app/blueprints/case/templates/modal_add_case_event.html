@@ -26,12 +26,23 @@
                     </div>
                     <div class="form-group col-7">
                         <label for="event_timetitle" class="placeholder mr-2">Event Time *</label>
-                        <div class="row ml-2">
+                        <div class="row ml-2" id="event_date_inputs">
                                 <input class="form-control col-5 mr-2" type="date" id="event_date" {% if event.event_date_wtz %} value="{{ event.event_date_wtz.strftime('%Y-%m-%d') }}"{% endif %}>
                                 <span></span>
                                 <input class="form-control col-4" type="time" step="0.001" id="event_time" {% if event.event_date_wtz %} value="{{ event.event_date_wtz.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
                                 <span></span>
                                 <input class="form-control col-2" type="text" id="event_tz" {% if event.event_tz %} value="{{ event.event_tz }}" {% else %} value="+00:00" {% endif %}>
+                                <button class="btn btn-sm btn-outline-white" onclick="show_time_converter();return false;"><i class="fas fa-magic"></i></button>
+                        </div>
+                        <div class="row ml-2" id="event_date_convert" style="display:none;">
+                            <div class="input-group ">
+                                <input class="form-control col-9" type="text" id="event_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary mr-2" type="button" onclick="time_converter();return false;">Submit</button>
+                                    <button class="btn btn-sm btn-outline" onclick="hide_time_converter();return false;"><i class="fas fa-magic"></i></button>
+                                </div>
+                            </div>
+                            <span id="convert_bad_feedback" class="text-danger"></span>
                         </div>
                     </div>
                 </div>
@@ -76,9 +87,9 @@
                 </div>
                 <div class="row">
                     <div class="form-group col-5">
-                        <label for="event_category" class="form-label">{{ form.event_category.label.text }}</label>
+                        <label for="event_category_id" class="form-label">{{ form.event_category_id.label.text }}</label>
                         <div class="row col-12">
-                            {{ form.event_category(class="selectpicker col-12") }}
+                            {{ form.event_category_id(class="selectpicker col-12") }}
                         </div>
                     </div>
                     <div class="form-group col-2">
@@ -169,7 +180,7 @@
         suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
     });
 $('[data-toggle="popover"]').popover();
-$('#event_category').select2({width:"100%"});
+$('#event_category_id').select2({width:"100%"});
 </script>
 
 {% if assets %}
@@ -188,10 +199,10 @@ $('#event_category').select2({width:"100%"});
 
 {% if category %}
     <script>
-        $('#event_category').val([
+        $('#event_category_id').val([
             {{ category[0].id }},
         ]);
-        $('#event_category').trigger('change');
+        $('#event_category_id').trigger('change');
     </script>
 {% endif %}
 

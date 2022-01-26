@@ -16,6 +16,12 @@ function visualizeTimeline(group) {
 
                   groups = new vis.DataSet();
                   groups_l = []
+                  if (data.data.events.length == 0) {
+                        $('#card_main_load').show();
+                        $('#visualization').text('No events in summary');
+                        hide_loader();
+                        return true;
+                  }
                   for (index in data.data.events) {
                         event = data.data.events[index];
                         if (!groups_l.includes(event.group)){
@@ -40,7 +46,7 @@ function visualizeTimeline(group) {
                   var options = {
                     stack: true,
                     minHeight: '400px',
-                    maxHeight: '100%',
+                    maxHeight: $(window).height() - 250,
                     start: data.data.events[0].date,
                     end: data.data.events[data.data.events.length - 1].date,
                   };
@@ -66,6 +72,7 @@ function visualizeTimeline(group) {
 }
 
 function refresh_timeline_graph(){
+    show_loader();
     queryString = window.location.search;
     urlParams = new URLSearchParams(queryString);
     group = urlParams.get('group-by');

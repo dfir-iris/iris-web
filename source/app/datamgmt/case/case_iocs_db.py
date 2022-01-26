@@ -103,6 +103,7 @@ def get_detailed_iocs(caseid):
         Ioc.ioc_value,
         Ioc.ioc_type_id,
         IocType.type_name.label('ioc_type'),
+        Ioc.ioc_type_id,
         Ioc.ioc_description,
         Ioc.ioc_tags,
         Ioc.ioc_misp,
@@ -215,7 +216,7 @@ def check_ioc_type_id(type_id: int):
         IocType.type_id == type_id
     ).first()
 
-    return type_id is not None
+    return type_id
 
 
 def get_ioc_type_id(type_name: str):

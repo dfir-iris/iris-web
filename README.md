@@ -79,7 +79,7 @@ The API reference is available in the [documentation](https://dfir-iris.github.i
 
 ## Help 
 
-You can reach us on [Discord](https://discord.gg/fwuXkpBHGz) if you have any question, issue or idea !
+You can reach us on [Discord](https://discord.gg/fwuXkpBHGz) or by [mail](mailto:contact@dfir-iris.org) if you have any question, issue or idea !
 
 ## License
 

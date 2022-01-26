@@ -116,7 +116,7 @@ def case_add_ioc(caseid):
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
         if link_existed:
-            return response_error("IOC already exists and linked to this case")
+            return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
 
         if ioc:
             track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
@@ -291,7 +291,7 @@ def case_update_ioc(cur_id, caseid):
     try:
         ioc = get_ioc(cur_id, caseid)
         if not ioc:
-            return response_error("Invalid note ID for this case")
+            return response_error("Invalid IOC ID for this case")
 
         # validate before saving
         ioc_schema = IocSchema()
@@ -306,7 +306,7 @@ def case_update_ioc(cur_id, caseid):
 
         if ioc_sc:
             track_activity("updated ioc {}".format(ioc_sc.ioc_value), caseid=caseid)
-            return response_success("Updated ioc {}".format(ioc_sc.ioc_value))
+            return response_success("Updated ioc {}".format(ioc_sc.ioc_value), data=ioc_schema.dump(ioc))
 
         return response_error("Unable to update ioc for internal reasons")
 

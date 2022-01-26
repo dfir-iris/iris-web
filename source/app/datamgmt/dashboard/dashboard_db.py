@@ -21,9 +21,8 @@ from flask_login import current_user
 from sqlalchemy import desc, and_
 
 from app import db
-from app.models import GlobalTasks, User, Cases, CaseTasks
 
-task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
+from app.models import GlobalTasks, User, Cases, CaseTasks, TaskStatus
 
 
 def list_global_tasks():
@@ -34,15 +33,46 @@ def list_global_tasks():
         GlobalTasks.task_last_update,
         GlobalTasks.task_tags,
         User.name.label('user_name'),
-        GlobalTasks.task_status
+        GlobalTasks.task_assignee_id,
+        GlobalTasks.task_status_id,
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor
     ).join(
         GlobalTasks.user_assigned
     ).order_by(
-        desc(GlobalTasks.task_status)
+        desc(TaskStatus.status_name)
+    ).join(
+        GlobalTasks.status
     ).all()
-    output = [c._asdict() for c in ct]
 
-    return output
+    return ct
+
+
+def get_global_task(task_id):
+    ct = GlobalTasks.query.with_entities(
+        GlobalTasks.id.label("task_id"),
+        GlobalTasks.task_title,
+        GlobalTasks.task_description,
+        GlobalTasks.task_last_update,
+        GlobalTasks.task_tags,
+        User.name.label('user_name'),
+        GlobalTasks.task_assignee_id,
+        GlobalTasks.task_status_id,
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor
+    ).filter(
+        GlobalTasks.id == task_id
+    ).join(
+        GlobalTasks.user_assigned,
+        GlobalTasks.status
+    ).order_by(
+        desc(TaskStatus.status_name)
+    ).first()
+
+    return ct
+
+def get_tasks_status():
+    return TaskStatus.query.all()
 
 
 def list_user_tasks():
@@ -54,19 +84,22 @@ def list_user_tasks():
         CaseTasks.task_tags,
         Cases.name.label('task_case'),
         CaseTasks.task_case_id.label('case_id'),
-        CaseTasks.task_status
+        CaseTasks.task_status_id,
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor
     ).join(
         CaseTasks.case
     ).order_by(
-        desc(CaseTasks.task_status)
+        desc(TaskStatus.status_name)
     ).filter(and_(
-        CaseTasks.task_status != 'Done',
-        CaseTasks.task_status != 'Canceled',
+        TaskStatus.status_name != 'Done',
+        TaskStatus.status_name != 'Canceled',
         CaseTasks.task_assignee_id == current_user.id
-    )).all()
-    output = [c._asdict() for c in ct]
+    )).join(
+        CaseTasks.status
+    ).all()
 
-    return output
+    return ct
 
 
 def update_gtask_status(task_id, status):
@@ -75,13 +108,14 @@ def update_gtask_status(task_id, status):
                 GlobalTasks.id == task_id
         ).first()
 
-        if task and status in task_status:
-            task.task_status = status
+        try:
+            task.task_status_id = status
             db.session.commit()
+            return task
+        except:
+            pass
 
-            return True
-
-    return False
+    return None
 
 
 def update_utask_status(task_id, status, case_id):
@@ -90,11 +124,22 @@ def update_utask_status(task_id, status, case_id):
                 CaseTasks.id == task_id,
                 CaseTasks.task_case_id == case_id
         ).first()
+        if task:
+            try:
+                task.task_status_id = status
 
-        if task and status in task_status:
-            task.task_status = status
-            db.session.commit()
+                db.session.commit()
+                return True
 
-            return task
+            except:
+                pass
 
-    return None
+    return False
+
+
+def get_task_status(task_status_id):
+    ret = TaskStatus.query.filter(
+        TaskStatus.id == task_status_id
+    ).first()
+
+    return ret

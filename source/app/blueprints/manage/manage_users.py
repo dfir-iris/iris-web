@@ -26,7 +26,7 @@ from flask_wtf import FlaskForm
 
 from app import db
 from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, \
-    get_user_by_username, get_user_details
+    get_user_by_username, get_user_details, get_users_list_restricted
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
@@ -216,9 +216,10 @@ if is_authentication_local():
             return response_error("Cannot delete active user")
 
 
+# Unrestricted section - non admin available
 @manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])
 @api_login_required
-def exists_user(cur_id, caseid):
+def exists_user_restricted(cur_id, caseid):
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID")
@@ -234,7 +235,7 @@ def exists_user(cur_id, caseid):
 
 @manage_users_blueprint.route('/manage/users/lookup/login/<string:login>', methods=['GET'])
 @api_login_required
-def lookup_name(login, caseid):
+def lookup_name_restricted(login, caseid):
     user = get_user_by_username(login)
     if not user:
         return response_error("Invalid login")
@@ -246,3 +247,11 @@ def lookup_name(login, caseid):
     }
 
     return response_success(data=output)
+
+@manage_users_blueprint.route('/manage/users/restricted/list', methods=['GET'])
+@api_login_required
+def manage_users_list_restricted(caseid):
+    users = get_users_list_restricted()
+
+    return response_success('', data=users)
+

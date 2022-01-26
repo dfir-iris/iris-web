@@ -36,7 +36,7 @@ from app.datamgmt.states import get_assets_state, update_assets_state
 from app.forms import ModalAddCaseAssetForm, AssetBasicForm
 
 from app.iris_engine.utils.tracker import track_activity
-from app.models import AnalysisStatus
+from app.models import AnalysisStatus, IocAssetLink, Ioc, IocLink
 from app.schema.marshables import CaseAssetsSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
@@ -80,16 +80,36 @@ def case_list_assets(caseid):
     ret = {}
     ret['assets'] = []
 
+    ioc_links_req = IocAssetLink.query.with_entities(
+        Ioc.ioc_id,
+        Ioc.ioc_value,
+        IocAssetLink.asset_id
+    ).filter(
+        Ioc.ioc_id == IocAssetLink.ioc_id,
+        IocLink.case_id == caseid,
+        IocLink.ioc_id == Ioc.ioc_id
+    ).all()
+
+    cache_ioc_link = {}
+    for ioc in ioc_links_req:
+
+        if ioc.asset_id not in cache_ioc_link:
+            cache_ioc_link[ioc.asset_id] = [ioc._asdict()]
+        else:
+            cache_ioc_link[ioc.asset_id].append(ioc._asdict())
+
     for asset in assets:
         asset = asset._asdict()
 
         # Find linked IoC
-        iocs = get_linked_iocs_from_asset(asset["asset_id"])
-        asset['ioc_links'] = [ioc._asdict() for ioc in iocs]
+        if len(assets) < 300:
+            # Find similar assets from other cases with the same customer
+            asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
+                            asset['asset_name'], asset['asset_type_id'], caseid, customer_id)]
+        else:
+            asset['link'] = []
 
-        # Find similar assets from other cases with the same customer
-        asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
-                        asset['asset_name'], asset['asset_type_id'], caseid, customer_id)]
+        asset['ioc_links'] = cache_ioc_link.get(asset['asset_id'])
 
         ret['assets'].append(asset)
 
@@ -157,7 +177,7 @@ def add_asset(caseid):
 
         if asset:
             track_activity("added asset {}".format(asset.asset_name), caseid=caseid)
-            return response_success(data=add_asset_schema.dump(asset))
+            return response_success("Asset added", data=add_asset_schema.dump(asset))
 
         return response_error("Unable to create asset for internal reasons")
 
@@ -183,7 +203,7 @@ def case_upload_ioc(caseid):
             csv_lines.insert(0, headers)
 
         # convert list of strings into CSV
-        csv_data = csv.DictReader(csv_lines, quotechar='"', delimiter=',')
+        csv_data = csv.DictReader(csv_lines, delimiter=',')
 
         ret = []
         errors = []
@@ -193,12 +213,15 @@ def case_upload_ioc(caseid):
 
         index = 0
         for row in csv_data:
-
+            missing_field = False
             for e in headers.split(','):
                 if row.get(e) is None:
                     errors.append(f"{e} is missing for row {index}")
-                    index += 1
+                    missing_field = True
                     continue
+
+            if missing_field:
+                continue
 
             # Asset name must not be empty
             if not row.get("asset_name"):
@@ -210,10 +233,16 @@ def case_upload_ioc(caseid):
             if row.get("asset_tags"):
                 row["asset_tags"] = row.get("asset_tags").replace("|", ",")  # Reformat Tags
 
+            if not row.get('asset_type_name'):
+                errors.append(f"Empty asset type for row {index}")
+                track_activity(f"Attempted to upload an empty asset type")
+                index += 1
+                continue
+
             type_id = get_asset_type_id(row['asset_type_name'].lower())
             if not type_id:
-                errors.append(f"{row['asset_type_name']} (invalid asset type: {row['asset_type_name']}) for row {index}")
-                track_activity(f'Attempted to upload unrecognized asset type {row["asset_type_name"]}')
+                errors.append(f"{row.get('asset_name')} (invalid asset type: {row.get('asset_type_name')}) for row {index}")
+                track_activity(f"Attempted to upload unrecognized asset type {row.get('asset_type_name')}")
                 index += 1
                 continue
 
@@ -323,7 +352,7 @@ def asset_update(cur_id, caseid):
 
         if asset:
             track_activity("updated asset {}".format(asset.asset_name), caseid=caseid)
-            return response_success("Updated asset {}".format(asset.asset_name))
+            return response_success("Updated asset {}".format(asset.asset_name), add_asset_schema.dump(asset))
 
         return response_error("Unable to update asset for internal reasons")
 

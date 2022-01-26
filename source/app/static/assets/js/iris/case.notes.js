@@ -230,14 +230,16 @@ function edit_add_save(group_id) {
 /* Delete a group of the dashboard */
 function edit_remote_groupnote(group_id) {
 
-    var data = {'group_title': $("#group-" + group_id).find('div.kanban-title-board').text(), 'group_id': group_id};
+    var data = Object();
+    data['group_title'] = $("#group-" + group_id).find('div.kanban-title-board').text();
     data["csrf_token"] = $('#csrf_token').val();
 
     $.ajax({
-        url: '/case/notes/groups/edit' + case_param(),
+        url: '/case/notes/groups/update/'+ group_id + case_param(),
         type: "POST",
-        data: data,
+        data: JSON.stringify(data),
         dataType: 'JSON',
+        contentType: "application/json;charset=UTF-8",
         success: function (data) {
             if (data.status == 'success') {
                 notify_success("Changes saved");
@@ -431,7 +433,7 @@ function save_note(this_item) {
     data_sent['note_content'] = $('#note_content').val();
 
     $.ajax({
-        url: '/case/notes/save/'+ n_id + case_param(),
+        url: '/case/notes/update/'+ n_id + case_param(),
         type: "POST",
         dataType: "json",
         contentType: "application/json;charset=UTF-8",
@@ -469,7 +471,7 @@ function draw_kanban() {
     show_loader();
 
     $.ajax({
-        url: '/case/notes/groups' + case_param(),
+        url: '/case/notes/groups/list' + case_param(),
         type: "GET",
         dataType: 'JSON',
         success: function (data) {

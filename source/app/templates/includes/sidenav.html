@@ -11,10 +11,10 @@
 						<div class="info">
 							<a data-toggle="collapse" href="#collapseExample" aria-expanded="true">
 								<span>
-									Welcome
 									<span class="user-level">
 									{{ current_user.name }}
-                  				</span>
+									</span>
+									<small class="text-muted justify-content-center" style="font-size: 10px;" id="current_date"></small>
 									<span class="caret"></span>
 								</span>
 							</a>
@@ -38,6 +38,7 @@
 						</div>
 					</div>
 					<ul class="nav nav-primary" id="l_nav_tab">
+
 						<li class="nav-item">
 							<a href="/dashboard?cid={{case_name[2]}}">
 								<i class="flaticon-home"></i>
@@ -124,7 +125,7 @@
 						</li>
 						{% endif %}
 						<li class="nav-item">
-							<a href="https://github.com/dfir-iris/iris-doc-src">
+							<a href="https://dfir-iris.github.io">
 								<i class="flaticon-round"></i>
 								<p>Help</p>
 							</a>
@@ -132,6 +133,7 @@
 					</ul>
 					{% endif %}
 				</div>
+
 				<div class="d-flex justify-content-center text-faded">
 					<a href="https://github.com/dfir-iris/iris-web" >Iris build {{ iris_version }}</a>
 				</div>

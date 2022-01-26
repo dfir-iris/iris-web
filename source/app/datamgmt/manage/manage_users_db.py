@@ -76,6 +76,25 @@ def get_users_list():
     return output
 
 
+def get_users_list_restricted():
+    users = User.query.all()
+
+    output = []
+    for user in users:
+        row = {}
+        row['user_id'] = user.id
+        row['user_name'] = user.name
+        row['user_login'] = user.user
+        roles = []
+        for role in user.roles:
+            roles.append(role.name)
+
+        row['user_active'] = user.active
+        output.append(row)
+
+    return output
+
+
 def create_user(user_name, user_login, user_password, user_email, user_isadmin, user_external_id: str = None):
     pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
 

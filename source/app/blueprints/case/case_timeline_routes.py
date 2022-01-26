@@ -136,7 +136,7 @@ def case_getgraph(caseid):
         tmp = {}
         ras = row
 
-        tmp['date'] = row.event_date.timestamp()
+        tmp['date'] = row.event_date
         tmp['group'] = row.category[0].name
         tmp['content'] = row.event_title
         content = row.event_content.replace('\n', '<br/>')
@@ -155,7 +155,79 @@ def case_getgraph(caseid):
     return response_success("", data=res)
 
 
-@case_timeline_blueprint.route('/case/timeline/get/<int:asset_id>', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/list', methods=['GET'])
+@api_login_required
+def case_gettimeline_api_nofilter(caseid):
+    return case_gettimeline_api(0)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/list/filter/<int:asset_id>', methods=['GET'])
+@api_login_required
+def case_gettimeline_api(asset_id, caseid):
+    if asset_id:
+        condition = and_(
+                CasesEvent.case_id == caseid,
+                CaseEventsAssets.asset_id == asset_id,
+                CaseEventsAssets.event_id == CasesEvent.event_id
+        )
+    else:
+        condition = CasesEvent.case_id == caseid
+
+    timeline = CasesEvent.query.with_entities(
+            CasesEvent.event_id,
+            CasesEvent.event_date,
+            CasesEvent.event_date_wtz,
+            CasesEvent.event_tz,
+            CasesEvent.event_title,
+            CasesEvent.event_color,
+            CasesEvent.event_tags,
+            CasesEvent.event_content,
+            CasesEvent.event_in_summary,
+            CasesEvent.event_in_graph,
+            EventCategory.name.label("category_name"),
+            EventCategory.id.label("event_category_id")
+        ).filter(condition).order_by(
+            CasesEvent.event_date
+        ).outerjoin(
+            CasesEvent.category
+        ).all()
+
+    assets_cache = CaseAssets.query.with_entities(
+        CaseAssets.asset_id,
+        CaseAssets.asset_name,
+        CaseEventsAssets.event_id
+    ).filter(
+        CaseEventsAssets.case_id == caseid,
+    ).join(CaseEventsAssets.asset).all()
+
+    tim = []
+    for row in timeline:
+        ras = row._asdict()
+        ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+
+        alki = []
+        cache = {}
+        for asset in assets_cache:
+            if asset.event_id == ras['event_id']:
+                if asset.asset_id not in cache:
+                    cache[asset.asset_id] = asset.asset_name
+
+                alki.append(asset._asdict())
+
+        ras['assets'] = alki
+
+        tim.append(ras)
+
+    resp = {
+        "timeline": tim,
+        "state": get_timeline_state(caseid=caseid)
+    }
+
+    return response_success("", data=resp)
+
+
+@case_timeline_blueprint.route('/case/timeline/filter/<int:asset_id>', methods=['GET'])
 @api_login_required
 def case_gettimeline(asset_id, caseid):
 
@@ -202,8 +274,8 @@ def case_gettimeline(asset_id, caseid):
     cache = {}
     for row in timeline:
         ras = row._asdict()
-        ras['event_date'] = ras['event_date'].isoformat()
-        ras['event_date_wtz'] = ras['event_date_wtz'].isoformat()
+        ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
 
         alki = []
         for asset in assets_cache:
@@ -251,7 +323,7 @@ def case_gettimeline(asset_id, caseid):
     return response_success("", data=resp)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/delete/<int:cur_id>', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_delete_event(cur_id, caseid):
 
@@ -278,7 +350,7 @@ def case_delete_event(cur_id, caseid):
     return response_success('Event ID {} deleted'.format(cur_id))
 
 
-@case_timeline_blueprint.route('/case/timeline/event/<int:cur_id>', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
 @api_login_required
 def event_view(cur_id, caseid):
 
@@ -297,12 +369,12 @@ def event_view(cur_id, caseid):
 
     output = event_schema.dump(event)
     output['event_assets'] = [asset[0] for asset in linked_assets]
-    output['event_category'] = event.category[0].id
+    output['event_category_id'] = event.category[0].id
 
     return response_success(data=output)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/<int:cur_id>/modal', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/modal', methods=['GET'])
 @login_required
 def event_view_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -322,7 +394,7 @@ def event_view_modal(cur_id, caseid, url_redir):
     form.event_in_summary.data = event.event_in_summary
 
     categories = get_events_categories()
-    form.event_category.choices = categories
+    form.event_category_id.choices = categories
 
     assets_prefill = CaseEventsAssets.query.with_entities(
         CaseEventsAssets.asset_id
@@ -340,7 +412,7 @@ def event_view_modal(cur_id, caseid, url_redir):
                            assets_prefill=assets_prefill, category=event.category)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/update/<int:cur_id>', methods=["POST"])
+@case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
 @api_login_required
 def case_edit_event(cur_id, caseid):
 
@@ -355,7 +427,6 @@ def case_edit_event(cur_id, caseid):
 
         event.event_date, event.event_date_wtz = event_schema.validate_date(
             jsdata.get(u'event_date'),
-            jsdata.get(u'event_time'),
             jsdata.get(u'event_tz')
             )
 
@@ -363,23 +434,25 @@ def case_edit_event(cur_id, caseid):
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
 
-        #db.session.add(event)
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
-        save_event_category(event.event_id, jsdata.get('event_category'))
+        save_event_category(event.event_id, jsdata.get('event_category_id'))
+
+        setattr(event, 'event_category_id', jsdata.get('event_category_id'))
 
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,
                             assets_list=jsdata.get('event_assets'))
 
+        track_activity("updated event {}".format(cur_id), caseid=caseid)
         return response_success("Event added", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/add/modal', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
 @login_required
 def case_add_event_modal(caseid, url_redir):
     if url_redir:
@@ -390,14 +463,14 @@ def case_add_event_modal(caseid, url_redir):
     assets = get_case_assets(caseid)
     def_cat = get_default_cat()
     categories = get_events_categories()
-    form.event_category.choices = categories
+    form.event_category_id.choices = categories
     form.event_in_graph.data = True
 
     return render_template("modal_add_case_event.html", form=form, event=event,
                            tags=event_tags, assets=assets, assets_prefill=None, category=def_cat)
 
 
-@case_timeline_blueprint.route('/case/timeline/event/add', methods=['POST'])
+@case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
 @api_login_required
 def case_add_event(caseid):
 
@@ -408,7 +481,6 @@ def case_add_event(caseid):
         event = event_schema.load(jsdata)
 
         event.event_date, event.event_date_wtz = event_schema.validate_date(jsdata.get(u'event_date'),
-                                                                            jsdata.get(u'event_time'),
                                                                             jsdata.get(u'event_tz'))
 
         event.case_id = caseid
@@ -419,18 +491,100 @@ def case_add_event(caseid):
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
-        save_event_category(event.event_id, jsdata.get('event_category'))
+        save_event_category(event.event_id, jsdata.get('event_category_id'))
+
+        setattr(event, 'event_category_id', jsdata.get('event_category_id'))
 
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,
                             assets_list=jsdata.get('event_assets'))
 
+        track_activity("added event {}".format(event.event_id), caseid=caseid)
         return response_success("Event added", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
 
+@case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
+@api_login_required
+def case_event_date_convert(caseid):
 
+    jsdata = request.get_json()
+
+    date_value = jsdata.get('date_value')
+    if not date_value:
+        return response_error("Invalid request")
+
+    date_value = date_value.strip()
+
+    if len(date_value) == 10 and '-' not in date_value and '.' not in date_value and '/' not in date_value:
+        # Assume linux timestamp, from 1966 to 2286
+        date = datetime.fromtimestamp(int(date_value))
+        tz = date.strftime("%z")
+        data = {
+            "date": date.strftime("%Y-%m-%d"),
+            "time": date.strftime("%H:%M:%S.%f")[:-3],
+            "tz": tz if tz else "+00:00"
+        }
+        return response_success("Date parsed", data=data)
+
+    elif len(date_value) == 13 and '-' not in date_value and '.' not in date_value and '/' not in date_value:
+        # Assume microsecond timestamp
+        date = datetime.fromtimestamp(int(date_value) / 1000)
+        tz = date.strftime("%z")
+        data = {
+            "date": date.strftime("%Y-%m-%d"),
+            "time": date.strftime("%H:%M:%S.%f")[:-3],
+            "tz": tz if tz else "+00:00"
+        }
+        return response_success("Date parsed", data=data)
+
+    else:
+
+        # brute force formats
+        for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
+                    '%Y-%m-%d %H:%M%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S.%f%z',
+                    '%Y-%m-%d %H:%M %Z', '%Y-%m-%d %H:%M:%S %Z', '%Y-%m-%d %H:%M:%S.%f %Z',
+
+                    '%b %d %H:%M:%S', '%Y %b %d %H:%M:%S', '%b %d %H:%M:%S %Y', '%b %d %Y %H:%M:%S',
+                    '%y %b %d %H:%M:%S', '%b %d %H:%M:%S %y', '%b %d %y %H:%M:%S',
+
+                    '%Y-%m-%d', '%Y-%m-%dT%H:%M', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f',
+                    '%Y-%m-%dT%H:%M%z', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z',
+                    '%Y-%m-%dT%H:%M %Z', '%Y-%m-%dT%H:%M:%S %Z', '%Y-%m-%dT%H:%M:%S.%f %Z',
+
+                    '%Y-%d-%m', '%Y-%d-%m %H:%M', '%Y-%d-%m %H:%M:%S', '%Y-%d-%m %H:%M:%S.%f',
+                    '%Y-%d-%m %H:%M%z', '%Y-%d-%m %H:%M:%S%z', '%Y-%d-%m %H:%M:%S.%f%z',
+                    '%Y-%d-%m %H:%M %Z', '%Y-%d-%m %H:%M:%S %Z', '%Y-%d-%m %H:%M:%S.%f %Z',
+
+                    '%d/%m/%Y %H:%M', '%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M:%S.%f',
+                    '%d.%m.%Y %H:%M', '%d.%m.%Y %H:%M:%S', '%d.%m.%Y %H:%M:%S.%f',
+                    '%d-%m-%Y %H:%M', '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M:%S.%f',
+
+                    '%b %d %Y %H:%M', '%b %d %Y %H:%M:%S', '%b %d %Y %H:%M:%S',
+
+                    '%a, %d %b %Y %H:%M:%S', '%a, %d %b %Y %H:%M:%S %Z', '%a, %d %b %Y %H:%M:%S.%f',
+                    '%a, %d %b %y %H:%M:%S', '%a, %d %b %y %H:%M:%S %Z', '%a, %d %b %y %H:%M:%S.%f',
+
+                    '%d %b %Y %H:%M', '%d %b %Y %H:%M:%S', '%d %b %Y %H:%M:%S.%f',
+                    '%d %b %y %H:%M', '%d %b %y %H:%M:%S', '%d %b %y %H:%M:%S.%f',
+
+                    '%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y', "%A, %B %d, %Y", "%A %B %d, %Y", "%A %B %d %Y",
+                    '%d %B %Y'):
+
+            try:
+                date = datetime.strptime(date_value, fmt)
+                tz = date.strftime("%z")
+                data = {
+                    "date": date.strftime("%Y-%m-%d"),
+                    "time": date.strftime("%H:%M:%S.%f")[:-3],
+                    "tz": tz if tz else "+00:00"
+                }
+                return response_success("Event added", data=data)
+            except ValueError:
+                pass
+
+    return response_error("Unable to find a matching date format")
 
 

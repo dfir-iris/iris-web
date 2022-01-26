@@ -2347,7 +2347,7 @@ body {
 }
 
 .logo-header[data-background-color="blue"] {
-    background: #1572E8 !important;
+    background: #0963D5 !important;
 }
 
 .logo-header[data-background-color="blue2"] {
@@ -6607,11 +6607,6 @@ label.error {
     color: #555;
 }
 
-.navbar[class*="bg-"] {
-    //border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
 .navbar[class*="bg-"] .navbar-brand {
     color: #ffffff;
 }
@@ -8287,7 +8282,7 @@ label.error {
 }
 
 .feed-item-default::after {
-    background: #1a2035 !important;
+    background: #7a84a6 !important;
 }
 
 .feed-item-primary::after {
@@ -14373,8 +14368,9 @@ body[data-background-color="dark"] .board {
 
 .bg-primary-gradient {
     background: #1572E8 !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #06418E, #1572E8) !important;
-    background: linear-gradient(-45deg, #06418E, #1572E8) !important;
+
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #05316A, #0963D5) !important;
+    background: linear-gradient(-45deg, #05316A, #0963D5)  !important;
 }
 
 .bg-secondary-gradient {

@@ -28,7 +28,7 @@ Table = $("#tasks_table").DataTable({
        "render": function (data, type, row, meta) {
           if (type === 'display') {
             data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="click" href="#" data-content="' + data + '">' + data.slice(0, 70);
+            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
             if (data.length > 70) {
                 datas += ' (..)</span>';
@@ -41,26 +41,17 @@ Table = $("#tasks_table").DataTable({
         }
       },
       {
-        "data": "task_status",
+        "data": "task_status_id",
         "render": function(data, type, row, meta) {
            if (type === 'display') {
-            if (row['task_status'] == 'To do') {
-                flag = 'danger';
-            } else if (row['task_status'] == 'In progress') {
-                flag = 'warning';
-            } else if (row['task_status'] == 'Done') {
-                flag = 'success';
-            } else {
-                flag = 'muted';
-            }
               data = sanitizeHTML(data);
-              data = '<span class="badge ml-2 badge-'+ flag +'">' + data + '</span>';
+              data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
           }
           return data;
         }
       },
       {
-        "data": "user_name",
+        "data": "assignee_name",
         "render": function (data, type, row, meta) { return sanitizeHTML(data);}
       },
       {
@@ -82,16 +73,7 @@ Table = $("#tasks_table").DataTable({
       }
     ],
     rowCallback: function (nRow, data) {
-        if (data['task_status'] == 'To do') {
-            flag = 'danger';
-        } else if (data['task_status'] == 'In progress') {
-            flag = 'warning';
-        } else if (data['task_status'] == 'Done') {
-            flag = 'success';
-        } else {
-            flag = 'muted';
-        }
-        nRow = '<span class="badge ml-2 badge-'+ flag +'">' + sanitizeHTML(data['task_status']) + '</span>';
+        nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
     },
     filter: true,
     info: true,
@@ -99,7 +81,7 @@ Table = $("#tasks_table").DataTable({
     processing: true,
     retrieve: true,
     pageLength: 50,
-    order: [[ 2, "desc" ]],
+    order: [[ 2, "asc" ]],
     buttons: [
     ],
     orderCellsTop: true,
@@ -131,7 +113,7 @@ function add_task() {
             var data_sent = $('#form_new_task').serializeObject();
             data_sent['task_tags'] = $('#task_tags').val();
             data_sent['task_assignee'] = $('#task_assignee').val();
-            data_sent['task_status'] = $('#task_status').val();
+            data_sent['task_status_id'] = $('#task_status_id').val();
 
             $.ajax({
                 url: 'tasks/add' + case_param(),
@@ -181,7 +163,7 @@ function update_task(id) {
     var data_sent = $('#form_new_task').serializeObject();
     data_sent['task_tags'] = $('#task_tags').val();
     data_sent['task_assignee'] = $('#task_assignee').val();
-    data_sent['task_status'] = $('#task_status').val();
+    data_sent['task_status_id'] = $('#task_status_id').val();
 
     $.ajax({
         url: 'tasks/update/' + id + case_param(),
@@ -262,6 +244,14 @@ function get_tasks() {
             if (data.status == 'success') {
                     Table.MakeCellsEditable("destroy");
                     tasks_list = data.data.tasks;
+
+                    options_l = data.data.tasks_status;
+                    options = [];
+                    for (index in options_l) {
+                        option = options_l[index];
+                        options.push({ "value": option.id, "display": option.status_name })
+                    }
+                    console.log(options);
                     Table.clear();
                     Table.rows.add(tasks_list);
                     hide_loader();
@@ -281,12 +271,7 @@ function get_tasks() {
                           {
                             "column": 2,
                             "type": "list",
-                            "options": [
-                              { "value": "To do", "display": "To do" },
-                              { "value": "In progress", "display": "In progress" },
-                              { "value": "Done", "display": "Done" },
-                              { "value": "Canceled", "display": "Canceled" }
-                            ]
+                            "options": options
                           }
                         ]
                       });
@@ -318,7 +303,8 @@ function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {
     contentType: "application/json;charset=UTF-8",
     success: function (response) {
       if (response.status == 'success') {
-           notify_success("Changes saved");
+            get_tasks();
+            notify_success("Changes saved");
       } else {
         notify_error('Error :' + response.message)
       }

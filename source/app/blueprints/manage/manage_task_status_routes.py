@@ -19,23 +19,25 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
+
+from app.models.models import TaskStatus
+from app.util import api_login_required
 from app.util import response_success, response_error
 
-from app.models.models import AnalysisStatus
-from app.util import api_login_required
-
-manage_anastatus_blueprint = Blueprint('manage_anastatus',
-                                    __name__,
-                                    template_folder='templates')
+manage_task_status_blueprint = Blueprint('manage_task_status',
+                                       __name__,
+                                       template_folder='templates')
 
 
 # CONTENT ------------------------------------------------
-@manage_anastatus_blueprint.route('/manage/analysis-status/list', methods=['GET'])
+@manage_task_status_blueprint.route('/manage/task-status/list', methods=['GET'])
 @api_login_required
-def list_anastatus(caseid):
-    lstatus = AnalysisStatus.query.with_entities(
-        AnalysisStatus.id,
-        AnalysisStatus.name
+def list_task_status(caseid):
+    lstatus = TaskStatus.query.with_entities(
+        TaskStatus.id,
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor,
+        TaskStatus.status_description
     ).all()
 
     data = [row._asdict() for row in lstatus]
@@ -43,20 +45,20 @@ def list_anastatus(caseid):
     return response_success("", data=data)
 
 
-@manage_anastatus_blueprint.route('/manage/analysis-status/<int:cur_id>', methods=['GET'])
+# CONTENT ------------------------------------------------
+@manage_task_status_blueprint.route('/manage/task-status/<int:cur_id>', methods=['GET'])
 @api_login_required
-def view_anastatus(cur_id, caseid):
-    lstatus = AnalysisStatus.query.with_entities(
-        AnalysisStatus.id,
-        AnalysisStatus.name
+def view_task_status(cur_id, caseid):
+    lstatus = TaskStatus.query.with_entities(
+        TaskStatus.id,
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor,
+        TaskStatus.status_description
     ).filter(
-        AnalysisStatus.id == cur_id
+        TaskStatus.id == cur_id
     ).first()
 
     if not lstatus:
-        return response_error(f"Analysis status ID {cur_id} not found")
+        return response_error(f"Task status ID #{cur_id} not found")
 
-    return response_success("", data=lstatus._asdict())
-
-
-# TODO : Add management of analysis status
+    return response_success(data=lstatus._asdict())

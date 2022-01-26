@@ -29,6 +29,7 @@ from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.client.client_db import get_client
 from app.datamgmt.iris_engine.modules_db import iris_module_exists, \
     get_pipelines_args_from_name
 from app.datamgmt.manage.manage_cases_db import list_cases_dict, close_case, reopen_case, delete_case, \
@@ -77,7 +78,7 @@ def get_case_api(cur_id, caseid):
     if res:
         return response_success(data=res._asdict())
 
-    return response_error(f'Case ID {res} not found')
+    return response_error(f'Case ID {cur_id} not found')
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['GET'])
@@ -155,11 +156,14 @@ def api_add_case(caseid):
     try:
 
         case = case_schema.load(request.json)
+
         case.save()
         track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+    except Exception as e:
+        return response_error(msg="Data error", data=e.__str__(), status=400)
 
     return response_success(msg='Case created', data=case_schema.dump(case))
 

@@ -20,7 +20,7 @@ Table_1 = $("#file_search_table_1").DataTable({
                 if (row['ioc_misp'] != null) {
                     jse = JSON.parse(row['ioc_misp']);
                     data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
-                       data-toggle="popover" data-trigger="focus" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
+                       data-toggle="popover" data-trigger="hover" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
                 }
             }
             return data;
@@ -30,7 +30,7 @@ Table_1 = $("#file_search_table_1").DataTable({
         "render": function (data, type, row, meta) {
             if (type === 'display') {
                  data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover" style="cursor: pointer;" data-trigger="focus" title="Description" data-content="' + data + '">' + data.slice(0, 70);
+                datas = '<span data-toggle="popover" style="cursor: pointer;" data-trigger="hover" title="Description" data-content="' + data + '">' + data.slice(0, 70);
 
                 if (data.length > 70) {
                     datas += ' (..)</span>';

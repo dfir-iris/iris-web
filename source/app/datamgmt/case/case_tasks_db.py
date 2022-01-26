@@ -24,7 +24,11 @@ from sqlalchemy import desc
 
 from app import db
 from app.datamgmt.states import update_tasks_state
-from app.models import CaseTasks, User
+from app.models import CaseTasks, User, TaskStatus
+
+
+def get_tasks_status():
+    return TaskStatus.query.all()
 
 
 def get_tasks(caseid):
@@ -34,14 +38,17 @@ def get_tasks(caseid):
         CaseTasks.task_description,
         CaseTasks.task_open_date,
         CaseTasks.task_tags,
-        User.name.label('user_name'),
-        CaseTasks.task_status
+        User.name.label('assignee_name'),
+        CaseTasks.task_assignee_id,
+        CaseTasks.task_status_id,
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor
     ).filter(
         CaseTasks.task_case_id == caseid
     ).join(
-        CaseTasks.user_assigned
+        CaseTasks.user_assigned, CaseTasks.status
     ).order_by(
-        desc(CaseTasks.task_status)
+        desc(TaskStatus.status_name)
     ).all()
 
 
@@ -52,11 +59,15 @@ def get_task(task_id, caseid):
 def update_task_status(task_status, task_id, caseid):
     task = get_task(task_id, caseid)
     if task:
-        task.task_status = task_status
+        try:
+            task.task_status_id = task_status
 
-        update_tasks_state(caseid=caseid)
-        db.session.commit()
-        return True
+            update_tasks_state(caseid=caseid)
+            db.session.commit()
+            return True
+
+        except:
+            return False
     else:
         return False
 
@@ -69,6 +80,8 @@ def add_task(task, user_id, caseid):
     task.task_userid_update = user_id
     task.task_open_date = now
     task.task_last_update = now
+
+    update_task_status(task.task_status_id, task.id, caseid)
 
     db.session.add(task)
 
