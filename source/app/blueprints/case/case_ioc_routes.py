@@ -20,8 +20,9 @@
 
 # IMPORTS ------------------------------------------------
 import csv
-import marshmallow
 import logging as log
+
+import marshmallow
 from flask import Blueprint, request
 from flask import render_template, url_for, redirect
 from flask_login import current_user
@@ -39,9 +40,11 @@ from app.models.models import Ioc
 from app.schema.marshables import IocSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
-case_ioc_blueprint = Blueprint('case_ioc',
-                               __name__,
-                               template_folder='templates')
+case_ioc_blueprint = Blueprint(
+    'case_ioc',
+    __name__,
+    template_folder='templates'
+)
 
 
 # CONTENT ------------------------------------------------
@@ -97,7 +100,6 @@ def case_ioc_state(caseid):
 @case_ioc_blueprint.route('/case/ioc/add', methods=['POST'])
 @api_login_required
 def case_add_ioc(caseid):
-
     try:
         # validate before saving
         add_ioc_schema = IocSchema()
@@ -132,7 +134,6 @@ def case_add_ioc(caseid):
 @case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])
 @api_login_required
 def case_upload_ioc(caseid):
-
     try:
         # validate before saving
         add_ioc_schema = IocSchema()
@@ -140,7 +141,7 @@ def case_upload_ioc(caseid):
 
         # get IOC list from request
         headers = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp"
-        csv_lines=jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
+        csv_lines = jsdata["CSVData"].splitlines()  # unavoidable since the file is passed as a string
         if csv_lines[0].lower() != headers:
             csv_lines.insert(0, headers)
 
@@ -192,7 +193,7 @@ def case_upload_ioc(caseid):
             ioc, existed = add_ioc(ioc=ioc,
                                    user_id=current_user.id,
                                    caseid=caseid
-                                )
+                                   )
             link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
             if link_existed:
@@ -238,7 +239,6 @@ def case_add_ioc_modal(caseid, url_redir):
 @case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_delete_ioc(cur_id, caseid):
-
     ioc = get_ioc(cur_id, caseid)
 
     if not ioc:
@@ -277,7 +277,6 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_view_ioc(cur_id, caseid):
-
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
@@ -289,7 +288,6 @@ def case_view_ioc(cur_id, caseid):
 @case_ioc_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
 @api_login_required
 def case_update_ioc(cur_id, caseid):
-
     try:
         ioc = get_ioc(cur_id, caseid)
         if not ioc:
@@ -314,4 +312,3 @@ def case_update_ioc(cur_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
-
