@@ -88,7 +88,8 @@ def get_all_user_activities():
         UserActivity.case_id,
         UserActivity.activity_date,
         UserActivity.activity_desc,
-        UserActivity.user_input
+        UserActivity.user_input,
+        UserActivity.is_from_api
     ).join(
         UserActivity.case, UserActivity.user
     ).order_by(desc(UserActivity.activity_date)).limit(10000).all()
@@ -98,7 +99,8 @@ def get_all_user_activities():
         UserActivity.user_id.label("user_name"),
         UserActivity.activity_date,
         UserActivity.activity_desc,
-        UserActivity.user_input
+        UserActivity.user_input,
+        UserActivity.is_from_api
     ).filter(
         UserActivity.case_id == None
     ).order_by(desc(UserActivity.activity_date)).limit(10000).all()
