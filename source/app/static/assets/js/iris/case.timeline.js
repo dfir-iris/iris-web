@@ -169,10 +169,10 @@ function draw_timeline() {
                 ioc_list = data.data.iocs;
                 for (ioc in ioc_list) {
                     // When an IOC contains another IOC in its description, we want to avoid to replace that particular pattern
-                    var avoid_inception_start = "(?!<span[^>]*?>)("
-                    var avoid_inception_end = ")(?![^<]*?</span>)"
+                    var avoid_inception_start = "(?!<span[^>]*?>)(^|:| |\>)("
+                    var avoid_inception_end = ")(\:| |>|$)(?![^<]*?<\/span>)"
                     var re = new RegExp(avoid_inception_start
-                           + "(^|>|:|;|,|\||-)" + escapeRegExp(ioc_list[ioc][1]) + "(^|>|:|;|,|\||-)"
+                           + escapeRegExp(ioc_list[ioc][1])
                            + avoid_inception_end
                            ,"g");
                     replacement = ' <span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc][2]) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc][1]) + '</span> ';
@@ -257,8 +257,9 @@ function draw_timeline() {
                             short_content = match_replace_ioc(content_split.slice(0,2).join('<br/>'), reap);
                             long_content = match_replace_ioc(content_split.slice(2).join('<br/>'), reap);
                         } else {
-                            short_content = match_replace_ioc(content_parsed.slice(0, 150), reap);
-                            long_content = match_replace_ioc(content_parsed.slice(150), reap);
+                            offset = content_parsed.slice(150).indexOf(' ');
+                            short_content = match_replace_ioc(content_parsed.slice(0, 150 + offset), reap);
+                            long_content = match_replace_ioc(content_parsed.slice(150 + offset), reap);
                         }
                         formatted_content = short_content + `<div class="collapse" id="collapseContent-`
                             + evt.event_id + `">
