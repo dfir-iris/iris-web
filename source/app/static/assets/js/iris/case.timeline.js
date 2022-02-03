@@ -1,4 +1,4 @@
-/* Fetch a modal that allows to add an event */ 
+/* Fetch a modal that allows to add an event */
 function add_event() {
     url = 'timeline/events/add/modal' + case_param();
     $('#modal_add_event_content').load(url, function () {   
@@ -172,7 +172,7 @@ function draw_timeline() {
                     var avoid_inception_start = "(?!<span[^>]*?>)("
                     var avoid_inception_end = ")(?![^<]*?</span>)"
                     var re = new RegExp(avoid_inception_start
-                           + " " + escapeRegExp(ioc_list[ioc][1]) + " "
+                           + "(^|>|:|;|,|\||-)" + escapeRegExp(ioc_list[ioc][1]) + "(^|>|:|;|,|\||-)"
                            + avoid_inception_end
                            ,"g");
                     replacement = ' <span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc][2]) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc][1]) + '</span> ';
