@@ -645,6 +645,14 @@ class IrisModule(db.Model):
     user = relationship('User')
 
 
+class IrisHook(db.Model):
+    __tablename__ = "iris_hooks"
+
+    id = Column(Integer, primary_key=True)
+    hook_name = Column(Text)
+    hook_description = Column(Text)
+
+
 class IrisReport(db.Model):
     __tablename__ = 'iris_reports'
 
