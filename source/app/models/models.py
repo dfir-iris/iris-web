@@ -619,6 +619,7 @@ class UserActivity(db.Model):
     activity_date = Column(DateTime)
     activity_desc = Column(Text)
     user_input = Column(Boolean)
+    is_from_api = Column(Boolean)
 
     user = relationship('User')
     case = relationship('Cases')

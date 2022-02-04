@@ -159,7 +159,8 @@ def activity_fetch(caseid):
     ua = UserActivity.query.with_entities(
         UserActivity.activity_date,
         User.name,
-        UserActivity.activity_desc
+        UserActivity.activity_desc,
+        UserActivity.is_from_api
     ).filter(
         UserActivity.case_id == caseid
     ).join(

@@ -441,9 +441,16 @@ function load_case_activity(){
                 js_data = data.data;
                 $('#case_activities').empty();
                 for (index in js_data) {
-                    console.log(index)
 
-                    entry =	`<li class="feed-item feed-item-default">
+                    if (js_data[index].is_from_api) {
+                        api_flag = 'feed-item-primary';
+                        title = 'Activity issued from API';
+                    } else {
+                        api_flag = 'feed-item-default';
+                        title = 'Activity issued from GUI';
+                    }
+
+                    entry =	`<li class="feed-item ${api_flag}" title='${title}'>
 							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
 							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</a></span>
 						    </li>`
