@@ -1,7 +1,7 @@
 """Add module types
 
 Revision ID: 10a7616f3cc7
-Revises: c773a35c280f
+Revises: 874ba5e5da44
 Create Date: 2022-02-04 07:46:32.382640
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection
 
 revision = '10a7616f3cc7'
-down_revision = 'c773a35c280f'
+down_revision = '874ba5e5da44'
 branch_labels = None
 depends_on = None
 
