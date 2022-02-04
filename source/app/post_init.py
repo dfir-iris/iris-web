@@ -142,6 +142,7 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_case_delete',
                 hook_description='Triggered on case deletion, after commit in DB')
 
+
     # --- Assets
     create_safe(db.session, IrisHook, hook_name='on_preload_asset_create',
                 hook_description='Triggered on asset creation, before commit in DB')
@@ -158,6 +159,9 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_asset_delete',
                 hook_description='Triggered on asset deletion, after commit in DB')
 
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_asset',
+                hook_description='Triggered upon user action')
+
     # --- Notes
     create_safe(db.session, IrisHook, hook_name='on_preload_note_create',
                 hook_description='Triggered on note creation, before commit in DB')
@@ -173,6 +177,9 @@ def create_safe_hooks():
                 hook_description='Triggered on note deletion, before commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_note_delete',
                 hook_description='Triggered on note deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_note',
+                hook_description='Triggered upon user action')
     
     # --- iocs
     create_safe(db.session, IrisHook, hook_name='on_preload_ioc_create',
@@ -189,7 +196,10 @@ def create_safe_hooks():
                 hook_description='Triggered on ioc deletion, before commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_ioc_delete',
                 hook_description='Triggered on ioc deletion, after commit in DB')
-    
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_ioc',
+                hook_description='Triggered on asset creation')
+
     # --- events
     create_safe(db.session, IrisHook, hook_name='on_preload_event_create',
                 hook_description='Triggered on event creation, before commit in DB')
@@ -205,6 +215,9 @@ def create_safe_hooks():
                 hook_description='Triggered on event deletion, before commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_event_delete',
                 hook_description='Triggered on event deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_event',
+                hook_description='Triggered upon user action')
     
     # --- evidence
     create_safe(db.session, IrisHook, hook_name='on_preload_evidence_create',
@@ -221,6 +234,9 @@ def create_safe_hooks():
                 hook_description='Triggered on evidence deletion, before commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_evidence_delete',
                 hook_description='Triggered on evidence deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_evidence',
+                hook_description='Triggered upon user action')
     
     # --- tasks
     create_safe(db.session, IrisHook, hook_name='on_preload_task_create',
@@ -237,6 +253,9 @@ def create_safe_hooks():
                 hook_description='Triggered on task deletion, before commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_task_delete',
                 hook_description='Triggered on task deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_task',
+                hook_description='Triggered upon user action')
     
     # --- reports
     create_safe(db.session, IrisHook, hook_name='on_preload_report_create',
