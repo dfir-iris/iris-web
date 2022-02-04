@@ -666,7 +666,7 @@ class IrisModuleHook(db.Model):
     run_asynchronously = Column(Boolean)
     wait_till_return = Column(Boolean)
 
-    module = relationship('Module')
+    module = relationship('IrisModule')
     hook = relationship('IrisHook')
 
 
