@@ -629,7 +629,7 @@ class IrisModule(db.Model):
     __tablename__ = "iris_module"
 
     id = Column(Integer, primary_key=True)
-    added_by_id = Column(ForeignKey('user.id'), nullable=True)
+    added_by_id = Column(ForeignKey('user.id'), nullable=False)
     module_human_name = Column(Text)
     module_name = Column(Text)
     module_description = Column(Text)
@@ -651,6 +651,22 @@ class IrisHook(db.Model):
     id = Column(Integer, primary_key=True)
     hook_name = Column(Text)
     hook_description = Column(Text)
+
+
+class IrisModuleHook(db.Model):
+    __tablename__ = "iris_module_hooks"
+
+    id = Column(Integer, primary_key=True)
+    module_id = Column(ForeignKey('iris_module.id'), nullable=False)
+    hook_id = Column(ForeignKey('iris_hooks.id'), nullable=False)
+    is_manual_hook = Column(Boolean)
+    retry_on_fail = Column(Boolean)
+    max_retry = Column(Integer)
+    run_asynchronously = Column(Boolean)
+    wait_till_return = Column(Boolean)
+
+    module = relationship('Module')
+    hook = relationship('IrisHook')
 
 
 class IrisReport(db.Model):
