@@ -31,7 +31,7 @@ def iris_module_exists(module_name):
 
 
 def iris_module_add(module_name, module_human_name, module_description,
-                    module_version, interface_version, has_pipeline, pipeline_args, module_config):
+                    module_version, interface_version, has_pipeline, pipeline_args, module_config, module_type):
     im = IrisModule()
     im.module_name = module_name
     im.module_human_name = module_human_name
@@ -44,6 +44,7 @@ def iris_module_add(module_name, module_human_name, module_description,
     im.module_config = module_config
     im.added_by_id = current_user.id
     im.is_active = True
+    im.module_type = module_type
 
     db.session.add(im)
     db.session.commit()

@@ -639,6 +639,7 @@ class IrisModule(db.Model):
     has_pipeline = Column(Boolean)
     pipeline_args = Column(JSON)
     module_config = Column(JSON)
+    module_type = Column(Text)
 
     user = relationship('User')
 

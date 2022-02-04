@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import importlib
 
+from app import app, configuration
+
 from app.datamgmt.iris_engine.modules_db import iris_module_exists, iris_module_add, modules_list_pipelines, \
      get_module_config_from_hname
 from iris_interface import IrisInterfaceStatus as IStatus
@@ -86,18 +88,38 @@ def check_module_health(module_instance):
     try:
         dup_logs("Testing module")
         dup_logs("Module name : {}".format(module_instance.get_module_name()))
+
+        if not (app.config.get('MODULES_INTERFACE_MIN_VERSION') <= module_instance.get_interface_version() <= app.config.get('MODULES_INTERFACE_MAX_VERSION')):
+            log.critical("Module interface no compatible with server. Expected "
+                         f"{app.config.get('MODULES_INTERFACE_MIN_VERSION')} <= module "
+                         f"<= {app.config.get('MODULES_INTERFACE_MAX_VERSION')}")
+
+            return False, logs.append("Module interface no compatible with server. Expected "
+                                      f"{app.config.get('MODULES_INTERFACE_MIN_VERSION')} <= module "
+                                      f"<= {app.config.get('MODULES_INTERFACE_MAX_VERSION')}")
+
         dup_logs("Module interface version : {}".format(module_instance.get_interface_version()))
 
-        if not module_instance.is_providing_pipeline():
-            log.critical("Module has no pipelines")
-            return False, logs.append("Error - Module has not pipelines")
+        module_type = module_instance.get_module_type()
+        if module_type not in ["pipeline", "processor"]:
+            log.critical(f"Unrecognised module type. Expected pipeline or processor, got {module_type}")
+            return False, logs.append(f"Unrecognised module type. Expected pipeline or processor, got {module_type}")
 
-        dup_logs("Module has pipeline : {}".format(module_instance.is_providing_pipeline()))
-        # Check the pipelines config health
-        has_error, llogs = check_pipeline_args(module_instance.pipeline_get_info())
-        logs.extend(llogs)
-        if has_error:
-            return False, logs
+        dup_logs("Module type : {}".format(module_instance.get_module_type()))
+
+        if not module_instance.is_providing_pipeline() and module_type == 'pipeline':
+            log.critical("Module of type pipeline has no pipelines")
+            return False, logs.append("Error - Module of type pipeline has not pipelines")
+
+        if module_instance.is_providing_pipeline():
+            dup_logs("Module has pipeline : {}".format(module_instance.is_providing_pipeline()))
+            # Check the pipelines config health
+            has_error, llogs = check_pipeline_args(module_instance.pipeline_get_info())
+
+            logs.extend(llogs)
+
+            if has_error:
+                return False, logs
 
         dup_logs("Module health validated")
         return module_instance.is_ready(), logs
@@ -209,7 +231,8 @@ def register_module(module_name):
                                   module_version=mod_inst.get_module_version(),
                                   interface_version=mod_inst.get_module_version(),
                                   has_pipeline=mod_inst.is_providing_pipeline(),
-                                  pipeline_args=mod_inst.pipeline_get_info()
+                                  pipeline_args=mod_inst.pipeline_get_info(),
+                                  module_type=mod_inst.get_module_type()
                                   )
 
         if not success:
