@@ -660,6 +660,7 @@ class IrisModuleHook(db.Model):
     module_id = Column(ForeignKey('iris_module.id'), nullable=False)
     hook_id = Column(ForeignKey('iris_hooks.id'), nullable=False)
     is_manual_hook = Column(Boolean)
+    manual_hook_ui_name = Column(Text)
     retry_on_fail = Column(Boolean)
     max_retry = Column(Integer)
     run_asynchronously = Column(Boolean)
