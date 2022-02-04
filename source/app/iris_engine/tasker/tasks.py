@@ -39,7 +39,7 @@ from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.reporter.reporter import IrisReporter
 from app.iris_engine.utils.tracker import track_activity
 
-from iris_interface.IrisModuleInterface import IrisInterfaceTypes
+from iris_interface.IrisModuleInterface import IrisPipelineTypes
 
 from app.models import CasesDatum, FileContentHash, HashLink, Ioc, CaseEventsAssets, CaseAssets
 from app.models.cases import Cases, CasesEvent
@@ -113,7 +113,7 @@ def task_case_update(module, pipeline, pipeline_args, caseid):
 
                 return pipeline_dispatcher(module=module,
                                            pipeline_name=pipeline,
-                                           pipeline_type=IrisInterfaceTypes.pipeline_type_update,
+                                           pipeline_type=IrisPipelineTypes.pipeline_type_update,
                                            pipeline_data=task_args)
 
             return IStatus.I2FileNotFound("Built path was not found ")
@@ -209,7 +209,7 @@ def task_case_import_from_form(form):
 
                     return pipeline_dispatcher(module=pipeline_mod,
                                                pipeline_name=pipeline,
-                                               pipeline_type=IrisInterfaceTypes.pipeline_type_update,
+                                               pipeline_type=IrisPipelineTypes.pipeline_type_update,
                                                pipeline_data=task_args)
 
 

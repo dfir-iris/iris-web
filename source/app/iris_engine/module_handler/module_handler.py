@@ -89,27 +89,32 @@ def check_module_health(module_instance):
         dup_logs("Testing module")
         dup_logs("Module name : {}".format(module_instance.get_module_name()))
 
-        if not (app.config.get('MODULES_INTERFACE_MIN_VERSION') <= module_instance.get_interface_version() <= app.config.get('MODULES_INTERFACE_MAX_VERSION')):
+        if not (float(app.config.get('MODULES_INTERFACE_MIN_VERSION'))
+                <= module_instance.get_interface_version()
+                <= float(app.config.get('MODULES_INTERFACE_MAX_VERSION'))):
             log.critical("Module interface no compatible with server. Expected "
                          f"{app.config.get('MODULES_INTERFACE_MIN_VERSION')} <= module "
                          f"<= {app.config.get('MODULES_INTERFACE_MAX_VERSION')}")
+            logs.append("Module interface no compatible with server. Expected "
+                        f"{app.config.get('MODULES_INTERFACE_MIN_VERSION')} <= module "
+                        f"<= {app.config.get('MODULES_INTERFACE_MAX_VERSION')}")
 
-            return False, logs.append("Module interface no compatible with server. Expected "
-                                      f"{app.config.get('MODULES_INTERFACE_MIN_VERSION')} <= module "
-                                      f"<= {app.config.get('MODULES_INTERFACE_MAX_VERSION')}")
+            return False, logs
 
         dup_logs("Module interface version : {}".format(module_instance.get_interface_version()))
 
         module_type = module_instance.get_module_type()
-        if module_type not in ["pipeline", "processor"]:
-            log.critical(f"Unrecognised module type. Expected pipeline or processor, got {module_type}")
-            return False, logs.append(f"Unrecognised module type. Expected pipeline or processor, got {module_type}")
+        if module_type not in ["module_pipeline", "module_processor"]:
+            log.critical(f"Unrecognised module type. Expected module_pipeline or module_processor, got {module_type}")
+            logs.append(f"Unrecognised module type. Expected module_pipeline or module_processor, got {module_type}")
+            return False, logs
 
         dup_logs("Module type : {}".format(module_instance.get_module_type()))
 
         if not module_instance.is_providing_pipeline() and module_type == 'pipeline':
             log.critical("Module of type pipeline has no pipelines")
-            return False, logs.append("Error - Module of type pipeline has not pipelines")
+            logs.append("Error - Module of type pipeline has not pipelines")
+            return False, logs
 
         if module_instance.is_providing_pipeline():
             dup_logs("Module has pipeline : {}".format(module_instance.is_providing_pipeline()))
@@ -126,7 +131,8 @@ def check_module_health(module_instance):
 
     except Exception as e:
         log.error(e.__str__())
-        return False, logs.append(e.__str__())
+        logs.append(e.__str__())
+        return False, logs
 
 
 def instantiate_module_from_name(module_name):
