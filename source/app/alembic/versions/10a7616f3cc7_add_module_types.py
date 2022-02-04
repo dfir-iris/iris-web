@@ -24,14 +24,14 @@ def upgrade():
     # Add column is_from_api to user_activities if not existing and set existing ones to false
     if not _table_has_column('iris_module', 'module_type'):
         op.add_column('iris_module',
-                      sa.Column('module_type', sa.Boolean)
+                      sa.Column('module_type', sa.Text)
                       )
 
         t_ua = sa.Table(
             'iris_module',
             sa.MetaData(),
             sa.Column('id', sa.Integer, primary_key=True),
-            sa.Column('module_type', sa.Boolean)
+            sa.Column('module_type', sa.Text)
         )
         conn = op.get_bind()
         conn.execute(t_ua.update().values(
