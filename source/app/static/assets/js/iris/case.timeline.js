@@ -168,14 +168,21 @@ function draw_timeline() {
                 var reap = [];
                 ioc_list = data.data.iocs;
                 for (ioc in ioc_list) {
+
+                    var capture_start = "(^|" + sanitizeHTML(";") + "|" + sanitizeHTML(":") + "|" + sanitizeHTML("|")
+                        + "|" + sanitizeHTML(">") + "|" + sanitizeHTML("<") + "|" + sanitizeHTML("[") + "|"
+                        + sanitizeHTML("]") + "|" + sanitizeHTML("(") + "|" + sanitizeHTML(")") + "| |\>)(";
+                    var capture_end = ")(" + sanitizeHTML(";") + "|" + sanitizeHTML(":") + "|" + sanitizeHTML("|")
+                        + "|" + sanitizeHTML(">") + "|" + sanitizeHTML("<") + "|" + sanitizeHTML("[") + "|"
+                        + sanitizeHTML("]") + "|" + sanitizeHTML("(") + "|" + sanitizeHTML(")") + "| |>|$|<br/>)";
                     // When an IOC contains another IOC in its description, we want to avoid to replace that particular pattern
-                    var avoid_inception_start = "(?!<span[^>]*?>)(^|:| |\>)("
-                    var avoid_inception_end = ")(\:| |>|$)(?![^<]*?<\/span>)"
+                    var avoid_inception_start = "(?!<span[^>]*?>)" + capture_start;
+                    var avoid_inception_end = "(?![^<]*?<\/span>)" + capture_end;
                     var re = new RegExp(avoid_inception_start
-                           + escapeRegExp(ioc_list[ioc][1])
+                           + escapeRegExp(sanitizeHTML(ioc_list[ioc][1]))
                            + avoid_inception_end
                            ,"g");
-                    replacement = ' <span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc][2]) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc][1]) + '</span> ';
+                    replacement = '$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc][2]) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc][1]) + '</span> $3';
                     reap.push([re, replacement]);
                 }
                 idx = 0;
