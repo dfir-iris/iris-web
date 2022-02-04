@@ -19,10 +19,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import importlib
 
-from app import app, configuration
+from app import app, configuration, db
 
 from app.datamgmt.iris_engine.modules_db import iris_module_exists, iris_module_add, modules_list_pipelines, \
      get_module_config_from_hname
+from app.models import IrisHook, IrisModuleHook
 from iris_interface import IrisInterfaceStatus as IStatus
 import logging
 
@@ -230,7 +231,7 @@ def register_module(module_name):
         # Auto parse the configuration and fill with default
         mod_config = preset_init_mod_config(mod_inst.get_init_configuration())
 
-        success = iris_module_add(module_name=module_name,
+        modu_id = iris_module_add(module_name=module_name,
                                   module_human_name=mod_inst.get_module_name(),
                                   module_description=mod_inst.get_module_description(),
                                   module_config=mod_config,
@@ -241,13 +242,86 @@ def register_module(module_name):
                                   module_type=mod_inst.get_module_type()
                                   )
 
-        if not success:
+        if not modu_id:
             return False, ["Unable to register module"]
+
+        if mod_inst.get_module_type() == 'module_processor':
+            mod_inst.register_hooks(module_id=modu_id)
 
     except Exception as e:
         return False, ["Fatal - {}".format(e.__str__())]
 
     return True, ["Module registered"]
+
+
+def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = False, manual_hook_name: str = None,
+                  retry_on_fail: bool = False, max_retry: int = 0, run_asynchronously: bool = True,
+                  wait_till_return: bool = False):
+    """
+    Register a new hook into IRIS. The hook_name should be a well-known hook to IRIS. iris_hooks table can be
+    queried, or by default they are declared in iris source code > source > app > post_init.
+
+    If is_manual_hook is set, the hook is triggered by user action and not automatically. If set, the iris_hook_name
+    should be a manual hook (aka begin with on_manual_trigger_) otherwise an error is raised.
+
+    If run_asynchronously is set (default), the action will be sent to RabbitMQ and processed asynchronously.
+    If set to false, the action is immediately done, which means it needs to be quick otherwise the request will be
+    pending and user experience degraded.
+
+    If wait_till_return and run_asynchronously are set, IRIS will wait for the feedback of the module. It means
+    the request will be pending, so the action need to be quick.
+
+    :param module_id: Module ID to register
+    :param iris_hook_name: Well-known hook name to register to
+    :param is_manual_hook: Set to true to indicate an action to run upon user trigger
+    :param manual_hook_name: The name of the hook displayed in the UI, if is_manual_hook is set
+    :param retry_on_fail: Set to true to retry the hook if the module fails
+    :param max_retry: Indicates how many time the hook should be retry if the module fails
+    :param run_asynchronously: Set to true to queue the module action in rabbitmq
+    :param wait_till_return: Set to true to wait for the module data
+    :return: Tuple
+    """
+    if is_manual_hook:
+        if "on_manual_trigger_" not in iris_hook_name:
+            return False, [f"Hook {iris_hook_name} is not a manual trigger hook"]
+
+        if not manual_hook_name:
+            return False, [f"Manual hooks should set manual_hook_name"]
+
+    hook = IrisHook.query.filter(IrisHook.hook_name == iris_hook_name).first()
+    if not hook:
+        return False, [f"Hook {iris_hook_name} is unknown"]
+
+    if not isinstance(is_manual_hook, bool):
+        return False, [f"Expected bool for is_manual_hook but got {type(is_manual_hook)}"]
+
+    if not isinstance(retry_on_fail, bool):
+        return False, [f"Expected bool for retry_on_fail but got {type(retry_on_fail)}"]
+
+    if not isinstance(run_asynchronously, bool):
+        return False, [f"Expected bool for run_asynchronously but got {type(run_asynchronously)}"]
+
+    if not isinstance(wait_till_return, bool):
+        return False, [f"Expected bool for wait_till_return but got {type(wait_till_return)}"]
+
+    if not isinstance(max_retry, int):
+        return False, [f"Expected int for max_retry but got {type(max_retry)}"]
+
+    imh = IrisModuleHook()
+    imh.is_manual_hook = is_manual_hook
+    imh.wait_till_return = wait_till_return
+    imh.run_asynchronously = run_asynchronously
+    imh.max_retry = max_retry
+    imh.manual_hook_ui_name = manual_hook_name if manual_hook_name else ""
+    imh.hook_id = hook.id
+    imh.module_id = module_id
+
+    try:
+        db.session.add(imh)
+    except Exception as e:
+        return False, [str(e)]
+
+    return True, [f"Hook {iris_hook_name} registered"]
 
 
 def list_available_pipelines():

@@ -46,10 +46,13 @@ def iris_module_add(module_name, module_human_name, module_description,
     im.is_active = True
     im.module_type = module_type
 
-    db.session.add(im)
-    db.session.commit()
+    try:
+        db.session.add(im)
+        db.session.commit()
+    except Exception:
+        return None
 
-    return True
+    return im.id
 
 
 def is_mod_configured(mod_config):
