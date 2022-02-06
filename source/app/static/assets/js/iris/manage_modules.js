@@ -281,6 +281,11 @@ $('#hooks_table').dataTable( {
     }
 );
 
+function refresh_modules_hooks() {
+  $('#hooks_table').DataTable().ajax.reload();
+  notify_success("Refreshed");
+}
+
 
 /* Update the param of a module */
 function update_param(module_id, param_name) {
@@ -418,6 +423,7 @@ function enable_module(module_id) {
                     }
                 ).then((value) => {
                     refresh_modules();
+                    refresh_modules_hooks();
                     module_detail(module_id);
                 });
             } else {
@@ -446,6 +452,7 @@ function disable_module(module_id) {
                     }
                 ).then((value) => {
                     refresh_modules();
+                    refresh_modules_hooks();
                     module_detail(module_id);
                 });
             } else {
