@@ -108,7 +108,7 @@ def case_add_ioc(caseid):
         if not check_ioc_type_id(type_id=ioc.ioc_type_id):
             return response_error("Not a valid IOC type")
 
-        ioc, _ = call_modules_hook('on_preload_ioc_create', data=ioc)
+        ioc = call_modules_hook('on_preload_ioc_create', data=ioc)
 
         ioc, existed = add_ioc(ioc=ioc,
                                user_id=current_user.id,
@@ -120,7 +120,7 @@ def case_add_ioc(caseid):
             return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
 
         if not link_existed:
-            ioc, expunge = call_modules_hook('on_postload_ioc_create', data=ioc)
+            ioc = call_modules_hook('on_postload_ioc_create', data=ioc)
 
         if ioc:
             track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
@@ -306,7 +306,7 @@ def case_update_ioc(cur_id, caseid):
         ioc_sc = ioc_schema.load(request.get_json(), instance=ioc)
         ioc_sc.user_id = current_user.id
 
-        ioc_sc, _ = call_modules_hook('on_preload_ioc_update', data=ioc_sc)
+        ioc_sc = call_modules_hook('on_preload_ioc_update', data=ioc_sc)
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
             return response_error("Not a valid IOC type")
@@ -314,10 +314,7 @@ def case_update_ioc(cur_id, caseid):
         update_ioc_state(caseid=caseid)
         db.session.commit()
 
-        ioc_sc, expunge = call_modules_hook('on_postload_ioc_update', data=ioc_sc)
-        if expunge:
-            db.session.refresh(ioc_sc)
-            db.session.expunge(ioc_sc)
+        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc)
 
         if ioc_sc:
             track_activity("updated ioc {}".format(ioc_sc.ioc_value), caseid=caseid)

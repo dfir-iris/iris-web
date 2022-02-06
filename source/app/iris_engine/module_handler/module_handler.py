@@ -340,24 +340,20 @@ def task_hook_wrapper(self, module_name, hook_name, data):
     :return: A task status JSON task_success or task_failure
     """
     # Data is serialized, so deserialized
-    engine = create_engine(app.config["SQALCHEMY_PIGGER_URI"] + 'iris_db')
-    meta = MetaData(engine)
     deser_data = loads(data=base64.b64decode(data))
 
-    Session = scoped_session(sessionmaker(bind=engine, expire_on_commit=False))
-    session = Session()
-    obj = session.merge(deser_data)
-    session.commit()
-
-    print(dir(deser_data))
+    # The receive object will most likely be cleared when handled by the task,
+    # so we need to attach it to a the session in the task
+    obj = db.session.merge(deser_data)
+    db.session.commit()
 
     log.info(f'Calling module {module_name} for hook {hook_name}')
     mod_inst = instantiate_module_from_name(module_name=module_name)
 
     data = mod_inst.hooks_handler(hook_name, data=obj)
 
-    session.commit()
-    session.close()
+    # Recommit the changes made by the module
+    db.session.commit()
 
     return
 
