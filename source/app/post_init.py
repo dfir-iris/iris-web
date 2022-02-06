@@ -18,7 +18,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import logging as log
 import random
 import secrets
 import string
@@ -35,6 +34,8 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.models.cases import Cases, Client
 from app.models.models import Role, Languages, User, get_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
     IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook
+
+log = app.logger
 
 
 def run_post_init(development=False):

@@ -19,7 +19,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
-import logging as log
 import configparser
 
 # --------- Configuration ---------
@@ -53,11 +52,6 @@ if os.environ.get('IRIS_WORKER') is None:
 
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
-
-# --------- LOGGING ---------
-LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
-LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-log.basicConfig(level=log.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 
 # Build of SQLAlchemy connectors. One is admin and the other is only for iris. Admin is needed to create new DB

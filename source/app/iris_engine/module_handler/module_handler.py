@@ -17,18 +17,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import logging
+
 import importlib
 
 from app import app, configuration, db
 
 from app.datamgmt.iris_engine.modules_db import iris_module_exists, iris_module_add, modules_list_pipelines, \
      get_module_config_from_hname
-from app.models import IrisHook, IrisModuleHook
+from app.models import IrisHook, IrisModuleHook, IrisModule
 from iris_interface import IrisInterfaceStatus as IStatus
-import logging
 
-
-log = logging.getLogger('iris')
+log = logging.getLogger(__name__)
 
 
 def check_module_compatibility(module_version):
@@ -322,6 +322,43 @@ def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = Fa
         return False, [str(e)]
 
     return True, [f"Hook {iris_hook_name} registered"]
+
+
+def call_modules_hook(hook_name: str, data: any) -> any:
+    """
+    Calls modules which have registered the specified hook
+
+    :raises: Exception if hook name doesn't exist. This shouldn't happen
+    :param hook_name: Name of the hook to call
+    :param data: Data associated with the hook
+    :return: Any
+    """
+    hook = IrisHook.query.filter(IrisHook.hook_name == hook_name).first()
+    if not hook:
+        log.critical(f'Hook name {hook_name} not found')
+        raise Exception(f'Hook name {hook_name} not found')
+
+    modules = IrisModuleHook.query.with_entities(
+        IrisModuleHook.max_retry,
+        IrisModuleHook.run_asynchronously,
+        IrisModuleHook.wait_till_return,
+        IrisModuleHook.retry_on_fail,
+        IrisModule.module_name
+    ).filter(
+        IrisModule.is_active == True,
+        IrisModuleHook.hook_id == hook.id
+    ).join(
+        IrisModuleHook.module,
+        IrisModuleHook.hook
+    ).all()
+
+    for module in modules:
+        log.info(f'Calling module {module.module_name} for hook {hook_name}')
+        mod_inst = instantiate_module_from_name(module_name=module.module_name)
+
+        data = mod_inst.hooks_handler(hook_name, data=data)
+
+    return data
 
 
 def list_available_pipelines():

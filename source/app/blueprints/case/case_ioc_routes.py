@@ -34,6 +34,7 @@ from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add
     get_tlps, get_ioc, delete_ioc, get_ioc_types_list, check_ioc_type_id, get_tlps_dict, get_ioc_type_id
 from app.datamgmt.states import get_ioc_state, update_ioc_state
 from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import Ioc
 from app.schema.marshables import IocSchema
@@ -107,6 +108,8 @@ def case_add_ioc(caseid):
         if not check_ioc_type_id(type_id=ioc.ioc_type_id):
             return response_error("Not a valid IOC type")
 
+        ioc = call_modules_hook('on_preload_ioc_create', data=ioc)
+
         ioc, existed = add_ioc(ioc=ioc,
                                user_id=current_user.id,
                                caseid=caseid
@@ -115,6 +118,9 @@ def case_add_ioc(caseid):
 
         if link_existed:
             return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
+
+        if not link_existed:
+            ioc = call_modules_hook('on_postload_ioc_create', data=ioc)
 
         if ioc:
             track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
@@ -300,11 +306,15 @@ def case_update_ioc(cur_id, caseid):
         ioc_sc = ioc_schema.load(request.get_json(), instance=ioc)
         ioc_sc.user_id = current_user.id
 
+        ioc_sc = call_modules_hook('on_preload_ioc_update', data=ioc_sc)
+
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
             return response_error("Not a valid IOC type")
 
         update_ioc_state(caseid=caseid)
         db.session.commit()
+
+        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc)
 
         if ioc_sc:
             track_activity("updated ioc {}".format(ioc_sc.ioc_value), caseid=caseid)

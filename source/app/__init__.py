@@ -17,8 +17,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import logging
 from flask import Flask
+from flask.logging import default_handler
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
@@ -35,6 +36,7 @@ from flask_logging import Filter
 from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
 
 import os
+import logging as logger
 
 
 class ReverseProxied(object):
@@ -55,6 +57,12 @@ TEMPLATE_PATH = os.path.join(APP_PATH, 'templates/')
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
+
+LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
+LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
+
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.config.from_object('app.configuration.Config')
 
