@@ -350,12 +350,12 @@ def task_hook_wrapper(self, module_name, hook_name, data):
     log.info(f'Calling module {module_name} for hook {hook_name}')
     mod_inst = instantiate_module_from_name(module_name=module_name)
 
-    data = mod_inst.hooks_handler(hook_name, data=obj)
-
+    task_status = mod_inst.hooks_handler(hook_name, data=obj)
+    print(task_status)
     # Recommit the changes made by the module
     db.session.commit()
 
-    return
+    return task_status
 
 
 def call_modules_hook(hook_name: str, data: any) -> any:
@@ -367,7 +367,6 @@ def call_modules_hook(hook_name: str, data: any) -> any:
     :param data: Data associated with the hook
     :return: Any
     """
-    expunge = False
     hook = IrisHook.query.filter(IrisHook.hook_name == hook_name).first()
     if not hook:
         log.critical(f'Hook name {hook_name} not found')
@@ -389,10 +388,6 @@ def call_modules_hook(hook_name: str, data: any) -> any:
 
     for module in modules:
         if module.run_asynchronously:
-            # # Object need to be expunge otherwise it will expire after commit, thus before the
-            # # task is called.
-            # db.session.expunge(data)
-            expunge = True
             # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
             # So pass a dumped instance and then rebuild on the task side
             ser_data = base64.b64encode(dumps(data)).decode('utf8')
@@ -405,7 +400,7 @@ def call_modules_hook(hook_name: str, data: any) -> any:
 
             data = mod_inst.hooks_handler(hook_name, data=data)
 
-    return data, expunge
+    return data
 
 
 def list_available_pipelines():
@@ -415,4 +410,3 @@ def list_available_pipelines():
     data = modules_list_pipelines()
 
     return data
-

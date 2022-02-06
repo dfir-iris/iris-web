@@ -57,6 +57,7 @@ def task_status(task_id, caseid, url_redir):
     tinfo = None
     try:
         tinfo = task.info.get_data()
+
     except:
         log.warning("{} does not respects task return convention".format(task.name))
         pass
@@ -106,10 +107,13 @@ def tasks_list(caseid):
 
             tinfo = None
             try:
+
                 tinfo = task.info.get_data()
+
             except:
                 log.warning("{} does not respects task return convention".format(task.name))
                 pass
+
             success = None
             user = "Shadow Iris"
             case_name = ""
