@@ -17,11 +17,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import base64
 import logging
 
 import importlib
+from sqlalchemy import MetaData, create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session as orm_scoped_session, scoped_session
+from pickle import loads, dumps
 
-from app import app, configuration, db
+from app import app, configuration, db, celery
 
 from app.datamgmt.iris_engine.modules_db import iris_module_exists, iris_module_add, modules_list_pipelines, \
      get_module_config_from_hname
@@ -324,6 +328,40 @@ def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = Fa
     return True, [f"Hook {iris_hook_name} registered"]
 
 
+@celery.task(bind=True)
+def task_hook_wrapper(self, module_name, hook_name, data):
+    """
+    Wrap a hook call into a Celery task to run asynchronously
+
+    :param self: Task instance
+    :param module_name: Module name to instanciate and call
+    :param hook_name: Name of the hook which was triggered
+    :param data: Data associated to the hook to process
+    :return: A task status JSON task_success or task_failure
+    """
+    # Data is serialized, so deserialized
+    engine = create_engine(app.config["SQALCHEMY_PIGGER_URI"] + 'iris_db')
+    meta = MetaData(engine)
+    deser_data = loads(data=base64.b64decode(data))
+
+    Session = scoped_session(sessionmaker(bind=engine, expire_on_commit=False))
+    session = Session()
+    obj = session.merge(deser_data)
+    session.commit()
+
+    print(dir(deser_data))
+
+    log.info(f'Calling module {module_name} for hook {hook_name}')
+    mod_inst = instantiate_module_from_name(module_name=module_name)
+
+    data = mod_inst.hooks_handler(hook_name, data=obj)
+
+    session.commit()
+    session.close()
+
+    return
+
+
 def call_modules_hook(hook_name: str, data: any) -> any:
     """
     Calls modules which have registered the specified hook
@@ -333,6 +371,7 @@ def call_modules_hook(hook_name: str, data: any) -> any:
     :param data: Data associated with the hook
     :return: Any
     """
+    expunge = False
     hook = IrisHook.query.filter(IrisHook.hook_name == hook_name).first()
     if not hook:
         log.critical(f'Hook name {hook_name} not found')
@@ -353,12 +392,24 @@ def call_modules_hook(hook_name: str, data: any) -> any:
     ).all()
 
     for module in modules:
-        log.info(f'Calling module {module.module_name} for hook {hook_name}')
-        mod_inst = instantiate_module_from_name(module_name=module.module_name)
+        if module.run_asynchronously:
+            # # Object need to be expunge otherwise it will expire after commit, thus before the
+            # # task is called.
+            # db.session.expunge(data)
+            expunge = True
+            # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
+            # So pass a dumped instance and then rebuild on the task side
+            ser_data = base64.b64encode(dumps(data)).decode('utf8')
+            task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name, data=ser_data)
 
-        data = mod_inst.hooks_handler(hook_name, data=data)
+        else:
+            # Direct call. Should be fast
+            log.info(f'Calling module {module.module_name} for hook {hook_name}')
+            mod_inst = instantiate_module_from_name(module_name=module.module_name)
 
-    return data
+            data = mod_inst.hooks_handler(hook_name, data=data)
+
+    return data, expunge
 
 
 def list_available_pipelines():

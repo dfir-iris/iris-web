@@ -286,7 +286,6 @@ def pipeline_dispatcher(module, pipeline_name, pipeline_type, pipeline_data):
 #             logs=[traceback.print_exc()]
 #         )
 
-
 @celery.task(bind=True)
 def task_feed_from_misp(self, import_res, case_id):
     """
