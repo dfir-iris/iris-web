@@ -23,7 +23,7 @@ import datetime
 from flask_login import current_user
 
 from app import db
-from app.models import IrisModule, User
+from app.models import IrisModule, User, IrisModuleHook, IrisHook
 
 
 def iris_module_exists(module_name):
@@ -181,4 +181,18 @@ def modules_list_pipelines():
     ).with_entities(
         IrisModule.module_name,
         IrisModule.pipeline_args
+    ).all()
+
+
+def module_list_hooks_view():
+    return IrisModuleHook.query.with_entities(
+        IrisModuleHook.id,
+        IrisModule.module_name,
+        IrisModule.is_active,
+        IrisHook.hook_name,
+        IrisHook.hook_description,
+        IrisModuleHook.is_manual_hook
+    ).join(
+        IrisModuleHook.module,
+        IrisModuleHook.hook
     ).all()

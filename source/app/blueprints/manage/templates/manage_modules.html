@@ -65,6 +65,55 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col">
+                            <div class="card-title">Registered hooks</div>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_modules();">
+                                <i class="fas fa-sync rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <div class="table-responsive" id="hooks_table_wrapper">
+                        <div class="selectgroup">
+                            <span id="table_buttons"></span>
+                        </div>
+                        <table class="table display table table-striped table-hover" width="100%"
+                            cellspacing="0" id="hooks_table">
+                            <thead>
+                                <tr>
+                                    <th>#ID</th>
+                                    <th>Registrant module</th>
+                                    <th>Hook name</th>
+                                    <th>Hook description</th>
+                                    <th>Automatic trigger</th>
+                                    <th>Active</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>#ID</th>
+                                    <th>Registrant module</th>
+                                    <th>Hook name</th>
+                                    <th>Hook description</th>
+                                    <th>Automatic trigger</th>
+                                    <th>Active</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal" tabindex="-1" role="dialog" id="modal_add_module" data-backdrop="true">
         <div class="modal-xl modal-dialog" role="document">
             <div class="modal-content" id="modal_add_module_content">

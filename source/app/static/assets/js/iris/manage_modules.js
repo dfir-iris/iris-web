@@ -225,6 +225,63 @@ function refresh_modules() {
   notify_success("Refreshed");
 }
 
+$('#hooks_table').dataTable( {
+    "ajax": {
+      "url": "modules/hooks/list" + case_param(),
+      "contentType": "application/json",
+      "type": "GET",
+      "data": function ( d ) {
+        if (d.status == 'success') {
+          return JSON.stringify( d.data );
+        } else {
+          return [];
+        }
+      }
+    },
+    "order": [[ 1, "asc" ]],
+    "autoWidth": false,
+    "columns": [
+      { 'data': 'id'},
+      { 'data': 'module_name',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'hook_name',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'hook_description',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+        { 'data': 'is_manual_hook',
+        "render": function (data, type, row, meta) {
+            if (data == false) {
+                    data = "<i class='fas fa-check text-success'></i>";
+                } else {
+                   data = "<i class='fas fa-times text-muted'></i>";
+              }
+            return data;
+          }
+        },
+      { 'data': 'is_active',
+        "render": function (data, type, row, meta) {
+            if (data == true) {
+                    data = "<i class='fas fa-check text-success'></i>";
+                } else {
+                   data = "<i class='fas fa-times text-muted'></i>";
+              }
+            return data;
+          }
+     }
+    ]
+    }
+);
+
+
 /* Update the param of a module */
 function update_param(module_id, param_name) {
     url = 'modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();

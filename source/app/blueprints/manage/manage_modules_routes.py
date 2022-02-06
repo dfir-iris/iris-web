@@ -30,7 +30,7 @@ from flask_wtf import FlaskForm
 from app import app
 from app.datamgmt.iris_engine.modules_db import iris_modules_list, get_module_from_id, delete_module_from_id, \
     get_module_config_from_id, is_mod_configured, iris_module_save_parameter, iris_module_enable_by_id, \
-    iris_module_disable_by_id
+    iris_module_disable_by_id, module_list_hooks_view
 from app.forms import AddModuleForm, UpdateModuleParameterForm
 from app.iris_engine.module_handler.module_handler import check_module_health, register_module, \
     instantiate_module_from_name
@@ -218,3 +218,12 @@ def view_delete_module(id, caseid):
     except Exception as e:
         log.error(e.__str__())
         return response_error("Cannot delete module. Error {}".format(e.__str__()))
+
+
+@manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
+@api_admin_required
+def view_modules_hook(caseid):
+    output = module_list_hooks_view()
+    data = [item._asdict() for item in output]
+
+    return response_success('', data=data)
