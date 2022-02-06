@@ -102,6 +102,7 @@ function add_module() {
                             }
                         ).then((value) => {
                             refresh_modules();
+                            refresh_modules_hooks();
                             $('#modal_add_module').modal('hide');
 
                         });
@@ -222,7 +223,7 @@ function refresh_modules() {
   $(function () {
   $('[data-toggle="tooltip"]').tooltip()
 })
-  notify_success("Refreshed");
+  notify_success("Modules refreshed");
 }
 
 $('#hooks_table').dataTable( {
@@ -283,7 +284,7 @@ $('#hooks_table').dataTable( {
 
 function refresh_modules_hooks() {
   $('#hooks_table').DataTable().ajax.reload();
-  notify_success("Refreshed");
+  notify_success("Hooks refreshed");
 }
 
 
@@ -392,6 +393,7 @@ function remove_module(id) {
                           timer: 1000
                       }).then((value) => {
                           refresh_modules();
+                          refresh_modules_hooks();
                           $('#modal_add_module').modal('hide');
                       });
                   } else {

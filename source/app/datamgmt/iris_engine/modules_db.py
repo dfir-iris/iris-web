@@ -169,6 +169,11 @@ def get_pipelines_args_from_name(module_name):
 
 
 def delete_module_from_id(module_id):
+    IrisModuleHook.query.filter(
+        IrisModuleHook.module_id == module_id
+    ).delete()
+    db.session.commit()
+
     IrisModule.query.filter(IrisModule.id == module_id).delete()
     db.session.commit()
     return True
