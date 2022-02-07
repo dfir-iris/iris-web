@@ -23,53 +23,14 @@ $('#form_new_customer').submit(function () {
 
 
 $(document).ready(function() {
-    update_tasks_list();
     update_gtasks_list();
     update_utasks_list();
     setInterval(check_page_update,30000);
 });
 
 function check_page_update(){
-    update_tasks_list();
     update_gtasks_list();
     update_utasks_list();
-}
-
-function update_tasks_list() {
-    $(this).toggleClass("down");
-    $.ajax({
-        url: '/tasks' + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                content = jsdata.data;
-                $("#task_feed").empty();
-                for (index in content) {
-                    if(content[index].state == 'progress') {
-                        item_cat = "warning";
-                    } else if(content[index].state == 'success') {
-                            item_cat = "success";
-                    } else {
-                            item_cat = "danger";
-                    }
-
-                    $("#task_feed").append("<li class='feed-item feed-item-" + item_cat + "'>" +
-                        "<time class='date' datetime='9-25'>" + content[index].date + "</time>" +
-                        "<span class='text'>"+ content[index].human_data + " - <a href='#' onclick=\"task_status('"+ content[index].task_id +"');\">Details</a></span>" +
-                        "</li>"
-                    )
-                }
-                $('#feed_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
-            } else {
-                $('#modal_customer_message').text(jsdata.message);
-            }
-        },
-        error: function (error) {
-            notify_error(error);
-        }
-    });
 }
 
 function task_status(id) {
