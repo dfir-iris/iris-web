@@ -353,6 +353,7 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
     log.info(f'Calling module {module_name} for hook {hook_name}')
     mod_inst = instantiate_module_from_name(module_name=module_name)
 
+    mod_inst.set_log_handler()
     task_status = mod_inst.hooks_handler(hook_name, data=obj)
 
     # Recommit the changes made by the module
