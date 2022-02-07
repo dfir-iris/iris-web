@@ -21,6 +21,7 @@ import base64
 import logging
 
 import importlib
+from flask_login import current_user
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session as orm_scoped_session, scoped_session
 from pickle import loads, dumps
@@ -329,7 +330,7 @@ def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = Fa
 
 
 @celery.task(bind=True)
-def task_hook_wrapper(self, module_name, hook_name, data):
+def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
     """
     Wrap a hook call into a Celery task to run asynchronously
 
@@ -337,6 +338,8 @@ def task_hook_wrapper(self, module_name, hook_name, data):
     :param module_name: Module name to instanciate and call
     :param hook_name: Name of the hook which was triggered
     :param data: Data associated to the hook to process
+    :param init_user: User initiating the task
+    :param caseid: Case associated
     :return: A task status JSON task_success or task_failure
     """
     # Data is serialized, so deserialized
@@ -351,20 +354,21 @@ def task_hook_wrapper(self, module_name, hook_name, data):
     mod_inst = instantiate_module_from_name(module_name=module_name)
 
     task_status = mod_inst.hooks_handler(hook_name, data=obj)
-    print(task_status)
+
     # Recommit the changes made by the module
     db.session.commit()
 
     return task_status
 
 
-def call_modules_hook(hook_name: str, data: any) -> any:
+def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
     """
     Calls modules which have registered the specified hook
 
     :raises: Exception if hook name doesn't exist. This shouldn't happen
     :param hook_name: Name of the hook to call
     :param data: Data associated with the hook
+    :param caseid: Case ID
     :return: Any
     """
     hook = IrisHook.query.filter(IrisHook.hook_name == hook_name).first()
@@ -391,7 +395,8 @@ def call_modules_hook(hook_name: str, data: any) -> any:
             # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
             # So pass a dumped instance and then rebuild on the task side
             ser_data = base64.b64encode(dumps(data)).decode('utf8')
-            task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name, data=ser_data)
+            task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name, data=ser_data,
+                                    init_user=current_user.name, caseid=caseid)
 
         else:
             # Direct call. Should be fast

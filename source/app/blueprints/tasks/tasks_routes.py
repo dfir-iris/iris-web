@@ -32,6 +32,7 @@ from sqlalchemy import desc
 import app
 from app.models.models import CeleryTaskMeta
 from app.util import response_success, response_error, login_required, api_login_required
+from iris_interface.IrisInterfaceStatus import IIStatus, IITaskStatus
 
 log = logging.getLogger('iris')
 
@@ -54,41 +55,38 @@ def task_status(task_id, caseid, url_redir):
 
     task = app.celery.AsyncResult(task_id)
 
-    tinfo = None
-    try:
-        tinfo = task.info.get_data()
+    task_info = {}
+    task_info['Task ID'] = task_id
+    task_info['Task Done'] = task.date_done
+    task_info['Task State']: task.state.lower()
+    task_info['Engine']: task.name if task.name else "No engine. Unrecoverable shadow failure"
 
-    except:
-        log.warning("{} does not respects task return convention".format(task.name))
-        pass
-    success = False
-    logs = []
-    user = "Shadow Iris"
-    case_name = ""
-    initial = 0
+    task_meta = task._get_task_meta()
 
-    if tinfo:
-        success = tinfo.success
-        logs = tinfo.logs
-        user = tinfo.user
-        case_name = tinfo.case_name
-        initial = tinfo.initial
+    if 'task_hook_wrapper' in task_meta.get('name'):
+        task_info['Module Name'] = task_meta.get('kwargs').get('module_name')
+        task_info['Hook Name'] = task_meta.get('kwargs').get('hook_name')
+        task_info['User'] = task_meta.get('kwargs').get('init_user')
+        task_info['Case ID'] = task_meta.get('kwargs').get('caseid')
 
-    rsp = {
-        'state': task.state.lower(),
-        'success': success,
-        'name': task.name if task.name else "No engine. Unrecoverable shadow failure",
-        'traceback': task.traceback,
-        'args': task.args,
-        'date': task.date_done,
-        'user': user,
-        'logs': logs,
-        'case_name': case_name,
-        'initial': initial,
-        'status': "Success" if success else "Failure"
-    }
+    if isinstance(task.info, IIStatus) and task.info.get_data():
+        # tinfo = task.info.get_data()
+        success = task.info.is_success()
+        # task_info['User'] = tinfo.user
+        # task_info['Case Name'] = tinfo.case_name
+        task_info['Logs'] = task.info.get_logs()
 
-    return render_template("modal_task_info.html", data=rsp, task_id=task.id)
+    else:
+        success = None
+        task_info['User'] = "Shadow Iris"
+        task_info['Logs'] = ['Task did not returned an IIStatus object']
+
+    if task_meta.get('traceback'):
+        task_info['Traceback'] = task.traceback
+
+    task_info['Success'] = "Success" if success else "Failure"
+
+    return render_template("modal_task_info.html", data=task_info, task_id=task.id)
 
 
 @tasks_blueprint.route("/tasks", methods=['GET'])
@@ -105,24 +103,20 @@ def tasks_list(caseid):
         if row.task_id:
             task = app.celery.AsyncResult(row.task_id)
 
-            tinfo = None
-            try:
+            if isinstance(task.info, IIStatus) and task.info.get_data():
+                success = task.info.is_success()
 
-                tinfo = task.info.get_data()
+            else:
+                success = None
+                user = "Shadow Iris"
+                case_name = ""
 
-            except:
-                log.warning("{} does not respects task return convention".format(task.name))
-                pass
-
-            success = None
-            user = "Shadow Iris"
-            case_name = ""
-            task_name, = task.name if task.name else "No engine. Unrecoverable shadow failure",
-
-            if tinfo:
-                success = tinfo.success
-                user = tinfo.user
-                case_name = tinfo.case_name
+            task_name = task.name if task.name else "No engine. Unrecoverable shadow failure"
+            if 'task_hook_wrapper' in task_name:
+                task_meta = task._get_task_meta()
+                task_name = f"{task_meta.get('kwargs').get('module_name')}::{task_meta.get('kwargs').get('hook_name')}"
+                user = task_meta.get('kwargs').get('init_user')
+                case_name = f"for case #{task_meta.get('kwargs').get('caseid')}"
 
             row = row._asdict()
             status = "Success" if success else "Failure"

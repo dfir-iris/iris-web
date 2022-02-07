@@ -1,64 +1,27 @@
 
 <div class="container col-md-12">
     <div class="form-group">
-    <label for="en">TID :</label>
-    <span type="text" class="text-faded" id="en">{{ task_id }}</span>
-  </div>
-  <div class="form-group mt--3">
-    <label for="en">Engine :</label>
-    <span type="text" class="text-faded" id="en">{{ data.name }}</span>
-  </div>
-  <div class="form-group mt--3">
-    <label for="st">Schedule state :</label>
-    <span type="text" class="text-faded" id="st">{{ data.state }}</span>
-  </div>
-  <div class="form-group mt--3">
-    <label for="ste">Task succeeded :</label>
-    <span type="text" class="text-faded" id="ste">{{ data.success }}</span>
-  </div>
-    <div class="form-group mt--3">
-     <label for="sstes">Status :</label>
-     <span type="text" class="text-faded" id="sstes">{{ data.status }}</span>
+    {% for element in data %}
+        {% if element != "Logs" %}
+        {% if data[element] != None %}
+          <div class="input-group">
+            <label for="en">{{ element }} : </label>
+            <span type="text" class="text-faded" id="en">{{ data[element] }}</span>
+          </div>
+      {% endif %}
+      {% endif %}
+    {% endfor %}
     </div>
 
-    {% if data.traceback %}
-    <div class="form-group mt--3">
-     <label for="sste">Traceback :</label>
-     <span type="text" class="text-faded" id="sste">{{ data.traceback }}</span>
-    </div>
+    {% if data.Logs %}
+        <div class="form-group mt--3">
+          <label>Logs</label>
+          <ul>
+            {% for log in data.Logs %}
+              <li>{{ log }}</li>
+            {% endfor %}
+          </ul>
+        </div>
     {% endif %}
-
-    {% if data.args %}
-
-    {% endif %}
-
-      <div class="form-group mt--3">
-        <label for="stesi">Initiating user :</label>
-        <span type="text" class="text-faded" id="stesi">{{ data.user }}</span>
-      </div>
-      <div class="form-group mt--3">
-        <label for="stessa">Initial TID :</label>
-        <span type="text" class="text-faded" id="stessa">{{ data.initial }}</span>
-      </div>
-      <div class="form-group mt--3">
-        <label for="stesa">Related Case :</label>
-        <span type="text" class="text-faded" id="stesa">{{ data.case_name }}</span>
-      </div>
-      <div class="form-group mt--3">
-        <label for="stssel">Date :</label>
-        <span type="text" class="text-faded" id="stssel">{{ data.date }}</span>
-      </div>
-      <div class="form-group mt--3">
-        <label>Logs</label>
-        <ul>
-          {% for log in data.logs %}
-            <li>{{ log }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-
-
-
-
 </div>
 
