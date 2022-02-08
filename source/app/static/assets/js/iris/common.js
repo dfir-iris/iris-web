@@ -202,6 +202,26 @@ function get_caseid() {
     return urlParams.get('cid')
 }
 
+function is_redirect() {
+    queryString = window.location.search;
+    urlParams = new URLSearchParams(queryString);
+
+    return urlParams.get('redirect')
+}
+
+function notify_redirect() {
+    if (is_redirect()) {
+        swal("You've been redirected",
+             "The case you attempted to reach wasn't found.\nYou have been redirected to a default case.",
+             "info", {button: "OK"}
+             ).then((value) => {
+                    queryString = window.location.search;
+                    urlParams = new URLSearchParams(queryString);
+                    urlParams.delete('redirect');
+                    window.location.search = urlParams;
+                });
+    }
+}
 
 function case_param() {
     var params = {
@@ -286,7 +306,32 @@ function check_update(url) {
                         $('#last_resfresh').text("Updates available").addClass("text-warning");
                         need_check = false;
                     }
+                },
+            error: function (data) {
+                if (data.status == 404) {
+                    swal("Stop everything !",
+                    "The case you are working on was deleted",
+                    "error",
+                    {
+                        buttons: {
+                            again: {
+                                text: "Go to my default case",
+                                value: "default"
+                            }
+                        }
+                    }
+                ).then((value) => {
+                    switch (value) {
+                        case "dash":
+                            location.reload();
+                            break;
+
+                        default:
+                            location.reload();
+                    }
+                });
                 }
+            }
         });
     }
 }
@@ -465,6 +510,7 @@ function update_time() {
 }
 
 $(document).ready(function(){
+    notify_redirect();
     update_time();
     setInterval(function() { update_time(); }, 30000);
 });

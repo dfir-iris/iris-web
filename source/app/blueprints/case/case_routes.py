@@ -64,7 +64,7 @@ event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "Us
 def case_r(caseid, url_redir):
 
     if url_redir:
-        return redirect(url_for('case.case', cid=caseid))
+        return redirect(url_for('case.case_r', cid=caseid, redirect=True))
 
     case = get_case(caseid)
     form = FlaskForm()

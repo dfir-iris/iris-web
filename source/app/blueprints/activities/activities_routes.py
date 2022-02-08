@@ -45,7 +45,7 @@ basedir = os.path.abspath(os.path.dirname(app.__file__))
 @login_required
 def activities_index(caseid: int, url_redir):
     if url_redir:
-        return redirect(url_for('activities.activities_index', cid=caseid))
+        return redirect(url_for('activities.activities_index', cid=caseid, redirect=True))
 
     form = FlaskForm()
 

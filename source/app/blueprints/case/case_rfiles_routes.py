@@ -44,7 +44,7 @@ case_rfiles_blueprint = Blueprint(
 @login_required
 def case_rfile(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_rfiles.case_rfile', cid=caseid))
+        return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
 
     form = FlaskForm()
     case = get_case(caseid)
@@ -115,7 +115,7 @@ def case_get_evidence(cur_id, caseid):
 @login_required
 def case_edit_rfile_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_rfiles.case_rfile', cid=caseid))
+        return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
 
     crf = get_rfile(cur_id, caseid)
     if not crf:

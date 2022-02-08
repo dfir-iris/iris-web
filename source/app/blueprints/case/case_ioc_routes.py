@@ -49,7 +49,7 @@ case_ioc_blueprint = Blueprint('case_ioc',
 @login_required
 def case_ioc(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_ioc.case_ioc', cid=caseid))
+        return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
 
     form = ModalAddCaseAssetForm()
     form.asset_id.choices = get_assets_types()
@@ -226,7 +226,7 @@ def case_upload_ioc(caseid):
 @login_required
 def case_add_ioc_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_ioc.case_ioc', cid=caseid))
+        return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
 
     form = ModalAddCaseIOCForm()
     form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
@@ -256,7 +256,7 @@ def case_delete_ioc(cur_id, caseid):
 @login_required
 def case_view_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid))
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     form = ModalAddCaseIOCForm()
     ioc = get_ioc(cur_id, caseid)

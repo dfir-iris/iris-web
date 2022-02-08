@@ -79,7 +79,7 @@ function submit_new_case() {
                     switch (value) {
 
                         case "dash":
-                            window.location.replace("/" + case_param());
+                            window.location.replace("/dashboard" + case_param());
                             break;
 
                         case "again":
@@ -87,7 +87,7 @@ function submit_new_case() {
                             break;
 
                         default:
-                            window.location.replace("/" + case_param());
+                            window.location.replace("/dashboard" + case_param());
                     }
                 });
             } else {

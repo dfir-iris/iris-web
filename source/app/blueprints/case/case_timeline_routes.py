@@ -52,7 +52,7 @@ case_timeline_blueprint = Blueprint('case_timeline',
 def case_timeline(caseid, url_redir):
 
     if url_redir:
-        return redirect(url_for('case_timeline.case_timeline', cid=caseid))
+        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
 
     case = Cases.query.filter(Cases.case_id == caseid).first()
     form = FlaskForm()
@@ -64,7 +64,7 @@ def case_timeline(caseid, url_redir):
 @login_required
 def case_getgraph_page(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid))
+        return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid, redirect=True))
 
     return render_template("case_graph_timeline.html")
 
@@ -378,7 +378,7 @@ def event_view(cur_id, caseid):
 @login_required
 def event_view_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_timeline.case_timeline', cid=caseid))
+        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
 
     event = get_case_event(cur_id, caseid)
     if not event:
@@ -456,7 +456,7 @@ def case_edit_event(cur_id, caseid):
 @login_required
 def case_add_event_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_timeline.case_timeline', cid=caseid))
+        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
 
     event = CasesEvent()
     form = CaseEventForm()

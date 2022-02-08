@@ -53,7 +53,7 @@ def case_assets(caseid, url_redir):
     :return: The HTML page of case assets
     """
     if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid))
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     form = ModalAddCaseAssetForm()
     # Get asset types from database
@@ -144,7 +144,7 @@ def autoload_asset(caseid):
 @login_required
 def add_asset_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid))
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     form = AssetBasicForm()
 
@@ -303,7 +303,7 @@ def asset_view(cur_id, caseid):
 @login_required
 def asset_view_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid))
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     # Get IoCs from the case
     case_iocs = get_iocs(caseid)

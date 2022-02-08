@@ -47,7 +47,7 @@ case_tasks_blueprint = Blueprint('case_tasks',
 @login_required
 def case_tasks(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_tasks.case_tasks', cid=caseid))
+        return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
 
     form = FlaskForm()
     case = get_case(caseid)
@@ -109,7 +109,7 @@ def case_task_statusupdate(cur_id, caseid):
 @login_required
 def case_add_task_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_tasks.case_tasks', cid=caseid))
+        return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
 
     task = CaseTasks()
 
@@ -162,7 +162,7 @@ def case_task_view(cur_id, caseid):
 @login_required
 def case_task_view_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_tasks.case_tasks', cid=caseid))
+        return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
 
     form = CaseTaskForm()
     task = get_task(task_id=cur_id, caseid=caseid)

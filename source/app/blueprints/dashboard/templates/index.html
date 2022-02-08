@@ -277,7 +277,7 @@
 		htmlLegendsChart = document.getElementById('htmlLegendsChart').getContext('2d');
 
         $.ajax({
-            url: '/dashboard/case_charts',
+            url: '/dashboard/case_charts' + case_param(),
             type: "GET",
             dataType: "JSON",
             success: function (data) {
