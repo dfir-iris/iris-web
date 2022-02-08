@@ -212,7 +212,7 @@ function is_redirect() {
 function notify_redirect() {
     if (is_redirect()) {
         swal("You've been redirected",
-             "The case you attempted to get doesn't exist. You have been redirected to a default case. ",
+             "The case you attempted to reach wasn't found.\nYou have been redirected to a default case. ",
              "info", {button: "OK"}
              ).then((value) => {
                     queryString = window.location.search;

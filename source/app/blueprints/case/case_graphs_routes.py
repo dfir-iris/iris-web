@@ -39,7 +39,7 @@ case_graph_blueprint = Blueprint('case_graph',
 @login_required
 def case_graph(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_graph.case_graph', cid=caseid))
+        return redirect(url_for('case_graph.case_graph', cid=caseid, redirect=True))
 
     case = get_case(caseid)
     form = FlaskForm()

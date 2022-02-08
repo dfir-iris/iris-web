@@ -13441,6 +13441,11 @@ label.error {
     margin-bottom: 20px !important;
 }
 
+.swal-text {
+  display: block;
+  text-align: center;
+}
+
 
 /*      Datatable     */
 

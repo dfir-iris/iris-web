@@ -106,7 +106,7 @@ def index(caseid, url_redir):
     :return: Page
     """
     if url_redir:
-        return redirect(url_for('index.index', cid=caseid))
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
 
     msg = None
     now = datetime.utcnow()
