@@ -47,6 +47,10 @@ def get_case(caseid):
     return Cases.query.filter(Cases.case_id == caseid).first()
 
 
+def case_exists(caseid):
+    return Cases.query.filter(Cases.case_id == caseid).count()
+
+
 def get_case_client_id(caseid):
     client_id = Cases.query.with_entities(
         Client.client_id

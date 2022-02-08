@@ -286,7 +286,10 @@ function check_update(url) {
                         $('#last_resfresh').text("Updates available").addClass("text-warning");
                         need_check = false;
                     }
-                }
+                },
+            error: function (data) {
+                console.log(data);
+            }
         });
     }
 }
