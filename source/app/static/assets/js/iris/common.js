@@ -288,7 +288,29 @@ function check_update(url) {
                     }
                 },
             error: function (data) {
-                console.log(data);
+                if (data.status == 404) {
+                    swal("Stop everything !",
+                    "The case you are working on was deleted",
+                    "error",
+                    {
+                        buttons: {
+                            again: {
+                                text: "Go to my default case",
+                                value: "default"
+                            }
+                        }
+                    }
+                ).then((value) => {
+                    switch (value) {
+                        case "dash":
+                            location.reload();
+                            break;
+
+                        default:
+                            location.reload();
+                    }
+                });
+                }
             }
         });
     }
