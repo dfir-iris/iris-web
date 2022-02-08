@@ -202,6 +202,26 @@ function get_caseid() {
     return urlParams.get('cid')
 }
 
+function is_redirect() {
+    queryString = window.location.search;
+    urlParams = new URLSearchParams(queryString);
+
+    return urlParams.get('redirect')
+}
+
+function notify_redirect() {
+    if (is_redirect()) {
+        swal("You've been redirected",
+             "The case you attempted to get doesn't exist. You have been redirected to a default case. ",
+             "info", {button: "OK"}
+             ).then((value) => {
+                    queryString = window.location.search;
+                    urlParams = new URLSearchParams(queryString);
+                    urlParams.delete('redirect');
+                    window.location.search = urlParams;
+                });
+    }
+}
 
 function case_param() {
     var params = {
@@ -490,6 +510,7 @@ function update_time() {
 }
 
 $(document).ready(function(){
+    notify_redirect();
     update_time();
     setInterval(function() { update_time(); }, 30000);
 });
