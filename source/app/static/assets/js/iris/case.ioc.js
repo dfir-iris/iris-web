@@ -134,27 +134,43 @@ var actionOptions = {
         enabled: false,
     },
     deselectAfterAction: true,
-    items: [
-           {
-            type: 'option',
-            title: 'Send to VT module',
-            multi: true,
-            multiTitle: 'VT Insight',
-            iconClass: 'fas fa-arrow-alt-circle-right',
-            buttonClasses: ['btn', 'btn-outline-primary'],
-            contextMenuClasses: ['text-primary'],
-
-            isDisabled: (row) => {
-                return row.role === '';
-            },
-            action: function (rows) {
-
-            },
-        }
-    ],
+    items: [],
 };
 
-Table.contextualActions(actionOptions);
+
+function load_ioc_menu_mod_options() {
+    $.ajax({
+    url: "/dim/hook-options/ioc/list" + case_param(),
+    type: "GET",
+    dataType: 'json',
+    success: function (response) {
+        if (response.status == 'success') {
+            if (response.data != null) {
+                jsdata = response.data;
+                for (option in jsdata) {
+                    opt = jsdata[option];
+                    actionOptions.items.push({
+                        type: 'option',
+                        title: opt.manual_hook_ui_name,
+                        multi: true,
+                        multiTitle: opt.manual_hook_ui_name,
+                        iconClass: 'fas fa-arrow-alt-circle-right',
+                        buttonClasses: ['btn', 'btn-outline-primary'],
+                        contextMenuClasses: ['text-primary'],
+                        action: function (rows) {
+                            alert("Hola there");
+                        },
+                    })
+                }
+                Table.contextualActions(actionOptions);
+            }
+        }
+    },
+    error: function (error) {
+        notify_error(error.statusText);
+    }
+});
+}
 
 var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
@@ -263,6 +279,7 @@ function get_case_ioc() {
                     $('#ioc_table_wrapper').show();
                     $('[data-toggle="popover"]').popover();
                     Table.columns.adjust().draw();
+                    load_ioc_menu_mod_options();
 
                 } else {
                     Table.clear().draw();

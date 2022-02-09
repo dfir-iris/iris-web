@@ -34,7 +34,7 @@ from sqlalchemy import desc
 
 import app
 from app.datamgmt.activities.activities_db import get_all_user_activities
-from app.models import CeleryTaskMeta
+from app.models import CeleryTaskMeta, IrisModuleHook, IrisHook, IrisModule
 from app.util import response_success, login_required, api_login_required, response_error
 
 dim_tasks_blueprint = Blueprint(
@@ -56,6 +56,25 @@ def dim_index(caseid: int, url_redir):
     form = FlaskForm()
 
     return render_template('dim_tasks.html', form=form)
+
+
+@dim_tasks_blueprint.route('/dim/hook-options/ioc/list', methods=['GET'])
+@api_login_required
+def list_dim_hook_options_ioc(caseid):
+    mods_options = IrisModuleHook.query.with_entities(
+        IrisModuleHook.manual_hook_ui_name,
+        IrisHook.hook_name,
+        IrisModule.module_name
+    ).filter(
+        IrisHook.hook_name == "on_manual_trigger_ioc"
+    ).join(
+        IrisModuleHook.module,
+        IrisModuleHook.hook
+    ).all()
+
+    data = [options._asdict() for options in mods_options]
+
+    return response_success("", data=data)
 
 
 @dim_tasks_blueprint.route('/dim/tasks/list', methods=['GET'])
