@@ -301,12 +301,12 @@ def case_update_ioc(cur_id, caseid):
         if not ioc:
             return response_error("Invalid IOC ID for this case")
 
+        request_data = call_modules_hook('on_preload_ioc_update', data=request.get_json(), caseid=caseid)
+
         # validate before saving
         ioc_schema = IocSchema()
-        ioc_sc = ioc_schema.load(request.get_json(), instance=ioc)
+        ioc_sc = ioc_schema.load(request_data, instance=ioc)
         ioc_sc.user_id = current_user.id
-
-        ioc_sc = call_modules_hook('on_preload_ioc_update', data=ioc_sc, caseid=caseid)
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
             return response_error("Not a valid IOC type")

@@ -392,7 +392,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
     ).all()
 
     for module in modules:
-        if module.run_asynchronously:
+        if module.run_asynchronously and "on_preload_" not in hook_name:
             # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
             # So pass a dumped instance and then rebuild on the task side
             ser_data = base64.b64encode(dumps(data)).decode('utf8')
@@ -404,7 +404,9 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
             log.info(f'Calling module {module.module_name} for hook {hook_name}')
             mod_inst = instantiate_module_from_name(module_name=module.module_name)
 
-            data = mod_inst.hooks_handler(hook_name, data=data)
+            status = mod_inst.hooks_handler(hook_name, data=data)
+            if status.is_success():
+                data = status.get_data()
 
     return data
 
