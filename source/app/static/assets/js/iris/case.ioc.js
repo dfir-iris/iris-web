@@ -107,9 +107,110 @@ Table = $("#ioc_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
         tableFiltering(this.api());
+    },
+    select: {
+            style: 'single'
     }
 });
 $("#ioc_table").css("font-size", 12);
+
+var actionOptions = {
+    iconPrefix: 'fad fa-fw',
+    classes: [],
+    contextMenu: {
+        enabled: true,
+        isMulti: true,
+        xoffset: -10,
+        yoffset: -10,
+        headerRenderer: function (rows) {
+            if (rows.length > 1) {
+                // For when we have contextMenu.isMulti enabled and have more than 1 row selected
+                return rows.length + ' people selected';
+            } else {
+                let row = rows[0];
+                if (row.role !== '')
+                    return row.fullName + ' (' + row.role + ')';
+                else return row.fullName;
+            }
+        },
+    },
+    buttonList: {
+        enabled: true,
+        iconOnly: false,
+        containerSelector: '#my-button-container',
+        groupClass: 'btn-group',
+        disabledOpacity: 0.4,
+        dividerSpacing: 10,
+    },
+    deselectAfterAction: true,
+    items: [
+           {
+            type: 'option',
+            title: 'Unassign Employee',
+            multi: true,
+            multiTitle: 'Unassign Employees',
+            iconClass: 'fa-user-alt-slash',
+            buttonClasses: ['btn', 'btn-outline-danger'],
+            contextMenuClasses: ['text-danger'],
+
+            isDisabled: (row) => {
+                return row.role === '';
+            },
+
+            confirmation: function (rows) {
+                var message =
+                    rows.length > 1
+                        ? 'Are you sure you want to unassign ' +
+                          rows.length +
+                          ' roles?'
+                        : 'Are you sure you want to unassign ' +
+                          rows[0].fullName +
+                          "'s role?";
+                return {
+                    title:
+                        rows.length > 1
+                            ? 'Unassign Employees'
+                            : 'Unassign Employee',
+                    message: message,
+                    buttons: {
+                        cancel: {
+                            className: 'btn-link',
+                            label: 'Cancel',
+                        },
+                        confirm: {
+                            className: 'btn-danger',
+                            label: '<i class="fa fa-user-slash"></i> Unassign',
+                        },
+                    },
+                };
+            },
+            action: function (rows) {
+                // Then change the data inline without redrawing and losing state
+                Table.rows(function (idx, data, node) {
+                    if (
+                        rows
+                            .map((r) => r.fullName)
+                            .includes(data.fullName)
+                    ) {
+                        let rowData = myTable.row(idx).data();
+                        rowData.role = '';
+                        rowData.location = '';
+                        rowData.extension = '';
+                        rowData.startDate = '';
+                        rowData.salary = '';
+                        myTable
+                            .row(idx)
+                            .data(rowData)
+                            .invalidate();
+                    }
+                    return false;
+                });
+            },
+        }
+    ],
+};
+
+Table.contextualActions(actionOptions);
 
 var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
@@ -201,6 +302,7 @@ function get_case_ioc() {
                     jsdata = response.data;
                     Table.clear();
                     Table.rows.add(jsdata.ioc);
+
                     Table.columns.adjust().draw();
 
                     set_last_state(jsdata.state);
