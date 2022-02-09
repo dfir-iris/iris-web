@@ -106,6 +106,54 @@ def list_dim_tasks(caseid):
     return response_success("", data=data)
 
 
+@dim_tasks_blueprint.route('/dim/tasks/limited-list', methods=['GET'])
+@api_login_required
+def list_dim_tasks(caseid):
+    tasks = CeleryTaskMeta.query.with_entities(
+        CeleryTaskMeta.task_id,
+        CeleryTaskMeta.date_done
+    ).order_by(desc(CeleryTaskMeta.date_done)).limit(20).all()
+
+    data = []
+
+    for row in tasks:
+        task = app.celery.AsyncResult(row.task_id)
+
+        task_name = task.name if task.name else "No engine. Unrecoverable shadow failure"
+        if 'task_hook_wrapper' in task_name:
+            task_name = f"{task.kwargs.get('module_name')}::{task.kwargs.get('hook_name')}"
+        else:
+            task_name = task.name
+
+        if task.kwargs:
+            user = task.kwargs.get('init_user')
+            case_name = f"Case #{task.kwargs.get('caseid')}"
+        else:
+            user = "Shadow Iris"
+            case_name = "Unknown"
+
+        if isinstance(task.result, IIStatus):
+
+            try:
+                success = task.result.is_success()
+            except:
+                success = None
+
+        else:
+            success = None
+
+        row = row._asdict()
+        row['state'] = "success" if success else str(task.result)
+        row['user'] = user
+
+        row['module'] = task_name
+        row['case'] = case_name if case_name else ""
+
+        data.append(row)
+
+    return response_success("", data=data)
+
+
 @dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
 @login_required
 def task_status(task_id, caseid, url_redir):

@@ -460,6 +460,35 @@ function load_case_activity(){
     });
 }
 
+
+function load_dim_limited_tasks(){
+    $.ajax({
+        url: '/dim/tasks/limited-list' + case_param(),
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+                js_data = data.data;
+                $('#dim_tasks_feed').empty();
+                for (index in js_data) {
+
+                    if (js_data[index].is_from_api) {
+                        api_flag = 'feed-item-primary';
+                        title = 'Activity issued from API';
+                    } else {
+                        api_flag = 'feed-item-default';
+                        title = 'Activity issued from GUI';
+                    }
+
+                    entry =	`<li class="feed-item ${api_flag}" title='${title}'>
+							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
+							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</a></span>
+						    </li>`
+                    $('#dim_tasks_feed').append(entry);
+                }
+            }
+    });
+}
+
 function update_time() {
     $('#current_date').text((new Date()).toLocaleString().slice(0, 17));
 }
