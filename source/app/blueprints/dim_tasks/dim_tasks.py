@@ -112,7 +112,7 @@ def list_limited_dim_tasks(caseid):
     tasks = CeleryTaskMeta.query.with_entities(
         CeleryTaskMeta.task_id,
         CeleryTaskMeta.date_done
-    ).order_by(desc(CeleryTaskMeta.date_done)).limit(20).all()
+    ).order_by(desc(CeleryTaskMeta.date_done)).limit(40).all()
 
     data = []
 

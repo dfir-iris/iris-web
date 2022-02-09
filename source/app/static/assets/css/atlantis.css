@@ -15305,7 +15305,7 @@ body[data-background-color="dark"] .board {
   background: #ffffff;
   background-size: cover;
   background-position: center center;
-  box-shadow: 2px 0px 20px rgba(69, 65, 78, 0.07);
+  box-shadow: -10px 0px 15px 0px rgba(69, 65, 78, 0.1);
   transition: all .3s;
   z-index: 1101;
   padding: 20px 20px 0; }

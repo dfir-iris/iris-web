@@ -13,7 +13,7 @@ Table = $("#activities_table").DataTable({
     "render": function (data, type, row, meta) {
         if (type === 'display') {
             data = sanitizeHTML(data);
-            data = "<a href='#' onclick=\"task_status('"+ data +"');return false;\">"+ data +"</a>"
+            data = "<a href='#' onclick=\"dim_task_status('"+ data +"');return false;\">"+ data +"</a>"
         }
         return data;
       } },
@@ -88,13 +88,6 @@ function get_activities () {
     });
 }
 
-
-function task_status(id) {
-    url = '/dim/tasks/status/'+id + case_param();
-    $('#info_task_modal_body').load(url, function(){
-        $('#modal_task_detail').modal({show:true});
-    });
-}
 
 $(document).ready(function(){
     get_activities();
