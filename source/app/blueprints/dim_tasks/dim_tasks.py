@@ -26,7 +26,7 @@ import pickle
 
 import os
 
-from flask import Blueprint
+from flask import Blueprint, request
 from flask import render_template, url_for, redirect
 from flask_wtf import FlaskForm
 from iris_interface.IrisInterfaceStatus import IIStatus
@@ -58,7 +58,7 @@ def dim_index(caseid: int, url_redir):
     return render_template('dim_tasks.html', form=form)
 
 
-@dim_tasks_blueprint.route('/dim/hook-options/ioc/list', methods=['GET'])
+@dim_tasks_blueprint.route('/dim/hooks/options/ioc/list', methods=['GET'])
 @api_login_required
 def list_dim_hook_options_ioc(caseid):
     mods_options = IrisModuleHook.query.with_entities(
@@ -75,6 +75,14 @@ def list_dim_hook_options_ioc(caseid):
     data = [options._asdict() for options in mods_options]
 
     return response_success("", data=data)
+
+
+@dim_tasks_blueprint.route('/dim/hooks/call', methods=['POST'])
+@api_login_required
+def dim_hooks_call(caseid):
+    print(request.json)
+
+    return response_success('')
 
 
 @dim_tasks_blueprint.route('/dim/tasks/list', methods=['GET'])
