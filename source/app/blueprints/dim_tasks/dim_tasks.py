@@ -108,7 +108,7 @@ def list_dim_tasks(caseid):
 
 @dim_tasks_blueprint.route('/dim/tasks/limited-list', methods=['GET'])
 @api_login_required
-def list_dim_tasks(caseid):
+def list_limited_dim_tasks(caseid):
     tasks = CeleryTaskMeta.query.with_entities(
         CeleryTaskMeta.task_id,
         CeleryTaskMeta.date_done

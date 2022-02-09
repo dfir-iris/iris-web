@@ -471,17 +471,17 @@ function load_dim_limited_tasks(){
                 $('#dim_tasks_feed').empty();
                 for (index in js_data) {
 
-                    if (js_data[index].is_from_api) {
-                        api_flag = 'feed-item-primary';
-                        title = 'Activity issued from API';
+                    if (js_data[index].state == 'success') {
+                        api_flag = 'feed-item-success';
+                        title = 'Task succeeded';
                     } else {
-                        api_flag = 'feed-item-default';
-                        title = 'Activity issued from GUI';
+                        api_flag = 'feed-item-warning';
+                        title = 'Task pending or failed';
                     }
 
                     entry =	`<li class="feed-item ${api_flag}" title='${title}'>
-							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
-							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</a></span>
+							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].date_done}</time>
+							<span class="text">${js_data[index].module} - ${js_data[index].user}</a></span>
 						    </li>`
                     $('#dim_tasks_feed').append(entry);
                 }
