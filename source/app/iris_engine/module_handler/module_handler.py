@@ -385,10 +385,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
         raise Exception(f'Hook name {hook_name} not found')
 
     modules = IrisModuleHook.query.with_entities(
-        IrisModuleHook.max_retry,
         IrisModuleHook.run_asynchronously,
-        IrisModuleHook.wait_till_return,
-        IrisModuleHook.retry_on_fail,
         IrisModule.module_name
     ).filter(
         IrisModule.is_active == True,
