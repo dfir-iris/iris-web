@@ -136,22 +136,25 @@ def case_edit_rfile(cur_id, caseid):
     try:
         # validate before saving
         evidence_schema = CaseEvidenceSchema()
-        jsdata = request.get_json()
+
+        request_data = call_modules_hook('on_preload_evidence_update', data=request.get_json(), caseid=caseid)
 
         crf = get_rfile(cur_id, caseid)
         if not crf:
             return response_error("Invalid evidence ID for this case")
 
-        evidence = evidence_schema.load(jsdata, instance=crf)
+        evidence = evidence_schema.load(request_data, instance=crf)
 
-        ctask = update_rfile(evidence=evidence,
+        evd = update_rfile(evidence=evidence,
                              user_id=current_user.id,
                              caseid=caseid
                             )
 
-        if ctask:
-            track_activity("updated evidence {}".format(ctask.filename), caseid=caseid)
-            return response_success(data=evidence_schema.dump(ctask))
+        evd = call_modules_hook('on_postload_evidence_update', data=evd, caseid=caseid)
+
+        if evd:
+            track_activity("updated evidence {}".format(evd.filename), caseid=caseid)
+            return response_success(data=evidence_schema.dump(evd))
 
         return response_error("Unable to update task for internal reasons")
 
@@ -163,11 +166,14 @@ def case_edit_rfile(cur_id, caseid):
 @api_login_required
 def case_delete_rfile(cur_id, caseid):
 
+    call_modules_hook('on_preload_evidence_delete', data=cur_id, caseid=caseid)
     crf = get_rfile(cur_id, caseid)
     if not crf:
         return response_error("Invalid evidence ID for this case")
 
     delete_rfile(cur_id, caseid=caseid)
+
+    call_modules_hook('on_postload_evidence_delete', data=cur_id, caseid=caseid)
 
     track_activity("deleted evidence ID {} from register".format(cur_id), caseid)
 
