@@ -486,11 +486,12 @@ def case_add_event(caseid):
     try:
 
         event_schema = EventSchema()
-        jsdata = request.get_json()
-        event = event_schema.load(jsdata)
+        request_data = call_modules_hook('on_preload_event_create', data=request.get_json(), caseid=caseid)
 
-        event.event_date, event.event_date_wtz = event_schema.validate_date(jsdata.get(u'event_date'),
-                                                                            jsdata.get(u'event_tz'))
+        event = event_schema.load(request_data)
+
+        event.event_date, event.event_date_wtz = event_schema.validate_date(request_data.get(u'event_date'),
+                                                                            request_data.get(u'event_tz'))
 
         event.case_id = caseid
         event.event_added = datetime.utcnow()
@@ -500,13 +501,15 @@ def case_add_event(caseid):
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
-        save_event_category(event.event_id, jsdata.get('event_category_id'))
+        save_event_category(event.event_id, request_data.get('event_category_id'))
 
-        setattr(event, 'event_category_id', jsdata.get('event_category_id'))
+        setattr(event, 'event_category_id', request_data.get('event_category_id'))
 
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,
-                            assets_list=jsdata.get('event_assets'))
+                            assets_list=request_data.get('event_assets'))
+
+        event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
         track_activity("added event {}".format(event.event_id), caseid=caseid)
         return response_success("Event added", data=event_schema.dump(event))
