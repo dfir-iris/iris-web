@@ -102,8 +102,10 @@ def case_add_ioc(caseid):
     try:
         # validate before saving
         add_ioc_schema = IocSchema()
-        jsdata = request.get_json()
-        ioc = add_ioc_schema.load(jsdata)
+
+        request_data = call_modules_hook('on_preload_ioc_create', data=request.get_json(), caseid=caseid)
+
+        ioc = add_ioc_schema.load(request_data)
 
         if not check_ioc_type_id(type_id=ioc.ioc_type_id):
             return response_error("Not a valid IOC type")
@@ -193,7 +195,9 @@ def case_upload_ioc(caseid):
             row['ioc_type_id'] = type_id.type_id
             row.pop('ioc_type', None)
 
-            ioc = add_ioc_schema.load(row)
+            request_data = call_modules_hook('on_preload_ioc_create', data=row, caseid=caseid)
+
+            ioc = add_ioc_schema.load(request_data)
 
             ioc, existed = add_ioc(ioc=ioc,
                                    user_id=current_user.id,
@@ -208,7 +212,8 @@ def case_upload_ioc(caseid):
                 continue
 
             if ioc:
-                ret.append(row)
+                ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
+                ret.append(request_data)
                 track_activity(f"added ioc {ioc.ioc_value}", caseid=caseid)
 
             else:
