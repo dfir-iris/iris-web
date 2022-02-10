@@ -496,6 +496,37 @@ function dim_task_status(id) {
     });
 }
 
+function init_module_processing(row, hook_name, module_name, data_type) {
+    var data = Object();
+    data['hook_name'] = hook_name;
+    data['module_name'] = module_name;
+    data['csrf_token'] = $('#csrf_token').val();
+    data['type'] = data_type;
+
+    if (type == "ioc") {
+        for (row in rows) {
+            data['targets'].push(row.ioc_id);
+        }
+    }
+
+    $.ajax({
+        url: "/dim/hooks/call" + case_param(),
+        type: "POST",
+        data: JSON.stringify(data),
+        dataType: "json",
+        contentType: "application/json;charset=UTF-8",
+        dataType: 'json',
+        success: function (response) {
+            if (response.status == 'success') {
+                    notify_success('Data sent to module');
+            }
+        },
+        error: function (error) {
+            notify_error(error.statusText);
+        }
+    });
+}
+
 function update_time() {
     $('#current_date').text((new Date()).toLocaleString().slice(0, 17));
 }

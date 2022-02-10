@@ -158,37 +158,12 @@ function load_ioc_menu_mod_options() {
                             buttonClasses: ['btn', 'btn-outline-primary'],
                             contextMenuClasses: ['text-primary'],
                             action: function (rows) {
-                                init_module_processing(rows, opt.hook_name, opt.module_name);
+                                init_module_processing(rows, opt.hook_name, opt.module_name, "ioc");
                             },
                         })
                     }
                     Table.contextualActions(actionOptions);
                 }
-            }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
-        }
-    });
-}
-
-function init_module_processing(row, hook_name, module_name) {
-    var data = Object();
-    data['hook_name'] = hook_name;
-    data['module_name'] = module_name;
-    data['row'] = row;
-    data['csrf_token'] = $('#csrf_token').val();
-
-    $.ajax({
-        url: "/dim/hooks/call" + case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        dataType: 'json',
-        success: function (response) {
-            if (response.status == 'success') {
-                    notify_success('Data sent to module');
             }
         },
         error: function (error) {
