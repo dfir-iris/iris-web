@@ -376,12 +376,16 @@ def asset_update(cur_id, caseid):
 @api_login_required
 def asset_delete(cur_id, caseid):
 
+    call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
+
     asset = get_asset(cur_id, caseid)
     if not asset:
         return response_error("Invalid asset ID for this case")
 
     # Deletes an asset and the potential links with the IoCs from the database
     delete_asset(cur_id, caseid)
+
+    call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
 
     track_activity("removed asset ID {}".format(cur_id), caseid=caseid)
 
