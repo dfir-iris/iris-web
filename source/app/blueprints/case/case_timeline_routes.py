@@ -31,6 +31,7 @@ from sqlalchemy import and_
 from app import db
 from app.datamgmt.states import get_timeline_state, update_timeline_state
 from app.forms import CaseEventForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models.cases import Cases, CasesEvent
 from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory
 from app.schema.marshables import EventSchema
@@ -327,6 +328,8 @@ def case_gettimeline(asset_id, caseid):
 @api_login_required
 def case_delete_event(cur_id, caseid):
 
+    call_modules_hook('on_preload_event_delete', data=cur_id, caseid=caseid)
+
     event = get_case_event(event_id=cur_id, caseid=caseid)
     if not event:
         return response_error('Not a valid event ID for this case')
@@ -344,6 +347,8 @@ def case_delete_event(cur_id, caseid):
     update_timeline_state(caseid=caseid)
 
     db.session.commit()
+
+    call_modules_hook('on_postload_event_delete', data=cur_id, caseid=caseid)
 
     track_activity("deleted event ID {} in timeline".format(cur_id), caseid)
 
@@ -422,12 +427,14 @@ def case_edit_event(cur_id, caseid):
             return response_error("Invalid event ID for this case")
 
         event_schema = EventSchema()
-        jsdata = request.get_json()
-        event = event_schema.load(jsdata, instance=event)
+
+        request_data = call_modules_hook('on_preload_event_update', data=request.get_json(), caseid=caseid)
+
+        event = event_schema.load(request_data, instance=event)
 
         event.event_date, event.event_date_wtz = event_schema.validate_date(
-            jsdata.get(u'event_date'),
-            jsdata.get(u'event_tz')
+            request_data.get(u'event_date'),
+            request_data.get(u'event_tz')
             )
 
         event.case_id = caseid
@@ -437,13 +444,15 @@ def case_edit_event(cur_id, caseid):
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
-        save_event_category(event.event_id, jsdata.get('event_category_id'))
+        save_event_category(event.event_id, request_data.get('event_category_id'))
 
-        setattr(event, 'event_category_id', jsdata.get('event_category_id'))
+        setattr(event, 'event_category_id', request_data.get('event_category_id'))
 
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,
-                            assets_list=jsdata.get('event_assets'))
+                            assets_list=request_data.get('event_assets'))
+
+        event = call_modules_hook('on_postload_event_update', data=event, caseid=caseid)
 
         track_activity("updated event {}".format(cur_id), caseid=caseid)
         return response_success("Event added", data=event_schema.dump(event))
