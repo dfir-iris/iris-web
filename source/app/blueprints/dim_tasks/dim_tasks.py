@@ -194,8 +194,11 @@ def list_limited_dim_tasks(caseid):
         if isinstance(task.result, IIStatus):
 
             try:
+
                 success = task.result.is_success()
-            except:
+
+            except Exception as e:
+
                 success = None
 
         else:
