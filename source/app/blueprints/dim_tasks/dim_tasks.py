@@ -60,15 +60,15 @@ def dim_index(caseid: int, url_redir):
     return render_template('dim_tasks.html', form=form)
 
 
-@dim_tasks_blueprint.route('/dim/hooks/options/ioc/list', methods=['GET'])
+@dim_tasks_blueprint.route('/dim/hooks/options/<type>/list', methods=['GET'])
 @api_login_required
-def list_dim_hook_options_ioc(caseid):
+def list_dim_hook_options_ioc(type, caseid):
     mods_options = IrisModuleHook.query.with_entities(
         IrisModuleHook.manual_hook_ui_name,
         IrisHook.hook_name,
         IrisModule.module_name
     ).filter(
-        IrisHook.hook_name == "on_manual_trigger_ioc"
+        IrisHook.hook_name == f"on_manual_trigger_{type}"
     ).join(
         IrisModuleHook.module,
         IrisModuleHook.hook

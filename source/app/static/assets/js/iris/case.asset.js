@@ -218,9 +218,11 @@ Table = $("#assets_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
         tableFiltering(this.api());
-    }
+    },
+    select: true
 });
 $("#assets_table").css("font-size", 12);
+
 var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
         { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white pl--2'
@@ -229,6 +231,7 @@ var buttons = new $.fn.dataTable.Buttons(Table, {
         , "titleAttr": 'Copy' },
     ]
 }).container().appendTo($('#tables_button'));
+
 
 /* Retrieve the list of assets and build a datatable for each type of asset */
 function get_case_assets() {
@@ -244,6 +247,8 @@ function get_case_assets() {
                     Table.clear();
                     Table.rows.add(jsdata.assets);
                     Table.columns.adjust().draw();
+                    load_ioc_menu_mod_options('asset', Table);
+
                     set_last_state(jsdata.state);
                     hide_loader();
                     $('#assets_table').on('click', function(e){

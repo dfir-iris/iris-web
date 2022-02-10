@@ -528,6 +528,72 @@ function init_module_processing(rows, hook_name, module_name, data_type) {
     });
 }
 
+
+function load_ioc_menu_mod_options(data_type, table) {
+    var actionOptions = {
+        classes: [],
+        contextMenu: {
+            enabled: true,
+            isMulti: true,
+            xoffset: -10,
+            yoffset: -10,
+            headerRenderer: function (rows) {
+                if (rows.length > 1) {
+                    return rows.length + ' items selected';
+                } else {
+                    let row = rows[0];
+                    return 'Quick action';
+                }
+            },
+        },
+        buttonList: {
+            enabled: false,
+        },
+        deselectAfterAction: true,
+        items: [],
+    };
+
+    $.ajax({
+        url: "/dim/hooks/options/"+ data_type +"/list" + case_param(),
+        type: "GET",
+        dataType: 'json',
+        success: function (response) {
+            if (response.status == 'success') {
+                if (response.data != null) {
+                    jsdata = response.data;
+                    if (jsdata.length == 0) {
+                        actionOptions.items.push({
+                            type: 'option',
+                            title: 'No quick action available',
+                            action: function(){}
+                       });
+                    }
+                    for (option in jsdata) {
+                        opt = jsdata[option];
+                        actionOptions.items.push({
+                            type: 'option',
+                            title: opt.manual_hook_ui_name,
+                            multi: true,
+                            multiTitle: opt.manual_hook_ui_name,
+                            iconClass: 'fas fa-arrow-alt-circle-right',
+                            buttonClasses: ['btn', 'btn-outline-primary'],
+                            contextMenuClasses: ['text-primary'],
+                            action: function (rows) {
+                                init_module_processing(rows, opt.hook_name, opt.module_name, data_type);
+                            },
+                        })
+                    }
+                    table.contextualActions(actionOptions);
+                }
+            }
+        },
+        error: function (error) {
+            notify_error(error.statusText);
+        }
+    });
+}
+
+
 function update_time() {
     $('#current_date').text((new Date()).toLocaleString().slice(0, 17));
 }

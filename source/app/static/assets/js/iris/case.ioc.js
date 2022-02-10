@@ -108,69 +108,9 @@ Table = $("#ioc_table").DataTable({
     initComplete: function () {
         tableFiltering(this.api());
     },
-    select: {
-            style: 'single'
-    }
+    select: true
 });
 $("#ioc_table").css("font-size", 12);
-
-var actionOptions = {
-    classes: [],
-    contextMenu: {
-        enabled: true,
-        isMulti: true,
-        xoffset: -10,
-        yoffset: -10,
-        headerRenderer: function (rows) {
-            if (rows.length > 1) {
-                return rows.length + ' iocs selected';
-            } else {
-                let row = rows[0];
-                return row.ioc_value + ' (' + row.ioc_type + ')';
-            }
-        },
-    },
-    buttonList: {
-        enabled: false,
-    },
-    deselectAfterAction: true,
-    items: [],
-};
-
-
-function load_ioc_menu_mod_options() {
-    $.ajax({
-        url: "/dim/hooks/options/ioc/list" + case_param(),
-        type: "GET",
-        dataType: 'json',
-        success: function (response) {
-            if (response.status == 'success') {
-                if (response.data != null) {
-                    jsdata = response.data;
-                    for (option in jsdata) {
-                        opt = jsdata[option];
-                        actionOptions.items.push({
-                            type: 'option',
-                            title: opt.manual_hook_ui_name,
-                            multi: true,
-                            multiTitle: opt.manual_hook_ui_name,
-                            iconClass: 'fas fa-arrow-alt-circle-right',
-                            buttonClasses: ['btn', 'btn-outline-primary'],
-                            contextMenuClasses: ['text-primary'],
-                            action: function (rows) {
-                                init_module_processing(rows, opt.hook_name, opt.module_name, "ioc");
-                            },
-                        })
-                    }
-                    Table.contextualActions(actionOptions);
-                }
-            }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
-        }
-    });
-}
 
 var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
@@ -279,7 +219,7 @@ function get_case_ioc() {
                     $('#ioc_table_wrapper').show();
                     $('[data-toggle="popover"]').popover();
                     Table.columns.adjust().draw();
-                    load_ioc_menu_mod_options();
+                    load_ioc_menu_mod_options('ioc', Table);
 
                 } else {
                     Table.clear().draw();
