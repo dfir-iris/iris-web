@@ -34,6 +34,7 @@ from app.datamgmt.case.case_db import get_case, get_case_client_id
 from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.states import get_assets_state, update_assets_state
 from app.forms import ModalAddCaseAssetForm, AssetBasicForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 
 from app.iris_engine.utils.tracker import track_activity
 from app.models import AnalysisStatus, IocAssetLink, Ioc, IocLink
@@ -164,16 +165,19 @@ def add_asset(caseid):
     try:
         # validate before saving
         add_asset_schema = CaseAssetsSchema()
-        jsdata = request.get_json()
-        asset = add_asset_schema.load(jsdata)
+        request_data = call_modules_hook('on_preload_asset_create', data=request.get_json(), caseid=caseid)
+
+        asset = add_asset_schema.load(request_data)
 
         asset = create_asset(asset=asset,
                              caseid=caseid,
                              user_id=current_user.id
                              )
 
-        if jsdata.get('ioc_links'):
-            set_ioc_links(jsdata.get('ioc_links'), asset.asset_id)
+        if request_data.get('ioc_links'):
+            set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
+
+        asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
         if asset:
             track_activity("added asset {}".format(asset.asset_name), caseid=caseid)

@@ -110,8 +110,6 @@ def case_add_ioc(caseid):
         if not check_ioc_type_id(type_id=ioc.ioc_type_id):
             return response_error("Not a valid IOC type")
 
-        ioc = call_modules_hook('on_preload_ioc_create', data=ioc, caseid=caseid)
-
         ioc, existed = add_ioc(ioc=ioc,
                                user_id=current_user.id,
                                caseid=caseid
