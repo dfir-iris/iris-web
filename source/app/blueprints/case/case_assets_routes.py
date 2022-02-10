@@ -349,7 +349,10 @@ def asset_update(cur_id, caseid):
 
         # validate before saving
         add_asset_schema = CaseAssetsSchema()
-        asset_schema = add_asset_schema.load(request.get_json(), instance=asset)
+
+        request_data = call_modules_hook('on_preload_asset_update', data=request.get_json(), caseid=caseid)
+
+        asset_schema = add_asset_schema.load(request_data, instance=asset)
 
         update_assets_state(caseid=caseid)
         db.session.commit()
@@ -357,9 +360,11 @@ def asset_update(cur_id, caseid):
         if hasattr(asset_schema, 'ioc_links'):
             set_ioc_links(asset_schema.ioc_links, asset.asset_id)
 
-        if asset:
-            track_activity("updated asset {}".format(asset.asset_name), caseid=caseid)
-            return response_success("Updated asset {}".format(asset.asset_name), add_asset_schema.dump(asset))
+        asset_schema = call_modules_hook('on_postload_asset_update', data=asset_schema, caseid=caseid)
+
+        if asset_schema:
+            track_activity("updated asset {}".format(asset_schema.asset_name), caseid=caseid)
+            return response_success("Updated asset {}".format(asset_schema.asset_name), add_asset_schema.dump(asset_schema))
 
         return response_error("Unable to update asset for internal reasons")
 
