@@ -255,19 +255,22 @@ def case_upload_ioc(caseid):
 
             row['analysis_status_id'] = analysis_status_id
 
-            asset_sc = add_asset_schema.load(row)
+            request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
+            asset_sc = add_asset_schema.load(request_data)
 
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
                                  user_id=current_user.id
                                  )
 
+            asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
+
             if not asset:
                 errors.append(f"Unable to add asset for internal reason")
                 index += 1
                 continue
 
-            ret.append(row)
+            ret.append(request_data)
             track_activity(f"added asset {asset.asset_name}", caseid=caseid)
 
             index += 1
