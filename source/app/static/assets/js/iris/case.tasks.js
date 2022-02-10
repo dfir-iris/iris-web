@@ -87,7 +87,8 @@ Table = $("#tasks_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
         tableFiltering(this.api());
-    }
+    },
+    select: true
 });
 $("#tasks_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {
@@ -277,6 +278,7 @@ function get_tasks() {
                       });
 
                     Table.columns.adjust().draw();
+                    load_menu_mod_options('task', Table);
                     $('[data-toggle="popover"]').popover();
 
                     set_last_state(data.data.state);
