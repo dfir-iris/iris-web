@@ -61,7 +61,8 @@ Table = $("#rfiles_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
         tableFiltering(this.api());
-    }
+    },
+    select: true
 });
 $("#rfiles_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {
@@ -86,6 +87,8 @@ function get_case_rfiles() {
                     Table.clear();
                     Table.rows.add(jsdata.evidences);
                     Table.columns.adjust().draw();
+
+                    load_menu_mod_options('evidence', Table);
 
                     set_last_state(jsdata.state);
                     hide_loader();
