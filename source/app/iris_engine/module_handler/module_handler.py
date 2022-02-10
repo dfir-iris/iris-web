@@ -351,13 +351,20 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
     db.session.commit()
 
     log.info(f'Calling module {module_name} for hook {hook_name}')
-    mod_inst = instantiate_module_from_name(module_name=module_name)
 
-    mod_inst.set_log_handler()
-    task_status = mod_inst.hooks_handler(hook_name, data=obj)
+    try:
+        mod_inst = instantiate_module_from_name(module_name=module_name)
 
-    # Recommit the changes made by the module
-    db.session.commit()
+        mod_inst.set_log_handler()
+        task_status = mod_inst.hooks_handler(hook_name, data=obj)
+
+        # Recommit the changes made by the module
+        db.session.commit()
+
+    except Exception as e:
+        msg = f"Failed to run hook {hook_name} with module {module_name}. Error {str(e)}"
+        log.critical(msg)
+        task_status = IStatus.I2Error(message=msg)
 
     return task_status
 
@@ -402,9 +409,16 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
         else:
             # Direct call. Should be fast
             log.info(f'Calling module {module.module_name} for hook {hook_name}')
-            mod_inst = instantiate_module_from_name(module_name=module.module_name)
 
-            status = mod_inst.hooks_handler(hook_name, data=data)
+            try:
+
+                mod_inst = instantiate_module_from_name(module_name=module.module_name)
+                status = mod_inst.hooks_handler(hook_name, data=data)
+
+            except Exception as e:
+                log.critical(f"Failed to run hook {hook_name} with module {module.module_name}. Error {str(e)}")
+                continue
+
             if status.is_success():
                 data = status.get_data()
 
