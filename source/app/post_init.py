@@ -133,16 +133,10 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_case_create',
                 hook_description='Triggered on case creation, after commit in DB')
 
-    create_safe(db.session, IrisHook, hook_name='on_preload_case_update',
-                hook_description='Triggered on case update, before commit in DB')
-    create_safe(db.session, IrisHook, hook_name='on_postload_case_update',
-                hook_description='Triggered on case update, after commit in DB')
-
     create_safe(db.session, IrisHook, hook_name='on_preload_case_delete',
                 hook_description='Triggered on case deletion, before commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_case_delete',
                 hook_description='Triggered on case deletion, after commit in DB')
-
 
     # --- Assets
     create_safe(db.session, IrisHook, hook_name='on_preload_asset_create',
@@ -256,6 +250,25 @@ def create_safe_hooks():
                 hook_description='Triggered on task deletion, after commit in DB')
 
     create_safe(db.session, IrisHook, hook_name='on_manual_trigger_task',
+                hook_description='Triggered upon user action')
+
+    # --- global tasks
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_create',
+                hook_description='Triggered on global task creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_create',
+                hook_description='Triggered on global task creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_update',
+                hook_description='Triggered on task update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_update',
+                hook_description='Triggered on global task update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_delete',
+                hook_description='Triggered on task deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_delete',
+                hook_description='Triggered on global task deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_global_task',
                 hook_description='Triggered upon user action')
     
     # --- reports
