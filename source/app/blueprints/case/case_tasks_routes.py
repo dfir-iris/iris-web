@@ -32,6 +32,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import get_tasks, get_task, update_task_status, add_task, get_tasks_status
 from app.datamgmt.states import get_tasks_state, update_tasks_state
 from app.forms import CaseTaskForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models.models import User, CaseTasks
 from app.schema.marshables import CaseTaskSchema
 from app.util import response_success, response_error, login_required, api_login_required
@@ -128,13 +129,16 @@ def case_add_task(caseid):
     try:
         # validate before saving
         task_schema = CaseTaskSchema()
-        jsdata = request.get_json()
-        task = task_schema.load(jsdata)
+        request_data = call_modules_hook('on_preload_task_create', data=request.get_json(), caseid=caseid)
+
+        task = task_schema.load(request_data)
 
         ctask = add_task(task=task,
                          user_id=current_user.id,
                          caseid=caseid
                          )
+
+        ctask = call_modules_hook('on_postload_task_create', data=ctask, caseid=caseid)
 
         if ctask:
             track_activity("added task {}".format(ctask.task_title), caseid=caseid)
@@ -190,10 +194,12 @@ def case_edit_task(cur_id, caseid):
         if not task:
             return response_error("Invalid task ID for this case")
 
+        request_data = call_modules_hook('on_preload_task_update', data=request.get_json(), caseid=caseid)
+
         # validate before saving
         task_schema = CaseTaskSchema()
-        jsdata = request.get_json()
-        task = task_schema.load(jsdata, instance=task)
+
+        task = task_schema.load(request_data, instance=task)
 
         task.task_userid_update = current_user.id
         task.task_last_update = datetime.utcnow()
@@ -201,6 +207,8 @@ def case_edit_task(cur_id, caseid):
         update_tasks_state(caseid=caseid)
 
         db.session.commit()
+
+        task = call_modules_hook('on_postload_task_update', data=task, caseid=caseid)
 
         if task:
             track_activity("updated task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
@@ -215,6 +223,8 @@ def case_edit_task(cur_id, caseid):
 @case_tasks_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_edit_delete(cur_id, caseid):
+
+    call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
     task = get_task(task_id=cur_id, caseid=caseid)
     if not task:
         return response_error("Invalid task ID for this case")
@@ -222,6 +232,9 @@ def case_edit_delete(cur_id, caseid):
     CaseTasks.query.filter(CaseTasks.id == cur_id, CaseTasks.task_case_id == caseid).delete()
 
     update_tasks_state(caseid=caseid)
+
+    call_modules_hook('on_postload_task_delete', data=cur_id, caseid=caseid)
+
     track_activity("deleted task ID {}".format(cur_id))
 
     return response_success("Task deleted")
