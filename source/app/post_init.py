@@ -193,7 +193,7 @@ def create_safe_hooks():
                 hook_description='Triggered on ioc deletion, after commit in DB')
 
     create_safe(db.session, IrisHook, hook_name='on_manual_trigger_ioc',
-                hook_description='Triggered on asset creation')
+                hook_description='Triggered upon user action')
 
     # --- events
     create_safe(db.session, IrisHook, hook_name='on_preload_event_create',
