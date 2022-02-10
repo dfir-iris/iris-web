@@ -529,7 +529,6 @@ function init_module_processing(rows, hook_name, module_name, data_type) {
 }
 
 function load_menu_mod_options_modal(element_id, data_type, anchor) {
-    data_type = "ioc";
 
     $.ajax({
         url: '/dim/hooks/options/'+ data_type +'/list' + case_param(),

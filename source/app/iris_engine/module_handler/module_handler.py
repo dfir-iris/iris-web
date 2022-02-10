@@ -260,8 +260,7 @@ def register_module(module_name):
 
 
 def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = False, manual_hook_name: str = None,
-                  retry_on_fail: bool = False, max_retry: int = 0, run_asynchronously: bool = True,
-                  wait_till_return: bool = False):
+                  run_asynchronously: bool = True):
     """
     Register a new hook into IRIS. The hook_name should be a well-known hook to IRIS. iris_hooks table can be
     queried, or by default they are declared in iris source code > source > app > post_init.
@@ -273,17 +272,11 @@ def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = Fa
     If set to false, the action is immediately done, which means it needs to be quick otherwise the request will be
     pending and user experience degraded.
 
-    If wait_till_return and run_asynchronously are set, IRIS will wait for the feedback of the module. It means
-    the request will be pending, so the action need to be quick.
-
     :param module_id: Module ID to register
     :param iris_hook_name: Well-known hook name to register to
     :param is_manual_hook: Set to true to indicate an action to run upon user trigger
     :param manual_hook_name: The name of the hook displayed in the UI, if is_manual_hook is set
-    :param retry_on_fail: Set to true to retry the hook if the module fails
-    :param max_retry: Indicates how many time the hook should be retry if the module fails
     :param run_asynchronously: Set to true to queue the module action in rabbitmq
-    :param wait_till_return: Set to true to wait for the module data
     :return: Tuple
     """
     if is_manual_hook:
@@ -300,23 +293,14 @@ def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = Fa
     if not isinstance(is_manual_hook, bool):
         return False, [f"Expected bool for is_manual_hook but got {type(is_manual_hook)}"]
 
-    if not isinstance(retry_on_fail, bool):
-        return False, [f"Expected bool for retry_on_fail but got {type(retry_on_fail)}"]
-
     if not isinstance(run_asynchronously, bool):
         return False, [f"Expected bool for run_asynchronously but got {type(run_asynchronously)}"]
 
-    if not isinstance(wait_till_return, bool):
-        return False, [f"Expected bool for wait_till_return but got {type(wait_till_return)}"]
-
-    if not isinstance(max_retry, int):
-        return False, [f"Expected int for max_retry but got {type(max_retry)}"]
-
     imh = IrisModuleHook()
     imh.is_manual_hook = is_manual_hook
-    imh.wait_till_return = wait_till_return
+    imh.wait_till_return = False
     imh.run_asynchronously = run_asynchronously
-    imh.max_retry = max_retry
+    imh.max_retry = 0
     imh.manual_hook_ui_name = manual_hook_name if manual_hook_name else ""
     imh.hook_id = hook.id
     imh.module_id = module_id
