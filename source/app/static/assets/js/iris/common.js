@@ -528,6 +528,34 @@ function init_module_processing(rows, hook_name, module_name, data_type) {
     });
 }
 
+function load_menu_mod_options_modal(element_id, data_type, anchor) {
+    data_type = "ioc";
+
+    $.ajax({
+        url: '/dim/hooks/options/'+ data_type +'/list' + case_param(),
+        type: "GET",
+        dataType: 'json',
+        success: function (response) {
+            if (response.status == 'success') {
+                if (response.data != null) {
+                    jsdata = response.data;
+                    if (jsdata.length != 0) {
+                        anchor.append('<div class="dropdown-divider"></div>');
+                    }
+                    for (option in jsdata) {
+                        opt = jsdata[option];
+                        menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing("${element_id}", "${opt.hook_name}",`+
+                                    `"${opt.module_name}", "${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+                        anchor.append(menu_opt);
+                    }
+                }
+            }
+        },
+        error: function (error) {
+            notify_error(error.statusText);
+        }
+    });
+}
 
 function load_menu_mod_options(data_type, table) {
     var actionOptions = {
@@ -561,13 +589,20 @@ function load_menu_mod_options(data_type, table) {
             if (response.status == 'success') {
                 if (response.data != null) {
                     jsdata = response.data;
-                    if (jsdata.length == 0) {
-                        actionOptions.items.push({
-                            type: 'option',
-                            title: 'No quick action available',
-                            action: function(){}
-                       });
-                    }
+
+                    actionOptions.items.push({
+                        type: 'option',
+                        title: 'Share',
+                        multi: false,
+                        iconClass: 'fas fa-share',
+                        buttonClasses: ['btn', 'btn-outline-primary'],
+                        action: function(){
+                            copy_object_link("${element_id}");return false;
+                        }
+                    });
+                    actionOptions.items.push({
+                        type: 'divider',
+                    });
                     for (option in jsdata) {
                         opt = jsdata[option];
                         actionOptions.items.push({
@@ -577,7 +612,7 @@ function load_menu_mod_options(data_type, table) {
                             multiTitle: opt.manual_hook_ui_name,
                             iconClass: 'fas fa-arrow-alt-circle-right',
                             buttonClasses: ['btn', 'btn-outline-primary'],
-                            contextMenuClasses: ['text-primary'],
+                            contextMenuClasses: ['text-dark'],
                             action: function (rows) {
                                 init_module_processing(rows, opt.hook_name, opt.module_name, data_type);
                             },

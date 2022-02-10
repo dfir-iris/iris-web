@@ -112,7 +112,9 @@ function get_case_rfiles() {
 /* Edit an rfiles */
 function edit_rfiles(rfiles_id) {
     url = 'evidences/' + rfiles_id + '/modal' + case_param();
-    $('#modal_add_rfiles_content').load(url, function () {});
+    $('#modal_add_rfiles_content').load(url, function () {
+        load_menu_mod_options_modal(rfiles_id, 'evidence', $("#evidence_modal_quick_actions"));
+    });
     $('#modal_add_rfiles').modal({ show: true });
 }
 

@@ -146,9 +146,9 @@ def case_edit_rfile(cur_id, caseid):
         evidence = evidence_schema.load(request_data, instance=crf)
 
         evd = update_rfile(evidence=evidence,
-                             user_id=current_user.id,
-                             caseid=caseid
-                            )
+                           user_id=current_user.id,
+                           caseid=caseid
+                           )
 
         evd = call_modules_hook('on_postload_evidence_update', data=evd, caseid=caseid)
 

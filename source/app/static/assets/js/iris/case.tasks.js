@@ -229,6 +229,7 @@ function delete_task(id) {
 function edit_task(id) {
   url = '/case/tasks/'+ id + '/modal' + case_param();
   $('#modal_add_task_content').load(url, function(){
+        load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
         $('#modal_add_task').modal({show:true});
   });
 }

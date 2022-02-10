@@ -1,17 +1,23 @@
 <div class="modal-header">
-        <h4>{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}</h4><br/>
+        <h4 class="modal-title mt-1 mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
+                     <i class="fas fa-info-circle ml-3 mt-2" data-toggle="popover"
+            title="Task info"
+            data-content="Last edited {{ event.event_added }} by {{ user_name }}"></i>
+        </h4>
             {% if event.event_id %}
-         <i class="fas fa-info-circle ml-3 mt-1" data-toggle="popover"
-                        title="Task info"
-                        data-content="Last edited {{ event.event_added }} by {{ user_name }}"></i>
-        <button type="button" class="mt--1 btn btn-sm float-right ml-3 btn-light btn-outline" onclick="copy_object_link({{event.event_id}});return false;" title="Copy shared link">
-            <span class="btn-label text-dark">
-                <i class="fa fa-share"></i>
-            </span>
-        </button>
+        <div class="row text-right">
+         <div class="dropdown">
+              <button class="btn btn-white pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                  <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+              </button>
+              <div class="dropdown-menu pull-right" id="event_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="#" onclick='copy_object_link({{event.event_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+              </div>
+         </div>
         {% endif %}
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-            aria-hidden="true">&times;</span></button>
+            <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true"><i class="fa fa-times"></i></span></button>
+        </div>
 </div>
 <div class="modal-body">
 

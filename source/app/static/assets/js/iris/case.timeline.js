@@ -45,7 +45,6 @@ function add_event() {
         
             return false;
         })
-
     });
    
     $('#modal_add_event').modal({ show: true });
@@ -127,6 +126,7 @@ function edit_event(id) {
   url = '/case/timeline/events/' + id + '/modal' + case_param();
   window.location.hash = id;
   $('#modal_add_event_content').load(url, function(){
+         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
   });
 }
@@ -297,6 +297,7 @@ function draw_timeline() {
                                         </button>
                                         <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                                                 <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                                <div class="dropdown-divider"></div>
                                                 <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
                                         </div>
                                     </div>

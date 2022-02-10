@@ -368,7 +368,7 @@ function asset_details(asset_id) {
             return false;
         })
 
-
+        load_menu_mod_options_modal(asset_id, 'asset', $("#asset_modal_quick_actions"));
     });
     $('#modal_add_asset').modal({ show: true });
     return false;

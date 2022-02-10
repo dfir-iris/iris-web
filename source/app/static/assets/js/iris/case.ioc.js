@@ -238,7 +238,9 @@ function get_case_ioc() {
 /* Edit an ioc */
 function edit_ioc(ioc_id) {
     url = 'ioc/' + ioc_id + '/modal' + case_param();
-    $('#modal_add_ioc_content').load(url, function () {});
+    $('#modal_add_ioc_content').load(url, function () {
+        load_menu_mod_options_modal(ioc_id, 'ioc', $("#ioc_modal_quick_actions"));
+    });
     $('#modal_add_ioc').modal({ show: true });
 }
 
