@@ -156,16 +156,19 @@ def case_note_add(caseid):
     try:
         # validate before saving
         addnote_schema = CaseAddNoteSchema()
-        jsdata = request.get_json()
-        addnote_schema.verify_group_id(jsdata, caseid=caseid)
-        addnote_schema.load(jsdata)
+        request_data = call_modules_hook('on_preload_note_create', data=request.get_json(), caseid=caseid)
 
-        note = add_note(jsdata.get('note_title'),
+        addnote_schema.verify_group_id(request_data, caseid=caseid)
+        addnote_schema.load(request_data)
+
+        note = add_note(request_data.get('note_title'),
                         datetime.utcnow(),
                         current_user.id,
                         caseid,
-                        jsdata.get('group_id'),
-                        note_content=jsdata.get('note_content'))
+                        request_data.get('group_id'),
+                        note_content=request_data.get('note_content'))
+
+        note = call_modules_hook('on_postload_note_create', data=note, caseid=caseid)
 
         if note:
             casenote_schema = CaseNoteSchema()
