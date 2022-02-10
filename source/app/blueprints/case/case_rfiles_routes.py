@@ -28,6 +28,7 @@ from flask_wtf import FlaskForm
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_rfiles_db import get_rfiles, add_rfile, get_rfile, update_rfile, delete_rfile
 from app.datamgmt.states import get_evidences_state
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseEvidenceSchema
 from app.util import response_success, response_error, login_required, api_login_required
@@ -82,13 +83,17 @@ def case_add_rfile(caseid):
     try:
         # validate before saving
         evidence_schema = CaseEvidenceSchema()
-        jsdata = request.get_json()
-        evidence = evidence_schema.load(jsdata)
+
+        request_data = call_modules_hook('on_preload_evidence_create', data=request.get_json(), caseid=caseid)
+
+        evidence = evidence_schema.load(request_data)
 
         crf = add_rfile(evidence=evidence,
                           user_id=current_user.id,
                           caseid=caseid
                          )
+
+        crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=caseid)
 
         if crf:
             track_activity("added evidence {}".format(crf.filename), caseid=caseid)
