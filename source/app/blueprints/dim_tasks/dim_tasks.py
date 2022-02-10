@@ -29,12 +29,14 @@ import os
 from flask import Blueprint, request
 from flask import render_template, url_for, redirect
 from flask_wtf import FlaskForm
+
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from iris_interface.IrisInterfaceStatus import IIStatus
 from sqlalchemy import desc
 
 import app
 from app.datamgmt.activities.activities_db import get_all_user_activities
-from app.models import CeleryTaskMeta, IrisModuleHook, IrisHook, IrisModule
+from app.models import CeleryTaskMeta, IrisModuleHook, IrisHook, IrisModule, Ioc
 from app.util import response_success, login_required, api_login_required, response_error
 
 dim_tasks_blueprint = Blueprint(
@@ -80,9 +82,39 @@ def list_dim_hook_options_ioc(caseid):
 @dim_tasks_blueprint.route('/dim/hooks/call', methods=['POST'])
 @api_login_required
 def dim_hooks_call(caseid):
-    print(request.json)
+    logs = []
+    js_data = request.json
+    if not js_data:
+        return response_error('Invalid data')
 
-    return response_success('')
+    hook_name = js_data.get('hook_name')
+    if not hook_name:
+        return response_error('Missing hook_name')
+
+    targets = js_data.get('targets')
+    if not targets:
+        return response_error('Missing targets')
+
+    data_type = js_data.get('type')
+    if not data_type:
+        return response_error('Missing data type')
+
+    index = 0
+    for target in js_data.get('targets'):
+        if data_type == 'ioc':
+            ioc = Ioc.query.filter(Ioc.ioc_id == target).first()
+            if not ioc:
+                logs.append(f'IOC ID {target} not found')
+                continue
+
+            # Call to queue task
+            call_modules_hook(hook_name=hook_name, data=ioc, caseid=caseid)
+            index += 1
+
+    if len(logs) > 0:
+        return response_error(f"Errors encountered during processing of data. Queued {index} tasks", data=logs)
+
+    return response_success(f'Queued {index} tasks')
 
 
 @dim_tasks_blueprint.route('/dim/tasks/list', methods=['GET'])

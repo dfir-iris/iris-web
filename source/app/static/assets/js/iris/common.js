@@ -496,16 +496,17 @@ function dim_task_status(id) {
     });
 }
 
-function init_module_processing(row, hook_name, module_name, data_type) {
+function init_module_processing(rows, hook_name, module_name, data_type) {
     var data = Object();
     data['hook_name'] = hook_name;
     data['module_name'] = module_name;
     data['csrf_token'] = $('#csrf_token').val();
     data['type'] = data_type;
+    data['targets'] = [];
 
-    if (type == "ioc") {
-        for (row in rows) {
-            data['targets'].push(row.ioc_id);
+    if (data_type == "ioc") {
+        for (index in rows) {
+            data['targets'].push(rows[index].ioc_id);
         }
     }
 
