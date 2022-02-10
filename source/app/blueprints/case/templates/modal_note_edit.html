@@ -6,7 +6,7 @@
               <button class="btn btn-white pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                   <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
               </button>
-              <div class="dropdown-menu pull-right" aria-labelledby="dropdownMenuButton">
+              <div class="dropdown-menu pull-right" id="note_quick_actions" aria-labelledby="dropdownMenuButton">
                   <a class="dropdown-item" href="#" onclick='copy_note_link({{note.note_id if note.note_id|length else id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
               </div>
          </div>

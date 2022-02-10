@@ -386,6 +386,32 @@ function note_detail(id) {
 
         edit_innote();
 
+        $.ajax({
+        url: "/dim/hooks/options/note/list" + case_param(),
+        type: "GET",
+        dataType: 'json',
+        success: function (response) {
+            if (response.status == 'success') {
+                if (response.data != null) {
+                    jsdata = response.data;
+                    if (jsdata.length != 0) {
+                        $('#note_quick_actions').append('<div class="dropdown-divider"></div>');
+                    }
+                    for (option in jsdata) {
+                        opt = jsdata[option];
+                        menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(${id}, ${opt.hook_name},`+
+                                    `${opt.module_name}, "notes");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+                        $('#note_quick_actions').append(menu_opt);
+                    }
+                }
+            }
+        },
+        error: function (error) {
+            notify_error(error.statusText);
+        }
+    });
+        $('#note_quick_actions')
+
         $('#modal_note_detail').modal({ show: true, backdrop: 'static', keyboard: false });
     });
 }
