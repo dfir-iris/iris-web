@@ -219,7 +219,7 @@ function get_case_ioc() {
                     $('#ioc_table_wrapper').show();
                     $('[data-toggle="popover"]').popover();
                     Table.columns.adjust().draw();
-                    load_ioc_menu_mod_options('ioc', Table);
+                    load_menu_mod_options('ioc', Table);
 
                 } else {
                     Table.clear().draw();

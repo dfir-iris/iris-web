@@ -247,7 +247,7 @@ function get_case_assets() {
                     Table.clear();
                     Table.rows.add(jsdata.assets);
                     Table.columns.adjust().draw();
-                    load_ioc_menu_mod_options('asset', Table);
+                    load_menu_mod_options('asset', Table);
 
                     set_last_state(jsdata.state);
                     hide_loader();

@@ -529,7 +529,7 @@ function init_module_processing(rows, hook_name, module_name, data_type) {
 }
 
 
-function load_ioc_menu_mod_options(data_type, table) {
+function load_menu_mod_options(data_type, table) {
     var actionOptions = {
         classes: [],
         contextMenu: {
