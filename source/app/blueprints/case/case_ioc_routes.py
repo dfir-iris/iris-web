@@ -250,6 +250,8 @@ def case_add_ioc_modal(caseid, url_redir):
 @api_login_required
 def case_delete_ioc(cur_id, caseid):
 
+    call_modules_hook('on_preload_ioc_delete', data=cur_id, caseid=caseid)
+
     ioc = get_ioc(cur_id, caseid)
 
     if not ioc:
@@ -258,6 +260,8 @@ def case_delete_ioc(cur_id, caseid):
     if not delete_ioc(ioc, caseid):
         track_activity("unlinked IOC ID {}".format(cur_id))
         return response_success("IOC unlinked")
+
+    call_modules_hook('on_postload_ioc_delete', data=cur_id, caseid=caseid)
 
     track_activity("deleted IOC ID {}".format(cur_id))
     return response_success("IOC deleted")
