@@ -36,7 +36,7 @@ from app.datamgmt.manage.manage_cases_db import list_cases_dict, close_case, reo
     get_case_details_rt
 from app.forms import AddCaseForm
 from app.iris_engine.module_handler.module_handler import list_available_pipelines, instantiate_module_from_name, \
-    configure_module_on_init
+    configure_module_on_init, call_modules_hook
 
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
@@ -98,8 +98,11 @@ def api_delete_case(cur_id, caseid):
 
     else:
         try:
-
+            call_modules_hook('on_preload_case_delete', data=cur_id, caseid=caseid)
             if delete_case(case_id=cur_id):
+
+                call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
+
                 track_activity("case {} deleted successfully".format(cur_id), caseid=caseid, ctx_less=True)
                 return response_success("Case successfully deleted")
 
@@ -155,9 +158,13 @@ def api_add_case(caseid):
 
     try:
 
-        case = case_schema.load(request.json)
+        request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
+        case = case_schema.load(request_data)
 
         case.save()
+
+        case = call_modules_hook('on_postload_case_create', data=request.case, caseid=caseid)
+
         track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
