@@ -62,6 +62,15 @@ $('#attributes_table').dataTable( {
                 "render": function ( data, type, row ) {
                     return '<a href="#" onclick="attribute_detail(\'' + row['attribute_id'] + '\');">' + sanitizeHTML(data) +'</a>';
                 }
+            },
+            {
+                "data": "attribute_display_name",
+                "render": function ( data, type, row ) {
+                    return '<a href="#" onclick="attribute_detail(\'' + row['attribute_id'] + '\');">' + sanitizeHTML(data) +'</a>';
+                }
+            },
+            {
+                "data": "attribute_description"
             }
         ]
     }
@@ -116,3 +125,4 @@ function attribute_detail(attr_id) {
     });
     $('#modal_add_attribute').modal({ show: true });
 }
+
