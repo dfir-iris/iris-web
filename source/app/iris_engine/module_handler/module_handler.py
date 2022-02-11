@@ -22,11 +22,10 @@ import logging
 
 import importlib
 from flask_login import current_user
-from sqlalchemy import MetaData, create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session as orm_scoped_session, scoped_session
+
 from pickle import loads, dumps
 
-from app import app, configuration, db, celery
+from app import app, db, celery
 
 from app.datamgmt.iris_engine.modules_db import iris_module_exists, iris_module_add, modules_list_pipelines, \
      get_module_config_from_hname
@@ -34,7 +33,6 @@ from app.models import IrisHook, IrisModuleHook, IrisModule
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = logging.getLogger(__name__)
-
 
 def check_module_compatibility(module_version):
     return True
@@ -348,6 +346,7 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
     except Exception as e:
         msg = f"Failed to run hook {hook_name} with module {module_name}. Error {str(e)}"
         log.critical(msg)
+        print(msg)
         task_status = IStatus.I2Error(message=msg)
 
     return task_status

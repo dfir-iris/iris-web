@@ -203,7 +203,7 @@ def module_list_hooks_view():
 
 
 def module_list_available_hooks():
-    return IrisHook.with_entities(
+    return IrisHook.query.with_entities(
         IrisHook.id,
         IrisHook.hook_name,
         IrisHook.hook_description
