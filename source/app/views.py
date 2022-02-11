@@ -41,6 +41,7 @@ from app.blueprints.manage.manage_assets_type_routes import manage_assets_bluepr
 from app.blueprints.manage.manage_advanced_routes import manage_adv_blueprint
 from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.manage.manage_templates_routes import manage_templates_blueprint
+from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
 
 from app.blueprints.context.context import ctx_blueprint
 from app.blueprints.case.case_routes import case_blueprint
@@ -77,6 +78,7 @@ app.register_blueprint(manage_event_cat_blueprint)
 app.register_blueprint(manage_objects_blueprint)
 app.register_blueprint(manage_tlp_type_blueprint)
 app.register_blueprint(manage_task_status_blueprint)
+app.register_blueprint(manage_attributes_blueprint)
 
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
