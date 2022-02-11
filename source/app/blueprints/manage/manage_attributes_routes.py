@@ -82,3 +82,23 @@ def attributes_modal(cur_id, caseid, url_redir):
 
     return render_template("modal_add_attribute.html", form=form, attribute=attribute)
 
+
+@manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
+@api_admin_required
+def update_attribute(cur_id, caseid):
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    attribute = CustomAttribute.query.filter(CustomAttribute.attribute_id == cur_id).first()
+    if not attribute:
+        return response_error(f"Invalid Attribute ID {cur_id}")
+
+    data = request.get_json()
+    attr_content = data.get('attribute_content')
+    if not attr_content:
+        return response_error("Invalid request")
+
+    attribute.attribute_content = attr_content
+    db.session.commit()
+
+    return response_success("Attribute updated")
