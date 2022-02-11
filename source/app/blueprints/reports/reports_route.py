@@ -30,6 +30,7 @@ from flask import Blueprint
 from flask import url_for, redirect, send_file
 from flask_login import current_user
 
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.reporter.reporter import IrisMakeDocReport
 from app.iris_engine.tasker.tasks import task_make_report, task_pull_misp_all, task_update_ioc_misp, task_update_ioc
 from app.iris_engine.utils.tracker import track_activity
@@ -47,6 +48,7 @@ file_remover = FileRemover()
 @api_login_required
 def download_case_activity(report_id, caseid):
 
+    call_modules_hook('on_preload_activities_report_create', data=report_id, caseid=caseid)
     if report_id:
         report = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
         if report:
@@ -59,6 +61,7 @@ def download_case_activity(report_id, caseid):
                 track_activity("failed to generate a report")
                 return response_error("Report error", "Failed to generate a report.")
 
+            call_modules_hook('on_postload_activities_report_create', data=report_id, caseid=caseid)
             resp = send_file(fpath, as_attachment=True)
             file_remover.cleanup_once_done(resp, tmp_dir)
 
@@ -72,9 +75,8 @@ def download_case_activity(report_id, caseid):
 @reports_blueprint.route("/report/generate/case/<report_id>")
 @api_login_required
 def _gen_report(report_id, caseid):
-    if not current_user.is_authenticated:
-        return redirect(url_for('login.login'))
 
+    call_modules_hook('on_preload_report_create', data=report_id, caseid=caseid)
     if report_id:
         report = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
         if report:
@@ -86,6 +88,8 @@ def _gen_report(report_id, caseid):
             if fpath is None:
                 track_activity("failed to generate a report")
                 return response_error("Report error", "Failed to generate a report.")
+
+            call_modules_hook('on_postload_report_create', data=fpath, caseid=caseid)
 
             resp = send_file(fpath, as_attachment=True)
             file_remover.cleanup_once_done(resp, tmp_dir)

@@ -58,7 +58,6 @@ def iris_module_add(module_name, module_human_name, module_description,
 def is_mod_configured(mod_config):
     for config in mod_config:
         if config['mandatory'] and ("value" not in config or config["value"] == ""):
-            print(config)
             return False
 
     return True
