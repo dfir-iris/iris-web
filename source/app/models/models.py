@@ -398,6 +398,16 @@ class Ioc(db.Model):
     ioc_type = relationship('IocType')
 
 
+class CustomAttribute(db.Model):
+    __tablename__ = 'custom_attribute'
+
+    attribute_id = Column(Integer, primary_key=True)
+    attribute_display_name = Column(Text)
+    attribute_description = Column(Text)
+    attribute_for = Column(Text)
+    attribute_content = Column(Text)
+
+
 class IocType(db.Model):
     __tablename__ = 'ioc_type'
 

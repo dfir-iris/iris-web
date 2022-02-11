@@ -22,9 +22,10 @@
 from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 
+from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AssetsType, CaseAssets
-from app.forms import AddAssetForm
+from app.models.models import AssetsType, CaseAssets, CustomAttribute
+from app.forms import AddAssetForm, AttributeForm
 from app import db
 
 from app.util import response_success, response_error, login_required, admin_required, api_admin_required
@@ -43,6 +44,22 @@ def manage_attributes(caseid, url_redir):
 
     form = AddAssetForm()
 
-    # Return default page of case management
     return render_template('manage_attributes.html', form=form)
+
+
+@manage_attributes_blueprint.route('/manage/attributes/<int:cur_id>/modal', methods=['GET'])
+@admin_required
+def attributes_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_attributes_blueprint.manage_attributes', cid=caseid))
+
+    form = AttributeForm()
+
+    attribute = CustomAttribute.query.filter(CustomAttribute.attribute_id == cur_id).first()
+    if not attribute:
+        return response_error(f"Invalid Attribute ID {cur_id}")
+
+    form.attribute_content.data = attribute.type_taxonomy
+
+    return render_template("modal_add_attribute.html", form=form, attribute=attribute)
 
