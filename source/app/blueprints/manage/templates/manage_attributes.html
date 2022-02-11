@@ -20,7 +20,7 @@
                             <div class="card-title">Objects Attributes</div>
                         </div>
                         <div class="col">
-                            <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_objects_attributes();">
+                            <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_attribute_table();">
                                 <i class="fas fa-sync rotate"></i>
                             </button>
                         </div>
@@ -33,7 +33,7 @@
                             <span id="table_buttons"></span>
                         </div>
                         <table class="table display table table-striped table-hover" width="100%"
-                            cellspacing="0" id="hooks_table">
+                            cellspacing="0" id="attributes_table">
                             <thead>
                                 <tr>
                                     <th>#ID</th>
@@ -61,9 +61,9 @@
         </div>
     </div>
 </div>
-    <div class="modal" tabindex="-1"  id="modal_add_type" data-backdrop="true">
+    <div class="modal" tabindex="-1"  id="modal_add_attribute" data-backdrop="true">
         <div class="modal-lg modal-dialog" role="document">
-            <div class="modal-content" id="modal_add_type_content">
+            <div class="modal-content" id="modal_add_attribute_content">
     
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
@@ -74,7 +74,7 @@
 
     {% block javascripts %}
 
-    <script src="/static/assets/js/iris/manage_objects.js"></script>
+    <script src="/static/assets/js/iris/manage_attributes.js"></script>
     <script src="/static/assets/js/iris/common.js"></script>
     <script>
     </script>
