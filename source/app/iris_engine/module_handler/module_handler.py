@@ -257,7 +257,7 @@ def register_module(module_name):
     return True, ["Module registered"]
 
 
-def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = False, manual_hook_name: str = None,
+def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = None,
                   run_asynchronously: bool = True):
     """
     Register a new hook into IRIS. The hook_name should be a well-known hook to IRIS. iris_hooks table can be
@@ -272,17 +272,21 @@ def register_hook(module_id: int, iris_hook_name: str, is_manual_hook: bool = Fa
 
     :param module_id: Module ID to register
     :param iris_hook_name: Well-known hook name to register to
-    :param is_manual_hook: Set to true to indicate an action to run upon user trigger
     :param manual_hook_name: The name of the hook displayed in the UI, if is_manual_hook is set
     :param run_asynchronously: Set to true to queue the module action in rabbitmq
     :return: Tuple
     """
-    if is_manual_hook:
-        if "on_manual_trigger_" not in iris_hook_name:
-            return False, [f"Hook {iris_hook_name} is not a manual trigger hook"]
 
+    module = IrisModule.query.filter(IrisModule.id == module_id).first()
+    if not module:
+        return False, [f'Module ID {module_id} not found']
+
+    is_manual_hook = False
+    if "on_manual_trigger_" in iris_hook_name:
+        is_manual_hook = True
         if not manual_hook_name:
-            return False, [f"Manual hooks should set manual_hook_name"]
+            # Set default hook name
+            manual_hook_name = f"{module.module_name}::{iris_hook_name}"
 
     hook = IrisHook.query.filter(IrisHook.hook_name == iris_hook_name).first()
     if not hook:
