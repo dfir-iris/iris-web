@@ -508,6 +508,7 @@ function init_module_processing(rows, hook_name, module_name, data_type) {
         "ioc": "ioc_id",
         "asset": "asset_id",
         "task": "task_id",
+        "global_task": "task_id",
         "evidence": "id"
     }
 

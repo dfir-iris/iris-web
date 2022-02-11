@@ -37,7 +37,7 @@ from sqlalchemy import desc
 import app
 from app.datamgmt.activities.activities_db import get_all_user_activities
 from app.models import CeleryTaskMeta, IrisModuleHook, IrisHook, IrisModule, Ioc, CaseAssets, Notes, CasesEvent, \
-    CaseTasks, CaseReceivedFile
+    CaseTasks, CaseReceivedFile, GlobalTasks
 from app.util import response_success, login_required, api_login_required, response_error
 
 dim_tasks_blueprint = Blueprint(
@@ -138,6 +138,11 @@ def dim_hooks_call(caseid):
                     CaseReceivedFile.case_id == caseid
             ).first()
 
+        elif data_type == "global_task":
+            obj = GlobalTasks.query.filter(
+                    GlobalTasks.id == target
+            ).first()
+
         else:
             logs.append(f'Data type {data_type} not supported')
             continue
@@ -150,7 +155,9 @@ def dim_hooks_call(caseid):
         # Call to queue task
         index += 1
 
-    call_modules_hook(hook_name=hook_name, data=obj_targets, caseid=caseid)
+    if len(obj_targets) > 0:
+        call_modules_hook(hook_name=hook_name, data=obj_targets, caseid=caseid)
+
     if len(logs) > 0:
         return response_error(f"Errors encountered during processing of data. Queued task with {index} objects",
                               data=logs)

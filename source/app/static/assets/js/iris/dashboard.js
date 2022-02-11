@@ -133,7 +133,8 @@ UserTaskTable = $("#utasks_table").DataTable({
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    ]
+    ],
+    select: true
 });
 $("#utasks_table").css("font-size", 12);
 
@@ -186,6 +187,7 @@ function update_utasks_list() {
                     UserTaskTable.columns.adjust().draw();
                     UserTaskTable.buttons().container().appendTo($('#utasks_table_info'));
                        $('[data-toggle="popover"]').popover();
+
                     $('#utasks_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
                 }
 
@@ -312,7 +314,8 @@ Table = $("#gtasks_table").DataTable({
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    ]
+    ],
+    select: true
 });
 $("#gtasks_table").css("font-size", 12);
 
@@ -462,6 +465,8 @@ function update_gtasks_list() {
                     Table.columns.adjust().draw();
                     Table.buttons().container().appendTo($('#gtasks_table_info'));
                        $('[data-toggle="popover"]').popover();
+
+                    load_menu_mod_options('global_task', Table);
                     $('#tasks_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
                 }
 
