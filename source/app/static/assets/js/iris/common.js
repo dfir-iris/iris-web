@@ -504,9 +504,18 @@ function init_module_processing(rows, hook_name, module_name, data_type) {
     data['type'] = data_type;
     data['targets'] = [];
 
-    if (data_type == "ioc") {
-        for (index in rows) {
-            data['targets'].push(rows[index].ioc_id);
+    type_map = {
+        "ioc": "ioc_id",
+        "asset": "asset_id",
+        "task": "task_id",
+        "evidence": "id"
+    }
+
+    for (index in rows) {
+        if (typeof rows[index] === 'object') {
+            data['targets'].push(rows[index][type_map[data_type]]);
+        } else {
+            data['targets'].push(rows[index]);
         }
     }
 
@@ -543,7 +552,7 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
                     }
                     for (option in jsdata) {
                         opt = jsdata[option];
-                        menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing("${element_id}", "${opt.hook_name}",`+
+                        menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
                                     `"${opt.module_name}", "${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
                         anchor.append(menu_opt);
                     }

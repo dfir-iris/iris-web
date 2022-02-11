@@ -298,19 +298,24 @@ def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = N
     if not isinstance(run_asynchronously, bool):
         return False, [f"Expected bool for run_asynchronously but got {type(run_asynchronously)}"]
 
-    imh = IrisModuleHook()
-    imh.is_manual_hook = is_manual_hook
-    imh.wait_till_return = False
-    imh.run_asynchronously = run_asynchronously
-    imh.max_retry = 0
-    imh.manual_hook_ui_name = manual_hook_name if manual_hook_name else ""
-    imh.hook_id = hook.id
-    imh.module_id = module_id
+    mod = IrisModuleHook.query.filter(
+        IrisModuleHook.hook_id == hook.id,
+        IrisModuleHook.module_id == module_id
+    ).first()
+    if not mod:
+        imh = IrisModuleHook()
+        imh.is_manual_hook = is_manual_hook
+        imh.wait_till_return = False
+        imh.run_asynchronously = run_asynchronously
+        imh.max_retry = 0
+        imh.manual_hook_ui_name = manual_hook_name if manual_hook_name else ""
+        imh.hook_id = hook.id
+        imh.module_id = module_id
 
-    try:
-        db.session.add(imh)
-    except Exception as e:
-        return False, [str(e)]
+        try:
+            db.session.add(imh)
+        except Exception as e:
+            return False, [str(e)]
 
     return True, [f"Hook {iris_hook_name} registered"]
 
@@ -331,10 +336,18 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
     # Data is serialized, so deserialized
     deser_data = loads(data=base64.b64decode(data))
 
+    _obj = None
     # The receive object will most likely be cleared when handled by the task,
     # so we need to attach it to a the session in the task
-    obj = db.session.merge(deser_data)
-    db.session.commit()
+    if isinstance(deser_data, list):
+        _obj = []
+        for dse_data in deser_data:
+            obj = db.session.merge(dse_data)
+            db.session.commit()
+            _obj.append(obj)
+    else:
+        _obj = db.session.merge(deser_data)
+        db.session.commit()
 
     log.info(f'Calling module {module_name} for hook {hook_name}')
 
@@ -342,7 +355,7 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
         mod_inst = instantiate_module_from_name(module_name=module_name)
 
         mod_inst.set_log_handler()
-        task_status = mod_inst.hooks_handler(hook_name, data=obj)
+        task_status = mod_inst.hooks_handler(hook_name, data=_obj)
 
         # Recommit the changes made by the module
         db.session.commit()
