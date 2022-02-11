@@ -68,7 +68,8 @@ def list_dim_hook_options_ioc(type, caseid):
         IrisHook.hook_name,
         IrisModule.module_name
     ).filter(
-        IrisHook.hook_name == f"on_manual_trigger_{type}"
+        IrisHook.hook_name == f"on_manual_trigger_{type}",
+        IrisModule.is_active == True
     ).join(
         IrisModuleHook.module,
         IrisModuleHook.hook
