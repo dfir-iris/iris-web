@@ -282,6 +282,7 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_activities_report_create',
                 hook_description='Triggered on activities report creation, before download of the document')
 
+
 def create_safe_languages():
     create_safe(db.session, Languages, name="french", code="FR")
     create_safe(db.session, Languages, name="english", code="EN")

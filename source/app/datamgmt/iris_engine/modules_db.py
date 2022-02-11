@@ -200,3 +200,12 @@ def module_list_hooks_view():
         IrisModuleHook.module,
         IrisModuleHook.hook
     ).all()
+
+
+def module_list_available_hooks():
+    return IrisHook.with_entities(
+        IrisHook.id,
+        IrisHook.hook_name,
+        IrisHook.hook_description
+    ).all()
+
