@@ -82,7 +82,7 @@ function refresh_attribute_table() {
 }
 
 function attribute_detail(attr_id) {
-    url = '/manage/attributes/update/' + attr_id + '/modal' + case_param();
+    url = '/manage/attributes/' + attr_id + '/modal' + case_param();
     $('#modal_add_attribute_content').load(url, function () {
 
         $('#submit_new_attribute').on("click", function () {

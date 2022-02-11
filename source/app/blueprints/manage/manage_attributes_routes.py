@@ -78,7 +78,7 @@ def attributes_modal(cur_id, caseid, url_redir):
     if not attribute:
         return response_error(f"Invalid Attribute ID {cur_id}")
 
-    form.attribute_content.data = attribute.type_taxonomy
+    form.attribute_content.data = attribute.attribute_content
 
     return render_template("modal_add_attribute.html", form=form, attribute=attribute)
 
