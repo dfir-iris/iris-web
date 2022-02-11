@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import json
+
 import csv
 import marshmallow
 import logging as log
@@ -36,7 +38,7 @@ from app.datamgmt.states import get_ioc_state, update_ioc_state
 from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import Ioc
+from app.models.models import Ioc, CustomAttribute
 from app.schema.marshables import IocSchema
 from app.util import response_success, response_error, login_required, api_login_required
 
@@ -115,6 +117,9 @@ def case_add_ioc(caseid):
                                caseid=caseid
                                )
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
+
+        ca = CustomAttribute.query.filter(CustomAttribute.attribute_for == 'ioc').first()
+        ioc.ioc_custom_attributes = ca.attribute_content
 
         if link_existed:
             return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
@@ -284,7 +289,9 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     form.ioc_description.data = ioc.ioc_description
     form.ioc_value.data = ioc.ioc_value
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc)
+    attributes = dict(json.loads(ioc.ioc_custom_attributes))
+
+    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=attributes)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])

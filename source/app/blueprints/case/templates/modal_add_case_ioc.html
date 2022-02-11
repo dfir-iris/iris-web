@@ -1,17 +1,19 @@
 <div class="modal-header">
     <h4 class="modal-title mt-2 mr-4">{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
     {% if ioc.ioc_id %}
+
         <div class="row text-center">
                 <ul class="nav nav-pills nav-default nav-pills" id="pills-tab-without-border" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active show" id="pills-home-tab-nobd" data-toggle="pill" href="#details" role="tab" aria-controls="pills-home-nobd" aria-selected="false">Info</a>
                 </li>
-                <li class="nav-item submenu">
-                    <a class="nav-link" id="pills-profile-tab-nobd" data-toggle="pill" href="#access-security" role="tab" aria-controls="pills-profile-nobd" aria-selected="false">Profile</a>
-                </li>
-                <li class="nav-item submenu">
-                    <a class="nav-link" id="pills-contact-tab-nobd" data-toggle="pill" href="#networking" role="tab" aria-controls="pills-contact-nobd" aria-selected="true">Contact</a>
-                </li>
+
+                {% for ca in attributes %}
+                    <li class="nav-item submenu">
+                        <a class="nav-link" id="pills-profile-tab-nobd" data-toggle="pill" href="#{{ ca }}" role="tab" aria-controls="pills-profile-nobd" aria-selected="false">{{ca}}</a>
+                    </li>
+                {% endfor %}
+
             </ul>
     </div>
 
@@ -70,12 +72,20 @@
                 </div>
             </div>
 
-              <div class="tab-pane" id="access-security">
-                content 0
+              {% for ca in attributes %}
+              <div class="tab-pane" id="{{ ca }}">
+                  {% for cle in attributes[ca] %}
+                        <div class="form-group row">
+                            <div class="col-6">
+                                <label for="ioc_type" class="mr-4">{{ cle }}
+                                </label>
+                                <input type="text" id="{{ cle }}"
+                                    class="form-control col-md-12"/>
+                            </div>
+                        </div>
+                   {% endfor %}
               </div>
-              <div class="tab-pane" id="networking">
-                 content 1
-              </div>
+              {% endfor %}
           </div>
             {% if ioc.ioc_id %}
                 <button type="button" class="btn btn-outline-danger mt-5"

@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import json
+
 from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 
@@ -98,7 +100,7 @@ def update_attribute(cur_id, caseid):
     if not attr_content:
         return response_error("Invalid request")
 
-    attribute.attribute_content = attr_content
+    attribute.attribute_content = dict(json.loads(attr_content))
     db.session.commit()
 
     return response_success("Attribute updated")
