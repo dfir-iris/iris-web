@@ -28,7 +28,8 @@ from app.models.models import AssetsType, CaseAssets, CustomAttribute
 from app.forms import AddAssetForm, AttributeForm
 from app import db
 
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required
+from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
+    api_login_required
 
 manage_attributes_blueprint = Blueprint('manage_attributes',
                                           __name__,
@@ -45,6 +46,24 @@ def manage_attributes(caseid, url_redir):
     form = AddAssetForm()
 
     return render_template('manage_attributes.html', form=form)
+
+
+@manage_attributes_blueprint.route('/manage/attributes/list')
+@api_login_required
+def list_attributes(caseid):
+    # Get all attributes
+    attributes = CustomAttribute.query.with_entities(
+        CustomAttribute.attribute_id,
+        CustomAttribute.attribute_content,
+        CustomAttribute.attribute_display_name,
+        CustomAttribute.attribute_description,
+        CustomAttribute.attribute_for
+    ).all()
+
+    data = [row._asdict() for row in attributes]
+
+    # Return the attributes
+    return response_success("", data=data)
 
 
 @manage_attributes_blueprint.route('/manage/attributes/<int:cur_id>/modal', methods=['GET'])

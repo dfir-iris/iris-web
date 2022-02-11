@@ -33,7 +33,8 @@ from app.configuration import SQLALCHEMY_BASE_URI
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.models.cases import Cases, Client
 from app.models.models import Role, Languages, User, get_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
-    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook, CustomAttribute
+    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook, CustomAttribute, \
+    create_safe_attr
 
 log = app.logger
 
@@ -432,24 +433,24 @@ def create_safe_report_types():
 
 
 def create_safe_attributes():
-    create_safe(db.session, CustomAttribute,  attribute_display_name='IOC',
-                attribute_description='Defines default attributes for IOCs', attribute_for='ioc',
-                attribute_content="{}")
-    create_safe(db.session, CustomAttribute,  attribute_display_name='Events',
-                attribute_description='Defines default attributes for Events', attribute_for='event',
-                attribute_content="{}")
-    create_safe(db.session, CustomAttribute,  attribute_display_name='Assets',
-                attribute_description='Defines default attributes for Assets', attribute_for='asset',
-                attribute_content="{}")
-    create_safe(db.session, CustomAttribute,  attribute_display_name='Tasks',
-                attribute_description='Defines default attributes for Tasks', attribute_for='task',
-                attribute_content="{}")
-    create_safe(db.session, CustomAttribute,  attribute_display_name='Notes',
-                attribute_description='Defines default attributes for Notes', attribute_for='note',
-                attribute_content="{}")
-    create_safe(db.session, CustomAttribute,  attribute_display_name='Evidences',
-                attribute_description='Defines default attributes for Evidences', attribute_for='evidence',
-                attribute_content="{}")
+    create_safe_attr(db.session, attribute_display_name='IOC',
+                     attribute_description='Defines default attributes for IOCs', attribute_for='ioc',
+                     attribute_content="{}")
+    create_safe_attr(db.session, attribute_display_name='Events',
+                     attribute_description='Defines default attributes for Events', attribute_for='event',
+                     attribute_content="{}")
+    create_safe_attr(db.session, attribute_display_name='Assets',
+                     attribute_description='Defines default attributes for Assets', attribute_for='asset',
+                     attribute_content="{}")
+    create_safe_attr(db.session, attribute_display_name='Tasks',
+                     attribute_description='Defines default attributes for Tasks', attribute_for='task',
+                     attribute_content="{}")
+    create_safe_attr(db.session, attribute_display_name='Notes',
+                     attribute_description='Defines default attributes for Notes', attribute_for='note',
+                     attribute_content="{}")
+    create_safe_attr(db.session, attribute_display_name='Evidences',
+                     attribute_description='Defines default attributes for Evidences', attribute_for='evidence',
+                     attribute_content="{}")
 
 
 def create_safe_ioctypes():

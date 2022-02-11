@@ -405,7 +405,7 @@ class CustomAttribute(db.Model):
     attribute_display_name = Column(Text)
     attribute_description = Column(Text)
     attribute_for = Column(Text)
-    attribute_content = Column(Text)
+    attribute_content = Column(JSON)
 
 
 class IocType(db.Model):
@@ -743,3 +743,23 @@ class CeleryTaskMeta(db.Model):
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
+
+
+def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):
+    cat = CustomAttribute.query.filter(
+        CustomAttribute.attribute_display_name == attribute_display_name,
+        CustomAttribute.attribute_description == attribute_description,
+        CustomAttribute.attribute_for == attribute_for
+    ).first()
+
+    if cat:
+        return False
+    else:
+        instance = CustomAttribute()
+        instance.attribute_display_name = attribute_display_name
+        instance.attribute_description = attribute_description
+        instance.attribute_for = attribute_for
+        instance.attribute_content = attribute_content
+        session.add(instance)
+        session.commit()
+        return True
