@@ -256,11 +256,21 @@ def update_all_ioc_attributes():
             if ioc.ioc_custom_attributes.get(tab) is None:
                 flag_modified(ioc, "ioc_custom_attributes")
                 ioc.ioc_custom_attributes[tab] = target_attr[tab]
+
             else:
                 for element in target_attr[tab]:
                     if element not in ioc.ioc_custom_attributes[tab]:
                         flag_modified(ioc, "ioc_custom_attributes")
                         ioc.ioc_custom_attributes[tab][element] = target_attr[tab][element]
+
+                    else:
+                        if ioc.ioc_custom_attributes[tab][element]['type'] != target_attr[tab][element]['type']:
+                            flag_modified(ioc, "ioc_custom_attributes")
+                            ioc.ioc_custom_attributes[tab][element]['type'] = target_attr[tab][element]['type']
+
+                        if ioc.ioc_custom_attributes[tab][element]['mandatory'] != target_attr[tab][element]['mandatory']:
+                            flag_modified(ioc, "ioc_custom_attributes")
+                            ioc.ioc_custom_attributes[tab][element]['mandatory'] = target_attr[tab][element]['mandatory']
 
         # Commit will only be effective if we flagged a modification, reducing load on the DB
         db.session.commit()
