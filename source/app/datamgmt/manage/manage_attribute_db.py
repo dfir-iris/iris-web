@@ -17,11 +17,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import logging as logger
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import db
 from app.models import Ioc, CustomAttribute, CasesEvent, CaseAssets, CaseTasks, Notes, CaseReceivedFile
+
+log = logger.getLogger(__name__)
 
 
 def update_all_attributes(object_type):
@@ -81,3 +83,45 @@ def get_default_custom_attributes(object_type):
     ca = CustomAttribute.query.filter(CustomAttribute.attribute_for == object_type).first()
     return ca.attribute_content
 
+
+def merge_custom_attributes(data, obj_id, object_type):
+
+    if object_type == 'ioc':
+        obj = Ioc.query.filter(Ioc.ioc_id == obj_id).first()
+    elif object_type == 'event':
+        obj = CasesEvent.query.filter(CasesEvent.event_id == obj_id).first()
+    elif object_type == 'asset':
+        obj = CasesEvent.query.filter(CaseAssets.asset_id == obj_id).first()
+    elif object_type == 'task':
+        obj = CaseTasks.query.filter(CaseTasks.id == obj_id).first()
+    elif object_type == 'note':
+        obj = Notes.query.filter(Notes.note_id == obj_id).first()
+    elif object_type == 'evidence':
+        obj = CaseReceivedFile.query.filter(CaseReceivedFile.id == obj_id).first()
+
+    current_attr = obj.custom_attributes
+
+    for field in data:
+        if obj.custom_attributes.get(field) is None:
+            log.error(f'Missing field {field} in {object_type}')
+
+        else:
+            for element in target_attr[tab]:
+                if element not in obj.custom_attributes[tab]:
+                    print(f'Migrating {element}')
+                    flag_modified(obj, "custom_attributes")
+                    obj.custom_attributes[tab][element] = target_attr[tab][element]
+
+                else:
+                    if obj.custom_attributes[tab][element]['type'] != target_attr[tab][element]['type']:
+                        flag_modified(obj, "custom_attributes")
+                        obj.custom_attributes[tab][element]['type'] = target_attr[tab][element]['type']
+
+                    if obj.custom_attributes[tab][element]['mandatory'] != target_attr[tab][element]['mandatory']:
+                        flag_modified(obj, "custom_attributes")
+                        obj.custom_attributes[tab][element]['mandatory'] = target_attr[tab][element]['mandatory']
+
+        # Commit will only be effective if we flagged a modification, reducing load on the DB
+        db.session.commit()
+
+    return

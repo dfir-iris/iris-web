@@ -317,6 +317,7 @@ def case_update_ioc(cur_id, caseid):
 
         # validate before saving
         ioc_schema = IocSchema()
+        request_data['ioc_id'] = cur_id
         ioc_sc = ioc_schema.load(request_data, instance=ioc)
         ioc_sc.user_id = current_user.id
 

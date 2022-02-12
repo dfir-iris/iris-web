@@ -640,10 +640,16 @@ function load_menu_mod_options(data_type, table) {
 function get_custom_attributes_fields() {
     values = Object();
     $("input[id^='inpstr_']").each(function (i, el) {
-        values[$(el).attr('data-attr-for')] = $(el).val();
+        tab = $(el).attr('data-ref-tab');
+        field = $(el).attr('data-attr-for');
+        if (!(tab in values)) { values[tab] = {} };
+        values[tab][field] = $(el).val();
     })
     $("input[id^='inpchk_']").each(function (i, el) {
-        values[$(el).attr('data-attr-for')] = $(el).is(':checked');
+        tab = $(el).attr('data-ref-tab');
+        field = $(el).attr('data-attr-for');
+        if (!(tab in values)) { values[tab] = {} };
+        values[tab][field] = $(el).is(':checked');
     })
 
     return values;

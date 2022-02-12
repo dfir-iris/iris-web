@@ -29,6 +29,7 @@ from sqlalchemy import func
 
 from app import ma
 from app.datamgmt.dashboard.dashboard_db import get_task_status
+from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
     CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp, EventCategory
 
@@ -112,6 +113,14 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         if not tlp_id:
             raise marshmallow.exceptions.ValidationError("Invalid TLP ID",
                                                          field_name="ioc_tlp_id")
+
+        return data
+
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr:
+            data['custom_attributes'] = merge_custom_attributes(data, data.get('ioc_id'), 'ioc')
 
         return data
 
