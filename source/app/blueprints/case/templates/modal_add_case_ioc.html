@@ -2,22 +2,7 @@
     <h4 class="modal-title mt-2 mr-4">{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
     {% if ioc.ioc_id %}
 
-        {% if ioc.ioc_custom_attributes|length > 0 %}
-        <div class="row text-center">
-                <ul class="nav nav-pills nav-default nav-pills" id="pills-tab-without-border" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active show" id="pills-home-tab-nobd" data-toggle="pill" href="#details" role="tab" aria-controls="pills-home-nobd" aria-selected="false">Info</a>
-                </li>
-
-                {% for ca in ioc.ioc_custom_attributes %}
-                    <li class="nav-item submenu">
-                        <a class="nav-link" id="pills-profile-tab-nobd" data-toggle="pill" href="#{{ ca }}" role="tab" aria-controls="pills-profile-nobd" aria-selected="false">{{ca}}</a>
-                    </li>
-                {% endfor %}
-
-            </ul>
-        </div>
-        {% endif %}
+    {% include 'modals/modal_attributes_nav.html' %}
 
     <div class="row text-right">
      <div class="dropdown">
@@ -73,39 +58,7 @@
                     </form>
                 </div>
             </div>
-
-              {% for ca in ioc.ioc_custom_attributes %}
-              <div class="tab-pane" id="{{ ca }}">
-                  {% for cle in ioc.ioc_custom_attributes[ca] %}
-                        <div class="form-group row">
-                            <div class="col-6">
-
-                                {% if ioc.ioc_custom_attributes[ca][cle]["type"] == "input_string" %}
-                                    <label for="{{ cle }}" class="mr-4">{{ cle }}
-                                    </label>
-                                    <input type="text" id="{{ cle }}" class="form-control col-md-12"/>
-
-                                {% elif ioc.ioc_custom_attributes[ca][cle]["type"] == "input_checkbox" %}
-                                    <div class="form-check">
-                                        <label class="form-check-label mt-3">
-                                            <input type="checkbox" id="{{ cle }}" class="form-control col-md-12"/>
-                                            <span class="form-check-sign"> {{ cle }}
-                                            </span>
-                                        </label>
-                                    </div>
-
-                                {% elif ioc.ioc_custom_attributes[ca][cle]["type"] == "raw" %}
-                                    <p>{{ cle }}</p>
-
-                                {% elif ioc.ioc_custom_attributes[ca][cle]["type"] == "html" %}
-                                    {{ cle|safe }}
-
-                                {% endif %}
-                            </div>
-                        </div>
-                   {% endfor %}
-              </div>
-              {% endfor %}
+            {% include 'modals/modal_attributes_tabs.html' %}
           </div>
             {% if ioc.ioc_id %}
                 <button type="button" class="btn btn-outline-danger mt-5"

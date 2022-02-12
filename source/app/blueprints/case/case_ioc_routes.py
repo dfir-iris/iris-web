@@ -120,7 +120,7 @@ def case_add_ioc(caseid):
 
         ca = CustomAttribute.query.filter(CustomAttribute.attribute_for == 'ioc').first()
 
-        ioc.ioc_custom_attributes = ca.attribute_content
+        ioc.custom_attributes = ca.attribute_content
 
         if link_existed:
             return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
@@ -290,7 +290,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     form.ioc_description.data = ioc.ioc_description
     form.ioc_value.data = ioc.ioc_value
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc)
+    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=ioc.custom_attributes)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])

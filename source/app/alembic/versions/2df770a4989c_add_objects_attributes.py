@@ -20,20 +20,20 @@ depends_on = None
 
 
 def upgrade():
-    if not _table_has_column('ioc', 'ioc_custom_attributes'):
+    if not _table_has_column('ioc', 'custom_attributes'):
         op.add_column('ioc',
-                      sa.Column('ioc_custom_attributes', sa.Text)
+                      sa.Column('custom_attributes', sa.Text)
                       )
 
         t_ua = sa.Table(
             'ioc',
             sa.MetaData(),
             sa.Column('id', sa.Integer, primary_key=True),
-            sa.Column('ioc_custom_attributes', sa.Text)
+            sa.Column('custom_attributes', sa.Text)
         )
         conn = op.get_bind()
         conn.execute(t_ua.update().values(
-            ioc_custom_attributes='{}'
+            custom_attributes='{}'
         ))
     pass
 

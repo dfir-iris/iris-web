@@ -1,0 +1,16 @@
+{% if attributes and attributes|length > 0 %}
+<div class="row text-center">
+        <ul class="nav nav-pills nav-default nav-pills" id="pills-tab-without-border" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active show" id="pills-home-tab-nobd" data-toggle="pill" href="#details" role="tab" aria-controls="pills-home-nobd" aria-selected="false">Info</a>
+        </li>
+
+        {% for ca in attributes %}
+            <li class="nav-item submenu">
+                <a class="nav-link" id="pills-profile-tab-nobd" data-toggle="pill" href="#{{ ca }}" role="tab" aria-controls="pills-profile-nobd" aria-selected="false">{{ca}}</a>
+            </li>
+        {% endfor %}
+
+    </ul>
+</div>
+{% endif %}
