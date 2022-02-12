@@ -131,6 +131,8 @@ function add_remote_note(group_id) {
         var data = Object();
         data['note_title'] = "Untitled note";
         data['note_content'] = "## Edit me with the right pencil button";
+        data['custom_attributes'] = get_custom_attributes_fields();
+
         data['group_id'] = group_id;
         data['csrf_token'] = $('#csrf_token').val();
         $.ajax({
@@ -431,6 +433,7 @@ function save_note(this_item) {
 
     var data_sent = $('#form_note').serializeObject();
     data_sent['note_content'] = $('#note_content').val();
+    data_sent['custom_attributes'] = get_custom_attributes_fields();
 
     $.ajax({
         url: '/case/notes/update/'+ n_id + case_param(),

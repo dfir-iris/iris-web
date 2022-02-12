@@ -128,6 +128,7 @@ def case_note_save(cur_id, caseid):
 
         request_data = call_modules_hook('on_preload_note_update', data=request.get_json(), caseid=caseid)
 
+        request_data['note_id'] = cur_id
         addnote_schema.load(request_data, partial=['group_id'])
 
         note = update_note(note_content=request_data.get('note_content'),

@@ -50,6 +50,7 @@ class CaseAddNoteSchema(ma.Schema):
     note_content = fields.String(required=False, validate=Length(min=1))
     group_id = fields.Integer(required=True)
     csrf_token = fields.String(required=False)
+    custom_attributes = fields.Dict(required=False)
 
     def verify_group_id(self, data, **kwargs):
         group = NotesGroup.query.filter(
@@ -61,6 +62,14 @@ class CaseAddNoteSchema(ma.Schema):
 
         raise marshmallow.exceptions.ValidationError("Invalid group id for note",
                                                      field_name="group_id")
+
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
+
+        return data
 
 
 class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
