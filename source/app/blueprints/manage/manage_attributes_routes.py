@@ -104,7 +104,8 @@ def update_attribute(cur_id, caseid):
     attribute.attribute_content = dict(json.loads(attr_content))
     db.session.commit()
 
-    # Now try to update every IOC attribute by merging the updated ones
-    update_all_ioc_attributes()
+    # Now try to update every attributes by merging the updated ones
+    if attribute.attribute_for == 'ioc':
+        update_all_ioc_attributes()
 
     return response_success("Attribute updated")

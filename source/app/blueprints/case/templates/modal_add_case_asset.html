@@ -1,5 +1,6 @@
 <div class="modal-header">
     <h4 class="modal-title mt-2 mr-4">{{ "Asset {}".format(asset.asset_name) if asset.asset_name else "Add asset" }}</h4>
+    {% include 'modals/modal_attributes_nav.html' %}
     <div class="row text-right">
         {% if asset.asset_id %}
              <div class="dropdown">
@@ -91,6 +92,7 @@
                         </select>
                     </div>
                 </div>
+            {% include 'modals/modal_attributes_tabs.html' %}
             </div>
             {% if asset.asset_id %}
                 <button type="button" class="btn btn-outline-danger ml-4 mt-5"

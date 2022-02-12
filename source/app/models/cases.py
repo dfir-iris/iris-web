@@ -20,6 +20,7 @@
 
 # IMPORTS ------------------------------------------------
 from sqlalchemy import Column, Date, Integer, String, Boolean, Text, ForeignKey, DateTime
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship, backref
 from flask_login import current_user
 from datetime import datetime
@@ -124,6 +125,7 @@ class CasesEvent(db.Model):
     event_tags = Column(Text)
     event_tz = Column(Text)
     event_date_wtz = Column(DateTime)
+    custom_attributes = Column(JSONB)
 
     case = relationship('Cases')
     user = relationship('User')

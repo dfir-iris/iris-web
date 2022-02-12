@@ -20,21 +20,23 @@ depends_on = None
 
 
 def upgrade():
-    if not _table_has_column('ioc', 'custom_attributes'):
-        op.add_column('ioc',
-                      sa.Column('custom_attributes', sa.Text)
-                      )
+    tables = ['ioc', 'case_assets', 'case_received_file', 'case_tasks', 'notes', 'cases_events']
+    for table in tables:
+        if not _table_has_column(table, 'custom_attributes'):
+            op.add_column(table,
+                          sa.Column('custom_attributes', sa.Text)
+                          )
 
-        t_ua = sa.Table(
-            'ioc',
-            sa.MetaData(),
-            sa.Column('id', sa.Integer, primary_key=True),
-            sa.Column('custom_attributes', sa.Text)
-        )
-        conn = op.get_bind()
-        conn.execute(t_ua.update().values(
-            custom_attributes='{}'
-        ))
+            t_ua = sa.Table(
+                table,
+                sa.MetaData(),
+                sa.Column('custom_attributes', sa.Text)
+            )
+            conn = op.get_bind()
+            conn.execute(t_ua.update().values(
+                custom_attributes='{}'
+            ))
+
     pass
 
 
