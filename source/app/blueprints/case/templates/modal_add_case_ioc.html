@@ -2,6 +2,7 @@
     <h4 class="modal-title mt-2 mr-4">{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
     {% if ioc.ioc_id %}
 
+        {% if attributes|length > 0 %}
         <div class="row text-center">
                 <ul class="nav nav-pills nav-default nav-pills" id="pills-tab-without-border" role="tablist">
                 <li class="nav-item">
@@ -15,7 +16,8 @@
                 {% endfor %}
 
             </ul>
-    </div>
+        </div>
+        {% endif %}
 
     <div class="row text-right">
      <div class="dropdown">

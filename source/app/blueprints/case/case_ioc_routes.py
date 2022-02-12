@@ -119,6 +119,7 @@ def case_add_ioc(caseid):
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
         ca = CustomAttribute.query.filter(CustomAttribute.attribute_for == 'ioc').first()
+
         ioc.ioc_custom_attributes = ca.attribute_content
 
         if link_existed:
@@ -289,7 +290,10 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     form.ioc_description.data = ioc.ioc_description
     form.ioc_value.data = ioc.ioc_value
 
-    attributes = dict(json.loads(ioc.ioc_custom_attributes))
+    if ioc.ioc_custom_attributes is not None:
+        attributes = dict(json.loads(ioc.ioc_custom_attributes))
+    else:
+        attributes = []
 
     return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=attributes)
 

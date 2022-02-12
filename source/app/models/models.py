@@ -391,7 +391,7 @@ class Ioc(db.Model):
     user_id = Column(ForeignKey('user.id'))
     ioc_misp = Column(Text)
     ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
-    ioc_custom_attributes = Column(JSON)
+    ioc_custom_attributes = Column(JSONB)
 
     user = relationship('User')
     tlp = relationship('Tlp')
@@ -405,7 +405,7 @@ class CustomAttribute(db.Model):
     attribute_display_name = Column(Text)
     attribute_description = Column(Text)
     attribute_for = Column(Text)
-    attribute_content = Column(JSON)
+    attribute_content = Column(JSONB)
 
 
 class IocType(db.Model):

@@ -435,22 +435,22 @@ def create_safe_report_types():
 def create_safe_attributes():
     create_safe_attr(db.session, attribute_display_name='IOC',
                      attribute_description='Defines default attributes for IOCs', attribute_for='ioc',
-                     attribute_content="{}")
+                     attribute_content={})
     create_safe_attr(db.session, attribute_display_name='Events',
                      attribute_description='Defines default attributes for Events', attribute_for='event',
-                     attribute_content="{}")
+                     attribute_content={})
     create_safe_attr(db.session, attribute_display_name='Assets',
                      attribute_description='Defines default attributes for Assets', attribute_for='asset',
-                     attribute_content="{}")
+                     attribute_content={})
     create_safe_attr(db.session, attribute_display_name='Tasks',
                      attribute_description='Defines default attributes for Tasks', attribute_for='task',
-                     attribute_content="{}")
+                     attribute_content={})
     create_safe_attr(db.session, attribute_display_name='Notes',
                      attribute_description='Defines default attributes for Notes', attribute_for='note',
-                     attribute_content="{}")
+                     attribute_content={})
     create_safe_attr(db.session, attribute_display_name='Evidences',
                      attribute_description='Defines default attributes for Evidences', attribute_for='evidence',
-                     attribute_content="{}")
+                     attribute_content={})
 
 
 def create_safe_ioctypes():

@@ -17,11 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
 
 from sqlalchemy import and_
 
 from app.datamgmt.states import update_ioc_state
-from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType
+from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType, CustomAttribute
 from app import db
 
 
@@ -236,3 +237,36 @@ def get_tlps_dict():
     for tlp in Tlp.query.all():
         tlpDict[tlp.tlp_name]=tlp.tlp_id 
     return tlpDict
+
+
+def update_all_ioc_attributes():
+    iocs = Ioc.query.with_entities(
+        Ioc.ioc_custom_attributes
+    ).all()
+
+    ioc_attr = CustomAttribute.query.with_entities(
+        CustomAttribute.attribute_content
+    ).filter(
+        CustomAttribute.attribute_for == 'ioc'
+    ).first()
+
+    target_attr = ioc_attr.attribute_content
+
+    for ioc in iocs:
+        print(ioc.ioc_custom_attributes)
+        print(type(ioc.ioc_custom_attributes))
+        print(type(target_attr))
+        if isinstance(ioc.ioc_custom_attributes, str):
+            ioc.ioc_custom_attributes = json.loads(ioc.ioc_custom_attributes)
+            db.session.commit()
+
+        ori_attr = ioc.ioc_custom_attributes
+        for tab in target_attr:
+            if ori_attr.get(tab) is None:
+                ioc.ioc_custom_attributes[tab] = target_attr[tab]
+            else:
+                for element in target_attr[tab]:
+                    if element not in ori_attr[tab]:
+                        ioc.ioc_custom_attributes[tab][element] = target_attr[tab][element]
+
+    db.session.commit()

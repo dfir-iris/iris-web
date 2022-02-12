@@ -25,6 +25,7 @@ from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
+from app.datamgmt.case.case_iocs_db import update_all_ioc_attributes
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import AssetsType, CaseAssets, CustomAttribute
 from app.forms import AddAssetForm, AttributeForm
@@ -102,5 +103,8 @@ def update_attribute(cur_id, caseid):
 
     attribute.attribute_content = dict(json.loads(attr_content))
     db.session.commit()
+
+    # Now try to update every IOC attribute by merging the updated ones
+    update_all_ioc_attributes()
 
     return response_success("Attribute updated")
