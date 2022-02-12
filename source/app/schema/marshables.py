@@ -345,6 +345,14 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
         model = CaseReceivedFile
         load_instance = True
 
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'evidence')
+
+        return data
+
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
     user_roles_str = fields.List(fields.String, required=False)

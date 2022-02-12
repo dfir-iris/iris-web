@@ -126,7 +126,7 @@ def case_edit_rfile_modal(cur_id, caseid, url_redir):
     if not crf:
         return response_error("Invalid evidence ID for this case")
 
-    return render_template("modal_edit_case_rfile.html", rfile=crf)
+    return render_template("modal_edit_case_rfile.html", rfile=crf, attributes=crf.custom_attributes)
 
 
 @case_rfiles_blueprint.route('/case/evidences/update/<int:cur_id>', methods=['POST'])
@@ -143,6 +143,7 @@ def case_edit_rfile(cur_id, caseid):
         if not crf:
             return response_error("Invalid evidence ID for this case")
 
+        request_data['id'] = cur_id
         evidence = evidence_schema.load(request_data, instance=crf)
 
         evd = update_rfile(evidence=evidence,
