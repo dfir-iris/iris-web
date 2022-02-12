@@ -48,14 +48,10 @@ def update_all_attributes(object_type):
 
     target_attr = ioc_attr.attribute_content
 
-    print(f'Migrating {len(obj_list)} of type {object_type}')
+    print(f'Migrating {len(obj_list)} objects of type {object_type}')
     for obj in obj_list:
-        for tab in target_attr:
-            if isinstance(obj.custom_attributes, str):
-                obj.custom_attributes = target_attr[tab]
-                db.session.commit()
-                continue
 
+        for tab in target_attr:
             if obj.custom_attributes.get(tab) is None:
                 print(f'Migrating {tab}')
                 flag_modified(obj, "custom_attributes")
@@ -82,4 +78,6 @@ def update_all_attributes(object_type):
 
 
 def get_default_custom_attributes(object_type):
-    return CustomAttribute.query.filter(CustomAttribute.attribute_for == object_type).first()
+    ca = CustomAttribute.query.filter(CustomAttribute.attribute_for == object_type).first()
+    return ca.attribute_content
+

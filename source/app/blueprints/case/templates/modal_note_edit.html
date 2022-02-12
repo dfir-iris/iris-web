@@ -1,6 +1,7 @@
 <div class="modal-header">
 
     <h4 class="modal-title mt-2 mr-4">{{ note.title }}</h4>
+    {% include 'modals/modal_attributes_nav.html' %}
       <div class="row text-right">
          <div class="dropdown">
               <button class="btn btn-white pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
@@ -15,7 +16,10 @@
         </div>
 </div>
 <div class="modal-body">
-    <form method="post" action="" id="form_note">
+    <div role="tabpanel">
+        <div class="tab-content">
+            <div class="tab-pane active" id="details">
+                <form method="post" action="" id="form_note">
         <iris_notein style="display: none;">{{ note.note_id if note.note_id|length else id }}</iris_notein>
 
     {{ note.hidden_tag() }}
@@ -25,27 +29,26 @@
                 {{ note.note_title(class='form-control input') }}
             </div>
             <div class="form-group mt-3">
-                <div class="row"></div>
                     <span id="last_saved" class="badge"></span>
                     <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();">
                     </button>
-
+            </div>
+            <div class="row">
+                <div class="col-md-6" id="container_note_content">
+                    <div style="display: none" id="fetched_crc"></div>
+                    <div id="editor_detail">{{ note.content }}</div>
+                    <textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-6" id="container_note_content">
-                        <div style="display: none" id="fetched_crc"></div>
-                        <div id="editor_detail">{{ note.content }}</div>
-                        <textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
-                    </div>
-                    <div class="col-md-6" id="ctrd_notesum">
-                        <div id="targetDiv"></div>
-                    </div>
+                <div class="col-md-6" id="ctrd_notesum">
+                    <div id="targetDiv"></div>
                 </div>
             </div>
         </div>
-
     </form>
+            </div>
+            {% include 'modals/modal_attributes_tabs.html' %}
+        </div>
+    </div>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-danger mr-auto" onclick="delete_note(this);">Delete note</button>

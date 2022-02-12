@@ -34,7 +34,7 @@ def upgrade():
             )
             conn = op.get_bind()
             conn.execute(t_ua.update().values(
-                custom_attributes='{}'
+                custom_attributes={}
             ))
 
     pass

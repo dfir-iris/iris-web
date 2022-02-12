@@ -34,7 +34,8 @@ def get_note(note_id, caseid=None):
         Notes.note_creationdate,
         Notes.note_lastupdate,
         NotesGroupLink.group_id,
-        NotesGroup.group_title
+        NotesGroup.group_title,
+        Notes.custom_attributes
     ).filter(and_(
         Notes.note_id == note_id,
         Notes.note_case_id == caseid
