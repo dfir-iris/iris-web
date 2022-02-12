@@ -32,6 +32,7 @@ from app.datamgmt.case.case_assets_db import get_assets_types, delete_asset, get
     create_asset, get_analysis_status_list, get_linked_iocs_finfo_from_asset, get_asset_type_id
 from app.datamgmt.case.case_db import get_case, get_case_client_id
 from app.datamgmt.case.case_iocs_db import get_iocs
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_assets_state, update_assets_state
 from app.forms import ModalAddCaseAssetForm, AssetBasicForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -154,8 +155,9 @@ def add_asset_modal(caseid, url_redir):
 
     # Get IoCs from the case
     ioc = get_iocs(caseid)
+    attributes = get_default_custom_attributes('asset')
 
-    return render_template("modal_add_case_asset.html", form=form, asset=None, ioc=ioc)
+    return render_template("modal_add_case_asset.html", form=form, asset=None, ioc=ioc, attributes=attributes)
 
 
 @case_assets_blueprint.route('/case/assets/add', methods=['POST'])

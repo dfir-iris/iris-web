@@ -21,6 +21,7 @@ function add_asset() {
                 data["ioc_links"] = [data["ioc_links"]]
             }
             data['asset_tags'] = $('#asset_tags').val();
+            data['custom_attributes'] = get_custom_attributes_fields();
 
             $.ajax({
                 url: 'assets/add' + case_param(),
