@@ -1,19 +1,21 @@
 {% if attributes and attributes|length > 0 %}
     {% for ca in attributes %}
-      <div class="tab-pane" id="{{ ca }}">
+     {% set outer_loop = loop %}
+      <div class="tab-pane" id="{{ outer_loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}">
           {% for cle in attributes[ca] %}
+                {% set tag_id = cle.lower() | replace(' ', '_' ) %}
                 <div class="form-group row">
                     <div class="col-6">
 
                         {% if attributes[ca][cle]["type"] == "input_string" %}
                             <label for="{{ cle }}" class="mr-4">{{ cle }}
                             </label>
-                            <input type="text" id="inpstr_{{loop.index}}_{{ cle.lower() | replace(' ', '_' ) }}" class="form-control col-md-12"/>
+                            <input type="text" id="inpstr_{{ loop.index }}_{{ tag_id }}" class="form-control col-md-12"/>
 
                         {% elif attributes[ca][cle]["type"] == "input_checkbox" %}
                             <div class="form-check">
                                 <label class="form-check-label mt-3">
-                                    <input type="checkbox" id="inpchk_{{loop.index}}_{{ cle.lower() | replace(' ', '_' ) }}" class="form-control col-md-12"/>
+                                    <input type="checkbox" id="inpstr_{{ loop.index }}_{{ tag_id }}" class="form-control col-md-12"/>
                                     <span class="form-check-sign"> {{ cle }}
                                     </span>
                                 </label>
