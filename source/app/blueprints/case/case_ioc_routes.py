@@ -290,12 +290,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     form.ioc_description.data = ioc.ioc_description
     form.ioc_value.data = ioc.ioc_value
 
-    if ioc.ioc_custom_attributes is not None:
-        attributes = dict(json.loads(ioc.ioc_custom_attributes))
-    else:
-        attributes = []
-
-    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=attributes)
+    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])

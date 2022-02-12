@@ -20,6 +20,7 @@
 import json
 
 from sqlalchemy import and_
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.datamgmt.states import update_ioc_state
 from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType, CustomAttribute
@@ -240,9 +241,7 @@ def get_tlps_dict():
 
 
 def update_all_ioc_attributes():
-    iocs = Ioc.query.with_entities(
-        Ioc.ioc_custom_attributes
-    ).all()
+    iocs = Ioc.query.all()
 
     ioc_attr = CustomAttribute.query.with_entities(
         CustomAttribute.attribute_content
@@ -253,20 +252,15 @@ def update_all_ioc_attributes():
     target_attr = ioc_attr.attribute_content
 
     for ioc in iocs:
-        print(ioc.ioc_custom_attributes)
-        print(type(ioc.ioc_custom_attributes))
-        print(type(target_attr))
-        if isinstance(ioc.ioc_custom_attributes, str):
-            ioc.ioc_custom_attributes = json.loads(ioc.ioc_custom_attributes)
-            db.session.commit()
-
-        ori_attr = ioc.ioc_custom_attributes
         for tab in target_attr:
-            if ori_attr.get(tab) is None:
+            if ioc.ioc_custom_attributes.get(tab) is None:
+                flag_modified(ioc, "ioc_custom_attributes")
                 ioc.ioc_custom_attributes[tab] = target_attr[tab]
             else:
                 for element in target_attr[tab]:
-                    if element not in ori_attr[tab]:
+                    if element not in ioc.ioc_custom_attributes[tab]:
+                        flag_modified(ioc, "ioc_custom_attributes")
                         ioc.ioc_custom_attributes[tab][element] = target_attr[tab][element]
 
-    db.session.commit()
+        # Commit will only be effective if we flagged a modification, reducing load on the DB
+        db.session.commit()

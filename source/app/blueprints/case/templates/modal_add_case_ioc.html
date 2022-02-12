@@ -2,14 +2,15 @@
     <h4 class="modal-title mt-2 mr-4">{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
     {% if ioc.ioc_id %}
 
-        {% if attributes|length > 0 %}
+    {{ioc.ioc_custom_attributes}}
+        {% if ioc.ioc_custom_attributes|length > 0 %}
         <div class="row text-center">
                 <ul class="nav nav-pills nav-default nav-pills" id="pills-tab-without-border" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active show" id="pills-home-tab-nobd" data-toggle="pill" href="#details" role="tab" aria-controls="pills-home-nobd" aria-selected="false">Info</a>
                 </li>
 
-                {% for ca in attributes %}
+                {% for ca in ioc.ioc_custom_attributes %}
                     <li class="nav-item submenu">
                         <a class="nav-link" id="pills-profile-tab-nobd" data-toggle="pill" href="#{{ ca }}" role="tab" aria-controls="pills-profile-nobd" aria-selected="false">{{ca}}</a>
                     </li>
@@ -74,9 +75,9 @@
                 </div>
             </div>
 
-              {% for ca in attributes %}
+              {% for ca in ioc.ioc_custom_attributes %}
               <div class="tab-pane" id="{{ ca }}">
-                  {% for cle in attributes[ca] %}
+                  {% for cle in ioc.ioc_custom_attributes[ca] %}
                         <div class="form-group row">
                             <div class="col-6">
                                 <label for="ioc_type" class="mr-4">{{ cle }}
