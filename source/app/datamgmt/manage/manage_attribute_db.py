@@ -86,6 +86,7 @@ def get_default_custom_attributes(object_type):
 
 def merge_custom_attributes(data, obj_id, object_type):
 
+    obj = None
     if object_type == 'ioc':
         obj = Ioc.query.filter(Ioc.ioc_id == obj_id).first()
     elif object_type == 'event':
@@ -99,29 +100,24 @@ def merge_custom_attributes(data, obj_id, object_type):
     elif object_type == 'evidence':
         obj = CaseReceivedFile.query.filter(CaseReceivedFile.id == obj_id).first()
 
-    current_attr = obj.custom_attributes
+    if not obj:
+        return data
 
-    for field in data:
-        if obj.custom_attributes.get(field) is None:
-            log.error(f'Missing field {field} in {object_type}')
+    for tab in data:
+        if obj.custom_attributes.get(tab) is None:
+            log.error(f'Missing tab {tab} in {object_type}')
+            continue
 
-        else:
-            for element in target_attr[tab]:
-                if element not in obj.custom_attributes[tab]:
-                    print(f'Migrating {element}')
+        for field in data[tab]:
+            if field not in obj.custom_attributes[tab]:
+                log.error(f'Missing field {field} in {object_type}')
+
+            else:
+                if obj.custom_attributes[tab][field]['value'] != data[tab][field]:
                     flag_modified(obj, "custom_attributes")
-                    obj.custom_attributes[tab][element] = target_attr[tab][element]
-
-                else:
-                    if obj.custom_attributes[tab][element]['type'] != target_attr[tab][element]['type']:
-                        flag_modified(obj, "custom_attributes")
-                        obj.custom_attributes[tab][element]['type'] = target_attr[tab][element]['type']
-
-                    if obj.custom_attributes[tab][element]['mandatory'] != target_attr[tab][element]['mandatory']:
-                        flag_modified(obj, "custom_attributes")
-                        obj.custom_attributes[tab][element]['mandatory'] = target_attr[tab][element]['mandatory']
+                    obj.custom_attributes[tab][field]['value'] = data[tab][field]
 
         # Commit will only be effective if we flagged a modification, reducing load on the DB
         db.session.commit()
 
-    return
+    return obj.custom_attributes

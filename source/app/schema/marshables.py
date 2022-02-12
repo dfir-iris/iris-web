@@ -120,7 +120,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
     def custom_attributes_merge(self, data, **kwargs):
         new_attr = data.get('custom_attributes')
         if new_attr:
-            data['custom_attributes'] = merge_custom_attributes(data, data.get('ioc_id'), 'ioc')
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
 
         return data
 

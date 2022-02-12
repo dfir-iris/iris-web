@@ -11,7 +11,9 @@
                             <label for="{{ cle }}" class="mr-4">{{ cle }}
                             </label>
                             <input type="text" id="inpstr_{{ loop.index }}_{{ tag_id }}"
-                                   data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"/>
+                                   data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"
+                                    {% if  attributes[ca][cle]['value'] %} value={{ attributes[ca][cle]['value'] }} {% endif %}
+                            />
 
                         {% elif attributes[ca][cle]["type"] == "input_checkbox" %}
                             <div class="form-check">
