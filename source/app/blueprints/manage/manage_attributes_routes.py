@@ -20,18 +20,14 @@
 
 # IMPORTS ------------------------------------------------
 import json
-
 from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 
-from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
-from app.datamgmt.case.case_iocs_db import update_all_ioc_attributes
-from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AssetsType, CaseAssets, CustomAttribute
-from app.forms import AddAssetForm, AttributeForm
 from app import db
-
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
+from app.datamgmt.manage.manage_attribute_db import update_all_attributes
+from app.forms import AddAssetForm, AttributeForm
+from app.models.models import CustomAttribute
+from app.util import response_success, response_error, admin_required, api_admin_required, \
     api_login_required
 
 manage_attributes_blueprint = Blueprint('manage_attributes',
@@ -105,7 +101,6 @@ def update_attribute(cur_id, caseid):
     db.session.commit()
 
     # Now try to update every attributes by merging the updated ones
-    if attribute.attribute_for == 'ioc':
-        update_all_ioc_attributes()
+    update_all_attributes(attribute.attribute_for)
 
     return response_success("Attribute updated")
