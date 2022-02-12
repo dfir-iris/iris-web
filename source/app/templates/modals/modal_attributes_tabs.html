@@ -8,12 +8,12 @@
                         {% if attributes[ca][cle]["type"] == "input_string" %}
                             <label for="{{ cle }}" class="mr-4">{{ cle }}
                             </label>
-                            <input type="text" id="{{ cle }}" class="form-control col-md-12"/>
+                            <input type="text" id="inpstr_{{loop.index}}_{{ cle.lower() | replace(' ', '_' ) }}" class="form-control col-md-12"/>
 
                         {% elif attributes[ca][cle]["type"] == "input_checkbox" %}
                             <div class="form-check">
                                 <label class="form-check-label mt-3">
-                                    <input type="checkbox" id="{{ cle }}" class="form-control col-md-12"/>
+                                    <input type="checkbox" id="inpchk_{{loop.index}}_{{ cle.lower() | replace(' ', '_' ) }}" class="form-control col-md-12"/>
                                     <span class="form-check-sign"> {{ cle }}
                                     </span>
                                 </label>
