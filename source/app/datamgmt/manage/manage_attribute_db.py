@@ -88,37 +88,53 @@ def get_default_custom_attributes(object_type):
 def merge_custom_attributes(data, obj_id, object_type):
 
     obj = None
-    if object_type == 'ioc':
-        obj = Ioc.query.filter(Ioc.ioc_id == obj_id).first()
-    elif object_type == 'event':
-        obj = CasesEvent.query.filter(CasesEvent.event_id == obj_id).first()
-    elif object_type == 'asset':
-        obj = CaseAssets.query.filter(CaseAssets.asset_id == obj_id).first()
-    elif object_type == 'task':
-        obj = CaseTasks.query.filter(CaseTasks.id == obj_id).first()
-    elif object_type == 'note':
-        obj = Notes.query.filter(Notes.note_id == obj_id).first()
-    elif object_type == 'evidence':
-        obj = CaseReceivedFile.query.filter(CaseReceivedFile.id == obj_id).first()
+    if obj_id:
+        if object_type == 'ioc':
+            obj = Ioc.query.filter(Ioc.ioc_id == obj_id).first()
+        elif object_type == 'event':
+            obj = CasesEvent.query.filter(CasesEvent.event_id == obj_id).first()
+        elif object_type == 'asset':
+            obj = CaseAssets.query.filter(CaseAssets.asset_id == obj_id).first()
+        elif object_type == 'task':
+            obj = CaseTasks.query.filter(CaseTasks.id == obj_id).first()
+        elif object_type == 'note':
+            obj = Notes.query.filter(Notes.note_id == obj_id).first()
+        elif object_type == 'evidence':
+            obj = CaseReceivedFile.query.filter(CaseReceivedFile.id == obj_id).first()
 
-    if not obj:
-        return data
+        if not obj:
+            return data
 
-    for tab in data:
-        if obj.custom_attributes.get(tab) is None:
-            log.error(f'Missing tab {tab} in {object_type}')
-            continue
+        for tab in data:
+            if obj.custom_attributes.get(tab) is None:
+                log.error(f'Missing tab {tab} in {object_type}')
+                continue
 
-        for field in data[tab]:
-            if field not in obj.custom_attributes[tab]:
-                log.error(f'Missing field {field} in {object_type}')
+            for field in data[tab]:
+                if field not in obj.custom_attributes[tab]:
+                    log.error(f'Missing field {field} in {object_type}')
 
-            else:
-                if obj.custom_attributes[tab][field]['value'] != data[tab][field]:
-                    flag_modified(obj, "custom_attributes")
-                    obj.custom_attributes[tab][field]['value'] = data[tab][field]
+                else:
+                    if obj.custom_attributes[tab][field]['value'] != data[tab][field]:
+                        flag_modified(obj, "custom_attributes")
+                        obj.custom_attributes[tab][field]['value'] = data[tab][field]
 
-        # Commit will only be effective if we flagged a modification, reducing load on the DB
-        db.session.commit()
+            # Commit will only be effective if we flagged a modification, reducing load on the DB
+            db.session.commit()
+            return obj.custom_attributes
 
-    return obj.custom_attributes
+    else:
+        default_attr = get_default_custom_attributes(object_type)
+        for tab in data:
+            if default_attr.get(tab) is None:
+                print(f'Missing tab {tab} in {object_type} default attribute')
+                continue
+
+            for field in data[tab]:
+                if field not in default_attr[tab]:
+                    print(f'Missing field {field} in {object_type} default attribute')
+
+                else:
+                    default_attr[tab][field]['value'] = data[tab][field]
+
+        return default_attr

@@ -4,8 +4,8 @@
             title="Task info"
             data-content="Last edited {{ event.event_added }} by {{ user_name }}"></i>
         </h4>
+            {% include 'modals/modal_attributes_nav.html' %}
             {% if event.event_id %}
-        {% include 'modals/modal_attributes_nav.html' %}
         <div class="row text-right">
          <div class="dropdown">
               <button class="btn btn-white pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">

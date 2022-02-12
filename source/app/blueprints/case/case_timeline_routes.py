@@ -470,6 +470,7 @@ def case_add_event_modal(caseid, url_redir):
         return redirect(url_for('case_timeline.case_timeline', cid=caseid))
 
     event = CasesEvent()
+    event.custom_attributes = get_default_custom_attributes('ioc')
     form = CaseEventForm()
     assets = get_case_assets(caseid)
     def_cat = get_default_cat()
@@ -499,8 +500,6 @@ def case_add_event(caseid):
         event.case_id = caseid
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
-
-        event.custom_attributes = get_default_custom_attributes('event')
 
         db.session.add(event)
         update_timeline_state(caseid=caseid)
