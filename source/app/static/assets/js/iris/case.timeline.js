@@ -11,6 +11,7 @@ function add_event() {
             data_sent['event_tags'] = $('#event_tags').val();
             data_sent['event_assets'] = $('#event_assets').val();
             data_sent['event_tz'] = $('#event_tz').val();
+            data_sent['custom_attributes'] = get_custom_attributes_fields();
 
             $.ajax({
                 url: 'timeline/events/add' + case_param(),
@@ -60,6 +61,7 @@ function update_event(id) {
     data_sent['event_tags'] = $('#event_tags').val();
     data_sent['event_assets'] = $('#event_assets').val();
     data_sent['event_tz'] = $('#event_tz').val();
+    data_sent['custom_attributes'] = get_custom_attributes_fields();
 
     $.ajax({
         url: 'timeline/events/update/' + id + case_param(),

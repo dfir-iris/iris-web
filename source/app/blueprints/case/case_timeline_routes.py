@@ -415,7 +415,7 @@ def event_view_modal(cur_id, caseid, url_redir):
 
     return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
                            assets=get_case_assets(caseid),
-                           assets_prefill=assets_prefill, category=event.category)
+                           assets_prefill=assets_prefill, category=event.category, attributes=event.custom_attributes)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
@@ -431,6 +431,7 @@ def case_edit_event(cur_id, caseid):
 
         request_data = call_modules_hook('on_preload_event_update', data=request.get_json(), caseid=caseid)
 
+        request_data['event_id'] = cur_id
         event = event_schema.load(request_data, instance=event)
 
         event.event_date, event.event_date_wtz = event_schema.validate_date(
@@ -477,7 +478,8 @@ def case_add_event_modal(caseid, url_redir):
     form.event_in_graph.data = True
 
     return render_template("modal_add_case_event.html", form=form, event=event,
-                           tags=event_tags, assets=assets, assets_prefill=None, category=def_cat)
+                           tags=event_tags, assets=assets, assets_prefill=None, category=def_cat,
+                           attributes=event.custom_attributes)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
