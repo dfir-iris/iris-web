@@ -119,8 +119,6 @@ def case_add_ioc(caseid):
                                )
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
-        ioc.custom_attributes = get_default_custom_attributes('ioc')
-
         if link_existed:
             return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
 
@@ -201,7 +199,7 @@ def case_upload_ioc(caseid):
             request_data = call_modules_hook('on_preload_ioc_create', data=row, caseid=caseid)
 
             ioc = add_ioc_schema.load(request_data)
-
+            ioc.custom_attributes = get_default_custom_attributes('ioc')
             ioc, existed = add_ioc(ioc=ioc,
                                    user_id=current_user.id,
                                    caseid=caseid
@@ -246,7 +244,9 @@ def case_add_ioc_modal(caseid, url_redir):
     form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
     form.ioc_tlp_id.choices = get_tlps()
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc())
+    attributes = get_default_custom_attributes('ioc')
+
+    return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc(), attributes=attributes)
 
 
 @case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['GET'])

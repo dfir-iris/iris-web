@@ -1,9 +1,8 @@
 <div class="modal-header">
     <h4 class="modal-title mt-2 mr-4">{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
-    {% if ioc.ioc_id %}
-
     {% include 'modals/modal_attributes_nav.html' %}
 
+    {% if ioc.ioc_id %}
     <div class="row text-right">
      <div class="dropdown">
           <button class="btn btn-white pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">

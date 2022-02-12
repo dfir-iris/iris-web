@@ -133,6 +133,7 @@ function add_ioc() {
 
             var data = $('#form_new_ioc').serializeObject();
             data['ioc_tags'] = $('#ioc_tags').val();
+            data['custom_attributes'] = get_custom_attributes_fields();
 
             id = $('#ioc_id').val();
             $.ajax({
