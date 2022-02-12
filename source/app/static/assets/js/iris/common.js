@@ -637,6 +637,17 @@ function load_menu_mod_options(data_type, table) {
     });
 }
 
+function get_custom_attributes_fields() {
+    values = Object();
+    $("input[id^='inpstr_']").each(function (i, el) {
+        values[$(el).attr('data-attr-for')] = $(el).val();
+    })
+    $("input[id^='inpchk_']").each(function (i, el) {
+        values[$(el).attr('data-attr-for')] = $(el).is(':checked');
+    })
+
+    return values;
+}
 
 function update_time() {
     $('#current_date').text((new Date()).toLocaleString().slice(0, 17));

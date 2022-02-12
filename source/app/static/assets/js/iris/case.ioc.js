@@ -252,6 +252,7 @@ function update_ioc(ioc_id) {
 
     var data = $('#form_new_ioc').serializeObject();
     data['ioc_tags'] = $('#ioc_tags').val();
+    data['custom_attributes'] = get_custom_attributes_fields();
 
     $.ajax({
         url: 'ioc/update/' + ioc_id + case_param(),
