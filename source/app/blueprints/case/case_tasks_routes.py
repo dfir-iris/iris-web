@@ -30,6 +30,7 @@ from flask_wtf import FlaskForm
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import get_tasks, get_task, update_task_status, add_task, get_tasks_status
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_tasks_state, update_tasks_state
 from app.forms import CaseTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -113,13 +114,14 @@ def case_add_task_modal(caseid, url_redir):
         return redirect(url_for('case_tasks.case_tasks', cid=caseid))
 
     task = CaseTasks()
-
+    task.custom_attributes = get_default_custom_attributes('task')
     form = CaseTaskForm()
     form.task_assignee_id.choices = [(user.id, user.name) for user in
                                      User.query.filter(User.active == True).order_by(User.name).all()]
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
-    return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None)
+    return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None,
+                           attributes=task.custom_attributes)
 
 
 @case_tasks_blueprint.route('/case/tasks/add', methods=['POST'])
