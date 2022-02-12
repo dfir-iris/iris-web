@@ -336,6 +336,8 @@ function asset_details(asset_id) {
                 data['asset_compromised'] = 'false';
             }
 
+            data['custom_attributes'] = get_custom_attributes_fields();
+
             $.ajax({
                 url: 'assets/update/' + asset_id + case_param(),
                 type: "POST",

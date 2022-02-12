@@ -92,6 +92,14 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('asset_id'), 'asset')
+
+        return data
+
 
 class IocSchema(ma.SQLAlchemyAutoSchema):
     ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)

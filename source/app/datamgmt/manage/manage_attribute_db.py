@@ -54,6 +54,7 @@ def update_all_attributes(object_type):
     for obj in obj_list:
 
         for tab in target_attr:
+
             if obj.custom_attributes.get(tab) is None:
                 print(f'Migrating {tab}')
                 flag_modified(obj, "custom_attributes")
@@ -92,7 +93,7 @@ def merge_custom_attributes(data, obj_id, object_type):
     elif object_type == 'event':
         obj = CasesEvent.query.filter(CasesEvent.event_id == obj_id).first()
     elif object_type == 'asset':
-        obj = CasesEvent.query.filter(CaseAssets.asset_id == obj_id).first()
+        obj = CaseAssets.query.filter(CaseAssets.asset_id == obj_id).first()
     elif object_type == 'task':
         obj = CaseTasks.query.filter(CaseTasks.id == obj_id).first()
     elif object_type == 'note':

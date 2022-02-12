@@ -335,7 +335,7 @@ def asset_view_modal(cur_id, caseid, url_redir):
     form.asset_tags.render_kw = {'value': asset.asset_tags}
 
     return render_template("modal_add_case_asset.html", form=form, asset=asset, map={}, ioc=case_iocs,
-                           ioc_prefill=ioc_prefill)
+                           ioc_prefill=ioc_prefill, attributes=asset.custom_attributes)
 
 
 @case_assets_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
@@ -352,6 +352,7 @@ def asset_update(cur_id, caseid):
 
         request_data = call_modules_hook('on_preload_asset_update', data=request.get_json(), caseid=caseid)
 
+        request_data['asset_id'] = cur_id
         asset_schema = add_asset_schema.load(request_data, instance=asset)
 
         update_assets_state(caseid=caseid)

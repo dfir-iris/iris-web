@@ -34,12 +34,16 @@ def create_asset(asset, caseid, user_id):
     asset.case_id = caseid
     asset.user_id = user_id
 
+    print(type(get_default_custom_attributes('asset')))
     asset.custom_attributes = get_default_custom_attributes('asset')
+    print(type(asset.custom_attributes))
 
     db.session.add(asset)
     update_assets_state(caseid=caseid, userid=user_id)
 
     db.session.commit()
+
+    print(type(asset.custom_attributes))
 
     return asset
 
