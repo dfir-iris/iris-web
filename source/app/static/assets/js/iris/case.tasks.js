@@ -115,6 +115,7 @@ function add_task() {
             data_sent['task_tags'] = $('#task_tags').val();
             data_sent['task_assignee'] = $('#task_assignee').val();
             data_sent['task_status_id'] = $('#task_status_id').val();
+            data_sent['custom_attributes'] = get_custom_attributes_fields();
 
             $.ajax({
                 url: 'tasks/add' + case_param(),
@@ -165,6 +166,7 @@ function update_task(id) {
     data_sent['task_tags'] = $('#task_tags').val();
     data_sent['task_assignee'] = $('#task_assignee').val();
     data_sent['task_status_id'] = $('#task_status_id').val();
+    data_sent['custom_attributes'] = get_custom_attributes_fields();
 
     $.ajax({
         url: 'tasks/update/' + id + case_param(),

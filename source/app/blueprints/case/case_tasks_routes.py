@@ -182,7 +182,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
 
     return render_template("modal_add_case_task.html", form=form, task=task,
-                           uid=task.task_assignee_id, user_name=user_name)
+                           uid=task.task_assignee_id, user_name=user_name, attributes=task.custom_attributes)
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
@@ -199,6 +199,7 @@ def case_edit_task(cur_id, caseid):
         # validate before saving
         task_schema = CaseTaskSchema()
 
+        request_data['id'] = cur_id
         task = task_schema.load(request_data, instance=task)
 
         task.task_userid_update = current_user.id

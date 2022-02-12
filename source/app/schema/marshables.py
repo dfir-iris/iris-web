@@ -337,6 +337,14 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'task')
+
+        return data
+
 
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     filename = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
