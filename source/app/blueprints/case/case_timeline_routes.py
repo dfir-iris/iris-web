@@ -29,6 +29,7 @@ from flask_wtf import FlaskForm
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_timeline_state, update_timeline_state
 from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -496,6 +497,8 @@ def case_add_event(caseid):
         event.case_id = caseid
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
+
+        event.custom_attributes = get_default_custom_attributes('event')
 
         db.session.add(event)
         update_timeline_state(caseid=caseid)

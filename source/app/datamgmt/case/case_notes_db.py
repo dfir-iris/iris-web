@@ -21,6 +21,7 @@
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
 from app.models import Notes, NotesGroupLink, NotesGroup, User
 
@@ -89,6 +90,8 @@ def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=
     note.note_content = note_content
     note.note_case_id = caseid
     note.note_user = user_id
+
+    note.custom_attributes = get_default_custom_attributes('note')
 
     db.session.add(note)
 

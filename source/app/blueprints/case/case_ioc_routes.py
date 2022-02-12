@@ -34,6 +34,7 @@ from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add_ioc, add_ioc_link, \
     get_tlps, get_ioc, delete_ioc, get_ioc_types_list, check_ioc_type_id, get_tlps_dict, get_ioc_type_id
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_ioc_state, update_ioc_state
 from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -118,9 +119,7 @@ def case_add_ioc(caseid):
                                )
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
-        ca = CustomAttribute.query.filter(CustomAttribute.attribute_for == 'ioc').first()
-
-        ioc.custom_attributes = ca.attribute_content
+        ioc.custom_attributes = get_default_custom_attributes('ioc')
 
         if link_existed:
             return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))

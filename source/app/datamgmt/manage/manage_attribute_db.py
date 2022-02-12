@@ -21,7 +21,7 @@
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import db
-from app.models import Ioc, CustomAttribute
+from app.models import Ioc, CustomAttribute, CasesEvent, CaseAssets, CaseTasks, Notes, CaseReceivedFile
 
 
 def update_all_attributes(object_type):
@@ -29,24 +29,42 @@ def update_all_attributes(object_type):
     obj_list = []
     if object_type == 'ioc':
         obj_list = Ioc.query.all()
+    elif object_type == 'event':
+        obj_list = CasesEvent.query.all()
+    elif object_type == 'asset':
+        obj_list = CaseAssets.query.all()
+    elif object_type == 'task':
+        obj_list = CaseTasks.query.all()
+    elif object_type == 'note':
+        obj_list = Notes.query.all()
+    elif object_type == 'evidence':
+        obj_list = CaseReceivedFile.query.all()
 
     ioc_attr = CustomAttribute.query.with_entities(
         CustomAttribute.attribute_content
     ).filter(
-        CustomAttribute.attribute_for == 'ioc'
+        CustomAttribute.attribute_for == object_type
     ).first()
 
     target_attr = ioc_attr.attribute_content
 
+    print(f'Migrating {len(obj_list)} of type {object_type}')
     for obj in obj_list:
         for tab in target_attr:
+            if isinstance(obj.custom_attributes, str):
+                obj.custom_attributes = target_attr[tab]
+                db.session.commit()
+                continue
+
             if obj.custom_attributes.get(tab) is None:
+                print(f'Migrating {tab}')
                 flag_modified(obj, "custom_attributes")
                 obj.custom_attributes[tab] = target_attr[tab]
 
             else:
                 for element in target_attr[tab]:
                     if element not in obj.custom_attributes[tab]:
+                        print(f'Migrating {element}')
                         flag_modified(obj, "custom_attributes")
                         obj.custom_attributes[tab][element] = target_attr[tab][element]
 
@@ -61,3 +79,7 @@ def update_all_attributes(object_type):
 
         # Commit will only be effective if we flagged a modification, reducing load on the DB
         db.session.commit()
+
+
+def get_default_custom_attributes(object_type):
+    return CustomAttribute.query.filter(CustomAttribute.attribute_for == object_type).first()

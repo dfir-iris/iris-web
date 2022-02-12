@@ -21,6 +21,7 @@
 import datetime
 
 from app import db
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_assets_state
 from app.models import AssetsType, IocAssetLink, CaseAssets, Cases, Ioc, AnalysisStatus, CaseEventsAssets, IocType
 from sqlalchemy import and_, func
@@ -32,6 +33,8 @@ def create_asset(asset, caseid, user_id):
     asset.date_update = datetime.datetime.utcnow()
     asset.case_id = caseid
     asset.user_id = user_id
+
+    asset.custom_attributes = get_default_custom_attributes('asset')
 
     db.session.add(asset)
     update_assets_state(caseid=caseid, userid=user_id)
