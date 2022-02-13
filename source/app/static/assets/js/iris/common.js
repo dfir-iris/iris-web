@@ -633,6 +633,12 @@ function get_custom_attributes_fields() {
         if (!(tab in values)) { values[tab] = {} };
         values[tab][field] = $(el).val();
     })
+    $("textarea[id^='inpstd_']").each(function (i, el) {
+        tab = $(el).attr('data-ref-tab');
+        field = $(el).attr('data-attr-for');
+        if (!(tab in values)) { values[tab] = {} };
+        values[tab][field] = $(el).val();
+    })
     $("input[id^='inpchk_']").each(function (i, el) {
         tab = $(el).attr('data-ref-tab');
         field = $(el).attr('data-attr-for');

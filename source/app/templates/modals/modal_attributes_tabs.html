@@ -20,7 +20,9 @@
                             <div class="form-check">
                                 <label class="form-check-label">
                                     <input type="checkbox" id="inpchk_{{ loop.index }}_{{ tag_id }}"
-                                           data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"/>
+                                           data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"
+                                           {% if attributes[ca][cle]['value'] == True %} checked {% endif %}
+                                    />
                                     <span class="form-check-sign"> {{ cle }}
                                     </span>
                                 </label>
@@ -31,7 +33,8 @@
                                 <label for="{{ cle }}">{{ cle }}
                                 </label>
                                 <textarea class="form-control" id="inpstd_{{ loop.index }}_{{ tag_id }}"
-                                              rows="12" style="height:100%;">{{ attributes[ca][cle]['value'] }}</textarea>
+                                                data-attr-for="{{cle}}" data-ref-tab="{{ca}}"
+                                                rows="12" style="height:100%;">{{ attributes[ca][cle]['value'] }}</textarea>
                             </div>
 
                         {% elif attributes[ca][cle]["type"] == "input_select" %}
