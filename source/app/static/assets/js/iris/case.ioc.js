@@ -133,7 +133,13 @@ function add_ioc() {
 
             var data = $('#form_new_ioc').serializeObject();
             data['ioc_tags'] = $('#ioc_tags').val();
-            data['custom_attributes'] = get_custom_attributes_fields();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data['custom_attributes'] = attributes;
 
             id = $('#ioc_id').val();
             $.ajax({
@@ -253,7 +259,13 @@ function update_ioc(ioc_id) {
 
     var data = $('#form_new_ioc').serializeObject();
     data['ioc_tags'] = $('#ioc_tags').val();
-    data['custom_attributes'] = get_custom_attributes_fields();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data['custom_attributes'] = attributes;
 
     $.ajax({
         url: 'ioc/update/' + ioc_id + case_param(),

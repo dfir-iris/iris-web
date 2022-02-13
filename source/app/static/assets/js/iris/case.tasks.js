@@ -115,7 +115,13 @@ function add_task() {
             data_sent['task_tags'] = $('#task_tags').val();
             data_sent['task_assignee'] = $('#task_assignee').val();
             data_sent['task_status_id'] = $('#task_status_id').val();
-            data_sent['custom_attributes'] = get_custom_attributes_fields();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data_sent['custom_attributes'] = attributes;
 
             $.ajax({
                 url: 'tasks/add' + case_param(),
@@ -166,7 +172,13 @@ function update_task(id) {
     data_sent['task_tags'] = $('#task_tags').val();
     data_sent['task_assignee'] = $('#task_assignee').val();
     data_sent['task_status_id'] = $('#task_status_id').val();
-    data_sent['custom_attributes'] = get_custom_attributes_fields();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
 
     $.ajax({
         url: 'tasks/update/' + id + case_param(),

@@ -122,7 +122,14 @@ function edit_rfiles(rfiles_id) {
 function update_rfile(rfiles_id) {
     var data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
-    data_sent['custom_attributes'] = get_custom_attributes_fields();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
+
 
     $.ajax({
         url: 'evidences/update/' + rfiles_id + case_param(),

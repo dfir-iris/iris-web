@@ -21,7 +21,13 @@ function add_asset() {
                 data["ioc_links"] = [data["ioc_links"]]
             }
             data['asset_tags'] = $('#asset_tags').val();
-            data['custom_attributes'] = get_custom_attributes_fields();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data['custom_attributes'] = attributes;
 
             $.ajax({
                 url: 'assets/add' + case_param(),
@@ -337,7 +343,13 @@ function asset_details(asset_id) {
                 data['asset_compromised'] = 'false';
             }
 
-            data['custom_attributes'] = get_custom_attributes_fields();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data['custom_attributes'] = attributes;
 
             $.ajax({
                 url: 'assets/update/' + asset_id + case_param(),

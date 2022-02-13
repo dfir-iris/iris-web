@@ -11,7 +11,13 @@ function add_event() {
             data_sent['event_tags'] = $('#event_tags').val();
             data_sent['event_assets'] = $('#event_assets').val();
             data_sent['event_tz'] = $('#event_tz').val();
-            data_sent['custom_attributes'] = get_custom_attributes_fields();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data_sent['custom_attributes'] = attributes;
 
             $.ajax({
                 url: 'timeline/events/add' + case_param(),
@@ -61,7 +67,13 @@ function update_event(id) {
     data_sent['event_tags'] = $('#event_tags').val();
     data_sent['event_assets'] = $('#event_assets').val();
     data_sent['event_tz'] = $('#event_tz').val();
-    data_sent['custom_attributes'] = get_custom_attributes_fields();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
 
     $.ajax({
         url: 'timeline/events/update/' + id + case_param(),
@@ -400,6 +412,7 @@ function time_converter(){
     var data_sent = Object();
     data_sent['date_value'] = date_val;
     data_sent['csrf_token'] = $('#csrf_token').val();
+
 
     $.ajax({
         url: 'timeline/events/convert-date' + case_param(),

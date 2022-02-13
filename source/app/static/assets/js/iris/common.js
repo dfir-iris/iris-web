@@ -627,7 +627,7 @@ function load_menu_mod_options(data_type, table) {
 
 function get_custom_attributes_fields() {
     values = Object();
-
+    has_error = [];
     $("input[id^='inpstd_']").each(function (i, el) {
         tab = $(el).attr('data-ref-tab');
         field = $(el).attr('data-attr-for');
@@ -636,6 +636,7 @@ function get_custom_attributes_fields() {
         values[tab][field] = $(el).val();
         if ($(el).prop('required') && !values[tab][field]) {
             $(el).parent().addClass('has-error');
+            has_error.push(field);
         } else {
              $(el).parent().removeClass('has-error');
         }
@@ -647,6 +648,7 @@ function get_custom_attributes_fields() {
         values[tab][field] = $(el).val();
         if ($(el).prop('required') && !values[tab][field]) {
             $(el).parent().addClass('has-error');
+            has_error.push(field);
         } else {
              $(el).parent().removeClass('has-error');
         }
@@ -664,12 +666,21 @@ function get_custom_attributes_fields() {
         values[tab][field] = $(el).val();
         if ($(el).prop('required') && !values[tab][field]) {
             $(el).parent().addClass('has-error');
+            has_error.push(field);
         } else {
              $(el).parent().removeClass('has-error');
         }
     })
 
-    return values;
+    if (has_error.length > 0) {
+        msg = 'Missing required fields: <br/>';
+        for (field in has_error) {
+            msg += '  - ' + has_error[field] + '<br/>';
+        }
+        notify_error(msg);
+    }
+
+    return [has_error, values];
 }
 
 function update_time() {
