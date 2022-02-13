@@ -12,7 +12,7 @@
                 <div class="form-group">
                     <label for="Attribute content" class="mr-4">Attribute content
                     </label>
-                    <div id="editor_detail">{{ attribute.attribute_content }}</div>
+                    <div id="editor_detail">{{ attribute.attribute_content|tojson(indent=4) }}</div>
                     <textarea id="attribute_content" rows="10" cols="82" style="display: none"></textarea>
                 </div>
 

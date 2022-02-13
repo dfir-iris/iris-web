@@ -98,7 +98,7 @@ function attribute_detail(attr_id) {
         editor.setOption("displayIndentGuides", true);
         editor.setOption("maxLines", "Infinity");
         editor.session.setUseWrapMode(true);
-        editor.setOption("indentedSoftWrap", false);
+        editor.setOption("indentedSoftWrap", true);
         editor.renderer.setScrollMargin(8, 5)
         editor.setOption("enableBasicAutocompletion", true);
         editor.commands.addCommand({
