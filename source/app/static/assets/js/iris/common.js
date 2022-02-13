@@ -627,7 +627,7 @@ function load_menu_mod_options(data_type, table) {
 
 function get_custom_attributes_fields() {
     values = Object();
-    $("input[id^='inpstr_']").each(function (i, el) {
+    $("input[id^='inpstd_']").each(function (i, el) {
         tab = $(el).attr('data-ref-tab');
         field = $(el).attr('data-attr-for');
         if (!(tab in values)) { values[tab] = {} };
@@ -670,15 +670,13 @@ $(document).ready(function(){
         } else {
             btt = current.split('?')[0];
         }
-        console.log(btt);
         $('#l_nav_tab .nav-item').each(function (k, al) {
             href = $(al).children().attr('href');
-
             try {
                 if (href == "#advanced-nav") {
                     $('#advanced-nav .nav-subitem').each(function (i, el) {
                         ktt = $(el).children().attr('href').split('?')[0];
-                        console.log(ktt);
+
                         if (ktt === btt) {
                             $(el).addClass('active');
                             $(al).addClass('active');

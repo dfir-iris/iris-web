@@ -5,24 +5,44 @@
           {% for cle in attributes[ca] %}
                 {% set tag_id = cle.lower() | replace(' ', '_' ) %}
                 <div class="form-group row">
-                    <div class="col-6">
+                    <div class="col-12">
 
                         {% if attributes[ca][cle]["type"] == "input_string" %}
-                            <label for="{{ cle }}" class="mr-4">{{ cle }}
+                         <div class="form-input">
+                            <label for="{{ cle }}">{{ cle }}
                             </label>
-                            <input type="text" id="inpstr_{{ loop.index }}_{{ tag_id }}"
+                            <input type="text" id="inpstd_{{ loop.index }}_{{ tag_id }}"
                                    data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"
                                     {% if  attributes[ca][cle]['value'] %} value={{ attributes[ca][cle]['value'] }} {% endif %}
                             />
-
+                         </div>
                         {% elif attributes[ca][cle]["type"] == "input_checkbox" %}
                             <div class="form-check">
-                                <label class="form-check-label mt-3">
+                                <label class="form-check-label">
                                     <input type="checkbox" id="inpchk_{{ loop.index }}_{{ tag_id }}"
                                            data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"/>
                                     <span class="form-check-sign"> {{ cle }}
                                     </span>
                                 </label>
+                            </div>
+
+                        {% elif attributes[ca][cle]["type"] == "input_textfield" %}
+                            <div class="form-input">
+                                <label for="{{ cle }}">{{ cle }}
+                                </label>
+                                <textarea class="form-control" id="inpstd_{{ loop.index }}_{{ tag_id }}"
+                                              rows="12" style="height:100%;">{{ attributes[ca][cle]['value'] }}</textarea>
+                            </div>
+
+                        {% elif attributes[ca][cle]["type"] == "input_select" %}
+                            <div class="form-inline">
+
+                                  <label class="my-1 mr-2" for="inpselect_{{ loop.index }}_{{ tag_id }}">{{ cle }}</label>
+                                  <select class="custom-select my-1 mr-sm-2" id="inpselect_{{ loop.index }}_{{ tag_id }}">
+                                  {% for opt in attributes[ca][cle]['options'] %}
+                                    <option {% if opt == attributes[ca][cle]['value'] %} selected {% endif %}>{{ opt }}</option>
+                                  {% endfor %}
+                                </select>
                             </div>
 
                         {% elif attributes[ca][cle]["type"] == "raw" %}

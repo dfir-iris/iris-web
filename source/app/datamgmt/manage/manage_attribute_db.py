@@ -160,7 +160,7 @@ def validate_attribute(attribute):
                 continue
 
             field_type = data[tab][field].get('type')
-            if field_type in ['input_string', 'input_textfield', 'input_checkbox']:
+            if field_type in ['input_string', 'input_textfield', 'input_checkbox', 'input_select']:
                 if data[tab][field].get('mandatory') is None:
                     logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "mandatory" tag')
 
@@ -174,6 +174,24 @@ def validate_attribute(attribute):
                 if field_type == 'input_checkbox' and not isinstance(data[tab][field].get('value'), bool):
                     logs.append(f'{tab} -> {field} of type {field_type} expects a value of type bool, '
                                 f'but got {type(data[tab][field].get("value"))}')
+
+                if field_type == 'input_select':
+                    if data[tab][field].get('options') is None:
+                        logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "options" tag')
+                        continue
+
+                    if not isinstance(data[tab][field].get('options'), list):
+                        logs.append(f'{tab} -> {field} of type {field_type} expects a value of type list, '
+                                    f'but got {type(data[tab][field].get("value"))}')
+
+                    if not isinstance(data[tab][field].get('value'), str):
+                        logs.append(f'{tab} -> {field} of type {field_type} expects a value of type str, '
+                                    f'but got {type(data[tab][field].get("value"))}')
+
+                    for opt in data[tab][field].get('options'):
+                        if not isinstance(opt, str):
+                            logs.append(f'{tab} -> {field} -> "options" expects a list of str, '
+                                        f'but got {type(opt)}')
 
             elif field_type in ['raw', 'html']:
                 if data[tab][field].get('value') is None:
