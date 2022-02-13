@@ -17,6 +17,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import collections
+
+from functools import partial
+
 import json
 
 import logging
@@ -65,13 +69,15 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
-app.config['JSON_SORT_KEYS'] = False
-
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
 app.config.from_object('app.configuration.Config')
 
-db = SQLAlchemy(app)  # flask-sqlalchemy
+SQLALCHEMY_ENGINE_OPTIONS = {
+    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict)
+}
+
+db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
 
 bc = Bcrypt(app)  # flask-bcrypt
 
