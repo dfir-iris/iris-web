@@ -183,20 +183,6 @@ $(function () {
     });
 })
 
-
-$(function () {
-    var current = location.pathname;
-    $('#l_nav_tab .nav-item').each(function () {
-        var $this = $(this);
-        var child = $this.children();
-        // if the current path is like this link, make it active
-        if (child.attr('href').startsWith(current)) {
-            $this.addClass('active');
-            return;
-        }
-    })
-})
-
 function get_caseid() {
     queryString = window.location.search;
     urlParams = new URLSearchParams(queryString);
@@ -675,4 +661,44 @@ function toggle_focus_mode() {
 $(document).ready(function(){
     update_time();
     setInterval(function() { update_time(); }, 30000);
+    $(function () {
+        var current = location.pathname;
+        btt = current.split('/')[1];
+
+        if (btt !== 'manage') {
+            btt = btt.split('?')[0];
+        } else {
+            btt = current.split('?')[0];
+        }
+        console.log(btt);
+        $('#l_nav_tab .nav-item').each(function (k, al) {
+            href = $(al).children().attr('href');
+
+            try {
+                if (href == "#advanced-nav") {
+                    $('#advanced-nav .nav-subitem').each(function (i, el) {
+                        ktt = $(el).children().attr('href').split('?')[0];
+                        console.log(ktt);
+                        if (ktt === btt) {
+                            $(el).addClass('active');
+                            $(al).addClass('active');
+                            $(al).children().attr('aria-expanded', true);
+                            $('#advanced-nav').show();
+                            return;
+                        }
+                    })
+                } else if (href.startsWith(btt)){
+                    $(this).addClass('active');
+                    return;
+                }else{
+                    att = "";
+                    att = href.split('/')[1].split('?')[0];
+                }
+            } catch {att=""}
+            if (att === btt) {
+                $(al).addClass('active');
+                return;
+            }
+        })
+    })
 });

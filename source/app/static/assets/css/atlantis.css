@@ -737,10 +737,6 @@ body {
     background: #1d7af3;
 }
 
-.sidebar .nav>.nav-item.active a i,
-.sidebar[data-background-color="white"] .nav>.nav-item.active a i {
-    color: #4d7cfe;
-}
 
 .sidebar .nav>.nav-item.submenu,
 .sidebar[data-background-color="white"] .nav>.nav-item.submenu {
@@ -886,10 +882,6 @@ body {
     background: #1572E8 !important;
 }
 
-.sidebar .nav.nav-primary>.nav-item.active a i,
-.sidebar[data-background-color="white"] .nav.nav-primary>.nav-item.active a i {
-    color: #1572E8 !important;
-}
 
 .sidebar .nav.nav-secondary>.nav-item a:hover i,
 .sidebar .nav.nav-secondary>.nav-item a:focus i,

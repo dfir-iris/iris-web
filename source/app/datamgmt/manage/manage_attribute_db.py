@@ -56,6 +56,10 @@ def update_all_attributes(object_type):
     for obj in obj_list:
 
         for tab in target_attr:
+            if obj.custom_attributes is None:
+                obj.custom_attributes = target_attr
+                flag_modified(obj, "custom_attributes")
+                continue
 
             if obj.custom_attributes.get(tab) is None:
                 print(f'Migrating {tab}')
