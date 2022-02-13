@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
+
 import logging as logger
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -138,3 +140,34 @@ def merge_custom_attributes(data, obj_id, object_type):
                     default_attr[tab][field]['value'] = data[tab][field]
 
         return default_attr
+
+
+def validate_attribute(attribute):
+    logs = []
+    try:
+        data = json.loads(attribute)
+    except Exception as e:
+        return None, [str(e)]
+
+    for tab in data:
+        for field in data[tab]:
+            if not data[tab][field].get('type'):
+                logs.append(f'{tab}::{field} is missing mandatory "type" tag')
+                continue
+
+            field_type = data[tab][field].get('type')
+            if field_type in ['input_string', 'input_textfield', 'input_checkbox']:
+                if data[tab][field].get('mandatory') is None:
+                    logs.append(f'{tab} -> {field} of type {field_type } is missing mandatory "mandatory" tag')
+
+                if data[tab][field].get('value') is None:
+                    logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "value" tag')
+
+            elif field_type in ['raw', 'html']:
+                if data[tab][field].get('value') is None:
+                    logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "value" tag')
+
+            else:
+                logs.append(f'{tab} -> {field}, unknown field type "{field_type}"')
+
+    return data, logs

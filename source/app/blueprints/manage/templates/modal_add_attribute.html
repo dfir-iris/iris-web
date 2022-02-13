@@ -100,7 +100,7 @@
                 <div class="col-6">
                     {{ form.hidden_tag() }}
                     <div class="form-group">
-                        <label for="Attribute content" class="mr-4">Attribute content
+                        <label for="Attribute content" class="mr-4">Attribute definition
                         </label>
                         <div id="editor_detail">{{ attribute.attribute_content|tojson(indent=4) }}</div>
                     </div>
@@ -108,7 +108,12 @@
             </div>
         </form>
     </div>
-
+    <div class="alert alert-warning" style="display:none;" role="alert" id="alert_attributes_details">
+        <span id="alert_attributes_edit"></span><br/>
+        <b>Logs:</b>
+        <ul id="attributes_err_details_list">
+        </ul>
+    </div>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-black float-right" id="preview_attribute">Preview</button>

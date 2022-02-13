@@ -24,7 +24,7 @@ from flask import Blueprint
 from flask import render_template, request, url_for, redirect
 
 from app import db
-from app.datamgmt.manage.manage_attribute_db import update_all_attributes
+from app.datamgmt.manage.manage_attribute_db import update_all_attributes, validate_attribute
 from app.forms import AddAssetForm, AttributeForm
 from app.models.models import CustomAttribute
 from app.util import response_success, response_error, admin_required, api_admin_required, \
@@ -121,7 +121,11 @@ def update_attribute(cur_id, caseid):
     if not attr_content:
         return response_error("Invalid request")
 
-    attribute.attribute_content = dict(json.loads(attr_content))
+    attr_contents, logs = validate_attribute(attr_content)
+    if len(logs) > 0:
+        return response_error("Found errors in attribute", data=logs)
+
+    attribute.attribute_content = validate_attribute(attr_content)
     db.session.commit()
 
     # Now try to update every attributes by merging the updated ones

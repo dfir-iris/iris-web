@@ -143,6 +143,9 @@ function attribute_detail(attr_id) {
             var data_sent = Object();
             data_sent['attribute_content'] = editor.getSession().getValue();
             data_sent['csrf_token'] = $("#csrf_token").val();
+            $('#alert_attributes_edit').empty();
+            $('#alert_attributes_details').hide();
+            $('#attributes_err_details_list').empty();
 
             $.ajax({
                 url:  '/manage/attributes/update/' + attr_id + case_param(),
@@ -169,7 +172,21 @@ function attribute_detail(attr_id) {
                     }
                 },
                 error: function (error) {
-                    propagate_form_api_errors(error.responseJSON.data);
+                    data = error.responseJSON;
+                    $('#submit_new_attribute').text('Save');
+                    $('#alert_attributes_edit').text(data.message);
+                    if (data.data && data.data.length > 0) {
+                        for(var i in data.data)
+                        {
+                           var output='<li>'+data.data[i]+'</li>';
+                           console.log(output);
+                           $('#attributes_err_details_list').append(output);
+                        }
+
+                        $('#alert_attributes_details').show();
+                    }
+                    $('#alert_attributes_edit').show();
+                    $('#submit_new_module').text("Retry");
                 }
             });
 
