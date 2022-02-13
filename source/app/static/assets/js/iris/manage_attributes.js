@@ -100,15 +100,25 @@ function attribute_detail(attr_id) {
         editor.session.setUseWrapMode(true);
         editor.setOption("indentedSoftWrap", true);
         editor.renderer.setScrollMargin(8, 5)
-        editor.setOption("enableBasicAutocompletion", true);
-        editor.commands.addCommand({
-            name: 'save',
-            bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-            exec: function(editor) {
-                save_note(this);
-            }
-        })
+//        //editor.setOption("enableBasicAutocompletion", true);
+//        editor.setOption("enableSnippets", true);
+//        editor.setOption("enableLiveAutocompletion", true);
 
+        editor.setOptions({
+          enableBasicAutocompletion: [{
+            getCompletions: (editor, session, pos, prefix, callback) => {
+              // note, won't fire if caret is at a word that does not have these letters
+              callback(null, [
+                {value: 'mandatory', score: 1, meta: 'mandatory tag'},
+                {value: 'type', score: 1, meta: 'type tag'},
+                {value: 'value', score: 1, meta: 'default value'},
+              ]);
+            },
+          }],
+          // to make popup appear automatically, without explicit _ctrl+space_
+          enableLiveAutocompletion: true,
+          enableSnippets: true
+        });
 
         $('#submit_new_attribute').on("click", function () {
             event.preventDefault();
