@@ -12,7 +12,8 @@
                 <div class="form-group">
                     <label for="Attribute content" class="mr-4">Attribute content
                     </label>
-                    {{ form.attribute_content(class='form-control',  autocomplete="off") }}
+                    <div id="editor_detail">{{ attribute.attribute_content }}</div>
+                    <textarea id="attribute_content" rows="10" cols="82" style="display: none"></textarea>
                 </div>
 
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"

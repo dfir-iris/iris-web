@@ -85,6 +85,31 @@ function attribute_detail(attr_id) {
     url = '/manage/attributes/' + attr_id + '/modal' + case_param();
     $('#modal_add_attribute_content').load(url, function () {
 
+        var editor = ace.edit("editor_detail",
+            {
+                autoScrollEditorIntoView: true,
+                minLines: 4
+            });
+        editor.setTheme("ace/theme/tomorrow");
+        editor.session.setMode("ace/mode/json");
+        editor.renderer.setShowGutter(true);
+        editor.setOption("showLineNumbers", true);
+        editor.setOption("showPrintMargin", false);
+        editor.setOption("displayIndentGuides", true);
+        editor.setOption("maxLines", "Infinity");
+        editor.session.setUseWrapMode(true);
+        editor.setOption("indentedSoftWrap", false);
+        editor.renderer.setScrollMargin(8, 5)
+        editor.setOption("enableBasicAutocompletion", true);
+        editor.commands.addCommand({
+            name: 'save',
+            bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+            exec: function(editor) {
+                save_note(this);
+            }
+        })
+
+
         $('#submit_new_attribute').on("click", function () {
             event.preventDefault();
             var form = $('#form_new_attribute').serializeObject();

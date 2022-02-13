@@ -56,7 +56,7 @@
     </div>
 </div>
     <div class="modal" tabindex="-1"  id="modal_add_attribute" data-backdrop="true">
-        <div class="modal-lg modal-dialog" role="document">
+        <div class="modal-xxl modal-dialog" role="document">
             <div class="modal-content" id="modal_add_attribute_content">
     
             </div><!-- /.modal-content -->
@@ -67,6 +67,9 @@
     {% endblock content %}
 
     {% block javascripts %}
+    <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
+        charset="utf-8"></script>
     <script src="/static/assets/js/iris/common.js"></script>
     <script src="/static/assets/js/iris/manage_attributes.js"></script>
     {% endblock javascripts %}
