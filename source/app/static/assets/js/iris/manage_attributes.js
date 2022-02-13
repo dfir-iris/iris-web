@@ -203,8 +203,7 @@ function update_attribute(attr_id, editor, partial, complete){
             if (data.data && data.data.length > 0) {
                 for(var i in data.data)
                 {
-                   var output='<li>'+data.data[i]+'</li>';
-                   console.log(output);
+                   var output='<li>'+ sanitizeHTML(data.data[i]) +'</li>';
                    $('#attributes_err_details_list').append(output);
                 }
 

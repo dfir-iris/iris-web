@@ -177,7 +177,8 @@ def validate_attribute(attribute):
                 continue
 
             field_type = data[tab][field].get('type')
-            if field_type in ['input_string', 'input_textfield', 'input_checkbox', 'input_select']:
+            if field_type in ['input_string', 'input_textfield', 'input_checkbox', 'input_select',
+                              'input_date', 'input_datetime']:
                 if data[tab][field].get('mandatory') is None:
                     logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "mandatory" tag')
 
@@ -190,7 +191,12 @@ def validate_attribute(attribute):
 
                 if field_type == 'input_checkbox' and not isinstance(data[tab][field].get('value'), bool):
                     logs.append(f'{tab} -> {field} of type {field_type} expects a value of type bool, '
-                                f'but got {type(data[tab][field].get("value"))}')
+                                f'but got {type(data[tab][field]["value"])}')
+
+                if field_type in ['input_string', 'input_textfield', 'input_date', 'input_datetime']:
+                    if not isinstance(data[tab][field].get('value'), str):
+                        logs.append(f'{tab} -> {field} of type {field_type} expects a value of type str, '
+                                    f'but got {type(data[tab][field]["value"])}')
 
                 if field_type == 'input_select':
                     if data[tab][field].get('options') is None:
@@ -199,11 +205,7 @@ def validate_attribute(attribute):
 
                     if not isinstance(data[tab][field].get('options'), list):
                         logs.append(f'{tab} -> {field} of type {field_type} expects a value of type list, '
-                                    f'but got {type(data[tab][field].get("value"))}')
-
-                    if not isinstance(data[tab][field].get('value'), str):
-                        logs.append(f'{tab} -> {field} of type {field_type} expects a value of type str, '
-                                    f'but got {type(data[tab][field].get("value"))}')
+                                    f'but got {type(data[tab][field]["value"])}')
 
                     for opt in data[tab][field].get('options'):
                         if not isinstance(opt, str):

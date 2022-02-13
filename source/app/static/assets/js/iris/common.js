@@ -645,6 +645,12 @@ function get_custom_attributes_fields() {
         if (!(tab in values)) { values[tab] = {} };
         values[tab][field] = $(el).is(':checked');
     })
+    $("select[id^='inpselect_']").each(function (i, el) {
+        tab = $(el).attr('data-ref-tab');
+        field = $(el).attr('data-attr-for');
+        if (!(tab in values)) { values[tab] = {} };
+        values[tab][field] = $(el).val();
+    })
 
     return values;
 }
