@@ -129,6 +129,7 @@ def update_attribute(cur_id, caseid):
 
     attribute.attribute_content = attr_contents
     db.session.commit()
+    print(attribute.attribute_content)
 
     # Now try to update every attributes by merging the updated ones
     complete_overwrite = data.get('complete_overwrite')

@@ -219,4 +219,4 @@ def validate_attribute(attribute):
             else:
                 logs.append(f'{tab} -> {field}, unknown field type "{field_type}"')
 
-    return dict(data), logs
+    return data, logs

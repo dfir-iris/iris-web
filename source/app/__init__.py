@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
+
 import logging
 from flask import Flask
 from flask.logging import default_handler
@@ -63,7 +65,10 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
+app.config['JSON_SORT_KEYS'] = False
+
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
+app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
 app.config.from_object('app.configuration.Config')
 
 db = SQLAlchemy(app)  # flask-sqlalchemy

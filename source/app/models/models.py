@@ -26,7 +26,7 @@ from flask_login import UserMixin
 
 from sqlalchemy import Boolean, Column, Date, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, text, \
     LargeBinary, DateTime, Sequence, or_, BigInteger, TIMESTAMP
-from sqlalchemy.dialects.postgresql import UUID, JSONB, JSON
+from sqlalchemy.dialects.postgresql import UUID, JSON, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -96,7 +96,7 @@ class CaseAssets(db.Model):
     date_update = Column(DateTime)
     user_id = Column(ForeignKey('user.id'))
     analysis_status_id = Column(ForeignKey('analysis_status.id'))
-    custom_attributes = Column(JSONB)
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user = relationship('User')
@@ -392,7 +392,7 @@ class Ioc(db.Model):
     user_id = Column(ForeignKey('user.id'))
     ioc_misp = Column(Text)
     ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
-    custom_attributes = Column(JSONB)
+    custom_attributes = Column(JSON)
 
     user = relationship('User')
     tlp = relationship('Tlp')
@@ -406,7 +406,7 @@ class CustomAttribute(db.Model):
     attribute_display_name = Column(Text)
     attribute_description = Column(Text)
     attribute_for = Column(Text)
-    attribute_content = Column(JSONB)
+    attribute_content = Column(JSON)
 
 
 class IocType(db.Model):
@@ -508,7 +508,7 @@ class Notes(db.Model):
     note_creationdate = Column(DateTime)
     note_lastupdate = Column(DateTime)
     note_case_id = Column(ForeignKey('cases.case_id'))
-    custom_attributes = Column(JSONB)
+    custom_attributes = Column(JSON)
 
     user = relationship('User')
     case = relationship('Cases')
@@ -561,7 +561,7 @@ class CaseReceivedFile(db.Model):
     file_size = Column(Integer)
     case_id = Column(ForeignKey('cases.case_id'))
     user_id = Column(ForeignKey('user.id'))
-    custom_attributes = Column(JSONB)
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user = relationship('User')
@@ -592,7 +592,7 @@ class CaseTasks(db.Model):
     task_assignee_id = Column(ForeignKey('user.id'))
     task_status_id = Column(ForeignKey('task_status.id'))
     task_case_id = Column(ForeignKey('cases.case_id'))
-    custom_attributes = Column(JSONB)
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user_open = relationship('User', foreign_keys=[task_userid_open])

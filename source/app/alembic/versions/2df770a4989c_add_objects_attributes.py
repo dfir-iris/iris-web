@@ -24,13 +24,13 @@ def upgrade():
     for table in tables:
         if not _table_has_column(table, 'custom_attributes'):
             op.add_column(table,
-                          sa.Column('custom_attributes', sa.Text)
+                          sa.Column('custom_attributes', sa.JSON)
                           )
 
             t_ua = sa.Table(
                 table,
                 sa.MetaData(),
-                sa.Column('custom_attributes', sa.Text)
+                sa.Column('custom_attributes', sa.JSON)
             )
             conn = op.get_bind()
             conn.execute(t_ua.update().values(
