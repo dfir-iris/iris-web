@@ -28,7 +28,7 @@ from app.models import Ioc, CustomAttribute, CasesEvent, CaseAssets, CaseTasks, 
 log = logger.getLogger(__name__)
 
 
-def update_all_attributes(object_type):
+def update_all_attributes(object_type, previous_attribute, partial_overwrite=False, complete_overwrite=False):
 
     obj_list = []
     if object_type == 'ioc':
@@ -44,24 +44,21 @@ def update_all_attributes(object_type):
     elif object_type == 'evidence':
         obj_list = CaseReceivedFile.query.all()
 
-    ioc_attr = CustomAttribute.query.with_entities(
-        CustomAttribute.attribute_content
-    ).filter(
-        CustomAttribute.attribute_for == object_type
-    ).first()
-
-    target_attr = ioc_attr.attribute_content
+    target_attr = get_default_custom_attributes(object_type)
 
     print(f'Migrating {len(obj_list)} objects of type {object_type}')
     for obj in obj_list:
 
-        for tab in target_attr:
-            if obj.custom_attributes is None:
-                obj.custom_attributes = target_attr
-                flag_modified(obj, "custom_attributes")
-                continue
+        if complete_overwrite or obj.custom_attributes is None:
+            print('Achieving complete overwrite')
+            obj.custom_attributes = target_attr
+            flag_modified(obj, "custom_attributes")
+            db.session.commit()
+            continue
 
-            if obj.custom_attributes.get(tab) is None:
+        for tab in target_attr:
+
+            if obj.custom_attributes.get(tab) is None or partial_overwrite:
                 print(f'Migrating {tab}')
                 flag_modified(obj, "custom_attributes")
                 obj.custom_attributes[tab] = target_attr[tab]
@@ -75,12 +72,28 @@ def update_all_attributes(object_type):
 
                     else:
                         if obj.custom_attributes[tab][element]['type'] != target_attr[tab][element]['type']:
-                            flag_modified(obj, "custom_attributes")
-                            obj.custom_attributes[tab][element]['type'] = target_attr[tab][element]['type']
+                            if (obj.custom_attributes[tab][element]['value'] == target_attr[tab][element]['value']) or \
+                                (obj.custom_attributes[tab][element]['type'] in ('input_string', 'input_text_field') and
+                                 target_attr[tab][element]['type'] in ('input_string', 'input_text_field')):
+                                flag_modified(obj, "custom_attributes")
+                                obj.custom_attributes[tab][element]['type'] = target_attr[tab][element]['type']
 
                         if obj.custom_attributes[tab][element]['mandatory'] != target_attr[tab][element]['mandatory']:
                             flag_modified(obj, "custom_attributes")
                             obj.custom_attributes[tab][element]['mandatory'] = target_attr[tab][element]['mandatory']
+
+        if partial_overwrite:
+            for tab in previous_attribute:
+                if not target_attr.get(tab):
+                    if obj.custom_attributes.get(tab):
+                        flag_modified(obj, "custom_attributes")
+                        obj.custom_attributes.pop(tab)
+
+                for element in previous_attribute[tab]:
+                    if not target_attr[tab].get(element):
+                        if obj.custom_attributes[tab].get(element):
+                            flag_modified(obj, "custom_attributes")
+                            obj.custom_attributes[tab].pop(element)
 
         # Commit will only be effective if we flagged a modification, reducing load on the DB
         db.session.commit()
@@ -91,7 +104,7 @@ def get_default_custom_attributes(object_type):
     return ca.attribute_content
 
 
-def merge_custom_attributes(data, obj_id, object_type):
+def merge_custom_attributes(data, obj_id, object_type, overwrite=False):
 
     obj = None
     if obj_id:
@@ -110,6 +123,10 @@ def merge_custom_attributes(data, obj_id, object_type):
 
         if not obj:
             return data
+
+        if overwrite:
+            log.error(f'Overwriting all {object_type}')
+            return get_default_custom_attributes(object_type)
 
         for tab in data:
             if obj.custom_attributes.get(tab) is None:

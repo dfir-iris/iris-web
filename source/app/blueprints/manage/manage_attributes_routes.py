@@ -125,10 +125,17 @@ def update_attribute(cur_id, caseid):
     if len(logs) > 0:
         return response_error("Found errors in attribute", data=logs)
 
+    previous_attribute = attribute.attribute_content
+
     attribute.attribute_content = attr_contents
     db.session.commit()
 
     # Now try to update every attributes by merging the updated ones
-    update_all_attributes(attribute.attribute_for)
+    complete_overwrite = data.get('complete_overwrite')
+    complete_overwrite = complete_overwrite if complete_overwrite else False
+    partial_overwrite = data.get('partial_overwrite')
+    partial_overwrite = partial_overwrite if partial_overwrite else False
+    update_all_attributes(attribute.attribute_for, partial_overwrite=partial_overwrite,
+                          complete_overwrite=complete_overwrite, previous_attribute=previous_attribute)
 
     return response_success("Attribute updated")

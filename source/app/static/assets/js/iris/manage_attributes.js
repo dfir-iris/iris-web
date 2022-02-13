@@ -143,59 +143,13 @@ function attribute_detail(attr_id) {
         });
 
         $('#submit_new_attribute').on("click", function () {
-            event.preventDefault();
-
-            var data_sent = Object();
-            data_sent['attribute_content'] = editor.getSession().getValue();
-            data_sent['csrf_token'] = $("#csrf_token").val();
-            $('#alert_attributes_edit').empty();
-            $('#alert_attributes_details').hide();
-            $('#attributes_err_details_list').empty();
-
-            $.ajax({
-                url:  '/manage/attributes/update/' + attr_id + case_param(),
-                type: "POST",
-                data: JSON.stringify(data_sent),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("You're set !",
-                            data.message,
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            refresh_attribute_table();
-                            $('#modal_add_attribute').modal('hide');
-                        });
-
-                    } else {
-                        $('#modal_add_attribute').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    data = error.responseJSON;
-                    $('#submit_new_attribute').text('Save');
-                    $('#alert_attributes_edit').text(data.message);
-                    if (data.data && data.data.length > 0) {
-                        for(var i in data.data)
-                        {
-                           var output='<li>'+data.data[i]+'</li>';
-                           console.log(output);
-                           $('#attributes_err_details_list').append(output);
-                        }
-
-                        $('#alert_attributes_details').show();
-                    }
-                    $('#alert_attributes_edit').show();
-                    $('#submit_new_module').text("Retry");
-                }
-            });
-
-            return false;
+            update_attribute(attr_id, editor, false, false);
+        })
+        $('#submit_partial_overwrite').on("click", function () {
+            update_attribute(attr_id, editor, true, false);
+        })
+        $('#submit_complete_overwrite').on("click", function () {
+            update_attribute(attr_id, editor, false, true);
         })
 
 
@@ -203,3 +157,63 @@ function attribute_detail(attr_id) {
     $('#modal_add_attribute').modal({ show: true });
 }
 
+function update_attribute(attr_id, editor, partial, complete){
+    event.preventDefault();
+
+    var data_sent = Object();
+    data_sent['attribute_content'] = editor.getSession().getValue();
+    data_sent['csrf_token'] = $("#csrf_token").val();
+    data_sent['partial_overwrite'] = partial;
+    data_sent['complete_overwrite'] = complete;
+
+    $('#alert_attributes_edit').empty();
+    $('#alert_attributes_details').hide();
+    $('#attributes_err_details_list').empty();
+
+    $.ajax({
+        url:  '/manage/attributes/update/' + attr_id + case_param(),
+        type: "POST",
+        data: JSON.stringify(data_sent),
+        dataType: "json",
+        contentType: "application/json;charset=UTF-8",
+        beforeSend: function() {
+            window.swal({
+                  title: "Updating and migrating...",
+                  text: "Please wait",
+                  imageUrl: "images/ajaxloader.gif",
+                  showConfirmButton: false,
+                  allowOutsideClick: false
+            });
+        },
+        complete: function() {
+            window.swal.close();
+        },
+        success: function (data) {
+            if (data.status == 'success') {
+                notify_success(data.message);
+            } else {
+                $('#modal_add_attribute').text('Save again');
+                swal("Oh no !", data.message, "error")
+            }
+        },
+        error: function (error) {
+            data = error.responseJSON;
+            $('#submit_new_attribute').text('Save');
+            $('#alert_attributes_edit').text(data.message);
+            if (data.data && data.data.length > 0) {
+                for(var i in data.data)
+                {
+                   var output='<li>'+data.data[i]+'</li>';
+                   console.log(output);
+                   $('#attributes_err_details_list').append(output);
+                }
+
+                $('#alert_attributes_details').show();
+            }
+            $('#alert_attributes_edit').show();
+            $('#submit_new_module').text("Retry");
+        }
+    });
+
+    return false;
+}
