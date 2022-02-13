@@ -158,10 +158,18 @@ def validate_attribute(attribute):
             field_type = data[tab][field].get('type')
             if field_type in ['input_string', 'input_textfield', 'input_checkbox']:
                 if data[tab][field].get('mandatory') is None:
-                    logs.append(f'{tab} -> {field} of type {field_type } is missing mandatory "mandatory" tag')
+                    logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "mandatory" tag')
+
+                elif not isinstance(data[tab][field].get('mandatory'), bool):
+                    logs.append(f'{tab} -> {field} -> "mandatory" expects a value of type bool, '
+                                f'but got {type(data[tab][field].get("mandatory"))}')
 
                 if data[tab][field].get('value') is None:
                     logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "value" tag')
+
+                if field_type == 'input_checkbox' and not isinstance(data[tab][field].get('value'), bool):
+                    logs.append(f'{tab} -> {field} of type {field_type} expects a value of type bool, '
+                                f'but got {type(data[tab][field].get("value"))}')
 
             elif field_type in ['raw', 'html']:
                 if data[tab][field].get('value') is None:
