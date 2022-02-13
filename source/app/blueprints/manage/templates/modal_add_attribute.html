@@ -13,7 +13,7 @@
                         <h2>{{ attribute.attribute_display_name }} attributes</h2>
                         <p>Attributes allow to extend the fields available for analyst when they edit or add {{ attribute.attribute_display_name }}.</p>
                         <div class="alert alert-warning" role="alert">
-                             Attributes can be added by administrator in this UI, or they can be pushed via API or modules.<br/>
+                             Attributes can be added by administrator in this UI, or they can be pushed by modules.<br/>
                              This means each {{ attribute.attribute_display_name }} object maybe have a different set of attributes.
                              Updating the default objects here will result in an update of every existing object, which might take a huge amount of time.
                             <p>Typing wrong attributes here might result in UI breaks. IRIS will attempt to validate the attributes' taxonomy before committing.</p>
@@ -82,6 +82,16 @@
     }
 }
                                     </pre>
+
+                                    <h4>Field types</h4>
+                                    The supported fields types are:
+                                    <ul>
+                                        <li>input_string: Standard input text</li>
+                                        <li>input_textfield: Standard input textfield</li>
+                                        <li>input_checkbox: Standard checkbox</li>
+                                        <li>raw: A static content rendered in raw text. HTML is not be interpreted.</li>
+                                        <li>html: A static content rendered as HTML. <b>This is by nature prone to exploitations.</b></li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -95,10 +105,12 @@
                         <div id="editor_detail">{{ attribute.attribute_content|tojson(indent=4) }}</div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
-                    id="submit_new_attribute">Update</button>
             </div>
         </form>
     </div>
 
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-black float-right" id="preview_attribute">Preview</button>
+    <button type="button" class="btn btn-outline-success float-right" id="submit_new_attribute">Update</button>
 </div>

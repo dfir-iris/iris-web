@@ -115,6 +115,28 @@ function attribute_detail(attr_id) {
           enableSnippets: true
         });
 
+        $('#preview_attribute').on("click", function () {
+             var data_sent = Object();
+            data_sent['attribute_content'] = editor.getSession().getValue();
+            data_sent['csrf_token'] = $("#csrf_token").val();
+
+            $.ajax({
+                url: '/manage/attributes/preview' + case_param(),
+                type: "POST",
+                data: JSON.stringify(data_sent),
+                dataType: "json",
+                contentType: "application/json;charset=UTF-8",
+                success: function(data) {
+                    $('#modal_preview_attribute_content').html(data.data);
+
+                    $('#modal_preview_attribute').modal({ show: true });
+                },
+                error:function(request, status, error) {
+                    notify_error(request.responseText);
+                }
+            });
+        });
+
         $('#submit_new_attribute').on("click", function () {
             event.preventDefault();
 

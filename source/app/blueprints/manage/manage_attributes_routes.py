@@ -40,7 +40,7 @@ manage_attributes_blueprint = Blueprint('manage_attributes',
 @admin_required
 def manage_attributes(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_attributes_blueprint.manage_attributes', cid=caseid))
+        return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
 
     form = AddAssetForm()
 
@@ -69,7 +69,7 @@ def list_attributes(caseid):
 @admin_required
 def attributes_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_attributes_blueprint.manage_attributes', cid=caseid))
+        return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
 
     form = AttributeForm()
 
@@ -80,6 +80,30 @@ def attributes_modal(cur_id, caseid, url_redir):
     form.attribute_content.data = attribute.attribute_content
 
     return render_template("modal_add_attribute.html", form=form, attribute=attribute)
+
+
+@manage_attributes_blueprint.route('/manage/attributes/preview', methods=['POST'])
+@admin_required
+def attributes_preview(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
+
+    data = request.get_json()
+    if not data:
+        return response_error(f"Invalid request")
+
+    attribute = data.get('attribute_content')
+    if not attribute:
+        return response_error(f"Invalid request")
+
+    try:
+        attribute = json.loads(attribute)
+    except Exception as e:
+        return response_error("Invalid JSON", data=str(e))
+
+    templated = render_template("modal_preview_attribute.html", attributes=attribute)
+
+    return response_success(data=templated)
 
 
 @manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
