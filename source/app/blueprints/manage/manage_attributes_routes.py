@@ -125,7 +125,7 @@ def update_attribute(cur_id, caseid):
     if len(logs) > 0:
         return response_error("Found errors in attribute", data=logs)
 
-    attribute.attribute_content = validate_attribute(attr_content)
+    attribute.attribute_content = attr_contents
     db.session.commit()
 
     # Now try to update every attributes by merging the updated ones

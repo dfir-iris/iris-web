@@ -107,6 +107,11 @@ function attribute_detail(attr_id) {
               callback(null, [
                 {value: 'mandatory', score: 1, meta: 'mandatory tag'},
                 {value: 'type', score: 1, meta: 'type tag'},
+                {value: 'input_string', score: 1, meta: 'An input string field type'},
+                {value: 'input_checkbox', score: 1, meta: 'An input checkbox field type'},
+                {value: 'input_textfield', score: 1, meta: 'An input textfield field type'},
+                {value: 'raw', score: 1, meta: 'A raw field type'},
+                {value: 'html', score: 1, meta: 'An html field type'},
                 {value: 'value', score: 1, meta: 'default value'},
               ]);
             },

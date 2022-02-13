@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import jinja2
 import os
 import configparser
 
@@ -52,7 +52,6 @@ if os.environ.get('IRIS_WORKER') is None:
 
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
-
 
 # Build of SQLAlchemy connectors. One is admin and the other is only for iris. Admin is needed to create new DB
 SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PG_ACCOUNT_,

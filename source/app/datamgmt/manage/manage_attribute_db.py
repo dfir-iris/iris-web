@@ -121,9 +121,9 @@ def merge_custom_attributes(data, obj_id, object_type):
                         flag_modified(obj, "custom_attributes")
                         obj.custom_attributes[tab][field]['value'] = data[tab][field]
 
-            # Commit will only be effective if we flagged a modification, reducing load on the DB
-            db.session.commit()
-            return obj.custom_attributes
+        # Commit will only be effective if we flagged a modification, reducing load on the DB
+        db.session.commit()
+        return obj.custom_attributes
 
     else:
         default_attr = get_default_custom_attributes(object_type)
@@ -178,4 +178,4 @@ def validate_attribute(attribute):
             else:
                 logs.append(f'{tab} -> {field}, unknown field type "{field_type}"')
 
-    return data, logs
+    return dict(data), logs
