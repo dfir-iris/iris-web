@@ -88,7 +88,7 @@ function attribute_detail(attr_id) {
         var editor = ace.edit("editor_detail",
             {
                 autoScrollEditorIntoView: true,
-                minLines: 4
+                minLines: 30,
             });
         editor.setTheme("ace/theme/tomorrow");
         editor.session.setMode("ace/mode/json");
@@ -100,14 +100,10 @@ function attribute_detail(attr_id) {
         editor.session.setUseWrapMode(true);
         editor.setOption("indentedSoftWrap", true);
         editor.renderer.setScrollMargin(8, 5)
-//        //editor.setOption("enableBasicAutocompletion", true);
-//        editor.setOption("enableSnippets", true);
-//        editor.setOption("enableLiveAutocompletion", true);
 
         editor.setOptions({
           enableBasicAutocompletion: [{
             getCompletions: (editor, session, pos, prefix, callback) => {
-              // note, won't fire if caret is at a word that does not have these letters
               callback(null, [
                 {value: 'mandatory', score: 1, meta: 'mandatory tag'},
                 {value: 'type', score: 1, meta: 'type tag'},
@@ -115,19 +111,21 @@ function attribute_detail(attr_id) {
               ]);
             },
           }],
-          // to make popup appear automatically, without explicit _ctrl+space_
           enableLiveAutocompletion: true,
           enableSnippets: true
         });
 
         $('#submit_new_attribute').on("click", function () {
             event.preventDefault();
-            var form = $('#form_new_attribute').serializeObject();
+
+            var data_sent = Object();
+            data_sent['attribute_content'] = editor.getSession().getValue();
+            data_sent['csrf_token'] = $("#csrf_token").val();
 
             $.ajax({
                 url:  '/manage/attributes/update/' + attr_id + case_param(),
                 type: "POST",
-                data: JSON.stringify(form),
+                data: JSON.stringify(data_sent),
                 dataType: "json",
                 contentType: "application/json;charset=UTF-8",
                 success: function (data) {

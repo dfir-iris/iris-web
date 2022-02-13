@@ -7,18 +7,96 @@
 
         <div class="container col-md-12">
         <form method="post" action="" id="form_new_attribute" enctype="multipart/form-data">
-            <div class="col-md-12 col-lg-12 col-sm-12">
-                {{ form.hidden_tag() }}
-                <div class="form-group">
-                    <label for="Attribute content" class="mr-4">Attribute content
-                    </label>
-                    <div id="editor_detail">{{ attribute.attribute_content|tojson(indent=4) }}</div>
-                    <textarea id="attribute_content" rows="10" cols="82" style="display: none"></textarea>
+            <div class="row">
+                <div class="col-6">
+                    <div class="accordion accordion-primary">
+                        <h2>{{ attribute.attribute_display_name }} attributes</h2>
+                        <p>Attributes allow to extend the fields available for analyst when they edit or add {{ attribute.attribute_display_name }}.</p>
+                        <div class="alert alert-warning" role="alert">
+                             Attributes can be added by administrator in this UI, or they can be pushed via API or modules.<br/>
+                             This means each {{ attribute.attribute_display_name }} object maybe have a different set of attributes.
+                             Updating the default objects here will result in an update of every existing object, which might take a huge amount of time.
+                            <p>Typing wrong attributes here might result in UI breaks. IRIS will attempt to validate the attributes' taxonomy before committing.</p>
+                            <b>To avoid this, use the Preview button before saving. It displays a 1-to-1 UI representation of the attributes</b>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header collapsed" id="drop_attr_description" data-toggle="collapse" data-target="#drop_attr_desc" aria-expanded="false" aria-controls="drop_attr_desc" role="button">
+                                <div class="span-icon">
+                                    <div class="flaticon-tea-cup"></div>
+                                </div>
+                                <div class="span-title">
+                                    More details
+                                </div>
+                                <div class="span-mode"></div>
+                            </div>
+
+                            <div id="drop_attr_desc" class="collapse" aria-labelledby="drop_tax_attr" style="">
+                                <div class="card-body">
+                                    <p>These attributes are stored in each {{ attribute.attribute_display_name }} object in the form of a JSON binary structure (JSONB)</p>
+                                    <p>Attributes in this page represents the default attributes of each new {{ attribute.attribute_display_name }} objects. Existing object are updated if they
+                                        don't hold the specified attributes. <b>Other existing attributes are not deleted.</b></p>
+                                    Attributes can have the following purposes:
+                                    <ul>
+                                        <li><b>Inputs</b>: Offers analysts the possibility to fill additional details. Multiple types of inputs are supported. See taxonomy for more details</li>
+                                        <li><b>Raw</b>: A static content rendered in raw text. HTML is not be interpreted.</li>
+                                        <li><b>HTML</b>: A static content rendered as HTML for infinite possibilities. <b>This is by nature prone to exploitations.</b></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header collapsed" id="drop_attr_taxonomy" data-toggle="collapse" data-target="#drop_tax_attr" aria-expanded="false" aria-controls="drop_tax_attr" role="button">
+                                <div class="span-icon">
+                                    <div class="flaticon-pencil"></div>
+                                </div>
+                                <div class="span-title">
+                                    Attributes taxonomy
+                                </div>
+                                <div class="span-mode"></div>
+                            </div>
+
+                            <div id="drop_tax_attr" class="collapse" aria-labelledby="drop_tax_attr" style="">
+                                <div class="card-body">
+                                    Attributes are defined as below.
+                                    <pre>
+{
+    "Tab Name 1": {                     // Defines a new tab in the {{ attribute.attribute_display_name }} modal
+        "Field 1": {                    // Defines a new field within the Tab Name 1
+            "type": "input_string",     // Defines the type of field, here a standard string input
+            "mandatory": true,          // Indicates whether the field is mandatory upon saving
+            "value": ""                 // Default value if any, else empty
+        },
+        "Field 2": {                    // Defines a second field within the tab Tab Name 1
+            "type": "input_checkbox",   // Defines an input checkbox
+            "mandatory": false,         // Indicates whether the field is mandatory upon saving
+            "value": ""                 // Default value if any, else empty
+        }
+    },
+    "VT report": {                      // Defines a second tab named VT report
+        "Content": {                    // Defines a new field Content within the VT Report
+            "type": "html",             // Defines an HTML interpreted content
+            "value": ""                 // Default value if any, else empty
+        }
+    }
+}
+                                    </pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
+                <div class="col-6">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        <label for="Attribute content" class="mr-4">Attribute content
+                        </label>
+                        <div id="editor_detail">{{ attribute.attribute_content|tojson(indent=4) }}</div>
+                    </div>
+                </div>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
-                id="submit_new_attribute">Update</button>
-
+                    id="submit_new_attribute">Update</button>
             </div>
         </form>
     </div>
