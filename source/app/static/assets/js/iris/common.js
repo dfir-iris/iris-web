@@ -62,6 +62,7 @@ function notify_error(message) {
             align: 'right'
         },
         time: 4000,
+        z_index: 2000,
     });
 }
 
@@ -69,13 +70,14 @@ function notify_success(message) {
     $.notify({
         icon: 'flaticon-hands',
         title: 'Done',
-        message: message
+        message: message,
     }, {
         type: 'success',
         placement: {
             from: 'bottom',
             align: 'right'
         },
+        z_index: 2000,
         time: 2000,
     });
 }
