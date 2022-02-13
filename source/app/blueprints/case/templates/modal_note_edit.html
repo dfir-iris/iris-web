@@ -3,6 +3,9 @@
     <h4 class="modal-title mt-2 mr-4">{{ note.title }}</h4>
     {% include 'modals/modal_attributes_nav.html' %}
       <div class="row text-right">
+      <button class="btn btn-white pull-right" title="Toggle focus mode" id="focus_mode" onclick="toggle_focus_mode();return false;">
+          <span aria-hidden="true"><i class="fas fas fa-coffee"></i></span>
+        </button>
          <div class="dropdown">
               <button class="btn btn-white pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                   <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
