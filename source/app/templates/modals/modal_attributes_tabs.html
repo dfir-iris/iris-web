@@ -56,6 +56,13 @@
                                     id="inpstd_{{ loop.index }}_{{ tag_id }}" value="{{ attributes[ca][cle]['value'] }}">
                             </div>
 
+                        {% elif attributes[ca][cle]["type"] == "input_datetime" %}
+                            <div class="form-input">
+                                  <label class="my-1 mr-2" for="inpstd_{{ loop.index }}_{{ tag_id }}">{{ cle }}</label>
+                                  <input type="datetime-local" data-attr-for="{{cle}}" data-ref-tab="{{ca}}"
+                                    id="inpstd_{{ loop.index }}_{{ tag_id }}" value="{{ attributes[ca][cle]['value'] }}">
+                            </div>
+
                         {% elif attributes[ca][cle]["type"] == "raw" %}
                             <p>{{ cle }}</p>
 
