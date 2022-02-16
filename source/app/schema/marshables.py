@@ -263,6 +263,14 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
         raise marshmallow.exceptions.ValidationError("Invalid client id",
                                                      field_name="case_customer")
 
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('case_id'), 'case')
+
+        return data
+
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
     task_id = auto_field('id')

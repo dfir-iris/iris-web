@@ -53,7 +53,8 @@ class Cases(db.Model):
                  client_id=None,
                  description=None,
                  gen_report=False,
-                 user=None
+                 user=None,
+                 custom_attributes=None
                  ):
         self.name = name,
         self.soc_id = soc_id,
@@ -64,6 +65,7 @@ class Cases(db.Model):
         self.description = description
         self.open_date = datetime.utcnow()
         self.gen_report = gen_report
+        self.custom_attributes = custom_attributes
 
     def save(self):
         """

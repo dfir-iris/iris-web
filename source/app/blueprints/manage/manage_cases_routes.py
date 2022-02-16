@@ -164,7 +164,7 @@ def api_add_case(caseid):
 
         case.save()
 
-        case = call_modules_hook('on_postload_case_create', data=request.case, caseid=caseid)
+        case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
         track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
