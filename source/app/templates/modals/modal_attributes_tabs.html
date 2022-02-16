@@ -9,7 +9,7 @@
 
                         {% if attributes[ca][cle]["type"] == "input_string" %}
                          <div class="form-input">
-                            <label for="{{ cle }}">{{ cle }}
+                            <label for="{{ cle }}">{{ cle }} {% if attributes[ca][cle]['mandatory'] %} * {% endif %}
                             </label>
                             <input type="text" id="inpstd_{{ loop.index }}_{{ tag_id }}"
                                    data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"
@@ -25,14 +25,14 @@
                                            {% if attributes[ca][cle]['value'] == True %} checked {% endif %}
                                             {% if attributes[ca][cle]['mandatory'] %} required {% endif %}
                                     />
-                                    <span class="form-check-sign"> {{ cle }}
+                                    <span class="form-check-sign"> {{ cle }}{% if attributes[ca][cle]['mandatory'] %} * {% endif %}
                                     </span>
                                 </label>
                             </div>
 
                         {% elif attributes[ca][cle]["type"] == "input_textfield" %}
                             <div class="form-input">
-                                <label for="{{ cle }}">{{ cle }}
+                                <label for="{{ cle }}">{{ cle }} {% if attributes[ca][cle]['mandatory'] %} * {% endif %}
                                 </label>
                                 <textarea class="form-control" id="inpstd_{{ loop.index }}_{{ tag_id }}"
                                                 data-attr-for="{{cle}}" data-ref-tab="{{ca}}"
@@ -55,7 +55,7 @@
 
                         {% elif attributes[ca][cle]["type"] == "input_date" %}
                             <div class="form-input">
-                                  <label class="my-1 mr-2" for="inpstd_{{ loop.index }}_{{ tag_id }}">{{ cle }}</label>
+                                  <label class="my-1 mr-2" for="inpstd_{{ loop.index }}_{{ tag_id }}">{{ cle }} {% if attributes[ca][cle]['mandatory'] %} * {% endif %}</label>
                                   <input type="date" data-attr-for="{{cle}}" data-ref-tab="{{ca}}"
                                     id="inpstd_{{ loop.index }}_{{ tag_id }}" value="{{ attributes[ca][cle]['value'] }}"
                                   {% if attributes[ca][cle]['mandatory'] %} required {% endif %} >
@@ -63,7 +63,7 @@
 
                         {% elif attributes[ca][cle]["type"] == "input_datetime" %}
                             <div class="form-input">
-                                  <label class="my-1 mr-2" for="inpstd_{{ loop.index }}_{{ tag_id }}">{{ cle }}</label>
+                                  <label class="my-1 mr-2" for="inpstd_{{ loop.index }}_{{ tag_id }}">{{ cle }} {% if attributes[ca][cle]['mandatory'] %} * {% endif %}</label>
                                   <input type="datetime-local" data-attr-for="{{cle}}" data-ref-tab="{{ca}}"
                                     id="inpstd_{{ loop.index }}_{{ tag_id }}" value="{{ attributes[ca][cle]['value'] }}"
                                     {% if attributes[ca][cle]['mandatory'] %} required {% endif %}
