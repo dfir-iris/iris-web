@@ -93,7 +93,6 @@ def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=
     note.note_user = user_id
 
     note.custom_attributes = get_default_custom_attributes('note')
-
     db.session.add(note)
 
     update_notes_state(caseid=caseid, userid=user_id)

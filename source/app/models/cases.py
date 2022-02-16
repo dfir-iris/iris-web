@@ -20,7 +20,7 @@
 
 # IMPORTS ------------------------------------------------
 from sqlalchemy import Column, Date, Integer, String, Boolean, Text, ForeignKey, DateTime
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, JSON
 from sqlalchemy.orm import relationship, backref
 from flask_login import current_user
 from datetime import datetime
@@ -42,6 +42,7 @@ class Cases(db.Model):
     open_date = Column(Date)
     close_date = Column(Date)
     user_id = Column(ForeignKey('user.id'))
+    custom_attributes = Column(JSON)
 
     client = relationship('Client')
     user = relationship('User')

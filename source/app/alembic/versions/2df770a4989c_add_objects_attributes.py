@@ -20,7 +20,7 @@ depends_on = None
 
 
 def upgrade():
-    tables = ['ioc', 'case_assets', 'case_received_file', 'case_tasks', 'notes', 'cases_events']
+    tables = ['ioc', 'case_assets', 'case_received_file', 'case_tasks', 'notes', 'cases_events', 'cases']
     for table in tables:
         if not _table_has_column(table, 'custom_attributes'):
             op.add_column(table,
