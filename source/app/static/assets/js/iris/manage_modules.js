@@ -288,6 +288,24 @@ function refresh_modules_hooks() {
 }
 
 
+function export_mod_config(module_id) {
+    $.ajax({
+          url: '/manage/modules/export-config/' + module_id + case_param(),
+          type: "GET",
+          dataType: 'JSON',
+          success: function (data) {
+              if (data.status == 'success') {
+                    console.log(data);
+              } else {
+                  swal ( "Oh no !" ,  data.message ,  "error" );
+              }
+          },
+          error: function (error) {
+              swal ( "Oh no !" ,  error ,  "error" );
+          }
+    });
+}
+
 /* Update the param of a module */
 function update_param(module_id, param_name) {
     url = 'modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();

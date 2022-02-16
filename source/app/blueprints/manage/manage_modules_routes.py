@@ -161,7 +161,7 @@ def update_module_param(param_name, caseid):
         return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id, form=form)
 
 
-@manage_modules_blueprint.route('/manage/modules/update/<id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/update/<int:id>', methods=['GET', 'POST'])
 @api_admin_required
 def view_module(id, caseid):
     form = AddModuleForm()
@@ -177,7 +177,7 @@ def view_module(id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/enable/<id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/enable/<int:id>', methods=['GET', 'POST'])
 @api_admin_required
 def enable_module(id, caseid):
     if id:
@@ -191,7 +191,7 @@ def enable_module(id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/disable/<id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/disable/<int:id>', methods=['GET', 'POST'])
 @api_admin_required
 def disable_module(id, caseid):
     if id:
@@ -205,7 +205,7 @@ def disable_module(id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/remove/<id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/remove/<int:id>', methods=['GET', 'POST'])
 @api_admin_required
 def view_delete_module(id, caseid):
     try:
@@ -218,6 +218,21 @@ def view_delete_module(id, caseid):
     except Exception as e:
         log.error(e.__str__())
         return response_error("Cannot delete module. Error {}".format(e.__str__()))
+
+
+@manage_modules_blueprint.route('/manage/modules/export-config/<int:id>', methods=['GET'])
+@api_admin_required
+def export_config(id, caseid):
+
+    mod_config, mod_name = get_module_config_from_id(id)
+    if mod_name:
+        data = {
+            "module_name": mod_name,
+            "module_configuration": mod_config
+        }
+        return response_success(data=data)
+
+    return response_error(f"Module ID {id} not found")
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
