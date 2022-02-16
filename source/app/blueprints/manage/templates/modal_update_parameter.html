@@ -33,7 +33,7 @@
 </div>
 <script>
   $(document).ready(function(){
-  if ($('#editor_detail')) {
+  if ($('#editor_detail').length != 0) {
      var editor = ace.edit("editor_detail",
             {
                 autoScrollEditorIntoView: true,

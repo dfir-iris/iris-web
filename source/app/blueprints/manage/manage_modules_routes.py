@@ -150,7 +150,7 @@ def update_module_param(param_name, caseid):
         return response_error('Malformed request', status=400)
 
     if request.method == 'POST':
-        parameter_value = request.form.get('param_value', type=str)
+        parameter_value = request.json.get('param_value')
         if iris_module_save_parameter(mod_id, mod_config, param_name, parameter_value):
             track_activity("parameter {} of mod #{} was updated".format(param_name, mod_id),
                            caseid=caseid, ctx_less=True)

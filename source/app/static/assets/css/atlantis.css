@@ -14369,7 +14369,14 @@ body[data-background-color="dark"] .board {
     background: linear-gradient(-45deg, #203C51, #5A7F9B) !important;
 }
 
-.bg-primary-gradient {
+.bg-shadow-gradient {
+    background: #1572E8 !important;
+
+    background: -webkit-linear-gradient(legacy-direction(-45deg),  #141515, #4848484F) !important;
+    background: linear-gradient(-45deg,  #141515, #4848484F)  !important;
+}
+
+.bg-primary-gradient{
     background: #1572E8 !important;
 
     background: -webkit-linear-gradient(legacy-direction(-45deg), #05316A, #0963D5) !important;

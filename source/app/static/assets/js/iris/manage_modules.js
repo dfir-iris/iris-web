@@ -293,10 +293,19 @@ function update_param(module_id, param_name) {
     url = 'modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();
     $('#modal_update_param_content').load(url, function () {
         $('#submit_save_parameter').on("click", function () {
+            var data = Object();
+            if ($('#editor_detail').length != 0) {
+                editor = ace.edit("editor_detail");
+                data['param_value'] = editor.getSession().getValue();
+                data['csrf_token'] = $('#csrf_token').val();
+            } else {
+                data = $('#form_update_param').serializeObject();
+            }
             $.ajax({
                 url: url,
                 type: "POST",
-                data: $('#form_update_param').serializeArray(),
+                data: JSON.stringify(data),
+                contentType: "application/json;charset=UTF-8",
                 dataType: "json",
                 success: function (data) {
                     if (data.status == 'success') {

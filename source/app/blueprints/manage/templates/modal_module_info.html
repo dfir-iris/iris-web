@@ -58,7 +58,7 @@
                     {% for id in config %}
                     <tr role="row">
                         <td><a href="#" onclick="update_param({{ data.id }}, '{{ data.id }}##{{ id['param_name'] }}');">{{ id["param_human_name"] }}</a></td>
-                        <td>{% if id["value"] %}{% if id["type"] != "sensitive_string" %} {{ id["value"] }} {% else %} *************** {% endif %}{% endif %}</td>
+                        <td>{% if id["value"] %}{% if id["type"] != "sensitive_string" %} {% if id["value"] is string %}{{ id["value"][0:20] + "[..]" }}{% else %}{{id["value"]}}{% endif %} {% else %} *************** {% endif %}{% endif %}</td>
                         <td>{{ id["mandatory"] }}</td>
                     </tr>
                     {% endfor %}
