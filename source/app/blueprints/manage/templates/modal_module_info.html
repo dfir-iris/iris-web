@@ -46,7 +46,7 @@
         <div class="form-group mt-3">
             <label>Configuration (click on a setting to edit)</label>
             <button type="button" class="btn btn-sm btn-outline-dark float-right" onclick="export_mod_config('{{ data.id }}');">Export configuration</button>
-            <button type="button" class="btn btn-sm btn-outline-dark float-right mr-2" onclick="import_mod_config('{{ data.id }}');">Import configuration</button>
+            <button type="button" class="btn btn-sm btn-outline-dark float-right mr-2" data-toggle="modal" data-target="#modal_input_config">Import configuration</button>
             <table id="datatable_db_list" class="table display table-bordered table-striped table-hover mt-4" width="100%"
                 cellspacing="0">
                 <thead>
@@ -68,7 +68,6 @@
             </table>
         </div>
     </div>
-
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-danger mr-auto" onclick="remove_module('{{ data.id }}');">Remove module</button>
@@ -78,4 +77,25 @@
     <button type="button" class="btn btn-outline-warning" onclick="disable_module('{{ data.id }}');">Disable module</button>
     {% endif %}
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+</div>
+
+<div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_input_config" data-backdrop="true">
+    <div class="modal-lg modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h5>Import module configuration from file</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                  aria-hidden="true">&times;</span></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <p>Select a configuration file to upload. Existing configuration for this module will be overwritten.</p>
+                    <label class="placeholder">Configuration file : </label>
+                    <input id="input_configuration_file" type="file" accept="text/json">
+                    <button type="button" class="btn  btn-outline-success float-right mr-2" onclick="import_mod_config('{{ data.id }}');">Import</button>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
 </div>

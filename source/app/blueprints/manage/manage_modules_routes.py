@@ -20,6 +20,7 @@
 
 # IMPORTS ------------------------------------------------
 import base64
+import json
 import logging as log
 import traceback
 
@@ -240,14 +241,29 @@ def export_mod_config(id, caseid):
 def import_mod_config(id, caseid):
 
     mod_config, mod_name = get_module_config_from_id(id)
+    logs = []
+    parameters_data = request.get_json().get('module_configuration')
 
-    for param in request.get_json():
-        if iris_module_save_parameter(id, mod_config, param_name, parameter_value):
-            track_activity("parameter {} of mod #{} was updated".format(param_name, mod_id),
-                           caseid=caseid, ctx_less=True)
-        return response_success("Saved")
+    try:
+        parameters = json.loads(parameters_data)
+    except Exception as e:
+        return response_error('Invalid data', data="Not a JSON file")
+
+    for param in parameters:
+        param_name = param.get('param_name')
+        parameter_value = param.get('value')
+        if not iris_module_save_parameter(id, mod_config, param_name, parameter_value):
+            logs.append(f'Unable to save parameter {param_name}')
+
+    track_activity(f"parameters of mod #{id} were updated from config file",
+                   caseid=caseid, ctx_less=True)
+
+    if len(logs) == 0:
+        msg = "Successfully imported data."
     else:
-        return response_error('Malformed request', status=400)
+        msg = "Configuration is partially imported, we got errors with the followings:\n- " + "\n- ".join(logs)
+
+    return response_success(msg)
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
