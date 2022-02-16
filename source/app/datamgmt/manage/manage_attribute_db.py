@@ -23,7 +23,7 @@ import logging as logger
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import db
-from app.models import Ioc, CustomAttribute, CasesEvent, CaseAssets, CaseTasks, Notes, CaseReceivedFile
+from app.models import Ioc, CustomAttribute, CasesEvent, CaseAssets, CaseTasks, Notes, CaseReceivedFile, Cases
 
 log = logger.getLogger(__name__)
 
@@ -43,6 +43,8 @@ def update_all_attributes(object_type, previous_attribute, partial_overwrite=Fal
         obj_list = Notes.query.all()
     elif object_type == 'evidence':
         obj_list = CaseReceivedFile.query.all()
+    elif object_type == 'case':
+        obj_list = Cases.query.all()
 
     target_attr = get_default_custom_attributes(object_type)
 
@@ -120,6 +122,8 @@ def merge_custom_attributes(data, obj_id, object_type, overwrite=False):
             obj = Notes.query.filter(Notes.note_id == obj_id).first()
         elif object_type == 'evidence':
             obj = CaseReceivedFile.query.filter(CaseReceivedFile.id == obj_id).first()
+        elif object_type == 'case':
+            obj = Cases.query.filter(Cases.case_id == obj_id).first()
 
         if not obj:
             return data
