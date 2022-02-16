@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import base64
 import logging
+import traceback
 
 import importlib
 from flask_login import current_user
@@ -365,7 +366,7 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
     except Exception as e:
         msg = f"Failed to run hook {hook_name} with module {module_name}. Error {str(e)}"
         log.critical(msg)
-        print(msg)
+        print(traceback.format_exc())
         task_status = IStatus.I2Error(message=msg)
 
     return task_status

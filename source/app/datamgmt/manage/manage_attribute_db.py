@@ -144,13 +144,11 @@ def add_tab_attribute_field(obj, tab_name, field_name, field_type, field_value, 
     if field_options:
         attr[field_name]['options'] = field_options
 
-    for tab in attr:
-        for field in attr[tab]:
-            if field not in attribute[tab]:
-                attribute[tab][field] = attr[tab][field]
-                flag_modified(obj, "custom_attributes")
+    attribute[tab_name][field_name] = attr[field_name]
 
+    flag_modified(obj, "custom_attributes")
     db.session.commit()
+
     return True
 
 
