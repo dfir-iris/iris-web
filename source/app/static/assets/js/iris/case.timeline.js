@@ -469,15 +469,7 @@ function timelineToCsv(){
     download_file("iris_timeline.csv", "text/csv", csv_data);
 }
 
-function download_file(filename, contentType, data) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
+
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){

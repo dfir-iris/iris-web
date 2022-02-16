@@ -222,7 +222,7 @@ def view_delete_module(id, caseid):
 
 @manage_modules_blueprint.route('/manage/modules/export-config/<int:id>', methods=['GET'])
 @api_admin_required
-def export_config(id, caseid):
+def export_mod_config(id, caseid):
 
     mod_config, mod_name = get_module_config_from_id(id)
     if mod_name:
@@ -233,6 +233,21 @@ def export_config(id, caseid):
         return response_success(data=data)
 
     return response_error(f"Module ID {id} not found")
+
+
+@manage_modules_blueprint.route('/manage/modules/import-config/<int:id>', methods=['POST'])
+@api_admin_required
+def import_mod_config(id, caseid):
+
+    mod_config, mod_name = get_module_config_from_id(id)
+
+    for param in request.get_json():
+        if iris_module_save_parameter(id, mod_config, param_name, parameter_value):
+            track_activity("parameter {} of mod #{} was updated".format(param_name, mod_id),
+                           caseid=caseid, ctx_less=True)
+        return response_success("Saved")
+    else:
+        return response_error('Malformed request', status=400)
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])

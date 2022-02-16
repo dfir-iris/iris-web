@@ -295,7 +295,8 @@ function export_mod_config(module_id) {
           dataType: 'JSON',
           success: function (data) {
               if (data.status == 'success') {
-                    console.log(data);
+                    download_file(data.data.module_configuration + "_configuration_export.json", "text/json",
+                    JSON.stringify(data.data.module_configuration, null, 4));
               } else {
                   swal ( "Oh no !" ,  data.message ,  "error" );
               }
