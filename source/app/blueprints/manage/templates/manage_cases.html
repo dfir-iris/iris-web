@@ -73,8 +73,8 @@
                                         {% if attributes and attributes|length > 0 %}
                                             <h4><ul class="nav nav-tabs nav-lines mr-4" role="tablist">
                                                     {% for ca in attributes %}
-                                                        <li class="nav-item submenu {% if loop.index == 1 %}{{"active show"}}{% endif %}">
-                                                            <a class="nav-link"  data-toggle="tab" href="#{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
+                                                        <li class="nav-item submenu">
+                                                            <a class="nav-link {% if loop.index == 1 %}{{"active show"}}{% endif %}"  data-toggle="tab" href="#{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
                                                             role="tab" aria-selected="false">{{ca}}</a>
                                                         </li>
                                                     {% endfor %}
