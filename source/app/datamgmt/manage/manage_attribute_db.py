@@ -107,42 +107,48 @@ def get_default_custom_attributes(object_type):
     return ca.attribute_content
 
 
-def add_tab_attribute(obj_id, object_type, tab_name, tab_data):
+def add_tab_attribute(obj, tab_name):
     """
     Add a new custom tab to an object ID
     """
-    obj = None
-    if not obj_id:
-        return False
-
-    if object_type == 'ioc':
-        obj = Ioc.query.filter(Ioc.ioc_id == obj_id).first()
-    elif object_type == 'event':
-        obj = CasesEvent.query.filter(CasesEvent.event_id == obj_id).first()
-    elif object_type == 'asset':
-        obj = CaseAssets.query.filter(CaseAssets.asset_id == obj_id).first()
-    elif object_type == 'task':
-        obj = CaseTasks.query.filter(CaseTasks.id == obj_id).first()
-    elif object_type == 'note':
-        obj = Notes.query.filter(Notes.note_id == obj_id).first()
-    elif object_type == 'evidence':
-        obj = CaseReceivedFile.query.filter(CaseReceivedFile.id == obj_id).first()
-    elif object_type == 'case':
-        obj = Cases.query.filter(Cases.case_id == obj_id).first()
-
     if not obj:
         return False
 
     attribute = obj.custom_attributes
     if tab_name in attribute:
-        n_data = {}
-        n_data[tab_name] = tab_data
-        attr = merge_custom_attributes(data=n_data, obj_id=obj_id, object_type=object_type)
-        if not attr: return False
+        return True
 
     else:
-        attribute[tab_name] = tab_data
+        attribute[tab_name] = {}
         flag_modified(obj, "custom_attributes")
+        db.session.commit()
+
+    return True
+
+
+def add_tab_attribute_field(obj, tab_name, field_name, field_type, field_value, mandatory=None, field_options=None):
+    if not obj:
+        return False
+
+    attribute = obj.custom_attributes
+    if tab_name not in attribute:
+        attribute[tab_name] = {}
+
+    attr = {
+        field_name: {
+            "mandatory": mandatory if mandatory is not None else False,
+            "type": field_type,
+            "value": field_value
+        }
+    }
+    if field_options:
+        attr[field_name]['options'] = field_options
+
+    for tab in attr:
+        for field in attr[tab]:
+            if field not in attribute[tab]:
+                attribute[tab][field] = attr[tab][field]
+                flag_modified(obj, "custom_attributes")
 
     db.session.commit()
     return True

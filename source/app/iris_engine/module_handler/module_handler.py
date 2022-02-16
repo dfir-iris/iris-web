@@ -339,6 +339,7 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
     _obj = None
     # The receive object will most likely be cleared when handled by the task,
     # so we need to attach it to a the session in the task
+    _obj = []
     if isinstance(deser_data, list):
         _obj = []
         for dse_data in deser_data:
@@ -346,8 +347,9 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
             db.session.commit()
             _obj.append(obj)
     else:
-        _obj = db.session.merge(deser_data)
+        _obj_a = db.session.merge(deser_data)
         db.session.commit()
+        _obj.append(_obj_a)
 
     log.info(f'Calling module {module_name} for hook {hook_name}')
 
