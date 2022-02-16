@@ -92,10 +92,11 @@ def update_all_attributes(object_type, previous_attribute, partial_overwrite=Fal
                         obj.custom_attributes.pop(tab)
 
                 for element in previous_attribute[tab]:
-                    if not target_attr[tab].get(element):
-                        if obj.custom_attributes[tab].get(element):
-                            flag_modified(obj, "custom_attributes")
-                            obj.custom_attributes[tab].pop(element)
+                    if target_attr.get(tab):
+                        if not target_attr[tab].get(element):
+                            if obj.custom_attributes[tab].get(element):
+                                flag_modified(obj, "custom_attributes")
+                                obj.custom_attributes[tab].pop(element)
 
         # Commit will only be effective if we flagged a modification, reducing load on the DB
         db.session.commit()
