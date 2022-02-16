@@ -40,6 +40,7 @@
                                 class="tab-pane fade px-4 py-5 show active">
                                 <div class="row">
                                     <div class="col-md-6 col-lg-6 col-sm-12">
+                                        <h4 class="border-bottom pb-3">General info</h4>
                                         <form method="post" action='' id="form_new_case" autocomplete="off">
                                             {{ form.hidden_tag() }}
                                             <div class="form-group ml-1 mb-2">
@@ -69,8 +70,23 @@
                                         </form>
                                     </div>
                                     <div class="col-md-6 col-lg-6 col-sm-12">
-                                        {% include 'modals/modal_attributes_nav.html' %}
-                                        {% include 'modals/modal_attributes_tabs.html' %}
+                                        {% if attributes and attributes|length > 0 %}
+                                            <h4><ul class="nav nav-tabs nav-lines mr-4" role="tablist">
+                                                    {% for ca in attributes %}
+                                                        <li class="nav-item submenu {% if loop.index == 1 %}{{"active show"}}{% endif %}">
+                                                            <a class="nav-link"  data-toggle="tab" href="#{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
+                                                            role="tab" aria-selected="false">{{ca}}</a>
+                                                        </li>
+                                                    {% endfor %}
+
+                                            </ul></h4>
+                                            <div role="tabpanel">
+                                                <div class="tab-content">
+                                                    {% set is_case_page = True %}
+                                                    {% include 'modals/modal_attributes_tabs.html' %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <button class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_case_btn" onclick="submit_new_case();">Create</button>

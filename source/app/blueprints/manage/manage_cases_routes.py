@@ -32,6 +32,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.client.client_db import get_client
 from app.datamgmt.iris_engine.modules_db import iris_module_exists, \
     get_pipelines_args_from_name
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_cases_db import list_cases_dict, close_case, reopen_case, delete_case, \
     get_case_details_rt
 from app.forms import AddCaseForm
@@ -204,7 +205,9 @@ def manage_index_cases(caseid, url_redir):
     pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
                       ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
 
-    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args)
+    attributes = get_default_custom_attributes('case')
+
+    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args, attributes=attributes)
 
 
 @manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])

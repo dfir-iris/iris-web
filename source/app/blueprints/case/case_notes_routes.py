@@ -169,7 +169,6 @@ def case_note_add(caseid):
                         request_data.get('group_id'),
                         note_content=request_data.get('note_content'))
 
-        print(note.custom_attributes)
         note = call_modules_hook('on_postload_note_create', data=note, caseid=caseid)
 
         if note:
