@@ -1,4 +1,4 @@
-celery==4.4.7
+celery>=5.2.2
 Flask==1.1.4
 Flask-Bcrypt==0.7.1
 Flask-Login==0.5.0
