@@ -325,6 +325,7 @@ function import_mod_config(module_id){
             success: function (data) {
                 jsdata = data;
                 if (jsdata.status == "success") {
+                    module_detail(module_id);
                     $('#modal_input_config').modal('hide');
                     swal("Got news for you", data.message, "success");
 
@@ -355,6 +356,9 @@ function update_param(module_id, param_name) {
                 data['csrf_token'] = $('#csrf_token').val();
             } else {
                 data = $('#form_update_param').serializeObject();
+                if ($('#param_value').attr('type') == "checkbox") {
+                    data['param_value'] = $('#param_value').prop('checked');
+                }
             }
             $.ajax({
                 url: url,
