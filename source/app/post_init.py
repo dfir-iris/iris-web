@@ -30,6 +30,7 @@ from sqlalchemy_utils import database_exists, create_database
 
 from app import db, bc, app, celery
 from app.configuration import SQLALCHEMY_BASE_URI
+from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name, register_module, \
     check_module_health
 from app.models.cases import Cases, Client
@@ -827,9 +828,12 @@ def register_default_modules():
 
         if not is_ready:
             log.info("Attempted to initiate {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+            return False
 
-        success, logs = register_module(module)
-        if not success:
+        mod_id, logs = register_module(module)
+        if mod_id is None:
             log.info("Attempted to add {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+
         else:
+            iris_module_disable_by_id(mod_id)
             log.info('Successfully registered {mod}'.format(mod=module))

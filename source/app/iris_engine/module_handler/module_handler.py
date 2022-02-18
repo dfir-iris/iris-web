@@ -219,18 +219,18 @@ def register_module(module_name):
 
     if not module_name:
         log.error("Provided module has no names")
-        return False, ["Module has no names"]
+        return None, ["Module has no names"]
 
     try:
 
         mod_inst = instantiate_module_from_name(module_name=module_name)
         if not mod_inst:
             log.error("Module could not be instantiated")
-            return False, ["Module could not be instantiated"]
+            return None, ["Module could not be instantiated"]
 
         if iris_module_exists(module_name=module_name):
             log.warning("Module already exists in Iris")
-            return False, ["Module already exists in Iris"]
+            return None, ["Module already exists in Iris"]
 
         # Auto parse the configuration and fill with default
         log.info('Parsing configuration')
@@ -249,15 +249,15 @@ def register_module(module_name):
                                   )
 
         if not modu_id:
-            return False, ["Unable to register module"]
+            return None, ["Unable to register module"]
 
         if mod_inst.get_module_type() == 'module_processor':
             mod_inst.register_hooks(module_id=modu_id)
 
     except Exception as e:
-        return False, ["Fatal - {}".format(e.__str__())]
+        return None, ["Fatal - {}".format(e.__str__())]
 
-    return True, ["Module registered"]
+    return modu_id, ["Module registered"]
 
 
 def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = None,

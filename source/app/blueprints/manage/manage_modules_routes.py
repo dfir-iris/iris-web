@@ -108,8 +108,8 @@ def add_module(caseid, url_redir):
 
             if is_ready:
                 # Registers into Iris DB for further calls
-                success, logs = register_module(module_name)
-                if success:
+                mod_id, logs = register_module(module_name)
+                if mod_id is not None:
                     track_activity("IRIS module {} was added".format(module_name), caseid=caseid, ctx_less=True)
                     return response_success("", data=logs)
                 else:
