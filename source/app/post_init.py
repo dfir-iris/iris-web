@@ -30,7 +30,8 @@ from sqlalchemy_utils import database_exists, create_database
 
 from app import db, bc, app, celery
 from app.configuration import SQLALCHEMY_BASE_URI
-from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
+from app.iris_engine.module_handler.module_handler import instantiate_module_from_name, register_module, \
+    check_module_health
 from app.models.cases import Cases, Client
 from app.models.models import Role, Languages, User, get_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
     IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook, CustomAttribute, \
@@ -88,6 +89,9 @@ def run_post_init(development=False):
 
         log.info("Creating base hooks")
         create_safe_hooks()
+
+        log.info("Registering default modules")
+        register_default_modules()
 
         log.info("Running DB migration")
 
@@ -813,3 +817,19 @@ def register_modules_pipelines():
         for task in tasks:
             celery.register_task(task)
 
+
+def register_default_modules():
+
+    modules = ['iris_vt_module', 'iris_check_module']
+    for module in modules:
+        class_ = instantiate_module_from_name(module)
+        is_ready, logs = check_module_health(class_)
+
+        if not is_ready:
+            log.info("Attempted to initiate {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+
+        success, logs = register_module(module)
+        if not success:
+            log.info("Attempted to add {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+        else:
+            log.info('Successfully registered {mod}'.format(mod=module))

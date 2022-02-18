@@ -18,31 +18,23 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import collections
-
-from functools import partial
-
 import json
-
-import logging
+import logging as logger
+import os
+import urllib.parse
 from flask import Flask
-from flask.logging import default_handler
+from flask_bcrypt import Bcrypt
+#from flask_logging import Filter
+from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_bcrypt import Bcrypt
-import urllib.parse
-
+from functools import partial
+from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery
-from flask_logging import Filter
-
-from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
-
-import os
-import logging as logger
 
 
 class ReverseProxied(object):
@@ -90,7 +82,7 @@ dropzone = Dropzone(app)
 
 celery = make_celery(app)
 
-filter = Filter('static')
+#filter = Filter('static')
 
 store = HttpExposedFileSystemStore(
     path='images',

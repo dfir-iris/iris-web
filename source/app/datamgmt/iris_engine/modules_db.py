@@ -42,7 +42,7 @@ def iris_module_add(module_name, module_human_name, module_description,
     im.has_pipeline = has_pipeline
     im.pipeline_args = pipeline_args
     im.module_config = module_config
-    im.added_by_id = current_user.id
+    im.added_by_id = current_user.id if current_user else User.query.first().id
     im.is_active = True
     im.module_type = module_type
 
