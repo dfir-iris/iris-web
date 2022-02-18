@@ -17,10 +17,22 @@
                 </div>
                 <div class="form-group mt-3">
 
-                    <label class="placeholder"><b>Value</b></label>
+
                     {% if parameter["type"].startswith("textfield_") %}
+                        <label class="placeholder"><b>Value</b></label>
                         <div id="editor_detail">{{ parameter["value"] }}</div>
+                    {% elif parameter["type"] == 'bool' %}
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <input type="checkbox" id="param_value"
+                                           class="form-control"
+                                           {% if parameter["value"] == "True" %} checked {% endif %}
+                                />
+                            <span class="form-check-sign">Check to set to true</span>
+                            </label>
+                        </div>
                     {% else %}
+                        <label class="placeholder"><b>Value</b></label>
                         <input class="form-control required" name="param_value" type="text" value="{{ parameter["value"] }}">
                     {% endif %}
                 </div>

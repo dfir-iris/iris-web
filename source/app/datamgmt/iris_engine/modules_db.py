@@ -69,10 +69,19 @@ def iris_module_save_parameter(mod_id, mod_config, parameter, value):
         index = 0
         for config in mod_config:
             if config['param_name'] == parameter:
+                if config['type'] == "bool":
+                    if isinstance(value, str):
+                        value = bool(value.lower() == "true")
+                    elif isinstance(value, bool):
+                        value = bool(value)
+                    else:
+                        value = False
+
                 mod_config[index]["value"] = value
                 data.module_config = mod_config
                 db.session.commit()
                 return True
+
             index += 1
 
     return False
