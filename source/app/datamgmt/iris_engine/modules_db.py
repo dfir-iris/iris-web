@@ -63,7 +63,7 @@ def is_mod_configured(mod_config):
     return True
 
 
-def iris_module_save_parameter(mod_id, mod_config, parameter, value):
+def iris_module_save_parameter(mod_id, mod_config, parameter, value, section=None):
     data = IrisModule.query.filter(IrisModule.id == mod_id).first()
     if data:
         index = 0
@@ -134,12 +134,13 @@ def get_module_from_id(module_id):
 def get_module_config_from_id(module_id):
     data = IrisModule.query.with_entities(
         IrisModule.module_config,
-        IrisModule.module_human_name
+        IrisModule.module_human_name,
+        IrisModule.module_name
     ).filter(
         IrisModule.id == module_id
     ).first()
 
-    return data.module_config, data.module_human_name
+    return data.module_config, data.module_human_name, data.module_name
 
 
 def get_module_config_from_name(module_name):

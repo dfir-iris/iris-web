@@ -260,6 +260,33 @@ def register_module(module_name):
     return modu_id, ["Module registered"]
 
 
+def iris_update_hooks(module_name, module_id):
+    """
+    Update hooks upon settings update
+    :param module_name: Name of the module to update
+    :param module_id: ID of the module to update
+    """
+
+    if not module_name:
+        log.error("Provided module has no names")
+        return False, ["Module has no names"]
+
+    try:
+
+        mod_inst = instantiate_module_from_name(module_name=module_name)
+        if not mod_inst:
+            log.error("Module could not be instantiated")
+            return False, ["Module could not be instantiated"]
+
+        if mod_inst.get_module_type() == 'module_processor':
+            mod_inst.register_hooks(module_id=module_id)
+
+    except Exception as e:
+        return False, ["Fatal - {}".format(e.__str__())]
+
+    return True, ["Module updated"]
+
+
 def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = None,
                   run_asynchronously: bool = True):
     """
@@ -321,6 +348,28 @@ def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = N
             return False, [str(e)]
 
     return True, [f"Hook {iris_hook_name} registered"]
+
+
+def deregister_from_hook(module_id: int, iris_hook_name: str):
+    """
+    Deregister from an existing hook. The hook_name should be a well-known hook to IRIS. No error are thrown if the
+    hook wasn't register in the first place
+
+    :param module_id: Module ID to deregister
+    :param iris_hook_name: hook_name to deregister from
+    :return: IrisInterfaceStatus object
+    """
+    print(f'Deregistering module #{module_id} from {iris_hook_name}')
+    hook = IrisModuleHook.query.filter(
+        IrisModuleHook.module_id == module_id,
+        IrisHook.hook_name == iris_hook_name,
+        IrisModuleHook.hook_id == IrisHook.id
+    ).first()
+    if hook:
+        print(f'Deregistered module #{module_id} from {iris_hook_name}')
+        db.session.delete(hook)
+
+    return True, ['Hook deregistered']
 
 
 @celery.task(bind=True)

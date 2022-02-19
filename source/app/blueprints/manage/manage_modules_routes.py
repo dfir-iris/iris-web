@@ -34,7 +34,7 @@ from app.datamgmt.iris_engine.modules_db import iris_modules_list, get_module_fr
     iris_module_disable_by_id, module_list_hooks_view
 from app.forms import AddModuleForm, UpdateModuleParameterForm
 from app.iris_engine.module_handler.module_handler import check_module_health, register_module, \
-    instantiate_module_from_name
+    instantiate_module_from_name, iris_update_hooks
 from app.iris_engine.utils.tracker import track_activity
 from app.util import admin_required, response_error, response_success, api_admin_required, login_required
 
@@ -139,7 +139,7 @@ def update_module_param(param_name, caseid):
         log.error(e.__str__())
         return response_error('Malformed request', status=400)
 
-    mod_config, mod_name = get_module_config_from_id(mod_id)
+    mod_config, mod_name, mod_iname = get_module_config_from_id(mod_id)
     form = UpdateModuleParameterForm()
     parameter = None
     for param in mod_config:
@@ -152,12 +152,20 @@ def update_module_param(param_name, caseid):
 
     if request.method == 'POST':
         parameter_value = request.json.get('param_value')
+
         if iris_module_save_parameter(mod_id, mod_config, param_name, parameter_value):
             track_activity("parameter {} of mod #{} was updated".format(param_name, mod_id),
                            caseid=caseid, ctx_less=True)
-            return response_success("Saved")
+
+            success, logs = iris_update_hooks(mod_iname, mod_id)
+            if not success:
+                return response_error("Unable to update hooks", data=logs)
+
+            return response_success("Saved", logs)
+
         else:
             return response_error('Malformed request', status=400)
+
     else:
         return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id, form=form)
 
@@ -225,7 +233,7 @@ def view_delete_module(id, caseid):
 @api_admin_required
 def export_mod_config(id, caseid):
 
-    mod_config, mod_name = get_module_config_from_id(id)
+    mod_config, mod_name, _ = get_module_config_from_id(id)
     if mod_name:
         data = {
             "module_name": mod_name,
@@ -240,7 +248,7 @@ def export_mod_config(id, caseid):
 @api_admin_required
 def import_mod_config(id, caseid):
 
-    mod_config, mod_name = get_module_config_from_id(id)
+    mod_config, mod_name, _ = get_module_config_from_id(id)
     logs = []
     parameters_data = request.get_json().get('module_configuration')
 
