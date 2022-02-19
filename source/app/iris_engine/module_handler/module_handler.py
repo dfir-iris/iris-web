@@ -332,13 +332,13 @@ def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = N
         IrisModuleHook.hook_id == hook.id,
         IrisModuleHook.module_id == module_id
     ).first()
-    if not mod:
+    if not mod or is_manual_hook:
         imh = IrisModuleHook()
         imh.is_manual_hook = is_manual_hook
         imh.wait_till_return = False
         imh.run_asynchronously = run_asynchronously
         imh.max_retry = 0
-        imh.manual_hook_ui_name = manual_hook_name if manual_hook_name else ""
+        imh.manual_hook_ui_name = manual_hook_name
         imh.hook_id = hook.id
         imh.module_id = module_id
 
@@ -360,14 +360,15 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
     :return: IrisInterfaceStatus object
     """
     print(f'Deregistering module #{module_id} from {iris_hook_name}')
-    hook = IrisModuleHook.query.filter(
+    hooks = IrisModuleHook.query.filter(
         IrisModuleHook.module_id == module_id,
         IrisHook.hook_name == iris_hook_name,
         IrisModuleHook.hook_id == IrisHook.id
-    ).first()
-    if hook:
-        print(f'Deregistered module #{module_id} from {iris_hook_name}')
-        db.session.delete(hook)
+    ).all()
+    if hooks:
+        for hook in hooks:
+            print(f'Deregistered module #{module_id} from {iris_hook_name}')
+            db.session.delete(hook)
 
     return True, ['Hook deregistered']
 

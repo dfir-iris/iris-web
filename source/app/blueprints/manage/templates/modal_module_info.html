@@ -4,45 +4,50 @@
             aria-hidden="true">&times;</span></button>
 </div>
 <div class="modal-body">
-
-    <div class="container col-md-12">
-        {% if not is_configured %}
-        <div class="form-group">
-                <b class="text-warning">The module was automatically disabled because mandatory parameters are not set.</b>
+    <div class="row">
+        <div class="container col-6">
+            {% if not is_configured %}
+            <div class="form-group">
+                    <b class="text-warning">The module was automatically disabled because mandatory parameters are not set.</b>
+            </div>
+            {% endif %}
+            <div class="form-group">
+                <label>Name :</label>
+                <span type="text" class="">{{ data.module_human_name|unquote }}</span>
+            </div>
+            <div class="form-group mt--3">
+                <label>Description :</label>
+                <span type="text" class="">{{ data.module_description }}</span>
+            </div>
+            <div class="form-group mt--3">
+                <label>Target package :</label>
+                <span type="text" class="text-faded">{{ data.module_name }}</span>
+            </div>
+            <div class="form-group mt--3">
+                <label>Date added :</label>
+                <span type="text" class="text-faded">{{ data.date_added }}</span>
+            </div>
         </div>
-        {% endif %}
-        <div class="form-group">
-            <label>Name :</label>
-            <span type="text" class="">{{ data.module_human_name|unquote }}</span>
+        <div class="container col-6">
+            <div class="form-group mt--3">
+                <label>Module version :</label>
+                <span type="text" class="text-faded">{{ data.module_version }}</span>
+            </div>
+            <div class="form-group mt--3">
+                <label>Interface version :</label>
+                <span type="text" class="text-faded">{{ data.interface_version }}</span>
+            </div>
+            <div class="form-group mt--3">
+                <label>Is active :</label>
+                <span type="text" class="text-faded">{{ data.is_active }} </span>
+            </div>
+            <div class="form-group mt--3">
+                <label>Provides pipeline :</label>
+                <span type="text" class="text-faded">{{ data.has_pipeline }}</span>
+            </div>
         </div>
-        <div class="form-group mt--3">
-            <label>Description :</label>
-            <span type="text" class="">{{ data.module_description }}</span>
-        </div>
-        <div class="form-group mt--3">
-            <label>Target package :</label>
-            <span type="text" class="text-faded">{{ data.module_name }}</span>
-        </div>
-        <div class="form-group mt--3">
-            <label>Date added :</label>
-            <span type="text" class="text-faded">{{ data.date_added }}</span>
-        </div>
-        <div class="form-group mt--3">
-            <label>Module version :</label>
-            <span type="text" class="text-faded">{{ data.module_version }}</span>
-        </div>
-        <div class="form-group mt--3">
-            <label>Interface version :</label>
-            <span type="text" class="text-faded">{{ data.interface_version }}</span>
-        </div>
-        <div class="form-group mt--3">
-            <label>Is active :</label>
-            <span type="text" class="text-faded">{{ data.is_active }} </span>
-        </div>
-        <div class="form-group mt--3">
-            <label>Provides pipeline :</label>
-            <span type="text" class="text-faded">{{ data.has_pipeline }}</span>
-        </div>
+    </div>
+    <div class="container col-12">
         <hr/>
         <div class="form-group mt-3">
              <label>Configuration (click on a setting to edit)</label>
