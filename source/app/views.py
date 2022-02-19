@@ -87,9 +87,9 @@ app.register_blueprint(activities_blueprint)
 app.register_blueprint(dim_tasks_blueprint)
 
 app.register_blueprint(api_blueprint)
-
+print(app.logger)
 run_post_init(development=app.config["DEVELOPMENT"])
-
+print(app.logger)
 
 # provide login manager with load_user callback
 @lm.user_loader

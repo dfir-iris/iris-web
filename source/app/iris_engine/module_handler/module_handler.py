@@ -33,7 +33,8 @@ from app.datamgmt.iris_engine.modules_db import iris_module_exists, iris_module_
 from app.models import IrisHook, IrisModuleHook, IrisModule
 from iris_interface import IrisInterfaceStatus as IStatus
 
-log = logging.getLogger(__name__)
+log = app.logger
+
 
 def check_module_compatibility(module_version):
     return True
@@ -404,6 +405,7 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
         db.session.commit()
         _obj.append(_obj_a)
 
+
     log.info(f'Calling module {module_name} for hook {hook_name}')
 
     try:
@@ -452,6 +454,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
 
     for module in modules:
         if module.run_asynchronously and "on_preload_" not in hook_name:
+            log.info(f'Calling module {module.module_name} asynchronously for hook {hook_name}')
             # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
             # So pass a dumped instance and then rebuild on the task side
             ser_data = base64.b64encode(dumps(data)).decode('utf8')
