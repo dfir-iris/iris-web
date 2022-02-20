@@ -241,6 +241,14 @@ def list_limited_dim_tasks(caseid):
 
         if isinstance(task.result, IIStatus):
 
+            if hasattr(task.result, 'logs'):
+                print(task.result.logs)
+
+            if hasattr(task.result, 'message'):
+                print(task.result.message)
+
+            print(task.result.data)
+
             try:
 
                 success = task.result.is_success()

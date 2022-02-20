@@ -360,7 +360,7 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
     :param iris_hook_name: hook_name to deregister from
     :return: IrisInterfaceStatus object
     """
-    print(f'Deregistering module #{module_id} from {iris_hook_name}')
+    log.info(f'Deregistering module #{module_id} from {iris_hook_name}')
     hooks = IrisModuleHook.query.filter(
         IrisModuleHook.module_id == module_id,
         IrisHook.hook_name == iris_hook_name,
@@ -368,7 +368,7 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
     ).all()
     if hooks:
         for hook in hooks:
-            print(f'Deregistered module #{module_id} from {iris_hook_name}')
+            log.info(f'Deregistered module #{module_id} from {iris_hook_name}')
             db.session.delete(hook)
 
     return True, ['Hook deregistered']
@@ -485,3 +485,27 @@ def list_available_pipelines():
     data = modules_list_pipelines()
 
     return data
+
+
+@celery.task(bind=True)
+def pipeline_dispatcher(self, module, pipeline_type, pipeline_data, init_user, caseid):
+    """
+    Dispatch the pipelines according to their types
+    :param pipeline_type: Type of pipeline
+    :param form: form contained
+    :return: IrisInterfaceStatus
+    """
+
+    # Retrieve the handler
+    mod = instantiate_module_from_name(module_name=module)
+    if mod:
+
+        status = configure_module_on_init(mod)
+        if status.is_failure():
+            return status
+
+        # This will run the task in the Celery context
+        return mod.pipeline_handler(pipeline_type=pipeline_type,
+                                    pipeline_data=pipeline_data)
+
+    return IStatus.I2InterfaceNotImplemented("Couldn't instantiate module {}".format(module))

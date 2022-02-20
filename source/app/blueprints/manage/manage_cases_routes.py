@@ -286,7 +286,6 @@ def manage_cases_uploadfiles(caseid):
 
     try:
         pipeline_mod = pipeline.split("-")[0]
-        pipeline_name = pipeline.split("-")[1]
     except Exception as e:
         log.error(e.__str__())
         return response_error('Malformed request', status=400)

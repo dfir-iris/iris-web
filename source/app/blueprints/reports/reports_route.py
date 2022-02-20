@@ -32,7 +32,7 @@ from flask_login import current_user
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.reporter.reporter import IrisMakeDocReport
-from app.iris_engine.tasker.tasks import task_make_report, task_pull_misp_all, task_update_ioc_misp, task_update_ioc
+from app.iris_engine.tasker.tasks import task_make_report
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseTemplateReport
 from app.util import response_success, PgEncoder, FileRemover, response_error, api_login_required
@@ -100,35 +100,3 @@ def _gen_report(report_id, caseid):
 
     return redirect(url_for('index.index'))
 
-
-@reports_blueprint.route("/reports_dev", methods=['GET'])
-@api_login_required
-def reports(caseid):
-
-    # Check if we already have a report for this case
-    """reportt = IrisReport.query\
-        .with_entities(
-            IrisReport.report_title,
-            IrisReport.report_content,
-            IrisReport.report_date
-        ).filter(
-            IrisReport.case_id == current_user.ctx_case
-        ).first()
-
-    if reportt:
-        return response_success("", data=json.loads(reportt.report_content))
-    """
-    data = task_make_report(caseid)
-    dte = json.dumps(data, cls=PgEncoder)
-
-    """report = IrisReport(
-        case_id=current_user.ctx_case,
-        report_content=dte,
-        report_date=datetime.now(),
-        user_id=current_user.id,
-        report_title= "Iris auto report"
-        )
-    """
-    # report.save()
-
-    return response_success("", data=data)

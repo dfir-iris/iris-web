@@ -101,9 +101,6 @@ def run_post_init(development=False):
         alembic_cfg.set_main_option('sqlalchemy.url',  SQLALCHEMY_BASE_URI + 'iris_db')
         command.upgrade(alembic_cfg, 'head')
 
-    log.info("Registering modules pipeline tasks")
-    register_modules_pipelines()
-
     if os.getenv("IRIS_WORKER") is None:
         log.info("Creating first administrative user")
         admin = create_safe_admin()
