@@ -230,7 +230,10 @@ def list_limited_dim_tasks(caseid):
         if 'task_hook_wrapper' in task_name:
             task_name = f"{task.kwargs.get('module_name')}::{task.kwargs.get('hook_name')}"
         else:
-            task_name = task.name
+            if task.name:
+                task_name = task.name.split('.')[-1]
+            else:
+                task_name = 'Shadow task'
 
         if task.kwargs:
             user = task.kwargs.get('init_user')
@@ -240,14 +243,6 @@ def list_limited_dim_tasks(caseid):
             case_name = "Unknown"
 
         if isinstance(task.result, IIStatus):
-
-            if hasattr(task.result, 'logs'):
-                print(task.result.logs)
-
-            if hasattr(task.result, 'message'):
-                print(task.result.message)
-
-            print(task.result.data)
 
             try:
 

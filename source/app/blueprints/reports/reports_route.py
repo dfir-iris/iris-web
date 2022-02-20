@@ -23,19 +23,15 @@
 # VARS ---------------------------------------------------
 
 # CONTENT ------------------------------------------------
-import json
 import tempfile
-
 from flask import Blueprint
 from flask import url_for, redirect, send_file
-from flask_login import current_user
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.reporter.reporter import IrisMakeDocReport
-from app.iris_engine.tasker.tasks import task_make_report
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseTemplateReport
-from app.util import response_success, PgEncoder, FileRemover, response_error, api_login_required
+from app.util import FileRemover, response_error, api_login_required
 
 reports_blueprint = Blueprint('reports',
                               __name__,
