@@ -61,6 +61,7 @@ app = Flask(__name__)
 
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
+app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
 app.config.from_object('app.configuration.Config')
 
 SQLALCHEMY_ENGINE_OPTIONS = {

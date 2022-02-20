@@ -66,7 +66,7 @@ class CaseAddNoteSchema(ma.Schema):
     @post_load
     def custom_attributes_merge(self, data, **kwargs):
         new_attr = data.get('custom_attributes')
-        if new_attr:
+        if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
 
         return data
@@ -104,7 +104,7 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def custom_attributes_merge(self, data, **kwargs):
         new_attr = data.get('custom_attributes')
-        if new_attr:
+        if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('asset_id'), 'asset')
 
         return data
@@ -136,7 +136,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def custom_attributes_merge(self, data, **kwargs):
         new_attr = data.get('custom_attributes')
-        if new_attr:
+        if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
 
         return data
@@ -188,7 +188,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def custom_attributes_merge(self, data, **kwargs):
         new_attr = data.get('custom_attributes')
-        if new_attr:
+        if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
@@ -266,7 +266,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def custom_attributes_merge(self, data, **kwargs):
         new_attr = data.get('custom_attributes')
-        if new_attr:
+        if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('case_id'), 'case')
 
         return data
@@ -356,7 +356,7 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def custom_attributes_merge(self, data, **kwargs):
         new_attr = data.get('custom_attributes')
-        if new_attr:
+        if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'task')
 
         return data
@@ -372,7 +372,7 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def custom_attributes_merge(self, data, **kwargs):
         new_attr = data.get('custom_attributes')
-        if new_attr:
+        if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'evidence')
 
         return data
