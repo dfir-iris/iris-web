@@ -56,6 +56,12 @@ def run_post_init(development=False):
         db.create_all(bind="iris_tasks")
         db.session.commit()
 
+        log.info("Running DB migration")
+
+        alembic_cfg = Config(file_='app/alembic.ini')
+        alembic_cfg.set_main_option('sqlalchemy.url',  SQLALCHEMY_BASE_URI + 'iris_db')
+        command.upgrade(alembic_cfg, 'head')
+
         log.info("Creating base languages")
         create_safe_languages()
 
@@ -94,12 +100,6 @@ def run_post_init(development=False):
 
         log.info("Registering default modules")
         register_default_modules()
-
-        log.info("Running DB migration")
-
-        alembic_cfg = Config(file_='app/alembic.ini')
-        alembic_cfg.set_main_option('sqlalchemy.url',  SQLALCHEMY_BASE_URI + 'iris_db')
-        command.upgrade(alembic_cfg, 'head')
 
     if os.getenv("IRIS_WORKER") is None:
         log.info("Creating first administrative user")
