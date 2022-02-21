@@ -54,7 +54,7 @@ def get_case_client_id(caseid):
         Cases.case_id == caseid
     ).join(Cases.client).first()
 
-    return client_id
+    return client_id.client_id
 
 
 def case_get_desc(caseid):
