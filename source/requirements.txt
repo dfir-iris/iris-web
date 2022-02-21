@@ -29,3 +29,4 @@ dependencies/iris_check_module-0.1-py3-none-any.whl
 dependencies/evtx2splunk-2.0.1-py3-none-any.whl
 dependencies/iris_evtx-1.1-py3-none-any.whl
 dependencies/iris_check_module-0.1-py3-none-any.whl
+dependencies/iris_vt_module-0.1-py3-none-any.whl
