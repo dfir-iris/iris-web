@@ -154,18 +154,32 @@ def instantiate_module_from_name(module_name):
 
     # The whole concept is based on the fact that the root module provides an __iris_module_interface
     # variable pointing to the interface class with which Iris can talk to
-    mod_interface = importlib.import_module("{}.{}".format(module_name,
+    try:
+        mod_interface = importlib.import_module("{}.{}".format(module_name,
                                                            mod_root_interface.__iris_module_interface))
+    except Exception as e:
+        log.error(f"Could not import module {module_name}: {e}")
+        return None
+
     if not mod_interface:
         return None
 
     # Now get a handle on the interface class
-    cl_interface = getattr(mod_interface, mod_root_interface.__iris_module_interface)
+    try:
+        cl_interface = getattr(mod_interface, mod_root_interface.__iris_module_interface)
+    except Exception as e:
+        log.error(f"Could not get handle on the interface class of module {module_name}: {e}")
+        return None
+
     if not cl_interface:
         return None
 
     # Try to instantiate the class
-    mod_inst = cl_interface()
+    try:
+        mod_inst = cl_interface()
+    except Exception as e:
+        log.error(f"Could not instantiate the class for module {module_name}: {e}")
+        return None
 
     return mod_inst
 
