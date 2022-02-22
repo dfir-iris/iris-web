@@ -21,7 +21,6 @@
 import datetime
 
 from app import db
-from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_assets_state
 from app.models import AssetsType, IocAssetLink, CaseAssets, Cases, Ioc, AnalysisStatus, CaseEventsAssets, IocType
 from sqlalchemy import and_, func
