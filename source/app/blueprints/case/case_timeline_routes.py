@@ -470,7 +470,7 @@ def case_add_event_modal(caseid, url_redir):
         return redirect(url_for('case_timeline.case_timeline', cid=caseid))
 
     event = CasesEvent()
-    event.custom_attributes = get_default_custom_attributes('ioc')
+    event.custom_attributes = get_default_custom_attributes('event')
     form = CaseEventForm()
     assets = get_case_assets(caseid)
     def_cat = get_default_cat()
