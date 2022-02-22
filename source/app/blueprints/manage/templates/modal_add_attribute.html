@@ -11,10 +11,10 @@
                 <div class="col-6">
                     <div class="accordion accordion-primary">
                         <h2>{{ attribute.attribute_display_name }} attributes</h2>
-                        <p>Attributes allow to extend the fields available for analyst when they add or edit {{ attribute.attribute_display_name }}.</p>
+                        <p>Attributes allow to extend the fields available for analysts when they add or edit {{ attribute.attribute_display_name }}.</p>
                         <div class="alert alert-warning" role="alert">
                              Attributes can be added by administrator in this UI, or they can be pushed by modules.<br/>
-                             This means each {{ attribute.attribute_display_name }} object maybe have a different set of attributes.
+                             This means each {{ attribute.attribute_display_name }} object may have a different set of attributes.
                              Updating the default objects here will result in an update of every existing object, which might take a huge amount of time.
                             <p>Typing wrong attributes here might result in UI breaks. IRIS will attempt to validate the attributes' taxonomy before committing.</p>
                             <b>To avoid this, use the Preview button before saving. It displays a 1-to-1 UI representation of the attributes</b>
@@ -34,13 +34,13 @@
                             <div id="drop_attr_desc" class="collapse" aria-labelledby="drop_tax_attr" style="">
                                 <div class="card-body">
                                     <p>These attributes are stored in each {{ attribute.attribute_display_name }} object in the form of a JSON binary structure (JSONB)</p>
-                                    <p>Attributes in this page represents the default attributes of each new {{ attribute.attribute_display_name }} objects. Existing object are updated if they
+                                    <p>Attributes in this page represent the default attributes of each new {{ attribute.attribute_display_name }} objects. Existing object are updated if they
                                         don't hold the specified attributes. <b>Other existing attributes are not deleted.</b></p>
                                     Attributes can have the following purposes:
                                     <ul>
-                                        <li><b>Inputs</b>: Offers analysts the possibility to fill additional details. Multiple types of inputs are supported. See taxonomy for more details</li>
-                                        <li><b>Raw</b>: A static content rendered in raw text. HTML is not be interpreted.</li>
-                                        <li><b>HTML</b>: A static content rendered as HTML for infinite possibilities. <b>This is by nature prone to exploitations.</b></li>
+                                        <li><b>Inputs</b>: Offer analysts the possibility to fill additional details. Multiple types of inputs are supported. See taxonomy for more details</li>
+                                        <li><b>Raw</b>: A static content rendered in raw text. HTML is not interpreted.</li>
+                                        <li><b>HTML</b>: A static content rendered as HTML for infinite possibilities. <b>Careful, this is by nature prone to vulnerabilities.</b></li>
                                     </ul>
                                 </div>
                             </div>
@@ -92,8 +92,8 @@
                                         <li>input_date: Standard date input</li>
                                         <li>input_datetime: Standard date and time input</li>
                                         <li>input_select: Standard select input. Need "options" tag to describe the available options</li>
-                                        <li>raw: A static content rendered in raw text. HTML is not be interpreted.</li>
-                                        <li>html: A static content rendered as HTML. <b>This is by nature prone to exploitations.</b></li>
+                                        <li>raw: A static content rendered in raw text. HTML is not interpreted.</li>
+                                        <li>html: A static content rendered as HTML. <b>Careful, this is by nature prone to vulnerabilities.</b></li>
                                     </ul>
                                 </div>
                             </div>
@@ -113,7 +113,7 @@
                             <div id="drop_attr_overwrite" class="collapse" aria-labelledby="drop_tax_attr" style="">
                                 <div class="card-body">
                                     <p>Changing types of fields in attributes might result in incompatibles types and existing objects being unable to be migrated.</p>
-                                    <p>When this happens, IRIS will not update the fields of these objects and let them as is to prevent any data loss .</p>
+                                    <p>When this happens, IRIS will not update the fields of these objects and let them as is to prevent any data loss.</p>
                                     <p>This behavior can however be changed by using the <kbd>Complete overwrite</kbd> and <kbd>Partial overwrite</kbd> buttons.</p>
 
                                     <p><kbd>Partial overwrite</kbd> basically resets all the values of every {{ attribute.attribute_display_name }} objects, and then applies the current attributes.
