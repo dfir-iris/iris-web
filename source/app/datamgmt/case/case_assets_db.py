@@ -151,10 +151,6 @@ def get_asset_type_id(asset_type_name):
 
 
 def get_similar_assets(asset_name, asset_type_id, caseid, customer_id):
-    print(asset_name)
-    print(asset_type_id)
-    print(caseid)
-    print(customer_id)
 
     linked_assets = CaseAssets.query.with_entities(
         Cases.name.label('case_name'),
