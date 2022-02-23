@@ -11,6 +11,13 @@ $(function(){
     })
 })
 
+function case_detail(id) {
+    url = '/manage/cases/details/' + id + case_param();
+    $('#info_case_modal_content').load(url, function () {
+        $('#modal_case_detail').modal({ show: true });
+    });
+}
+
 function close_case(id) {
   swal({
     title: "Are you sure?",

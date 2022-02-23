@@ -15,13 +15,60 @@
                     <b>Mandatory :</b> {{ parameter["mandatory"] }}<br/>
                     <b>Expected type :</b> {{ parameter["type"] }}<br/>
                 </div>
-                <div class="form-group mt-3
-                    <label class="placeholder"><b>Value</b></label>
-                    <input class="form-control required" name="param_value" type="text" value="{{ parameter["value"] }}">
+                <div class="form-group mt-3">
+
+
+                    {% if parameter["type"].startswith("textfield_") %}
+                        <label class="placeholder"><b>Value</b></label>
+                        <div id="editor_detail">{{ parameter["value"] }}</div>
+                    {% elif parameter["type"] == 'bool' %}
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <input type="checkbox" id="param_value"
+                                           class="form-control"
+                                           {% if parameter["value"] == True %} checked {% endif %}
+                                />
+                            <span class="form-check-sign">Check to set to true</span>
+                            </label>
+                        </div>
+                    {% else %}
+                        <label class="placeholder"><b>Value</b></label>
+                        <input class="form-control required" name="param_value" type="text" value="{{ parameter["value"] }}">
+                    {% endif %}
                 </div>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
                 id="submit_save_parameter">Save</button>
+            </div>
         </form>
     </div>
 
 </div>
+<script>
+  $(document).ready(function(){
+  if ($('#editor_detail').length != 0) {
+     var editor = ace.edit("editor_detail",
+            {
+                autoScrollEditorIntoView: true,
+                minLines: 30,
+            });
+        editor.setTheme("ace/theme/tomorrow");
+
+        {% if parameter["type"].endswith("json") %}
+        editor.session.setMode("ace/mode/json");
+        {% elif parameter["type"].endswith("html") %}
+        editor.session.setMode("ace/mode/html");
+        {% elif parameter["type"].endswith("markdown") %}
+        editor.session.setMode("ace/mode/markdown");
+        {% endif %}
+
+        editor.renderer.setShowGutter(true);
+        editor.setOption("showLineNumbers", true);
+        editor.setOption("showPrintMargin", false);
+        editor.setOption("displayIndentGuides", true);
+        editor.setOption("maxLines", "Infinity");
+        editor.session.setUseWrapMode(true);
+        editor.setOption("indentedSoftWrap", true);
+        editor.renderer.setScrollMargin(8, 5);
+        }
+ });
+</script>

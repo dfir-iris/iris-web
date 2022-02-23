@@ -32,11 +32,12 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.client.client_db import get_client
 from app.datamgmt.iris_engine.modules_db import iris_module_exists, \
     get_pipelines_args_from_name
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_cases_db import list_cases_dict, close_case, reopen_case, delete_case, \
     get_case_details_rt
 from app.forms import AddCaseForm
 from app.iris_engine.module_handler.module_handler import list_available_pipelines, instantiate_module_from_name, \
-    configure_module_on_init
+    configure_module_on_init, call_modules_hook
 
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
@@ -98,8 +99,11 @@ def api_delete_case(cur_id, caseid):
 
     else:
         try:
-
+            call_modules_hook('on_preload_case_delete', data=cur_id, caseid=caseid)
             if delete_case(case_id=cur_id):
+
+                call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
+
                 track_activity("case {} deleted successfully".format(cur_id), caseid=caseid, ctx_less=True)
                 return response_success("Case successfully deleted")
 
@@ -155,9 +159,13 @@ def api_add_case(caseid):
 
     try:
 
-        case = case_schema.load(request.json)
+        request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
+        case = case_schema.load(request_data)
 
         case.save()
+
+        case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
+
         track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
@@ -197,7 +205,9 @@ def manage_index_cases(caseid, url_redir):
     pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
                       ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
 
-    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args)
+    attributes = get_default_custom_attributes('case')
+
+    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args, attributes=attributes)
 
 
 @manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
@@ -276,7 +286,6 @@ def manage_cases_uploadfiles(caseid):
 
     try:
         pipeline_mod = pipeline.split("-")[0]
-        pipeline_name = pipeline.split("-")[1]
     except Exception as e:
         log.error(e.__str__())
         return response_error('Malformed request', status=400)

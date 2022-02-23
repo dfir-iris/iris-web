@@ -87,7 +87,8 @@ Table = $("#tasks_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
         tableFiltering(this.api());
-    }
+    },
+    select: true
 });
 $("#tasks_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {
@@ -114,6 +115,13 @@ function add_task() {
             data_sent['task_tags'] = $('#task_tags').val();
             data_sent['task_assignee'] = $('#task_assignee').val();
             data_sent['task_status_id'] = $('#task_status_id').val();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data_sent['custom_attributes'] = attributes;
 
             $.ajax({
                 url: 'tasks/add' + case_param(),
@@ -164,6 +172,13 @@ function update_task(id) {
     data_sent['task_tags'] = $('#task_tags').val();
     data_sent['task_assignee'] = $('#task_assignee').val();
     data_sent['task_status_id'] = $('#task_status_id').val();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
 
     $.ajax({
         url: 'tasks/update/' + id + case_param(),
@@ -228,6 +243,7 @@ function delete_task(id) {
 function edit_task(id) {
   url = '/case/tasks/'+ id + '/modal' + case_param();
   $('#modal_add_task_content').load(url, function(){
+        load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
         $('#modal_add_task').modal({show:true});
   });
 }
@@ -277,6 +293,7 @@ function get_tasks() {
                       });
 
                     Table.columns.adjust().draw();
+                    load_menu_mod_options('task', Table);
                     $('[data-toggle="popover"]').popover();
 
                     set_last_state(data.data.state);

@@ -38,6 +38,13 @@ function submit_new_case() {
     }
 
     var data_sent = $('form#form_new_case').serializeObject();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
 
     $.ajax({
         url: '/manage/cases/add' + case_param(),

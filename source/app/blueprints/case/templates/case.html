@@ -1,18 +1,21 @@
 {% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %} {% block stylesheets %} {% endblock stylesheets %} {% block content %} {% if current_user.is_authenticated %}
 
 {% if case.close_date %}
-<div class="panel-header bg-close-gradient">
 {% else %}
 <div class="panel-header bg-info-gradient">
 {% endif %}
     <div class="page-inner py-5">
         <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
             <div>
-                <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-3"></i> {{ case.name|unquote }}</h2>
+                <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-3"></i> {{ case.name|unquote }}
+                </h2>
                 <h5 class="text-white op-7 mb-2">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
                 {% if case.close_date %}
                 <h5 class="text-warning  mb-2">Closed on {{ case.close_date }}</h5>
                 {% endif %}
+                <small><a href="#" onclick="case_detail({{ case.case_id }});" class="btn btn-sm btn-outline-light btn-rounded float-left">
+                  Case info
+                    </a></small>
             </div>
             <div class="ml-md-auto py-2 py-md-0">
                 <h5 class="text-white op-7 mb-2 ">Customer : {{ case.client.name }}</h5>
@@ -130,6 +133,13 @@
                 </a>
           </div>
       </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+<div class="modal" tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
+    <div class="modal-xl modal-dialog" role="document">
+        <div class="modal-content" id="info_case_modal_content">
+
+        </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div>
 {% endif %} {% endblock content %} {% block javascripts %}

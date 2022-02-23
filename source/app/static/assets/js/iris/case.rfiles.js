@@ -61,7 +61,8 @@ Table = $("#rfiles_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
         tableFiltering(this.api());
-    }
+    },
+    select: true
 });
 $("#rfiles_table").css("font-size", 12);
 var buttons = new $.fn.dataTable.Buttons(Table, {
@@ -87,6 +88,8 @@ function get_case_rfiles() {
                     Table.rows.add(jsdata.evidences);
                     Table.columns.adjust().draw();
 
+                    load_menu_mod_options('evidence', Table);
+
                     set_last_state(jsdata.state);
                     hide_loader();
 
@@ -109,7 +112,9 @@ function get_case_rfiles() {
 /* Edit an rfiles */
 function edit_rfiles(rfiles_id) {
     url = 'evidences/' + rfiles_id + '/modal' + case_param();
-    $('#modal_add_rfiles_content').load(url, function () {});
+    $('#modal_add_rfiles_content').load(url, function () {
+        load_menu_mod_options_modal(rfiles_id, 'evidence', $("#evidence_modal_quick_actions"));
+    });
     $('#modal_add_rfiles').modal({ show: true });
 }
 
@@ -117,6 +122,14 @@ function edit_rfiles(rfiles_id) {
 function update_rfile(rfiles_id) {
     var data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
+
 
     $.ajax({
         url: 'evidences/update/' + rfiles_id + case_param(),
