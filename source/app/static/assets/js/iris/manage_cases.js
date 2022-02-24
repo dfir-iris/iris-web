@@ -38,6 +38,13 @@ function submit_new_case() {
     }
 
     var data_sent = $('form#form_new_case').serializeObject();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
 
     $.ajax({
         url: '/manage/cases/add' + case_param(),
@@ -79,7 +86,7 @@ function submit_new_case() {
                     switch (value) {
 
                         case "dash":
-                            window.location.replace("/" + case_param());
+                            window.location.replace("/dashboard" + case_param());
                             break;
 
                         case "again":
@@ -87,7 +94,7 @@ function submit_new_case() {
                             break;
 
                         default:
-                            window.location.replace("/" + case_param());
+                            window.location.replace("/dashboard" + case_param());
                     }
                 });
             } else {

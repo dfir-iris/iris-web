@@ -20,7 +20,7 @@
 #################
 # COMPILE IMAGE #
 #################
-FROM python:3.7 AS compile-image
+FROM python:3.9 AS compile-image
 RUN apt-get update
 
 RUN python -m venv /opt/venv
@@ -35,7 +35,7 @@ RUN pip3 install -r requirements.txt
 ###############
 # BUILD IMAGE #
 ###############
-FROM python:3.7 as iriswebapp
+FROM python:3.9 as iriswebapp
 
 ENV PYTHONUNBUFFERED=1
 

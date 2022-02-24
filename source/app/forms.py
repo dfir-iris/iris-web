@@ -55,6 +55,10 @@ class AddAssetForm(FlaskForm):
     asset_description = StringField(u'Asset description', validators=[DataRequired()])
 
 
+class AttributeForm(FlaskForm):
+    attribute_content = TextAreaField(u'Attribute content', validators=[DataRequired()])
+
+
 class AddIocTypeForm(FlaskForm):
     type_name = StringField(u'Type name', validators=[DataRequired()])
     type_description = StringField(u'Type description', validators=[DataRequired()])

@@ -64,7 +64,7 @@ event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "Us
 def case_r(caseid, url_redir):
 
     if url_redir:
-        return redirect(url_for('case.case', cid=caseid))
+        return redirect(url_for('case.case_r', cid=caseid, redirect=True))
 
     case = get_case(caseid)
     form = FlaskForm()
@@ -159,7 +159,8 @@ def activity_fetch(caseid):
     ua = UserActivity.query.with_entities(
         UserActivity.activity_date,
         User.name,
-        UserActivity.activity_desc
+        UserActivity.activity_desc,
+        UserActivity.is_from_api
     ).filter(
         UserActivity.case_id == caseid
     ).join(

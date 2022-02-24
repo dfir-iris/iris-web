@@ -62,6 +62,7 @@ function notify_error(message) {
             align: 'right'
         },
         time: 4000,
+        z_index: 2000,
     });
 }
 
@@ -69,13 +70,14 @@ function notify_success(message) {
     $.notify({
         icon: 'flaticon-hands',
         title: 'Done',
-        message: message
+        message: message,
     }, {
         type: 'success',
         placement: {
             from: 'bottom',
             align: 'right'
         },
+        z_index: 2000,
         time: 2000,
     });
 }
@@ -181,20 +183,6 @@ $(function () {
     });
 })
 
-
-$(function () {
-    var current = location.pathname;
-    $('#l_nav_tab .nav-item').each(function () {
-        var $this = $(this);
-        var child = $this.children();
-        // if the current path is like this link, make it active
-        if (child.attr('href').startsWith(current)) {
-            $this.addClass('active');
-            return;
-        }
-    })
-})
-
 function get_caseid() {
     queryString = window.location.search;
     urlParams = new URLSearchParams(queryString);
@@ -202,6 +190,26 @@ function get_caseid() {
     return urlParams.get('cid')
 }
 
+function is_redirect() {
+    queryString = window.location.search;
+    urlParams = new URLSearchParams(queryString);
+
+    return urlParams.get('redirect')
+}
+
+function notify_redirect() {
+    if (is_redirect()) {
+        swal("You've been redirected",
+             "The case you attempted to reach wasn't found.\nYou have been redirected to a default case.",
+             "info", {button: "OK"}
+             ).then((value) => {
+                    queryString = window.location.search;
+                    urlParams = new URLSearchParams(queryString);
+                    urlParams.delete('redirect');
+                    window.location.search = urlParams;
+                });
+    }
+}
 
 function case_param() {
     var params = {
@@ -286,7 +294,32 @@ function check_update(url) {
                         $('#last_resfresh').text("Updates available").addClass("text-warning");
                         need_check = false;
                     }
+                },
+            error: function (data) {
+                if (data.status == 404) {
+                    swal("Stop everything !",
+                    "The case you are working on was deleted",
+                    "error",
+                    {
+                        buttons: {
+                            again: {
+                                text: "Go to my default case",
+                                value: "default"
+                            }
+                        }
+                    }
+                ).then((value) => {
+                    switch (value) {
+                        case "dash":
+                            location.reload();
+                            break;
+
+                        default:
+                            location.reload();
+                    }
+                });
                 }
+            }
         });
     }
 }
@@ -441,11 +474,18 @@ function load_case_activity(){
                 js_data = data.data;
                 $('#case_activities').empty();
                 for (index in js_data) {
-                    console.log(index)
 
-                    entry =	`<li class="feed-item feed-item-default">
+                    if (js_data[index].is_from_api) {
+                        api_flag = 'feed-item-primary';
+                        title = 'Activity issued from API';
+                    } else {
+                        api_flag = 'feed-item-default';
+                        title = 'Activity issued from GUI';
+                    }
+
+                    entry =	`<li class="feed-item ${api_flag}" title='${title}'>
 							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
-							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</a></span>
+							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</span>
 						    </li>`
                     $('#case_activities').append(entry);
                 }
@@ -453,11 +493,306 @@ function load_case_activity(){
     });
 }
 
+
+function load_dim_limited_tasks(){
+    $.ajax({
+        url: '/dim/tasks/limited-list' + case_param(),
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+                js_data = data.data;
+                $('#dim_tasks_feed').empty();
+                for (index in js_data) {
+
+                    if (js_data[index].state == 'success') {
+                        api_flag = 'feed-item-success';
+                        title = 'Task succeeded';
+                    } else {
+                        api_flag = 'feed-item-warning';
+                        title = 'Task pending or failed';
+                    }
+
+                    entry =	`<li class="feed-item ${api_flag}" title='${title}'>
+							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].date_done}</time>
+							<span class="text" title="${js_data[index].task_id}"><a href="#" onclick='dim_task_status("${js_data[index].task_id}");return false;'>${js_data[index].module}</a> - ${js_data[index].user}</span>
+						    </li>`
+                    $('#dim_tasks_feed').append(entry);
+                }
+            }
+    });
+}
+
+function dim_task_status(id) {
+    url = '/dim/tasks/status/'+id + case_param();
+    $('#info_dim_task_modal_body').load(url, function(){
+        $('#modal_dim_task_detail').modal({show:true});
+    });
+}
+
+function init_module_processing(rows, hook_name, module_name, data_type) {
+    var data = Object();
+    data['hook_name'] = hook_name;
+    data['module_name'] = module_name;
+    data['csrf_token'] = $('#csrf_token').val();
+    data['type'] = data_type;
+    data['targets'] = [];
+
+    type_map = {
+        "ioc": "ioc_id",
+        "asset": "asset_id",
+        "task": "task_id",
+        "global_task": "task_id",
+        "evidence": "id"
+    }
+
+    for (index in rows) {
+        if (typeof rows[index] === 'object') {
+            data['targets'].push(rows[index][type_map[data_type]]);
+        } else {
+            data['targets'].push(rows[index]);
+        }
+    }
+
+    $.ajax({
+        url: "/dim/hooks/call" + case_param(),
+        type: "POST",
+        data: JSON.stringify(data),
+        dataType: "json",
+        contentType: "application/json;charset=UTF-8",
+        dataType: 'json',
+        success: function (response) {
+            if (response.status == 'success') {
+                    notify_success('Data sent to module');
+            }
+        },
+        error: function (error) {
+            notify_error(error.statusText);
+        }
+    });
+}
+
+function load_menu_mod_options_modal(element_id, data_type, anchor) {
+
+    $.ajax({
+        url: '/dim/hooks/options/'+ data_type +'/list' + case_param(),
+        type: "GET",
+        dataType: 'json',
+        success: function (response) {
+            if (response.status == 'success') {
+                if (response.data != null) {
+                    jsdata = response.data;
+                    if (jsdata.length != 0) {
+                        anchor.append('<div class="dropdown-divider"></div>');
+                    }
+                    for (option in jsdata) {
+                        opt = jsdata[option];
+                        menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
+                                    `"${opt.module_name}", "${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+                        anchor.append(menu_opt);
+                    }
+                }
+            }
+        },
+        error: function (error) {
+            notify_error(error.statusText);
+        }
+    });
+}
+
+function load_menu_mod_options(data_type, table) {
+    var actionOptions = {
+        classes: [],
+        contextMenu: {
+            enabled: true,
+            isMulti: true,
+            xoffset: -10,
+            yoffset: -10,
+            headerRenderer: function (rows) {
+                if (rows.length > 1) {
+                    return rows.length + ' items selected';
+                } else {
+                    let row = rows[0];
+                    return 'Quick action';
+                }
+            },
+        },
+        buttonList: {
+            enabled: false,
+        },
+        deselectAfterAction: true,
+        items: [],
+    };
+
+    $.ajax({
+        url: "/dim/hooks/options/"+ data_type +"/list" + case_param(),
+        type: "GET",
+        dataType: 'json',
+        success: function (response) {
+            if (response.status == 'success') {
+                if (response.data != null) {
+                    jsdata = response.data;
+
+                    actionOptions.items.push({
+                        type: 'option',
+                        title: 'Share',
+                        multi: false,
+                        iconClass: 'fas fa-share',
+                        buttonClasses: ['btn', 'btn-outline-primary'],
+                        action: function(){
+                            copy_object_link("${element_id}");return false;
+                        }
+                    });
+                    actionOptions.items.push({
+                        type: 'divider',
+                    });
+                    for (option in jsdata) {
+                        opt = jsdata[option];
+                        actionOptions.items.push({
+                            type: 'option',
+                            title: opt.manual_hook_ui_name,
+                            multi: true,
+                            multiTitle: opt.manual_hook_ui_name,
+                            iconClass: 'fas fa-arrow-alt-circle-right',
+                            buttonClasses: ['btn', 'btn-outline-primary'],
+                            contextMenuClasses: ['text-dark'],
+                            action: function (rows) {
+                                init_module_processing(rows, opt.hook_name, opt.module_name, data_type);
+                            },
+                        })
+                    }
+                    table.contextualActions(actionOptions);
+                }
+            }
+        },
+        error: function (error) {
+            notify_error(error.statusText);
+        }
+    });
+}
+
+function get_custom_attributes_fields() {
+    values = Object();
+    has_error = [];
+    $("input[id^='inpstd_']").each(function (i, el) {
+        tab = $(el).attr('data-ref-tab');
+        field = $(el).attr('data-attr-for');
+        if (!(tab in values)) { values[tab] = {} };
+
+        values[tab][field] = $(el).val();
+        if ($(el).prop('required') && !values[tab][field]) {
+            $(el).parent().addClass('has-error');
+            has_error.push(field);
+        } else {
+             $(el).parent().removeClass('has-error');
+        }
+    })
+    $("textarea[id^='inpstd_']").each(function (i, el) {
+        tab = $(el).attr('data-ref-tab');
+        field = $(el).attr('data-attr-for');
+        if (!(tab in values)) { values[tab] = {} };
+        values[tab][field] = $(el).val();
+        if ($(el).prop('required') && !values[tab][field]) {
+            $(el).parent().addClass('has-error');
+            has_error.push(field);
+        } else {
+             $(el).parent().removeClass('has-error');
+        }
+    })
+    $("input[id^='inpchk_']").each(function (i, el) {
+        tab = $(el).attr('data-ref-tab');
+        field = $(el).attr('data-attr-for');
+        if (!(tab in values)) { values[tab] = {} };
+        values[tab][field] = $(el).is(':checked');
+    })
+    $("select[id^='inpselect_']").each(function (i, el) {
+        tab = $(el).attr('data-ref-tab');
+        field = $(el).attr('data-attr-for');
+        if (!(tab in values)) { values[tab] = {} };
+        values[tab][field] = $(el).val();
+        if ($(el).prop('required') && !values[tab][field]) {
+            $(el).parent().addClass('has-error');
+            has_error.push(field);
+        } else {
+             $(el).parent().removeClass('has-error');
+        }
+    })
+
+    if (has_error.length > 0) {
+        msg = 'Missing required fields: <br/>';
+        for (field in has_error) {
+            msg += '  - ' + has_error[field] + '<br/>';
+        }
+        notify_error(msg);
+    }
+
+    return [has_error, values];
+}
+
 function update_time() {
     $('#current_date').text((new Date()).toLocaleString().slice(0, 17));
 }
 
+function download_file(filename, contentType, data) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+function toggle_focus_mode() {
+    class_a = "bg-focus-gradient"
+    $(".modal-case-focus").each(function (i, el)  {
+        if ($(el).hasClass( class_a )) {
+            $(el).removeClass(class_a, 1000);
+        } else {
+            $(el).addClass(class_a, 1000);
+        }
+    });
+}
+
 $(document).ready(function(){
+    notify_redirect();
     update_time();
     setInterval(function() { update_time(); }, 30000);
+    $(function () {
+        var current = location.pathname;
+        btt = current.split('/')[1];
+
+        if (btt !== 'manage') {
+            btt = btt.split('?')[0];
+        } else {
+            btt = current.split('?')[0];
+        }
+        $('#l_nav_tab .nav-item').each(function (k, al) {
+            href = $(al).children().attr('href');
+            try {
+                if (href == "#advanced-nav") {
+                    $('#advanced-nav .nav-subitem').each(function (i, el) {
+                        ktt = $(el).children().attr('href').split('?')[0];
+
+                        if (ktt === btt) {
+                            $(el).addClass('active');
+                            $(al).addClass('active');
+                            $(al).children().attr('aria-expanded', true);
+                            $('#advanced-nav').show();
+                            return;
+                        }
+                    })
+                } else if (href.startsWith(btt)){
+                    $(this).addClass('active');
+                    return;
+                }else{
+                    att = "";
+                    att = href.split('/')[1].split('?')[0];
+                }
+            } catch {att=""}
+            if (att === btt) {
+                $(al).addClass('active');
+                return;
+            }
+        })
+    })
 });

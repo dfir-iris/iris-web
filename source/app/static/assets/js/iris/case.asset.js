@@ -21,6 +21,13 @@ function add_asset() {
                 data["ioc_links"] = [data["ioc_links"]]
             }
             data['asset_tags'] = $('#asset_tags').val();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data['custom_attributes'] = attributes;
 
             $.ajax({
                 url: 'assets/add' + case_param(),
@@ -218,9 +225,11 @@ Table = $("#assets_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
         tableFiltering(this.api());
-    }
+    },
+    select: true
 });
 $("#assets_table").css("font-size", 12);
+
 var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
         { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white pl--2'
@@ -229,6 +238,7 @@ var buttons = new $.fn.dataTable.Buttons(Table, {
         , "titleAttr": 'Copy' },
     ]
 }).container().appendTo($('#tables_button'));
+
 
 /* Retrieve the list of assets and build a datatable for each type of asset */
 function get_case_assets() {
@@ -244,6 +254,8 @@ function get_case_assets() {
                     Table.clear();
                     Table.rows.add(jsdata.assets);
                     Table.columns.adjust().draw();
+                    load_menu_mod_options('asset', Table);
+
                     set_last_state(jsdata.state);
                     hide_loader();
                     $('#assets_table').on('click', function(e){
@@ -331,6 +343,14 @@ function asset_details(asset_id) {
                 data['asset_compromised'] = 'false';
             }
 
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data['custom_attributes'] = attributes;
+
             $.ajax({
                 url: 'assets/update/' + asset_id + case_param(),
                 type: "POST",
@@ -363,7 +383,7 @@ function asset_details(asset_id) {
             return false;
         })
 
-
+        load_menu_mod_options_modal(asset_id, 'asset', $("#asset_modal_quick_actions"));
     });
     $('#modal_add_asset').modal({ show: true });
     return false;

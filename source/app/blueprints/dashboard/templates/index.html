@@ -5,6 +5,8 @@
 
 {% block stylesheets %}
 <link rel="stylesheet" href="/static/assets/css/suggestags.css">
+<link href="/static/assets/css/dataTables.contextualActions.min.css" rel="stylesheet">
+<link href="/static/assets/css/dataTables.select.min.css" rel="stylesheet">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -184,28 +186,7 @@
                     </div>
 				</section>
 			</div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="card full-height">
-            <div class="card-header">
-              <div class="card-title">Last automated tasks
-                <div class="text-faded float-right">
-                  <small id="feed_last_updated"></small>
-                  <button type="button" class="btn btn-xs btn-icon btn-round btn-outline-default ml-2"
-                  onclick="update_tasks_list();">
-                  <i class="fas fa-sync rotate"></i>
-                </button>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <ol class="activity-feed" id="task_feed">
-              </ol>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
 
     <div class="modal fade " tabindex="-1" role="dialog" id="modal_add_customer" data-backdrop="true">
@@ -232,24 +213,6 @@
       </div><!-- /.modal-dialog -->
     </div>
 
-    <div class="modal fade " tabindex="-1" role="dialog" id="modal_task_detail" data-backdrop="true">
-      <div class="modal-xl modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5>Task info</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                  aria-hidden="true">&times;</span></button>
-            </div>
-            <div class="modal-body" id="info_task_modal_body">
-
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-          </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
-    </div>
-
     <div class="modal " tabindex="-1" role="dialog" id="modal_add_gtask" data-backdrop="true">
         <div class="modal-xl modal-dialog" role="document">
             <div class="modal-content" id="modal_add_gtask_content">
@@ -268,6 +231,8 @@
 
     <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
     <script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.contextualActions.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
     <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
     <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
     <script src="/static/assets/js/iris/dashboard.js"></script>
@@ -277,7 +242,7 @@
 		htmlLegendsChart = document.getElementById('htmlLegendsChart').getContext('2d');
 
         $.ajax({
-            url: '/dashboard/case_charts',
+            url: '/dashboard/case_charts' + case_param(),
             type: "GET",
             dataType: "JSON",
             success: function (data) {

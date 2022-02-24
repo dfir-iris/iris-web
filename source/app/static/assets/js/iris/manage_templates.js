@@ -145,41 +145,51 @@ $('#reports_table').dataTable( {
       "type": "GET",
       "data": function ( d ) {
         if (d.status == 'success') {
-
           return JSON.stringify( d.data );
         } else {
           return [];
         }
       }
     },
-    "order": [[ 0, "desc" ]],
     "autoWidth": false,
-    "columnDefs": [
+    "columns": [
+        {
+            "data": "name",
+            "render": function ( data, type, row ) {
+                data = sanitizeHTML(data);
+                return '<a href="#" onclick="delete_report(\'' + row['id'] + '\');">' + data +'</a>';
+            }
+        },
+        {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+             "data": "description",
+        },
+        {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+            "data": "naming_format",
+        },
+        {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+            "data": "date_created",
+        },
+        {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+            "data": "created_by",
+        },
+        {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+            "data": "code",
+        },
+        {
+            "render": function ( data, type, row ) {return sanitizeHTML(data);},
+            "data": "type_name",
+        },
         {
             "render": function ( data, type, row ) {
                 data = sanitizeHTML(data);
-                return '<a href="#" onclick="delete_report(\'' + row[7] + '\');">' + data +'</a>';
+                return '<a href="templates/download/' + row["id"] + case_param() + '"><i class="fas fa-download"></i></a>';
             },
-            "targets": 0
-        },
-        {
-            "render": function ( data, type, row ) {return sanitizeHTML(data);},
-            "targets": 1
-        },
-        {
-            "render": function ( data, type, row ) {return sanitizeHTML(data);},
-            "targets": 2
-        },
-        {
-            "render": function ( data, type, row ) {return sanitizeHTML(data);},
-            "targets": 4
-        },
-        {
-            "render": function ( data, type, row ) {
-                data = sanitizeHTML(data);
-                return '<a href="templates/download/' + row[7] + case_param() + '"><i class="fas fa-download"></i></a>';
-            },
-            "targets": 7
+            "data": "id",
         }
       ]
     }
@@ -205,7 +215,7 @@ function report_detail(report_id) {
                 success: function (data) {
                     if (data.status == 'success') {
                         swal("You're set !",
-                            "The asset has been updated successfully",
+                            "The report has been updated successfully",
                             {
                                 icon: "success",
                                 timer: 400

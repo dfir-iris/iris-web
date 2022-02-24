@@ -17,7 +17,6 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 import configparser
 import logging as log
 import os
@@ -56,11 +55,6 @@ if os.environ.get('IRIS_WORKER') is None:
 
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
-
-# --------- LOGGING ---------
-LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
-LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-log.basicConfig(level=log.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 # Build of SQLAlchemy connectors. One is admin and the other is only for iris. Admin is needed to create new DB
 SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
@@ -146,6 +140,9 @@ class Config():
 
     API_MIN_VERSION = "1.0.1"
     API_MAX_VERSION = "1.0.2"
+
+    MODULES_INTERFACE_MIN_VERSION = '1.1'
+    MODULES_INTERFACE_MAX_VERSION = '1.1'
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True

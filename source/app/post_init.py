@@ -17,8 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-import logging as log
+import logging
 import random
 import secrets
 import string
@@ -31,13 +30,19 @@ from sqlalchemy_utils import database_exists, create_database
 
 from app import db, bc, app, celery
 from app.configuration import SQLALCHEMY_BASE_URI
-from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
+from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.iris_engine.module_handler.module_handler import instantiate_module_from_name, register_module, \
+    check_module_health
 from app.models.cases import Cases, Client
 from app.models.models import Role, Languages, User, get_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
-    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus
+    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook, CustomAttribute, \
+    create_safe_attr
+
+log = app.logger
 
 
 def run_post_init(development=False):
+
     log.info("Running post initiation steps")
 
     if os.getenv("IRIS_WORKER") is None:
@@ -51,6 +56,12 @@ def run_post_init(development=False):
         db.create_all(bind="iris_tasks")
         db.session.commit()
 
+        log.info("Running DB migration")
+
+        alembic_cfg = Config(file_='app/alembic.ini')
+        alembic_cfg.set_main_option('sqlalchemy.url',  SQLALCHEMY_BASE_URI + 'iris_db')
+        command.upgrade(alembic_cfg, 'head')
+
         log.info("Creating base languages")
         create_safe_languages()
 
@@ -62,6 +73,9 @@ def run_post_init(development=False):
 
         log.info("Creating base IOC types")
         create_safe_ioctypes()
+
+        log.info("Creating base attributes")
+        create_safe_attributes()
 
         log.info("Creating base report types")
         create_safe_report_types()
@@ -81,14 +95,11 @@ def run_post_init(development=False):
         log.info("Creating base tasks status")
         create_safe_task_status()
 
-        log.info("Running DB migration")
+        log.info("Creating base hooks")
+        create_safe_hooks()
 
-        alembic_cfg = Config(file_='app/alembic.ini')
-        alembic_cfg.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_URI + 'iris_db')
-        command.upgrade(alembic_cfg, 'head')
-
-    log.info("Registering modules pipeline tasks")
-    register_modules_pipelines()
+        log.info("Registering default modules")
+        register_default_modules()
 
     if os.getenv("IRIS_WORKER") is None:
         log.info("Creating first administrative user")
@@ -120,6 +131,163 @@ def create_safe_db(db_name):
         create_database(engine.url)
 
     engine.dispose()
+
+
+def create_safe_hooks():
+    # --- Case
+    create_safe(db.session, IrisHook, hook_name='on_preload_case_create',
+                hook_description='Triggered on case creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_case_create',
+                hook_description='Triggered on case creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_case_delete',
+                hook_description='Triggered on case deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_case_delete',
+                hook_description='Triggered on case deletion, after commit in DB')
+
+    # --- Assets
+    create_safe(db.session, IrisHook, hook_name='on_preload_asset_create',
+                hook_description='Triggered on asset creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_create',
+                hook_description='Triggered on asset creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_asset_update',
+                hook_description='Triggered on asset update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_update',
+                hook_description='Triggered on asset update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_asset_delete',
+                hook_description='Triggered on asset deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_delete',
+                hook_description='Triggered on asset deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_asset',
+                hook_description='Triggered upon user action')
+
+    # --- Notes
+    create_safe(db.session, IrisHook, hook_name='on_preload_note_create',
+                hook_description='Triggered on note creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_create',
+                hook_description='Triggered on note creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_note_update',
+                hook_description='Triggered on note update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_update',
+                hook_description='Triggered on note update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_note_delete',
+                hook_description='Triggered on note deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_delete',
+                hook_description='Triggered on note deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_note',
+                hook_description='Triggered upon user action')
+    
+    # --- iocs
+    create_safe(db.session, IrisHook, hook_name='on_preload_ioc_create',
+                hook_description='Triggered on ioc creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_create',
+                hook_description='Triggered on ioc creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_ioc_update',
+                hook_description='Triggered on ioc update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_update',
+                hook_description='Triggered on ioc update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_ioc_delete',
+                hook_description='Triggered on ioc deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_delete',
+                hook_description='Triggered on ioc deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_ioc',
+                hook_description='Triggered upon user action')
+
+    # --- events
+    create_safe(db.session, IrisHook, hook_name='on_preload_event_create',
+                hook_description='Triggered on event creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_create',
+                hook_description='Triggered on event creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_event_update',
+                hook_description='Triggered on event update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_update',
+                hook_description='Triggered on event update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_event_delete',
+                hook_description='Triggered on event deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_delete',
+                hook_description='Triggered on event deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_event',
+                hook_description='Triggered upon user action')
+    
+    # --- evidence
+    create_safe(db.session, IrisHook, hook_name='on_preload_evidence_create',
+                hook_description='Triggered on evidence creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_create',
+                hook_description='Triggered on evidence creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_evidence_update',
+                hook_description='Triggered on evidence update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_update',
+                hook_description='Triggered on evidence update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_evidence_delete',
+                hook_description='Triggered on evidence deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_delete',
+                hook_description='Triggered on evidence deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_evidence',
+                hook_description='Triggered upon user action')
+    
+    # --- tasks
+    create_safe(db.session, IrisHook, hook_name='on_preload_task_create',
+                hook_description='Triggered on task creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_create',
+                hook_description='Triggered on task creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_task_update',
+                hook_description='Triggered on task update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_update',
+                hook_description='Triggered on task update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_task_delete',
+                hook_description='Triggered on task deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_delete',
+                hook_description='Triggered on task deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_task',
+                hook_description='Triggered upon user action')
+
+    # --- global tasks
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_create',
+                hook_description='Triggered on global task creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_create',
+                hook_description='Triggered on global task creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_update',
+                hook_description='Triggered on task update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_update',
+                hook_description='Triggered on global task update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_delete',
+                hook_description='Triggered on task deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_delete',
+                hook_description='Triggered on global task deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_global_task',
+                hook_description='Triggered upon user action')
+    
+    # --- reports
+    create_safe(db.session, IrisHook, hook_name='on_preload_report_create',
+                hook_description='Triggered on report creation, before generation in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_report_create',
+                hook_description='Triggered on report creation, before download of the document')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_activities_report_create',
+                hook_description='Triggered on activities report creation, before generation in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_activities_report_create',
+                hook_description='Triggered on activities report creation, before download of the document')
 
 
 def create_safe_languages():
@@ -266,6 +434,30 @@ def create_safe_case(user, client):
 def create_safe_report_types():
     create_safe(db.session, ReportType, name="Investigation")
     create_safe(db.session, ReportType, name="Activities")
+
+
+def create_safe_attributes():
+    create_safe_attr(db.session, attribute_display_name='IOC',
+                     attribute_description='Defines default attributes for IOCs', attribute_for='ioc',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Events',
+                     attribute_description='Defines default attributes for Events', attribute_for='event',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Assets',
+                     attribute_description='Defines default attributes for Assets', attribute_for='asset',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Tasks',
+                     attribute_description='Defines default attributes for Tasks', attribute_for='task',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Notes',
+                     attribute_description='Defines default attributes for Notes', attribute_for='note',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Evidences',
+                     attribute_description='Defines default attributes for Evidences', attribute_for='evidence',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Cases',
+                     attribute_description='Defines default attributes for Cases', attribute_for='case',
+                     attribute_content={})
 
 
 def create_safe_ioctypes():
@@ -624,3 +816,23 @@ def register_modules_pipelines():
         tasks = status.get_data()
         for task in tasks:
             celery.register_task(task)
+
+
+def register_default_modules():
+
+    modules = ['iris_vt_module', 'iris_check_module']
+    for module in modules:
+        class_ = instantiate_module_from_name(module)
+        is_ready, logs = check_module_health(class_)
+
+        if not is_ready:
+            log.info("Attempted to initiate {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+            return False
+
+        mod_id, logs = register_module(module)
+        if mod_id is None:
+            log.info("Attempted to add {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+
+        else:
+            iris_module_disable_by_id(mod_id)
+            log.info('Successfully registered {mod}'.format(mod=module))

@@ -218,7 +218,7 @@ def get_urlcase(request):
     case = get_case(caseid)
 
     if not case:
-        return True, None
+        return True, 1
 
     if caseid != current_user.ctx_case:
         current_user.ctx_case = case.case_id
@@ -401,8 +401,8 @@ def api_login_required(f):
 
         else:
             redir, caseid = get_urlcase(request=request)
-            if not caseid:
-                return response_error("Invalid case ID", status=400)
+            if not caseid or redir:
+                return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
 
             return f(*args, **kwargs)
@@ -428,8 +428,8 @@ def api_admin_required(f):
 
         else:
             redir, caseid = get_urlcase(request=request)
-            if not caseid:
-                return response_error("Invalid case ID", status=400)
+            if not caseid or redir:
+                return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
 
             roles = [role.name for role in current_user.roles]

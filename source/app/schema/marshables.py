@@ -29,6 +29,7 @@ from sqlalchemy import func
 
 from app import ma
 from app.datamgmt.dashboard.dashboard_db import get_task_status
+from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
     CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp, EventCategory
 
@@ -49,6 +50,7 @@ class CaseAddNoteSchema(ma.Schema):
     note_content = fields.String(required=False, validate=Length(min=1))
     group_id = fields.Integer(required=True)
     csrf_token = fields.String(required=False)
+    custom_attributes = fields.Dict(required=False)
 
     def verify_group_id(self, data, **kwargs):
         group = NotesGroup.query.filter(
@@ -60,6 +62,14 @@ class CaseAddNoteSchema(ma.Schema):
 
         raise marshmallow.exceptions.ValidationError("Invalid group id for note",
                                                      field_name="group_id")
+
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
+
+        return data
 
 
 class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
@@ -91,6 +101,14 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('asset_id'), 'asset')
+
+        return data
+
 
 class IocSchema(ma.SQLAlchemyAutoSchema):
     ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
@@ -112,6 +130,14 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         if not tlp_id:
             raise marshmallow.exceptions.ValidationError("Invalid TLP ID",
                                                          field_name="ioc_tlp_id")
+
+        return data
+
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
 
         return data
 
@@ -156,6 +182,14 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid assets ID",
                                                              field_name="event_assets")
+
+        return data
+
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
 
@@ -228,6 +262,14 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
 
         raise marshmallow.exceptions.ValidationError("Invalid client id",
                                                      field_name="case_customer")
+
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('case_id'), 'case')
+
+        return data
 
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
@@ -311,6 +353,14 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'task')
+
+        return data
+
 
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     filename = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
@@ -318,6 +368,14 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = CaseReceivedFile
         load_instance = True
+
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'evidence')
+
+        return data
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):

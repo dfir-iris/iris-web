@@ -32,6 +32,7 @@ from app import db
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_status, list_user_tasks, \
     update_utask_status, get_tasks_status, get_global_task
 from app.forms import CustomerForm, CaseGlobalTaskForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.models.models import Client, UserActivity, TaskStatus
@@ -103,7 +104,7 @@ def index(caseid, url_redir):
     :return: Page
     """
     if url_redir:
-        return redirect(url_for('index.index', cid=caseid))
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
 
     msg = None
     now = datetime.utcnow()
@@ -225,7 +226,10 @@ def add_gtask(caseid):
         try:
 
             gtask_schema = GlobalTasksSchema()
-            gtask = gtask_schema.load(request.json)
+
+            request_data = call_modules_hook('on_preload_global_task_create', data=request.get_json(), caseid=caseid)
+
+            gtask = gtask_schema.load(request_data)
 
         except marshmallow.exceptions.ValidationError as e:
             return response_error(msg="Data error", data=e.messages, status=400)
@@ -243,6 +247,7 @@ def add_gtask(caseid):
         except Exception as e:
             return response_error(msg="Data error", data=e.__str__(), status=400)
 
+        gtask = call_modules_hook('on_postload_global_task_create', data=gtask, caseid=caseid)
         track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
 
         return response_success('Saved !', data=gtask_schema.dump(gtask))
@@ -270,11 +275,17 @@ def edit_gtask(cur_id, caseid):
 
                 try:
                     gtask_schema = GlobalTasksSchema()
-                    gtask = gtask_schema.load(request.json, instance=task)
+
+                    request_data = call_modules_hook('on_preload_global_task_update', data=request.get_json(),
+                                                     caseid=caseid)
+
+                    gtask = gtask_schema.load(request_data, instance=task)
                     gtask.task_userid_update = current_user.id
                     gtask.task_last_update = datetime.utcnow()
 
                     db.session.commit()
+
+                    gtask = call_modules_hook('on_postload_global_task_update', data=gtask, caseid=caseid)
 
                 except marshmallow.exceptions.ValidationError as e:
                     return response_error(msg="Data error", data=e.messages, status=400)
@@ -299,6 +310,8 @@ def edit_gtask(cur_id, caseid):
 @api_login_required
 def gtask_delete(cur_id, caseid):
 
+    call_modules_hook('on_preload_global_task_delete', data=cur_id, caseid=caseid)
+
     if not cur_id:
         return response_error("Missing parameter")
 
@@ -309,6 +322,7 @@ def gtask_delete(cur_id, caseid):
     GlobalTasks.query.filter(GlobalTasks.id == cur_id).delete()
     db.session.commit()
 
+    call_modules_hook('on_postload_global_task_delete', data=request.get_json(), caseid=caseid)
     track_activity("deleted global task ID {}".format(cur_id), caseid=caseid)
 
     return response_success("Task deleted")

@@ -20,6 +20,7 @@
 
 # IMPORTS ------------------------------------------------
 import base64
+import json
 import logging as log
 import traceback
 
@@ -30,10 +31,10 @@ from flask_wtf import FlaskForm
 from app import app
 from app.datamgmt.iris_engine.modules_db import iris_modules_list, get_module_from_id, delete_module_from_id, \
     get_module_config_from_id, is_mod_configured, iris_module_save_parameter, iris_module_enable_by_id, \
-    iris_module_disable_by_id
+    iris_module_disable_by_id, module_list_hooks_view
 from app.forms import AddModuleForm, UpdateModuleParameterForm
 from app.iris_engine.module_handler.module_handler import check_module_health, register_module, \
-    instantiate_module_from_name
+    instantiate_module_from_name, iris_update_hooks
 from app.iris_engine.utils.tracker import track_activity
 from app.util import admin_required, response_error, response_success, api_admin_required, login_required
 
@@ -107,8 +108,8 @@ def add_module(caseid, url_redir):
 
             if is_ready:
                 # Registers into Iris DB for further calls
-                success, logs = register_module(module_name)
-                if success:
+                mod_id, logs = register_module(module_name)
+                if mod_id is not None:
                     track_activity("IRIS module {} was added".format(module_name), caseid=caseid, ctx_less=True)
                     return response_success("", data=logs)
                 else:
@@ -138,7 +139,7 @@ def update_module_param(param_name, caseid):
         log.error(e.__str__())
         return response_error('Malformed request', status=400)
 
-    mod_config, mod_name = get_module_config_from_id(mod_id)
+    mod_config, mod_name, mod_iname = get_module_config_from_id(mod_id)
     form = UpdateModuleParameterForm()
     parameter = None
     for param in mod_config:
@@ -150,18 +151,26 @@ def update_module_param(param_name, caseid):
         return response_error('Malformed request', status=400)
 
     if request.method == 'POST':
-        parameter_value = request.form.get('param_value', type=str)
+        parameter_value = request.json.get('param_value')
+
         if iris_module_save_parameter(mod_id, mod_config, param_name, parameter_value):
             track_activity("parameter {} of mod #{} was updated".format(param_name, mod_id),
                            caseid=caseid, ctx_less=True)
-            return response_success("Saved")
+
+            success, logs = iris_update_hooks(mod_iname, mod_id)
+            if not success:
+                return response_error("Unable to update hooks", data=logs)
+
+            return response_success("Saved", logs)
+
         else:
             return response_error('Malformed request', status=400)
+
     else:
         return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id, form=form)
 
 
-@manage_modules_blueprint.route('/manage/modules/update/<id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/update/<int:id>', methods=['GET', 'POST'])
 @api_admin_required
 def view_module(id, caseid):
     form = AddModuleForm()
@@ -177,7 +186,7 @@ def view_module(id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/enable/<id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/enable/<int:id>', methods=['GET', 'POST'])
 @api_admin_required
 def enable_module(id, caseid):
     if id:
@@ -191,7 +200,7 @@ def enable_module(id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/disable/<id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/disable/<int:id>', methods=['GET', 'POST'])
 @api_admin_required
 def disable_module(id, caseid):
     if id:
@@ -205,7 +214,7 @@ def disable_module(id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/remove/<id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/remove/<int:id>', methods=['GET', 'POST'])
 @api_admin_required
 def view_delete_module(id, caseid):
     try:
@@ -218,3 +227,57 @@ def view_delete_module(id, caseid):
     except Exception as e:
         log.error(e.__str__())
         return response_error("Cannot delete module. Error {}".format(e.__str__()))
+
+
+@manage_modules_blueprint.route('/manage/modules/export-config/<int:id>', methods=['GET'])
+@api_admin_required
+def export_mod_config(id, caseid):
+
+    mod_config, mod_name, _ = get_module_config_from_id(id)
+    if mod_name:
+        data = {
+            "module_name": mod_name,
+            "module_configuration": mod_config
+        }
+        return response_success(data=data)
+
+    return response_error(f"Module ID {id} not found")
+
+
+@manage_modules_blueprint.route('/manage/modules/import-config/<int:id>', methods=['POST'])
+@api_admin_required
+def import_mod_config(id, caseid):
+
+    mod_config, mod_name, _ = get_module_config_from_id(id)
+    logs = []
+    parameters_data = request.get_json().get('module_configuration')
+
+    try:
+        parameters = json.loads(parameters_data)
+    except Exception as e:
+        return response_error('Invalid data', data="Not a JSON file")
+
+    for param in parameters:
+        param_name = param.get('param_name')
+        parameter_value = param.get('value')
+        if not iris_module_save_parameter(id, mod_config, param_name, parameter_value):
+            logs.append(f'Unable to save parameter {param_name}')
+
+    track_activity(f"parameters of mod #{id} were updated from config file",
+                   caseid=caseid, ctx_less=True)
+
+    if len(logs) == 0:
+        msg = "Successfully imported data."
+    else:
+        msg = "Configuration is partially imported, we got errors with the followings:\n- " + "\n- ".join(logs)
+
+    return response_success(msg)
+
+
+@manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
+@api_admin_required
+def view_modules_hook(caseid):
+    output = module_list_hooks_view()
+    data = [item._asdict() for item in output]
+
+    return response_success('', data=data)

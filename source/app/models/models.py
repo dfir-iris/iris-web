@@ -26,7 +26,7 @@ from flask_login import UserMixin
 
 from sqlalchemy import Boolean, Column, Date, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, text, \
     LargeBinary, DateTime, Sequence, or_, BigInteger, TIMESTAMP
-from sqlalchemy.dialects.postgresql import UUID, JSONB, JSON
+from sqlalchemy.dialects.postgresql import UUID, JSON, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -96,6 +96,7 @@ class CaseAssets(db.Model):
     date_update = Column(DateTime)
     user_id = Column(ForeignKey('user.id'))
     analysis_status_id = Column(ForeignKey('analysis_status.id'))
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user = relationship('User')
@@ -393,10 +394,21 @@ class Ioc(db.Model):
     user_id = Column(ForeignKey('user.id'))
     ioc_misp = Column(Text)
     ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
+    custom_attributes = Column(JSON)
 
     user = relationship('User')
     tlp = relationship('Tlp')
     ioc_type = relationship('IocType')
+
+
+class CustomAttribute(db.Model):
+    __tablename__ = 'custom_attribute'
+
+    attribute_id = Column(Integer, primary_key=True)
+    attribute_display_name = Column(Text)
+    attribute_description = Column(Text)
+    attribute_for = Column(Text)
+    attribute_content = Column(JSON)
 
 
 class IocType(db.Model):
@@ -498,6 +510,7 @@ class Notes(db.Model):
     note_creationdate = Column(DateTime)
     note_lastupdate = Column(DateTime)
     note_case_id = Column(ForeignKey('cases.case_id'))
+    custom_attributes = Column(JSON)
 
     user = relationship('User')
     case = relationship('Cases')
@@ -550,6 +563,7 @@ class CaseReceivedFile(db.Model):
     file_size = Column(Integer)
     case_id = Column(ForeignKey('cases.case_id'))
     user_id = Column(ForeignKey('user.id'))
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user = relationship('User')
@@ -580,6 +594,7 @@ class CaseTasks(db.Model):
     task_assignee_id = Column(ForeignKey('user.id'))
     task_status_id = Column(ForeignKey('task_status.id'))
     task_case_id = Column(ForeignKey('cases.case_id'))
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user_open = relationship('User', foreign_keys=[task_userid_open])
@@ -621,6 +636,7 @@ class UserActivity(db.Model):
     activity_date = Column(DateTime)
     activity_desc = Column(Text)
     user_input = Column(Boolean)
+    is_from_api = Column(Boolean)
 
     user = relationship('User')
     case = relationship('Cases')
@@ -630,7 +646,7 @@ class IrisModule(db.Model):
     __tablename__ = "iris_module"
 
     id = Column(Integer, primary_key=True)
-    added_by_id = Column(ForeignKey('user.id'), nullable=True)
+    added_by_id = Column(ForeignKey('user.id'), nullable=False)
     module_human_name = Column(Text)
     module_name = Column(Text)
     module_description = Column(Text)
@@ -641,8 +657,34 @@ class IrisModule(db.Model):
     has_pipeline = Column(Boolean)
     pipeline_args = Column(JSON)
     module_config = Column(JSON)
+    module_type = Column(Text)
 
     user = relationship('User')
+
+
+class IrisHook(db.Model):
+    __tablename__ = "iris_hooks"
+
+    id = Column(Integer, primary_key=True)
+    hook_name = Column(Text)
+    hook_description = Column(Text)
+
+
+class IrisModuleHook(db.Model):
+    __tablename__ = "iris_module_hooks"
+
+    id = Column(Integer, primary_key=True)
+    module_id = Column(ForeignKey('iris_module.id'), nullable=False)
+    hook_id = Column(ForeignKey('iris_hooks.id'), nullable=False)
+    is_manual_hook = Column(Boolean)
+    manual_hook_ui_name = Column(Text)
+    retry_on_fail = Column(Boolean)
+    max_retry = Column(Integer)
+    run_asynchronously = Column(Boolean)
+    wait_till_return = Column(Boolean)
+
+    module = relationship('IrisModule')
+    hook = relationship('IrisHook')
 
 
 class IrisReport(db.Model):
@@ -708,3 +750,21 @@ class CeleryTaskMeta(db.Model):
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
 
+def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):
+    cat = CustomAttribute.query.filter(
+        CustomAttribute.attribute_display_name == attribute_display_name,
+        CustomAttribute.attribute_description == attribute_description,
+        CustomAttribute.attribute_for == attribute_for
+    ).first()
+
+    if cat:
+        return False
+    else:
+        instance = CustomAttribute()
+        instance.attribute_display_name = attribute_display_name
+        instance.attribute_description = attribute_description
+        instance.attribute_for = attribute_for
+        instance.attribute_content = attribute_content
+        session.add(instance)
+        session.commit()
+        return True
