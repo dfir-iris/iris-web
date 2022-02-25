@@ -398,8 +398,10 @@ def create_safe_admin():
 
         ur = UserRoles()
         ur.user_id = user.id
-        ur.role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-        db.session.add(ur)
+        row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
+        if row_role_id and len(row_role_id) > 0:
+            ur.role_id = row_role_id[0]
+            db.session.add(ur)
 
         db.session.commit()
     else:

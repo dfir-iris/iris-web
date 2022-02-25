@@ -94,8 +94,6 @@ def save_event_category(event_id, category_id):
 
 
 def update_event_assets(event_id, caseid, assets_list):
-    if not assets_list:
-        return False
 
     CaseEventsAssets.query.filter(
         CaseEventsAssets.event_id == event_id

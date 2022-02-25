@@ -104,8 +104,10 @@ def create_user(user_name, user_login, user_password, user_email, user_isadmin, 
     if user_isadmin:
         ur = UserRoles()
         ur.user_id = user.id
-        ur.role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-        db.session.add(ur)
+        row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
+        if row_role_id and len(row_role_id) > 0:
+            ur.role_id = row_role_id[0]
+            db.session.add(ur)
 
     db.session.commit()
     return user
@@ -125,12 +127,16 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
         if user_isadmin:
             ur = UserRoles()
             ur.user_id = user.id
-            ur.role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-            db.session.add(ur)
+            row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
+            if row_role_id and len(row_role_id) > 0:
+                ur.role_id = row_role_id[0]
+                db.session.add(ur)
 
         else:
-            role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-            UserRoles.query.filter(UserRoles.user_id == user.id, UserRoles.role_id == role_id).delete()
+            row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
+            if row_role_id and len(row_role_id) > 0:
+                role_id = row_role_id[0]
+                UserRoles.query.filter(UserRoles.user_id == user.id, UserRoles.role_id == role_id).delete()
 
     db.session.commit()
 
@@ -138,6 +144,7 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
 
 
 def delete_user(user_id):
+    UserRoles.query.filter(UserRoles.user_id == user_id).delete()
     User.query.filter(User.id == user_id).delete()
     db.session.commit()
 
