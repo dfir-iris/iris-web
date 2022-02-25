@@ -94,6 +94,8 @@ services:
       - "rabbitmq"
       - "db"
       - "app"
+    extra_hosts:
+      - "auth_iris.app.dev:172.17.0.1"
     environment:
       - POSTGRES_PASSWORD
       - POSTGRES_USER
