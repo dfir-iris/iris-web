@@ -193,10 +193,10 @@ function draw_timeline() {
                     var avoid_inception_start = "(?!<span[^>]*?>)" + capture_start;
                     var avoid_inception_end = "(?![^<]*?<\/span>)" + capture_end;
                     var re = new RegExp(avoid_inception_start
-                           + escapeRegExp(sanitizeHTML(ioc_list[ioc][1]))
+                           + escapeRegExp(sanitizeHTML(ioc_list[ioc]['ioc_value']))
                            + avoid_inception_end
                            ,"g");
-                    replacement = '$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc][2]) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc][1]) + '</span> $3';
+                    replacement = '$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc]['ioc_description']) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc]['ioc_value']) + '</span> $3';
                     reap.push([re, replacement]);
                 }
                 idx = 0;

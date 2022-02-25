@@ -199,9 +199,11 @@ def get_urlcase(request):
             js_d = request.get_json()
             if js_d:
                 caseid = js_d.get('cid')
+                print(caseid)
                 request.json.pop('cid')
             else:
                 caseid = current_user.ctx_case
+                redir = True
 
         except Exception as e:
             cookie_session = request.cookies.get('session')
@@ -213,11 +215,10 @@ def get_urlcase(request):
                 log.error(traceback.print_exc())
                 return True, None
 
-        redir = True
-
     case = get_case(caseid)
 
     if not case:
+        log.warning('No case found. Using default case')
         return True, 1
 
     if caseid != current_user.ctx_case:
