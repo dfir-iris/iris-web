@@ -312,7 +312,7 @@ def case_gettimeline(asset_id, caseid):
         resp = {
             "tim": tim,
             "assets": cache,
-            "iocs": iocs,
+            "iocs": [ioc._asdict() for ioc in iocs],
             "state": get_timeline_state(caseid=caseid)
         }
 
