@@ -83,9 +83,6 @@ def case_graph_get_data(caseid):
             img = 'windows_server.png'
             is_master_atype = True
 
-        elif 'windows' in atype:
-            img = "windows_{}".format(img)
-
         elif 'account' in atype:
             img = 'user.png'
 
@@ -112,6 +109,9 @@ def case_graph_get_data(caseid):
         elif 'phone' in atype:
             img = 'phone.png'
             is_master_atype = True
+
+        elif 'windows' in atype:
+            img = "windows_{}".format(img)
 
         else:
             img = 'question-mark.png'
