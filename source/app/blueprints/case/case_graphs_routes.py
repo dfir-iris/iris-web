@@ -67,7 +67,19 @@ def case_graph_get_data(caseid):
         img = ""
         is_master_atype = False
 
-        if 'computer' in atype:
+        if 'windows - server' in atype:
+            img = 'windows_server.png'
+            is_master_atype = True
+
+        elif 'windows - computer' in atype:
+            img = 'windows_desktop.png'
+            is_master_atype = True
+
+        elif 'windows - dc' in atype:
+            img = 'windows_server.png'
+            is_master_atype = True
+
+        elif 'computer' in atype:
             img = 'desktop.png'
             is_master_atype = True
 
@@ -76,10 +88,6 @@ def case_graph_get_data(caseid):
             is_master_atype = True
 
         elif 'domain controller' in atype:
-            img = 'windows_server.png'
-            is_master_atype = True
-
-        elif 'windows - dc' in atype:
             img = 'windows_server.png'
             is_master_atype = True
 
@@ -109,9 +117,6 @@ def case_graph_get_data(caseid):
         elif 'phone' in atype:
             img = 'phone.png'
             is_master_atype = True
-
-        elif 'windows' in atype:
-            img = "windows_{}".format(img)
 
         else:
             img = 'question-mark.png'
