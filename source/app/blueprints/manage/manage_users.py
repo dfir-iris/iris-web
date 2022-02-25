@@ -26,7 +26,7 @@ from flask_wtf import FlaskForm
 
 from app import db
 from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, \
-    get_user_by_username, get_user_details, get_users_list_restricted
+    get_user_by_username, get_user_details, get_users_list_restricted, delete_user
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
@@ -200,8 +200,12 @@ def view_delete_user(cur_id, caseid):
         if not user:
             return response_error("Invalid user ID")
 
-        db.session.delete(user)
-        db.session.commit()
+        if user.active is True:
+            response_error("Cannot delete active user")
+            track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid)
+            return response_error("Cannot delete active user")
+
+        delete_user(user.id)
 
         track_activity(message="deleted user ID {}".format(cur_id), caseid=caseid)
         return response_success("Deleted user ID {}".format(cur_id))

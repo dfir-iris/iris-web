@@ -140,6 +140,7 @@ def update_user(password, user_isadmin, user):
 
 
 def delete_user(user_id):
+    UserRoles.query.filter(UserRoles.user_id == user_id).delete()
     User.query.filter(User.id == user_id).delete()
     db.session.commit()
 
