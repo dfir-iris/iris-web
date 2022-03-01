@@ -288,7 +288,6 @@ def iris_update_hooks(module_name, module_id):
         return False, ["Module has no names"]
 
     try:
-
         mod_inst = instantiate_module_from_name(module_name=module_name)
         if not mod_inst:
             log.error("Module could not be instantiated")
@@ -346,9 +345,10 @@ def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = N
 
     mod = IrisModuleHook.query.filter(
         IrisModuleHook.hook_id == hook.id,
-        IrisModuleHook.module_id == module_id
+        IrisModuleHook.module_id == module_id,
+        IrisModuleHook.manual_hook_ui_name == manual_hook_name
     ).first()
-    if not mod or is_manual_hook:
+    if not mod:
         imh = IrisModuleHook()
         imh.is_manual_hook = is_manual_hook
         imh.wait_till_return = False
@@ -360,10 +360,14 @@ def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = N
 
         try:
             db.session.add(imh)
+            db.session.commit()
         except Exception as e:
             return False, [str(e)]
 
-    return True, [f"Hook {iris_hook_name} registered"]
+        return True, [f"Hook {iris_hook_name} registered"]
+
+    else:
+        return True, [f"Hook {iris_hook_name} already registered"]
 
 
 def deregister_from_hook(module_id: int, iris_hook_name: str):

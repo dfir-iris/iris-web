@@ -131,6 +131,9 @@ def add_tab_attribute_field(obj, tab_name, field_name, field_type, field_value, 
         return False
 
     attribute = obj.custom_attributes
+    if attribute is None:
+        attribute = {}
+
     if tab_name not in attribute:
         attribute[tab_name] = {}
 
