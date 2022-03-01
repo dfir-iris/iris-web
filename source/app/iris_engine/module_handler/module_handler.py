@@ -25,6 +25,7 @@ import importlib
 from flask_login import current_user
 
 from pickle import loads, dumps
+from sqlalchemy import and_
 
 from app import app, db, celery
 
@@ -439,12 +440,13 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     return task_status
 
 
-def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
+def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str = None) -> any:
     """
     Calls modules which have registered the specified hook
 
     :raises: Exception if hook name doesn't exist. This shouldn't happen
     :param hook_name: Name of the hook to call
+    :param hook_ui_name: UI name of the hook
     :param data: Data associated with the hook
     :param caseid: Case ID
     :return: Any
@@ -454,21 +456,30 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
         log.critical(f'Hook name {hook_name} not found')
         raise Exception(f'Hook name {hook_name} not found')
 
+    if hook_ui_name:
+        condition = and_(
+            IrisModule.is_active == True,
+            IrisModuleHook.hook_id == hook.id,
+            IrisModuleHook.manual_hook_ui_name == hook_ui_name
+        )
+    else:
+        condition = and_(
+            IrisModule.is_active == True,
+            IrisModuleHook.hook_id == hook.id
+        )
+
     modules = IrisModuleHook.query.with_entities(
         IrisModuleHook.run_asynchronously,
         IrisModule.module_name,
         IrisModuleHook.manual_hook_ui_name
-    ).filter(
-        IrisModule.is_active == True,
-        IrisModuleHook.hook_id == hook.id
-    ).join(
+    ).filter(condition).join(
         IrisModuleHook.module,
         IrisModuleHook.hook
     ).all()
 
     for module in modules:
         if module.run_asynchronously and "on_preload_" not in hook_name:
-            log.info(f'Calling module {module.module_name} asynchronously for hook {hook_name}')
+            log.info(f'Calling module {module.module_name} asynchronously for hook {hook_name} :: {hook_ui_name}')
             # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
             # So pass a dumped instance and then rebuild on the task side
             ser_data = base64.b64encode(dumps(data)).decode('utf8')

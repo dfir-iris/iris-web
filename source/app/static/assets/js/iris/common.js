@@ -529,10 +529,11 @@ function dim_task_status(id) {
     });
 }
 
-function init_module_processing(rows, hook_name, module_name, data_type) {
+function init_module_processing(rows, hook_name, hook_ui_name, module_name, data_type) {
     var data = Object();
     data['hook_name'] = hook_name;
     data['module_name'] = module_name;
+    data['hook_ui_name'] = hook_ui_name;
     data['csrf_token'] = $('#csrf_token').val();
     data['type'] = data_type;
     data['targets'] = [];
@@ -587,7 +588,7 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
                     for (option in jsdata) {
                         opt = jsdata[option];
                         menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
-                                    `"${opt.module_name}", "${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+                                    `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
                         anchor.append(menu_opt);
                     }
                 }
@@ -656,7 +657,7 @@ function load_menu_mod_options(data_type, table) {
                             buttonClasses: ['btn', 'btn-outline-primary'],
                             contextMenuClasses: ['text-dark'],
                             action: function (rows) {
-                                init_module_processing(rows, opt.hook_name, opt.module_name, data_type);
+                                init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
                             },
                         })
                     }
