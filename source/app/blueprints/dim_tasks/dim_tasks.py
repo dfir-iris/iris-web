@@ -93,6 +93,10 @@ def dim_hooks_call(caseid):
     if not hook_name:
         return response_error('Missing hook_name')
 
+    hook_ui_name = js_data.get('hook_ui_name')
+    if not hook_ui_name:
+        return response_error('Missing hook_ui_name')
+
     targets = js_data.get('targets')
     if not targets:
         return response_error('Missing targets')
@@ -156,7 +160,7 @@ def dim_hooks_call(caseid):
         index += 1
 
     if len(obj_targets) > 0:
-        call_modules_hook(hook_name=hook_name, data=obj_targets, caseid=caseid)
+        call_modules_hook(hook_name=hook_name, hook_ui_name=hook_ui_name, data=obj_targets, caseid=caseid)
 
     if len(logs) > 0:
         return response_error(f"Errors encountered during processing of data. Queued task with {index} objects",

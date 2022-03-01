@@ -389,13 +389,14 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
 
 
 @celery.task(bind=True)
-def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
+def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_user, caseid):
     """
     Wrap a hook call into a Celery task to run asynchronously
 
     :param self: Task instance
     :param module_name: Module name to instanciate and call
     :param hook_name: Name of the hook which was triggered
+    :param hook_ui_name: Name of the UI hook so module knows which hook was called
     :param data: Data associated to the hook to process
     :param init_user: User initiating the task
     :param caseid: Case associated
@@ -424,7 +425,7 @@ def task_hook_wrapper(self, module_name, hook_name, data, init_user, caseid):
     try:
         mod_inst = instantiate_module_from_name(module_name=module_name)
 
-        task_status = mod_inst.hooks_handler(hook_name, data=_obj)
+        task_status = mod_inst.hooks_handler(hook_name, hook_ui_name, data=_obj)
 
         # Recommit the changes made by the module
         db.session.commit()
@@ -455,7 +456,8 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
 
     modules = IrisModuleHook.query.with_entities(
         IrisModuleHook.run_asynchronously,
-        IrisModule.module_name
+        IrisModule.module_name,
+        IrisModuleHook.manual_hook_ui_name
     ).filter(
         IrisModule.is_active == True,
         IrisModuleHook.hook_id == hook.id
@@ -470,7 +472,8 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
             # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
             # So pass a dumped instance and then rebuild on the task side
             ser_data = base64.b64encode(dumps(data)).decode('utf8')
-            task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name, data=ser_data,
+            task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
+                                    hook_ui_name=module.manual_hook_ui_name, data=ser_data,
                                     init_user=current_user.name, caseid=caseid)
 
         else:
@@ -480,7 +483,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int) -> any:
             try:
 
                 mod_inst = instantiate_module_from_name(module_name=module.module_name)
-                status = mod_inst.hooks_handler(hook_name, data=data)
+                status = mod_inst.hooks_handler(hook_name, module.manual_hook_ui_name, data=data)
 
             except Exception as e:
                 log.critical(f"Failed to run hook {hook_name} with module {module.module_name}. Error {str(e)}")
