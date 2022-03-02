@@ -10,7 +10,59 @@
 
 {{ form.hidden_tag() }}
 <div class="page-inner">
+    <div class="row ">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Server settings</div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <h2 >Proxy</h2>
+                            <p>Proxy settings can be used by modules to access external resources.<br/>
+                            IRIS in itself does not make any external connexions. </p>
+                            <div class="row mb-4">
+                                <div class="col-6">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                HTTP Proxy
+                                            </span>
+                                        </div>
+                                        <input class="form-control" id="http_proxy" placeholder="HTTP Proxy">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                HTTP Proxy
+                                            </span>
+                                        </div>
+                                        <input class="form-control" id="https_proxy" placeholder="HTTPS Proxy">
+                                    </div>
+                                </div>
+                            </div>
 
+                            <h2 class="mt-4">Behavior</h2>
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input class="form-check-input" type="checkbox" id="prevent_postinit_overwrite" value="">
+                                    <span class="form-check-sign">Prevent post-init step to rewrite default items during boot</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="float-right mt-4">
+                        <button class="btn btn-primary" type="button" onclick="update_settings()">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock content %}
 
