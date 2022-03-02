@@ -18,18 +18,14 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import os
-import subprocess
 # IMPORTS ------------------------------------------------
-import tempfile
 
-from flask import Blueprint, send_file, url_for, render_template
+from flask import Blueprint, url_for, render_template
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app.configuration import PG_SERVER_, PG_PORT_, PGA_ACCOUNT_, PGA_PASSWD_
-from app.iris_engine.utils.tracker import track_activity
-from app.util import FileRemover, response_error, api_admin_required, admin_required
+from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
+from app.util import admin_required
 
 manage_srv_settings_blueprint = Blueprint(
     'manage_srv_settings_blueprint',
@@ -46,5 +42,7 @@ def manage_settings(caseid, url_redir):
 
     form = FlaskForm()
 
+    server_settings = get_srv_settings()
+
     # Return default page of case management
-    return render_template('manage_srv_settings.html', form=form)
+    return render_template('manage_srv_settings.html', form=form, settings=server_settings)

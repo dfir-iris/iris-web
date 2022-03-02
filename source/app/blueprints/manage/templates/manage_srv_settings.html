@@ -30,7 +30,7 @@
                                                 HTTP Proxy
                                             </span>
                                         </div>
-                                        <input class="form-control" id="http_proxy" placeholder="HTTP Proxy">
+                                        <input class="form-control" id="http_proxy" placeholder="HTTP Proxy" value="{{ settings.http_proxy }}">
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -40,7 +40,7 @@
                                                 HTTP Proxy
                                             </span>
                                         </div>
-                                        <input class="form-control" id="https_proxy" placeholder="HTTPS Proxy">
+                                        <input class="form-control" id="https_proxy" placeholder="HTTPS Proxy" value="{{ settings.http_proxy }}">
                                     </div>
                                 </div>
                             </div>
@@ -48,7 +48,7 @@
                             <h2 class="mt-4">Behavior</h2>
                             <div class="form-check">
                                 <label class="form-check-label">
-                                    <input class="form-check-input" type="checkbox" id="prevent_postinit_overwrite" value="">
+                                    <input class="form-check-input" type="checkbox" id="prevent_postinit_overwrite" value="{% if settings.prevent_post_mod_repush %}checked{% endif %}">
                                     <span class="form-check-sign">Prevent post-init step to rewrite default items during boot</span>
                                 </label>
                             </div>
