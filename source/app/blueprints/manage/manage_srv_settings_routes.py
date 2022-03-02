@@ -31,20 +31,18 @@ from app.configuration import PG_SERVER_, PG_PORT_, PGA_ACCOUNT_, PGA_PASSWD_
 from app.iris_engine.utils.tracker import track_activity
 from app.util import FileRemover, response_error, api_admin_required, admin_required
 
-manage_adv_blueprint = Blueprint(
-    'manage_adv',
+manage_srv_settings_blueprint = Blueprint(
+    'manage_srv_settings_blueprint',
     __name__,
     template_folder='templates'
 )
 
-file_remover = FileRemover()
 
-
-@manage_adv_blueprint.route('/manage/settings', methods=['GET'])
+@manage_srv_settings_blueprint.route('/manage/settings', methods=['GET'])
 @admin_required
 def manage_settings(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_objects.manage_objects', cid=caseid))
+        return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
 
     form = FlaskForm()
 
