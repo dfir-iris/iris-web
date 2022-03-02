@@ -23,11 +23,13 @@ import subprocess
 # IMPORTS ------------------------------------------------
 import tempfile
 
-from flask import Blueprint, send_file
+from flask import Blueprint, send_file, url_for, render_template
+from flask_wtf import FlaskForm
+from werkzeug.utils import redirect
 
 from app.configuration import PG_SERVER_, PG_PORT_, PGA_ACCOUNT_, PGA_PASSWD_
 from app.iris_engine.utils.tracker import track_activity
-from app.util import FileRemover, response_error, api_admin_required
+from app.util import FileRemover, response_error, api_admin_required, admin_required
 
 manage_adv_blueprint = Blueprint(
     'manage_adv',
@@ -38,26 +40,13 @@ manage_adv_blueprint = Blueprint(
 file_remover = FileRemover()
 
 
-@manage_adv_blueprint.route('/manage/advanced/backup/db', methods=['GET'])
-@api_admin_required
-def manage_adv_back_db(caseid):
-    try:
-        tmp_dir = tempfile.mkdtemp()
-        # Make a backup
-        args = ['/usr/bin/pg_dump', '-h{}'.format(PG_SERVER_), '-p{}'.format(PG_PORT_), '-diris_db', '-U{}'.format(PGA_ACCOUNT_), '-W{}'.format(PGA_PASSWD_)]
+@manage_adv_blueprint.route('/manage/settings', methods=['GET'])
+@admin_required
+def manage_settings(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_objects.manage_objects', cid=caseid))
 
-        with open(os.path.join(tmp_dir, "iris_backup.sql"), 'w') as f:
-            process = subprocess.Popen(args, stdout=f)
+    form = FlaskForm()
 
-            stdout, stderr = process.communicate()
-
-        resp = send_file(os.path.join(tmp_dir, "iris_backup.sql"), as_attachment=True)
-
-        file_remover.cleanup_once_done(resp, tmp_dir)
-
-        track_activity("backed up database")
-
-        return response_error("Uncaught error. {}".format(stdout))
-
-    except Exception as e:
-        return response_error("Error {}".format(e))
+    # Return default page of case management
+    return render_template('manage_srv_settings.html', form=form)
