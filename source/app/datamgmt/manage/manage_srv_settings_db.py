@@ -6,6 +6,14 @@ def get_srv_settings():
     return ServerSettings.query.first()
 
 
+def get_server_settings_as_dict():
+    srv_settings = ServerSettings.query.first()
+    if srv_settings:
+        return srv_settings._asdict()
+    else:
+        return {}
+
+
 def get_alembic_revision():
     with db.engine.connect() as con:
         version_num = con.execute("SELECT version_num FROM alembic_version").first()[0]
