@@ -60,7 +60,7 @@ def manage_settings(caseid, url_redir):
     return render_template('manage_srv_settings.html', form=form, settings=server_settings, versions=versions)
 
 
-@manage_srv_settings_blueprint.route('/manage/settings/updates', methods=['POST'])
+@manage_srv_settings_blueprint.route('/manage/settings/update', methods=['POST'])
 @api_admin_required
 def manage_update_settings(caseid):
     if not request.is_json:
