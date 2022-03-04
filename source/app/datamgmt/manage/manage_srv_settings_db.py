@@ -1,5 +1,6 @@
 from app import db
 from app.models import ServerSettings
+from app.schema.marshables import ServerSettingsSchema
 
 
 def get_srv_settings():
@@ -9,7 +10,10 @@ def get_srv_settings():
 def get_server_settings_as_dict():
     srv_settings = ServerSettings.query.first()
     if srv_settings:
-        return srv_settings._asdict()
+
+        sc = ServerSettingsSchema()
+        return sc.dump(srv_settings)
+
     else:
         return {}
 

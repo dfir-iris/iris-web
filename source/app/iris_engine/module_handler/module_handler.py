@@ -430,10 +430,14 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     try:
         mod_inst = instantiate_module_from_name(module_name=module_name)
 
-        task_status = mod_inst.hooks_handler(hook_name, hook_ui_name, data=_obj)
+        if mod_inst:
+            task_status = mod_inst.hooks_handler(hook_name, hook_ui_name, data=_obj)
 
-        # Recommit the changes made by the module
-        db.session.commit()
+            # Recommit the changes made by the module
+            db.session.commit()
+
+        else:
+            raise Exception('Unable to instantiate target module')
 
     except Exception as e:
         msg = f"Failed to run hook {hook_name} with module {module_name}. Error {str(e)}"
