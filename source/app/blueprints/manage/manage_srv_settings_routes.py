@@ -19,13 +19,16 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-
-from flask import Blueprint, url_for, render_template
+import marshmallow
+from flask import Blueprint, url_for, render_template, request
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
+from app import db
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
-from app.util import admin_required
+from app.iris_engine.utils.tracker import track_activity
+from app.schema.marshables import ServerSettingsSchema
+from app.util import admin_required, api_admin_required, response_error, response_success
 
 manage_srv_settings_blueprint = Blueprint(
     'manage_srv_settings_blueprint',
@@ -46,3 +49,25 @@ def manage_settings(caseid, url_redir):
 
     # Return default page of case management
     return render_template('manage_srv_settings.html', form=form, settings=server_settings)
+
+
+@manage_srv_settings_blueprint.route('/manage/settings/updates', methods=['POST'])
+@api_admin_required
+def manage_update_settings(caseid):
+    if not request.is_json:
+        return response_error('Invalid request')
+
+    srv_settings_schema = ServerSettingsSchema()
+    server_settings = get_srv_settings()
+
+    try:
+
+        srv_settings_sc = srv_settings_schema.load(request.get_json(), instance=server_settings)
+        db.session.commit()
+
+        if srv_settings_sc:
+            track_activity("Server settings updated", caseid=caseid)
+            return response_success("Server settings updated", srv_settings_sc)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)

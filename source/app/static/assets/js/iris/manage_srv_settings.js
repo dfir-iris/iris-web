@@ -1,4 +1,5 @@
 function update_settings() {
+
     $.ajax({
         url: 'manage/settings/update',
         type: "POST",
