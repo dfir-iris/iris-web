@@ -2264,6 +2264,18 @@ body {
     background: rgba(185, 185, 185, 0.18) !important;
 }
 
+body[data-background-color="dark"] .btn-light,
+body[data-background-color="dark"] .badge-light {
+    background: rgba(185, 185, 185, 0.18) !important;
+    color: #fff;
+}
+
+body[data-background-color="dark"] .page-link {
+    background: rgba(185, 185, 185, 0.18) !important;
+    border: none;
+}
+
+
 .main-header .navbar-header[data-background-color="white"] .nav-search .input-group,
 .main-header .navbar-header .navbar-header-transparent .nav-search .input-group {
     background: #eee;
@@ -2534,7 +2546,7 @@ body {
 .sidebar[data-background-color="dark2"].sidebar-style-2 .nav .nav-item.active>a:hover,
 .sidebar[data-background-color="dark2"].sidebar-style-2 .nav .nav-item.active>a:focus,
 .sidebar[data-background-color="dark2"].sidebar-style-2 .nav .nav-item.active>a[data-toggle=collapse][aria-expanded=true] {
-    background: #fff !important;
+    background: rgba(185, 185, 185, 0.18) !important;
     color: #1f283e !important;
 }
 
@@ -6834,8 +6846,17 @@ label.error {
     background-color: #31CE36;
 }
 
+body[data-background-color="dark"] .badge-success {
+    background-color: #056F08DB
+}
+
 .badge-warning {
     background: #FFAD46;
+    color: #ffffff !important;
+}
+
+body[data-background-color="dark"] .badge-warning {
+    background: #DF7D03A3;
     color: #ffffff !important;
 }
 
@@ -6843,6 +6864,9 @@ label.error {
     background-color: #F25961;
 }
 
+body[data-background-color="dark"] .badge-danger {
+    background-color: #9D2F35;
+}
 
 /*     Dropdown    */
 
@@ -14107,7 +14131,7 @@ body[data-background-color="dark"] .main-header {
 }
 
 body[data-background-color="dark"] .main-panel {
-    color: rgba(169, 175, 187, 0.82) !important;
+    color: rgba(225, 226, 228, 0.91) !important;
 }
 
 body[data-background-color="dark"] .main-panel label {
@@ -14167,6 +14191,14 @@ body[data-background-color="dark"] .breadcrumbs li a {
 
 body[data-background-color="dark"] .page-category {
     color: #828282;
+}
+
+body[data-background-color="dark"] a {
+    color: #4E8CDB;
+}
+
+body[data-background-color="dark"] tr.odd > selected {
+    color: #4666a2;
 }
 
 body[data-background-color="dark"] .card-title,

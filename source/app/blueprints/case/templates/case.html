@@ -1,4 +1,5 @@
-{% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %} {% block stylesheets %} {% endblock stylesheets %} {% block content %} {% if current_user.is_authenticated %}
+{% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %} {% block stylesheets %} {% endblock stylesheets %} {% block content %}
+{% if current_user.is_authenticated %}
 
 {% if case.close_date %}
 {% else %}
