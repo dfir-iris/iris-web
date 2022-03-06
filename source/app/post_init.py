@@ -145,6 +145,9 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_case_delete',
                 hook_description='Triggered on case deletion, after commit in DB')
 
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_case',
+                hook_description='Triggered upon user action')
+
     # --- Assets
     create_safe(db.session, IrisHook, hook_name='on_preload_asset_create',
                 hook_description='Triggered on asset creation, before commit in DB')

@@ -37,7 +37,7 @@ from sqlalchemy import desc
 import app
 from app.datamgmt.activities.activities_db import get_all_user_activities
 from app.models import CeleryTaskMeta, IrisModuleHook, IrisHook, IrisModule, Ioc, CaseAssets, Notes, CasesEvent, \
-    CaseTasks, CaseReceivedFile, GlobalTasks
+    CaseTasks, CaseReceivedFile, GlobalTasks, Cases
 from app.util import response_success, login_required, api_login_required, response_error
 
 dim_tasks_blueprint = Blueprint(
@@ -111,6 +111,9 @@ def dim_hooks_call(caseid):
         obj = None
         if data_type == 'ioc':
             obj = Ioc.query.filter(Ioc.ioc_id == target).first()
+
+        elif data_type == "case":
+            obj = Cases.query.filter(Cases.case_id == caseid).first()
 
         elif data_type == "asset":
             obj = CaseAssets.query.filter(
