@@ -14318,7 +14318,15 @@ body[data-background-color="dark"] .page-with-aside .page-aside .aside-nav .nav>
 }
 
 body[data-background-color="dark"] .board {
-    color: #575962;
+    color: #cac7c7;
+}
+
+body[data-background-color="dark"] .kanban-board {
+    background: #2f3953 !important;
+}
+
+body[data-background-color="dark"] .kanban-item {
+    background: #1a2035 !important;
 }
 
 body[data-background-color="dark"] .modal-content {
@@ -14529,6 +14537,12 @@ body[data-background-color="dark"] .form-check [type="checkbox"] + .form-check-s
 
     background: -webkit-linear-gradient(legacy-direction(-45deg), #05316A, #0963D5) !important;
     background: linear-gradient(-45deg, #05316A, #0963D5)  !important;
+}
+
+body[data-background-color="dark"] .bg-primary-gradient{
+    background: #1f283e !important;
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #0A0B11, #1f283e) !important;
+    background: linear-gradient(-45deg, #0A0B11, #1f283e) !important;
 }
 
 .bg-secondary-gradient {
