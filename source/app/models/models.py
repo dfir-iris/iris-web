@@ -640,6 +640,15 @@ class UserActivity(db.Model):
     case = relationship('Cases')
 
 
+class ServerSettings(db.Model):
+    __table_name__ = "server_settings"
+
+    id = Column(Integer, primary_key=True)
+    https_proxy = Column(Text)
+    http_proxy = Column(Text)
+    prevent_post_mod_repush = Column(Boolean)
+
+
 class IrisModule(db.Model):
     __tablename__ = "iris_module"
 

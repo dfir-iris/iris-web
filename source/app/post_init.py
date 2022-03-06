@@ -36,7 +36,7 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.models.cases import Cases, Client
 from app.models.models import Role, Languages, User, get_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
     IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook, CustomAttribute, \
-    create_safe_attr
+    create_safe_attr, ServerSettings
 
 log = app.logger
 
@@ -97,6 +97,9 @@ def run_post_init(development=False):
 
         log.info("Creating base hooks")
         create_safe_hooks()
+
+        log.info("Creating base server settings")
+        create_safe_server_settings()
 
         log.info("Registering default modules")
         register_default_modules()
@@ -793,6 +796,11 @@ def create_safe_tlp():
     create_safe(db.session, Tlp, tlp_name="red", tlp_bscolor="danger")
     create_safe(db.session, Tlp, tlp_name="amber", tlp_bscolor="warning")
     create_safe(db.session, Tlp, tlp_name="green", tlp_bscolor="success")
+
+
+def create_safe_server_settings():
+    if not ServerSettings.query.count():
+        create_safe(db.session, ServerSettings, http_proxy="", https_proxy="", prevent_post_mod_repush=False)
 
 
 def register_modules_pipelines():

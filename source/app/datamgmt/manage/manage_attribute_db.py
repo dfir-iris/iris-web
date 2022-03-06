@@ -149,6 +149,8 @@ def add_tab_attribute_field(obj, tab_name, field_name, field_type, field_value, 
 
     attribute[tab_name][field_name] = attr[field_name]
 
+    obj.custom_attributes = attribute
+
     flag_modified(obj, "custom_attributes")
     db.session.commit()
 

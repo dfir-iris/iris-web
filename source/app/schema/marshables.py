@@ -31,7 +31,7 @@ from app import ma
 from app.datamgmt.dashboard.dashboard_db import get_task_status
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp, EventCategory
+    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp, EventCategory, ServerSettings
 
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
@@ -215,6 +215,16 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
             )
 
         return data
+
+
+class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
+    http_proxy = auto_field('http_proxy', required=False, allow_none=False)
+    https_proxy = auto_field('https_proxy', required=False, allow_none=False)
+    prevent_post_mod_repush = auto_field('prevent_post_mod_repush', required=False)
+
+    class Meta:
+        model = ServerSettings
+        load_instance = True
 
 
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
