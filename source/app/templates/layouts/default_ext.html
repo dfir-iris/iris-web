@@ -62,7 +62,7 @@
 
 	<!-- Atlantis JS -->
 	<script src="/static/assets/js/atlantis.min.js"></script>
-<!--	<script src="/static/assets/js/dark-mode.js"></script>-->
+	{% if current_user.has_dark_mode %}<script src="/static/assets/js/dark-mode.js"></script>{% endif %}
 
 	<script src="/static/assets/js/iris/common.js"></script>
 
