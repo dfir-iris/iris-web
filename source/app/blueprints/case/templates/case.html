@@ -75,11 +75,8 @@
                         <div class="row">
                             <div class="col-md-6" id="container_editor_summary">
                                 <div style="display: none" id="fetched_crc"></div>
-                                <div id="editor_summary"></div>
+                                <div id="editor_summary" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
                                 <textarea id="case_summary" rows="10" cols="82" style="display: none"></textarea>
-                                <!--<div class="row">
-                                    <button type="submit" class="btn btn-outline-success ml-4 mt-5" id="submit_new_rule">Save</button>
-                                </div>-->
                             </div>
                             <div class="col-md-6" id="ctrd_casesum">
                                 <div id="targetDiv"></div>

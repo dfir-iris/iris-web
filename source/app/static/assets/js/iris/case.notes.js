@@ -340,7 +340,12 @@ function note_detail(id) {
                 autoScrollEditorIntoView: true,
                 minLines: 4
             });
-        editor.setTheme("ace/theme/tomorrow");
+
+        if ($("#editor_detail").attr("data-theme") != "dark") {
+            editor.setTheme("ace/theme/tomorrow");
+        } else {
+            editor.setTheme("ace/theme/tomorrow_night");
+        }
         editor.session.setMode("ace/mode/markdown");
         editor.renderer.setShowGutter(true);
         editor.setOption("showLineNumbers", true);

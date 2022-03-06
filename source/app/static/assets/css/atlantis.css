@@ -14119,7 +14119,7 @@ body[data-background-color="bg3"] {
 }
 
 body[data-background-color="dark"] {
-    background: #1a2035;
+    background: #161a29;
 }
 
 body[data-background-color="dark"] .main-header {
@@ -14154,7 +14154,6 @@ body[data-background-color="dark"] .card .card-footer,
 body[data-background-color="dark"] .card .card-action,
 body[data-background-color="dark"] .accordion .card,
 body[data-background-color="dark"] .card-profile .user-stats [class^="col"],
-body[data-background-color="dark"] .timeline>li>.timeline-panel,
 body[data-background-color="dark"] .table td,
 body[data-background-color="dark"] .table th,
 body[data-background-color="dark"] .breadcrumbs,
@@ -14169,6 +14168,10 @@ body[data-background-color="dark"] .mail-wrapper .mail-content .email-head,
 body[data-background-color="dark"] .mail-wrapper .mail-content .email-sender,
 body[data-background-color="dark"] .main-panel .page-divider {
     border-color: rgba(181, 181, 181, 0.1) !important;
+}
+
+body[data-background-color="dark"] .timeline>li>.timeline-panel {
+    border-color: rgba(181, 181, 181, 0.1);
 }
 
 body[data-background-color="dark"] .timeline>li>.timeline-panel:before {
@@ -14194,8 +14197,9 @@ body[data-background-color="dark"] a {
     color: #4E8CDB;
 }
 
-body[data-background-color="dark"] tr.odd > selected {
-    color: #4666a2;
+body[data-background-color="dark"] table.dataTable tbody > tr.selected,
+body[data-background-color="dark"] table.dataTable tbody > tr > .selected {
+	background-color: #455471 !important;
 }
 
 body[data-background-color="dark"] .card-title,
@@ -14237,7 +14241,8 @@ body[data-background-color="dark"] .card-danger .card-category {
 }
 
 body[data-background-color="dark"] .btn-outline-dark,
-body[data-background-color="dark"] .btn,
+body[data-background-color="dark"] .btn-outline-white,
+body[data-background-color="dark"] .btn-outline-light,
 body[data-background-color="dark"] .nav-pills .nav-link:not(.active) {
     background: rgba(185, 185, 185, 0.18);
     color: #fff;
@@ -14273,11 +14278,15 @@ body[data-background-color="dark"] .footer {
     background: #1f283e;
 }
 
+body[data-background-color="dark"] .bg-focus-gradient {
+    background: linear-gradient(-180deg, #29292f, #1a1a1a) !important;
+}
+
 body[data-background-color="dark"] .form-control,
 body[data-background-color="dark"] .form-group-default,
 body[data-background-color="dark"] .select2-container--bootstrap .select2-selection {
-    background-color: #1a2035;
-    color: #fff;
+    background-color: #1a2035 !important;
+    color: #fff !important;;
     border-color: #2f374b;
 }
 
@@ -14387,7 +14396,7 @@ body[data-background-color="dark"] .select2-dropdown {
 }
 
 body[data-background-color="dark"] .dropdown-item {
-    color: #cac7c7;
+    color: #cac7c7 !important;
 }
 
 body[data-background-color="dark"] .dropdown-item:hover {
@@ -14429,6 +14438,11 @@ body[data-background-color="dark"] .page-link {
 }
 
 body[data-background-color="dark"] .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #cac7c7;
+}
+
+body[data-background-color="dark"] .form-control:disabled,
+body[data-background-color="dark"] .form-control[readonly] {
     color: #cac7c7;
 }
 

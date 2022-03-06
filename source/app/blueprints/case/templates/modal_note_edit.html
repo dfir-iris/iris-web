@@ -39,7 +39,7 @@
             <div class="row">
                 <div class="col-md-6" id="container_note_content">
                     <div style="display: none" id="fetched_crc"></div>
-                    <div id="editor_detail">{{ note.content }}</div>
+                    <div id="editor_detail" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{{ note.content }}</div>
                     <textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
                 </div>
                 <div class="col-md-6" id="ctrd_notesum">
