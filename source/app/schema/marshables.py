@@ -218,8 +218,8 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
 
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
-    http_proxy = auto_field('http_proxy', required=False, validate=Length(min=2), allow_none=False)
-    https_proxy = auto_field('https_proxy', required=False, validate=Length(min=2), allow_none=False)
+    http_proxy = auto_field('http_proxy', required=False, allow_none=False)
+    https_proxy = auto_field('https_proxy', required=False, allow_none=False)
     prevent_post_mod_repush = auto_field('prevent_post_mod_repush', required=False)
 
     class Meta:
