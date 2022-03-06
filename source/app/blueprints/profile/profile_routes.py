@@ -110,7 +110,7 @@ def update_user_view(caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@profile_blueprint.route('/user/theme/set/<str:theme>', methods=['GET'])
+@profile_blueprint.route('/user/theme/set/<theme>', methods=['GET'])
 @api_login_required
 def profile_set_theme(theme, caseid):
     if theme not in ['dark', 'light']:
@@ -120,7 +120,7 @@ def profile_set_theme(theme, caseid):
     if not user:
         return response_error("Invalid user ID")
 
-    user.dark_mode = theme is 'dark'
+    user.in_dark_mode = (theme == 'dark')
     db.session.commit()
 
     return response_success('Theme changed')

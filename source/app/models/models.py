@@ -317,7 +317,7 @@ class User(UserMixin, db.Model):
     ctx_human_case = db.Column(db.String(256))
     active = db.Column(db.Boolean())
     api_key = db.Column(db.Text(), unique=True)
-    dark_mode = db.Column(db.Boolean())
+    in_dark_mode = db.Column(db.Boolean())
 
     roles = db.relationship('Role', secondary='user_roles')
 
