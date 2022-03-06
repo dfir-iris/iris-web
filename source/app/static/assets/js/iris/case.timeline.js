@@ -214,20 +214,21 @@ function draw_timeline() {
                     }
 
                     /* Do we have a border color to set ? */
-                    style = " style='";
+                    style = "";
                     if (tesk) {
-                        style += "background-color: #f0f0f0;";
+                        style += "timeline-odd";
                         tesk = false;
                     } else {
+                        style += "timeline-even";
                         tesk = true;
                     }
 
-
+                    style_s = "style='";
                     if (evt.event_color != null) {
-                            style += "border-left: 2px groove " + sanitizeHTML(evt.event_color);
+                            style_s += "border-left: 2px groove " + sanitizeHTML(evt.event_color);
                     }
 
-                    style += ";'";
+                    style_s += ";'";
 
                     /* For every assets linked to the event, build a link tag */
                     if (evt.assets != null) {
@@ -295,7 +296,7 @@ function draw_timeline() {
                     shared_link = buildShareLink(evt.event_id);
                     entry = `<li class="timeline-inverted" title="Event ID #`+ evt.event_id + `">
                         ` + tmb_d + `
-                            <div class="timeline-panel" `+ style +` id="event_`+ evt.event_id + `" >
+                            <div class="timeline-panel `+ style +`" `+ style_s +` id="event_`+ evt.event_id + `" >
                                 <div class="timeline-heading">
                                     <div class="btn-group dropdown float-right">
 
@@ -316,10 +317,10 @@ function draw_timeline() {
                                         </div>
                                     </div>
                                     <div class="row mb-2">
-                                        <a class="timeline-title" style="color: rgb(75, 79, 87);" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
+                                        <a class="timeline-title" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
                                     </div>
                                 </div>
-                                <div class="timeline-body text-faded" style="color: rgb(130, 130, 130);">
+                                <div class="timeline-body text-faded" >
                                     <span>` + formatted_content + `</span>
                                 </div>
                                 <div class="bottom-hour mt-2">
