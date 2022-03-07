@@ -6538,8 +6538,7 @@ label.error {
     text-align: center;
 }
 
-.navbar .navbar-nav .nav-item .nav-link:hover,
-.navbar .navbar-nav .nav-item .nav-link:focus {
+.navbar .navbar-nav .nav-item .nav-link:hover {
     background: #eee !important;
 }
 
