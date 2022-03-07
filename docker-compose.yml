@@ -42,6 +42,8 @@ services:
       - DB_PASS
     networks:
       - iris_backend
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
   app:
     build:
@@ -127,6 +129,7 @@ services:
 volumes:
   iris-downloads:
   user_templates:
+  db_data:
 
 networks:
   iris_backend:
