@@ -12,7 +12,7 @@
                         aria-hidden="true">&times;</span></button>
                   </div>
                   <div class="modal-body">
-                  <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="user_context">
+                  <select class="selectpicker form-control btn-outline-white dropdown-submenu" data-show-subtext="true" data-live-search="true" id="user_context">
                       <optgroup label="Opened">
                         {% for case in cases_context_selector %}
                               <option value="{{ case[2] }}">{{ case[0]|unquote }} ({{ case[1] }})</option>
@@ -26,8 +26,8 @@
                   </select>
                   </div>
                   <div class="modal-footer">
-                        <button type="button" class="btn btn-border-success" id="submit_set_context">Save</button>
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                      <button type="button" class="btn btn-default mr-auto" data-dismiss="modal">Close</button>
+                      <button type="button" class="btn btn-outline-success" id="submit_set_context">Save</button>
                   </div>
             </form>
           </div><!-- /.modal-content -->

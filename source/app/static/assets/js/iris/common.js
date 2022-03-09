@@ -82,8 +82,6 @@ function notify_success(message) {
     });
 }
 
-$('#user_context').selectpicker()
-
 function updateURLParameter(url, param, paramVal)
 {
     var TheAnchor = null;
@@ -754,10 +752,18 @@ function toggle_focus_mode() {
     });
 }
 
+
+$('#user_context').selectpicker({liveSearch: true,
+    title: "None",
+    style: "btn-outline-white"
+});
+$('#user_context').selectpicker('val', get_caseid());
+
 $(document).ready(function(){
     notify_redirect();
     update_time();
     setInterval(function() { update_time(); }, 30000);
+
     $(function () {
         var current = location.pathname;
         btt = current.split('/')[1];

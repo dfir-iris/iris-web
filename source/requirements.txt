@@ -9,7 +9,6 @@ marshmallow==3.14.0
 marshmallow-sqlalchemy==0.26.1
 gunicorn==20.1.0
 psycopg2-binary==2.9.1
-pymisp==2.4.119
 pyunpack==0.2.2
 requests==2.26.0
 SQLAlchemy==1.4.31
