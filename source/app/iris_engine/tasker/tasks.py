@@ -20,32 +20,18 @@
 
 # IMPORTS ------------------------------------------------
 import os
-import traceback
 import urllib.parse
-import logging as log
-
 from celery.signals import task_prerun
 from flask_login import current_user
-from sqlalchemy import case
 
-from app import celery
 from app import db, app
-from app.blueprints.context.context import update_user_case_ctx
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name, get_module_config_from_name
-from app.iris_engine.connectors.misp4iris import Misp4Iris
-from app.iris_engine.module_handler.module_handler import instantiate_module_from_name, configure_module_on_init, \
-    pipeline_dispatcher
+from app.iris_engine.module_handler.module_handler import pipeline_dispatcher
 from app.iris_engine.utils.common import build_upload_path
-from app.iris_engine.reporter.reporter import IrisReporter
 from app.iris_engine.utils.tracker import track_activity
-
-from iris_interface.IrisModuleInterface import IrisPipelineTypes
-
-from app.models import CasesDatum, FileContentHash, HashLink, Ioc, CaseEventsAssets, CaseAssets
-from app.models.cases import Cases, CasesEvent
-from app.util import task_failure, task_success
+from app.models.cases import Cases
 from iris_interface import IrisInterfaceStatus as IStatus
+from iris_interface.IrisModuleInterface import IrisPipelineTypes
 
 app.config['timezone'] = 'Europe/Paris'
 
@@ -54,28 +40,6 @@ app.config['timezone'] = 'Europe/Paris'
 @task_prerun.connect
 def on_task_init(*args, **kwargs):
     db.engine.dispose()
-
-
-def task_make_report(caseid):
-    """
-    Create a report task according to the current case
-    :return: JSON report representation
-    """
-    case = Cases.query \
-        .filter(Cases.case_id == caseid) \
-        .first()
-
-    if case:
-        task_args = {
-            "user": current_user.name,
-            "user_id": current_user.id,
-            "case_name": case.name,
-            "case_id": case.case_id,
-        }
-        report = IrisReporter(None, task_args)
-        return report.make_report()
-
-    return False
 
 
 def task_case_update(module, pipeline, pipeline_args, caseid):
