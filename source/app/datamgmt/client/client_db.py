@@ -17,13 +17,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from sqlalchemy import JSON
-from typing import List, Dict, Union
+from typing import List
 
 from app import db
-from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
-from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.models import Client
 from app.schema.marshables import CustomerSchema
 

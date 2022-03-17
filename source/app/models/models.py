@@ -68,9 +68,6 @@ class Client(db.Model):
     name = Column(String(2048), unique=True)
     custom_attributes = Column(JSON)
 
-    def __init__(self, name):
-        self.name = name
-
 
 class AssetsType(db.Model):
     __tablename__ = 'assets_type'
