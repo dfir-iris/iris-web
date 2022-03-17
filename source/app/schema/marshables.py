@@ -333,6 +333,14 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+    @post_load
+    def custom_attributes_merge(self, data, **kwargs):
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('client_id'), 'client')
+
+        return data
+
 
 class TaskLogSchema(ma.Schema):
     log_content = fields.String(required=False, validate=Length(min=1))

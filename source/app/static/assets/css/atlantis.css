@@ -7684,7 +7684,9 @@ body[data-background-color="dark"] .badge-danger {
 
 .btn-light {
     background: #ffffff;
+    background: #ebecec !important;
     border-color: transparent;
+    color: #000;
 }
 
 .btn-light:hover,

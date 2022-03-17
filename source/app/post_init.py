@@ -465,6 +465,9 @@ def create_safe_attributes():
     create_safe_attr(db.session, attribute_display_name='Cases',
                      attribute_description='Defines default attributes for Cases', attribute_for='case',
                      attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Customers',
+                     attribute_description='Defines default attributes for Customers', attribute_for='client',
+                     attribute_content={})
 
 
 def create_safe_ioctypes():

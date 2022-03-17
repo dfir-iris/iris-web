@@ -82,7 +82,7 @@ def add_task(task, user_id, caseid):
     task.task_open_date = now
     task.task_last_update = now
 
-    task.custom_attributes = get_default_custom_attributes('task')
+    task.custom_attributes = task.custom_attributes if task.custom_attributes else get_default_custom_attributes('task')
 
     update_task_status(task.task_status_id, task.id, caseid)
 

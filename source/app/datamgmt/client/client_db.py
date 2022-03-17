@@ -17,16 +17,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from sqlalchemy import JSON
 from typing import List, Dict, Union
 
 from app import db
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.models import Client
 from app.schema.marshables import CustomerSchema
-
-client_schema = CustomerSchema()
 
 
 def get_client_list() -> List[Client]:
@@ -56,12 +55,10 @@ def get_client_api(client_id: str) -> Client:
     return output
 
 
-def create_client(client_name: str) -> Client:
-    client_data = {
-        "customer_name": client_name
-    }
+def create_client(data) -> Client:
 
-    client = client_schema.load(client_data)
+    client_schema = CustomerSchema()
+    client = client_schema.load(data)
 
     db.session.add(client)
     db.session.commit()
@@ -69,25 +66,15 @@ def create_client(client_name: str) -> Client:
     return client
 
 
-def update_client(client_id: str, client_name: str) -> Client:
+def update_client(client_id: str, data) -> Client:
     # TODO: Possible reuse somewhere else ...
     client = get_client(client_id)
 
     if not client:
         raise ElementNotFoundException('No Customer found with this uuid.')
 
-    invariant_properties = ['client_id']
-    properties = list(filter(lambda x: x not in invariant_properties, Client.__table__.columns.keys()))
-
-    updated_client_data = {
-        "customer_name": client_name
-    }
-
-    updated_client = client_schema.load(updated_client_data)
-
-    for key in properties:
-        if getattr(client, key) != getattr(updated_client, key):
-            setattr(client, key, getattr(updated_client, key))
+    client_schema = CustomerSchema()
+    client_schema.load(data, instance=client)
 
     db.session.commit()
 
