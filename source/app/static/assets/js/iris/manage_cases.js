@@ -4,6 +4,10 @@
 
 /* Onrefresh handler */
 function onRefresh() {
+    $("#update_pipeline_selector").selectpicker({
+        liveSearch: true,
+        style: "btn-outline-white"
+        })
     $("#update_pipeline_selector").selectpicker("val", "");
     $('#update_pipeline_selector').selectpicker("refresh");
     $(".control-update-pipeline-args ").hide();
@@ -12,6 +16,10 @@ function onRefresh() {
 window.onbeforeunload = onRefresh;
 
 /* Hide the args selectors */
+$("#update_pipeline_selector").selectpicker({
+    liveSearch: true,
+    style: "btn-outline-white"
+    })
 $('#update_pipeline_selector').selectpicker("refresh");
 $(".control-update-pipeline-args ").hide();
 $('.control-update-pipeline-'+ $('#update_pipeline_selector').val() ).show();
@@ -21,7 +29,7 @@ $('.control-update-pipeline-'+ $('#update_pipeline_selector').val() ).show();
 $('#case_customer').selectpicker({
     liveSearch: true,
     title: "Customer",
-    style: "Bootstrap 4: 'btn-outline-primary'"
+    style: "btn-outline-white"
 });
 
 $('#update_pipeline_selector').on('change', function(e){

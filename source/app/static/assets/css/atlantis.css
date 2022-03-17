@@ -14171,6 +14171,10 @@ body[data-background-color="dark"] .main-panel .page-divider {
     border-color: rgba(181, 181, 181, 0.1) !important;
 }
 
+.timeline>li>.timeline-even {
+    background: rgba(181, 181, 181, 0.1);
+}
+
 body[data-background-color="dark"] .timeline>li>.timeline-panel {
     border-color: rgba(181, 181, 181, 0.1);
 }
@@ -14195,7 +14199,7 @@ body[data-background-color="dark"] .page-category {
 }
 
 body[data-background-color="dark"] a {
-    color: #4E8CDB;
+    color: #9FB2FF;
 }
 
 body[data-background-color="dark"] table.dataTable tbody > tr.selected,
@@ -14416,7 +14420,7 @@ body[data-background-color="dark"] input,
 body[data-background-color="dark"] select,
 body[data-background-color="dark"] .select2-selection,
 body[data-background-color="dark"] .select2-container--default {
-    background: rgba(185, 185, 185, 0.18);
+    background: rgba(185, 185, 185, 0.18) !important;
     color: #cac7c7;
 }
 

@@ -300,12 +300,12 @@ function draw_timeline() {
                                 <div class="timeline-heading">
                                     <div class="btn-group dropdown float-right">
 
-                                        <button type="button" class="btn btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
+                                        <button type="button" class="btn btn-light btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
                                             <span class="btn-label">
                                                 <i class="fa fa-pen"></i>
                                             </span>
                                         </button>
-                                        <button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                        <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                             <span class="btn-label">
                                                 <i class="fa fa-cog"></i>
                                             </span>
