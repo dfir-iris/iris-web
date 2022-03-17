@@ -23,24 +23,23 @@ Iris (web interface, database management, etc).
  - IrisModules are extensions of the core that allow third parties to process
 data via Iris (eg enrich IOCs with MISP and VT, upload and injection of EVTX into Splunk). 
  
-IrisWeb can work without any modules, but a default ones are preinstalled. Head to ``Manage > Modules`` in the UI to see
-and configure them. 
+IrisWeb can work without any modules though defaults ones are preinstalled. Head to ``Manage > Modules`` in the UI 
+to configure and enable them. 
 
 ### Run IrisWeb 
 The app has 5 dockers: 
-- `app - iriswebapp_app`: The core of IrisWeb 
-- `db`: The Postgres database 
-- `rabbitmq`: The message broker handling modules tasks
+- `app - iriswebapp_app`: Core of IrisWeb 
+- `db`: Postgres database 
+- `rabbitmq`: Message broker handling modules tasks
 - `worker`: Jobs handler relying on RabbitMq 
-- `nginx`: The reverse proxy
+- `nginx`: Reverse proxy
 
 **To run:**
-1. Clone the repo and cd into it
+1. Get the last release and cd into it
 2. Copy `.env.model` into `.env`
 3. [Optional for non-production] Change the default credentials in the .env file at 
 the root of the project:
-   1. Nginx: you might want to specify your own :
-      1. A pair is provided  in the `./docker/dev_certs` repository, but you might want to change with your own certificate.
+   1. Nginx: you might want to specify your own - A pair is provided  in the `./docker/dev_certs` repository, but you might want to change with your own certificate.
    2. Database credentials: **POSTGRES_PASSWORD** and **DB_PASS** (you can also customise the usernames)
    3. IRIS secrets: **SECRET_KEY** and **SECURITY_PASSWORD_SALT**
 4. Build `docker-compose build`
@@ -58,21 +57,23 @@ We also recommend immediately changing your administrator's password, either on 
 For a more comprehensive overview of the case features, 
 you can head to [tutorials](https://dfir-iris.github.io/operations/tutorials.html), we've put some videos there.  
 
+## Upgrades
+Please read the release notes when upgrading versions. Most of the time the migrations are handled automatically, but some
+changes might require manual labor depending on the version. 
 
 ## Documentation
-
-A more comprehensive documentation is available on [dfir-iris.github.io](https://dfir-iris.github.io), or one can build 
+A comprehensive documentation is available on [dfir-iris.github.io](https://dfir-iris.github.io), or one can build 
 the documentation available in [here](https://github.com/dfir-iris/iris-doc-src).
 
 ## API
-
 The API reference is available in the [documentation](https://dfir-iris.github.io/operations/api.html#references) or [documentation repository](https://github.com/dfir-iris/iris-doc-src).
 
-## Help 
-
+## Help
 You can reach us on [Discord](https://discord.gg/fwuXkpBHGz) or by [mail](mailto:contact@dfir-iris.org) if you have any question, issue or idea !
 
-## License
+## Considerations
+Iris is in its early stage. It can already be used in production, but please set backups of the database and DO NOT expose the interface on the Internet. We highly recommend using a private dedicated and secured network.
 
+## License
 The contents of this repository is available under [LGPL3 license](LICENSE.txt).
 
