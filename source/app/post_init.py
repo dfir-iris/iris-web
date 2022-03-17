@@ -835,6 +835,12 @@ def register_modules_pipelines():
 
 def register_default_modules():
 
+    srv_settings = ServerSettings.query.first()
+
+    if srv_settings.prevent_post_mod_repush:
+        log.info('Post init modules repush disabled')
+        return
+
     modules = ['iris_vt_module', 'iris_check_module']
     for module in modules:
         class_ = instantiate_module_from_name(module)
