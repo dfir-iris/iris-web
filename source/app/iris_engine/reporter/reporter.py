@@ -26,20 +26,17 @@
 import logging as log
 import os
 from datetime import datetime
-
+from docx_generator.docx_generator import DocxGenerator
+from docx_generator.exceptions import rendering_error
 from flask_login import current_user
-from sqlalchemy import create_engine, text, and_, or_, desc
+from sqlalchemy import desc
 
 from app import app
 from app.datamgmt.activities.activities_db import get_auto_activities, get_manual_activities
-from app.datamgmt.reporter.report_db import export_case_json
-from app.models import CasesDatum, HashLink, FileContentHash, FileName, PathName, CasesEvent, IocLink, Ioc, \
-    IocAssetLink, CaseAssets, AssetsType, CaseEventsAssets, CaseReceivedFile, CaseTemplateReport
-from app.util import task_success, task_failure
 from app.datamgmt.case.case_db import case_get_desc_crc
-
-from docx_generator.docx_generator import DocxGenerator
-from docx_generator.exceptions import rendering_error
+from app.datamgmt.reporter.report_db import export_case_json
+from app.models import CasesEvent, IocLink, Ioc, \
+    IocAssetLink, CaseAssets, AssetsType, CaseEventsAssets, CaseReceivedFile, CaseTemplateReport
 
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)
