@@ -33,7 +33,7 @@
 
                             <div id="drop_attr_desc" class="collapse" aria-labelledby="drop_tax_attr" style="">
                                 <div class="card-body">
-                                    <p>These attributes are stored in each {{ attribute.attribute_display_name }} object in the form of a JSON binary structure (JSONB)</p>
+                                    <p>These attributes are stored in each {{ attribute.attribute_display_name }} object in the form of a JSON structure.</p>
                                     <p>Attributes in this page represent the default attributes of each new {{ attribute.attribute_display_name }} objects. Existing object are updated if they
                                         don't hold the specified attributes. <b>Other existing attributes are not deleted.</b></p>
                                     Attributes can have the following purposes:
@@ -116,8 +116,8 @@
                                     <p>When this happens, IRIS will not update the fields of these objects and let them as is to prevent any data loss.</p>
                                     <p>This behavior can however be changed by using the <kbd>Complete overwrite</kbd> and <kbd>Partial overwrite</kbd> buttons.</p>
 
-                                    <p><kbd>Partial overwrite</kbd> basically resets all the values of every {{ attribute.attribute_display_name }} objects, and then applies the current attributes.
-                                        All associated values are lost. This does not impact attributes pushed by modules or previous configuration.</p>
+                                    <p><kbd>Partial overwrite</kbd> basically resets the attributes values of every {{ attribute.attribute_display_name }} objects that matches the current ones, and then applies the current attributes.
+                                        All associated values are lost. This does not impact attributes pushed by modules.</p>
                                     <p><kbd>Complete overwrite</kbd> resets all attributes of every {{ attribute.attribute_display_name }} objects, including the ones created by modules, and then applies the current attributes.
                                         All associated values are lost.</p>
 

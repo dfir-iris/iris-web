@@ -27,31 +27,45 @@ IrisWeb can work without any modules though defaults ones are preinstalled. Head
 to configure and enable them. 
 
 ### Run IrisWeb 
-The app has 5 dockers: 
-- `app - iriswebapp_app`: Core of IrisWeb 
-- `db`: Postgres database 
-- `rabbitmq`: Message broker handling modules tasks
-- `worker`: Jobs handler relying on RabbitMq 
-- `nginx`: Reverse proxy
+Iris is split on 5 Docker services, each with a different role.
 
-**To run:**
-1. Get the last release and cd into it
-2. Copy `.env.model` into `.env`
-3. [Optional for non-production] Change the default credentials in the .env file at 
-the root of the project:
-   1. Nginx: you might want to specify your own - A pair is provided  in the `./docker/dev_certs` repository, but you might want to change with your own certificate.
-   2. Database credentials: **POSTGRES_PASSWORD** and **DB_PASS** (you can also customise the usernames)
-   3. IRIS secrets: **SECRET_KEY** and **SECURITY_PASSWORD_SALT**
-4. Build `docker-compose build`
-5. Run `docker-compose up` 
+- ``app - iris_webapp``: The core, including web server, DB management, module management etc.
+- ``db``: A PostgresSQL database
+- ``RabbitMQ``: A RabbitMQ engine to handle jobs queuing and processing
+- ``worker``: Jobs handler relying on RabbitMQ
+- ``nginx``: A NGINX reverse proxy
 
-A first account called **administrator** is created by default, the password is randomly 
-created and **output in the docker `app` service**. The output is pretty verbose, you can look for the following string ``WARNING :: post_init :: create_safe_admin :: >>>``.  
-If you want to define an admin password at the first start, you can also create and define the environment variable **IRIS_ADM_PASSWORD**
-in the `app` docker instance (see [webApp Dockerfile](./docker/webApp/Dockerfile)).
+Each service can be built independently, which can be useful when developing.
 
-Once it is up, go to ``https://<your_instance>:4433``, login as administrator, and start using IRIS!
-We also recommend immediately changing your administrator's password, either on its profile page or in the *Users* management page.
+``` bash
+#  Clone the iris-web repository
+git clone https://github.com/dfir-iris/iris-web.git
+cd iris-web
+
+# Copy the environment file 
+cp .env.model .env
+# [... optionally, do some configuration as specified below ...]
+
+# Build the dockers
+docker-compose build
+
+# Run IRIS 
+docker-compose up
+```
+
+Iris will be available on the host interface, port 4433, protocol HTTPS - ``https://<your_instance_ip>:4433``.  
+By default, an ``administrator`` account is created. The password is printed in stdout the very first time Iris is started. It won't be printed anymore after that.  
+You can search for ``WARNING :: post_init :: create_safe_admin :: >>>`` in the logs to find the password.  
+
+If you want to define an admin password at the first start, you can also create and define the environment variable **IRIS_ADM_PASSWORD** in the `app` docker instance (see the webApp Dockerfile). This has no effects once the administrator account is created.   
+
+## Optional configuration
+
+You can skip this part if you just want to try or develop. If used in production, please configure the .env file at the root of the project:
+
+- Nginx: you might want to specify your own certificate as specified above
+- Database credentials: **POSTGRES_PASSWORD** and **DB_PASS** (you can also customise the usernames)
+- IRIS secrets: **SECRET_KEY** and **SECURITY_PASSWORD_SALT**
 
 ## Showcase
 For a more comprehensive overview of the case features, 
