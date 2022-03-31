@@ -240,24 +240,32 @@ def list_dim_tasks(caseid):
 @dim_tasks_blueprint.route('/dim/tasks/limited-list', methods=['GET'])
 @api_login_required
 def list_limited_dim_tasks(caseid):
-    tasks = CeleryTaskMeta.query.with_entities(
-        CeleryTaskMeta.task_id,
-        CeleryTaskMeta.date_done
-    ).order_by(desc(CeleryTaskMeta.date_done)).limit(40).all()
+    tasks = CeleryTaskMeta.query.order_by(desc(CeleryTaskMeta.date_done)).limit(40).all()
 
     data = []
 
     for row in tasks:
         task = app.celery.AsyncResult(row.task_id)
 
-        task_name = task.name if task.name else "No engine. Unrecoverable shadow failure"
-        if 'task_hook_wrapper' in task_name:
+        tkp = {}
+        tkp['state'] = row.status
+        tkp['case'] = "Unknown"
+        tkp['module'] = row.name
+        tkp['task_id'] = row.task_id
+        tkp['date_done'] = row.date_done
+        tkp['user'] = "Unknown"
+
+        try:
+            tinfo = task.info
+        except AttributeError:
+            # Legacy task
+            data.append(tkp)
+            continue
+
+        if 'task_hook_wrapper' in row.name:
             task_name = f"{task.kwargs.get('module_name')}::{task.kwargs.get('hook_name')}"
         else:
-            if task.name:
-                task_name = task.name.split('.')[-1]
-            else:
-                task_name = 'Shadow task'
+            task_name = task.name
 
         if task.kwargs:
             user = task.kwargs.get('init_user')
@@ -269,24 +277,19 @@ def list_limited_dim_tasks(caseid):
         if isinstance(task.result, IIStatus):
 
             try:
-
                 success = task.result.is_success()
-
-            except Exception as e:
-
+            except:
                 success = None
 
         else:
             success = None
 
-        row = row._asdict()
-        row['state'] = "success" if success else str(task.result)
-        row['user'] = user
+        tkp['state'] = "success" if success else str(task.result)
+        tkp['user'] = user
+        tkp['module'] = task_name
+        tkp['case'] = case_name if case_name else ""
 
-        row['module'] = task_name
-        row['case'] = case_name if case_name else ""
-
-        data.append(row)
+        data.append(tkp)
 
     return response_success("", data=data)
 
