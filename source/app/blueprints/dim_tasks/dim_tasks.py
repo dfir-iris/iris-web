@@ -172,14 +172,6 @@ def dim_hooks_call(caseid):
     return response_success(f'Queued task with {index} objects')
 
 
-@dim_tasks_blueprint.route('/dim/tasks/test', methods=['GET'])
-@api_login_required
-def list_dim_tasksss(caseid):
-    tasks = CeleryTaskMeta.query.order_by(desc(CeleryTaskMeta.date_done)).limit(200).all()
-
-    return response_success(data=tasks)
-
-
 @dim_tasks_blueprint.route('/dim/tasks/list', methods=['GET'])
 @api_login_required
 def list_dim_tasks(caseid):
