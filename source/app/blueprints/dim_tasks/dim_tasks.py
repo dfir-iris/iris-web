@@ -172,21 +172,40 @@ def dim_hooks_call(caseid):
     return response_success(f'Queued task with {index} objects')
 
 
+@dim_tasks_blueprint.route('/dim/tasks/test', methods=['GET'])
+@api_login_required
+def list_dim_tasksss(caseid):
+    tasks = CeleryTaskMeta.query.order_by(desc(CeleryTaskMeta.date_done)).limit(200).all()
+
+    return response_success(data=tasks)
+
+
 @dim_tasks_blueprint.route('/dim/tasks/list', methods=['GET'])
 @api_login_required
 def list_dim_tasks(caseid):
-    tasks = CeleryTaskMeta.query.with_entities(
-        CeleryTaskMeta.task_id,
-        CeleryTaskMeta.date_done
-    ).order_by(desc(CeleryTaskMeta.date_done)).limit(200).all()
+    tasks = CeleryTaskMeta.query.order_by(desc(CeleryTaskMeta.date_done)).limit(200).all()
 
     data = []
 
     for row in tasks:
         task = app.celery.AsyncResult(row.task_id)
 
-        task_name = task.name if task.name else "No engine. Unrecoverable shadow failure"
-        if 'task_hook_wrapper' in task_name:
+        tkp = {}
+        tkp['state'] = row.status
+        tkp['case'] = "Unknown"
+        tkp['module'] = row.name
+        tkp['task_id'] = row.task_id
+        tkp['date_done'] = row.date_done
+        tkp['user'] = "Unknown"
+
+        try:
+            tinfo = task.info
+        except AttributeError:
+            # Legacy task
+            data.append(tkp)
+            continue
+
+        if 'task_hook_wrapper' in row.name:
             task_name = f"{task.kwargs.get('module_name')}::{task.kwargs.get('hook_name')}"
         else:
             task_name = task.name
@@ -208,14 +227,12 @@ def list_dim_tasks(caseid):
         else:
             success = None
 
-        row = row._asdict()
-        row['state'] = "success" if success else str(task.result)
-        row['user'] = user
+        tkp['state'] = "success" if success else str(task.result)
+        tkp['user'] = user
+        tkp['module'] = task_name
+        tkp['case'] = case_name if case_name else ""
 
-        row['module'] = task_name
-        row['case'] = case_name if case_name else ""
-
-        data.append(row)
+        data.append(tkp)
 
     return response_success("", data=data)
 
@@ -290,7 +307,7 @@ def task_status(task_id, caseid, url_redir):
 
     task_meta = task._get_task_meta()
 
-    if 'task_hook_wrapper' in task_meta.get('name'):
+    if task_meta.get('name') and 'task_hook_wrapper' in task_meta.get('name'):
         task_info['Module name'] = task_meta.get('kwargs').get('module_name')
         task_info['Hook name'] = task_meta.get('kwargs').get('hook_name')
         task_info['User'] = task_meta.get('kwargs').get('init_user')
@@ -303,7 +320,7 @@ def task_status(task_id, caseid, url_redir):
     else:
         success = None
         task_info['User'] = "Shadow Iris"
-        task_info['Logs'] = ['Task did not returned an IIStatus object']
+        task_info['Logs'] = ['Task did not returned a valid IIStatus object']
 
     if task_meta.get('traceback'):
         task_info['Traceback'] = task.traceback
