@@ -117,37 +117,37 @@ def dim_hooks_call(caseid):
 
         elif data_type == "asset":
             obj = CaseAssets.query.filter(
-                    CaseAssets.asset_id == target,
-                    CaseAssets.case_id == caseid
+                CaseAssets.asset_id == target,
+                CaseAssets.case_id == caseid
             ).first()
 
         elif data_type == "note":
             obj = Notes.query.filter(
-                    Notes.note_id == target,
-                    Notes.note_case_id == caseid
+                Notes.note_id == target,
+                Notes.note_case_id == caseid
             ).first()
 
         elif data_type == "event":
             obj = CasesEvent.query.filter(
-                    CasesEvent.event_id == target,
-                    CasesEvent.case_id == caseid
+                CasesEvent.event_id == target,
+                CasesEvent.case_id == caseid
             ).first()
 
         elif data_type == "task":
             obj = CaseTasks.query.filter(
-                    CaseTasks.id == target,
-                    CaseTasks.task_case_id == caseid
+                CaseTasks.id == target,
+                CaseTasks.task_case_id == caseid
             ).first()
 
         elif data_type == "evidence":
             obj = CaseReceivedFile.query.filter(
-                    CaseReceivedFile.id == target,
-                    CaseReceivedFile.case_id == caseid
+                CaseReceivedFile.id == target,
+                CaseReceivedFile.case_id == caseid
             ).first()
 
         elif data_type == "global_task":
             obj = GlobalTasks.query.filter(
-                    GlobalTasks.id == target
+                GlobalTasks.id == target
             ).first()
 
         else:
@@ -299,6 +299,19 @@ def task_status(task_id, caseid, url_redir):
 
     task = app.celery.AsyncResult(task_id)
 
+    try:
+        tinfo = task.info
+    except AttributeError:
+        # Legacy task
+        task_info = {}
+        task_info['Danger'] = 'This task was executed in a previous version of IRIS and the status cannot be read ' \
+                              'anymore.'
+        task_info['Note'] = 'All the data readable by the current IRIS version is displayed in ' \
+                            'the table.'
+        task_info['Additional information'] = 'The results of this tasks were stored in a pickled Class which does' \
+                                              ' not exists anymore in current IRIS version.'
+        return render_template("modal_task_info.html", data=task_info, task_id=task.id)
+
     task_info = {}
     task_info['Task ID'] = task_id
     task_info['Task finished on'] = task.date_done
@@ -328,4 +341,3 @@ def task_status(task_id, caseid, url_redir):
     task_info['Success'] = "Success" if success else "Failure"
 
     return render_template("modal_task_info.html", data=task_info, task_id=task.id)
-
