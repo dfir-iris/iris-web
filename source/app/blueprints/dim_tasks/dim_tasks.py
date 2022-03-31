@@ -284,7 +284,7 @@ def task_status(task_id, caseid, url_redir):
 
     task_info = {}
     task_info['Task ID'] = task_id
-    task_info['Task finish on'] = task.date_done
+    task_info['Task finished on'] = task.date_done
     task_info['Task state']: task.state.lower()
     task_info['Engine']: task.name if task.name else "No engine. Unrecoverable shadow failure"
 
