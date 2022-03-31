@@ -408,7 +408,7 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     :return: A task status JSON task_success or task_failure
     """
     # Data is serialized, so deserialized
-    deser_data = loads(data=base64.b64decode(data))
+    deser_data = loads(base64.b64decode(data))
 
     _obj = None
     # The receive object will most likely be cleared when handled by the task,
