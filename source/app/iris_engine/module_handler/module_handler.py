@@ -420,6 +420,8 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
             obj = db.session.merge(dse_data)
             db.session.commit()
             _obj.append(obj)
+    elif isinstance(deser_data, str):
+        _obj = deser_data
     else:
         _obj_a = db.session.merge(deser_data)
         db.session.commit()
