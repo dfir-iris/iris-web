@@ -144,7 +144,7 @@
             {% for e in ioc %}
                 {
                     id: {{ e.ioc_id }},
-                    text: "{{ e.ioc_value }}"
+                    text: {{ e.ioc_value| tojson }}
                 },
             {% endfor %}
         ];
