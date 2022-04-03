@@ -202,7 +202,7 @@ $('#event_category_id').select2({width:"100%"});
             {% for e in assets %}
                 {
                     id: {{ e.asset_id }},
-                    text: "{{ e.asset_name }}"
+                    text: {{ e.asset_name| tojson  }}
                 },
             {% endfor %}
         ];
