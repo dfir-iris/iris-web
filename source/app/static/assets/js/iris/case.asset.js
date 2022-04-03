@@ -90,7 +90,11 @@ Table = $("#assets_table").DataTable({
         "data": "asset_name",
         "render": function (data, type, row, meta) {
           if (type === 'display') {
-            datak= sanitizeHTML(data);
+            if (row['asset_domain']) {
+                datak = sanitizeHTML(row['asset_domain'])+"\\"+ sanitizeHTML(data);
+            } else {
+                datak = sanitizeHTML(data);
+            }
 
             if (data.length > 60) {
                 datak = data.slice(0, 60) + " (..)";
