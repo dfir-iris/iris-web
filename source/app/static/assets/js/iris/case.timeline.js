@@ -240,7 +240,7 @@ function draw_timeline() {
                     if(evt.category_name && evt.category_name != 'Unspecified') {
                         tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
                         if (evt.category_name != 'Unspecified') {
-                            cats += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
+                            cats += '<span class="badge badge-light mr-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
                         }
                     }
 
