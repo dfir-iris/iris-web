@@ -149,7 +149,8 @@ class IrisMakeDocReport(object):
         ).with_entities(
             CaseReceivedFile.filename,
             CaseReceivedFile.date_added,
-            CaseReceivedFile.file_hash
+            CaseReceivedFile.file_hash,
+            CaseReceivedFile.custom_attributes
         ).order_by(
             CaseReceivedFile.date_added
         ).all()
@@ -206,7 +207,9 @@ class IrisMakeDocReport(object):
         res = IocLink.query.distinct().with_entities(
             Ioc.ioc_value,
             Ioc.ioc_type,
-            Ioc.ioc_description
+            Ioc.ioc_description,
+            Ioc.ioc_tags,
+            Ioc.custom_attributes
         ).filter(
             IocLink.case_id == caseid
         ).join(IocLink.ioc).order_by(Ioc.ioc_type).all()
@@ -230,7 +233,9 @@ class IrisMakeDocReport(object):
             CaseAssets.asset_name,
             CaseAssets.asset_description,
             CaseAssets.asset_compromised.label('compromised'),
-            AssetsType.asset_name.label("type")
+            AssetsType.asset_name.label("type"),
+            CaseAssets.custom_attributes,
+            CaseAssets.asset_tags
         ).filter(
             CaseAssets.case_id == caseid
         ).join(
