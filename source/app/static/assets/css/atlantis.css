@@ -8441,6 +8441,19 @@ body[data-background-color="dark"] .badge-danger {
     z-index: 100;
 }
 
+.timeline>li>.time-badge-compact {
+    color: #181818;
+    width: 5rem;
+    height: 2rem;
+    font-size: 1.8em;
+    text-align: center;
+    position: absolute;
+    left: 1%;
+    margin-left: -25px;
+    background-color: #ffffff00;
+    z-index: 100;
+}
+
 .timeline-badge.default {
     background-color: #1a2035 !important;
 }
@@ -15552,17 +15565,10 @@ body[data-background-color="dark"] .bg-primary-gradient{
     padding: 20px; } }
 
 
-.btn_over_page_c {
-    position: fixed; /* Fixed/sticky position */
-    bottom: 20px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
-    z-index: 99; /* Make sure it does not overlap */
-    cursor: pointer; /* Add a mouse pointer on hover */
-}
 
 .btn_over_page_a {
     position: fixed; /* Fixed/sticky position */
-    bottom: 120px; /* Place the button at the bottom of the page */
+    bottom: 220px; /* Place the button at the bottom of the page */
     right: 20px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
@@ -15570,7 +15576,15 @@ body[data-background-color="dark"] .bg-primary-gradient{
 
 .btn_over_page_b {
     position: fixed; /* Fixed/sticky position */
-    bottom: 70px; /* Place the button at the bottom of the page */
+    bottom: 170px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
+.btn_over_page_c {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 120px; /* Place the button at the bottom of the page */
     right: 20px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
@@ -15578,7 +15592,15 @@ body[data-background-color="dark"] .bg-primary-gradient{
 
 .btn_over_page_d {
     position: fixed; /* Fixed/sticky position */
-    bottom: 170px; /* Place the button at the bottom of the page */
+    bottom: 70px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
+.btn_over_page_e {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 20px; /* Place the button at the bottom of the page */
     right: 20px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */

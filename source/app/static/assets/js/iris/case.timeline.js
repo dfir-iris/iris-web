@@ -145,6 +145,32 @@ function edit_event(id) {
   });
 }
 
+function is_timeline_compact_view() {
+    var x = getCookie('iris_tm_compact');
+    if (typeof x !== 'undefined') {
+        if (x === 'true') {
+            return true;
+        }
+    }
+    return false;
+}
+
+function toggle_compact_view() {
+    var x = getCookie('iris_tm_compact');
+    if (typeof x === 'undefined') {
+        setCookie('iris_tm_compact', 'true', 365);
+        location.reload();
+    } else {
+        if (x === 'true') {
+            setCookie('iris_tm_compact', 'false', 365);
+            location.reload();
+        } else {
+            setCookie('iris_tm_compact', 'true', 365);
+            location.reload();
+        }
+    }
+}
+
 var current_timeline;
 /* Fetch and draw the timeline */
 function draw_timeline() {
@@ -159,6 +185,7 @@ function draw_timeline() {
         dataType: "json",
         success: function (data) {
             if (data.status == 'success') {
+                var compact = is_timeline_compact_view();
                 var is_i = false;
                 current_timeline = data.data.tim;
                 tmb = [];
@@ -204,6 +231,7 @@ function draw_timeline() {
                     evt = data.data.tim[index];
                     dta =  evt.event_date.split('T');
                     tags = '';
+                    cats = '';
                     tmb_d = '';
                     style = '';
                     asset = '';
@@ -211,6 +239,9 @@ function draw_timeline() {
                     /* If IOC then build a tag */
                     if(evt.category_name && evt.category_name != 'Unspecified') {
                         tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
+                        if (evt.category_name != 'Unspecified') {
+                            cats += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
+                        }
                     }
 
                     /* Do we have a border color to set ? */
@@ -264,78 +295,130 @@ function draw_timeline() {
                     }
 
                     day = dta[0];
+                    mtop_day = '';
                     if (!tmb.includes(day)) {
                         tmb.push(day);
-                        tmb_d = '<div class="time-badge" id="time_'+ idx +'"><small class="text-muted">'+ day + '</small><br/></div>';
+                        if (!compact) {
+                            tmb_d = '<div class="time-badge" id="time_'+ idx +'"><small class="text-muted">'+ day + '</small><br/></div>';
+                        } else {
+                            tmb_d = '<div class="time-badge-compact" id="time_'+ idx +'"><small class="text-muted">'+ day + '</small><br/></div>';
+                        }
                         idx += 1;
+                        mtop_day = 'mt-4';
                     }
 
                     title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
                     content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
-                    content_split = content_parsed.split('<br/>');
-                    lines = content_split.length;
-                    if (content_parsed.length > 150 || lines > 2) {
-                        if (lines > 2) {
-                            short_content = match_replace_ioc(content_split.slice(0,2).join('<br/>'), reap);
-                            long_content = match_replace_ioc(content_split.slice(2).join('<br/>'), reap);
+
+                    if (!compact) {
+                        content_split = content_parsed.split('<br/>');
+                        lines = content_split.length;
+                        if (content_parsed.length > 150 || lines > 2) {
+                            if (lines > 2) {
+                                short_content = match_replace_ioc(content_split.slice(0,2).join('<br/>'), reap);
+                                long_content = match_replace_ioc(content_split.slice(2).join('<br/>'), reap);
+                            } else {
+                                offset = content_parsed.slice(150).indexOf(' ');
+                                short_content = match_replace_ioc(content_parsed.slice(0, 150 + offset), reap);
+                                long_content = match_replace_ioc(content_parsed.slice(150 + offset), reap);
+                            }
+                            formatted_content = short_content + `<div class="collapse" id="collapseContent-`
+                                + evt.event_id + `">
+                                `+ long_content +`
+                            </div>
+                            <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-`
+                                + evt.event_id + `" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
                         } else {
-                            offset = content_parsed.slice(150).indexOf(' ');
-                            short_content = match_replace_ioc(content_parsed.slice(0, 150 + offset), reap);
-                            long_content = match_replace_ioc(content_parsed.slice(150 + offset), reap);
+                            formatted_content = match_replace_ioc(content_parsed, reap);
                         }
-                        formatted_content = short_content + `<div class="collapse" id="collapseContent-`
-                            + evt.event_id + `">
-                            `+ long_content +`
-                        </div>
-                        <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-`
-                            + evt.event_id + `" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
-                    } else {
-                        formatted_content = match_replace_ioc(content_parsed, reap);
                     }
 
                     shared_link = buildShareLink(evt.event_id);
-                    entry = `<li class="timeline-inverted" title="Event ID #`+ evt.event_id + `">
-                        ` + tmb_d + `
-                            <div class="timeline-panel `+ style +`" `+ style_s +` id="event_`+ evt.event_id + `" >
-                                <div class="timeline-heading">
-                                    <div class="btn-group dropdown float-right">
 
-                                        <button type="button" class="btn btn-light btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
-                                            <span class="btn-label">
-                                                <i class="fa fa-pen"></i>
-                                            </span>
-                                        </button>
-                                        <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                            <span class="btn-label">
-                                                <i class="fa fa-cog"></i>
-                                            </span>
-                                        </button>
-                                        <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                                <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                                                <div class="dropdown-divider"></div>
-                                                <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                    if (compact) {
+                        entry = `<li class="timeline-inverted `+ mtop_day +`" title="Event ID #`+ evt.event_id + `">
+                            ` + tmb_d + `
+                                <div class="timeline-panel `+ style +`" `+ style_s +` id="event_`+ evt.event_id + `" >
+                                    <div class="timeline-heading">
+                                        <div class="btn-group dropdown float-right">
+                                            ` + cats + `
+                                            <button type="button" class="btn btn-light btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
+                                                <span class="btn-label">
+                                                    <i class="fa fa-pen"></i>
+                                                </span>
+                                            </button>
+                                            <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                                <span class="btn-label">
+                                                    <i class="fa fa-cog"></i>
+                                                </span>
+                                            </button>
+                                            <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                    <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                                            </div>
+                                        </div>
+                                        <div class="collapsed" id="dropa_`+ evt.event_id +`" data-toggle="collapse" data-target="#drop_`+ evt.event_id +`" aria-expanded="false" aria-controls="drop_`+ evt.event_id +`" role="button" style="cursor: pointer;">
+                                            <span class="text-muted text-sm float-left mb--2"><small>`+ evt.event_date + `</small></span>
+                                            <a class="text-dark text-sm ml-3" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
                                         </div>
                                     </div>
-                                    <div class="row mb-2">
-                                        <a class="timeline-title" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
+                                    <div class="timeline-body text-faded" >
+                                        <div id="drop_`+ evt.event_id +`" class="collapse" aria-labelledby="dropa_`+ evt.event_id +`" style="">
+                                            <div class="card-body">
+                                                `+ content_parsed +`
+                                            </div>
+                                            <div class="bottom-hour mt-2">
+                                                <span class="float-right">`+ asset + tags +`</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="timeline-body text-faded" >
-                                    <span>` + formatted_content + `</span>
+                            </li>`
+                    } else {
+                        entry = `<li class="timeline-inverted" title="Event ID #`+ evt.event_id + `">
+                            ` + tmb_d + `
+                                <div class="timeline-panel `+ style +`" `+ style_s +` id="event_`+ evt.event_id + `" >
+                                    <div class="timeline-heading">
+                                        <div class="btn-group dropdown float-right">
+
+                                            <button type="button" class="btn btn-light btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
+                                                <span class="btn-label">
+                                                    <i class="fa fa-pen"></i>
+                                                </span>
+                                            </button>
+                                            <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                                <span class="btn-label">
+                                                    <i class="fa fa-cog"></i>
+                                                </span>
+                                            </button>
+                                            <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                    <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <a class="timeline-title" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-body text-faded" >
+                                        <span>` + formatted_content + `</span>
+                                    </div>
+                                    <div class="bottom-hour mt-2">
+                                        <span class="float-right">`+ asset + tags +`</span>
+                                        <span class="text-muted text-sm float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>`+ evt.event_date + ori_date + `</small></span>
+                                    <div>
                                 </div>
-                                <div class="bottom-hour mt-2">
-                                    <span class="float-right">`+ asset + tags +`</span>
-                                    <span class="text-muted text-sm float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>`+ evt.event_date + ori_date + `</small></span>
-                                <div>
-                            </div>
-                        </li>`
+                            </li>`
+                    }
                     is_i = false;
 
                     //entry = match_replace_ioc(entry, reap);
                     $('#timeline_list').append(entry);
 
-                }
 
+                }
                 //match_replace_ioc(data.data.iocs, "timeline_list");
                 $('[data-toggle="popover"]').popover();
 
