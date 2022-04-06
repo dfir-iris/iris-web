@@ -108,3 +108,20 @@ def update_user_view(caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@profile_blueprint.route('/user/theme/set/<theme>', methods=['GET'])
+@api_login_required
+def profile_set_theme(theme, caseid):
+    if theme not in ['dark', 'light']:
+        return response_error('Invalid data')
+
+    user = get_user(current_user.id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    user.in_dark_mode = (theme == 'dark')
+    db.session.commit()
+
+    return response_success('Theme changed')
+

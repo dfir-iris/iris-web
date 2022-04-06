@@ -23,6 +23,7 @@ from datetime import datetime
 from sqlalchemy import desc
 
 from app import db
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_tasks_state
 from app.models import CaseTasks, User, TaskStatus
 
@@ -80,6 +81,8 @@ def add_task(task, user_id, caseid):
     task.task_userid_update = user_id
     task.task_open_date = now
     task.task_last_update = now
+
+    task.custom_attributes = task.custom_attributes if task.custom_attributes else get_default_custom_attributes('task')
 
     update_task_status(task.task_status_id, task.id, caseid)
 

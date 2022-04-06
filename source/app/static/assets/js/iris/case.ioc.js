@@ -107,7 +107,8 @@ Table = $("#ioc_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
         tableFiltering(this.api());
-    }
+    },
+    select: true
 });
 $("#ioc_table").css("font-size", 12);
 
@@ -132,6 +133,13 @@ function add_ioc() {
 
             var data = $('#form_new_ioc').serializeObject();
             data['ioc_tags'] = $('#ioc_tags').val();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            data['custom_attributes'] = attributes;
 
             id = $('#ioc_id').val();
             $.ajax({
@@ -201,6 +209,7 @@ function get_case_ioc() {
                     jsdata = response.data;
                     Table.clear();
                     Table.rows.add(jsdata.ioc);
+
                     Table.columns.adjust().draw();
 
                     set_last_state(jsdata.state);
@@ -217,6 +226,7 @@ function get_case_ioc() {
                     $('#ioc_table_wrapper').show();
                     $('[data-toggle="popover"]').popover();
                     Table.columns.adjust().draw();
+                    load_menu_mod_options('ioc', Table);
 
                 } else {
                     Table.clear().draw();
@@ -235,7 +245,9 @@ function get_case_ioc() {
 /* Edit an ioc */
 function edit_ioc(ioc_id) {
     url = 'ioc/' + ioc_id + '/modal' + case_param();
-    $('#modal_add_ioc_content').load(url, function () {});
+    $('#modal_add_ioc_content').load(url, function () {
+        load_menu_mod_options_modal(ioc_id, 'ioc', $("#ioc_modal_quick_actions"));
+    });
     $('#modal_add_ioc').modal({ show: true });
 }
 
@@ -247,6 +259,13 @@ function update_ioc(ioc_id) {
 
     var data = $('#form_new_ioc').serializeObject();
     data['ioc_tags'] = $('#ioc_tags').val();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data['custom_attributes'] = attributes;
 
     $.ajax({
         url: 'ioc/update/' + ioc_id + case_param(),

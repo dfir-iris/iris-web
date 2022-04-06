@@ -3,8 +3,7 @@
 {% block title %} Case Tasks {% endblock title %}
 
 {% block stylesheets %}
-<link rel="stylesheet" href="/static/assets/css/suggestags.css">
-<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+{% include 'includes/header_case.html' %}
 {% endblock stylesheets %}
 
 {% block content %}
@@ -104,18 +103,10 @@
 {% endblock content %}
 
 {% block javascripts %}
-<script src="/static/assets/js/core/jquery.validate.js"></script>
-<script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
+{% include 'includes/footer_case.html' %}
 
 <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
-<script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
-<script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
-<script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
-
-<script src="/static/assets/js/iris/datatablesUtils.js"></script>
-<script src="/static/assets/js/iris/case.js"></script>
 <script src="/static/assets/js/iris/case.tasks.js"></script>
-<script>
-</script>
+
 
 {% endblock javascripts %}

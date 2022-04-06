@@ -4,6 +4,10 @@
 
 /* Onrefresh handler */
 function onRefresh() {
+    $("#update_pipeline_selector").selectpicker({
+        liveSearch: true,
+        style: "btn-outline-white"
+        })
     $("#update_pipeline_selector").selectpicker("val", "");
     $('#update_pipeline_selector').selectpicker("refresh");
     $(".control-update-pipeline-args ").hide();
@@ -12,6 +16,10 @@ function onRefresh() {
 window.onbeforeunload = onRefresh;
 
 /* Hide the args selectors */
+$("#update_pipeline_selector").selectpicker({
+    liveSearch: true,
+    style: "btn-outline-white"
+    })
 $('#update_pipeline_selector').selectpicker("refresh");
 $(".control-update-pipeline-args ").hide();
 $('.control-update-pipeline-'+ $('#update_pipeline_selector').val() ).show();
@@ -21,7 +29,7 @@ $('.control-update-pipeline-'+ $('#update_pipeline_selector').val() ).show();
 $('#case_customer').selectpicker({
     liveSearch: true,
     title: "Customer",
-    style: "Bootstrap 4: 'btn-outline-primary'"
+    style: "btn-outline-white"
 });
 
 $('#update_pipeline_selector').on('change', function(e){
@@ -38,6 +46,13 @@ function submit_new_case() {
     }
 
     var data_sent = $('form#form_new_case').serializeObject();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
 
     $.ajax({
         url: '/manage/cases/add' + case_param(),
@@ -79,7 +94,7 @@ function submit_new_case() {
                     switch (value) {
 
                         case "dash":
-                            window.location.replace("/" + case_param());
+                            window.location.replace("/dashboard" + case_param());
                             break;
 
                         case "again":
@@ -87,7 +102,7 @@ function submit_new_case() {
                             break;
 
                         default:
-                            window.location.replace("/" + case_param());
+                            window.location.replace("/dashboard" + case_param());
                     }
                 });
             } else {

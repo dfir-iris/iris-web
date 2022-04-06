@@ -1,40 +1,53 @@
 <div class="modal-header">
-    <h4>Edit registered file</h4>
-    <button type="button" class="mt--1 btn btn-sm float-right ml-3 btn-light btn-outline" onclick="copy_object_link({{rfile.id}});return false;" title="Copy shared link">
-        <span class="btn-label text-dark">
-            <i class="fa fa-share"></i>
-        </span>
-    </button>
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-            aria-hidden="true">&times;</span></button>
+    <h4 class="modal-title mt-2 mr-4">Edit registered file</h4>
+    {% if rfile.id %}
+    {% include 'modals/modal_attributes_nav.html' %}
+    <div class="row text-right">
+     <div class="dropdown">
+          <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+              <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+          </button>
+          <div class="dropdown-menu pull-right" id="evidence_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item" href="#" onclick='copy_object_link({{rfile.id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+          </div>
+     </div>
+    {% endif %}
+        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    </div>
 </div>
 <div class="modal-body">
-
-    <div class="container col-md-12">
-        <form method="post" action="" id="form_edit_rfile">
-            <div class="col-md-12 col-lg-12 col-sm-12">
-                <div class="form-group">
-                    <label for="rfile_filename" class="placeholder">Filename *</label>
-                    <input class="form-control" placeholder="Filename" id="filename" required name="filename" value="{{ rfile.filename }}"/>
+    <div role="tabpanel">
+          <div class="tab-content">
+                <div class="tab-pane active" id="details">
+                    <div class="container col-md-12">
+                        <form method="post" action="" id="form_edit_rfile">
+                            <div class="col-md-12 col-lg-12 col-sm-12">
+                                <div class="form-group">
+                                    <label for="rfile_filename" class="placeholder">Filename *</label>
+                                    <input class="form-control" placeholder="Filename" id="filename" required name="filename" value="{{ rfile.filename }}"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rfile_size" class="placeholder">File size (bytes) *</label>
+                                    <input class="form-control" placeholder="Size in bytes" id="file_size" name="file_size" value="{{ rfile.file_size }}"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rfile_hash" class="placeholder">File Hash</label>
+                                    <input class="form-control" placeholder="Hash" id="file_hash" name="file_hash" value="{{ rfile.file_hash }}"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rfile_desc" class="placeholder">File description</label>
+                                    <input class="form-control" placeholder="Description" id="file_description" name="file_description" value="{{ rfile.file_description }}"/>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="rfile_size" class="placeholder">File size (bytes) *</label>
-                    <input class="form-control" placeholder="Size in bytes" id="file_size" name="file_size" value="{{ rfile.file_size }}"/>
-                </div>
-                <div class="form-group">
-                    <label for="rfile_hash" class="placeholder">File Hash</label>
-                    <input class="form-control" placeholder="Hash" id="file_hash" name="file_hash" value="{{ rfile.file_hash }}"/>
-                </div>
-                <div class="form-group">
-                    <label for="rfile_desc" class="placeholder">File description</label>
-                    <input class="form-control" placeholder="Description" id="file_description" name="file_description" value="{{ rfile.file_description }}"/>
-                </div>
-
-            </div>
-                <button type="button" class="btn btn-outline-danger mt-5"
+              {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
+         <button type="button" class="btn btn-outline-danger mt-5"
                 onclick="delete_rfile('{{ rfile.id }}');">Delete</button>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
                 onclick="update_rfile('{{ rfile.id }}');" id="submit_new_rfiles">Update</button>
-        </form>
     </div>
 </div>

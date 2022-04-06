@@ -33,6 +33,7 @@ from app.datamgmt.case.case_notes_db import get_note, delete_note, add_note, upd
     get_group_details
 from app.datamgmt.states import get_notes_state
 from app.forms import CaseNoteForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseNoteSchema, CaseAddNoteSchema, CaseGroupNoteSchema
 from app.util import response_success, response_error, login_required, api_login_required
@@ -47,7 +48,7 @@ case_notes_blueprint = Blueprint('case_notes',
 @login_required
 def case_notes(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_notes.case_notes', cid=caseid))
+        return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
 
     form = FlaskForm()
     case = get_case(caseid)
@@ -80,7 +81,7 @@ def case_note_detail(cur_id, caseid):
 @login_required
 def case_note_detail_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_notes.case_notes', cid=caseid))
+        return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
 
     form = CaseNoteForm()
 
@@ -91,12 +92,14 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
         form.title = note.note_title
         form.note_title.render_kw = {"value": note.note_title}
 
-    return render_template("modal_note_edit.html", note=form, id=cur_id)
+    return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=note.custom_attributes)
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_note_delete(cur_id, caseid):
+
+    call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
 
     note = get_note(cur_id, caseid)
     if not note:
@@ -109,6 +112,8 @@ def case_note_delete(cur_id, caseid):
     except Exception as e:
         return response_error("Unable to remove note", data=e.__traceback__)
 
+    call_modules_hook('on_postload_note_delete', data=cur_id, caseid=caseid)
+
     track_activity("deleted note ID {}".format(cur_id), caseid=caseid)
     return response_success("Deleted")
 
@@ -120,11 +125,14 @@ def case_note_save(cur_id, caseid):
     try:
         # validate before saving
         addnote_schema = CaseAddNoteSchema()
-        jsdata = request.get_json()
-        addnote_schema.load(jsdata, partial=['group_id'])
 
-        note = update_note(note_content=jsdata.get('note_content'),
-                           note_title=jsdata.get('note_title'),
+        request_data = call_modules_hook('on_preload_note_update', data=request.get_json(), caseid=caseid)
+
+        request_data['note_id'] = cur_id
+        addnote_schema.load(request_data, partial=['group_id'])
+
+        note = update_note(note_content=request_data.get('note_content'),
+                           note_title=request_data.get('note_title'),
                            update_date=datetime.utcnow(),
                            user_id=current_user.id,
                            note_id=cur_id,
@@ -134,10 +142,12 @@ def case_note_save(cur_id, caseid):
 
             return response_error("Invalid note ID for this case")
 
+        note = call_modules_hook('on_postload_note_update', data=note, caseid=caseid)
+
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    track_activity("updated note {}".format(jsdata.get('note_title')), caseid=caseid)
+    track_activity("updated note {}".format(request_data.get('note_title')), caseid=caseid)
     return response_success("Note ID {} saved".format(cur_id), data=addnote_schema.dump(note))
 
 
@@ -147,16 +157,19 @@ def case_note_add(caseid):
     try:
         # validate before saving
         addnote_schema = CaseAddNoteSchema()
-        jsdata = request.get_json()
-        addnote_schema.verify_group_id(jsdata, caseid=caseid)
-        addnote_schema.load(jsdata)
+        request_data = call_modules_hook('on_preload_note_create', data=request.get_json(), caseid=caseid)
 
-        note = add_note(jsdata.get('note_title'),
+        addnote_schema.verify_group_id(request_data, caseid=caseid)
+        addnote_schema.load(request_data)
+
+        note = add_note(request_data.get('note_title'),
                         datetime.utcnow(),
                         current_user.id,
                         caseid,
-                        jsdata.get('group_id'),
-                        note_content=jsdata.get('note_content'))
+                        request_data.get('group_id'),
+                        note_content=request_data.get('note_content'))
+
+        note = call_modules_hook('on_postload_note_create', data=note, caseid=caseid)
 
         if note:
             casenote_schema = CaseNoteSchema()

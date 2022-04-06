@@ -23,6 +23,7 @@ import datetime
 from sqlalchemy import desc, and_
 
 from app import db
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_evidences_state
 from app.models import CaseReceivedFile, User
 
@@ -48,6 +49,8 @@ def add_rfile(evidence, caseid, user_id):
     evidence.date_added = datetime.datetime.now()
     evidence.case_id = caseid
     evidence.user_id = user_id
+
+    evidence.custom_attributes = get_default_custom_attributes('evidence')
 
     db.session.add(evidence)
 

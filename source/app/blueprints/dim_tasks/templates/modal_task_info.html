@@ -1,0 +1,27 @@
+
+<div class="container col-md-12">
+    <div class="form-group">
+    {% for element in data %}
+        {% if element != "Logs" %}
+        {% if data[element] != None %}
+          <div class="input-group">
+            <label for="en">{{ element }}: </label>
+            <span type="text" class="text-faded ml-1" id="en"> {{ data[element] }}</span>
+          </div>
+      {% endif %}
+      {% endif %}
+    {% endfor %}
+    </div>
+
+    {% if data['Logs'] %}
+        <div class="form-group mt--3">
+          <label>Logs</label>
+          <ul>
+            {% for log in data['Logs'] %}
+              <li>{{ log }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+    {% endif %}
+</div>
+

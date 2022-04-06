@@ -38,14 +38,15 @@ from app.blueprints.reports.reports_route import reports_blueprint
 from app.blueprints.search.search_routes import search_blueprint
 from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
-from app.blueprints.manage.manage_advanced_routes import manage_adv_blueprint
+from app.blueprints.manage.manage_srv_settings_routes import manage_srv_settings_blueprint
 from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.manage.manage_templates_routes import manage_templates_blueprint
+from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
 
-from app.blueprints.tasks.tasks_routes import tasks_blueprint
 from app.blueprints.context.context import ctx_blueprint
 from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.activities.activities_routes import activities_blueprint
+from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 
 from app.blueprints.api.api_routes import api_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
@@ -66,7 +67,7 @@ app.register_blueprint(profile_blueprint)
 app.register_blueprint(search_blueprint)
 app.register_blueprint(manage_cases_blueprint)
 app.register_blueprint(manage_assets_blueprint)
-app.register_blueprint(manage_adv_blueprint)
+app.register_blueprint(manage_srv_settings_blueprint)
 app.register_blueprint(manage_users_blueprint)
 app.register_blueprint(manage_templates_blueprint)
 app.register_blueprint(manage_modules_blueprint)
@@ -77,12 +78,13 @@ app.register_blueprint(manage_event_cat_blueprint)
 app.register_blueprint(manage_objects_blueprint)
 app.register_blueprint(manage_tlp_type_blueprint)
 app.register_blueprint(manage_task_status_blueprint)
+app.register_blueprint(manage_attributes_blueprint)
 
-app.register_blueprint(tasks_blueprint)
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
 app.register_blueprint(reports_blueprint)
 app.register_blueprint(activities_blueprint)
+app.register_blueprint(dim_tasks_blueprint)
 
 app.register_blueprint(api_blueprint)
 

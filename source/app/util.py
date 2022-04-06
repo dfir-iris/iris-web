@@ -195,9 +195,11 @@ def get_urlcase(request):
             js_d = request.get_json()
             if js_d:
                 caseid = js_d.get('cid')
+                print(caseid)
                 request.json.pop('cid')
             else:
                 caseid = current_user.ctx_case
+                redir = True
 
         except Exception as e:
             cookie_session = request.cookies.get('session')
@@ -209,12 +211,11 @@ def get_urlcase(request):
                 log.error(traceback.print_exc())
                 return True, None
 
-        redir = True
-
     case = get_case(caseid)
 
     if not case:
-        return True, None
+        log.warning('No case found. Using default case')
+        return True, 1
 
     if caseid != current_user.ctx_case:
         current_user.ctx_case = case.case_id
@@ -299,8 +300,8 @@ def api_login_required(f):
 
         else:
             redir, caseid = get_urlcase(request=request)
-            if not caseid:
-                return response_error("Invalid case ID", status=400)
+            if not caseid or redir:
+                return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
 
             return f(*args, **kwargs)
@@ -326,8 +327,8 @@ def api_admin_required(f):
 
         else:
             redir, caseid = get_urlcase(request=request)
-            if not caseid:
-                return response_error("Invalid case ID", status=400)
+            if not caseid or redir:
+                return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
 
             roles = [role.name for role in current_user.roles]

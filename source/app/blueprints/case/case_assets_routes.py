@@ -32,8 +32,10 @@ from app.datamgmt.case.case_assets_db import get_assets_types, delete_asset, get
     create_asset, get_analysis_status_list, get_linked_iocs_finfo_from_asset, get_asset_type_id
 from app.datamgmt.case.case_db import get_case, get_case_client_id
 from app.datamgmt.case.case_iocs_db import get_iocs
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_assets_state, update_assets_state
 from app.forms import ModalAddCaseAssetForm, AssetBasicForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 
 from app.iris_engine.utils.tracker import track_activity
 from app.models import AnalysisStatus, IocAssetLink, Ioc, IocLink
@@ -53,7 +55,7 @@ def case_assets(caseid, url_redir):
     :return: The HTML page of case assets
     """
     if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid))
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     form = ModalAddCaseAssetForm()
     # Get asset types from database
@@ -144,7 +146,7 @@ def autoload_asset(caseid):
 @login_required
 def add_asset_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid))
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     form = AssetBasicForm()
 
@@ -153,8 +155,9 @@ def add_asset_modal(caseid, url_redir):
 
     # Get IoCs from the case
     ioc = get_iocs(caseid)
+    attributes = get_default_custom_attributes('asset')
 
-    return render_template("modal_add_case_asset.html", form=form, asset=None, ioc=ioc)
+    return render_template("modal_add_case_asset.html", form=form, asset=None, ioc=ioc, attributes=attributes)
 
 
 @case_assets_blueprint.route('/case/assets/add', methods=['POST'])
@@ -164,16 +167,19 @@ def add_asset(caseid):
     try:
         # validate before saving
         add_asset_schema = CaseAssetsSchema()
-        jsdata = request.get_json()
-        asset = add_asset_schema.load(jsdata)
+        request_data = call_modules_hook('on_preload_asset_create', data=request.get_json(), caseid=caseid)
+
+        asset = add_asset_schema.load(request_data)
 
         asset = create_asset(asset=asset,
                              caseid=caseid,
                              user_id=current_user.id
                              )
 
-        if jsdata.get('ioc_links'):
-            set_ioc_links(jsdata.get('ioc_links'), asset.asset_id)
+        if request_data.get('ioc_links'):
+            set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
+
+        asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
         if asset:
             track_activity("added asset {}".format(asset.asset_name), caseid=caseid)
@@ -251,19 +257,22 @@ def case_upload_ioc(caseid):
 
             row['analysis_status_id'] = analysis_status_id
 
-            asset_sc = add_asset_schema.load(row)
+            request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
+            asset_sc = add_asset_schema.load(request_data)
 
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
                                  user_id=current_user.id
                                  )
 
+            asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
+
             if not asset:
                 errors.append(f"Unable to add asset for internal reason")
                 index += 1
                 continue
 
-            ret.append(row)
+            ret.append(request_data)
             track_activity(f"added asset {asset.asset_name}", caseid=caseid)
 
             index += 1
@@ -303,7 +312,7 @@ def asset_view(cur_id, caseid):
 @login_required
 def asset_view_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid))
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     # Get IoCs from the case
     case_iocs = get_iocs(caseid)
@@ -328,7 +337,7 @@ def asset_view_modal(cur_id, caseid, url_redir):
     form.asset_tags.render_kw = {'value': asset.asset_tags}
 
     return render_template("modal_add_case_asset.html", form=form, asset=asset, map={}, ioc=case_iocs,
-                           ioc_prefill=ioc_prefill)
+                           ioc_prefill=ioc_prefill, attributes=asset.custom_attributes)
 
 
 @case_assets_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
@@ -342,7 +351,11 @@ def asset_update(cur_id, caseid):
 
         # validate before saving
         add_asset_schema = CaseAssetsSchema()
-        asset_schema = add_asset_schema.load(request.get_json(), instance=asset)
+
+        request_data = call_modules_hook('on_preload_asset_update', data=request.get_json(), caseid=caseid)
+
+        request_data['asset_id'] = cur_id
+        asset_schema = add_asset_schema.load(request_data, instance=asset)
 
         update_assets_state(caseid=caseid)
         db.session.commit()
@@ -350,9 +363,11 @@ def asset_update(cur_id, caseid):
         if hasattr(asset_schema, 'ioc_links'):
             set_ioc_links(asset_schema.ioc_links, asset.asset_id)
 
-        if asset:
-            track_activity("updated asset {}".format(asset.asset_name), caseid=caseid)
-            return response_success("Updated asset {}".format(asset.asset_name), add_asset_schema.dump(asset))
+        asset_schema = call_modules_hook('on_postload_asset_update', data=asset_schema, caseid=caseid)
+
+        if asset_schema:
+            track_activity("updated asset {}".format(asset_schema.asset_name), caseid=caseid)
+            return response_success("Updated asset {}".format(asset_schema.asset_name), add_asset_schema.dump(asset_schema))
 
         return response_error("Unable to update asset for internal reasons")
 
@@ -364,12 +379,16 @@ def asset_update(cur_id, caseid):
 @api_login_required
 def asset_delete(cur_id, caseid):
 
+    call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
+
     asset = get_asset(cur_id, caseid)
     if not asset:
         return response_error("Invalid asset ID for this case")
 
     # Deletes an asset and the potential links with the IoCs from the database
     delete_asset(cur_id, caseid)
+
+    call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
 
     track_activity("removed asset ID {}".format(cur_id), caseid=caseid)
 

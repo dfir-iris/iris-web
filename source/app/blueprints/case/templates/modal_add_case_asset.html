@@ -1,99 +1,109 @@
 <div class="modal-header">
-    <h4>{{ "Asset {}".format(asset.asset_name) if asset.asset_name else "Add asset" }}</h4>
-    {% if asset.asset_id %}
-        <button type="button" class="mt--1 btn btn-sm float-right ml-3 btn-light btn-outline" onclick="copy_object_link({{asset.asset_id}});return false;" title="Copy shared link">
-            <span class="btn-label text-dark">
-                <i class="fa fa-share"></i>
-            </span>
-        </button>
-        {% endif %}
-
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-            aria-hidden="true">&times;</span></button>
+    <h4 class="modal-title mt-2 mr-4">{{ "Asset {}".format(asset.asset_name) if asset.asset_name else "Add asset" }}</h4>
+    {% include 'modals/modal_attributes_nav.html' %}
+    <div class="row text-right">
+        {% if asset.asset_id %}
+             <div class="dropdown">
+                  <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                      <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                  </button>
+                  <div class="dropdown-menu pull-right" id="asset_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                      <a class="dropdown-item" href="#" onclick='copy_object_link({{asset.asset_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                  </div>
+             </div>
+            {% endif %}
+        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    </div>
 </div>
 <div class="modal-body">
+    <div role="tabpanel">
+          <div class="tab-content">
+                <div class="tab-pane active" id="details">
+                    <div class="container col-md-12">
+                        <form method="post" action="" id="form_new_asset">
+                            <div class="col-md-12 col-lg-12 col-sm-12">
+                                {{ form.hidden_tag() }}
+                                <div class="form-group row">
+                                    <div class="col">
+                                        <label for="name" class="placeholder">Asset Name *</label>
+                                        {{ form.asset_name(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="col">
+                                        <label for="asset_type" class="placeholder">Asset Type *</label>
+                                        {{ form.asset_type_id(class="selectpicker pl--6  col-md-12") }}
+                                    </div>
+                                </div>
 
-    <div class="container col-md-12">
-        <div class="row mb-4">
+                                <div class="form-group">
+                                        <label for="asset_description" class="placeholder">Description</label>
+                                        {{ form.asset_description(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                                <label for="asset_domain" class="placeholder">Domain</label>
+                                                {{ form.asset_domain(class='form-control',  autocomplete="off") }}
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                                <label for="asset_ip" class="placeholder">IP</label>
+                                                {{ form.asset_ip(class='form-control',  autocomplete="off") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <a class="btn btn-outline-white btn-sm" data-toggle="collapse" href="#collapseAddInfo" role="button" aria-expanded="false" aria-controls="collapseAddInfo">> Additional information</a>
+                                    <div class="collapse" id="collapseAddInfo">
+                                        <div class="card card-body">
+                                        <label for="asset_info" class="placeholder">Additional information</label>
+                                        {{ form.asset_info(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-6">
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                {{ form.asset_compromised(class="form-check-input", type="checkbox") }}
+                                                <span class="form-check-sign"> Is Compromised
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="analysis_status_id" class="placeholder">Analysis Status</label>
+                                        {{ form.analysis_status_id(class="selectpicker pl--6  col-md-12") }}
+                                    </div>
+                                </div>
+                                <div class="form-group mt-3">
+                                    <label for="asset_tags">Asset tags
+                                    </label>
+                                    <input type="text" id="asset_tags"
+                                        class="form-control col-md-12" {% if asset.asset_tags %} value="{{ asset.asset_tags }}" {% endif %}/>
+                                </div>
+                                <div class="form-group" data-select2-id="7">
+                                    <label>Linked IOC</label>
+                                    <div class="select2-input ml-12" data-select2-id="6">
+                                        <select id="ioc_links" name="ioc_links" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="ioc_links" tabindex="-1" aria-hidden="true" style="width: 100%">
 
-        </div>
-        <form method="post" action="" id="form_new_asset">
-            <div class="col-md-12 col-lg-12 col-sm-12">
-                {{ form.hidden_tag() }}
-                <div class="form-group row">
-                    <div class="col">
-                        <label for="name" class="placeholder">Asset Name *</label>
-                        {{ form.asset_name(class='form-control',  autocomplete="off") }}
-                    </div>
-                    <div class="col">
-                        <label for="asset_type" class="placeholder">Asset Type *</label>
-                        {{ form.asset_type_id(class="selectpicker pl--6  col-md-12") }}
-                    </div>
-                </div>
+                                        </select>
+                                    </div>
+                                </div>
 
-                <div class="form-group">
-                        <label for="asset_description" class="placeholder">Description</label>
-                        {{ form.asset_description(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
-                </div>
-                <div class="form-group row">
-                    <div class="col">
-                        <div class="form-group">
-                                <label for="asset_domain" class="placeholder">Domain</label>
-                                {{ form.asset_domain(class='form-control',  autocomplete="off") }}
-                        </div>
+                            </div>
+                        </form>
                     </div>
-                    <div class="col">
-                        <div class="form-group">
-                                <label for="asset_ip" class="placeholder">IP</label>
-                                {{ form.asset_ip(class='form-control',  autocomplete="off") }}
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseAddInfo" role="button" aria-expanded="false" aria-controls="collapseAddInfo">> Additional information</a>
-                    <div class="collapse" id="collapseAddInfo">
-                        <div class="card card-body">
-                        <label for="asset_info" class="placeholder">Additional information</label>
-                        {{ form.asset_info(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="form-group col-6">
-                        <div class="form-check">
-                            <label class="form-check-label">
-                                {{ form.asset_compromised(class="form-check-input", type="checkbox") }}
-                                <span class="form-check-sign"> Is Compromised
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="form-group col-6">
-                        <label for="analysis_status_id" class="placeholder">Analysis Status</label>
-                        {{ form.analysis_status_id(class="selectpicker pl--6  col-md-12") }}
-                    </div>
-                </div>
-                <div class="form-group mt-3">
-                    <label for="asset_tags">Asset tags
-                    </label>
-                    <input type="text" id="asset_tags"
-                        class="form-control col-md-12" {% if asset.asset_tags %} value="{{ asset.asset_tags }}" {% endif %}/>
-                </div>
-                <div class="form-group" data-select2-id="7">
-                    <label>Linked IOC</label>
-                    <div class="select2-input ml-12" data-select2-id="6">
-                        <select id="ioc_links" name="ioc_links" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="ioc_links" tabindex="-1" aria-hidden="true" style="width: 100%">
 
-                        </select>
-                    </div>
                 </div>
-            </div>
-            {% if asset.asset_id %}
-                <button type="button" class="btn btn-outline-danger ml-4 mt-5"
-                onclick="delete_asset({{ asset.asset_id }});">Delete</button>
-            {% endif %}
-            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  id="submit_new_asset">Save</button>
-        </form>
+               {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
+        {% if asset.asset_id %}
+            <button type="button" class="btn btn-outline-danger ml-4 mt-5"
+            onclick="delete_asset({{ asset.asset_id }});">Delete</button>
+        {% endif %}
+        <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  id="submit_new_asset">Save</button>
     </div>
 </div>
     <script>
@@ -105,13 +115,13 @@
     $('#asset_type_id').selectpicker({
         liveSearch: true,
         title: "None",
-        style: "Bootstrap 4: 'btn-outline-primary'",
+        style: "btn-outline-white",
 
     });
     $('#analysis_status_id').selectpicker({
         liveSearch: true,
         title: "None",
-        style: "Bootstrap 4: 'btn-outline-primary'"
+        style: "btn-outline-white"
     });
     $('#analysis_status_id').selectpicker('val', '1');
     </script>
@@ -134,7 +144,7 @@
             {% for e in ioc %}
                 {
                     id: {{ e.ioc_id }},
-                    text: "{{ e.ioc_value }}"
+                    text: {{ e.ioc_value| tojson }}
                 },
             {% endfor %}
         ];

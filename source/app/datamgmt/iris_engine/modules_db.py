@@ -23,7 +23,7 @@ import datetime
 from flask_login import current_user
 
 from app import db
-from app.models import IrisModule, User
+from app.models import IrisModule, User, IrisModuleHook, IrisHook
 
 
 def iris_module_exists(module_name):
@@ -31,7 +31,7 @@ def iris_module_exists(module_name):
 
 
 def iris_module_add(module_name, module_human_name, module_description,
-                    module_version, interface_version, has_pipeline, pipeline_args, module_config):
+                    module_version, interface_version, has_pipeline, pipeline_args, module_config, module_type):
     im = IrisModule()
     im.module_name = module_name
     im.module_human_name = module_human_name
@@ -42,34 +42,46 @@ def iris_module_add(module_name, module_human_name, module_description,
     im.has_pipeline = has_pipeline
     im.pipeline_args = pipeline_args
     im.module_config = module_config
-    im.added_by_id = current_user.id
+    im.added_by_id = current_user.id if current_user else User.query.first().id
     im.is_active = True
+    im.module_type = module_type
 
-    db.session.add(im)
-    db.session.commit()
+    try:
+        db.session.add(im)
+        db.session.commit()
+    except Exception:
+        return None
 
-    return True
+    return im.id
 
 
 def is_mod_configured(mod_config):
     for config in mod_config:
         if config['mandatory'] and ("value" not in config or config["value"] == ""):
-            print(config)
             return False
 
     return True
 
 
-def iris_module_save_parameter(mod_id, mod_config, parameter, value):
+def iris_module_save_parameter(mod_id, mod_config, parameter, value, section=None):
     data = IrisModule.query.filter(IrisModule.id == mod_id).first()
     if data:
         index = 0
         for config in mod_config:
             if config['param_name'] == parameter:
+                if config['type'] == "bool":
+                    if isinstance(value, str):
+                        value = bool(value.lower() == "true")
+                    elif isinstance(value, bool):
+                        value = bool(value)
+                    else:
+                        value = False
+
                 mod_config[index]["value"] = value
                 data.module_config = mod_config
                 db.session.commit()
                 return True
+
             index += 1
 
     return False
@@ -122,12 +134,13 @@ def get_module_from_id(module_id):
 def get_module_config_from_id(module_id):
     data = IrisModule.query.with_entities(
         IrisModule.module_config,
-        IrisModule.module_human_name
+        IrisModule.module_human_name,
+        IrisModule.module_name
     ).filter(
         IrisModule.id == module_id
     ).first()
 
-    return data.module_config, data.module_human_name
+    return data.module_config, data.module_human_name, data.module_name
 
 
 def get_module_config_from_name(module_name):
@@ -165,6 +178,11 @@ def get_pipelines_args_from_name(module_name):
 
 
 def delete_module_from_id(module_id):
+    IrisModuleHook.query.filter(
+        IrisModuleHook.module_id == module_id
+    ).delete()
+    db.session.commit()
+
     IrisModule.query.filter(IrisModule.id == module_id).delete()
     db.session.commit()
     return True
@@ -178,3 +196,26 @@ def modules_list_pipelines():
         IrisModule.module_name,
         IrisModule.pipeline_args
     ).all()
+
+
+def module_list_hooks_view():
+    return IrisModuleHook.query.with_entities(
+        IrisModuleHook.id,
+        IrisModule.module_name,
+        IrisModule.is_active,
+        IrisHook.hook_name,
+        IrisHook.hook_description,
+        IrisModuleHook.is_manual_hook
+    ).join(
+        IrisModuleHook.module,
+        IrisModuleHook.hook
+    ).all()
+
+
+def module_list_available_hooks():
+    return IrisHook.query.with_entities(
+        IrisHook.id,
+        IrisHook.hook_name,
+        IrisHook.hook_description
+    ).all()
+

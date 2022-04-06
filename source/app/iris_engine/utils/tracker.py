@@ -21,6 +21,7 @@
 
 # IMPORTS ------------------------------------------------
 from datetime import datetime
+from flask import request
 
 from flask_login import current_user
 
@@ -58,6 +59,8 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False):
     log.info(ua.activity_desc)
 
     ua.user_input = user_input
+
+    ua.is_from_api = (request.cookies.get('session') is None if request else False)
 
     db.session.add(ua)
     db.session.commit()

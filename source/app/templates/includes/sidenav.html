@@ -58,7 +58,7 @@
 							</a>
 						</li>
 						<li class="nav-item">
-							<a href="/search">
+							<a href="/search?cid={{case_name[2]}}">
 								<i class="flaticon-search-2"></i>
 								<span class="sub-item">Search</span>
 							</a>
@@ -67,6 +67,12 @@
 							<a href="/activities?cid={{case_name[2]}}">
 								<i class="flaticon-list"></i>
 								<span class="sub-item">Activities</span>
+							</a>
+						</li>
+						<li class="nav-item">
+							<a href="/dim/tasks?cid={{case_name[2]}}">
+								<i class="flaticon-web-1"></i>
+								<span class="sub-item">DIM Tasks</span>
 							</a>
 						</li>
 						<li class="nav-section">
@@ -83,41 +89,53 @@
 						</li>
 						{% if current_user.is_admin() %}
 						<li class="nav-item submenu">
-							<a data-toggle="collapse" href="#email-nav" class="" aria-expanded="false">
+							<a data-toggle="collapse" href="#advanced-nav" class="" aria-expanded="false">
 								<i class="flaticon-interface-3"></i>
 								<p>Advanced</p>
 								<span class="caret"></span>
 							</a>
-							<div class="collapse" id="email-nav" style="">
+							<div class="collapse" id="advanced-nav" style="">
 								<ul class="nav nav-collapse">
-									<li>
+									<li class="nav-subitem">
 										<a href="/manage/modules?cid={{case_name[2]}}">
 											<i class="fas fa-cubes"></i>
 											<p>Modules</p>
 										</a>
 									</li>
-									<li>
+									<li class="nav-subitem">
 										<a href="/manage/customers?cid={{case_name[2]}}">
 											<i class="flaticon-desk"></i>
 											<p>Customers</p>
 										</a>
 									</li>
-									<li>
+									<li class="nav-subitem">
 										<a href="/manage/objects?cid={{case_name[2]}}">
 											<i class="flaticon-box-2"></i>
 											<p>Case Objects</p>
 										</a>
 									</li>
-									<li>
+									<li class="nav-subitem">
+										<a href="/manage/attributes?cid={{case_name[2]}}">
+											<i class="flaticon-list"></i>
+											<p>Objects Attributes</p>
+										</a>
+									</li>
+									<li class="nav-subitem">
 										<a href="/manage/templates?cid={{case_name[2]}}">
 											<i class="fas fa-file-code"></i>
 											<p>Templates</p>
 										</a>
 									</li>
-									<li>
+									<li class="nav-subitem">
 										<a href="/manage/users?cid={{case_name[2]}}">
 											<i class="flaticon-user"></i>
 											<p>Users</p>
+										</a>
+									</li>
+									<li class="nav-subitem">
+										<a href="/manage/settings?cid={{case_name[2]}}">
+											<i class="flaticon-settings"></i>
+											<p>Server settings</p>
 										</a>
 									</li>
 								</ul>

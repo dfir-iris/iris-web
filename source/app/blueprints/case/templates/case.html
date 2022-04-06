@@ -1,18 +1,29 @@
-{% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %} {% block stylesheets %} {% endblock stylesheets %} {% block content %} {% if current_user.is_authenticated %}
+{% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %} {% block stylesheets %} {% endblock stylesheets %} {% block content %}
+{% if current_user.is_authenticated %}
 
 {% if case.close_date %}
-<div class="panel-header bg-close-gradient">
 {% else %}
 <div class="panel-header bg-info-gradient">
 {% endif %}
     <div class="page-inner py-5">
         <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
             <div>
-                <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-3"></i> {{ case.name|unquote }}</h2>
+                <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-3"></i> {{ case.name|unquote }}
+                </h2>
                 <h5 class="text-white op-7 mb-2">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
                 {% if case.close_date %}
                 <h5 class="text-warning  mb-2">Closed on {{ case.close_date }}</h5>
                 {% endif %}
+                <small><a href="#" onclick="case_detail({{ case.case_id }});" class="btn btn-sm btn-outline-light btn-rounded float-left">
+                  Case info
+                    </a></small>
+                <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-light btn-rounded float-left ml-2" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                          <span aria-hidden="true">Processors</span>
+                      </button>
+                      <div class="dropdown-menu pull-right" id="case_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                      </div>
+                 </div>
             </div>
             <div class="ml-md-auto py-2 py-md-0">
                 <h5 class="text-white op-7 mb-2 ">Customer : {{ case.client.name }}</h5>
@@ -23,7 +34,7 @@
                   </span>
                   Activity report
                 </a>
-                <a href="#" onclick="report_template_selector();" class="btn btn-sm btn-light btn-rounded btn-border float-right mt-2">
+                <a href="#" onclick="report_template_selector();" class="btn btn-sm btn-white btn-rounded btn-border float-right mt-2">
                   <span class="btn-label">
                     <i class="fa fa-plus"></i>
                   </span>
@@ -64,11 +75,8 @@
                         <div class="row">
                             <div class="col-md-6" id="container_editor_summary">
                                 <div style="display: none" id="fetched_crc"></div>
-                                <div id="editor_summary"></div>
+                                <div id="editor_summary" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
                                 <textarea id="case_summary" rows="10" cols="82" style="display: none"></textarea>
-                                <!--<div class="row">
-                                    <button type="submit" class="btn btn-outline-success ml-4 mt-5" id="submit_new_rule">Save</button>
-                                </div>-->
                             </div>
                             <div class="col-md-6" id="ctrd_casesum">
                                 <div id="targetDiv"></div>
@@ -132,6 +140,13 @@
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div>
+<div class="modal" tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
+    <div class="modal-xl modal-dialog" role="document">
+        <div class="modal-content" id="info_case_modal_content">
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
 {% endif %} {% endblock content %} {% block javascripts %}
 
 <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -146,6 +161,7 @@
 <script>
     var is_db_linked = {{ 1 if case.name else 0 }};
     $('#modal_select_report').selectpicker();
+    load_menu_mod_options_modal([{{case.case_id}}], 'case', $("#case_modal_quick_actions"));
 </script>
 
 {% endblock javascripts %}

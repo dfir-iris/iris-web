@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import traceback
 
 from flask import Blueprint
 from flask import render_template, request, url_for, redirect
@@ -27,6 +28,7 @@ from marshmallow import ValidationError
 from app.datamgmt.client.client_db import get_client_list, get_client, update_client, create_client, delete_client, \
     get_client_api
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException, ElementInUseException
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.forms import AddCustomerForm
 from app.iris_engine.utils.tracker import track_activity
 from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
@@ -85,7 +87,8 @@ def view_customer_modal(cur_id, caseid, url_redir):
 
     form.customer_name.render_kw = {'value': customer.name}
 
-    return render_template("modal_add_customer.html", form=form, customer=customer)
+    return render_template("modal_add_customer.html", form=form, customer=customer,
+                           attributes=customer.custom_attributes)
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>', methods=['POST'])
@@ -95,7 +98,7 @@ def view_customers(cur_id, caseid):
         return response_error("Invalid request")
 
     try:
-        client = update_client(cur_id, request.json.get('customer_name'))
+        client = update_client(cur_id, request.json)
 
     except ElementNotFoundException:
         return response_error('Invalid Customer ID')
@@ -103,8 +106,9 @@ def view_customers(cur_id, caseid):
     except ValidationError as e:
         return response_error("", data=e.messages)
 
-    except Exception:
-        return response_error('An error occurred during Customer update ...')
+    except Exception as e:
+        print(traceback.format_exc())
+        return response_error(f'An error occurred during Customer update. {e}')
 
     client_schema = CustomerSchema()
     return response_success("Customer updated", client_schema.dump(client))
@@ -116,8 +120,8 @@ def add_customers_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
     form = AddCustomerForm()
-
-    return render_template("modal_add_customer.html", form=form, customer=None)
+    attributes = get_default_custom_attributes('client')
+    return render_template("modal_add_customer.html", form=form, customer=None, attributes=attributes)
 
 
 @manage_customers_blueprint.route('/manage/customers/add', methods=['POST'])
@@ -127,11 +131,12 @@ def add_customers(caseid):
         return response_error("Invalid request")
 
     try:
-        client = create_client(request.json.get('customer_name'))
+        client = create_client(request.json)
     except ValidationError as e:
         return response_error(msg='Error adding customer', data=e.messages, status=400)
-    except Exception:
-        return response_error('An error occurred during customer addition')
+    except Exception as e:
+        print(traceback.format_exc())
+        return response_error(f'An error occurred during customer addition. {e}')
 
     track_activity(f"Added customer {client.name}", caseid=caseid, ctx_less=True)
 

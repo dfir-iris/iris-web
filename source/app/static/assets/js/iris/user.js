@@ -79,3 +79,28 @@ function update_password(user_id) {
     $('#modal_pwd_user_content').load(url, function () {});
     $('#modal_pwd_user').modal({ show: true });
 }
+
+
+$('input[type=radio][name=iris-theme]').change(function() {
+    if (this.value == 'false') {
+        theme = 'light'
+    }
+    else if (this.value == 'true') {
+        theme = 'dark';
+    } else {
+        return;
+    }
+    $.ajax({
+        url: 'theme/set/'+ theme + case_param(),
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+            if (data.status == 'success') {
+                location.reload(true);
+            }
+        },
+        error: function (error) {
+            notify_error(error.responseJSON.message);
+        }
+    });
+});

@@ -71,15 +71,15 @@ def manage_report_templates(caseid, url_redir):
 @manage_templates_blueprint.route('/manage/templates/list')
 @api_admin_required
 def report_templates_list(caseid):
-    # Get all assets
+    # Get all templates
     templates = CaseTemplateReport.query.with_entities(
         CaseTemplateReport.name,
         CaseTemplateReport.description,
         CaseTemplateReport.naming_format,
         CaseTemplateReport.date_created,
-        User.name,
+        User.name.label('created_by'),
         Languages.code,
-        ReportType.name,
+        ReportType.name.label('type_name'),
         CaseTemplateReport.id
     ).join(
         CaseTemplateReport.created_by_user,
@@ -87,8 +87,10 @@ def report_templates_list(caseid):
         CaseTemplateReport.report_type
     ).all()
 
+    data = [row._asdict() for row in templates]
+
     # Return the assets
-    return response_success("", data=templates)
+    return response_success("", data=data)
 
 
 @manage_templates_blueprint.route('/manage/templates/add', methods=['GET', 'POST'])

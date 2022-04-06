@@ -131,6 +131,7 @@ function add_remote_note(group_id) {
         var data = Object();
         data['note_title'] = "Untitled note";
         data['note_content'] = "## Edit me with the right pencil button";
+
         data['group_id'] = group_id;
         data['csrf_token'] = $('#csrf_token').val();
         $.ajax({
@@ -339,7 +340,12 @@ function note_detail(id) {
                 autoScrollEditorIntoView: true,
                 minLines: 4
             });
-        editor.setTheme("ace/theme/tomorrow");
+
+        if ($("#editor_detail").attr("data-theme") != "dark") {
+            editor.setTheme("ace/theme/tomorrow");
+        } else {
+            editor.setTheme("ace/theme/tomorrow_night");
+        }
         editor.session.setMode("ace/mode/markdown");
         editor.renderer.setShowGutter(true);
         editor.setOption("showLineNumbers", true);
@@ -385,7 +391,7 @@ function note_detail(id) {
         target.innerHTML = html;
 
         edit_innote();
-
+        load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
         $('#modal_note_detail').modal({ show: true, backdrop: 'static', keyboard: false });
     });
 }
@@ -431,6 +437,13 @@ function save_note(this_item) {
 
     var data_sent = $('#form_note').serializeObject();
     data_sent['note_content'] = $('#note_content').val();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
 
     $.ajax({
         url: '/case/notes/update/'+ n_id + case_param(),

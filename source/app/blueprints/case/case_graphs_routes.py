@@ -39,7 +39,7 @@ case_graph_blueprint = Blueprint('case_graph',
 @login_required
 def case_graph(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_graph.case_graph', cid=caseid))
+        return redirect(url_for('case_graph.case_graph', cid=caseid, redirect=True))
 
     case = get_case(caseid)
     form = FlaskForm()
@@ -67,7 +67,19 @@ def case_graph_get_data(caseid):
         img = ""
         is_master_atype = False
 
-        if 'computer' in atype:
+        if 'windows - server' in atype:
+            img = 'windows_server.png'
+            is_master_atype = True
+
+        elif 'windows - computer' in atype:
+            img = 'windows_desktop.png'
+            is_master_atype = True
+
+        elif 'windows - dc' in atype:
+            img = 'windows_server.png'
+            is_master_atype = True
+
+        elif 'computer' in atype:
             img = 'desktop.png'
             is_master_atype = True
 
@@ -78,13 +90,6 @@ def case_graph_get_data(caseid):
         elif 'domain controller' in atype:
             img = 'windows_server.png'
             is_master_atype = True
-
-        elif 'windows - dc' in atype:
-            img = 'windows_server.png'
-            is_master_atype = True
-
-        elif 'windows' in atype:
-            img = "windows_{}".format(img)
 
         elif 'account' in atype:
             img = 'user.png'

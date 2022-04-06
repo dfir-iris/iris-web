@@ -17,11 +17,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
 
 from sqlalchemy import and_
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.datamgmt.states import update_ioc_state
-from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType
+from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType, CustomAttribute
 from app import db
 
 
@@ -236,3 +238,4 @@ def get_tlps_dict():
     for tlp in Tlp.query.all():
         tlpDict[tlp.tlp_name]=tlp.tlp_id 
     return tlpDict
+

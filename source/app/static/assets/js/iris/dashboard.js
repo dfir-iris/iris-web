@@ -23,53 +23,14 @@ $('#form_new_customer').submit(function () {
 
 
 $(document).ready(function() {
-    update_tasks_list();
     update_gtasks_list();
     update_utasks_list();
     setInterval(check_page_update,30000);
 });
 
 function check_page_update(){
-    update_tasks_list();
     update_gtasks_list();
     update_utasks_list();
-}
-
-function update_tasks_list() {
-    $(this).toggleClass("down");
-    $.ajax({
-        url: '/tasks' + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                content = jsdata.data;
-                $("#task_feed").empty();
-                for (index in content) {
-                    if(content[index].state == 'progress') {
-                        item_cat = "warning";
-                    } else if(content[index].state == 'success') {
-                            item_cat = "success";
-                    } else {
-                            item_cat = "danger";
-                    }
-
-                    $("#task_feed").append("<li class='feed-item feed-item-" + item_cat + "'>" +
-                        "<time class='date' datetime='9-25'>" + content[index].date + "</time>" +
-                        "<span class='text'>"+ content[index].human_data + " - <a href='#' onclick=\"task_status('"+ content[index].task_id +"');\">Details</a></span>" +
-                        "</li>"
-                    )
-                }
-                $('#feed_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
-            } else {
-                $('#modal_customer_message').text(jsdata.message);
-            }
-        },
-        error: function (error) {
-            notify_error(error);
-        }
-    });
 }
 
 function task_status(id) {
@@ -172,7 +133,8 @@ UserTaskTable = $("#utasks_table").DataTable({
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    ]
+    ],
+    select: true
 });
 $("#utasks_table").css("font-size", 12);
 
@@ -225,6 +187,7 @@ function update_utasks_list() {
                     UserTaskTable.columns.adjust().draw();
                     UserTaskTable.buttons().container().appendTo($('#utasks_table_info'));
                        $('[data-toggle="popover"]').popover();
+
                     $('#utasks_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
                 }
 
@@ -351,7 +314,8 @@ Table = $("#gtasks_table").DataTable({
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    ]
+    ],
+    select: true
 });
 $("#gtasks_table").css("font-size", 12);
 
@@ -501,6 +465,8 @@ function update_gtasks_list() {
                     Table.columns.adjust().draw();
                     Table.buttons().container().appendTo($('#gtasks_table_info'));
                        $('[data-toggle="popover"]').popover();
+
+                    load_menu_mod_options('global_task', Table);
                     $('#tasks_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
                 }
 

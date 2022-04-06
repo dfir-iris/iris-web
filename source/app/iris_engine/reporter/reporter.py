@@ -26,145 +26,20 @@
 import logging as log
 import os
 from datetime import datetime
-
+from docx_generator.docx_generator import DocxGenerator
+from docx_generator.exceptions import rendering_error
 from flask_login import current_user
-from sqlalchemy import create_engine, text, and_, or_, desc
+from sqlalchemy import desc
 
 from app import app
 from app.datamgmt.activities.activities_db import get_auto_activities, get_manual_activities
-from app.datamgmt.reporter.report_db import export_case_json
-from app.iris_engine.connectors.misp4iris import Misp4Iris
-from app.models import CasesDatum, HashLink, FileContentHash, FileName, PathName, CasesEvent, IocLink, Ioc, \
-    IocAssetLink, CaseAssets, AssetsType, CaseEventsAssets, CaseReceivedFile, CaseTemplateReport
-from app.util import task_success, task_failure
 from app.datamgmt.case.case_db import case_get_desc_crc
-
-from docx_generator.docx_generator import DocxGenerator
-from docx_generator.exceptions import rendering_error
+from app.datamgmt.reporter.report_db import export_case_json
+from app.models import CasesEvent, IocLink, Ioc, \
+    IocAssetLink, CaseAssets, AssetsType, CaseEventsAssets, CaseReceivedFile, CaseTemplateReport
 
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)
-
-
-class IrisReporter(object):
-    def __init__(self, task_self, task_args):
-        self._case_id = task_args.get('case_id')
-        self._case_name = task_args['case_name']
-        self._user = task_args.get('user')
-        self.task = task_self
-        self._logger = log.getLogger(self.__str__())
-        self.message_queue = []
-        handler = QueuingHandler(message_queue=self.message_queue,
-                                 level=log.INFO,
-                                 task_self=task_self
-                                 )
-        formatter = log.Formatter(LOG_FORMAT)
-        handler.setFormatter(formatter)
-        self._logger.addHandler(handler)
-        self._report = {}
-
-    def _ret_task_success(self, data=None):
-        """
-        Return a comprehensive success response to the task manager
-        :param data: Data containing the JSON report
-        :return: JSON task response
-        """
-        return task_success(
-            user=self._user,
-            case_name=self._case_name,
-            logs=list(self.message_queue),
-            data=data
-        )
-
-    def _ret_task_failure(self, data=None):
-        """
-        Return a comprehensive response failure to the task manager
-        :param data: Data containing the JSON report
-        :return: JSON task response
-        """
-        return task_failure(
-            user=self._user,
-            case_name=self._case_name,
-            logs=list(self.message_queue),
-            data=data
-        )
-
-    def make_report(self):
-        """
-        Start the actual creation of the report
-        :return:
-        """
-        # self._report['computers'] = self._get_case_computers()
-        # self._report['vt_detection'] = self._get_vt_detection()
-        self._report['misp_detection'] = self._get_misp_matches()
-
-        return self._report
-
-    def _get_vt_detection(self):
-        """
-        Search for low VT score and tagged malware
-        :return:
-        """
-        res = CasesDatum.query \
-            .with_entities(
-                FileName.filename,
-                PathName.path,
-                FileContentHash.vt_score,
-                FileContentHash.flag,
-                FileContentHash.comment,
-                FileContentHash.seen_count,
-                FileContentHash.vt_url
-        ).filter(
-            and_(
-                or_(
-                    FileContentHash.vt_score >= 3.0,
-                    FileContentHash.flag == "1",
-                    FileContentHash.flag == "2"
-                ),
-                CasesDatum.case_id == self._case_id
-            )
-        ).join(CasesDatum.hash_link, HashLink.file_content_hash, HashLink.file_name, HashLink.path_name)
-
-        data = [row._asdict() for row in res]
-
-        return data
-
-    def _get_misp_matches(self):
-        """
-        For every hashs linked to the case, look for it in MISP and report
-        :return:
-        """
-        # Create an instance of MISP
-        m4i = Misp4Iris()
-        exec_res = {}
-
-        # Get the
-        res = CasesDatum.query \
-            .with_entities(
-                FileName.filename,
-                PathName.path,
-                FileContentHash.content_hash
-        ).filter(
-            CasesDatum.case_id == self._case_id
-        ).join(CasesDatum.hash_link, HashLink.file_content_hash, HashLink.file_name,
-               HashLink.path_name).all()
-        if res:
-            tab = []
-            tot = len(res) * 1.0
-            idx = 0.0
-            for element in res:
-                tab.append(element.filename)
-                if len(tab) > 200:
-                    print('\r{} % ({} / {}) done'.format((idx / tot) * 100, idx, tot), end="")
-                    rt = m4i.search_fn(tab)
-                    if rt:
-                        exec_res.update(rt)
-                    tab = []
-                idx += 1.0
-        else:
-            print("Empty set")
-
-        return exec_res
 
 
 class IrisMakeDocReport(object):
@@ -274,7 +149,8 @@ class IrisMakeDocReport(object):
         ).with_entities(
             CaseReceivedFile.filename,
             CaseReceivedFile.date_added,
-            CaseReceivedFile.file_hash
+            CaseReceivedFile.file_hash,
+            CaseReceivedFile.custom_attributes
         ).order_by(
             CaseReceivedFile.date_added
         ).all()
@@ -331,7 +207,9 @@ class IrisMakeDocReport(object):
         res = IocLink.query.distinct().with_entities(
             Ioc.ioc_value,
             Ioc.ioc_type,
-            Ioc.ioc_description
+            Ioc.ioc_description,
+            Ioc.ioc_tags,
+            Ioc.custom_attributes
         ).filter(
             IocLink.case_id == caseid
         ).join(IocLink.ioc).order_by(Ioc.ioc_type).all()
@@ -355,7 +233,9 @@ class IrisMakeDocReport(object):
             CaseAssets.asset_name,
             CaseAssets.asset_description,
             CaseAssets.asset_compromised.label('compromised'),
-            AssetsType.asset_name.label("type")
+            AssetsType.asset_name.label("type"),
+            CaseAssets.custom_attributes,
+            CaseAssets.asset_tags
         ).filter(
             CaseAssets.case_id == caseid
         ).join(

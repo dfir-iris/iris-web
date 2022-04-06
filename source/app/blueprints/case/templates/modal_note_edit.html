@@ -1,17 +1,28 @@
 <div class="modal-header">
 
-    <h4 class="ml-2 mt-1">{{ note.title }}</h4>
-    <button type="button" class="btn btn-sm float-right ml-3 btn-light btn-outline" onclick="copy_object_link({{note.note_id if note.note_id|length else id}});return false;" title="Copy shared link">
-        <span class="btn-label text-dark">
-            <i class="fa fa-share"></i>
-        </span>
-    </button>
-
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-            aria-hidden="true">&times;</span></button>
+    <h4 class="modal-title mt-2 mr-4">{{ note.title }}</h4>
+    {% include 'modals/modal_attributes_nav.html' %}
+      <div class="row text-right">
+      <button class="btn bg-transparent pull-right" title="Toggle focus mode" id="focus_mode" onclick="toggle_focus_mode();return false;">
+          <span aria-hidden="true"><i class="fas fas fa-coffee"></i></span>
+        </button>
+         <div class="dropdown">
+              <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                  <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+              </button>
+              <div class="dropdown-menu pull-right" id="note_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="#" onclick='copy_object_link({{note.note_id if note.note_id|length else id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+              </div>
+         </div>
+        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+        </div>
 </div>
 <div class="modal-body">
-    <form method="post" action="" id="form_note">
+    <div role="tabpanel">
+        <div class="tab-content">
+            <div class="tab-pane active" id="details">
+                <form method="post" action="" id="form_note">
         <iris_notein style="display: none;">{{ note.note_id if note.note_id|length else id }}</iris_notein>
 
     {{ note.hidden_tag() }}
@@ -21,27 +32,26 @@
                 {{ note.note_title(class='form-control input') }}
             </div>
             <div class="form-group mt-3">
-                <div class="row"></div>
                     <span id="last_saved" class="badge"></span>
                     <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();">
                     </button>
-
+            </div>
+            <div class="row">
+                <div class="col-md-6" id="container_note_content">
+                    <div style="display: none" id="fetched_crc"></div>
+                    <div id="editor_detail" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{{ note.content }}</div>
+                    <textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-6" id="container_note_content">
-                        <div style="display: none" id="fetched_crc"></div>
-                        <div id="editor_detail">{{ note.content }}</div>
-                        <textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
-                    </div>
-                    <div class="col-md-6" id="ctrd_notesum">
-                        <div id="targetDiv"></div>
-                    </div>
+                <div class="col-md-6" id="ctrd_notesum">
+                    <div id="targetDiv"></div>
                 </div>
             </div>
         </div>
-
     </form>
+            </div>
+            {% include 'modals/modal_attributes_tabs.html' %}
+        </div>
+    </div>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-danger mr-auto" onclick="delete_note(this);">Delete note</button>

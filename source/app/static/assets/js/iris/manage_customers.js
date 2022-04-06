@@ -10,6 +10,14 @@ function add_customer() {
         $('#submit_new_customer').on("click", function () {
             const form = $('#form_new_customer').serializeObject();
 
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            form['custom_attributes'] = attributes;
+
             $.ajax({
                 url: 'customers/add' + case_param(),
                 type: "POST",
@@ -87,7 +95,15 @@ function customer_detail(customer_id) {
 
         $('#form_new_customer').on("submit", preventFormDefaultBehaviourOnSubmit);
         $('#submit_new_customer').on("click", function () {
+
             const form = $('#form_new_customer').serializeObject();
+            ret = get_custom_attributes_fields();
+            has_error = ret[0].length > 0;
+            attributes = ret[1];
+
+            if (has_error){return false;}
+
+            form['custom_attributes'] = attributes;
 
             $.ajax({
                 url: 'customers/update/' + customer_id + case_param(),
