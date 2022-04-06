@@ -66,7 +66,6 @@ class IrisMakeDocReport(object):
             log.error("Unknown report type")
             return None
 
-        print(case_info)
         report = CaseTemplateReport.query.filter(CaseTemplateReport.id == self._report_id).first()
 
         name = "{}".format("{}.docx".format(report.naming_format))
