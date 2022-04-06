@@ -101,12 +101,11 @@ def run_post_init(development=False):
         log.info("Creating base server settings")
         create_safe_server_settings()
 
-        log.info("Registering default modules")
-        register_default_modules()
-
-    if os.getenv("IRIS_WORKER") is None:
         log.info("Creating first administrative user")
         admin = create_safe_admin()
+
+        log.info("Registering default modules")
+        register_default_modules()
 
         log.info("Creating demo client")
         client = create_safe_client()
