@@ -18,6 +18,10 @@ function clear_api_error() {
    $(".invalid-feedback").hide();
 }
 
+ $('.modal').on('hidden.bs.modal', function (e) {
+    $('body').addClass('modal-open');
+ });
+
 function setCookie(name,value,days) {
     var expires = "";
     if (days) {
