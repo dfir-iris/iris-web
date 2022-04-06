@@ -14386,6 +14386,10 @@ body[data-background-color="dark"] .timeline-inverted {
     color: #cac7c7;
 }
 
+body[data-background-color="dark"] .timeline-inverted .text-dark {
+    color: #cac7c7 !important;
+}
+
 body[data-background-color="dark"] .timeline-odd {
     background: #202940 !important;
         color: #cac7c7;
