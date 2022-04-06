@@ -841,7 +841,7 @@ def register_default_modules():
         log.info('Post init modules repush disabled')
         return
 
-    modules = ['iris_vt_module', 'iris_check_module']
+    modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module']
     for module in modules:
         class_ = instantiate_module_from_name(module)
         is_ready, logs = check_module_health(class_)
