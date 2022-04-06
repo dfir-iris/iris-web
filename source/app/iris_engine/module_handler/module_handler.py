@@ -149,10 +149,13 @@ def instantiate_module_from_name(module_name):
     :param module_name: Name of the module to register
     :return: Class instance or None
     """
-    mod_root_interface = importlib.import_module(module_name)
-    if not mod_root_interface:
+    try:
+        mod_root_interface = importlib.import_module(module_name)
+        if not mod_root_interface:
+            return None
+    except Exception as e:
+        log.error(f"Could not import root module {module_name}: {e}")
         return None
-
     # The whole concept is based on the fact that the root module provides an __iris_module_interface
     # variable pointing to the interface class with which Iris can talk to
     try:
