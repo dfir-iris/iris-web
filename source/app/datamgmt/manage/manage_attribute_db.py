@@ -82,7 +82,8 @@ def update_all_attributes(object_type, previous_attribute, partial_overwrite=Fal
                                 flag_modified(obj, "custom_attributes")
                                 obj.custom_attributes[tab][element]['type'] = target_attr[tab][element]['type']
 
-                        if obj.custom_attributes[tab][element]['mandatory'] != target_attr[tab][element]['mandatory']:
+                        if 'mandatory' in target_attr[tab][element] \
+                                and obj.custom_attributes[tab][element]['mandatory'] != target_attr[tab][element]['mandatory']:
                             flag_modified(obj, "custom_attributes")
                             obj.custom_attributes[tab][element]['mandatory'] = target_attr[tab][element]['mandatory']
 
