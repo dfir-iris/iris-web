@@ -837,7 +837,7 @@ def register_default_modules():
 
     srv_settings = ServerSettings.query.first()
 
-    if srv_settings.prevent_post_mod_repush:
+    if srv_settings.prevent_post_mod_repush is True:
         log.info('Post init modules repush disabled')
         return
 
