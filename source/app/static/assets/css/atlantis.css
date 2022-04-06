@@ -14540,8 +14540,8 @@ body[data-background-color="dark"] .form-check [type="checkbox"] + .form-check-s
 
 .bg-focus-gradient {
     background: #1f283e !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #66666a, #959595) !important;
-    background: linear-gradient(-45deg, #66666a, #959595) !important;
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #54545cc4, #a1a4aee6) !important;
+    background:  linear-gradient(-45deg, #54545cc4, #a1a4aee6) !important
     -webkit-transition: background 1s ease-out;
     -moz-transition: background 1s ease-out;
     -o-transition: background 1s ease-out;
