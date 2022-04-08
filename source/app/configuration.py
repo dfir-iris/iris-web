@@ -81,7 +81,7 @@ class CeleryConfig():
 class Config():
 
     # Handled by bumpversion
-    IRIS_VERSION = "v1.4.0"
+    IRIS_VERSION = "v1.4.1"
 
     API_MIN_VERSION = "1.0.1"
     API_MAX_VERSION = "1.0.2"
