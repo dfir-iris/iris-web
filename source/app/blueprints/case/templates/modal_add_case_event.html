@@ -41,14 +41,14 @@
                                                 <input class="form-control col-4" type="time" step="0.001" id="event_time" {% if event.event_date_wtz %} value="{{ event.event_date_wtz.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
                                                 <span></span>
                                                 <input class="form-control col-2" type="text" id="event_tz" {% if event.event_tz %} value="{{ event.event_tz }}" {% else %} value="+00:00" {% endif %}>
-                                                <button class="btn btn-sm btn-outline-white" onclick="show_time_converter();return false;"><i class="fas fa-magic"></i></button>
+                                                <button class="btn btn-sm btn-outline-white" type="button" onclick="show_time_converter();return false;"><i class="fas fa-magic"></i></button>
                                         </div>
                                         <div class="row ml-2" id="event_date_convert" style="display:none;">
                                             <div class="input-group ">
                                                 <input class="form-control col-9" type="text" id="event_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
                                                 <div class="input-group-append">
                                                     <button class="btn btn-outline-secondary mr-2" type="button" onclick="time_converter();return false;">Submit</button>
-                                                    <button class="btn btn-sm btn-outline" onclick="hide_time_converter();return false;"><i class="fas fa-magic"></i></button>
+                                                    <button class="btn btn-sm btn-outline" type="button" onclick="hide_time_converter();return false;"><i class="fas fa-magic"></i></button>
                                                 </div>
                                             </div>
                                             <span id="convert_bad_feedback" class="text-danger"></span>
