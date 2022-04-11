@@ -26,9 +26,9 @@ import configparser
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
-    config.read('app/config.docker.ini')
+    config.read(f'app{os.path.sep}config.docker.ini')
 else:
-    config.read('app/config.priv.ini')
+    config.read(f'app{os.path.sep}config.priv.ini')
 
 # Fetch the values
 misp_url = config.get('MISP', 'MISP_URL')
