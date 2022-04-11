@@ -79,6 +79,11 @@ def delete_event_category(event_id):
         CaseEventCategory.event_id == event_id
     ).delete()
 
+def get_event_category(event_id):
+    cec = CaseEventCategory.query.filter(
+        CaseEventCategory.event_id == event_id
+    ).first()
+    return cec
 
 def save_event_category(event_id, category_id):
     CaseEventCategory.query.filter(
@@ -92,6 +97,11 @@ def save_event_category(event_id, category_id):
     db.session.add(cec)
     db.session.commit()
 
+def get_event_assets_ids(event_id):
+    assets_list = CaseEventsAssets.query.filter(
+        CaseEventsAssets.event_id == event_id
+    ).all()
+    return list(map(lambda x: x.asset_id, assets_list))
 
 def update_event_assets(event_id, caseid, assets_list):
 

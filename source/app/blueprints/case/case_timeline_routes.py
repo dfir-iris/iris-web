@@ -37,9 +37,8 @@ from app.models.cases import Cases, CasesEvent
 from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory
 from app.schema.marshables import EventSchema
 from app.util import response_success, response_error, login_required, api_login_required
-from app.datamgmt.case.case_events_db import get_case_assets, get_events_categories, save_event_category, \
-    get_default_cat, delete_event_category, get_case_event, update_event_assets
-
+from app.datamgmt.case.case_events_db import get_case_assets, get_events_categories, save_event_category, get_default_cat, \
+    delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids
 from app.iris_engine.utils.tracker import track_activity
 
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
@@ -521,6 +520,59 @@ def case_add_event(caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
+@case_timeline_blueprint.route('/case/timeline/events/duplicate/<int:cur_id>', methods=['GET'])
+@api_login_required
+def case_duplicate_event(cur_id, caseid):
+
+    #TODO create modules hook
+    # call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
+
+    try:
+        event_schema = EventSchema()
+        old_event = get_case_event(event_id=cur_id, caseid=caseid)
+        if not old_event:
+            return response_error("Invalid event ID for this case")
+
+        #create new Event
+        event = CasesEvent()
+        print(event)
+        orig_event_id = event.event_id
+        #transfer duplicated event's attributes to new event
+        for key in dir(old_event):
+            if not key.startswith('_'):
+                setattr(event, key, getattr(old_event,key))
+        event.event_id = orig_event_id
+
+        
+        #override event_added and user_id
+        event.event_added = datetime.utcnow()
+        event.user_id = current_user.id
+        event.event_title = f"[DUPLICATED] - {event.event_title}"
+      
+        db.session.add(event)
+        update_timeline_state(caseid=caseid)
+        db.session.commit()
+
+        #update category
+        old_event_category = get_event_category(old_event.event_id)
+        if old_event_category is not None:
+            save_event_category(event.event_id, old_event_category.category_id)
+
+        #update assets mapping
+        assets_list = get_event_assets_ids(old_event.event_id)
+        print(assets_list)
+        update_event_assets(event_id=event.event_id,
+            caseid=caseid,
+            assets_list=assets_list)
+
+        event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
+
+        track_activity("added event {}".format(event.event_id), caseid=caseid)
+        return response_success("Event added", data=event_schema.dump(event))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
 
 @case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
 @api_login_required
@@ -602,5 +654,3 @@ def case_event_date_convert(caseid):
                 pass
 
     return response_error("Unable to find a matching date format")
-
-
