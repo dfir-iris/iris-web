@@ -535,3 +535,7 @@ function disable_module(module_id) {
         }
     });
 }
+
+$('.modal').on('hidden.bs.modal', function (e) {
+    $('body').addClass('modal-open');
+});

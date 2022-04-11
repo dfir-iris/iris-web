@@ -82,7 +82,7 @@ A comprehensive documentation is available on [dfir-iris.github.io](https://dfir
 The API reference is available in the [documentation](https://dfir-iris.github.io/operations/api/#references) or [documentation repository](https://github.com/dfir-iris/iris-doc-src).
 
 ## Help
-You can reach us on [Discord](https://discord.gg/fwuXkpBHGz) or by [mail](mailto:contact@dfir-iris.org) if you have any question, issue or idea !
+You can reach us on [Discord](https://discord.gg/76tM6QUJza) or by [mail](mailto:contact@dfir-iris.org) if you have any question, issue or idea !
 
 ## Considerations
 Iris is in its early stage. It can already be used in production, but please set backups of the database and DO NOT expose the interface on the Internet. We highly recommend using a private dedicated and secured network.
