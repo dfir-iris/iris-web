@@ -212,6 +212,9 @@ def create_safe_hooks():
                 hook_description='Triggered on event creation, before commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_event_create',
                 hook_description='Triggered on event creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_preload_event_duplicate',
+                hook_description='Triggered on event duplication, before commit in DB')
+
 
     create_safe(db.session, IrisHook, hook_name='on_preload_event_update',
                 hook_description='Triggered on event update, before commit in DB')

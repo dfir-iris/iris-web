@@ -524,8 +524,7 @@ def case_add_event(caseid):
 @api_login_required
 def case_duplicate_event(cur_id, caseid):
 
-    #TODO create modules hook
-    # call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
+    call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
 
     try:
         event_schema = EventSchema()
@@ -533,18 +532,18 @@ def case_duplicate_event(cur_id, caseid):
         if not old_event:
             return response_error("Invalid event ID for this case")
 
-        #create new Event
+        # Create new Event
         event = CasesEvent()
-        print(event)
+
         orig_event_id = event.event_id
-        #transfer duplicated event's attributes to new event
+        # Transfer duplicated event's attributes to new event
         for key in dir(old_event):
             if not key.startswith('_'):
-                setattr(event, key, getattr(old_event,key))
+                setattr(event, key, getattr(old_event, key))
+
         event.event_id = orig_event_id
 
-        
-        #override event_added and user_id
+        # Override event_added and user_id
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
         event.event_title = f"[DUPLICATED] - {event.event_title}"
@@ -553,17 +552,16 @@ def case_duplicate_event(cur_id, caseid):
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
-        #update category
+        # Update category
         old_event_category = get_event_category(old_event.event_id)
         if old_event_category is not None:
             save_event_category(event.event_id, old_event_category.category_id)
 
-        #update assets mapping
+        # Update assets mapping
         assets_list = get_event_assets_ids(old_event.event_id)
-        print(assets_list)
         update_event_assets(event_id=event.event_id,
-            caseid=caseid,
-            assets_list=assets_list)
+                            caseid=caseid,
+                            assets_list=assets_list)
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
