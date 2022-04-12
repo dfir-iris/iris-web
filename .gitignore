@@ -18,3 +18,5 @@ orcparser/
 venv1/
 .DS_Store
 .env
+.venv/
+.vscode/

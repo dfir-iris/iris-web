@@ -57,6 +57,34 @@ function add_event() {
     $('#modal_add_event').modal({ show: true });
 }
 
+
+function duplicate_event(id) {
+    window.location.hash = id;
+    clear_api_error();
+    $.ajax({
+        url: "timeline/events/duplicate/" + id + case_param(),
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+            if (data.status == 'success') {
+                swal("Done !",
+                     data.message,
+                    {
+                        icon: "success",
+                        timer: 500
+                    }
+                );
+                draw_timeline()
+            } else {
+                swal("Oh no !", data.message, "error")
+            }
+        },
+        error: function (error) {
+            notify_error(error.statusText);
+        }
+    });
+}
+
 function update_event(id) {
     window.location.hash = id;
     clear_api_error();
@@ -135,7 +163,7 @@ function delete_event(id) {
     });
 }
 
-/* Edit and event from the timeline thanks to its ID */
+/* Edit an event from the timeline thanks to its ID */
 function edit_event(id) {
   url = '/case/timeline/events/' + id + '/modal' + case_param();
   window.location.hash = id;
@@ -354,6 +382,7 @@ function draw_timeline() {
                                             </button>
                                             <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                                                     <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                                    <a href= "#" class="dropdown-item" onclick="duplicate_event(`+ evt.event_id +`);return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                                     <div class="dropdown-divider"></div>
                                                     <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
                                             </div>
@@ -394,6 +423,7 @@ function draw_timeline() {
                                             </button>
                                             <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                                                     <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                                    <a href= "#" class="dropdown-item" onclick="duplicate_event(`+ evt.event_id +`);return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                                     <div class="dropdown-divider"></div>
                                                     <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
                                             </div>
