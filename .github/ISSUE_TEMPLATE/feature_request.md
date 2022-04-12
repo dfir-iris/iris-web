@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+*Please ensure your feature request is not already on the roadmap or associated with an issue. This can be checked [here](https://github.com/orgs/dfir-iris/projects/1/views/4).*
+
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
