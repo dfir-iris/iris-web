@@ -505,16 +505,33 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
             log.info(f'Calling module {module.module_name} for hook {hook_name}')
 
             try:
+                was_list = True
+                # The data passed on to the module hook is expected to be a list
+                # So we make sure it's the case or adapt otherwise
+                if not isinstance(data, list):
+                    data_list = [data]
+                    was_list = False
+                else:
+                    data_list = data
 
                 mod_inst = instantiate_module_from_name(module_name=module.module_name)
-                status = mod_inst.hooks_handler(hook_name, module.manual_hook_ui_name, data=data)
+                status = mod_inst.hooks_handler(hook_name, module.manual_hook_ui_name, data=data_list)
 
             except Exception as e:
                 log.critical(f"Failed to run hook {hook_name} with module {module.module_name}. Error {str(e)}")
                 continue
 
             if status.is_success():
-                data = status.get_data()
+                data_result = status.get_data()
+                if not was_list:
+                    if not isinstance(data_result, list):
+                        log.critical(f"Error getting data result from hook {hook_name}: A list is expected, instead got a {type(data_result)}")
+                        continue
+                    else:
+                        # We fetch the first elt here because we want to get back to the old type
+                        data = data_result[0]
+                else:
+                    data = data_result
 
     return data
 
