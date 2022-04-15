@@ -7,7 +7,7 @@
 
         {% for ca in attributes %}
             <li class="nav-item submenu">
-                <a class="nav-link"  data-toggle="pill" href="#{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" role="tab" aria-selected="false">{{ca}}</a>
+                <a class="nav-link"  data-toggle="pill" href="#{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" role="tab" aria-controls="{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" aria-selected="false">{{ca}}</a>
             </li>
         {% endfor %}
 
