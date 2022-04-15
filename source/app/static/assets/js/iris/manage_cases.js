@@ -461,3 +461,17 @@ function close_case(id) {
 }
 
 
+$(document).ready(function() {
+
+    if ($('.nav-tabs').length > 0) { // if .nav-tabs exists
+        var hashtag = window.location.hash;
+        if (hashtag!='') {
+            $('.nav-item > a').removeClass('active').removeClass('show');
+            $('.nav-item > a[href="'+hashtag+'"]').addClass('active');
+             $('.nav-item > a[href="'+hashtag+'"]').addClass('show');
+            $('.tab-content > div').removeClass('active');
+            $(hashtag).addClass('active'); $(hashtag).addClass('show');
+        }
+    }
+
+});
