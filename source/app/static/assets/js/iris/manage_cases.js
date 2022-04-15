@@ -126,6 +126,7 @@ function submit_new_case() {
  *  Case update section 
  *************************/
 /* Dropzone creation for update */
+Dropzone.autoDiscover = false;
 var dropUpdate = new Dropzone("div#files_drop_1", {
     url: "cases/upload_files" + case_param(),
     acceptedFiles: ".zip,.7z,.tar.gz,.tgz,.evtx,.evtx_data,.txt,.ml",
