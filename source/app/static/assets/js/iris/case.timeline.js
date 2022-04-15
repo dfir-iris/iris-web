@@ -584,6 +584,20 @@ function timelineToCsv(){
 }
 
 
+var vt_in_raw = ace.edit("timeline_filtering",
+{
+    autoScrollEditorIntoView: true,
+    minLines: 2,
+    maxLines: 5
+});
+vt_in_raw.setTheme("ace/theme/tomorrow");
+vt_in_raw.session.setMode("ace/mode/json");
+vt_in_raw.renderer.setShowGutter(true);
+vt_in_raw.setOption("showPrintMargin", false);
+vt_in_raw.setOption("displayIndentGuides", true);
+vt_in_raw.session.setUseWrapMode(true);
+vt_in_raw.setOption("indentedSoftWrap", true);
+
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){

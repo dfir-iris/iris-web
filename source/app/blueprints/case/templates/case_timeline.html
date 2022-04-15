@@ -23,14 +23,9 @@
 			<nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient">
 				{{ form.hidden_tag() }}
 				<ul class="container-fluid mt-3 mb--2">
-                    <ul class="navbar-nav">
-                        <li class="nav-item hidden-caret">
-                            <select class="selectpicker" data-show-subtext="true" data-live-search="true" data-size="10" id="time_timeline_select">
-                            </select>
-                        </li>
-                        <li class="nav-item hidden-caret">
-                            <select class="selectpicker" data-show-subtext="true" data-live-search="true" data-size="10" id="assets_timeline_select">
-                            </select>
+                    <ul class="navbar-nav col-8">
+                        <li class="nav-item hidden-caret col-12">
+                            <div id='timeline_filtering' class="col-12"></div>
                         </li>
                      </ul>
                     <ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
@@ -111,6 +106,10 @@
 
 {% endblock content %}
 {% block javascripts %}
+
+<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
+    charset="utf-8"></script>
 
 <script src="/static/assets/js/core/moments.min.js"></script>
 <script src="/static/assets/js/core/bootstrap-datetimepicker.min.js"></script>
