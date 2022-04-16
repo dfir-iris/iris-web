@@ -318,7 +318,7 @@ def case_filter_timeline(caseid):
         for asset in assets_cache:
             if asset.event_id == ras['event_id']:
                 if asset.asset_id not in cache:
-                    cache[asset.asset_id] = "{} ({})".format(asset.asset_name, asset.type)
+                    cache[asset.asset_id] = "{}".format(asset.asset_name)
 
                 alki.append(
                     {
@@ -414,7 +414,7 @@ def case_gettimeline(asset_id, caseid):
         for asset in assets_cache:
             if asset.event_id == ras['event_id']:
                 if asset.asset_id not in cache:
-                    cache[asset.asset_id] = "{} ({})".format(asset.asset_name, asset.type)
+                    cache[asset.asset_id] = "{}".format(asset.asset_name)
 
                 alki.append(
                     {

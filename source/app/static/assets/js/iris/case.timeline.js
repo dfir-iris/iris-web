@@ -1,3 +1,21 @@
+var tm_filter = ace.edit("timeline_filtering",
+{
+    autoScrollEditorIntoView: true,
+    minLines: 1,
+    maxLines: 5
+});
+tm_filter.setTheme("ace/theme/tomorrow");
+tm_filter.session.setMode("ace/mode/json");
+tm_filter.renderer.setShowGutter(false);
+tm_filter.setShowPrintMargin(false);
+tm_filter.renderer.setScrollMargin(10, 10);
+tm_filter.setOption("displayIndentGuides", true);
+tm_filter.setOption("indentedSoftWrap", true);
+tm_filter.setOption("showLineNumbers", false);
+tm_filter.setOption("placeholder", "Filter timeline");
+tm_filter.setOption("highlightActiveLine", false);
+
+
 /* Fetch a modal that allows to add an event */
 function add_event() {
     url = 'timeline/events/add/modal' + case_param();
@@ -213,9 +231,31 @@ function build_timeline(data) {
 
     $('#time_timeline_select').empty();
 
+    var standard_filters = [
+                {value: 'asset:', score: 10, meta: 'Specify asset to filter with'},
+                {value: 'startDate:', score: 10, meta: 'Start date to filter with'},
+                {value: 'endDate:', score: 10, meta: 'End date to filter with'},
+                {value: 'tag:', score: 10, meta: 'Tag to filter with'},
+                {value: 'description:', score: 10, meta: 'Description contains'},
+                {value: 'raw:', score: 10, meta: 'Raw data contains'},
+                {value: 'AND ', score: 10, meta: 'AND operator'},
+                {value: 'OR ', score: 10, meta: 'OR operator'},
+              ]
+
     for (rid in data.data.assets) {
-        $('#assets_timeline_select').append('<option value="'+rid+'">' + sanitizeHTML(data.data.assets[rid]) + '</options>');
+        standard_filters.push(
+             {value: data.data.assets[rid], score: 1, meta: 'Asset of the case'}
+        );
     }
+
+    tm_filter.setOptions({
+          enableBasicAutocompletion: [{
+            getCompletions: (editor, session, pos, prefix, callback) => {
+              callback(null, standard_filters);
+            },
+          }],
+          enableLiveAutocompletion: true,
+    });
 
     var tesk = false;
     // Prepare replacement mod
@@ -583,40 +623,7 @@ function timelineToCsv(){
     download_file("iris_timeline.csv", "text/csv", csv_data);
 }
 
-var tm_filter = ace.edit("timeline_filtering",
-{
-    autoScrollEditorIntoView: true,
-    minLines: 1,
-    maxLines: 5
-});
-tm_filter.setTheme("ace/theme/tomorrow");
-tm_filter.session.setMode("ace/mode/json");
-tm_filter.renderer.setShowGutter(false);
-tm_filter.setShowPrintMargin(false);
-tm_filter.renderer.setScrollMargin(10, 10);
-tm_filter.setOption("displayIndentGuides", true);
-tm_filter.setOption("indentedSoftWrap", true);
-tm_filter.setOption("showLineNumbers", false);
-tm_filter.setOption("placeholder", "Filter timeline");
-tm_filter.setOption("highlightActiveLine", false);
-tm_filter.setOptions({
-  enableBasicAutocompletion: [{
-    getCompletions: (editor, session, pos, prefix, callback) => {
-      callback(null, [
-        {value: 'asset:', score: 1, meta: 'Specify asset to filter with'},
-        {value: 'startDate:', score: 2, meta: 'Start date to filter with'},
-        {value: 'endDate:', score: 2, meta: 'End date to filter with'},
-        {value: 'tag:', score: 2, meta: 'Tag to filter with'},
-        {value: 'description:', score: 2, meta: 'Description contains'},
-        {value: 'raw:', score: 2, meta: 'Raw data contains'},
-        {value: 'AND ', score: 2, meta: 'AND operator'},
-        {value: 'OR ', score: 2, meta: 'OR operator'},
-      ]);
-    },
-  }],
-  // to make popup appear automatically, without explicit _ctrl+space_
-  enableLiveAutocompletion: true,
-});
+
 
 function split_bool(split_str) {
     and_split = split_str.split(' AND ');
