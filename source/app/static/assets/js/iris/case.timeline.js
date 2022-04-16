@@ -244,7 +244,7 @@ function build_timeline(data) {
 
     for (rid in data.data.assets) {
         standard_filters.push(
-             {value: data.data.assets[rid], score: 1, meta: 'Asset of the case'}
+             {value: data.data.assets[rid][0], score: 1, meta: data.data.assets[rid][1]}
         );
     }
 
