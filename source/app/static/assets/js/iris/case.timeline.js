@@ -642,7 +642,7 @@ function split_bool(split_str) {
 }
 
 var parsed_filter = {};
-var keywords = ['asset', 'tag', 'description', 'raw', 'startDate', 'endDate'];
+var keywords = ['asset', 'tag', 'description', 'raw', 'category', 'startDate', 'endDate'];
 
 
 function parse_filter(str_filter, keywords) {
@@ -679,11 +679,10 @@ function parse_filter(str_filter, keywords) {
 }
 
 function filter_timeline() {
-    keywords = ['asset', 'tag', 'description', 'raw', 'startDate', 'endDate'];
+    keywords = ['asset', 'tag', 'description', 'category',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
-    console.log(filter_query);
 
     $('#timeline_list').empty();
     show_loader();

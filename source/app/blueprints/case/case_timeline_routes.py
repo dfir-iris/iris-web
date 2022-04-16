@@ -28,7 +28,7 @@ from flask import Blueprint
 from flask import render_template, url_for, redirect, request
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -249,6 +249,7 @@ def case_filter_timeline(caseid):
     assets = filter_d.get('asset')
     tags = filter_d.get('tag')
     descriptions = filter_d.get('description')
+    categories = filter_d.get('categories')
     raws = filter_d.get('raw')
     start_date = filter_d.get('startDate')
     end_date = filter_d.get('endDate')
@@ -277,6 +278,30 @@ def case_filter_timeline(caseid):
         for raw in raws:
             condition = and_(condition,
                              CasesEvent.event_raw.like(f'%{raw}%'))
+
+    if start_date:
+        try:
+            parsed_start_date = parse_bf_date_format(start_date[0])
+            condition = and_(condition,
+                             CasesEvent.event_date >= parsed_start_date)
+
+        except Exception as e:
+            print(e)
+            pass
+
+    if end_date:
+        try:
+            parsed_end_date = parse_bf_date_format(end_date[0])
+            condition = and_(condition,
+                             CasesEvent.event_date <= parsed_end_date)
+        except Exception as e:
+            pass
+
+    if categories:
+
+        for category in categories:
+            condition = and_(condition,
+                             CasesEvent.category == category)
 
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
