@@ -148,7 +148,7 @@ var dropUpdate = new Dropzone("div#files_drop_1", {
     }
 });
 
-/* Add of field for file upload */ 
+/* Add of field for file upload */
 dropUpdate.on('sending', function (file, xhr, formData) {
     formData.append('is_update', true);
     formData.append('pipeline', $('#update_pipeline_selector').val() );
