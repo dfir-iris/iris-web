@@ -618,6 +618,60 @@ tm_filter.setOptions({
   enableLiveAutocompletion: true,
 });
 
+const keywords_list = ['asset', 'tag', 'description', 'raw', 'startDate']
+
+function split_bool(split_str) {
+    and_split = split_str.split(' AND ');
+
+    if (and_split[0]) {
+      return and_split[0].trim();
+    }
+
+    return null;
+}
+
+var parsed_filter = {};
+
+function parse_filter(str_filter, keywords) {
+  for (var k = 0; k < keywords.length; k++) {
+    keyword = keywords[k];
+		console.log('Parsing '+keyword);
+	  items = str_filter.split(keyword + ':');
+
+    ita = items[1];
+
+    if (ita === undefined) {
+    	continue;
+    }
+
+    item = split_bool(ita);
+
+
+    if (item != null) {
+      if (!(keyword in parsed_filter)) {
+        parsed_filter[keyword] = [];
+      }
+      if (!parsed_filter[keyword].includes(item)) {
+        parsed_filter[keyword].push(item);
+        console.log('Itemized :'+ item);
+      }
+
+      if (items[1] != undefined) {
+        str_filter = str_filter.replace(keyword + ':' + items[1], '');
+        if (parse_filter(str_filter, keywords)) {
+        	keywords.shift();
+        }
+      }
+    }
+  }
+  return true;
+}
+
+function filter_timeline() {
+    parsed_filter = {};
+    parse_filter(tm_filter.getValue(), keywords_list);
+}
+
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
