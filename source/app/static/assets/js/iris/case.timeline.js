@@ -583,21 +583,40 @@ function timelineToCsv(){
     download_file("iris_timeline.csv", "text/csv", csv_data);
 }
 
-
-var vt_in_raw = ace.edit("timeline_filtering",
+var tm_filter = ace.edit("timeline_filtering",
 {
     autoScrollEditorIntoView: true,
-    minLines: 2,
+    minLines: 1,
     maxLines: 5
 });
-vt_in_raw.setTheme("ace/theme/tomorrow");
-vt_in_raw.session.setMode("ace/mode/json");
-vt_in_raw.renderer.setShowGutter(true);
-vt_in_raw.setOption("showPrintMargin", false);
-vt_in_raw.setOption("displayIndentGuides", true);
-vt_in_raw.session.setUseWrapMode(true);
-vt_in_raw.setOption("indentedSoftWrap", true);
-
+tm_filter.setTheme("ace/theme/tomorrow");
+tm_filter.session.setMode("ace/mode/json");
+tm_filter.renderer.setShowGutter(false);
+tm_filter.setShowPrintMargin(false);
+tm_filter.renderer.setScrollMargin(10, 10);
+tm_filter.setOption("displayIndentGuides", true);
+tm_filter.setOption("indentedSoftWrap", true);
+tm_filter.setOption("showLineNumbers", false);
+tm_filter.setOption("placeholder", "Filter timeline");
+tm_filter.setOption("highlightActiveLine", false);
+tm_filter.setOptions({
+  enableBasicAutocompletion: [{
+    getCompletions: (editor, session, pos, prefix, callback) => {
+      callback(null, [
+        {value: 'asset:', score: 1, meta: 'Specify asset to filter with'},
+        {value: 'startDate:', score: 2, meta: 'Start date to filter with'},
+        {value: 'endDate:', score: 2, meta: 'End date to filter with'},
+        {value: 'tag:', score: 2, meta: 'Tag to filter with'},
+        {value: 'description:', score: 2, meta: 'Description contains'},
+        {value: 'raw:', score: 2, meta: 'Raw data contains'},
+        {value: 'AND ', score: 2, meta: 'AND operator'},
+        {value: 'OR ', score: 2, meta: 'OR operator'},
+      ]);
+    },
+  }],
+  // to make popup appear automatically, without explicit _ctrl+space_
+  enableLiveAutocompletion: true,
+});
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
