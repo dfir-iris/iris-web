@@ -232,14 +232,14 @@ function build_timeline(data) {
     $('#time_timeline_select').empty();
 
     var standard_filters = [
-                {value: 'asset:', score: 10, meta: 'Specify asset to filter with'},
-                {value: 'startDate:', score: 10, meta: 'Start date to filter with'},
-                {value: 'endDate:', score: 10, meta: 'End date to filter with'},
-                {value: 'tag:', score: 10, meta: 'Tag to filter with'},
-                {value: 'description:', score: 10, meta: 'Description contains'},
-                {value: 'raw:', score: 10, meta: 'Raw data contains'},
-                {value: 'AND ', score: 10, meta: 'AND operator'},
-                {value: 'OR ', score: 10, meta: 'OR operator'},
+                {value: 'asset:', score: 10, meta: 'Match assets of events'},
+                {value: 'startDate:', score: 10, meta: 'Match end date of events'},
+                {value: 'endDate:', score: 10, meta: 'Match end date of events'},
+                {value: 'tag:', score: 10, meta: 'Match tag of events'},
+                {value: 'description:', score: 10, meta: 'Match description of events'},
+                {value: 'category:', score: 10, meta: 'Match category of events'},
+                {value: 'raw:', score: 10, meta: 'Match raw data of events'},
+                {value: 'AND ', score: 10, meta: 'AND operator'}
               ]
 
     for (rid in data.data.assets) {
