@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import json
+
 from datetime import datetime
 
 import marshmallow
@@ -40,6 +42,8 @@ from app.util import response_success, response_error, login_required, api_login
 from app.datamgmt.case.case_events_db import get_case_assets, get_events_categories, save_event_category, get_default_cat, \
     delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids
 from app.iris_engine.utils.tracker import track_activity
+
+import urllib.parse
 
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
 
@@ -226,6 +230,134 @@ def case_gettimeline_api(asset_id, caseid):
     }
 
     return response_success("", data=resp)
+
+
+@case_timeline_blueprint.route('/case/timeline/advanced-filter', methods=['GET'])
+@api_login_required
+def case_filter_timeline(caseid):
+    args = request.args.to_dict()
+    query_filter = args.get('q')
+
+    try:
+
+        filter_d = dict(json.loads(urllib.parse.unquote_plus(query_filter)))
+
+    except Exception as e:
+        return response_error('Invalid query string')
+
+    assets = filter_d.get('asset')
+    tags = filter_d.get('tag')
+    descriptions = filter_d.get('description')
+    raws = filter_d.get('raw')
+    start_date = filter_d.get('startDate')
+    end_date = filter_d.get('endDate')
+
+    condition = and_(CasesEvent.case_id == caseid)
+
+    if assets:
+        for asset in assets:
+            condition = and_( condition,
+                CaseEventsAssets.asset_id == CaseAssets.asset_id,
+                CaseAssets.asset_name == asset,
+                CaseEventsAssets.event_id == CasesEvent.event_id
+            )
+
+    if tags:
+        for tag in tags:
+            condition = and_(condition,
+                             CasesEvent.event_tags.like(f'%{tag},%'))
+
+    if descriptions:
+        for description in descriptions:
+            condition = and_(condition,
+                             CasesEvent.event_content.like(f'%{description}%'))
+
+    if raws:
+        for raw in raws:
+            condition = and_(condition,
+                             CasesEvent.event_raw.like(f'%{raw}%'))
+
+    timeline = CasesEvent.query.with_entities(
+            CasesEvent.event_id,
+            CasesEvent.event_date,
+            CasesEvent.event_date_wtz,
+            CasesEvent.event_tz,
+            CasesEvent.event_title,
+            CasesEvent.event_color,
+            CasesEvent.event_tags,
+            CasesEvent.event_content,
+            CasesEvent.event_in_summary,
+            CasesEvent.event_in_graph,
+            EventCategory.name.label("category_name")
+        ).filter(condition).order_by(
+            CasesEvent.event_date
+        ).outerjoin(
+            CasesEvent.category
+        ).all()
+
+    assets_cache = CaseAssets.query.with_entities(
+        CaseEventsAssets.event_id,
+        CaseAssets.asset_id,
+        CaseAssets.asset_name,
+        AssetsType.asset_name.label('type'),
+        CaseAssets.asset_ip,
+        CaseAssets.asset_description,
+        CaseAssets.asset_compromised
+    ).filter(
+        CaseEventsAssets.case_id == caseid,
+    ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+
+    tim = []
+    cache = {}
+    for row in timeline:
+        ras = row._asdict()
+        ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+
+        alki = []
+        for asset in assets_cache:
+            if asset.event_id == ras['event_id']:
+                if asset.asset_id not in cache:
+                    cache[asset.asset_id] = "{} ({})".format(asset.asset_name, asset.type)
+
+                alki.append(
+                    {
+                        "name": "{} ({})".format(asset.asset_name, asset.type),
+                        "ip": asset.asset_ip,
+                        "description": asset.asset_description,
+                        "compromised": asset.asset_compromised
+                    }
+                )
+
+        ras['assets'] = alki
+
+        tim.append(ras)
+
+    if request.cookies.get('session'):
+
+        iocs = IocLink.query.with_entities(
+            Ioc.ioc_id,
+            Ioc.ioc_value,
+            Ioc.ioc_description,
+        ).filter(
+            IocLink.case_id == caseid,
+            Ioc.ioc_id == IocLink.ioc_id
+        ).all()
+
+        resp = {
+            "tim": tim,
+            "assets": cache,
+            "iocs": [ioc._asdict() for ioc in iocs],
+            "state": get_timeline_state(caseid=caseid)
+        }
+
+    else:
+        resp = {
+            "timeline": tim,
+            "state": get_timeline_state(caseid=caseid)
+        }
+
+    return response_success("ok", data=resp)
 
 
 @case_timeline_blueprint.route('/case/timeline/filter/<int:asset_id>', methods=['GET'])
@@ -519,6 +651,7 @@ def case_add_event(caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
 
 @case_timeline_blueprint.route('/case/timeline/events/duplicate/<int:cur_id>', methods=['GET'])
 @api_login_required

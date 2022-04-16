@@ -618,13 +618,17 @@ tm_filter.setOptions({
   enableLiveAutocompletion: true,
 });
 
-const keywords_list = ['asset', 'tag', 'description', 'raw', 'startDate']
-
 function split_bool(split_str) {
     and_split = split_str.split(' AND ');
 
     if (and_split[0]) {
       return and_split[0].trim();
+    }
+
+    or_split = split_str.split(' OR ');
+
+    if (or_split[0]) {
+      return or_split[0].trim();
     }
 
     return null;
@@ -635,8 +639,7 @@ var parsed_filter = {};
 function parse_filter(str_filter, keywords) {
   for (var k = 0; k < keywords.length; k++) {
     keyword = keywords[k];
-		console.log('Parsing '+keyword);
-	  items = str_filter.split(keyword + ':');
+	items = str_filter.split(keyword + ':');
 
     ita = items[1];
 
@@ -653,7 +656,7 @@ function parse_filter(str_filter, keywords) {
       }
       if (!parsed_filter[keyword].includes(item)) {
         parsed_filter[keyword].push(item);
-        console.log('Itemized :'+ item);
+        console.log('Got '+ item + 'as' + keyword);
       }
 
       if (items[1] != undefined) {
@@ -668,8 +671,22 @@ function parse_filter(str_filter, keywords) {
 }
 
 function filter_timeline() {
+    keywords_list = ['asset', 'tag', 'description', 'raw', 'startDate']
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords_list);
+    filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
+    console.log(filter_query);
+
+     $.ajax({
+        url: "/case/timeline/advanced-filter" + case_param(),
+        type: "GET",
+        data: { 'q': filter_query },
+        dataType: "json",
+        success: function (data) {
+            console.log(data);
+        }
+     });
+
 }
 
 /* Page is ready, fetch the assets of the case */
