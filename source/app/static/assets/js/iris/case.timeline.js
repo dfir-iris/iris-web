@@ -208,21 +208,15 @@ function build_timeline(data) {
     var is_i = false;
     current_timeline = data.data.tim;
     tmb = [];
-    reid = $('#assets_timeline_select').val();
-    if (reid == null) { reid = 0; }
 
-    $('#assets_timeline_select').empty();
+    reid = 0;
+
     $('#time_timeline_select').empty();
 
-
-    /* Build the filter list */
-    $('#assets_timeline_select').append('<option value="0">All assets</options>');
     for (rid in data.data.assets) {
         $('#assets_timeline_select').append('<option value="'+rid+'">' + sanitizeHTML(data.data.assets[rid]) + '</options>');
     }
-    $('#assets_timeline_select').selectpicker('val', reid);
 
-    $('#assets_timeline_select').selectpicker("refresh");
     var tesk = false;
     // Prepare replacement mod
     var reap = [];
@@ -246,6 +240,7 @@ function build_timeline(data) {
         reap.push([re, replacement]);
     }
     idx = 0;
+
     for (index in data.data.tim) {
         evt = data.data.tim[index];
         dta =  evt.event_date.split('T');
@@ -443,11 +438,10 @@ function build_timeline(data) {
     //match_replace_ioc(data.data.iocs, "timeline_list");
     $('[data-toggle="popover"]').popover();
 
-    for (tm in tmb) {
-        $('#time_timeline_select').append('<option value="'+ tm +'">' +tmb[tm] + '</options>');
+    if (data.data.tim.length === 0) {
+       $('#timeline_list').append('<h3 class="ml-mr-auto text-center">No events in current view</h3>');
     }
 
-    $('#time_timeline_select').selectpicker("refresh");
     last_state = data.data.state.object_state;
     hide_loader();
 
@@ -628,7 +622,7 @@ function split_bool(split_str) {
     and_split = split_str.split(' AND ');
 
     if (and_split[0]) {
-      return and_split[0].trim();
+      return and_split[0];
     }
 
     or_split = split_str.split(' OR ');
@@ -646,8 +640,8 @@ var keywords = ['asset', 'tag', 'description', 'raw', 'startDate', 'endDate'];
 
 function parse_filter(str_filter, keywords) {
   for (var k = 0; k < keywords.length; k++) {
-    keyword = keywords[k];
-	items = str_filter.split(keyword + ':');
+  	keyword = keywords[k];
+    items = str_filter.split(keyword + ':');
 
     ita = items[1];
 
@@ -657,18 +651,17 @@ function parse_filter(str_filter, keywords) {
 
     item = split_bool(ita);
 
-
     if (item != null) {
       if (!(keyword in parsed_filter)) {
         parsed_filter[keyword] = [];
       }
       if (!parsed_filter[keyword].includes(item)) {
-        parsed_filter[keyword].push(item);
-        console.log('Got '+ item + ' as ' + keyword);
+        parsed_filter[keyword].push(item.trim());
+        console.log('Got '+ item.trim() + ' as ' + keyword);
       }
 
       if (items[1] != undefined) {
-        str_filter = str_filter.replace(keyword + ':' + items[1], '');
+        str_filter = str_filter.replace(keyword + ':' + item, '');
         if (parse_filter(str_filter, keywords)) {
         	keywords.shift();
         }
@@ -688,7 +681,7 @@ function filter_timeline() {
     $('#timeline_list').empty();
     show_loader();
      $.ajax({
-        url: "/cagse/timeline/advanced-filter" + case_param(),
+        url: "/case/timeline/advanced-filter" + case_param(),
         type: "GET",
         data: { 'q': filter_query },
         dataType: "json",
