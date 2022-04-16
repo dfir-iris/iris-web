@@ -249,7 +249,7 @@ def case_filter_timeline(caseid):
     assets = filter_d.get('asset')
     tags = filter_d.get('tag')
     descriptions = filter_d.get('description')
-    categories = filter_d.get('categories')
+    categories = filter_d.get('category')
     raws = filter_d.get('raw')
     start_date = filter_d.get('startDate')
     end_date = filter_d.get('endDate')
@@ -301,7 +301,7 @@ def case_filter_timeline(caseid):
 
         for category in categories:
             condition = and_(condition,
-                             CasesEvent.category == category)
+                             EventCategory.name == category)
 
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
