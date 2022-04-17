@@ -246,6 +246,7 @@ function build_timeline(data) {
                 {value: 'description:', score: 10, meta: 'Match description of events'},
                 {value: 'category:', score: 10, meta: 'Match category of events'},
                 {value: 'title:', score: 10, meta: 'Match title of events'},
+                {value: 'source:', score: 10, meta: 'Match source of events'},
                 {value: 'raw:', score: 10, meta: 'Match raw data of events'},
                 {value: 'AND ', score: 10, meta: 'AND operator'}
               ]
@@ -656,7 +657,7 @@ function split_bool(split_str) {
 }
 
 var parsed_filter = {};
-var keywords = ['asset', 'tag', 'title', 'description', 'raw', 'category', 'startDate', 'endDate'];
+var keywords = ['asset', 'tag', 'title', 'description', 'raw', 'category', 'source', 'startDate', 'endDate'];
 
 
 function parse_filter(str_filter, keywords) {
@@ -699,7 +700,7 @@ function filter_timeline() {
 }
 
 function apply_filtering() {
-    keywords = ['asset', 'tag', 'title', 'description', 'category',  'raw', 'startDate', 'endDate'];
+    keywords = ['asset', 'tag', 'title', 'description', 'category', 'source',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
