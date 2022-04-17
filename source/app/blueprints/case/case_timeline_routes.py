@@ -340,7 +340,11 @@ def case_filter_timeline(caseid):
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
 
     assets_map = {}
+    cache = {}
     for asset in assets_cache:
+        if asset.asset_id not in cache:
+            cache[asset.asset_id] = [asset.asset_name, asset.type]
+
         if asset.asset_name.lower() in assets:
             if asset.event_id in assets_map:
                 assets_map[asset.event_id] += 1
@@ -353,7 +357,6 @@ def case_filter_timeline(caseid):
             assets_filter.append(event_id)
 
     tim = []
-    cache = {}
     for row in timeline:
         if assets is not None:
             if row.event_id not in assets_filter:
@@ -368,9 +371,6 @@ def case_filter_timeline(caseid):
         for asset in assets_cache:
 
             if asset.event_id == ras['event_id']:
-                if asset.asset_id not in cache:
-                    cache[asset.asset_id] = [asset.asset_name, asset.type]
-
                 alki.append(
                     {
                         "name": "{} ({})".format(asset.asset_name, asset.type),
