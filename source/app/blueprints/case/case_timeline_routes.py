@@ -255,16 +255,6 @@ def case_filter_timeline(caseid):
     end_date = filter_d.get('endDate')
 
     condition = (CasesEvent.case_id == caseid)
-    if assets:
-        assets_condition = condition
-        for asset in assets:
-            assets_condition = and_(assets_condition, and_(
-                CaseEventsAssets.asset_id == CaseAssets.asset_id,
-                CaseAssets.asset_name == asset,
-                CaseEventsAssets.event_id == CasesEvent.event_id
-            ))
-
-        condition = and_(condition, assets_condition)
 
     if tags:
         for tag in tags:
@@ -304,8 +294,6 @@ def case_filter_timeline(caseid):
             condition = and_(condition,
                              EventCategory.name == category)
 
-    print(str(condition))
-
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
             CasesEvent.event_date,
@@ -324,6 +312,21 @@ def case_filter_timeline(caseid):
             CasesEvent.category
         ).all()
 
+    events_assets = None
+    if assets:
+        assets_condition = (CasesEvent.case_id == caseid)
+        for asset in assets:
+            assets_condition = and_(assets_condition, and_(
+                CaseEventsAssets.asset_id == CaseAssets.asset_id,
+                CaseAssets.asset_name == asset
+            ))
+
+        events_assets_q = CaseEventsAssets.query.with_entities(
+            CaseEventsAssets.event_id
+        ).filter(assets_condition).all()
+
+        events_assets = [event_id for event_id in events_assets_q]
+
     assets_cache = CaseAssets.query.with_entities(
         CaseEventsAssets.event_id,
         CaseAssets.asset_id,
@@ -339,7 +342,12 @@ def case_filter_timeline(caseid):
     tim = []
     cache = {}
     for row in timeline:
+        if events_assets:
+            if row.event_id not in events_assets:
+                continue
+
         ras = row._asdict()
+
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
 
