@@ -267,17 +267,17 @@ def case_filter_timeline(caseid):
     if tags:
         for tag in tags:
             condition = and_(condition,
-                             CasesEvent.event_tags.like(f'%{tag},%'))
+                             CasesEvent.event_tags.ilike(f'%{tag}%'))
 
     if descriptions:
         for description in descriptions:
             condition = and_(condition,
-                             CasesEvent.event_content.like(f'%{description}%'))
+                             CasesEvent.event_content.ilike(f'%{description}%'))
 
     if raws:
         for raw in raws:
             condition = and_(condition,
-                             CasesEvent.event_raw.like(f'%{raw}%'))
+                             CasesEvent.event_raw.ilike(f'%{raw}%'))
 
     if start_date:
         try:
