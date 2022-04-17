@@ -38,7 +38,7 @@
                             <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
                         </li>
                         <li class="nav-item hidden-caret">
-                            <button class="btn btn-primary btn-sm" onclick="draw_timeline();">
+                            <button class="btn btn-primary btn-sm" onclick="get_or_filter_tm();">
                                 <span class="menu-title">Refresh</span>
                             </button>
                         </li>
@@ -85,7 +85,7 @@
             </div>
             <div id="side_timeline">
                 <button class="btn btn-round btn-light btn_over_page_a" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_b" title="Refresh" onclick="draw_timeline();"><i class="fas fa-redo-alt"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_b" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_c" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_d" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_e" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>

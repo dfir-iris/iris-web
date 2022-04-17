@@ -693,7 +693,7 @@ function parse_filter(str_filter, keywords) {
 
 function filter_timeline() {
     current_path = location.protocol + '//' + location.host + location.pathname;
-    new_path = current_path + case_param() + '&filter=' + encodeURI(tm_filter.getValue());
+    new_path = current_path + case_param() + '&filter=' + encodeURIComponent(tm_filter.getValue());
     window.location = new_path;
 }
 
@@ -730,24 +730,27 @@ function apply_filtering() {
 function getFilterFromLink(){
     queryString = window.location.search;
     urlParams = new URLSearchParams(queryString);
-    console.log(urlParams.get('filter'));
+
     if (urlParams.get('filter') !== undefined) {
         return urlParams.get('filter')
     }
     return null;
 }
 
-/* Page is ready, fetch the assets of the case */
-$(document).ready(function(){
-
+function get_or_filter_tm() {
     filter = getFilterFromLink();
-    console.log(filter);
     if (filter) {
         tm_filter.setValue(filter);
         apply_filtering();
     } else {
         draw_timeline();
     }
+}
+
+/* Page is ready, fetch the assets of the case */
+$(document).ready(function(){
+
+    get_or_filter_tm();
 
     setInterval(function() { check_update('timeline/state'); }, 3000);
 
