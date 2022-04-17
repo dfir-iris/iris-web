@@ -253,6 +253,7 @@ def case_filter_timeline(caseid):
     raws = filter_d.get('raw')
     start_date = filter_d.get('startDate')
     end_date = filter_d.get('endDate')
+    titles = filter_d.get('title')
 
     condition = (CasesEvent.case_id == caseid)
 
@@ -260,6 +261,11 @@ def case_filter_timeline(caseid):
         for tag in tags:
             condition = and_(condition,
                              CasesEvent.event_tags.ilike(f'%{tag}%'))
+
+    if titles:
+        for title in titles:
+            condition = and_(condition,
+                             CasesEvent.event_title.ilike(f'%{title}%'))
 
     if descriptions:
         for description in descriptions:
