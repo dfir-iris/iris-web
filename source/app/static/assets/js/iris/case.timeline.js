@@ -14,6 +14,13 @@ tm_filter.setOption("indentedSoftWrap", true);
 tm_filter.setOption("showLineNumbers", false);
 tm_filter.setOption("placeholder", "Filter timeline");
 tm_filter.setOption("highlightActiveLine", false);
+tm_filter.commands.addCommand({
+                    name: "Do filter",
+                    bindKey: { win: "Enter", mac: "Enter" },
+                    exec: function (editor) {
+                              filter_timeline();
+                    }
+});
 
 
 /* Fetch a modal that allows to add an event */
@@ -685,6 +692,12 @@ function parse_filter(str_filter, keywords) {
 }
 
 function filter_timeline() {
+    current_path = location.protocol + '//' + location.host + location.pathname;
+    new_path = current_path + case_param() + '&filter=' + encodeURI(tm_filter.getValue());
+    window.location = new_path;
+}
+
+function apply_filtering() {
     keywords = ['asset', 'tag', 'description', 'category',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
@@ -714,10 +727,27 @@ function filter_timeline() {
      }).done(function() {goToSharedLink()});
 }
 
+function getFilterFromLink(){
+    queryString = window.location.search;
+    urlParams = new URLSearchParams(queryString);
+    console.log(urlParams.get('filter'));
+    if (urlParams.get('filter') !== undefined) {
+        return urlParams.get('filter')
+    }
+    return null;
+}
+
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
-    draw_timeline();
+    filter = getFilterFromLink();
+    console.log(filter);
+    if (filter) {
+        tm_filter.setValue(filter);
+        apply_filtering();
+    } else {
+        draw_timeline();
+    }
 
     setInterval(function() { check_update('timeline/state'); }, 3000);
 

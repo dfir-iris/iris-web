@@ -254,15 +254,17 @@ def case_filter_timeline(caseid):
     start_date = filter_d.get('startDate')
     end_date = filter_d.get('endDate')
 
-    condition = and_(CasesEvent.case_id == caseid)
-
+    condition = (CasesEvent.case_id == caseid)
     if assets:
+        assets_condition = (CasesEvent.case_id == caseid)
         for asset in assets:
-            condition = and_( condition,
+            assets_condition = and_(assets_condition, and_(
                 CaseEventsAssets.asset_id == CaseAssets.asset_id,
                 CaseAssets.asset_name == asset,
                 CaseEventsAssets.event_id == CasesEvent.event_id
-            )
+            ))
+
+        condition = and_(condition, assets_condition)
 
     if tags:
         for tag in tags:
@@ -301,6 +303,8 @@ def case_filter_timeline(caseid):
         for category in categories:
             condition = and_(condition,
                              EventCategory.name == category)
+
+    print(str(condition))
 
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
