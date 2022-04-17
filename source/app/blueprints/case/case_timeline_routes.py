@@ -256,7 +256,7 @@ def case_filter_timeline(caseid):
 
     condition = (CasesEvent.case_id == caseid)
     if assets:
-        assets_condition = (CasesEvent.case_id == caseid)
+        assets_condition = condition
         for asset in assets:
             assets_condition = and_(assets_condition, and_(
                 CaseEventsAssets.asset_id == CaseAssets.asset_id,
