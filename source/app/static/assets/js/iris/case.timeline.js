@@ -248,6 +248,12 @@ function build_timeline(data) {
         );
     }
 
+    for (rid in data.data.categories) {
+        standard_filters.push(
+             {value: data.data.categories[rid], score: 1, meta: "Event category"}
+        );
+    }
+
     tm_filter.setOptions({
           enableBasicAutocompletion: [{
             getCompletions: (editor, session, pos, prefix, callback) => {

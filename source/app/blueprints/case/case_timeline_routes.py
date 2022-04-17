@@ -298,7 +298,6 @@ def case_filter_timeline(caseid):
             pass
 
     if categories:
-
         for category in categories:
             condition = and_(condition,
                              EventCategory.name == category)
@@ -374,6 +373,7 @@ def case_filter_timeline(caseid):
             "tim": tim,
             "assets": cache,
             "iocs": [ioc._asdict() for ioc in iocs],
+            "categories": [cat.name for cat in get_events_categories()],
             "state": get_timeline_state(caseid=caseid)
         }
 
@@ -470,6 +470,7 @@ def case_gettimeline(asset_id, caseid):
             "tim": tim,
             "assets": cache,
             "iocs": [ioc._asdict() for ioc in iocs],
+            "categories": [cat.name for cat in get_events_categories()],
             "state": get_timeline_state(caseid=caseid)
         }
 
