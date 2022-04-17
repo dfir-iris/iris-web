@@ -59,7 +59,6 @@
           </div>
     </div>
 </div>
-{% if current_user.is_admin %}
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-danger mr-auto" onclick="remove_case('{{ data.case_id }}');">Remove case</button>
     {% if not data.close_date %}
@@ -69,4 +68,3 @@
     {% endif %}
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
 </div>
-{% endif %}
