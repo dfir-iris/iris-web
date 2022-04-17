@@ -1,5 +1,4 @@
 {% set attributes = data.custom_attributes %}
-{% set page_uid = range(1, 99999) | random %}
 <div class="modal-header">
     <h4 class="modal-title mt-2 mr-4">{{ data.case_name|unquote }}</h4>
     {% include 'modals/modal_attributes_nav.html' %}
@@ -59,12 +58,8 @@
           </div>
     </div>
 </div>
+
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-danger mr-auto" onclick="remove_case('{{ data.case_id }}');">Remove case</button>
-    {% if not data.close_date %}
-        <button type="button" class="btn btn-outline-success" onclick="close_case('{{ data.case_id }}');">Close case</button>
-    {% else %}
-        <button type="button" class="btn btn-outline-success" onclick="reopen_case('{{ data.case_id }}');">Reopen case</button>
-    {% endif %}
+    <button type="button" class="btn btn-outline-default mr-auto" onclick="manage_case();">Manage case</button>
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
 </div>

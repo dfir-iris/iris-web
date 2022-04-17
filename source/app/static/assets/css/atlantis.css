@@ -15790,3 +15790,5 @@ div.dataTables_processing { z-index: 1; }
   -o-animation: yellow-fade 2s ease-in-out 0s;
   animation: yellow-fade 2s ease-in-out 0s;
 }
+
+.modal { overflow: auto !important; }
