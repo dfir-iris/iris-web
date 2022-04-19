@@ -35,7 +35,7 @@
                                         {{ form.event_title(class='form-control col-md-12 col-sm-12',  autocomplete="off") }}
                                     </div>
                                     <div class="form-group col-7">
-                                        <label for="event_timetitle" class="placeholder mr-2">Event Time *</label>
+                                        <label for="event_timetitle" class="placeholder ml-2">Event Time *</label>
                                         <div class="row ml-2" id="event_date_inputs">
                                                 <input class="form-control col-5 mr-2" type="date" id="event_date" {% if event.event_date_wtz %} value="{{ event.event_date_wtz.strftime('%Y-%m-%d') }}"{% endif %}>
                                                 <span></span>
@@ -99,7 +99,7 @@
                                     <div class="form-group col-5">
                                         <label for="event_category_id" class="form-label">{{ form.event_category_id.label.text }}</label>
                                         <div class="row col-12">
-                                            {{ form.event_category_id(class="selectpicker col-12") }}
+                                            {{ form.event_category_id(class="selectpicker") }}
                                         </div>
                                     </div>
                                     <div class="form-group col-2">
@@ -194,7 +194,12 @@
         suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
     });
 $('[data-toggle="popover"]').popover();
-$('#event_category_id').select2({width:"100%"});
+$('#event_category_id').selectpicker({
+    width:"100%",
+    liveSearch: true,
+    title: "None",
+    style: "btn-outline-white",
+    });
 </script>
 
 {% if assets %}
