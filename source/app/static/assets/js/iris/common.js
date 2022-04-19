@@ -372,7 +372,7 @@ function get_hash() {
     }
     getMD5(
         document.getElementById("input_autofill").files[0],
-    prog => $('#btn_rfile_proc').text("Processing "+ (prog * 100).toFixed(2) + "%")
+        prog => $('#btn_rfile_proc').text("Processing "+ (prog * 100).toFixed(2) + "%")
     ).then(
         res => on_done_hash(res),
         err => console.error(err)
@@ -382,9 +382,9 @@ function get_hash() {
 
 function on_done_hash(result) {
     $('#btn_rfile_proc').text('Done processing');
-    $('#file_hash').val(result);
-    $('#filename').val(document.getElementById("input_autofill").files[0].name);
-    $('#file_size').val(document.getElementById("input_autofill").files[0].size);
+    $('form#form_add_receivedfile #file_hash').val(result);
+    $('form#form_add_receivedfile #filename').val(document.getElementById("input_autofill").files[0].name);
+    $('form#form_add_receivedfile #file_size').val(document.getElementById("input_autofill").files[0].size);
 }
 
 
