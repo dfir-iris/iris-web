@@ -39,15 +39,24 @@
                                     <label for="rfile_desc" class="placeholder">File description</label>
                                     <input class="form-control" placeholder="Description" id="file_description" name="file_description" value="{{ rfile.file_description }}"/>
                                 </div>
+                                <div class="form-group">
+                                    <p>Automatically compute file information by selecting it below. The file will not be uploaded nor saved.</p>
+                                    <input id="input_autofill" type="file">
+                                    <button class="btn btn-sm" type="button" onclick="get_hash()" id="btn_rfile_proc">Process</button>
+                                </div>
                             </div>
                         </form>
                     </div>
                 </div>
               {% include 'modals/modal_attributes_tabs.html' %}
           </div>
+        {% if rfile.id %}
          <button type="button" class="btn btn-outline-danger mt-5"
                 onclick="delete_rfile('{{ rfile.id }}');">Delete</button>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
                 onclick="update_rfile('{{ rfile.id }}');" id="submit_new_rfiles">Update</button>
+        {% else %}
+            <button type="button" class="btn btn-outline-success float-right" onclick="add_rfile();">Register</button>
+        {% endif %}
     </div>
 </div>
