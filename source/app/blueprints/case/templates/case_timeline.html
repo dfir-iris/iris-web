@@ -23,14 +23,14 @@
 			<nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient">
 				{{ form.hidden_tag() }}
 				<ul class="container-fluid mt-3 mb--2">
-                    <ul class="navbar-nav">
-                        <li class="nav-item hidden-caret">
-                            <select class="selectpicker" data-show-subtext="true" data-live-search="true" data-size="10" id="time_timeline_select">
-                            </select>
-                        </li>
-                        <li class="nav-item hidden-caret">
-                            <select class="selectpicker" data-show-subtext="true" data-live-search="true" data-size="10" id="assets_timeline_select">
-                            </select>
+                    <ul class="navbar-nav col-8">
+                        <li class="nav-item hidden-caret col-12">
+                            <div class="row">
+                                <div id='timeline_filtering' class="col-9 pt-2 pl-2" style="border-radius:3px;" ></div>
+                                <button class="btn btn-sm btn-light ml-2" onclick="filter_timeline();">
+                                    <span class="menu-title text-dark">Apply filter</span>
+                                </button>
+                            </div>
                         </li>
                      </ul>
                     <ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
@@ -38,7 +38,7 @@
                             <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
                         </li>
                         <li class="nav-item hidden-caret">
-                            <button class="btn btn-primary btn-sm" onclick="draw_timeline();">
+                            <button class="btn btn-primary btn-sm" onclick="get_or_filter_tm();">
                                 <span class="menu-title">Refresh</span>
                             </button>
                         </li>
@@ -85,7 +85,7 @@
             </div>
             <div id="side_timeline">
                 <button class="btn btn-round btn-light btn_over_page_a" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_b" title="Refresh" onclick="draw_timeline();"><i class="fas fa-redo-alt"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_b" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_c" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_d" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_e" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>
@@ -111,6 +111,10 @@
 
 {% endblock content %}
 {% block javascripts %}
+
+<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
+    charset="utf-8"></script>
 
 <script src="/static/assets/js/core/moments.min.js"></script>
 <script src="/static/assets/js/core/bootstrap-datetimepicker.min.js"></script>
