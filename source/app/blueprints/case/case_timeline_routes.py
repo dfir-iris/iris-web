@@ -345,11 +345,12 @@ def case_filter_timeline(caseid):
         if asset.asset_id not in cache:
             cache[asset.asset_id] = [asset.asset_name, asset.type]
 
-        if asset.asset_name.lower() in assets:
-            if asset.event_id in assets_map:
-                assets_map[asset.event_id] += 1
-            else:
-                assets_map[asset.event_id] = 1
+        if assets:
+            if asset.asset_name.lower() in assets:
+                if asset.event_id in assets_map:
+                    assets_map[asset.event_id] += 1
+                else:
+                    assets_map[asset.event_id] = 1
 
     assets_filter = []
     for event_id in assets_map:
@@ -358,7 +359,7 @@ def case_filter_timeline(caseid):
 
     tim = []
     for row in timeline:
-        if assets is not None:
+        if assets is not None and len(assets_filter) > 0:
             if row.event_id not in assets_filter:
                 continue
 

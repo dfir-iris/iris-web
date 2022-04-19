@@ -5548,7 +5548,7 @@ label {
     font-size: 14px;
     border-color: #ebedf2;
     padding: .6rem 1rem;
-    height: inherit !important;
+    /* height: inherit !important;*/
 }
 
 .form-control:focus {
@@ -15479,9 +15479,9 @@ body[data-background-color="dark"] .bg-primary-gradient{
 }
 
 .sizable-textarea {
-    resize: none;
     min-height: 8rem;
   }
+
 
 .modal-xxl {
    width: 90%;
