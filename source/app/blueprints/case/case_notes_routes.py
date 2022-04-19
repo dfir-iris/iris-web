@@ -86,13 +86,15 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
     form = CaseNoteForm()
 
     note = get_note(cur_id, caseid)
+    ca = None
 
     if note:
         form.content = note.note_content
         form.title = note.note_title
         form.note_title.render_kw = {"value": note.note_title}
+        ca = note.custom_attributes
 
-    return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=note.custom_attributes)
+    return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca)
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['GET'])

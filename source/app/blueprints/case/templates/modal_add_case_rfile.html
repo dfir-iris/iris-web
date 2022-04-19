@@ -1,7 +1,9 @@
 <div class="modal-header">
     <h4 class="modal-title mt-2 mr-4">Edit registered file</h4>
-    {% if rfile.id %}
+
     {% include 'modals/modal_attributes_nav.html' %}
+
+    {% if rfile.id %}
     <div class="row text-right">
      <div class="dropdown">
           <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">

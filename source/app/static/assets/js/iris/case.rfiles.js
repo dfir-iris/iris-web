@@ -34,19 +34,27 @@ function add_modal_rfile() {
 }
 
 function add_rfile() {
-    var data = $('form#form_add_receivedfile').serializeObject();
-    data['csrf_token'] = $('#csrf_token').val();
+    var data_sent = $('form#form_edit_rfile').serializeObject();
+    data_sent['csrf_token'] = $('#csrf_token').val();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
+
     $.ajax({
         url: '/case/evidences/add' + case_param(),
         type: "POST",
-        data: JSON.stringify(data),
+        data: JSON.stringify(data_sent),
         contentType: "application/json;charset=UTF-8",
         dataType: "json",
         success: function (data) {
             jsdata = data;
             if (jsdata.status == "success") {
                 if (typeof reload_rfiles != "undefined") { reload_rfiles(); }
-                $('#modal_add_receivedfile').modal('hide');
+                $('#modal_add_rfiles').modal('hide');
                 notify_success("File registered");
 
             } else {

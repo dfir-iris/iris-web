@@ -406,9 +406,9 @@ function load_case_activity(){
                         title = 'Activity issued from GUI';
                     }
 
-                    entry =	`<li class="feed-item ${api_flag}" title='${title}'>
+                    entry =	`<li class="feed-item ${api_flag}" title='${sanitizeHTML(title)}'>
 							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
-							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</span>
+							<span class="text">${sanitizeHTML(js_data[index].name)} - ${sanitizeHTML(js_data[index].activity_desc)}</span>
 						    </li>`
                     $('#case_activities').append(entry);
                 }
