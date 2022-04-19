@@ -623,6 +623,16 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
     });
 }
 
+function get_row_id(row) {
+    ids_map = ["ioc_id","asset_id","task_id","id"];
+    for (id in ids_map) {
+        if (row[ids_map[id]] !== undefined) {
+            return row[ids_map[id]];
+        }
+    }
+    return null;
+}
+
 function load_menu_mod_options(data_type, table) {
     var actionOptions = {
         classes: [],
@@ -662,8 +672,9 @@ function load_menu_mod_options(data_type, table) {
                         multi: false,
                         iconClass: 'fas fa-share',
                         buttonClasses: ['btn', 'btn-outline-primary'],
-                        action: function(){
-                            copy_object_link("${element_id}");return false;
+                        action: function(rows){
+                            row = rows[0];
+                            copy_object_link(get_row_id(row));
                         }
                     });
                     actionOptions.items.push({
