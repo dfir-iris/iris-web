@@ -613,7 +613,7 @@ def case_event_date_convert(caseid):
         for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
                     '%Y-%m-%d %H:%M%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S.%f%z',
                     '%Y-%m-%d %H:%M %Z', '%Y-%m-%d %H:%M:%S %Z', '%Y-%m-%d %H:%M:%S.%f %Z', 
-                    '%Y-%M-%D - %h:%m:%s.%f%Z',
+                    '%Y-%m-%d - %H:%M:%S.%f%z',
 
                     '%b %d %H:%M:%S', '%Y %b %d %H:%M:%S', '%b %d %H:%M:%S %Y', '%b %d %Y %H:%M:%S',
                     '%y %b %d %H:%M:%S', '%b %d %H:%M:%S %y', '%b %d %y %H:%M:%S',
