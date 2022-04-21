@@ -441,6 +441,7 @@ def case_edit_event(cur_id, caseid):
         event.case_id = caseid
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
+        event.event_tags = request_data.get(u'event_tags')
 
         update_timeline_state(caseid=caseid)
         db.session.commit()
@@ -611,7 +612,8 @@ def case_event_date_convert(caseid):
         # brute force formats
         for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
                     '%Y-%m-%d %H:%M%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S.%f%z',
-                    '%Y-%m-%d %H:%M %Z', '%Y-%m-%d %H:%M:%S %Z', '%Y-%m-%d %H:%M:%S.%f %Z',
+                    '%Y-%m-%d %H:%M %Z', '%Y-%m-%d %H:%M:%S %Z', '%Y-%m-%d %H:%M:%S.%f %Z', 
+                    '%Y-%M-%D - %h:%m:%s.%f%Z',
 
                     '%b %d %H:%M:%S', '%Y %b %d %H:%M:%S', '%b %d %H:%M:%S %Y', '%b %d %Y %H:%M:%S',
                     '%y %b %d %H:%M:%S', '%b %d %H:%M:%S %y', '%b %d %y %H:%M:%S',
