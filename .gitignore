@@ -20,3 +20,5 @@ venv1/
 .env
 .venv/
 .vscode/
+*.png
+*.code-workspace
