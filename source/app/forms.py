@@ -22,6 +22,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, PasswordField, IntegerField, BooleanField, \
     widgets, SelectMultipleField, SelectField, DateTimeField
 from wtforms.validators import InputRequired, Email, DataRequired, Regexp
+from flask_wtf.file import FileAllowed, FileRequired, FileField
 
 
 class LoginForm(FlaskForm):
@@ -53,7 +54,8 @@ class MultiCheckboxField(SelectMultipleField):
 class AddAssetForm(FlaskForm):
     asset_name = StringField(u'Asset name', validators=[DataRequired()])
     asset_description = StringField(u'Asset description', validators=[DataRequired()])
-
+    asset_icon_compromised = StringField(u'Asset icon compromised name', validators=[DataRequired()])
+    asset_icon_not_compromised = StringField(u'Asset icon compromised name', validators=[DataRequired()])
 
 class AttributeForm(FlaskForm):
     attribute_content = TextAreaField(u'Attribute content', validators=[DataRequired()])

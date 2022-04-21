@@ -122,6 +122,7 @@ class Config():
     APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     UPLOADED_PATH = config.get('IRIS', 'UPLOADED_PATH') if config.get('IRIS', 'UPLOADED_PATH', fallback=False) else "/home/iris/downloads"
     TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH', fallback=False) else "/home/iris/user_templates"
+    ASSET_PATH = config.get('IRIS', 'ASSET_PATH') if config.get('IRIS', 'TEMPLATES_PATH', fallback=False) else APP_PATH+"/app/static/assets/img/graph"
 
     UPDATE_DIR_NAME = '_updates_'
 

@@ -535,7 +535,6 @@ def case_duplicate_event(cur_id, caseid):
 
         #create new Event
         event = CasesEvent()
-        print(event)
         orig_event_id = event.event_id
         #transfer duplicated event's attributes to new event
         for key in dir(old_event):
@@ -560,7 +559,6 @@ def case_duplicate_event(cur_id, caseid):
 
         #update assets mapping
         assets_list = get_event_assets_ids(old_event.event_id)
-        print(assets_list)
         update_event_assets(event_id=event.event_id,
             caseid=caseid,
             assets_list=assets_list)

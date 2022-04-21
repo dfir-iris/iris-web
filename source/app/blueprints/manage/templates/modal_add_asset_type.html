@@ -10,23 +10,23 @@
             <div class="col-md-12 col-lg-12 col-sm-12">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
-                    <label for="asset_type" class="mr-4">Type
+                    <label for="asset_type" class="mr-4">Assett Type
                     </label>
                     {{ form.asset_name(class='form-control',  autocomplete="off") }}
                 </div>
                 <div class="form-group mt-3">
-                    <label for="asset_description" class="placeholder">Type description</label>
+                    <label for="asset_description" class="placeholder">Asset Type description</label>
                     {{ form.asset_description(class='form-control',  autocomplete="off") }}
                 </div>
                 <div class="form-group">
-                    <label for="asset_icon_compromised" class="mr-4">Icon - compromised
+                    <label for="asset_icon_compromised" class="mr-4">Asset Icon - compromised
                     </label>
-                    {{ form.asset_icon_compromised(class='form-control') }}
+                    {{ form.asset_icon_compromised(class='form-control',type='file') }}
                 </div>
                 <div class="form-group">
-                    <label for="asset_icon_compromised" class="mr-4">Icon - not compromised
+                    <label for="asset_icon_compromised" class="mr-4">Asset Icon - not compromised
                     </label>
-                    {{ form.asset_icon_not_compromised(class='form-control') }}
+                    {{ form.asset_icon_not_compromised(class='form-control',type='file') }}
                 </div>
 
             {% if assettype.asset_id %}
@@ -37,7 +37,7 @@
 
             {% else %}
 
-                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                <button type="submit" class="btn btn-outline-success ml-4 mt-5 float-right"
                 id="submit_new_assettype">Save</button>
 
             {% endif %}

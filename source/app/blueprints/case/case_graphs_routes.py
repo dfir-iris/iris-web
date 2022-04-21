@@ -62,62 +62,13 @@ def case_graph_get_data(caseid):
     tmp = {}
 
     for event in events:
-        ioc = "ioc_" if event.asset_compromised else ""
-        atype = event.asset_type.lower()
         img = ""
-        is_master_atype = False
-
-        if 'windows - server' in atype:
-            img = 'windows_server.png'
+        if event.asset_compromised:
+            img = event.asset_icon_compromised
             is_master_atype = True
-
-        elif 'windows - computer' in atype:
-            img = 'windows_desktop.png'
-            is_master_atype = True
-
-        elif 'windows - dc' in atype:
-            img = 'windows_server.png'
-            is_master_atype = True
-
-        elif 'computer' in atype:
-            img = 'desktop.png'
-            is_master_atype = True
-
-        elif 'server' in atype:
-            img = 'server.png'
-            is_master_atype = True
-
-        elif 'domain controller' in atype:
-            img = 'windows_server.png'
-            is_master_atype = True
-
-        elif 'account' in atype:
-            img = 'user.png'
-
-        elif 'vpn' in atype:
-            img = 'vpn.png'
-            is_master_atype = True
-
-        elif 'firewall' in atype:
-            img = 'firewall.png'
-            is_master_atype = True
-
-        elif 'router' in atype:
-            img = 'router.png'
-            is_master_atype = True
-
-        elif 'WAF' in atype:
-            img = 'firewall.png'
-            is_master_atype = True
-
-        elif 'switch' in atype:
-            img = 'switch.png'
-            is_master_atype = True
-
-        elif 'phone' in atype:
-            img = 'phone.png'
-            is_master_atype = True
-
+        elif not event.asset_compromised:
+            img = event.asset_icon_not_compromised
+            is_master_atype = False
         else:
             img = 'question-mark.png'
 
@@ -138,7 +89,7 @@ def case_graph_get_data(caseid):
         new_node = {
             'id': event.asset_id,
             'label': event.asset_name,
-            'image': '/static/assets/img/graph/' + ioc + img,
+            'image': '/static/assets/img/graph/' + img,
             'shape': 'image',
             'title': title,
             'value': 1
@@ -150,7 +101,7 @@ def case_graph_get_data(caseid):
             'node_id': event.asset_id,
             'node_title': "{} -{}".format(event.event_date, event.event_title),
             'node_name': event.asset_name,
-            'node_type': atype
+            'node_type': event.asset_description
         }
         if tmp.get(event.event_id):
             tmp[event.event_id]['list'].append(ak)

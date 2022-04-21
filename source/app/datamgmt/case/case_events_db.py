@@ -31,6 +31,8 @@ def get_case_events_graph(caseid):
         CaseAssets.asset_name,
         CaseAssets.asset_id,
         AssetsType.asset_name.label('asset_type'),
+        AssetsType.asset_icon_not_compromised,
+        AssetsType.asset_icon_compromised,
         CasesEvent.event_color,
         CaseAssets.asset_compromised,
         CaseAssets.asset_description,
@@ -43,7 +45,7 @@ def get_case_events_graph(caseid):
     )).join(
         CaseEventsAssets.event,
         CaseEventsAssets.asset,
-        CaseAssets.asset_type
+        CaseAssets.asset_type,
     ).all()
 
     return events

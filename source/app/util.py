@@ -195,7 +195,6 @@ def get_urlcase(request):
             js_d = request.get_json()
             if js_d:
                 caseid = js_d.get('cid')
-                print(caseid)
                 request.json.pop('cid')
             else:
                 caseid = current_user.ctx_case
@@ -312,7 +311,6 @@ def api_login_required(f):
 def api_admin_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
-
         if request.method == 'POST':
             cookie_session = request.cookies.get('session')
             if cookie_session:
@@ -321,7 +319,6 @@ def api_admin_required(f):
                     return response_error('Invalid CSRF token')
                 elif request.is_json:
                     request.json.pop('csrf_token')
-
         if not current_user.is_authenticated:
             return response_error("Authentication required", status=401)
 

@@ -343,33 +343,33 @@ def create_safe_task_status():
 
 
 def create_safe_assets():
-    get_or_create(db.session, AssetsType, asset_name="Account", asset_description="Generic Account")
-    get_or_create(db.session, AssetsType, asset_name="Firewall", asset_description="Firewall")
-    get_or_create(db.session, AssetsType, asset_name="Linux - Server", asset_description="Linux server")
-    get_or_create(db.session, AssetsType, asset_name="Linux - Computer", asset_description="Linux computer")
-    get_or_create(db.session, AssetsType, asset_name="Linux Account", asset_description="Linux Account")
-    get_or_create(db.session, AssetsType, asset_name="Mac - Computer", asset_description="Mac computer")
-    get_or_create(db.session, AssetsType, asset_name="Phone - Android", asset_description="Android Phone")
-    get_or_create(db.session, AssetsType, asset_name="Phone - IOS", asset_description="Apple Phone")
-    get_or_create(db.session, AssetsType, asset_name="Windows - Computer", asset_description="Standard Windows Computer")
-    get_or_create(db.session, AssetsType, asset_name="Windows - Server", asset_description="Standard Windows Server")
-    get_or_create(db.session, AssetsType, asset_name="Windows - DC", asset_description="Domain Controller")
-    get_or_create(db.session, AssetsType, asset_name="Router", asset_description="Router")
-    get_or_create(db.session, AssetsType, asset_name="Switch", asset_description="Switch")
-    get_or_create(db.session, AssetsType, asset_name="VPN", asset_description="VPN")
-    get_or_create(db.session, AssetsType, asset_name="WAF", asset_description="WAF")
+    get_or_create(db.session, AssetsType, asset_name="Account", asset_description="Generic Account", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_or_create(db.session, AssetsType, asset_name="Firewall", asset_description="Firewall", asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
+    get_or_create(db.session, AssetsType, asset_name="Linux - Server", asset_description="Linux server", asset_icon_not_compromised="server.png", asset_icon_compromised="ioc_server.png")
+    get_or_create(db.session, AssetsType, asset_name="Linux - Computer", asset_description="Linux computer", asset_icon_not_compromised="desktop.png", asset_icon_compromised="ioc_desktop.png")
+    get_or_create(db.session, AssetsType, asset_name="Linux Account", asset_description="Linux Account", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_or_create(db.session, AssetsType, asset_name="Mac - Computer", asset_description="Mac computer", asset_icon_not_compromised="desktop.png", asset_icon_compromised="ioc_desktop.png")
+    get_or_create(db.session, AssetsType, asset_name="Phone - Android", asset_description="Android Phone", asset_icon_not_compromised="phone.png", asset_icon_compromised="ioc_phone.png")
+    get_or_create(db.session, AssetsType, asset_name="Phone - IOS", asset_description="Apple Phone", asset_icon_not_compromised="phone.png", asset_icon_compromised="ioc_phone.png")
+    get_or_create(db.session, AssetsType, asset_name="Windows - Computer", asset_description="Standard Windows Computer", asset_icon_not_compromised="windows_desktop.png", asset_icon_compromised="ioc_windows_desktop.png")
+    get_or_create(db.session, AssetsType, asset_name="Windows - Server", asset_description="Standard Windows Server", asset_icon_not_compromised="windows_server.png", asset_icon_compromised="ioc_windows_server.png")
+    get_or_create(db.session, AssetsType, asset_name="Windows - DC", asset_description="Domain Controller", asset_icon_not_compromised="windows_server.png", asset_icon_compromised="ioc_windows_server.png")
+    get_or_create(db.session, AssetsType, asset_name="Router", asset_description="Router", asset_icon_not_compromised="router.png", asset_icon_compromised="ioc_router.png")
+    get_or_create(db.session, AssetsType, asset_name="Switch", asset_description="Switch", asset_icon_not_compromised="switch.png", asset_icon_compromised="ioc_switch.png")
+    get_or_create(db.session, AssetsType, asset_name="VPN", asset_description="VPN", asset_icon_not_compromised="vpn.png", asset_icon_compromised="ioc_vpn.png")
+    get_or_create(db.session, AssetsType, asset_name="WAF", asset_description="WAF", asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - Local",
-                                          asset_description="Windows Account - Local")
+                                          asset_description="Windows Account - Local", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - Local - Admin",
-                                          asset_description="Windows Account - Local - Admin")
+                                          asset_description="Windows Account - Local - Admin", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - AD",
-                                          asset_description="Windows Account - AD")
+                                          asset_description="Windows Account - AD", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - Admin",
-                                          asset_description="Windows Account - AD - Admin")
+                                          asset_description="Windows Account - AD - Admin", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - krbtgt",
-                                          asset_description="Windows Account - AD - krbtgt")
+                                          asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
     get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - Service",
-                                          asset_description="Windows Account - AD - krbtgt")
+                                          asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
 
 
 def create_safe_client():

@@ -19,15 +19,18 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-import marshmallow
-from flask import Blueprint
+import marshmallow, string, random
+from flask import Blueprint, flash
 from flask import render_template, request, url_for, redirect
 
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import AssetsType, CaseAssets
 from app.forms import AddAssetForm
-from app import db
+from app import db, app
 from app.schema.marshables import AssetSchema
+from werkzeug.utils import secure_filename
+import os
+
 
 from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
     api_login_required
@@ -37,6 +40,20 @@ manage_assets_blueprint = Blueprint('manage_assets',
                                     template_folder='templates')
 
 
+ALLOWED_EXTENSIONS = {'png', 'svg'}
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def get_random_string(length):
+    letters = string.ascii_lowercase
+    result_str = ''.join(random.choice(letters) for i in range(length))
+    return result_str
+
+
 @manage_assets_blueprint.route('/manage/asset-type/list')
 @api_login_required
 def list_assets(caseid):
@@ -44,7 +61,9 @@ def list_assets(caseid):
     assets = AssetsType.query.with_entities(
         AssetsType.asset_name,
         AssetsType.asset_description,
-        AssetsType.asset_id
+        AssetsType.asset_id,
+        AssetsType.asset_icon_compromised,
+        AssetsType.asset_icon_not_compromised,
     ).all()
 
     data = [row._asdict() for row in assets]
@@ -85,6 +104,9 @@ def view_assets_modal(cur_id, caseid, url_redir):
 
     form.asset_name.render_kw = {'value': asset.asset_name}
     form.asset_description.render_kw = {'value': asset.asset_description}
+    form.asset_icon_compromised.render_kw = {'value': asset.asset_icon_compromised}
+    form.asset_icon_not_compromised.render_kw = {'value': asset.asset_icon_not_compromised}
+
 
     return render_template("modal_add_asset_type.html", form=form, assettype=asset)
 
@@ -128,23 +150,46 @@ def add_assets_modal(caseid, url_redir):
 @manage_assets_blueprint.route('/manage/asset-type/add', methods=['POST'])
 @api_admin_required
 def add_assets(caseid):
-    if not request.is_json:
-        return response_error("Invalid request")
 
-    asset_schema = AssetSchema()
+    form = AddAssetForm()
 
-    try:
+    asset_type = AssetsType()
 
-        asset_sc = asset_schema.load(request.get_json())
-        db.session.add(asset_sc)
+    if form.is_submitted():
+        
+        asset_type.asset_name = request.form.get('asset_name','', type=str)
+        asset_type.asset_description = request.form.get('asset_description','', type=str)
+        for icon in ['asset_icon_compromised','asset_icon_not_compromised']:
+            file = request.files[icon]
+            if file.filename == '':
+                flash('No selected file')
+                return redirect(request.url)
+
+            if file and allowed_file(file.filename):
+                filename = get_random_string(18)
+
+                try:
+
+                    file.save(os.path.join(app.config['ASSET_PATH'], filename))
+                    # file.save(filename)
+
+                except Exception as e:
+                    return response_error(f"Unable to add icon {e}")
+
+                setattr(asset_type,icon, filename)
+
+            else:
+                return response_error("Unable to add a file")
+
+        db.session.add(asset_type)
         db.session.commit()
+        track_activity("Added asset type {asset_name}".format(asset_name=asset_type.asset_name), caseid=caseid, ctx_less=True)
+    else:
+        print("invalid")
 
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
-
-    track_activity("Added asset type {asset_name}".format(asset_name=asset_sc.asset_name), caseid=caseid, ctx_less=True)
+    
     # Return the assets
-    return response_success("Added successfully", data=asset_sc)
+    return response_success("Added successfully", data=asset_type.asset_name)
 
 
 @manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])
