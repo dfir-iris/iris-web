@@ -31,12 +31,6 @@ else:
     config.read(f'app{os.path.sep}config.priv.ini')
 
 # Fetch the values
-misp_url = config.get('MISP', 'MISP_URL')
-misp_key = config.get('MISP', 'MISP_KEY')
-misp_verifycert = config.get('MISP', 'MISP_VERIFYCERT') != "False"
-misp_http_proxy = config.get('MISP', 'MISP_PROXY_HTTP')
-misp_https_proxy = config.get('MISP', 'MISP_PROXY_HTTPS')
-
 PG_ACCOUNT_ = os.environ.get('DB_USER', config.get('POSTGRES', 'PG_ACCOUNT'))
 PG_PASSWD_ = os.environ.get('DB_PASS', config.get('POSTGRES', 'PG_PASSWD'))
 PGA_ACCOUNT_ = os.environ.get('POSTGRES_USER', config.get('POSTGRES', 'PGA_ACCOUNT'))
