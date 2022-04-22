@@ -78,6 +78,8 @@ def case_list_ioc(caseid):
         ial = get_ioc_links(ioc.ioc_id, caseid)
 
         out['link'] = [row._asdict() for row in ial]
+        # Legacy, must be changed next version
+        out['misp_link'] = None
 
         ret['ioc'].append(out)
 
