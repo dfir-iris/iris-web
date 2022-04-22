@@ -12,7 +12,7 @@
 # IRIS
 
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](./LICENSE.txt)   
-IRIS is a web collaborative platform for incident response analysts allowing to share investigations at a technical level. 
+IRIS is a web collaborative platform aiming to help incident responders sharing technical details during investigations. 
 
 ![demo_timeline](img/timeline_speed.gif)
 

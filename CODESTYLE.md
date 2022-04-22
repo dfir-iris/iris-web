@@ -9,8 +9,9 @@ Try to follow the repository convention :
 - If it's linked to an issue, prepend with the issue ID, i.e `[#issue_id][action] Commit message` 
 
 ## Code
-The code should be pretty easy to apprehend. It's not perfect but it will improve over time.  
-Here are the main tips to be aware of : 
+The code should be pretty easy to apprehend. It's not perfect but it will improve over time.   
+Some documentation about development is available [here](https://dfir-iris.github.io/development/).   
+Here are the main takes : 
 
 - **Routes** : these are the things that describes how URI should be handled. Routes are split by categories as in the UI menu. 
 They are defined in `source > app > blueprints`. A route providing a web page (i.e non API) relies on templates. 
