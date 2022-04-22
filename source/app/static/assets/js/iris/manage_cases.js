@@ -126,6 +126,7 @@ function submit_new_case() {
  *  Case update section 
  *************************/
 /* Dropzone creation for update */
+Dropzone.autoDiscover = false;
 var dropUpdate = new Dropzone("div#files_drop_1", {
     url: "cases/upload_files" + case_param(),
     acceptedFiles: ".zip,.7z,.tar.gz,.tgz,.evtx,.evtx_data,.txt,.ml",
@@ -147,7 +148,7 @@ var dropUpdate = new Dropzone("div#files_drop_1", {
     }
 });
 
-/* Add of field for file upload */ 
+/* Add of field for file upload */
 dropUpdate.on('sending', function (file, xhr, formData) {
     formData.append('is_update', true);
     formData.append('pipeline', $('#update_pipeline_selector').val() );
@@ -461,3 +462,17 @@ function close_case(id) {
 }
 
 
+$(document).ready(function() {
+
+    if ($('.nav-tabs').length > 0) { // if .nav-tabs exists
+        var hashtag = window.location.hash;
+        if (hashtag!='') {
+            $('.nav-item > a').removeClass('active').removeClass('show');
+            $('.nav-item > a[href="'+hashtag+'"]').addClass('active');
+             $('.nav-item > a[href="'+hashtag+'"]').addClass('show');
+            $('.tab-content > div').removeClass('active');
+            $(hashtag).addClass('active'); $(hashtag).addClass('show');
+        }
+    }
+
+});

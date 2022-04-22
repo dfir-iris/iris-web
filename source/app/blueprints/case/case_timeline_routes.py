@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import json
+
 from datetime import datetime
 
 import marshmallow
@@ -26,21 +28,23 @@ from flask import Blueprint
 from flask import render_template, url_for, redirect, request
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_timeline_state, update_timeline_state
 from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
+from app.iris_engine.utils.common import parse_bf_date_format
 from app.models.cases import Cases, CasesEvent
 from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory
 from app.schema.marshables import EventSchema
 from app.util import response_success, response_error, login_required, api_login_required
-from app.datamgmt.case.case_events_db import get_case_assets, get_events_categories, save_event_category, \
-    get_default_cat, delete_event_category, get_case_event, update_event_assets
-
+from app.datamgmt.case.case_events_db import get_case_assets, get_events_categories, save_event_category, get_default_cat, \
+    delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids
 from app.iris_engine.utils.tracker import track_activity
+
+import urllib.parse
 
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
 
@@ -229,6 +233,186 @@ def case_gettimeline_api(asset_id, caseid):
     return response_success("", data=resp)
 
 
+@case_timeline_blueprint.route('/case/timeline/advanced-filter', methods=['GET'])
+@api_login_required
+def case_filter_timeline(caseid):
+    args = request.args.to_dict()
+    query_filter = args.get('q')
+
+    try:
+
+        filter_d = dict(json.loads(urllib.parse.unquote_plus(query_filter)))
+
+    except Exception as e:
+        return response_error('Invalid query string')
+
+    assets = filter_d.get('asset')
+    tags = filter_d.get('tag')
+    descriptions = filter_d.get('description')
+    categories = filter_d.get('category')
+    raws = filter_d.get('raw')
+    start_date = filter_d.get('startDate')
+    end_date = filter_d.get('endDate')
+    titles = filter_d.get('title')
+    sources = filter_d.get('source')
+
+    condition = (CasesEvent.case_id == caseid)
+
+    if assets:
+        assets = [asset.lower() for asset in assets]
+
+    if tags:
+        for tag in tags:
+            condition = and_(condition,
+                             CasesEvent.event_tags.ilike(f'%{tag}%'))
+
+    if titles:
+        for title in titles:
+            condition = and_(condition,
+                             CasesEvent.event_title.ilike(f'%{title}%'))
+
+    if sources:
+        for source in sources:
+            condition = and_(condition,
+                             CasesEvent.event_source.ilike(f'%{source}%'))
+
+    if descriptions:
+        for description in descriptions:
+            condition = and_(condition,
+                             CasesEvent.event_content.ilike(f'%{description}%'))
+
+    if raws:
+        for raw in raws:
+            condition = and_(condition,
+                             CasesEvent.event_raw.ilike(f'%{raw}%'))
+
+    if start_date:
+        try:
+            parsed_start_date = parse_bf_date_format(start_date[0])
+            condition = and_(condition,
+                             CasesEvent.event_date >= parsed_start_date)
+
+        except Exception as e:
+            print(e)
+            pass
+
+    if end_date:
+        try:
+            parsed_end_date = parse_bf_date_format(end_date[0])
+            condition = and_(condition,
+                             CasesEvent.event_date <= parsed_end_date)
+        except Exception as e:
+            pass
+
+    if categories:
+        for category in categories:
+            condition = and_(condition,
+                             EventCategory.name == category)
+
+    timeline = CasesEvent.query.with_entities(
+            CasesEvent.event_id,
+            CasesEvent.event_date,
+            CasesEvent.event_date_wtz,
+            CasesEvent.event_tz,
+            CasesEvent.event_title,
+            CasesEvent.event_color,
+            CasesEvent.event_tags,
+            CasesEvent.event_content,
+            CasesEvent.event_in_summary,
+            CasesEvent.event_in_graph,
+            EventCategory.name.label("category_name")
+        ).filter(condition).order_by(
+            CasesEvent.event_date
+        ).outerjoin(
+            CasesEvent.category
+        ).all()
+
+    assets_cache = CaseAssets.query.with_entities(
+        CaseEventsAssets.event_id,
+        CaseAssets.asset_id,
+        CaseAssets.asset_name,
+        AssetsType.asset_name.label('type'),
+        CaseAssets.asset_ip,
+        CaseAssets.asset_description,
+        CaseAssets.asset_compromised
+    ).filter(
+        CaseEventsAssets.case_id == caseid,
+    ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+
+    assets_map = {}
+    cache = {}
+    for asset in assets_cache:
+        if asset.asset_id not in cache:
+            cache[asset.asset_id] = [asset.asset_name, asset.type]
+
+        if assets:
+            if asset.asset_name.lower() in assets:
+                if asset.event_id in assets_map:
+                    assets_map[asset.event_id] += 1
+                else:
+                    assets_map[asset.event_id] = 1
+
+    assets_filter = []
+    for event_id in assets_map:
+        if assets_map[event_id] == len(assets):
+            assets_filter.append(event_id)
+
+    tim = []
+    for row in timeline:
+        if assets is not None and len(assets_filter) > 0:
+            if row.event_id not in assets_filter:
+                continue
+
+        ras = row._asdict()
+
+        ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+
+        alki = []
+        for asset in assets_cache:
+
+            if asset.event_id == ras['event_id']:
+                alki.append(
+                    {
+                        "name": "{} ({})".format(asset.asset_name, asset.type),
+                        "ip": asset.asset_ip,
+                        "description": asset.asset_description,
+                        "compromised": asset.asset_compromised
+                    }
+                )
+
+        ras['assets'] = alki
+
+        tim.append(ras)
+
+    if request.cookies.get('session'):
+
+        iocs = IocLink.query.with_entities(
+            Ioc.ioc_id,
+            Ioc.ioc_value,
+            Ioc.ioc_description,
+        ).filter(
+            IocLink.case_id == caseid,
+            Ioc.ioc_id == IocLink.ioc_id
+        ).all()
+
+        resp = {
+            "tim": tim,
+            "assets": cache,
+            "iocs": [ioc._asdict() for ioc in iocs],
+            "categories": [cat.name for cat in get_events_categories()],
+            "state": get_timeline_state(caseid=caseid)
+        }
+
+    else:
+        resp = {
+            "timeline": tim,
+            "state": get_timeline_state(caseid=caseid)
+        }
+
+    return response_success("ok", data=resp)
+
+
 @case_timeline_blueprint.route('/case/timeline/filter/<int:asset_id>', methods=['GET'])
 @api_login_required
 def case_gettimeline(asset_id, caseid):
@@ -283,7 +467,7 @@ def case_gettimeline(asset_id, caseid):
         for asset in assets_cache:
             if asset.event_id == ras['event_id']:
                 if asset.asset_id not in cache:
-                    cache[asset.asset_id] = "{} ({})".format(asset.asset_name, asset.type)
+                    cache[asset.asset_id] = [asset.asset_name, asset.type]
 
                 alki.append(
                     {
@@ -313,6 +497,7 @@ def case_gettimeline(asset_id, caseid):
             "tim": tim,
             "assets": cache,
             "iocs": [ioc._asdict() for ioc in iocs],
+            "categories": [cat.name for cat in get_events_categories()],
             "state": get_timeline_state(caseid=caseid)
         }
 
@@ -522,6 +707,58 @@ def case_add_event(caseid):
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
 
+@case_timeline_blueprint.route('/case/timeline/events/duplicate/<int:cur_id>', methods=['GET'])
+@api_login_required
+def case_duplicate_event(cur_id, caseid):
+
+    call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
+
+    try:
+        event_schema = EventSchema()
+        old_event = get_case_event(event_id=cur_id, caseid=caseid)
+        if not old_event:
+            return response_error("Invalid event ID for this case")
+
+        # Create new Event
+        event = CasesEvent()
+
+        orig_event_id = event.event_id
+        # Transfer duplicated event's attributes to new event
+        for key in dir(old_event):
+            if not key.startswith('_'):
+                setattr(event, key, getattr(old_event, key))
+
+        event.event_id = orig_event_id
+
+        # Override event_added and user_id
+        event.event_added = datetime.utcnow()
+        event.user_id = current_user.id
+        event.event_title = f"[DUPLICATED] - {event.event_title}"
+      
+        db.session.add(event)
+        update_timeline_state(caseid=caseid)
+        db.session.commit()
+
+        # Update category
+        old_event_category = get_event_category(old_event.event_id)
+        if old_event_category is not None:
+            save_event_category(event.event_id, old_event_category.category_id)
+
+        # Update assets mapping
+        assets_list = get_event_assets_ids(old_event.event_id)
+        update_event_assets(event_id=event.event_id,
+                            caseid=caseid,
+                            assets_list=assets_list)
+
+        event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
+
+        track_activity("added event {}".format(event.event_id), caseid=caseid)
+        return response_success("Event added", data=event_schema.dump(event))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
 @case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
 @api_login_required
 def case_event_date_convert(caseid):
@@ -532,75 +769,15 @@ def case_event_date_convert(caseid):
     if not date_value:
         return response_error("Invalid request")
 
-    date_value = date_value.strip()
+    parsed_date = parse_bf_date_format(date_value)
 
-    if len(date_value) == 10 and '-' not in date_value and '.' not in date_value and '/' not in date_value:
-        # Assume linux timestamp, from 1966 to 2286
-        date = datetime.fromtimestamp(int(date_value))
-        tz = date.strftime("%z")
+    if parsed_date:
+        tz = parsed_date.strftime("%z")
         data = {
-            "date": date.strftime("%Y-%m-%d"),
-            "time": date.strftime("%H:%M:%S.%f")[:-3],
+            "date": parsed_date.strftime("%Y-%m-%d"),
+            "time": parsed_date.strftime("%H:%M:%S.%f")[:-3],
             "tz": tz if tz else "+00:00"
         }
         return response_success("Date parsed", data=data)
-
-    elif len(date_value) == 13 and '-' not in date_value and '.' not in date_value and '/' not in date_value:
-        # Assume microsecond timestamp
-        date = datetime.fromtimestamp(int(date_value) / 1000)
-        tz = date.strftime("%z")
-        data = {
-            "date": date.strftime("%Y-%m-%d"),
-            "time": date.strftime("%H:%M:%S.%f")[:-3],
-            "tz": tz if tz else "+00:00"
-        }
-        return response_success("Date parsed", data=data)
-
-    else:
-
-        # brute force formats
-        for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
-                    '%Y-%m-%d %H:%M%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S.%f%z',
-                    '%Y-%m-%d %H:%M %Z', '%Y-%m-%d %H:%M:%S %Z', '%Y-%m-%d %H:%M:%S.%f %Z',
-
-                    '%b %d %H:%M:%S', '%Y %b %d %H:%M:%S', '%b %d %H:%M:%S %Y', '%b %d %Y %H:%M:%S',
-                    '%y %b %d %H:%M:%S', '%b %d %H:%M:%S %y', '%b %d %y %H:%M:%S',
-
-                    '%Y-%m-%d', '%Y-%m-%dT%H:%M', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f',
-                    '%Y-%m-%dT%H:%M%z', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z',
-                    '%Y-%m-%dT%H:%M %Z', '%Y-%m-%dT%H:%M:%S %Z', '%Y-%m-%dT%H:%M:%S.%f %Z',
-
-                    '%Y-%d-%m', '%Y-%d-%m %H:%M', '%Y-%d-%m %H:%M:%S', '%Y-%d-%m %H:%M:%S.%f',
-                    '%Y-%d-%m %H:%M%z', '%Y-%d-%m %H:%M:%S%z', '%Y-%d-%m %H:%M:%S.%f%z',
-                    '%Y-%d-%m %H:%M %Z', '%Y-%d-%m %H:%M:%S %Z', '%Y-%d-%m %H:%M:%S.%f %Z',
-
-                    '%d/%m/%Y %H:%M', '%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M:%S.%f',
-                    '%d.%m.%Y %H:%M', '%d.%m.%Y %H:%M:%S', '%d.%m.%Y %H:%M:%S.%f',
-                    '%d-%m-%Y %H:%M', '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M:%S.%f',
-
-                    '%b %d %Y %H:%M', '%b %d %Y %H:%M:%S', '%b %d %Y %H:%M:%S',
-
-                    '%a, %d %b %Y %H:%M:%S', '%a, %d %b %Y %H:%M:%S %Z', '%a, %d %b %Y %H:%M:%S.%f',
-                    '%a, %d %b %y %H:%M:%S', '%a, %d %b %y %H:%M:%S %Z', '%a, %d %b %y %H:%M:%S.%f',
-
-                    '%d %b %Y %H:%M', '%d %b %Y %H:%M:%S', '%d %b %Y %H:%M:%S.%f',
-                    '%d %b %y %H:%M', '%d %b %y %H:%M:%S', '%d %b %y %H:%M:%S.%f',
-
-                    '%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y', "%A, %B %d, %Y", "%A %B %d, %Y", "%A %B %d %Y",
-                    '%d %B %Y'):
-
-            try:
-                date = datetime.strptime(date_value, fmt)
-                tz = date.strftime("%z")
-                data = {
-                    "date": date.strftime("%Y-%m-%d"),
-                    "time": date.strftime("%H:%M:%S.%f")[:-3],
-                    "tz": tz if tz else "+00:00"
-                }
-                return response_success("Event added", data=data)
-            except ValueError:
-                pass
 
     return response_error("Unable to find a matching date format")
-
-

@@ -12,47 +12,14 @@ $(function(){
 })
 
 function case_detail(id) {
-    url = '/manage/cases/details/' + id + case_param();
+    url = '/case/details/' + id + case_param();
     $('#info_case_modal_content').load(url, function () {
         $('#modal_case_detail').modal({ show: true });
     });
 }
 
-function close_case(id) {
-  swal({
-    title: "Are you sure?",
-    text: "Case ID " + id + " will be closed and will not appear in contexts anymore",
-    icon: "warning",
-    buttons: true,
-    dangerMode: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, close it!'
-  })
-  .then((willDelete) => {
-    if (willDelete) {
-      $.ajax({
-          url: '/manage/cases/close/' + id ,
-          type: "POST",
-          dataType: 'JSON',
-          success: function (data) {
-              if (data.status == 'success') {
-                  swal("Case has been closed !", {
-                      icon: "success",
-                  }).then((value) => {
-                      refresh_case_table();
-                      $('#modal_case_detail').modal('hide');
-                  });
-              } else {
-                  swal ( "Oh no !" ,  data.message ,  "error" );
-              }
-          },
-          error: function (error) {
-              swal ( "Oh no !" ,  error ,  "error" );                
-          }
-      });
-    }
-  });
+function manage_case(id) {
+   window.location = 'manage/cases?cid='+ case_param() +'#view';
 }
 
 function buildShareLink(lookup_id) {

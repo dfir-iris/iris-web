@@ -4,17 +4,18 @@
             title="Task info"
             data-content="Last edited {{ event.event_added }} by {{ user_name }}"></i>
         </h4>
-            {% include 'modals/modal_attributes_nav.html' %}
-            {% if event.event_id %}
-        <div class="row text-right">
-         <div class="dropdown">
-              <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                  <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-              </button>
-              <div class="dropdown-menu pull-right" id="event_modal_quick_actions" aria-labelledby="dropdownMenuButton">
-                  <a class="dropdown-item" href="#" onclick='copy_object_link({{event.event_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
-              </div>
-         </div>
+        {% include 'modals/modal_attributes_nav.html' %}
+        {% if event.event_id %}
+            <div class="row text-right">
+            <div class="dropdown">
+                <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                    <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                </button>
+                <div class="dropdown-menu pull-right" id="event_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item" href="#" onclick='copy_object_link({{event.event_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                    <a class="dropdown-item" href="#" onclick='duplicate_event({{event.event_id}});return false;'><i class="fa fa-clone mr-2"></i>Duplicate</a>
+                </div>
+            </div>
         {% endif %}
             <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
                 aria-hidden="true"><i class="fa fa-times"></i></span></button>
@@ -41,14 +42,14 @@
                                                 <input class="form-control col-4" type="time" step="0.001" id="event_time" {% if event.event_date_wtz %} value="{{ event.event_date_wtz.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
                                                 <span></span>
                                                 <input class="form-control col-2" type="text" id="event_tz" {% if event.event_tz %} value="{{ event.event_tz }}" {% else %} value="+00:00" {% endif %}>
-                                                <button class="btn btn-sm btn-outline-white" onclick="show_time_converter();return false;"><i class="fas fa-magic"></i></button>
+                                                <button class="btn btn-sm btn-outline-white" type="button" onclick="show_time_converter();return false;"><i class="fas fa-magic"></i></button>
                                         </div>
                                         <div class="row ml-2" id="event_date_convert" style="display:none;">
                                             <div class="input-group ">
                                                 <input class="form-control col-9" type="text" id="event_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
                                                 <div class="input-group-append">
                                                     <button class="btn btn-outline-secondary mr-2" type="button" onclick="time_converter();return false;">Submit</button>
-                                                    <button class="btn btn-sm btn-outline" onclick="hide_time_converter();return false;"><i class="fas fa-magic"></i></button>
+                                                    <button class="btn btn-sm btn-outline" type="button" onclick="hide_time_converter();return false;"><i class="fas fa-magic"></i></button>
                                                 </div>
                                             </div>
                                             <span id="convert_bad_feedback" class="text-danger"></span>
@@ -62,12 +63,12 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="form-group mt-1 col-12">
+                                    <div class="form-group col-12 mt-1">
                                           <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseRawEvent" role="button" aria-expanded="false" aria-controls="collapseRawEvent">> Edit raw event data</a>
                                         <div class="collapse" id="collapseRawEvent">
                                             <div class="card card-body">
                                                 <label for="event_content" class="placeholder">{{ form.event_raw.label.text }}</label>
-                                                {{ form.event_raw(class='form-control col-12 sizable-textarea',  autocomplete="off") }}
+                                                {{ form.event_raw(class='form-control sizable-textarea',  autocomplete="off") }}
                                             </div>
                                         </div>
                                     </div>

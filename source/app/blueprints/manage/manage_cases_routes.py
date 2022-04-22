@@ -71,6 +71,21 @@ def details_case(cur_id, caseid, url_redir):
         return response_error("Unknown case")
 
 
+@manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
+@login_required
+def details_case_from_case(cur_id, caseid, url_redir):
+    if url_redir:
+        return response_error("Invalid request")
+
+    res = get_case_details_rt(cur_id)
+
+    if res:
+        return render_template("modal_case_info_from_case.html", data=res)
+
+    else:
+        return response_error("Unknown case")
+
+
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
 @api_login_required
 def get_case_api(cur_id, caseid):
