@@ -58,6 +58,7 @@ SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".
                                                                                        server=PG_SERVER_,
                                                                                        port=PG_PORT_)
 
+RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
 
 # --------- CELERY ---------
 class CeleryConfig():
