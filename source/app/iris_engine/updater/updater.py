@@ -2,7 +2,7 @@ import requests
 from packaging import version
 
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
-from app import app
+from app import app, celery
 
 
 def get_latest_release():
@@ -33,3 +33,8 @@ def is_updates_available():
     else:
         return False, f'**Current server is up-to-date with {release_version}**'
 
+
+@celery.task(bind=True)
+def task_update_worker(self, update_to_version):
+    #celery.control.revoke(self.id)
+    celery.control.pool_restart(reload=True)

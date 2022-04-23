@@ -65,6 +65,8 @@ class CeleryConfig():
     broker_url = "amqp://localhost" if not os.getenv('DOCKERIZED') else "amqp://rabbitmq"
     result_extended = True
     result_serializer = "json"
+    worker_pool_restarts = True
+
     task_routes = ([
         ('app.iris_engine.tasker.tasks.task_kbh_import', { 'route' : 'case_import'}),
         ('app.iris_engine.tasker.tasks.task_feed_iris', { 'route' : 'case_import'})

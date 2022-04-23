@@ -26,7 +26,7 @@ from werkzeug.utils import redirect
 
 from app import db, app
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_alembic_revision
-from app.iris_engine.updater.updater import get_latest_release, is_updates_available
+from app.iris_engine.updater.updater import get_latest_release, is_updates_available, task_update_worker
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import ServerSettingsSchema
 from app.util import admin_required, api_admin_required, response_error, response_success
@@ -38,11 +38,15 @@ manage_srv_settings_blueprint = Blueprint(
 )
 
 
-@manage_srv_settings_blueprint.route('/manage/updates', methods=['GET'])
+@manage_srv_settings_blueprint.route('/manage/server/do-updates', methods=['GET'])
 @api_admin_required
-def manage_updates(caseid):
-    release = is_updates_available()
-    return response_success(data=release)
+def manage_execute_update(caseid):
+    has_updates, updates_content = is_updates_available()
+
+    if has_updates:
+        task_update_worker.delay(update_to_version=updates_content)
+
+    return response_success(data="Task queued")
 
 
 @manage_srv_settings_blueprint.route('/manage/server/check-updates/modal', methods=['GET'])
