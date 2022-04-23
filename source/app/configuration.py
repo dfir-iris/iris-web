@@ -60,6 +60,7 @@ SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".
 
 RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
 
+
 # --------- CELERY ---------
 class CeleryConfig():
     result_backend = "db+" + SQLALCHEMY_BASE_URI + "iris_tasks"  # use database as storage
