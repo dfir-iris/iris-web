@@ -57,50 +57,6 @@
       </div><!-- /.modal-dialog -->
     </div>
 
-
-    <div class="modal " tabindex="-1" role="dialog" id="modal_add_receivedfile" data-backdrop="true">
-      <div class="modal-lg modal-dialog" role="document">
-        <form method="post" action="" id="form_add_receivedfile">
-
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5>Register received file</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                  aria-hidden="true">&times;</span></button>
-            </div>
-
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="rfile_filename" class="placeholder">Filename *</label>
-                    <input class="form-control" placeholder="Filename" id="filename" required name="filename" autocomplete="off"/>
-                </div>
-                <div class="form-group">
-                    <label for="rfile_size" class="placeholder">File size (bytes) *</label>
-                    <input class="form-control" placeholder="Size in bytes" id="file_size" name="file_size" autocomplete="off"/>
-                </div>
-                <div class="form-group">
-                    <label for="rfile_hash" class="placeholder">File Hash</label>
-                    <input class="form-control" placeholder="hash" id="file_hash" name="file_hash" autocomplete="off"/>
-                </div>
-                <div class="form-group">
-                    <label for="rfile_desc" class="placeholder">File description</label>
-                    <input class="form-control" placeholder="Description" id="file_description" name="file_description" autocomplete="off"/>
-                </div>
-                <div class="form-group">
-                    <p>Automatically compute file information by selecting it below. The file will not be uploaded nor saved.</p>
-                    <input id="input_autofill" type="file">
-                    <button class="btn btn-sm" type="button" onclick="get_hash()" id="btn_rfile_proc">Process</button>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-              <button type="button" class="btn btn-success" onclick="add_rfile();">Register</button>
-            </div>
-          </div><!-- /.modal-content -->
-        </form>
-      </div><!-- /.modal-dialog -->
-    </div>
-
 <div class="modal " tabindex="-1" role="dialog" id="modal_dim_task_detail" data-backdrop="true">
   <div class="modal-xl modal-dialog" role="document">
       <div class="modal-content">

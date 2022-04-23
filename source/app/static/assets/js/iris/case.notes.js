@@ -310,7 +310,9 @@ function edit_note(event) {
 
 /* On modal close, refresh */
 $('#modal_note_detail').on('hidden.bs.modal', function (e) {
-    draw_kanban();
+    if (window.location.pathname.includes('/case/notes')) {
+        draw_kanban();
+    }
   })
 
 var sh_ext = showdown.extension('bootstrap-tables', function () {

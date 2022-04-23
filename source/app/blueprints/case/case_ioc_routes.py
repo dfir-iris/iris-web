@@ -29,7 +29,6 @@ from flask import render_template, url_for, redirect
 from flask_login import current_user
 
 from app import db
-from app.configuration import misp_url
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add_ioc, add_ioc_link, \
@@ -79,7 +78,8 @@ def case_list_ioc(caseid):
         ial = get_ioc_links(ioc.ioc_id, caseid)
 
         out['link'] = [row._asdict() for row in ial]
-        out['misp_link'] = misp_url
+        # Legacy, must be changed next version
+        out['misp_link'] = None
 
         ret['ioc'].append(out)
 
