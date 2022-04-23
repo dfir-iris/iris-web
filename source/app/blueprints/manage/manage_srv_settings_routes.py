@@ -26,6 +26,7 @@ from werkzeug.utils import redirect
 
 from app import db, app
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_alembic_revision
+from app.iris_engine.updater.updater import get_latest_release
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import ServerSettingsSchema
 from app.util import admin_required, api_admin_required, response_error, response_success
@@ -35,6 +36,13 @@ manage_srv_settings_blueprint = Blueprint(
     __name__,
     template_folder='templates'
 )
+
+
+@manage_srv_settings_blueprint.route('/manage/updates', methods=['GET'])
+@api_admin_required
+def manage_updates(caseid):
+    release = get_latest_release()
+    return response_success(data=release)
 
 
 @manage_srv_settings_blueprint.route('/manage/settings', methods=['GET'])
