@@ -558,7 +558,7 @@ class CaseReceivedFile(db.Model):
     date_added = Column(DateTime)
     file_hash = Column(String(65))
     file_description = Column(Text)
-    file_size = Column(Integer)
+    file_size = Column(BigInteger)
     case_id = Column(ForeignKey('cases.case_id'))
     user_id = Column(ForeignKey('user.id'))
     custom_attributes = Column(JSON)

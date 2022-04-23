@@ -259,7 +259,7 @@ def case_upload_ioc(caseid):
 
             request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
             asset_sc = add_asset_schema.load(request_data)
-
+            asset_sc.custom_attributes = get_default_custom_attributes('asset')
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
                                  user_id=current_user.id

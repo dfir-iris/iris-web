@@ -27,6 +27,7 @@ from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_rfiles_db import get_rfiles, add_rfile, get_rfile, update_rfile, delete_rfile
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_evidences_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -126,7 +127,16 @@ def case_edit_rfile_modal(cur_id, caseid, url_redir):
     if not crf:
         return response_error("Invalid evidence ID for this case")
 
-    return render_template("modal_edit_case_rfile.html", rfile=crf, attributes=crf.custom_attributes)
+    return render_template("modal_add_case_rfile.html", rfile=crf, attributes=crf.custom_attributes)
+
+
+@case_rfiles_blueprint.route('/case/evidences/add/modal', methods=['GET'])
+@login_required
+def case_add_rfile_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
+
+    return render_template("modal_add_case_rfile.html", rfile=None, attributes=get_default_custom_attributes('evidence'))
 
 
 @case_rfiles_blueprint.route('/case/evidences/update/<int:cur_id>', methods=['POST'])

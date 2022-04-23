@@ -5548,7 +5548,7 @@ label {
     font-size: 14px;
     border-color: #ebedf2;
     padding: .6rem 1rem;
-    height: inherit !important;
+    /* height: inherit !important;*/
 }
 
 .form-control:focus {
@@ -14581,6 +14581,13 @@ body[data-background-color="dark"] .bg-primary-gradient{
     background: linear-gradient(-45deg, #0A0B11, #1f283e) !important;
 }
 
+body[data-background-color="dark"] .modal-header,
+body[data-background-color="dark"] .modal-footer {
+      border-top: none;
+      border-bottom: none;
+}
+
+
 .bg-secondary-gradient {
     background: #6861CE !important;
     background: -webkit-linear-gradient(legacy-direction(-45deg), #2A20AC, #6861CE) !important;
@@ -15479,9 +15486,9 @@ body[data-background-color="dark"] .bg-primary-gradient{
 }
 
 .sizable-textarea {
-    resize: none;
     min-height: 8rem;
   }
+
 
 .modal-xxl {
    width: 90%;
@@ -15790,3 +15797,5 @@ div.dataTables_processing { z-index: 1; }
   -o-animation: yellow-fade 2s ease-in-out 0s;
   animation: yellow-fade 2s ease-in-out 0s;
 }
+
+.modal { overflow: auto !important; }

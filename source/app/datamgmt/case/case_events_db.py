@@ -99,11 +99,16 @@ def save_event_category(event_id, category_id):
     db.session.add(cec)
     db.session.commit()
 
+
 def get_event_assets_ids(event_id):
-    assets_list = CaseEventsAssets.query.filter(
+    assets_list = CaseEventsAssets.query.with_entities(
+        CaseEventsAssets.asset_id
+    ).filter(
         CaseEventsAssets.event_id == event_id
     ).all()
-    return list(map(lambda x: x.asset_id, assets_list))
+
+    return [x for x in assets_list]
+
 
 def update_event_assets(event_id, caseid, assets_list):
 

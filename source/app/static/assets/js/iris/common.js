@@ -269,33 +269,6 @@ $('#form_add_tasklog').submit(function () {
     return false;
 });
 
-function add_rfile() {
-    var data = $('form#form_add_receivedfile').serializeObject();
-    data['csrf_token'] = $('#csrf_token').val();
-    $.ajax({
-        url: '/case/evidences/add' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                if (typeof reload_rfiles != "undefined") { reload_rfiles(); }
-                $('#modal_add_receivedfile').modal('hide');
-                notify_success("File registered");
-
-            } else {
-                notify_error("Unable to register file. " + jsdata.message)
-            }
-        },
-        error: function (error) {
-            notify_error(error.responseJSON.message);
-            propagate_form_api_errors(error.responseJSON.data);
-        }
-    });
-    return false;
-}
 
 var last_state = null;
 var need_check = true;
@@ -363,79 +336,6 @@ function hide_loader() {
     $('#loading_msg').hide();
     $('#card_main_load').show();
     update_last_resfresh();
-}
-
-function get_hash() {
-  getMD5(
-    document.getElementById("input_autofill").files[0],
-    prog => $('#btn_rfile_proc').text("Processing "+ (prog * 100).toFixed(2) + "%")
-  ).then(
-    res => on_done_hash(res),
-    err => console.error(err)
-  );
-}
-
-
-function on_done_hash(result) {
-    $('#btn_rfile_proc').text('Done processing');
-    $('#file_hash').val(result);
-    $('#filename').val(document.getElementById("input_autofill").files[0].name);
-    $('#file_size').val(document.getElementById("input_autofill").files[0].size);
-}
-
-
-function readChunked(file, chunkCallback, endCallback) {
-  var fileSize   = file.size;
-  var chunkSize  = 4 * 1024 * 1024; // 4MB
-  var offset     = 0;
-
-  var reader = new FileReader();
-  reader.onload = function() {
-    if (reader.error) {
-      endCallback(reader.error || {});
-      return;
-    }
-    offset += reader.result.length;
-    // callback for handling read chunk
-    // TODO: handle errors
-    chunkCallback(reader.result, offset, fileSize);
-    if (offset >= fileSize) {
-      endCallback(null);
-      return;
-    }
-    readNext();
-  };
-
-  reader.onerror = function(err) {
-    endCallback(err || {});
-  };
-
-  function readNext() {
-    var fileSlice = file.slice(offset, offset + chunkSize);
-    reader.readAsBinaryString(fileSlice);
-  }
-  readNext();
-}
-
-function getMD5(blob, cbProgress) {
-  return new Promise((resolve, reject) => {
-    var md5 = CryptoJS.algo.MD5.create();
-    readChunked(blob, (chunk, offs, total) => {
-      md5.update(CryptoJS.enc.Latin1.parse(chunk));
-      if (cbProgress) {
-        cbProgress(offs / total);
-      }
-    }, err => {
-      if (err) {
-        reject(err);
-      } else {
-        // TODO: Handle errors
-        var hash = md5.finalize();
-        var hashHex = hash.toString(CryptoJS.enc.Hex);
-        resolve(hashHex);
-      }
-    });
-  });
 }
 
 var sanitizeHTML = function (str) {
@@ -506,9 +406,9 @@ function load_case_activity(){
                         title = 'Activity issued from GUI';
                     }
 
-                    entry =	`<li class="feed-item ${api_flag}" title='${title}'>
+                    entry =	`<li class="feed-item ${api_flag}" title='${sanitizeHTML(title)}'>
 							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
-							<span class="text">${js_data[index].name} - ${js_data[index].activity_desc}</span>
+							<span class="text">${sanitizeHTML(js_data[index].name)} - ${sanitizeHTML(js_data[index].activity_desc)}</span>
 						    </li>`
                     $('#case_activities').append(entry);
                 }
@@ -623,6 +523,16 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
     });
 }
 
+function get_row_id(row) {
+    ids_map = ["ioc_id","asset_id","task_id","id"];
+    for (id in ids_map) {
+        if (row[ids_map[id]] !== undefined) {
+            return row[ids_map[id]];
+        }
+    }
+    return null;
+}
+
 function load_menu_mod_options(data_type, table) {
     var actionOptions = {
         classes: [],
@@ -662,8 +572,9 @@ function load_menu_mod_options(data_type, table) {
                         multi: false,
                         iconClass: 'fas fa-share',
                         buttonClasses: ['btn', 'btn-outline-primary'],
-                        action: function(){
-                            copy_object_link("${element_id}");return false;
+                        action: function(rows){
+                            row = rows[0];
+                            copy_object_link(get_row_id(row));
                         }
                     });
                     actionOptions.items.push({

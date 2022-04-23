@@ -2,6 +2,7 @@
 {% if current_user.is_authenticated %}
 
 {% if case.close_date %}
+<div class="panel-header bg-close-gradient">
 {% else %}
 <div class="panel-header bg-info-gradient">
 {% endif %}
