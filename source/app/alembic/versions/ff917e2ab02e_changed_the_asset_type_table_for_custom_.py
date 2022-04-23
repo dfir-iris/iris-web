@@ -31,19 +31,19 @@ def upgrade():
                       sa.Column('asset_icon_compromised', sa.String(255))
                       )
 
-        t_ua = sa.Table(
-            'asset_type',
-            sa.MetaData(),
-            sa.Column('asset_id', sa.Integer, primary_key=True),
-            sa.Column('asset_name', sa.String(155))
-        )
-        conn = op.get_bind()
-        vals = t_ua.select()
-        icon_not_compromised, icon_compromised = _get_icons(vals.assed_name)
-        conn.execute(t_ua.update().values(
-            asset_icon_not_compromised=icon_not_compromised,
-            asset_icon_compromised=icon_compromised
-        ))
+    t_ua = sa.Table(
+        'asset_type',
+        sa.MetaData(),
+        sa.Column('asset_id', sa.Integer, primary_key=True),
+        sa.Column('asset_name', sa.String(155))
+    )
+    conn = op.get_bind()
+    vals = t_ua.select()
+    icon_not_compromised, icon_compromised = _get_icons(vals.assed_name)
+    conn.execute(t_ua.update().values(
+        asset_icon_not_compromised=icon_not_compromised,
+        asset_icon_compromised=icon_compromised
+    ))
 
 
 def downgrade():
@@ -86,7 +86,7 @@ def _get_icons(asset_name):
         "Windows Account - AD - krbtgt": ("Windows Account - AD - krbtgt", "user.png", "ioc_user.png"),
         "Windows Account - AD - Service": ("Windows Account - AD - krbtgt", "user.png", "ioc_user.png")
     }
-    if assets[asset_name]:
-        return assets[asset_name][1], assets[asset_name][2]
+    if assets.get(asset_name):
+        return assets.get(asset_name)[1], assets.get(asset_name)[2]
     else:
         return "question-mark.png","ioc_question-mark.png"
