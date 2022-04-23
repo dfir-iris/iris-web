@@ -25,11 +25,25 @@ function update_settings() {
     });
 }
 
+function unescapeHTML( text ) {
+    return text.replace( /&amp;/g, "&" )
+               .replace( /&lt;/g, "<" )
+               .replace( /&gt;/g, ">" )
+               .replace( /&quot;/g, "\"" )
+               .replace( /&#39;/g, "'" )
+               .replace( /\n/g, "\n\n");
+  }
+
+
 function check_updates() {
     $('#modal_updates').modal({ show: true });
     $('#modal_updates_content').load(
         '/manage/server/check-updates/modal' + case_param(),
         function () {
+            var conv = new showdown.Converter();
+            var txt = document.getElementById('updates_content_md').innerHTML;
+
+            document.getElementById('updates_content_md').innerHTML = conv.makeHtml(txt);
             $('#modal_updates').modal({ show: true });
         });
 }

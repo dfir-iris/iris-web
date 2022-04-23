@@ -9,7 +9,7 @@ def get_latest_release():
     server_settings = get_server_settings_as_dict()
     proxies = server_settings.get('proxies')
     try:
-        releases = requests.get(app.config .get('RELEASE_URL'), proxies=proxies)
+        releases = requests.get(app.config.get('RELEASE_URL'), proxies=proxies)
     except Exception as e:
         app.logger.error(e)
         return None
@@ -28,8 +28,8 @@ def is_updates_available():
     release_version = release.get('name')
 
     if version.parse(current_version) < version.parse(release_version):
-        return f'New version {release_version} available'
+        return True, f'# New version {release_version} available\n\n{release.get("body")}'
 
     else:
-        return f'Current server is up-to-date with {release_version}'
+        return False, f'**Current server is up-to-date with {release_version}**'
 

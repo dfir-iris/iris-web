@@ -5,11 +5,17 @@
 </div>
 <div class="modal-body">
     <div class="container col-md-12">
-          <div class="row">
-              {{ has_updates }}
+          <div class="col-md-12" id="updates_content_md">
+{{ updates_content }}
           </div>
     </div>
 </div>
 <div class="modal-footer">
+
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+
+    {% if has_updates %}
+        <button type="button" class="btn btn-success" data-dismiss="modal">Update server</button>
+    {% endif %}
+
 </div>
