@@ -1,4 +1,4 @@
-"""changed the asset_type table for custom icons
+"""changed the assets_type table for custom icons
 
 Revision ID: ff917e2ab02e
 Revises: b664ca1203a4
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'ff917e2ab02e'
-down_revision = 'b664ca1203a4'
+down_revision = 'c832bd69f827'
 branch_labels = None
 depends_on = None
 
@@ -20,31 +20,36 @@ from sqlalchemy.engine import reflection
 
 
 def upgrade():
-    if not _table_has_column('asset_type', 'asset_icon_not_compromised'):
-        op.add_column('asset_type',
+    if not _table_has_column('assets_type', 'asset_icon_not_compromised'):
+        op.add_column('assets_type',
                       sa.Column('asset_icon_not_compromised', sa.String(255))
                       )
 
         
-    if not _table_has_column('asset_type', 'asset_icon_compromised'):
-        op.add_column('asset_type',
+    if not _table_has_column('assets_type', 'asset_icon_compromised'):
+        op.add_column('assets_type',
                       sa.Column('asset_icon_compromised', sa.String(255))
                       )
 
-    t_ua = sa.Table(
-        'asset_type',
+    t_assets_type = sa.Table(
+        'assets_type',
         sa.MetaData(),
         sa.Column('asset_id', sa.Integer, primary_key=True),
         sa.Column('asset_name', sa.String(155))
     )
+    
+    # Migrate existing Asset_types
     conn = op.get_bind()
-    vals = t_ua.select()
-    icon_not_compromised, icon_compromised = _get_icons(vals.assed_name)
-    conn.execute(t_ua.update().values(
-        asset_icon_not_compromised=icon_not_compromised,
-        asset_icon_compromised=icon_compromised
-    ))
+    res = conn.execute("SELECT asset_id FROM public.assets_type;")
+    results = res.fetchall()
 
+    if results:
+        for res in results:
+            icon_not_compromised, icon_compromised = _get_icons(res[0])
+            conn.execute(t_assets_type.update().where(t_assets_type.c.asset_id == res[0]).values(
+                asset_icon_not_compromised=icon_not_compromised,
+                asset_icon_compromised=icon_compromised
+            ))
 
 def downgrade():
     pass
