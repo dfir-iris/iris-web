@@ -3,6 +3,7 @@ from packaging import version
 
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app import app, celery
+from iris_interface import IrisInterfaceStatus as IStatus
 
 
 def get_latest_release():
@@ -36,5 +37,7 @@ def is_updates_available():
 
 @celery.task(bind=True)
 def task_update_worker(self, update_to_version):
-    #celery.control.revoke(self.id)
-    celery.control.pool_restart(reload=True)
+    celery.control.revoke(self.request.id)
+    celery.control.broadcast("pool_restart", arguments={"reload_modules": True})
+
+    return IStatus.I2Success(message="Pool restarted")
