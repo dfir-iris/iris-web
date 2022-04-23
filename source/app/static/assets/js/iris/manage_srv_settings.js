@@ -25,3 +25,12 @@ function update_settings() {
     });
 }
 
+function check_updates() {
+    $('#modal_updates').modal({ show: true });
+    $('#modal_updates_content').load(
+        '/manage/server/check-updates/modal' + case_param(),
+        function () {
+            $('#modal_updates').modal({ show: true });
+        });
+}
+

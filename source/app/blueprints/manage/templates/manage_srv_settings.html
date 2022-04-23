@@ -43,8 +43,16 @@
                             </div>
                         </div>
                     </div>
-                    <hr>
                     <div class="row">
+                        <div class="col-12">
+                            <div class="float-right mt-4">
+                                <button class="btn btn-outline-primary" id="check_updates" type="button" onclick="check_updates()">Check for updates</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="row mt-2">
                         <form id="form_srv_settings" class="col-12">
                             {{ form.hidden_tag() }}
                             <div class="col-12">
@@ -95,6 +103,24 @@
             </div>
         </div>
     </div>
+</div>
+<div class="modal " tabindex="-1" role="dialog" id="modal_updates" data-backdrop="true">
+    <div class="modal-xl modal-dialog" role="document">
+        <div class="modal-content" id="modal_updates_content">
+            <div class="modal-header">
+                <h4 class="modal-title mt-2 mr-4">Server Updates</h4>
+                <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+            <div class="modal-body">
+                <div class="container col-md-12">
+                      <div class="row">
+                          <h3>Please wait while we look for updates</h3>
+                      </div>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
 </div>
 {% endblock content %}
 

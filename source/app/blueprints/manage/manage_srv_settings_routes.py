@@ -45,6 +45,18 @@ def manage_updates(caseid):
     return response_success(data=release)
 
 
+@manage_srv_settings_blueprint.route('/manage/server/check-updates/modal', methods=['GET'])
+@admin_required
+def manage_check_updates_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
+
+    has_updates = is_updates_available()
+
+    # Return default page of case management
+    return render_template('modal_server_updates.html', has_updates=has_updates)
+
+
 @manage_srv_settings_blueprint.route('/manage/settings', methods=['GET'])
 @admin_required
 def manage_settings(caseid, url_redir):
