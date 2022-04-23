@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+from cmath import log
+import logging
 import marshmallow, string, random
 from flask import Blueprint, flash
 from flask import render_template, request, url_for, redirect
@@ -28,7 +30,6 @@ from app.models.models import AssetsType, CaseAssets
 from app.forms import AddAssetForm
 from app import db, app
 from app.schema.marshables import AssetSchema
-from werkzeug.utils import secure_filename
 import os
 
 
@@ -114,27 +115,46 @@ def view_assets_modal(cur_id, caseid, url_redir):
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
 @api_admin_required
 def view_assets(cur_id, caseid):
-    if not request.is_json:
-        return response_error("Invalid request")
-
-    asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
-    if not asset:
+    asset_type = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
+    if not asset_type:
         return response_error("Invalid asset type ID")
 
-    asset_schema = AssetSchema()
+    form = AddAssetForm()
+    
+    if form.is_submitted():
+        
+        asset_type.asset_name = request.form.get('asset_name','', type=str)
+        asset_type.asset_description = request.form.get('asset_description','', type=str)
+        for icon in ['asset_icon_compromised','asset_icon_not_compromised']:
+            file = request.files[icon]
+            # if file.filename == '':
+            #     flash('No selected file')
+            #     return redirect(request.url)
 
-    try:
+            if file and allowed_file(file.filename):
+                filename = get_random_string(18)
 
-        asset_sc = asset_schema.load(request.get_json(), instance=asset)
+                try:
 
-        if asset_sc:
-            track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
-            return response_success("Asset type updated", asset_sc)
+                    file.save(os.path.join(app.config['ASSET_PATH'], filename))
+                    # file.save(filename)
 
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+                except Exception as e:
+                    return response_error(f"Unable to add icon {e}")
 
-    return response_success("Unexpected error server-side. Nothing updated", data=asset)
+                setattr(asset_type, icon, filename)
+
+            # else:
+            #     return response_error("Unable to add a file")
+
+        db.session.commit()
+        track_activity("Updated asset type {asset_name}".format(asset_name=asset_type.asset_name), caseid=caseid, ctx_less=True)
+    else:
+        print("invalid")
+
+    
+    # Return the assets
+    return response_success("Added successfully", data=asset_type.asset_name)
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
@@ -161,9 +181,9 @@ def add_assets(caseid):
         asset_type.asset_description = request.form.get('asset_description','', type=str)
         for icon in ['asset_icon_compromised','asset_icon_not_compromised']:
             file = request.files[icon]
-            if file.filename == '':
-                flash('No selected file')
-                return redirect(request.url)
+            # if file.filename == '':
+            #     flash('No selected file')
+            #     return redirect(request.url)
 
             if file and allowed_file(file.filename):
                 filename = get_random_string(18)
@@ -178,8 +198,8 @@ def add_assets(caseid):
 
                 setattr(asset_type,icon, filename)
 
-            else:
-                return response_error("Unable to add a file")
+            # else:
+            #     return response_error("Unable to add a file")
 
         db.session.add(asset_type)
         db.session.commit()
@@ -203,7 +223,21 @@ def delete_assets(cur_id, caseid):
     if case_linked:
         return response_error("Cannot delete a referenced asset type. Please delete any assets of this type first.")
 
+    
+    try:
+        #not deleting icons for now because multiple asset_types might rely on the same icon
+        
+        #only delete icons if there is only one AssetType linked to it
+        if(len(AssetsType.query.filter(AssetsType.asset_icon_compromised == asset.asset_icon_compromised).all()) == 1):
+            os.unlink(os.path.join(app.config['ASSET_PATH'], asset.asset_icon_compromised))
+        if(len(AssetsType.query.filter(AssetsType.asset_icon_not_compromised == asset.asset_icon_not_compromised).all()) == 1):
+            os.unlink(os.path.join(app.config['ASSET_PATH'], asset.asset_icon_not_compromised))
+
+    except Exception as e:
+        logging.error(f"Unable to delete {e}")
+    
     db.session.delete(asset)
+
     track_activity("Deleted asset type ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)
 
     return response_success("Deleted asset type ID {cur_id} successfully".format(cur_id=cur_id))

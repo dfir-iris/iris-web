@@ -54,8 +54,8 @@ class MultiCheckboxField(SelectMultipleField):
 class AddAssetForm(FlaskForm):
     asset_name = StringField(u'Asset name', validators=[DataRequired()])
     asset_description = StringField(u'Asset description', validators=[DataRequired()])
-    asset_icon_compromised = StringField(u'Asset icon compromised name', validators=[DataRequired()])
-    asset_icon_not_compromised = StringField(u'Asset icon compromised name', validators=[DataRequired()])
+    asset_icon_compromised = StringField(u'Asset icon compromised name', default="ioc_question-mark.png")
+    asset_icon_not_compromised = StringField(u'Asset icon not compromised name', default="question-mark.png")
 
 class AttributeForm(FlaskForm):
     attribute_content = TextAreaField(u'Attribute content', validators=[DataRequired()])
@@ -137,6 +137,7 @@ class CaseEventForm(FlaskForm):
     event_category_id = SelectField(u'Event Category')
     event_tz = StringField(u'Event Timezone', validators=[DataRequired()])
     event_in_summary = BooleanField(u'Add to summary')
+    event_tags = StringField(u'Event Tags')
     event_in_graph = BooleanField(u'Display in graph')
 
 

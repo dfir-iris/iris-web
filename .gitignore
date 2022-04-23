@@ -17,7 +17,7 @@ libesedb-*/
 orcparser/
 venv1/
 .DS_Store
-.env
+.env*
 .venv/
 .vscode/
 *.png

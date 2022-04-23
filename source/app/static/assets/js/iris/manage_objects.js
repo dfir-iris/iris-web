@@ -100,46 +100,42 @@ function refresh_asset_table() {
 function assettype_detail(asset_id) {
     url = '/manage/asset-type/update/' + asset_id + '/modal' + case_param();
     $('#modal_add_type_content').load(url, function () {
-
-        $('#submit_new_assettype').on("click", function () {
+        $('#form_new_asset_type').submit("click", function (event) {
             event.preventDefault();
-            var form = $('#form_new_asset_type').serializeObject();
+            var formData = new FormData(this);
+
+            url = '/manage/asset-type/update/' + asset_id + case_param();
 
             $.ajax({
-                url:  '/manage/asset-type/update/' + asset_id + case_param(),
+                url: url,
                 type: "POST",
-                data: JSON.stringify(form),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
                 success: function (data) {
                     if (data.status == 'success') {
-                        swal("You're set !",
-                            data.message,
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
+                        swal(data.message, {
+                            icon: "success",
+                            timer: 500
+                        }).then((value) => {
                             refresh_asset_table();
                             $('#modal_add_type').modal('hide');
                         });
-
                     } else {
-                        $('#modal_add_type').text('Save again');
-                        swal("Oh no !", data.message, "error")
+                        swal ( "Oh no !" ,  data.message ,  "error" );
                     }
                 },
                 error: function (error) {
-                    propagate_form_api_errors(error.responseJSON.data);
+                    $('#modal_add_type').text('Save');
+                    swal("Oh no !", error.statusText, "error")
                 }
             });
 
             return false;
-        })
-
-
     });
     $('#modal_add_type').modal({ show: true });
+    });
 }
 
 function delete_asset_type(id) {
