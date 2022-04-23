@@ -1,7 +1,7 @@
 """changed the assets_type table for custom icons
 
 Revision ID: ff917e2ab02e
-Revises: b664ca1203a4
+Revises: c832bd69f827
 Create Date: 2022-04-21 22:14:55.815983
 
 """
