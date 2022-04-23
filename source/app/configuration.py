@@ -58,8 +58,6 @@ SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".
                                                                                        server=PG_SERVER_,
                                                                                        port=PG_PORT_)
 
-RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
-
 
 # --------- CELERY ---------
 class CeleryConfig():
@@ -84,6 +82,8 @@ class Config():
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.1'
+
+    RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True
