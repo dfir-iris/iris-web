@@ -10,7 +10,6 @@ from app import app, celery
 from iris_interface import IrisInterfaceStatus as IStatus
 
 
-
 def get_external_url(url):
     server_settings = get_server_settings_as_dict()
     proxies = server_settings.get('proxies')
@@ -29,13 +28,17 @@ def get_latest_release():
         releases = get_external_url(app.config.get('RELEASE_URL'))
     except Exception as e:
         app.logger.error(e)
-        return None
+        return True, None
 
-    if releases:
+    if releases.status_code == 200:
         releases_j = releases.json()
-        return releases_j[0]
 
-    return None
+        return False, releases_j[0]
+
+    if releases.status_code == 403:
+        return True, releases.json()
+
+    return True, None
 
 
 def get_release_assets(assets_url):
@@ -53,8 +56,12 @@ def get_release_assets(assets_url):
 
 
 def is_updates_available():
-    release = get_latest_release()
+    has_error, release = get_latest_release()
+
     current_version = app.config.get('IRIS_VERSION')
+
+    if has_error:
+        return False, release.get('message')
 
     release_version = release.get('name')
 
@@ -131,6 +138,19 @@ def verify_assets_signatures(target_directory, release_assets_info):
     if import_result.counts.get('count') != 1:
         log.append(f'ERROR - Unable to fetch {app.config.get("RELEASE_SIGNATURE_KEY")} from key server')
         has_error = True
+
+    for asset in assets_check:
+        with open(asset, 'rb') as fin:
+
+            verified = gpg.verify_file(fin, sig_file=str(assets_check[asset]))
+
+            if not verified.valid:
+
+                log.append(f'ERROR - {asset} does not have a valid signature (check against {assets_check[asset]}). Contact DFIR-IRIS team')
+                has_error = True
+                continue
+
+            log.append(f"{asset} : signature validated")
 
     return has_error, log
 

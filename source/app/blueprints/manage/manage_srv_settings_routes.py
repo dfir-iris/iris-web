@@ -58,7 +58,7 @@ def manage_check_updates_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
 
-    has_updates, updates_content, _ = is_updates_available()
+    has_updates, updates_content = is_updates_available()
 
     # Return default page of case management
     return render_template('modal_server_updates.html', has_updates=has_updates, updates_content=updates_content)
