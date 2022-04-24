@@ -73,7 +73,7 @@ $('#assets_table').dataTable( {
                 "data": "asset_icon_not_compromised_path",
                 "render": function ( data, type, row ) {
                     if (type === 'display') { data = sanitizeHTML(data);}
-                    return '<img style="widht:2em;height:2em" src=\'' + data + '\'>';
+                    return '<img style="width:2em;height:2em" src=\'' + data + '\'>';
 
                 }
             },
@@ -81,7 +81,7 @@ $('#assets_table').dataTable( {
                 "data": "asset_icon_compromised_path",
                 "render": function ( data, type, row ) {
                     if (type === 'display') { data = sanitizeHTML(data);}
-                    return '<img style="widht:2em;height:2em" src=\'' + data + '\'>';
+                    return '<img style="width:2em;height:2em" src=\'' + data + '\'>';
                 }
             }
         ]
