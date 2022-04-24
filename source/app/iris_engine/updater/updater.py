@@ -125,9 +125,12 @@ def verify_assets_signatures(target_directory, release_assets_info):
 
     log.append("Importing DFIR-IRIS GPG key from server")
     gpg = gnupg.GPG()
+
     import_result = gpg.recv_keys(app.config.get('RELEASE_SIGNATURE_KEY'), keyserver="hkps://keys.openpgp.org")
 
-    print(import_result.count)
+    if import_result.counts.get('count') != 1:
+        log.append(f'ERROR - Unable to fetch {app.config.get("RELEASE_SIGNATURE_KEY")} from key server')
+        has_error = True
 
     return has_error, log
 
