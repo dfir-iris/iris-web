@@ -22,6 +22,7 @@ import random
 import secrets
 import string
 import os
+import glob
 from alembic.config import Config
 from alembic import command, context
 
@@ -115,6 +116,10 @@ def run_post_init(development=False):
             user=admin,
             client=client
         )
+
+        # setup symlinks for custom_assets
+        log.info("Creating symlinks for custom asset icons")
+        custom_assets_symlinks()
 
     if development:
         if os.getenv("IRIS_WORKER") is None:
@@ -858,3 +863,13 @@ def register_default_modules():
         else:
             iris_module_disable_by_id(mod_id)
             log.info('Successfully registered {mod}'.format(mod=module))
+        
+def custom_assets_symlinks():
+    source_paths = glob.glob(app.configuration['ASSET_STORE_PATH'])
+    for store_fullpath in source_paths:
+        filename = store_fullpath.split(os.path.sep)[-1]
+        show_fullpath = os.path.join(app.config['APP_PATH'],'app',app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
+        os.symlink(store_fullpath, show_fullpath)  
+        log.info(f"Created symlink {store_fullpath} -> {show_fullpath}")
+
+
