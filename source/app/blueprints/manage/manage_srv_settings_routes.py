@@ -26,7 +26,8 @@ from werkzeug.utils import redirect
 
 from app import db, app
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_alembic_revision
-from app.iris_engine.updater.updater import get_latest_release, is_updates_available, task_update_worker
+from app.iris_engine.updater.updater import get_latest_release, is_updates_available, task_update_worker, \
+    init_server_update
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import ServerSettingsSchema
 from app.util import admin_required, api_admin_required, response_error, response_success
@@ -41,12 +42,14 @@ manage_srv_settings_blueprint = Blueprint(
 @manage_srv_settings_blueprint.route('/manage/server/do-updates', methods=['GET'])
 @api_admin_required
 def manage_execute_update(caseid):
-    has_updates, updates_content = is_updates_available()
+    has_updates, updates_content, release_config = is_updates_available()
 
     if has_updates:
         task_update_worker.delay(update_to_version=updates_content)
 
-    return response_success(data="Task queued")
+    success, logs = init_server_update(release_config)
+
+    return response_success(data=logs)
 
 
 @manage_srv_settings_blueprint.route('/manage/server/check-updates/modal', methods=['GET'])
@@ -55,7 +58,7 @@ def manage_check_updates_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
 
-    has_updates, updates_content = is_updates_available()
+    has_updates, updates_content, _ = is_updates_available()
 
     # Return default page of case management
     return render_template('modal_server_updates.html', has_updates=has_updates, updates_content=updates_content)

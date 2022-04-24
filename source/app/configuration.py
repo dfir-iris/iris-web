@@ -86,6 +86,7 @@ class Config():
     MODULES_INTERFACE_MAX_VERSION = '1.1'
 
     RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
+    RELEASE_SIGNATURE_KEY = "B9B762555CE8751E57B178DD3003B1BA1A2E235E"
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True
