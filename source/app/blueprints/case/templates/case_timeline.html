@@ -84,11 +84,15 @@
                 </div>
             </div>
             <div id="side_timeline">
-                <button class="btn btn-round btn-light btn_over_page_a" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_b" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_c" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_d" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_e" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_a btn-conditional" title="Change color" onclick=""><i class="fas fa-tint"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_b btn-conditional" title="Toggle Summary" onclick=""><i class="fas fa-newspaper"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_c btn-conditional" title="Toggle Graph" onclick=""><i class="fas fa-share-alt"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_d" title="Select rows" onclick="toggle_selector();" id="selector-btn"><i class="fas fa-check"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_e" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_f" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_g" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_h" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_i" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>
             </div>
         
         </div>

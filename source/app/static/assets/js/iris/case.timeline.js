@@ -21,7 +21,7 @@ tm_filter.commands.addCommand({
                               filter_timeline();
                     }
 });
-
+var selector_active;
 
 /* Fetch a modal that allows to add an event */
 function add_event() {
@@ -222,6 +222,38 @@ function toggle_compact_view() {
             location.reload();
         }
     }
+}
+
+function toggle_selector() {
+    //activating selector toggle
+    if(selector_active == false) {
+        selector_active = true;
+        $(".btn-conditional").show(250);
+        $("#selector-btn").addClass("btn-active");
+        $("[id^=dropa_]").removeAttr('data-toggle');
+
+        $(".timeline li .timeline-panel").on('click', function(){
+
+            $(this).addClass("timeline-selected");
+        });
+    
+        $(".timeline-selected").on('click', function(){
+            $(this).removeClass("timeline-selected");
+        });
+    }
+
+    //deactivating selector toggle
+    else if(selector_active == true) {
+        selector_active = false;
+        $(".btn-conditional").hide(250);
+        $("#selector-btn").removeClass("btn-active");
+        $("[id^=dropa_]").attr('data-toggle','collapse');
+        $(".timeline-selected").removeClass("timeline-selected");
+    }
+    //TODO
+    //1. set variable to indicate selector is active
+    //2. show other side-icons
+    //3. add on_click events to timeline-panels
 }
 
 
@@ -751,6 +783,8 @@ function get_or_filter_tm() {
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
+
+    selector_active = false;
 
     get_or_filter_tm();
 
