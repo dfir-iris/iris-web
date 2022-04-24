@@ -54,6 +54,7 @@ services:
     volumes:
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
+      - asset_icons:/home/iris/asset_icons
     restart: always
     depends_on:
       - "rabbitmq"
@@ -129,6 +130,7 @@ services:
 volumes:
   iris-downloads:
   user_templates:
+  asset_icons:
   db_data:
 
 networks:

@@ -50,9 +50,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN apt update
 RUN apt install -y p7zip-full
 
-
 RUN mkdir /iriswebapp/
 RUN mkdir -p /home/iris/user_templates
+RUN mkdir /home/iris/asset_icons
 
 WORKDIR /iriswebapp
 
