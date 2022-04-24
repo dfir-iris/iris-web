@@ -23,6 +23,7 @@ import secrets
 import string
 import os
 import glob
+from tkinter import E
 from alembic.config import Config
 from alembic import command, context
 
@@ -30,7 +31,7 @@ from sqlalchemy import create_engine, and_
 from sqlalchemy_utils import database_exists, create_database
 
 from app import db, bc, app, celery
-from app.configuration import SQLALCHEMY_BASE_URI
+#from app.config import SQLALCHEMY_BASE_URI
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name, register_module, \
     check_module_health
@@ -60,7 +61,7 @@ def run_post_init(development=False):
         log.info("Running DB migration")
 
         alembic_cfg = Config(file_='app/alembic.ini')
-        alembic_cfg.set_main_option('sqlalchemy.url',  SQLALCHEMY_BASE_URI + 'iris_db')
+        alembic_cfg.set_main_option('sqlalchemy.url',  app.config['SQLALCHEMY_DATABASE_URI'])
         command.upgrade(alembic_cfg, 'head')
 
         log.info("Creating base languages")
@@ -865,11 +866,17 @@ def register_default_modules():
             log.info('Successfully registered {mod}'.format(mod=module))
         
 def custom_assets_symlinks():
-    source_paths = glob.glob(app.configuration['ASSET_STORE_PATH'])
-    for store_fullpath in source_paths:
-        filename = store_fullpath.split(os.path.sep)[-1]
-        show_fullpath = os.path.join(app.config['APP_PATH'],'app',app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
-        os.symlink(store_fullpath, show_fullpath)  
-        log.info(f"Created symlink {store_fullpath} -> {show_fullpath}")
+    try:
+        source_paths = glob.glob(os.path.join(app.config['ASSET_STORE_PATH'],"*"))
+        log.info("Attempting to add symlinks for:")
+        log.info(source_paths)
+        for store_fullpath in source_paths:
+            filename = store_fullpath.split(os.path.sep)[-1]
+            show_fullpath = os.path.join(app.config['APP_PATH'],'app', app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
+            os.symlink(store_fullpath, show_fullpath)  
+            log.info(f"Created symlink {store_fullpath} -> {show_fullpath}")
+    except Exception as e:
+        log.error(f"Error: {e}")
+
 
 

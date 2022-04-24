@@ -29,7 +29,5 @@ printf "Running ${target} ...\n"
 if [[ "${target}" == iris-worker ]] ; then
     exec celery -A app.celery worker -E -l INFO
 else
-    #adds symlinks for all uploaded asset_icons to the correct img folder
-    find /home/iris/asset_icons -type f -exec ln -vs "{}" /iriswebapp/app/static/assets/img/graph/ ";"
     exec gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info
 fi
