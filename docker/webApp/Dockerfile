@@ -52,7 +52,7 @@ RUN apt install -y p7zip-full
 
 RUN mkdir /iriswebapp/
 RUN mkdir -p /home/iris/user_templates
-RUN mkdir /home/iris/asset_icons
+RUN mkdir -p /home/iris/server_data/custom_assets
 
 WORKDIR /iriswebapp
 
