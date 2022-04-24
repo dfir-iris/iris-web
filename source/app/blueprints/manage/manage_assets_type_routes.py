@@ -43,6 +43,24 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
 
+def store_icon(file, icon, asset_type):
+    if file and allowed_file(file.filename):
+        filename = get_random_string(18)
+
+        try:
+            print(app.config['APP_PATH'])
+            store_fullpath = os.path.join(app.config['ASSET_STORE_PATH'], filename)
+            show_fullpath = os.path.join(app.config['APP_PATH'],'app',app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
+            file.save(store_fullpath)
+            print(f"save file to {store_fullpath}")
+            os.symlink(store_fullpath, show_fullpath)  
+            print("created symlink")          
+        except Exception as e:
+            print(f"error: {e}") 
+            return response_error(f"Unable to add icon {e}")
+
+        setattr(asset_type, icon, filename)
+    
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -67,7 +85,13 @@ def list_assets(caseid):
         AssetsType.asset_icon_not_compromised,
     ).all()
 
-    data = [row._asdict() for row in assets]
+    data = []
+    for row in assets:
+        row_dict = row._asdict()
+        row_dict['asset_icon_compromised_path'] = os.path.join(app.config['APP_PATH'],'app',app.config['ASSET_SHOW_PATH'].strip(os.path.sep),row_dict['asset_icon_compromised'])
+        row_dict['asset_icon_not_compromised_path'] = os.path.join(app.config['APP_PATH'],'app',app.config['ASSET_SHOW_PATH'].strip(os.path.sep),row_dict['asset_icon_not_compromised'])
+        data.append(row._asdict())
+    # data = [row._asdict() for row in assets]
 
     # Return the assets
     return response_success("", data=data)
@@ -107,6 +131,8 @@ def view_assets_modal(cur_id, caseid, url_redir):
     form.asset_description.render_kw = {'value': asset.asset_description}
     form.asset_icon_compromised.render_kw = {'value': asset.asset_icon_compromised}
     form.asset_icon_not_compromised.render_kw = {'value': asset.asset_icon_not_compromised}
+    setattr(asset, 'asset_icon_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_compromised))
+    setattr(asset, 'asset_icon_not_compromised_path',os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_not_compromised))
 
 
     return render_template("modal_add_asset_type.html", form=form, assettype=asset)
@@ -127,25 +153,9 @@ def view_assets(cur_id, caseid):
         asset_type.asset_description = request.form.get('asset_description','', type=str)
         for icon in ['asset_icon_compromised','asset_icon_not_compromised']:
             file = request.files[icon]
-            # if file.filename == '':
-            #     flash('No selected file')
-            #     return redirect(request.url)
 
-            if file and allowed_file(file.filename):
-                filename = get_random_string(18)
-
-                try:
-
-                    file.save(os.path.join(app.config['ASSET_PATH'], filename))
-                    # file.save(filename)
-
-                except Exception as e:
-                    return response_error(f"Unable to add icon {e}")
-
-                setattr(asset_type, icon, filename)
-
-            # else:
-            #     return response_error("Unable to add a file")
+            store_icon(file, icon, asset_type)
+            
 
         db.session.commit()
         track_activity("Updated asset type {asset_name}".format(asset_name=asset_type.asset_name), caseid=caseid, ctx_less=True)
@@ -181,25 +191,9 @@ def add_assets(caseid):
         asset_type.asset_description = request.form.get('asset_description','', type=str)
         for icon in ['asset_icon_compromised','asset_icon_not_compromised']:
             file = request.files[icon]
-            # if file.filename == '':
-            #     flash('No selected file')
-            #     return redirect(request.url)
 
-            if file and allowed_file(file.filename):
-                filename = get_random_string(18)
+            store_icon(file, icon, asset_type)
 
-                try:
-
-                    file.save(os.path.join(app.config['ASSET_PATH'], filename))
-                    # file.save(filename)
-
-                except Exception as e:
-                    return response_error(f"Unable to add icon {e}")
-
-                setattr(asset_type,icon, filename)
-
-            # else:
-            #     return response_error("Unable to add a file")
 
         db.session.add(asset_type)
         db.session.commit()
@@ -229,9 +223,9 @@ def delete_assets(cur_id, caseid):
         
         #only delete icons if there is only one AssetType linked to it
         if(len(AssetsType.query.filter(AssetsType.asset_icon_compromised == asset.asset_icon_compromised).all()) == 1):
-            os.unlink(os.path.join(app.config['ASSET_PATH'], asset.asset_icon_compromised))
+            os.unlink(os.path.join(app.config['ASSET_STORE_PATH'], asset.asset_icon_compromised))
         if(len(AssetsType.query.filter(AssetsType.asset_icon_not_compromised == asset.asset_icon_not_compromised).all()) == 1):
-            os.unlink(os.path.join(app.config['ASSET_PATH'], asset.asset_icon_not_compromised))
+            os.unlink(os.path.join(app.config['ASSET_STORE_PATH'], asset.asset_icon_not_compromised))
 
     except Exception as e:
         logging.error(f"Unable to delete {e}")

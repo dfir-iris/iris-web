@@ -70,20 +70,18 @@ $('#assets_table').dataTable( {
                 }
             },
             {
-                "data": "asset_icon_not_compromised",
+                "data": "asset_icon_not_compromised_path",
                 "render": function ( data, type, row ) {
                     if (type === 'display') { data = sanitizeHTML(data);}
-                    path = "/static/assets/img/graph/"+data
-                    return '<img style="widht:2em;height:2em" src=\'' + path + '\'>';
+                    return '<img style="widht:2em;height:2em" src=\'' + data + '\'>';
 
                 }
             },
             {
-                "data": "asset_icon_compromised",
+                "data": "asset_icon_compromised_path",
                 "render": function ( data, type, row ) {
                     if (type === 'display') { data = sanitizeHTML(data);}
-                    path = "/static/assets/img/graph/"+data
-                    return '<img style="widht:2em;height:2em" src=\'' + path + '\'>';
+                    return '<img style="widht:2em;height:2em" src=\'' + data + '\'>';
                 }
             }
         ]
