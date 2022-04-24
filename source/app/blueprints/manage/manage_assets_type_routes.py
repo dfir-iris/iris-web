@@ -48,15 +48,11 @@ def store_icon(file, icon, asset_type):
         filename = get_random_string(18)
 
         try:
-            print(app.config['APP_PATH'])
             store_fullpath = os.path.join(app.config['ASSET_STORE_PATH'], filename)
             show_fullpath = os.path.join(app.config['APP_PATH'],'app',app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
             file.save(store_fullpath)
-            print(f"save file to {store_fullpath}")
             os.symlink(store_fullpath, show_fullpath)  
-            print("created symlink")          
         except Exception as e:
-            print(f"error: {e}") 
             return response_error(f"Unable to add icon {e}")
 
         setattr(asset_type, icon, filename)
