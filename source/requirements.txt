@@ -22,7 +22,7 @@ eventlet==0.30.2
 alembic==1.7.5
 setuptools==59.6.0
 python-dateutil==2.8.2
-gnupg==2.3.1
+python-gnupg==0.4.8
 
 dependencies/docx_generator-0.7.0-py3-none-any.whl
 dependencies/iris_interface-1.1-py3-none-any.whl

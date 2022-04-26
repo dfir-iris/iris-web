@@ -79,21 +79,14 @@ def init_server_update(release_config):
         return False, log
 
     log.append('Fetching release assets info')
-    release_assets_url = release_config.get('assets_url')
-    release_assets_j = get_release_assets(release_assets_url)
-
-    if not release_assets_j:
-        log.append('Unable to fetch release assets. Please check server logs')
-        return False, log
-
-    has_error, log_o, temp_dir = download_release_assets(release_assets_j)
+    has_error, log_o, temp_dir = download_release_assets(release_config.get('assets'))
     log.extend(log_o)
     if has_error:
         log.append('Aborting upgrades - see previous errors')
         temp_dir.cleanup()
         return False, log
 
-    has_error, log_o = verify_assets_signatures(temp_dir, release_assets_j)
+    has_error, log_o = verify_assets_signatures(temp_dir, release_config.get('assets'))
     log.extend(log_o)
     if has_error:
         log.append('Aborting upgrades - see previous errors')
@@ -133,20 +126,23 @@ def verify_assets_signatures(target_directory, release_assets_info):
     log.append("Importing DFIR-IRIS GPG key from server")
     gpg = gnupg.GPG()
 
-    import_result = gpg.recv_keys(app.config.get('RELEASE_SIGNATURE_KEY'), keyserver="hkps://keys.openpgp.org")
+    with open('dependencies/DFIR-IRIS_pkey.asc', 'rb') as pkey:
+        import_result = gpg.import_keys(pkey.read())
 
-    if import_result.counts.get('count') != 1:
+    if import_result.count < 1:
         log.append(f'ERROR - Unable to fetch {app.config.get("RELEASE_SIGNATURE_KEY")} from key server')
         has_error = True
 
     for asset in assets_check:
-        with open(asset, 'rb') as fin:
+        with open(assets_check[asset], 'rb') as fin:
 
-            verified = gpg.verify_file(fin, sig_file=str(assets_check[asset]))
+            verified = gpg.verify_file(fin, data_filename=asset)
 
             if not verified.valid:
 
-                log.append(f'ERROR - {asset} does not have a valid signature (check against {assets_check[asset]}). Contact DFIR-IRIS team')
+                log.append(f'ERROR - {asset} does not have a valid signature (checked against {assets_check[asset]}). '
+                           f'Contact DFIR-IRIS team')
+                log.append(f"{verified.status}")
                 has_error = True
                 continue
 
@@ -162,7 +158,7 @@ def download_release_assets(release_assets_info):
 
     for release_asset in release_assets_info:
         asset_name = release_asset.get('name')
-        asset_url = release_asset.get('url')
+        asset_url = release_asset.get('browser_download_url')
 
         # TODO: Check for available FS free space before downloading
         log.append(f'Downloading {asset_name} from {asset_url}')
