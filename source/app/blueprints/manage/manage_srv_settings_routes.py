@@ -21,10 +21,12 @@
 # IMPORTS ------------------------------------------------
 import marshmallow
 from flask import Blueprint, url_for, render_template, request
+from flask_login import current_user
+from flask_socketio import emit, join_room
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app import db, app
+from app import db, app, socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_alembic_revision
 from app.iris_engine.updater.updater import get_latest_release, is_updates_available, task_update_worker, \
     init_server_update
@@ -39,7 +41,7 @@ manage_srv_settings_blueprint = Blueprint(
 )
 
 
-@manage_srv_settings_blueprint.route('/manage/server/do-updates', methods=['GET'])
+@manage_srv_settings_blueprint.route('/manage/server/start-update', methods=['GET'])
 @api_admin_required
 def manage_execute_update(caseid):
     has_updates, updates_content, release_config = is_updates_available()
@@ -52,6 +54,16 @@ def manage_execute_update(caseid):
     return response_success(data=logs)
 
 
+@manage_srv_settings_blueprint.route('/manage/server/make-update', methods=['GET'])
+@admin_required
+def manage_update(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
+
+    # Return default page of case management
+    return render_template('manage_make_update.html')
+
+
 @manage_srv_settings_blueprint.route('/manage/server/check-updates/modal', methods=['GET'])
 @admin_required
 def manage_check_updates_modal(caseid, url_redir):
@@ -61,7 +73,7 @@ def manage_check_updates_modal(caseid, url_redir):
     has_updates, updates_content, _ = is_updates_available()
 
     # Return default page of case management
-    return render_template('modal_server_updates.html', has_updates=has_updates, updates_content=updates_content)
+    return render_template('manage_srv_settings.html', has_updates=has_updates, updates_content=updates_content)
 
 
 @manage_srv_settings_blueprint.route('/manage/settings', methods=['GET'])

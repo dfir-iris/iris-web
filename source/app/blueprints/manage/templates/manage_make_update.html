@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>IRIS - Server updates</title>
+	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
+	<link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
+
+	<!-- Fonts and icons -->
+	<script src="/static/assets/js/plugin/webfont/webfont.min.js"></script>
+	<script>
+		WebFont.load({
+			custom: {"families":["Lato:300,400,700,900", "Flaticon", "Font Awesome 5 Solid", "Font Awesome 5 Regular", "Font Awesome 5 Brands", "simple-line-icons"],
+			urls: ['/static/assets/css/fonts.css']},
+			active: function() {
+				sessionStorage.fonts = true;
+			}
+		});
+	</script>
+
+	<!-- CSS Files -->
+	<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/static/assets/css/atlantis.css">
+	<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+
+</head>
+<body class="bg-primary-gradient">
+
+    <div class="wrapper mt-2">
+        <div class="content">
+            <div class="col-12">
+                <div class="mt-2 row justify-content-center">
+                    <a href="/" class="logo ml-2">
+                        <img src="/static/assets/img/logo-white-2.png" alt="navbar brand" class="navbar-brand" width="150">
+                    </a>
+                </div>
+                <div class="mt-2 row justify-content-center">
+                    <h1 class="text-light">Server Updates</h1>
+                </div>
+                <div class="row justify-content-center">
+                    <i class="text-light">Some great improvements are hopefully on their way, hang tight</i>
+                </div>
+				<div class="row mt-4 justify-content-center">
+					<h4 class="text-light">Please do not leave the page</h4>
+				</div>
+
+				<div class="main-panel">
+					<div class="row mt-4 justify-content-left text-light">
+						<ul id="updates_log">
+
+						</ul>
+					</div>
+				</div>
+
+            </div>
+
+			</div>
+
+		</div>
+
+	<!--   Core JS Files   -->
+
+	<script src="/static/assets/js/core/jquery.3.2.1.min.js"></script>
+	<script src="/static/assets/js/core/popper.min.js"></script>
+	<script src="/static/assets/js/core/bootstrap.min.js"></script>
+
+	<!-- jQuery UI -->
+	<script src="/static/assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+	<script src="/static/assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
+
+	<!-- jQuery Scrollbar -->
+	<script src="/static/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+
+	<!-- Atlantis JS -->
+	<script src="/static/assets/js/atlantis.min.js"></script>
+	{% if current_user.in_dark_mode %}<script src="/static/assets/js/dark-mode.js"></script>{% endif %}
+
+    <script src="/static/assets/js/core/socket.io.js"></script>
+	<script>
+		$(document).ready(function(){
+			update_socket = io.connect();
+			channel = 'iris_update_status';
+			update_socket.emit('join', { 'channel': channel });
+
+			update_socket.on( "update_status", function(data) {
+				$("#updates_log").append('<li>'+ data + '</li>');
+			}.bind() );
+
+			update_socket.on( "update_ping", function(data) {
+				$("#updates_log").append('<li><i class="fas fa-check text-success"></i> Server connection verified</li>');
+				$("#updates_log").append('<li><i class="fas fa-check text-success"></i> Starting update</li>');
+				initiate_update();
+			}.bind() );
+
+			update_socket.emit('update_ping', { 'channel': channel });
+
+		});
+
+		function get_caseid() {
+			queryString = window.location.search;
+			urlParams = new URLSearchParams(queryString);
+
+			return urlParams.get('cid')
+		}
+
+		function case_param() {
+			var params = {
+				cid: get_caseid
+			}
+			return '?'+ $.param(params);
+		}
+
+		function initiate_update() {
+			$.ajax({
+				url: '/manage/server/start-update' + case_param(),
+				type: "GET",
+				dataType: "json",
+				success: function (data) {
+					$("#updates_log").append('<li><i class="fas fa-check text-success"></i> Update order sent. Expecting feedback anytime soon</li>');
+				},
+				error: function (data) {
+					$("#updates_log").append('<li class="text-light"><i class="fas fa-times text-danger"></i> Unexpected error starting update</li>');
+				}});
+		}
+	</script>
+</body>
+</html>

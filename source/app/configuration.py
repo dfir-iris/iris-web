@@ -120,8 +120,12 @@ class Config():
     Set download path, max file upload size and timeout
     """
     APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    UPLOADED_PATH = config.get('IRIS', 'UPLOADED_PATH') if config.get('IRIS', 'UPLOADED_PATH', fallback=False) else "/home/iris/downloads"
-    TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH', fallback=False) else "/home/iris/user_templates"
+    UPLOADED_PATH = config.get('IRIS', 'UPLOADED_PATH') if config.get('IRIS', 'UPLOADED_PATH',
+                                                                      fallback=False) else "/home/iris/downloads"
+    TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH',
+                                                                        fallback=False) else "/home/iris/user_templates"
+    BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
+                                                                        fallback=False) else "/home/iris/server_backup"
 
     UPDATE_DIR_NAME = '_updates_'
 
