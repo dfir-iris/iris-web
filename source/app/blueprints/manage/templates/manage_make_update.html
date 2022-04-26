@@ -77,52 +77,7 @@
 	{% if current_user.in_dark_mode %}<script src="/static/assets/js/dark-mode.js"></script>{% endif %}
 
     <script src="/static/assets/js/core/socket.io.js"></script>
-	<script>
-		$(document).ready(function(){
-			update_socket = io.connect();
-			channel = 'iris_update_status';
-			update_socket.emit('join', { 'channel': channel });
+    <script src="/static/assets/js/iris/update_handler.js"></script>
 
-			update_socket.on( "update_status", function(data) {
-				$("#updates_log").append('<li>'+ data + '</li>');
-			}.bind() );
-
-			update_socket.on( "update_ping", function(data) {
-				$("#updates_log").append('<li><i class="fas fa-check text-success"></i> Server connection verified</li>');
-				$("#updates_log").append('<li><i class="fas fa-check text-success"></i> Starting update</li>');
-				initiate_update();
-			}.bind() );
-
-			update_socket.emit('update_ping', { 'channel': channel });
-
-		});
-
-		function get_caseid() {
-			queryString = window.location.search;
-			urlParams = new URLSearchParams(queryString);
-
-			return urlParams.get('cid')
-		}
-
-		function case_param() {
-			var params = {
-				cid: get_caseid
-			}
-			return '?'+ $.param(params);
-		}
-
-		function initiate_update() {
-			$.ajax({
-				url: '/manage/server/start-update' + case_param(),
-				type: "GET",
-				dataType: "json",
-				success: function (data) {
-					$("#updates_log").append('<li><i class="fas fa-check text-success"></i> Update order sent. Expecting feedback anytime soon</li>');
-				},
-				error: function (data) {
-					$("#updates_log").append('<li class="text-light"><i class="fas fa-times text-danger"></i> Unexpected error starting update</li>');
-				}});
-		}
-	</script>
 </body>
 </html>

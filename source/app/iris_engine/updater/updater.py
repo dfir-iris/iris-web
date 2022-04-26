@@ -1,3 +1,6 @@
+import eventlet
+from threading import Thread, Event
+
 import json
 import shutil
 import socketio
@@ -16,14 +19,24 @@ from app import app, celery, socket_io
 from iris_interface import IrisInterfaceStatus as IStatus
 
 
-@socket_io.event
 def update_log_to_socket(status):
+    print(status)
     socket_io.emit('update_status', status, to='iris_update_status')
 
 
 @socket_io.on('update_ping')
 def socket_on_update_ping(msg):
     emit('update_ping', 'Server connected')
+
+
+@socket_io.on('update_start_update')
+def socket_on_update_start_update(msg):
+    socket_io.start_background_task(target=inner_init_server_update)
+
+
+def inner_init_server_update():
+    has_updates, updates_content, release_config = is_updates_available()
+    init_server_update(release_config)
 
 
 def get_external_url(url):
