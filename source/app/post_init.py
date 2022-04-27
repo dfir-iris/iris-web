@@ -42,7 +42,7 @@ log = app.logger
 
 
 def run_post_init(development=False):
-
+    log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
 
     if os.getenv("IRIS_WORKER") is None:

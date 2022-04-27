@@ -64,9 +64,10 @@ def socket_on_update_ping(msg):
          namespace='/server-updates')
 
 
-@socket_io.on('update_do_reboot', namespace='/server-updates')
+@socket_io.on('update_get_current_version', namespace='/server-updates')
 def socket_on_update_do_reboot(msg):
-    notify_server_off()
+    socket_io.emit('update_current_version', {"version": app.config.get('IRIS_VERSION')}, to='iris_update_status',
+                   namespace='/server-updates')
 
 
 def notify_server_ready_to_reboot():
@@ -203,10 +204,13 @@ def call_ext_updater(update_archive):
         target_dir = Path.cwd()
     else:
         source_dir = Path.cwd().absolute() / 'scripts'
-        target_dir = '../../update_server/test_update' # TODO change
+        target_dir = Path('../../update_server/test_update') # TODO change
 
-    subprocess.Popen(["nohup", "/bin/bash", f"{source_dir}/iris_updater.sh", update_archive.as_posix(),
-                      target_dir.as_posix(), archive_name, 'iriswebapp'])
+    subprocess.Popen(["nohup", "/bin/bash", f"{source_dir}/iris_updater.sh",
+                      update_archive.as_posix(),        # Update archive to unpack
+                      target_dir.as_posix(),            # Target directory of update
+                      archive_name,                     # Root directory of the archive
+                      'iriswebapp'])                    # Target webapp
 
     return
 

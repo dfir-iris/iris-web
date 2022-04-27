@@ -50,14 +50,20 @@ function initiate_update() {
 var intervalId = null;
 var ios = io('/server-updates');
 var update_socket = null;
+var current_version = null;
+var updated_version = null;
 
 function ping_check_server_online() {
     try {
         update_socket = ios.connect();
+        update_socket.emit('join-update', { 'channel': channel });
+
         log_msg('Server is back online');
         clearInterval(intervalId);
-         $('#tag_bottom').hide();
-         $('#update_return_button').show();
+        update_socket.emit('update_get_current_version', { 'channel': channel });
+
+        $('#tag_bottom').hide();
+        $('#update_return_button').show();
     }
     catch(e) {
         console.log('Server still offline');
@@ -90,8 +96,24 @@ $(document).ready(function(){
     update_socket.on('disconnect', function () {
         add_update_log('Server is offline, waiting for connection', data.is_error);
         intervalId = window.setInterval(function(){
-          ping_check_server_online();
-        }, 1000);
+            ping_check_server_online();
+        }, 2000);
+    });
+
+    update_socket.on('update_current_version', function (data) {
+        add_update_log('Server reported version ' + data.version , false);
+        if (current_version == null) {
+            current_version = data.version;
+        } else {
+            updated_version = data.version;
+            if (updated_version == current_version) {
+                add_update_log('Something was wrong - server is still in the same version', true);
+                add_update_log('Please check server logs', true);
+            } else {
+                add_update_log('Successfully updated from ' + current_version + ' to ' + updated_version, false);
+                add_update_log('You can now leave this page', false);
+            }
+        }
     });
 
     update_socket.on('update_has_fail', function () {
@@ -100,5 +122,6 @@ $(document).ready(function(){
     });
 
     update_socket.emit('update_ping', { 'channel': channel });
+    update_socket.emit('update_get_current_version', { 'channel': channel });
 
 });
