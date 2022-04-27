@@ -86,7 +86,7 @@ class Config():
     MODULES_INTERFACE_MAX_VERSION = '1.1'
 
     #RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
-    RELEASE_URL = 'http://127.0.0.1:8088/releases'
+    RELEASE_URL = 'http://192.168.1.11:8088/releases'
     RELEASE_SIGNATURE_KEY = "3003B1BA1A2E235E"
 
     if os.environ.get('IRIS_WORKER') is None:
@@ -125,7 +125,7 @@ class Config():
     TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH',
                                                                         fallback=False) else "/home/iris/user_templates"
     BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
-                                                                        fallback=False) else "/home/iris/server_backup"
+                                                                        fallback=False) else "/home/iris/server_data/backup"
 
     UPDATE_DIR_NAME = '_updates_'
 

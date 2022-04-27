@@ -10,6 +10,7 @@ marshmallow-sqlalchemy==0.26.1
 gunicorn==20.1.0
 psycopg2-binary==2.9.1
 pyunpack==0.2.2
+packaging==21.3
 requests==2.26.0
 SQLAlchemy==1.4.31
 SQLAlchemy-ImageAttach==1.1.0

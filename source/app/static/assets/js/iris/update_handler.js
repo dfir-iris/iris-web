@@ -31,26 +31,26 @@ function case_param() {
 }
 
 function initiate_update() {
-    update_socket.emit('update_start_update', { 'channel': channel });
-//    log_msg('Update order sent. Expecting feedback anytime soon');
-//    $.ajax({
-//        url: '/manage/server/start-update' + case_param(),
-//        type: "GET",
-//        dataType: "json",
-//        beforeSend : function () {
-//            log_msg('Update order sent. Expecting feedback anytime soon');
-//        },
-//        success: function (data) {},
-//        error: function (data) {
-//            log_error('Unexpected error starting update');
-//        }
-//    });
+    //update_socket.emit('update_start_update', { 'channel': channel });
+    $.ajax({
+        url: '/manage/server/start-update' + case_param(),
+        type: "GET",
+        dataType: "json",
+        beforeSend : function () {
+            log_msg('Update order sent. Expecting feedback anytime soon');
+        },
+        success: function (data) {},
+        error: function (data) {
+            log_error('Unexpected error starting update');
+        }
+    });
 }
 
 $(document).ready(function(){
-    update_socket = io.connect();
+    ios = io('/server-updates');
+    update_socket = ios.connect();
 
-    update_socket.emit('join', { 'channel': channel });
+    update_socket.emit('join-update', { 'channel': channel });
 
     update_socket.on( "update_status", function(data) {
         log_msg(data);

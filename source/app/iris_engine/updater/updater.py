@@ -1,4 +1,7 @@
+import os
+
 import eventlet
+from flask_login import current_user
 from threading import Thread, Event
 
 import json
@@ -21,17 +24,27 @@ from iris_interface import IrisInterfaceStatus as IStatus
 
 def update_log_to_socket(status):
     print(status)
-    socket_io.emit('update_status', status, to='iris_update_status')
+    socket_io.emit('update_status', status, to='iris_update_status', namespace='/server-updates')
 
 
-@socket_io.on('update_ping')
+@socket_io.on('join-update', namespace='/server-updates')
+def get_message(data):
+    if not current_user.is_authenticated:
+        return
+
+    room = data['channel']
+    join_room(room=room)
+    emit('join', {'message': f"{current_user.user} just joined"}, room=room, namespace='/server-updates')
+
+
+@socket_io.on('update_ping', namespace='/server-updates')
 def socket_on_update_ping(msg):
-    emit('update_ping', 'Server connected')
+    emit('update_ping', 'Server connected', namespace='/server-updates')
 
 
-@socket_io.on('update_start_update')
-def socket_on_update_start_update(msg):
-    socket_io.start_background_task(target=inner_init_server_update)
+#@socket_io.on('update_start_update')
+def socket_on_update_start_update():
+    socket_io.start_background_task(target=inner_init_server_update, app_ctx=app)
 
 
 def inner_init_server_update():
@@ -141,15 +154,26 @@ def init_server_update(release_config):
 def update_backup_current_version():
     date_time = datetime.now()
 
-    backup_dir = Path(app.config.get("BACKUP_PATH")) / f"server_backup_{date_time.timestamp()}"
+    root_backup = Path(app.config.get("BACKUP_PATH"))
+    root_backup.mkdir(exist_ok=True)
+
+    backup_dir = root_backup / f"server_backup_{date_time.timestamp()}"
     backup_dir.mkdir(exist_ok=True)
     if not backup_dir.is_dir():
         update_log_to_socket(f"Unable to create directory {backup_dir} for backup. Aborting")
         return True
 
+    if os.getenv("DOCKERIZED"):
+        source_dir = Path.cwd()
+    else:
+        source_dir = Path.cwd().parent.absolute()
+
     try:
-        shutil.copytree(Path.cwd().parent.absolute(), backup_dir, dirs_exist_ok=True)
+        update_log_to_socket(f'Copying {source_dir} to {backup_dir}')
+        shutil.copytree(source_dir, backup_dir, dirs_exist_ok=True)
     except Exception as e:
+        update_log_to_socket('Unable to backup current version')
+        update_log_to_socket(str(e))
         return False, ['Unable to backup current version', str(e)]
 
     update_log_to_socket('Current version backed up')

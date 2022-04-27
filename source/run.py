@@ -21,10 +21,6 @@ import logging
 from app import app, socket_io
 
 
-def stop_server():
-    socket_io.stop()
-
-
 if __name__ != '__main__':
     gunicorn_logger = logging.getLogger('gunicorn.error')
     app.logger.addHandler(gunicorn_logger.handlers)

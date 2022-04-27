@@ -20,3 +20,4 @@ venv1/
 .env
 .venv/
 .vscode/
+nohup.out
