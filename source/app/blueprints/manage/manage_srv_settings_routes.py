@@ -19,20 +19,16 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-from threading import Thread
 
 import eventlet
 import marshmallow
-from flask import Blueprint, url_for, render_template, request, copy_current_request_context
-from flask_login import current_user
-from flask_socketio import emit, join_room
+from flask import Blueprint, url_for, render_template, request
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app import db, app, socket_io
+from app import db, app
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_alembic_revision
-from app.iris_engine.updater.updater import get_latest_release, is_updates_available, task_update_worker, \
-    init_server_update, inner_init_server_update, socket_on_update_start_update
+from app.iris_engine.updater.updater import is_updates_available, inner_init_server_update
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import ServerSettingsSchema
 from app.util import admin_required, api_admin_required, response_error, response_success
@@ -48,8 +44,7 @@ manage_srv_settings_blueprint = Blueprint(
 @api_admin_required
 def manage_execute_update(caseid):
 
-    thread = Thread(target=inner_init_server_update)
-    thread.start()
+    eventlet.spawn(inner_init_server_update)
 
     return response_success()
 

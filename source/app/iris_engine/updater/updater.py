@@ -42,11 +42,6 @@ def socket_on_update_ping(msg):
     emit('update_ping', 'Server connected', namespace='/server-updates')
 
 
-#@socket_io.on('update_start_update')
-def socket_on_update_start_update():
-    socket_io.start_background_task(target=inner_init_server_update, app_ctx=app)
-
-
 def inner_init_server_update():
     has_updates, updates_content, release_config = is_updates_available()
     init_server_update(release_config)
