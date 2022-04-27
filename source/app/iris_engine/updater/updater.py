@@ -1,30 +1,49 @@
-import os
+import subprocess
 
-import eventlet
-from flask_login import current_user
-from threading import Thread, Event
-
-import json
-import shutil
-import socketio
-from datetime import datetime
+import gnupg
 import hashlib
-
+import json
+import os
 import requests
+import shutil
+import tempfile
+import time
+from datetime import datetime
+from flask_login import current_user
 from flask_socketio import join_room, emit
 from packaging import version
-import tempfile
 from pathlib import Path
-import gnupg
 
-from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app import app, celery, socket_io
+from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from iris_interface import IrisInterfaceStatus as IStatus
 
+log = app.logger
 
-def update_log_to_socket(status):
-    print(status)
-    socket_io.emit('update_status', status, to='iris_update_status', namespace='/server-updates')
+
+def update_log_to_socket(status, is_error=False):
+    log.info(status)
+    data = {
+        "message": status,
+        "is_error": is_error
+    }
+    socket_io.emit('update_status', data, to='iris_update_status', namespace='/server-updates')
+
+
+def notify_server_off():
+    socket_io.emit('server_has_turned_off', {}, to='iris_update_status', namespace='/server-updates')
+
+
+def notify_update_failed():
+    socket_io.emit('update_has_fail', {}, to='iris_update_status', namespace='/server-updates')
+
+
+def update_log(status):
+    update_log_to_socket(status)
+
+
+def update_log_error(status):
+    update_log_to_socket(status, is_error=True)
 
 
 @socket_io.on('join-update', namespace='/server-updates')
@@ -34,12 +53,24 @@ def get_message(data):
 
     room = data['channel']
     join_room(room=room)
-    emit('join', {'message': f"{current_user.user} just joined"}, room=room, namespace='/server-updates')
+
+    emit('join', {'message': f"{current_user.user} just joined", 'is_error': False}, room=room,
+         namespace='/server-updates')
 
 
 @socket_io.on('update_ping', namespace='/server-updates')
 def socket_on_update_ping(msg):
-    emit('update_ping', 'Server connected', namespace='/server-updates')
+    emit('update_ping', {'message': f"Server connected", 'is_error': False},
+         namespace='/server-updates')
+
+
+@socket_io.on('update_do_reboot', namespace='/server-updates')
+def socket_on_update_do_reboot(msg):
+    notify_server_off()
+
+
+def notify_server_ready_to_reboot():
+    socket_io.emit('server_ready_to_reboot', {}, to='iris_update_status', namespace='/server-updates')
 
 
 def inner_init_server_update():
@@ -112,38 +143,72 @@ def is_updates_available():
 def init_server_update(release_config):
 
     if not release_config:
-        update_log_to_socket('Release config is empty. Please contact IRIS team')
+        update_log_error('Release config is empty. Please contact IRIS team')
+        notify_update_failed()
         return False
 
-    update_log_to_socket('Fetching release assets info')
+    update_log('Fetching release assets info')
     has_error, temp_dir = download_release_assets(release_config.get('assets'))
     if has_error:
-        update_log_to_socket('Aborting upgrades - see previous errors')
-        temp_dir.cleanup()
+        update_log_error('Aborting upgrades - see previous errors')
+        notify_update_failed()
+        shutil.rmtree(temp_dir)
         return False
 
     has_error = verify_assets_signatures(temp_dir, release_config.get('assets'))
     if has_error:
-        update_log_to_socket('Aborting upgrades - see previous errors')
-        temp_dir.cleanup()
+        update_log_error('Aborting upgrades - see previous errors')
+        notify_update_failed()
+        shutil.rmtree(temp_dir)
         return False
 
-    update_log_to_socket('Update files verified')
-    update_log_to_socket('Backing up current version')
-    has_error = update_backup_current_version()
+    updates_config = verify_compatibility(temp_dir, release_config.get('assets'))
+    if updates_config is None:
+        update_log_error('Aborting upgrades - see previous errors')
+        notify_update_failed()
+        shutil.rmtree(temp_dir)
+        return False
+
+    update_log('Update files verified')
+    update_log('Backing up current version')
+    #has_error = update_backup_current_version()
+    has_error = False
     if has_error:
-        update_log_to_socket('Aborting upgrades - see previous errors')
-        temp_dir.cleanup()
+        update_log_error('Aborting upgrades - see previous errors')
+        notify_update_failed()
+        shutil.rmtree(temp_dir)
         return False
 
-    update_log_to_socket('All checks passed. IRIS will turn off shortly and updates.')
-    update_log_to_socket('Please don\'t leave the page - IRIS will reboot and resume')
-    update_log_to_socket('Handing off to updater')
+    update_log('All checks passed. IRIS will turn off shortly and updates')
+    update_log('Please don\'t leave the page - logging will resume here')
+    update_log('Handing off to updater')
+
+    notify_server_off()
+    time.sleep(0.5)
+
+    update_archive = Path(temp_dir) / updates_config.get('app_archive')
+    call_ext_updater(update_archive=update_archive)
 
     import app
     app.socket_io.stop()
 
     return True
+
+
+def call_ext_updater(update_archive):
+    archive_name = update_archive.stem
+
+    if os.getenv("DOCKERIZED"):
+        source_dir = Path.cwd() / 'scripts'
+        target_dir = Path.cwd()
+    else:
+        source_dir = Path.cwd().absolute() / 'scripts'
+        target_dir = '../../update_server/test_update' # TODO change
+
+    subprocess.Popen(["nohup", "/bin/bash", f"{source_dir}/iris_updater.sh", update_archive.as_posix(),
+                      target_dir.as_posix(), archive_name, 'iriswebapp'])
+
+    return
 
 
 def update_backup_current_version():
@@ -155,7 +220,7 @@ def update_backup_current_version():
     backup_dir = root_backup / f"server_backup_{date_time.timestamp()}"
     backup_dir.mkdir(exist_ok=True)
     if not backup_dir.is_dir():
-        update_log_to_socket(f"Unable to create directory {backup_dir} for backup. Aborting")
+        update_log_error(f"Unable to create directory {backup_dir} for backup. Aborting")
         return True
 
     if os.getenv("DOCKERIZED"):
@@ -164,14 +229,14 @@ def update_backup_current_version():
         source_dir = Path.cwd().parent.absolute()
 
     try:
-        update_log_to_socket(f'Copying {source_dir} to {backup_dir}')
+        update_log(f'Copying {source_dir} to {backup_dir}')
         shutil.copytree(source_dir, backup_dir, dirs_exist_ok=True)
     except Exception as e:
-        update_log_to_socket('Unable to backup current version')
-        update_log_to_socket(str(e))
+        update_log_error('Unable to backup current version')
+        update_log_error(str(e))
         return False, ['Unable to backup current version', str(e)]
 
-    update_log_to_socket('Current version backed up')
+    update_log('Current version backed up')
     has_error = generate_backup_config_file(backup_dir)
     if has_error:
         return True
@@ -206,9 +271,57 @@ def generate_backup_config_file(backup_dir):
             json.dump(backup_config, fconfig, indent=4)
 
     except Exception as e:
-        return True, ['Unable to save configuration file', str(e)]
+        update_log_error('Unable to save configuration file')
+        update_log_error(str(e))
+        return True
 
-    return False, ['Generated backup configuration saved']
+    update_log('Backup configuration file generated')
+    return False
+
+
+def verify_compatibility(target_directory, release_assets_info):
+    release_updates = None
+
+    update_log('Verifying updates compatibilities')
+
+    for release_asset in release_assets_info:
+        asset_name = release_asset.get('name')
+        if asset_name != 'release_updates.json':
+            continue
+
+        if (Path(target_directory) / asset_name).is_file():
+            release_updates = Path(target_directory) / asset_name
+            break
+
+    if not release_updates:
+        update_log_error('Unable to find release updates configuration file')
+        return None
+
+    try:
+        with open(file=release_updates) as fin:
+            updates_info = json.load(fin)
+    except Exception as e:
+        update_log_error('Unable to read release updates configuration file')
+        update_log_error(str(e))
+        update_log_error('Please contact DFIR-IRIS team')
+        return None
+
+    can_update = False
+    accepted_versions = updates_info.get('accepted_versions')
+    for av in accepted_versions:
+        if version.parse(app.config.get('IRIS_VERSION')) == version.parse(av):
+            can_update = True
+            break
+
+    if not can_update:
+        update_log_error(f'Current version {app.config.get("IRIS_VERSION")} cannot '
+                         f'be updated to {updates_info.get("target_version")} automatically')
+        update_log_error(f'Supported versions are {updates_info.get("accepted_versions")}')
+        return None
+
+    update_log('Compatibly checks done. Good to go')
+
+    return updates_info
 
 
 def verify_assets_signatures(target_directory, release_assets_info):
@@ -222,29 +335,29 @@ def verify_assets_signatures(target_directory, release_assets_info):
 
         if not asset_name.endswith('.sig'):
 
-            if (Path(target_directory.name) / asset_name).is_file():
+            if (Path(target_directory) / asset_name).is_file():
 
-                if (Path(target_directory.name) / f"{asset_name}.sig").is_file():
-                    assets_check[Path(target_directory.name) / asset_name] = Path(target_directory.name) / f"{asset_name}.sig"
+                if (Path(target_directory) / f"{asset_name}.sig").is_file():
+                    assets_check[Path(target_directory) / asset_name] = Path(target_directory) / f"{asset_name}.sig"
 
                 else:
-                    update_log_to_socket(f"ERROR - {Path(target_directory.name) / asset_name} does not have a signature file")
+                    update_log_error(f"{asset_name} does not have a signature file")
                     has_error = True
             else:
-                update_log_to_socket(f"ERROR - Could not find {Path(target_directory.name) / asset_name}")
+                update_log_error(f"Could not find {Path(target_directory) / asset_name}")
                 has_error = True
 
     if has_error:
         return has_error
 
-    update_log_to_socket("Importing DFIR-IRIS GPG key from server")
+    update_log("Importing DFIR-IRIS GPG key")
     gpg = gnupg.GPG()
 
     with open('dependencies/DFIR-IRIS_pkey.asc', 'rb') as pkey:
         import_result = gpg.import_keys(pkey.read())
 
     if import_result.count < 1:
-        update_log_to_socket(f'ERROR - Unable to fetch {app.config.get("RELEASE_SIGNATURE_KEY")} from key server')
+        update_log_error(f'Unable to fetch {app.config.get("RELEASE_SIGNATURE_KEY")}')
         has_error = True
 
     for asset in assets_check:
@@ -254,34 +367,35 @@ def verify_assets_signatures(target_directory, release_assets_info):
 
             if not verified.valid:
 
-                update_log_to_socket(f'ERROR - {asset} does not have a valid signature (checked against {assets_check[asset]}). '
-                           f'Contact DFIR-IRIS team')
-                update_log_to_socket(f"{verified.status}")
+                update_log_error(f'{asset.name} does not have a valid signature (checked '
+                                 f'against {assets_check[asset].name}). '
+                                 f'Contact DFIR-IRIS team')
+                update_log_error(f"Signature status : {verified.status}")
                 has_error = True
                 continue
 
-            update_log_to_socket(f"{asset} : signature validated")
+            update_log(f"{asset.name} : signature validated")
 
     return has_error
 
 
 def download_release_assets(release_assets_info):
     has_error = False
-    temp_dir = tempfile.TemporaryDirectory()
+    temp_dir = tempfile.mkdtemp()
 
     for release_asset in release_assets_info:
         asset_name = release_asset.get('name')
         asset_url = release_asset.get('browser_download_url')
 
         # TODO: Check for available FS free space before downloading
-        update_log_to_socket(f'Downloading {asset_name} from {asset_url}')
+        update_log(f'Downloading from {asset_url}')
 
-        if not download_from_url(asset_url, Path(temp_dir.name) / asset_name):
-            update_log_to_socket('ERROR - Unable to save asset file to FS')
+        if not download_from_url(asset_url, Path(temp_dir) / asset_name):
+            update_log_error('ERROR - Unable to save asset file to FS')
             has_error = True
 
     if has_error:
-        update_log_to_socket('Aborting upgrades - see previous errors')
+        update_log_error('Aborting upgrades - see previous errors')
 
     return has_error, temp_dir
 
