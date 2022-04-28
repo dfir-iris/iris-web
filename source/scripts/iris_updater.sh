@@ -29,7 +29,7 @@ echo "Done"
 echo "Restarting IRIS web app"
 cd $2
 #chmox +x iris-entrypoint.sh
-if [$5 == 1]
+if [[ $5 -eq 1 ]]
 then
   nohup ./iris-entrypoint.sh $4
 else

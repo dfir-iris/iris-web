@@ -180,18 +180,20 @@ def init_server_update(release_config):
         shutil.rmtree(temp_dir)
         return False
 
-    update_log('All checks passed. IRIS will turn off shortly and updates')
-    update_log('Please don\'t leave the page - logging will resume here')
-    update_log('Handing off to updater')
+    if release_config.get('need_app_reboot'):
+        update_log('All checks passed. IRIS will turn off shortly and updates')
+        update_log('Please don\'t leave the page - logging will resume here')
+        update_log('Handing off to updater')
 
-    notify_server_off()
-    time.sleep(0.5)
+        notify_server_off()
+        time.sleep(0.5)
 
     update_archive = Path(temp_dir) / updates_config.get('app_archive')
     call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'))
 
-    import app
-    app.socket_io.stop()
+    if release_config.get('need_app_reboot'):
+        import app
+        app.socket_io.stop()
 
     return True
 
