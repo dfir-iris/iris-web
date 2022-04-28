@@ -15871,3 +15871,16 @@ div.dataTables_processing { z-index: 1; }
         -webkit-transform: rotate(360deg);
         transform:rotate(360deg);
     }
+}
+
+
+.update-overflow {
+  max-height: 95%;
+  overflow-y: scroll;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y proximity;
+}
+
+.update-overflow  > div > div > div:last-child {
+  scroll-snap-align: end;
+}

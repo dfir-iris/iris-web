@@ -169,4 +169,5 @@ $(document).ready(function(){
 
     update_socket.emit('join-update', { 'channel': channel });
 
+
 });
