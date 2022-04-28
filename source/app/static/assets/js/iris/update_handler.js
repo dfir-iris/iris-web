@@ -14,9 +14,6 @@ function add_update_log(message, is_error) {
         html_wrap = `<h4><i class="mt-2 fas fa-times text-danger"></i> `
     }
     $("#updates_log").append(html_wrap + message + '</h4><br/>')
-//    $('html, body').animate({
-//        scrollTop: $("#tag_bottom").offset().top
-//    }, 2000);
 }
 
 function get_caseid() {
@@ -34,7 +31,6 @@ function case_param() {
 }
 
 function initiate_update() {
-    //update_socket.emit('update_start_update', { 'channel': channel });
     $.ajax({
         url: '/manage/server/start-update' + case_param(),
         type: "GET",
@@ -59,7 +55,7 @@ var no_resp_time = 0;
 
 function check_server_version() {
     $.ajax({
-        url: '/api/versions?cid=1',
+        url: '/api/versions' + case_param(),
         type: "GET",
         dataType: "json",
         timeout: 1000,
@@ -69,6 +65,8 @@ function check_server_version() {
                 add_update_log('Something was wrong - server is still in the same version', true);
                 add_update_log('Please check server logs', true);
                 clearInterval(intervalId);
+                $('#tag_bottom').hide();
+                $('#update_return_button').show();
             } else {
                 add_update_log('Successfully updated from ' + current_version + ' to ' + server_version, false);
                 add_update_log('You can now leave this page', false);
@@ -115,6 +113,12 @@ function ping_check_server_online() {
     });
 }
 
+function start_updates(){
+    $('#update_start_btn').hide();
+    update_socket.emit('update_get_current_version', { 'channel': channel });
+    update_socket.emit('update_ping', { 'channel': channel });
+}
+
 
 $(document).ready(function(){
 
@@ -128,6 +132,11 @@ $(document).ready(function(){
         log_msg('Server connection verified');
         log_msg('Starting update');
         initiate_update();
+    }.bind() );
+
+    update_socket.on( "server_has_updated", function(data) {
+        log_msg('Server reported updates applied. Checking . . .');
+        check_server_version();
     }.bind() );
 
     update_socket.on('disconnect', function () {
@@ -159,7 +168,5 @@ $(document).ready(function(){
     });
 
     update_socket.emit('join-update', { 'channel': channel });
-    update_socket.emit('update_ping', { 'channel': channel });
-    update_socket.emit('update_get_current_version', { 'channel': channel });
 
 });

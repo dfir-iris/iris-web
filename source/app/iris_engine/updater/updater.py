@@ -74,6 +74,10 @@ def notify_server_ready_to_reboot():
     socket_io.emit('server_ready_to_reboot', {}, to='iris_update_status', namespace='/server-updates')
 
 
+def notify_server_has_updated():
+    socket_io.emit('server_has_updated', {}, to='iris_update_status', namespace='/server-updates')
+
+
 def inner_init_server_update():
     has_updates, updates_content, release_config = is_updates_available()
     init_server_update(release_config)
@@ -189,16 +193,20 @@ def init_server_update(release_config):
         time.sleep(0.5)
 
     update_archive = Path(temp_dir) / updates_config.get('app_archive')
-    call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'))
+    call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+                     need_reboot=release_config.get('need_app_reboot'))
 
     if release_config.get('need_app_reboot'):
         import app
         app.socket_io.stop()
 
+    else:
+        notify_server_has_updated()
+
     return True
 
 
-def call_ext_updater(update_archive, scope):
+def call_ext_updater(update_archive, scope, need_reboot):
     archive_name = update_archive.stem
 
     if os.getenv("DOCKERIZED"):
@@ -214,8 +222,9 @@ def call_ext_updater(update_archive, scope):
                       update_archive.as_posix(),        # Update archive to unpack
                       target_dir.as_posix(),            # Target directory of update
                       archive_name,                     # Root directory of the archive
-                      scope[0]],
-                      docker)                        # Target webapp
+                      scope[0]],                        # Scope of the update
+                      docker,                           # Are we in docker ?
+                      need_reboot)                      # Do we need to restart the app
 
     return
 

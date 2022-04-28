@@ -26,14 +26,17 @@ echo "Applying updates"
 rsync -av --checksum $TMP_DIR/$3/source/ $2
 echo "Done"
 
-echo "Restarting IRIS web app"
-cd $2
-#chmox +x iris-entrypoint.sh
-if [[ $5 -eq 1 ]]
+if [[ $6 ]]
 then
-  nohup ./iris-entrypoint.sh $4
-else
-  exec gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info
+  echo "Restarting IRIS web app"
+  cd $2
+  if [[ $5 -eq 1 ]]
+  then
+    nohup ./iris-entrypoint.sh $4
+  else
+    exec gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info
+  fi
 fi
-echo "Done - Update applied"
+
+echo "Update applied"
 

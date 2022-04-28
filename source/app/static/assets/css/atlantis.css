@@ -15811,7 +15811,7 @@ div.dataTables_processing { z-index: 1; }
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  background: #fff;
+  background: #000;
   animation-timing-function: cubic-bezier(0, 1, 1, 0);
 }
 .lds-ellipsis div:nth-child(1) {
@@ -15854,3 +15854,20 @@ div.dataTables_processing { z-index: 1; }
     transform: translate(24px, 0);
   }
 }
+
+.image-update {
+    -webkit-animation:spin 20s linear infinite;
+    -moz-animation:spin 20s linear infinite;
+    animation:spin 20s linear infinite;
+}
+@-moz-keyframes spin {
+    100% { -moz-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+    100% { -webkit-transform: rotate(360deg); }
+}
+@keyframes spin {
+    100% {
+        -webkit-transform: rotate(360deg);
+        transform:rotate(360deg);
+    }

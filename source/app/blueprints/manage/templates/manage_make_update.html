@@ -25,45 +25,43 @@
 	<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 
 </head>
-<body class="bg-primary-gradient">
-
-    <div class="wrapper mt-2">
-        <div class="content">
-            <div class="col-12">
-                <div class="mt-2 row justify-content-center">
-                    <a href="/" class="logo ml-2">
-                        <img src="/static/assets/img/logo-white-2.png" alt="navbar brand" class="navbar-brand" width="150">
-                    </a>
-                </div>
-                <div class="mt-2 row justify-content-center">
-                    <h1 class="text-light">Server Update</h1>
-                </div>
-                <div class="row justify-content-center">
-                    <i class="text-light">Some great improvements are hopefully on their way, hang tight</i>
-                </div>
-				<div class="row mt-4 justify-content-center">
-					<h4 class="text-warning">Please do not leave or refresh the page</h4>
-				</div>
-
-				<div class="main-panel">
-					<div class="row mt-4 justify-content-left text-light">
-						<div id="updates_log">
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="row text-light">
-							<div id="offline_time" style="display:none;"></div>
-						</div>
-						<div class="row">
-							<div id="tag_bottom" class="lds-ellipsis justify-content-center"><div></div><div></div><div></div><div></div></div>
-							<a href='/manage/settings' class="btn btn-dark ml-mr-auto" style="display:none;" id="update_return_button">Go back to server</a>
-						</div>
+<body class="bg-primary-gradient-update">
+    <div class="container bg-white" style="height: 75%;">
+		<div class="col-12 shadow-lg p-3 rounded overflow-auto mt-4 justify-content-center">
+			<div class="mt-2 row justify-content-center">
+				<a href="/" class="logo ml-2">
+					<img src="/static/assets/img/logo-alone-2-black.png" alt="navbar brand" class='image-update navbar-brand' width="50">
+				</a>
+			</div>
+			<div class="mt-2 row justify-content-center">
+				<h1 class="text-dark">Server Updates</h1>
+			</div>
+			<div class="row justify-content-center">
+				<i class="text-dark">Some great improvements are hopefully on their way, hang tight</i>
+			</div>
+			<div class="row mt-4 justify-content-center">
+				<h4 class="text-danger">Please do not leave or refresh the page once updates have started</h4>
+			</div>
+			<div class="row mt-4 justify-content-center">
+				<a href='#' onclick="start_updates();" class="btn btn-outline-success ml-mr-auto" id="update_start_btn">Start updates</a>
+			</div>
+			<div class="col">
+				<div class="row mt-4 justify-content-left text-dark pl-4">
+					<div id="updates_log">
 					</div>
 				</div>
-            </div>
+
+				<div class="col">
+					<div class="row text-light">
+						<div id="offline_time" style="display:none;"></div>
+					</div>
+					<div class="row justify-content-center">
+						<div id="tag_bottom" style="display:none;" class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+						<a href='/manage/settings' class="btn btn-dark ml-mr-auto" style="display:none;" id="update_return_button">Go back to server</a>
+					</div>
+				</div>
+			</div>
 		</div>
-
 	</div>
 
 	<!--   Core JS Files   -->
