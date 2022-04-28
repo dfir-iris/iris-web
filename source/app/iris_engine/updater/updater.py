@@ -188,7 +188,7 @@ def init_server_update(release_config):
     time.sleep(0.5)
 
     update_archive = Path(temp_dir) / updates_config.get('app_archive')
-    call_ext_updater(update_archive=update_archive)
+    call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'))
 
     import app
     app.socket_io.stop()
@@ -196,21 +196,24 @@ def init_server_update(release_config):
     return True
 
 
-def call_ext_updater(update_archive):
+def call_ext_updater(update_archive, scope):
     archive_name = update_archive.stem
 
     if os.getenv("DOCKERIZED"):
         source_dir = Path.cwd() / 'scripts'
         target_dir = Path.cwd()
+        docker = 1
     else:
         source_dir = Path.cwd().absolute() / 'scripts'
         target_dir = Path('../../update_server/test_update') # TODO change
+        docker = 0
 
     subprocess.Popen(["nohup", "/bin/bash", f"{source_dir}/iris_updater.sh",
                       update_archive.as_posix(),        # Update archive to unpack
                       target_dir.as_posix(),            # Target directory of update
                       archive_name,                     # Root directory of the archive
-                      'iriswebapp'])                    # Target webapp
+                      scope[0]],
+                      docker)                        # Target webapp
 
     return
 

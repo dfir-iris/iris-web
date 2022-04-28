@@ -29,6 +29,11 @@ echo "Done"
 echo "Restarting IRIS web app"
 cd $2
 #chmox +x iris-entrypoint.sh
-nohup ./iris-entrypoint.sh $4
+if [$5 == 1]
+then
+  nohup ./iris-entrypoint.sh $4
+else
+  exec gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info
+fi
 echo "Done - Update applied"
 
