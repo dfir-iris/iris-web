@@ -49,13 +49,33 @@
 					<h4 class="text-danger text-center">Please do not leave or refresh the page once updates have started</h4>
 				</div>
 			</div>
+			<div class="row mt-4 update_start_txt">
+				<div class="col pl-4 justify-content-center">
+					<p class="text-center">Ensure users are disconnected. Any unsaved work might be lost.</p>
+				</div>
+			</div>
+			<div class="row mt-4 justify-content-center update_start_txt">
+				<div class="col-6">
+					<p class="text-center">The following steps might occur during updates, depending on the updates scope : </p>
+					<ul>
+						<li>Fetch of updates information from github.com</li>
+						<li>Download of updates assets from github</li>
+						<li>Signatures verification</li>
+						<li>Compatibility verifications</li>
+						<li>Back up of the current server code to backup storage defined in <code>BACKUP_PATH</code></li>
+						<li>Server stop and update of application</li>
+						<li>Server restarts</li>
+						<li>Version check</li>
+					</ul>
+				</div>
+			</div>
 			<div class="row mt-4">
-				<div class="col d-flex justify-content-center">
+				<div class="col d-flex justify-content-center ">
 					<a href='#' onclick="start_updates();" class="btn btn-outline-success text-center" id="update_start_btn">Start updates</a>
 				</div>
 			</div>
-			<div id="container-updates" class="row" style="min-height:0;max-height:75%;overflow-y: scroll;">
-				<div class="col justify-content-left text-dark pl-4">
+			<div id="container-updates" class="row shadow-lg ml-4 mr-4 rounded" style="display:none;min-height:0;max-height:75%;overflow-y: scroll;">
+				<div class="col justify-content-left text-dark pl-4 mt-4 mb-4">
 					<div class="col">
 						<div id="updates_log">
 						</div>
