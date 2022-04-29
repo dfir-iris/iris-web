@@ -15856,9 +15856,9 @@ div.dataTables_processing { z-index: 1; }
 }
 
 .image-update {
-    -webkit-animation:spin 20s linear infinite;
-    -moz-animation:spin 20s linear infinite;
-    animation:spin 20s linear infinite;
+    -webkit-animation:spin 30s linear infinite;
+    -moz-animation:spin 30s linear infinite;
+    animation:spin 30s linear infinite;
 }
 @-moz-keyframes spin {
     100% { -moz-transform: rotate(360deg); }
@@ -15877,10 +15877,4 @@ div.dataTables_processing { z-index: 1; }
 .update-overflow {
   max-height: 95%;
   overflow-y: scroll;
-  overscroll-behavior-y: contain;
-  scroll-snap-type: y proximity;
-}
-
-.update-overflow  > div > div > div:last-child {
-  scroll-snap-align: end;
 }

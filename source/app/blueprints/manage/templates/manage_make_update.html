@@ -26,43 +26,54 @@
 
 </head>
 <body class="bg-dark-gradient p-4" style="height: 100vh;">
-    <div class="container bg-white shadow-lg p-3 rounded update-overflow">
-		<div class="col-12 mt-4 ">
-			<div class="mt-2 row justify-content-center">
-				<a href="/" class="logo ml-2">
-					<img src="/static/assets/img/logo-alone-2-black.png" alt="navbar brand" class='image-update navbar-brand' width="50">
-				</a>
+    <div class="container h-100 flex-column bg-white shadow-lg p-3 rounded">
+			<div class="mt-2 row">
+				<div class="col d-flex justify-content-center">
+					<a href="/" class="logo ml-2 text-center">
+						<img src="/static/assets/img/logo-alone-2-black.png" alt="navbar brand" class='image-update navbar-brand' width="50">
+					</a>
+				</div>
 			</div>
-			<div class="mt-2 row justify-content-center">
-				<h1 class="text-dark">Server Updates</h1>
+			<div class="mt-2 row">
+				<div class="col d-flex justify-content-center">
+					<h1 class="text-dark text-center">Server Updates</h1>
+				</div>
 			</div>
-			<div class="row justify-content-center">
-				<i class="text-dark">Some great improvements are hopefully on their way, hang tight</i>
+			<div class="row ">
+				<div class="col d-flex justify-content-center">
+					<i class="text-dark">Some great improvements are hopefully on their way, hang tight</i>
+				</div>
 			</div>
-			<div class="row mt-4 justify-content-center">
-				<h4 class="text-danger">Please do not leave or refresh the page once updates have started</h4>
+			<div class="row mt-4">
+				<div class="col d-flex justify-content-center">
+					<h4 class="text-danger text-center">Please do not leave or refresh the page once updates have started</h4>
+				</div>
 			</div>
-			<div class="row mt-4 justify-content-center">
-				<a href='#' onclick="start_updates();" class="btn btn-outline-success ml-mr-auto" id="update_start_btn">Start updates</a>
+			<div class="row mt-4">
+				<div class="col d-flex justify-content-center">
+					<a href='#' onclick="start_updates();" class="btn btn-outline-success text-center" id="update_start_btn">Start updates</a>
+				</div>
 			</div>
-			<div class="col">
-				<div class="row mt-4 justify-content-left text-dark pl-4">
-					<div id="updates_log">
+			<div id="container-updates" class="row" style="min-height:0;max-height:75%;overflow-y: scroll;">
+				<div class="col justify-content-left text-dark pl-4">
+					<div class="col">
+						<div id="updates_log">
+						</div>
+						<div id="updates_log_end"></div>
 					</div>
 				</div>
-
+			</div>
+			<div class="row text-light">
 				<div class="col">
-					<div class="row text-light">
-						<div id="offline_time" style="display:none;"></div>
-					</div>
-					<div class="row justify-content-center">
-						<div id="tag_bottom" style="display:none;" class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
-						<a href='/manage/settings' class="btn btn-dark ml-mr-auto" style="display:none;" id="update_return_button">Go back to server</a>
-					</div>
-					<div class="updates_log_end"></div>
+					<div id="offline_time" style="display:none;"></div>
 				</div>
 			</div>
-		</div>
+			<div class="row mt-4">
+				<div class="col d-flex justify-content-center">
+					<div id="tag_bottom" style="display:none;" class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+					<a href='/manage/settings' class="btn btn-dark ml-mr-auto" style="display:none;" id="update_return_button">Go back to server</a>
+				</div>
+			</div>
 	</div>
 
 	<!--   Core JS Files   -->
