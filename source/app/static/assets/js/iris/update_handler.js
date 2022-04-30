@@ -160,15 +160,6 @@ $(document).ready(function(){
         add_update_log('Server reported version ' + data.version , false);
         if (current_version == null) {
             current_version = data.version;
-        } else {
-            updated_version = data.version;
-            if (updated_version == current_version) {
-                add_update_log('Something was wrong - server is still in the same version', true);
-                add_update_log('Please check server logs', true);
-            } else {
-                add_update_log('Successfully updated from ' + current_version + ' to ' + updated_version, false);
-                add_update_log('You can now leave this page', false);
-            }
         }
     });
 

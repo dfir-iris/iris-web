@@ -207,7 +207,6 @@ def init_server_update(release_config):
         notify_server_off()
         time.sleep(0.5)
 
-
     call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
                      need_reboot=release_config.get('need_app_reboot'))
 
