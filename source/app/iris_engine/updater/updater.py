@@ -16,7 +16,7 @@ from pathlib import Path
 
 from app import app, celery, socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
-from app.util import admin_required
+from app.util import admin_required, api_admin_required
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = app.logger
@@ -48,9 +48,8 @@ def update_log_error(status):
 
 
 @socket_io.on('join-update', namespace='/server-updates')
-@admin_required
 def get_message(data):
-    if not current_user.is_authenticated:
+    if not current_user.is_admin():
         return
 
     room = data['channel']
@@ -61,15 +60,19 @@ def get_message(data):
 
 
 @socket_io.on('update_ping', namespace='/server-updates')
-@admin_required
 def socket_on_update_ping(msg):
+    if not current_user.is_admin():
+        return
+
     emit('update_ping', {'message': f"Server connected", 'is_error': False},
          namespace='/server-updates')
 
 
 @socket_io.on('update_get_current_version', namespace='/server-updates')
-@admin_required
 def socket_on_update_do_reboot(msg):
+    if not current_user.is_admin():
+        return
+
     socket_io.emit('update_current_version', {"version": app.config.get('IRIS_VERSION')}, to='iris_update_status',
                    namespace='/server-updates')
 
@@ -178,7 +181,15 @@ def init_server_update(release_config):
         shutil.rmtree(temp_dir)
         return False
 
-    update_log('Update files verified')
+    update_archive = Path(temp_dir) / updates_config.get('app_archive')
+
+    has_error = verify_archive_fingerprint(update_archive, updates_config.get('app_fingerprint'))
+    if not has_error:
+        update_log_error('Aborting upgrades - see previous errors')
+        notify_update_failed()
+        shutil.rmtree(temp_dir)
+        return False
+
     update_log('Backing up current version')
     #has_error = update_backup_current_version()
     has_error = False
@@ -196,7 +207,7 @@ def init_server_update(release_config):
         notify_server_off()
         time.sleep(0.5)
 
-    update_archive = Path(temp_dir) / updates_config.get('app_archive')
+
     call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
                      need_reboot=release_config.get('need_app_reboot'))
 
@@ -208,6 +219,27 @@ def init_server_update(release_config):
         notify_server_has_updated()
 
     return True
+
+
+def verify_archive_fingerprint(update_archive, archive_sha256):
+    update_log('Verifying updates archive')
+    if update_archive.is_file():
+        sha256_hash = hashlib.sha256()
+
+        with open(update_archive, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+
+        current_sha256 = sha256_hash.hexdigest().upper()
+        if current_sha256 == archive_sha256:
+            return True
+
+        update_log_error(f'Fingerprint mismatch. Expected {archive_sha256} but got {current_sha256}')
+
+    else:
+        update_log_error(f'Archive {update_archive} not found')
+
+    return False
 
 
 def call_ext_updater(update_archive, scope, need_reboot):
@@ -339,6 +371,10 @@ def verify_compatibility(target_directory, release_assets_info):
         update_log_error(f'Current version {app.config.get("IRIS_VERSION")} cannot '
                          f'be updated to {updates_info.get("target_version")} automatically')
         update_log_error(f'Supported versions are {updates_info.get("accepted_versions")}')
+        return None
+
+    if not updates_info.get('supports_auto'):
+        update_log_error(f'This updates does not support automatic handling. Please read the upgrades instructions.')
         return None
 
     update_log('Compatibly checks done. Good to go')
