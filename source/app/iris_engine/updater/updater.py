@@ -16,6 +16,7 @@ from pathlib import Path
 
 from app import app, celery, socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
+from app.util import admin_required
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = app.logger
@@ -47,6 +48,7 @@ def update_log_error(status):
 
 
 @socket_io.on('join-update', namespace='/server-updates')
+@admin_required
 def get_message(data):
     if not current_user.is_authenticated:
         return
@@ -59,12 +61,14 @@ def get_message(data):
 
 
 @socket_io.on('update_ping', namespace='/server-updates')
+@admin_required
 def socket_on_update_ping(msg):
     emit('update_ping', {'message': f"Server connected", 'is_error': False},
          namespace='/server-updates')
 
 
 @socket_io.on('update_get_current_version', namespace='/server-updates')
+@admin_required
 def socket_on_update_do_reboot(msg):
     socket_io.emit('update_current_version', {"version": app.config.get('IRIS_VERSION')}, to='iris_update_status',
                    namespace='/server-updates')
