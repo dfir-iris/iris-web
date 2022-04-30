@@ -199,7 +199,11 @@ def init_server_update(release_config):
         shutil.rmtree(temp_dir)
         return False
 
-    if release_config.get('need_app_reboot'):
+    if updates_config.get('need_app_reboot') is True:
+        update_log('Closing all database connections. Unsaved work will be lost.')
+        from sqlalchemy.orm import close_all_sessions
+        close_all_sessions()
+
         update_log('All checks passed. IRIS will turn off shortly and updates')
         update_log('Please don\'t leave the page - logging will resume here')
         update_log('Handing off to updater')
@@ -208,10 +212,11 @@ def init_server_update(release_config):
         time.sleep(0.5)
 
     call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
-                     need_reboot=release_config.get('need_app_reboot'))
+                     need_reboot=updates_config.get('need_app_reboot'))
 
-    if release_config.get('need_app_reboot'):
+    if updates_config.get('need_app_reboot') is True:
         import app
+
         app.socket_io.stop()
 
     else:
@@ -257,9 +262,9 @@ def call_ext_updater(update_archive, scope, need_reboot):
                       update_archive.as_posix(),        # Update archive to unpack
                       target_dir.as_posix(),            # Target directory of update
                       archive_name,                     # Root directory of the archive
-                      scope[0]],                        # Scope of the update
-                      docker,                           # Are we in docker ?
-                      need_reboot)                      # Do we need to restart the app
+                      scope[0],                        # Scope of the update
+                      "1" if docker else "0",                           # Are we in docker ?
+                      "1" if need_reboot else "0"])                      # Do we need to restart the app
 
     return
 
@@ -372,7 +377,7 @@ def verify_compatibility(target_directory, release_assets_info):
         update_log_error(f'Supported versions are {updates_info.get("accepted_versions")}')
         return None
 
-    if not updates_info.get('supports_auto'):
+    if not updates_info.get('support_auto'):
         update_log_error(f'This updates does not support automatic handling. Please read the upgrades instructions.')
         return None
 
