@@ -14551,8 +14551,8 @@ body[data-background-color="dark"] .form-check [type="checkbox"] + .form-check-s
 
 .bg-dark-gradient {
     background: #1f283e !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #0A0B11, #1f283e) !important;
-    background: linear-gradient(-45deg, #0A0B11, #1f283e) !important;
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #0A0B11, #1f283e) fixed !important;
+    background: linear-gradient(-45deg, #0A0B11, #1f283e) fixed !important;
 }
 
 .bg-close-gradient {

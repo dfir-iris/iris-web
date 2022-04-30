@@ -14,7 +14,7 @@ function add_update_log(message, is_error) {
         html_wrap = `<h4><i class="mt-2 fas fa-times text-danger"></i> `
     }
     $("#updates_log").append(html_wrap + message + '</h4><br/>')
-    $('#container-updates').animate({
+    $('html, body').animate({
         scrollTop: $("#updates_log_end").offset().top
     }, 50);
 }
@@ -121,12 +121,12 @@ function start_updates(){
     $('.update_start_txt').hide();
     $('#container-updates').show();
     update_socket.emit('update_get_current_version', { 'channel': channel });
-    update_socket.emit('update_ping', { 'channel': channel });
-//    index = 0;
-//    while(index < 20) {
-//        add_update_log('ping');
-//        index += 1;
-//    }
+    //update_socket.emit('update_ping', { 'channel': channel });
+    index = 0;
+    while(index < 20) {
+        add_update_log('ping');
+        index += 1;
+    }
 }
 
 
