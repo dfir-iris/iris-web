@@ -26,6 +26,7 @@ log = app.logger
 
 
 def backup_iris_db():
+    logs = []
     backup_dir = Path(app.config.get('BACKUP_PATH')) / "database"
 
     try:
@@ -34,15 +35,15 @@ def backup_iris_db():
             backup_dir.mkdir()
 
     except Exception as e:
-        log.error(e)
-        return True
+        logs.append('Unable to create backup directory')
+        logs.append(str(e))
+        return True, logs
 
     backup_file = Path(app.config.get('BACKUP_PATH')) / "database" / "backup-{}.sql.gz".format(
         datetime.now().strftime("%Y-%m-%d_%H%M%S"))
 
-    completed_process = None
     try:
-
+        logs.append(f'Saving database')
         with open(backup_file, 'w') as backup:
             completed_process = subprocess.run(
                 [f'{app.config.get("PG_CLIENT_PATH")}/pg_dump', '-h',
@@ -54,16 +55,18 @@ def backup_iris_db():
                 env={'PGPASSWORD': app.config.get('PGA_PASSWD')})
 
     except Exception as e:
-        log.error(e)
-        return True
+        logs.append('Something went wrong backing up DB')
+        logs.append(str(e))
+        return True, logs
 
     try:
         completed_process.check_returncode()
     except subprocess.CalledProcessError as e:
-        log.error(e)
-        return True
+        logs.append('Something went wrong backing up DB')
+        logs.append(str(e))
+        return True, logs
 
     if backup_file.is_file() and backup_file.stat().st_size != 0:
-        log.info(f'Backup completed in {backup_file}')
+        logs.append(f'Backup completed in {backup_file}')
 
-    return False
+    return False, logs

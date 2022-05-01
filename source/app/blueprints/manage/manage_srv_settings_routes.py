@@ -28,6 +28,7 @@ from werkzeug.utils import redirect
 
 from app import db, app
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_alembic_revision
+from app.iris_engine.backup.backup import backup_iris_db
 from app.iris_engine.updater.updater import is_updates_available, inner_init_server_update
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import ServerSettingsSchema
@@ -57,6 +58,20 @@ def manage_update(caseid, url_redir):
 
     # Return default page of case management
     return render_template('manage_make_update.html')
+
+
+@manage_srv_settings_blueprint.route('/manage/server/backups/make-db', methods=['GET'])
+@api_admin_required
+def manage_make_db_backup(caseid):
+
+    has_error, logs = backup_iris_db()
+    if has_error:
+        rep = response_error('Backup failed', data=logs)
+
+    else:
+        rep = response_success('Backup done', data=logs)
+
+    return rep
 
 
 @manage_srv_settings_blueprint.route('/manage/server/check-updates/modal', methods=['GET'])

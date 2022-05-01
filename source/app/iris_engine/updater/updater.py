@@ -220,8 +220,11 @@ def init_server_update(release_config):
         return False
 
     update_log('Backing up database')
-    has_error = backup_iris_db()
+    has_error, logs = backup_iris_db()
     if has_error:
+        for log in logs:
+            update_log_error(log)
+
         update_log_error('Aborting upgrades - see previous errors')
         notify_update_failed()
         shutil.rmtree(temp_dir)

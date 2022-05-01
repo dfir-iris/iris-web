@@ -91,7 +91,7 @@ function check_server_version() {
 function ping_check_server_online() {
 
     $.ajax({
-        url: '/api/ping?cid=1',
+        url: '/api/ping' + case_param(),
         type: "GET",
         dataType: "json",
         timeout: 1000,

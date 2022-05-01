@@ -48,3 +48,34 @@ function check_updates() {
         });
 }
 
+function init_db_backup() {
+
+    $.ajax({
+        url: '/manage/server/backups/make-db' + case_param(),
+        type: "GET",
+        dataType: "json",
+        timeout: 1000,
+        success: function (data) {
+            msg = ""
+            for (idx in data.data) {
+                msg += data.data[idx] + '\n';
+            }
+            swal("Done",
+                 msg,
+                {
+                    icon: "success"
+                });
+        },
+        error: function (error) {
+            for (idx in error.responseJSON.data) {
+                msg += data.data[idx] + '\n';
+            }
+
+            swal("Error",
+                 msg,
+                {
+                    icon: "error"
+                });
+        }
+    });
+}
