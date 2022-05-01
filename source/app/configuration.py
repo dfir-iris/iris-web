@@ -126,6 +126,7 @@ class Config():
                                                                         fallback=False) else "/home/iris/user_templates"
     BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
                                                                         fallback=False) else "/home/iris/server_data/backup"
+    UPDATES_PATH = os.path.join(BACKUP_PATH, 'updates')
 
     PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
                                                                         fallback=False) else "/usr/local/bin/"

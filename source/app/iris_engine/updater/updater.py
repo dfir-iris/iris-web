@@ -236,7 +236,7 @@ def init_server_update(release_config):
 
         update_log('Scheduled. Waiting for worker to finish updating')
         result_output = async_update.get(interval=1)
-        if result_output.is_failure:
+        if result_output.is_failure():
             update_log_error('Worker failed to updates')
             update_log_error(result_output.logs)
 
@@ -245,11 +245,12 @@ def init_server_update(release_config):
             shutil.rmtree(temp_dir)
             return False
 
+        time.sleep(5)
         async_update_version = task_update_get_version.delay()
         result_output = async_update_version.get(interval=1)
-        if result_output.is_failure:
+        if result_output.is_failure():
             update_log_error('Worker failed to updates')
-            update_log_error(result_output.logs)
+            update_log_error(result_output.data)
 
             update_log_error('Aborting upgrades - see previous errors')
             notify_update_failed()
@@ -528,14 +529,17 @@ def verify_assets_signatures(target_directory, release_assets_info):
 
 def download_release_assets(release_assets_info):
     has_error = False
-    temp_dir = tempfile.mkdtemp()
+    if not Path(app.config.get("UPDATES_PATH")).is_dir():
+        Path(app.config.get("UPDATES_PATH")).mkdir(exist_ok=True)
+
+    temp_dir = tempfile.mkdtemp(dir=app.config.get("UPDATES_PATH"))
 
     for release_asset in release_assets_info:
         asset_name = release_asset.get('name')
         asset_url = release_asset.get('browser_download_url')
 
         # TODO: Check for available FS free space before downloading
-        update_log(f'Downloading from {asset_url}')
+        update_log(f'Downloading from {asset_url} to {temp_dir}')
 
         if not download_from_url(asset_url, Path(temp_dir) / asset_name):
             update_log_error('ERROR - Unable to save asset file to FS')

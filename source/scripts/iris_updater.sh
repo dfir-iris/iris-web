@@ -46,10 +46,10 @@ then
     # Otherwise, not in docker, directly call the methods
     if [[ $4 -eq "worker" ]]
     then
-      echo "Restarting IRIS worker"
-      celery -A app.celery control shutdown
-      sleep 2
-      nohup celery -A app.celery worker -E -l INFO
+      echo "Skipping IRIS worker due to autoreload"
+#      celery -A app.celery control shutdown
+#      sleep 2
+#      nohup celery -A app.celery worker -E -l INFO
 
     else
 
