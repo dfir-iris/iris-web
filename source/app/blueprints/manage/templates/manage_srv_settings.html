@@ -12,14 +12,13 @@
 <div class="page-inner">
     <div class="row ">
         <div class="col-md-12">
-            <div class="card">
+            <div class="card shadow-lg">
                 <div class="card-header">
-                    <div class="card-title">Server settings</div>
+                    <div class="card-title">Server versions</div>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-12">
-                            <h2>Versions</h2>
                             <div class="col-12 mb-4">
                                 <dl class="row">
                                     <dt class="col-sm-3">IRIS server version:</dt>
@@ -50,54 +49,81 @@
                             </div>
                         </div>
                     </div>
-
-                    <hr>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-lg">
+                <div class="card-header">
+                    <div class="card-title">Global settings</div>
+                </div>
+                <div class="card-body">
                     <div class="row mt-2">
-                        <form id="form_srv_settings" class="col-12">
-                            {{ form.hidden_tag() }}
-                            <div class="col-12">
-                                <h2>Proxy</h2>
-                                <div class="col-12 mb-4">
-                                    <p>Proxy settings can be used by modules to access external resources.</p>
-                                    <div class="row mb-4">
-                                        <div class="col-6">
-                                            <div class="input-group mb-3">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">
-                                                        HTTP Proxy
-                                                    </span>
+                        <div class="col-12">
+                            <form id="form_srv_settings">
+                                {{ form.hidden_tag() }}
+                                    <h2>Proxy</h2>
+                                    <div class="mb-4">
+                                        <p>Proxy settings can be used by modules to access external resources.</p>
+                                        <div class="row mb-4">
+                                            <div class="col-6">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            HTTP Proxy
+                                                        </span>
+                                                    </div>
+                                                    <input class="form-control" name="http_proxy" placeholder="HTTP Proxy" value="{{ settings.http_proxy }}">
                                                 </div>
-                                                <input class="form-control" name="http_proxy" placeholder="HTTP Proxy" value="{{ settings.http_proxy }}">
                                             </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="input-group mb-3">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">
-                                                        HTTP Proxy
-                                                    </span>
+                                            <div class="col-6">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            HTTP Proxy
+                                                        </span>
+                                                    </div>
+                                                    <input class="form-control" name="https_proxy" placeholder="HTTPS Proxy" value="{{ settings.http_proxy }}">
                                                 </div>
-                                                <input class="form-control" name="https_proxy" placeholder="HTTPS Proxy" value="{{ settings.http_proxy }}">
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <h2 class="mt-4">Behavior</h2>
-                                <div class="col-12 mb-4">
-                                    <div class="form-check">
-                                        <label class="form-check-label">
-                                            <input class="form-check-input" type="checkbox" id="prevent_post_mod_repush" name="prevent_post_mod_repush" {% if settings.prevent_post_mod_repush %}checked{% endif %}>
-                                            <span class="form-check-sign">Prevent post-init step to register default modules again during boot</span>
-                                        </label>
+                                    <h2 class="mt-4">Behavior</h2>
+                                    <div class="col-12 mb-4">
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <input class="form-check-input" type="checkbox" id="prevent_post_mod_repush" name="prevent_post_mod_repush" {% if settings.prevent_post_mod_repush %}checked{% endif %}>
+                                                <span class="form-check-sign">Prevent post-init step to register default modules again during boot</span>
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
+                            </form>
+                            <div class="float-right mt-4">
+                                <button class="btn btn-outline-primary float-right" id="save_srv_settings" type="button" onclick="update_settings()">Save changes</button>
                             </div>
-                        </form>
+                        </div>
                     </div>
-
-
-                    <div class="float-right mt-4">
-                        <button class="btn btn-primary" id="save_srv_settings" type="button" onclick="update_settings()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-lg">
+                <div class="card-header">
+                    <div class="card-title">Backups</div>
+                </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <h2>Database</h2>
+                                <p>Initiate a database backup. The backup file is stored on the configured path <code>BACKUP_PATH</code></p>
+                                <div class="float-right mt-4">
+                                    <button class="btn btn-outline-primary" id="init_db_backup" type="button" onclick="init_db_backup()">Backup database</button>
+                                </div>
+                        </div>
                     </div>
                 </div>
             </div>
