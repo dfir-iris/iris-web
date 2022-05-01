@@ -48,7 +48,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 #ENV IRIS_ADM_PASSWORD="MySuperFirstPasswordIWant"
 
 RUN apt update
-RUN apt install -y p7zip-full pgp rsync
+RUN apt install -y p7zip-full pgp rsync postgresql-client
 
 
 RUN mkdir /iriswebapp/
