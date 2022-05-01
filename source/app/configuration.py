@@ -127,6 +127,9 @@ class Config():
     BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
                                                                         fallback=False) else "/home/iris/server_data/backup"
 
+    PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
+                                                                        fallback=False) else "/usr/local/bin/"
+
     UPDATE_DIR_NAME = '_updates_'
 
     DROPZONE_MAX_FILE_SIZE = 1024

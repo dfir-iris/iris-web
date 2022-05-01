@@ -26,24 +26,44 @@ log = app.logger
 
 
 def backup_iris_db():
+    backup_dir = Path(app.config.get('BACKUP_PATH')) / "database"
+
+    try:
+
+        if not backup_dir.is_dir():
+            backup_dir.mkdir()
+
+    except Exception as e:
+        log.error(e)
+        return True
+
     backup_file = Path(app.config.get('BACKUP_PATH')) / "database" / "backup-{}.sql.gz".format(
         datetime.now().strftime("%Y-%m-%d_%H%M%S"))
 
     completed_process = None
-    with open(backup_file, 'w') as backup:
-        completed_process = subprocess.run(
-            ['/usr/local/bin/pg_dump', '-h', app.config.get('PG_SERVER'), '-p', app.config.get('PG_PORT'),
-             '-U', app.config.get('PGA_ACCOUNT'),
-             '--compress=9', '-c', '-O', '--if-exists', 'iris_db'],
-            stdout=backup,
-            env={'PGPASSWORD': app.config.get('PGA_PASSWD')})
+    try:
+
+        with open(backup_file, 'w') as backup:
+            completed_process = subprocess.run(
+                [f'{app.config.get("PG_CLIENT_PATH")}/pg_dump', '-h',
+                 app.config.get('PG_SERVER'), '-p',
+                 app.config.get('PG_PORT'),
+                 '-U', app.config.get('PGA_ACCOUNT'),
+                 '--compress=9', '-c', '-O', '--if-exists', 'iris_db'],
+                stdout=backup,
+                env={'PGPASSWORD': app.config.get('PGA_PASSWD')})
+
+    except Exception as e:
+        log.error(e)
+        return True
 
     try:
         completed_process.check_returncode()
     except subprocess.CalledProcessError as e:
         log.error(e)
+        return True
 
-    if backup_file.is_file():
+    if backup_file.is_file() and backup_file.stat().st_size != 0:
         log.info(f'Backup completed in {backup_file}')
 
-    return True
+    return False

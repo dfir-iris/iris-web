@@ -35,6 +35,7 @@ from pathlib import Path
 
 from app import app, celery, socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
+from app.iris_engine.backup.backup import backup_iris_db
 from app.util import admin_required, api_admin_required
 from iris_interface import IrisInterfaceStatus as IStatus
 
@@ -212,6 +213,14 @@ def init_server_update(release_config):
     update_log('Backing up current version')
     #has_error = update_backup_current_version()
     has_error = False
+    if has_error:
+        update_log_error('Aborting upgrades - see previous errors')
+        notify_update_failed()
+        shutil.rmtree(temp_dir)
+        return False
+
+    update_log('Backing up database')
+    has_error = backup_iris_db()
     if has_error:
         update_log_error('Aborting upgrades - see previous errors')
         notify_update_failed()
