@@ -230,6 +230,44 @@ def init_server_update(release_config):
         shutil.rmtree(temp_dir)
         return False
 
+    if 'worker' in updates_config.get('scope'):
+        update_log('Worker needs to be updated. Scheduling updates task')
+        async_update = task_update_worker.delay(update_archive.as_posix(), updates_config)
+
+        update_log('Scheduled. Waiting for worker to finish updating')
+        result_output = async_update.get(interval=1)
+        if result_output.is_failure:
+            update_log_error('Worker failed to updates')
+            update_log_error(result_output.logs)
+
+            update_log_error('Aborting upgrades - see previous errors')
+            notify_update_failed()
+            shutil.rmtree(temp_dir)
+            return False
+
+        async_update_version = task_update_get_version.delay()
+        result_output = async_update_version.get(interval=1)
+        if result_output.is_failure:
+            update_log_error('Worker failed to updates')
+            update_log_error(result_output.logs)
+
+            update_log_error('Aborting upgrades - see previous errors')
+            notify_update_failed()
+            shutil.rmtree(temp_dir)
+            return False
+
+        worker_update_version = result_output.get_data()
+        if worker_update_version != updates_config.get('target_version'):
+            update_log_error('Worker failed to updates')
+            update_log_error(f'Expected version {updates_config.get("target_version")} but worker '
+                             f'is in {worker_update_version}')
+            update_log_error('Aborting upgrades - see previous errors')
+            notify_update_failed()
+            shutil.rmtree(temp_dir)
+            return False
+
+        update_log(f'Worker updated to {updates_config.get("target_version")}')
+
     if updates_config.get('need_app_reboot') is True:
         update_log('Closing all database connections. Unsaved work will be lost.')
         from sqlalchemy.orm import close_all_sessions
@@ -242,8 +280,10 @@ def init_server_update(release_config):
         notify_server_off()
         time.sleep(0.5)
 
-    call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
-                     need_reboot=updates_config.get('need_app_reboot'))
+    if 'iriswebapp' in updates_config.get('scope'):
+
+        call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+                         need_reboot=updates_config.get('need_app_reboot'))
 
     if updates_config.get('need_app_reboot') is True:
         import app
@@ -278,7 +318,10 @@ def verify_archive_fingerprint(update_archive, archive_sha256):
 
 
 def call_ext_updater(update_archive, scope, need_reboot):
-    archive_name = update_archive.stem
+    if not isinstance(update_archive, Path):
+        update_archive = Path(update_archive)
+
+    archive_name = Path(update_archive).stem
 
     if os.getenv("DOCKERIZED"):
         source_dir = Path.cwd() / 'scripts'
@@ -289,15 +332,21 @@ def call_ext_updater(update_archive, scope, need_reboot):
         target_dir = Path('../../update_server/test_update') # TODO change
         docker = 0
 
-    subprocess.Popen(["nohup", "/bin/bash", f"{source_dir}/iris_updater.sh",
-                      update_archive.as_posix(),        # Update archive to unpack
-                      target_dir.as_posix(),            # Target directory of update
-                      archive_name,                     # Root directory of the archive
-                      scope[0],                        # Scope of the update
-                      "1" if docker else "0",                           # Are we in docker ?
-                      "1" if need_reboot else "0"])                      # Do we need to restart the app
+    try:
 
-    return
+        subprocess.Popen(["nohup", "/bin/bash", f"{source_dir}/iris_updater.sh",
+                          update_archive.as_posix(),        # Update archive to unpack
+                          target_dir.as_posix(),            # Target directory of update
+                          archive_name,                     # Root directory of the archive
+                          scope[0],                        # Scope of the update
+                          "1" if docker else "0",                           # Are we in docker ?
+                          "1" if need_reboot else "0"])                      # Do we need to restart the app
+
+    except Exception as e:
+        log.error(str(e))
+        return False
+
+    return True
 
 
 def update_backup_current_version():
@@ -412,6 +461,11 @@ def verify_compatibility(target_directory, release_assets_info):
         update_log_error(f'This updates does not support automatic handling. Please read the upgrades instructions.')
         return None
 
+    if 'worker' not in updates_info.get('scope') and 'iriswebapp' not in updates_info.get('scope'):
+        update_log_error(f'Something is wrong, updates configuration does not have any valid scope')
+        update_log_error('Please contact DFIR-IRIS team')
+        return None
+
     update_log('Compatibly checks done. Good to go')
 
     return updates_info
@@ -503,8 +557,20 @@ def download_from_url(asset_url, target_file):
 
 
 @celery.task(bind=True)
-def task_update_worker(self, update_to_version):
-    celery.control.revoke(self.request.id)
-    celery.control.broadcast("pool_restart", arguments={"reload_modules": True})
+def task_update_worker(self, update_archive, updates_config):
 
-    return IStatus.I2Success(message="Pool restarted")
+    if not call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+                            need_reboot=updates_config.get('need_worker_reboot')):
+
+        return IStatus.I2Success(message="Unable to spawn updater")
+
+    # if updates_config.get('need_worker_reboot') is True:
+    #     celery.control.revoke(self.request.id)
+    #     celery.control.broadcast("pool_restart", arguments={"reload_modules": True})
+
+    return IStatus.I2Success(message="Worker updater called")
+
+
+@celery.task(bind=True)
+def task_update_get_version(self):
+    return IStatus.I2Success(data=app.config.get('IRIS_VERSION'))
