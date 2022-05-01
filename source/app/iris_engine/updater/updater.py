@@ -334,7 +334,7 @@ def call_ext_updater(update_archive, scope, need_reboot):
 
     try:
 
-        subprocess.Popen(["nohup", "/bin/bash", f"{source_dir}/iris_updater.sh",
+        subprocess.Popen([ "/bin/bash", f"{source_dir}/iris_updater.sh",
                           update_archive.as_posix(),        # Update archive to unpack
                           target_dir.as_posix(),            # Target directory of update
                           archive_name,                     # Root directory of the archive

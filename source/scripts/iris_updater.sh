@@ -47,11 +47,12 @@ then
     if [[ $4 -eq "worker" ]]
     then
       echo "Restarting IRIS worker"
-      exec celery -A app.celery control shutdown
+      celery -A app.celery control shutdown
       sleep 2
-      exec celery -A app.celery worker -E -l INFO
+      nohup celery -A app.celery worker -E -l INFO
 
-    else:
+    else
+
       echo "Restarting IRIS web app"
       exec gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info
 
