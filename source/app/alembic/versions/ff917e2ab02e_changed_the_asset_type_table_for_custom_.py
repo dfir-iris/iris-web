@@ -35,7 +35,9 @@ def upgrade():
         'assets_type',
         sa.MetaData(),
         sa.Column('asset_id', sa.Integer, primary_key=True),
-        sa.Column('asset_name', sa.String(155))
+        sa.Column('asset_name', sa.String(155)),
+        sa.Column('asset_icon_not_compromised', sa.String(255)),
+        sa.Column('asset_icon_compromised', sa.String(255))
     )
     
     # Migrate existing Asset_types
