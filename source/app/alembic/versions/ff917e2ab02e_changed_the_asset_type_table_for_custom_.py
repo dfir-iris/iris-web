@@ -42,7 +42,7 @@ def upgrade():
     
     # Migrate existing Asset_types
     conn = op.get_bind()
-    res = conn.execute("SELECT asset_id FROM public.assets_type;")
+    res = conn.execute("SELECT asset_id, asset_name FROM public.assets_type;")
     results = res.fetchall()
 
     if results:
