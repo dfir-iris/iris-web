@@ -866,7 +866,9 @@ def custom_assets_symlinks():
         for store_fullpath in source_paths:
             filename = store_fullpath.split(os.path.sep)[-1]
             show_fullpath = os.path.join(app.config['APP_PATH'],'app', app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
-            os.symlink(store_fullpath, show_fullpath)  
+            if not os.path.islink(show_fullpath):
+                os.symlink(store_fullpath, show_fullpath)
+                log.info(f"Created symlink {store_fullpath} -> {show_fullpath}")
             log.info(f"Created symlink {store_fullpath} -> {show_fullpath}")
     except Exception as e:
         log.error(f"Error: {e}")
