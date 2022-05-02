@@ -23,7 +23,6 @@ import secrets
 import string
 import os
 import glob
-from tkinter import E
 from alembic.config import Config
 from alembic import command, context
 
