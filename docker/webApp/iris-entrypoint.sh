@@ -25,7 +25,6 @@ target=${1-:app}
 
 printf "Running ${target} ...\n"
 
-
 if [[ "${target}" == iris-worker ]] ; then
     exec celery -A app.celery worker -E -l INFO
 else
