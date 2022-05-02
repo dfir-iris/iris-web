@@ -45,7 +45,7 @@ def upgrade():
 
     if results:
         for res in results:
-            icon_not_compromised, icon_compromised = _get_icons(res[0])
+            icon_not_compromised, icon_compromised = _get_icons(res[1])
             conn.execute(t_assets_type.update().where(t_assets_type.c.asset_id == res[0]).values(
                 asset_icon_not_compromised=icon_not_compromised,
                 asset_icon_compromised=icon_compromised
