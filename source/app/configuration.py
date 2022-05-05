@@ -129,7 +129,7 @@ class Config():
     UPDATES_PATH = os.path.join(BACKUP_PATH, 'updates')
 
     PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
-                                                                        fallback=False) else "/usr/local/bin/"
+                                                                        fallback=False) else "/usr/bin"
 
     UPDATE_DIR_NAME = '_updates_'
 

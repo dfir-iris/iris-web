@@ -335,15 +335,16 @@ def call_ext_updater(update_archive, scope, need_reboot):
 
     try:
 
-        subprocess.Popen([ "/bin/bash", f"{source_dir}/iris_updater.sh",
+        subprocess.Popen(["/bin/bash", f"{source_dir}/iris_updater.sh",
                           update_archive.as_posix(),        # Update archive to unpack
                           target_dir.as_posix(),            # Target directory of update
                           archive_name,                     # Root directory of the archive
                           scope[0],                        # Scope of the update
                           "1" if docker else "0",                           # Are we in docker ?
-                          "1" if need_reboot else "0"])                      # Do we need to restart the app
+                          "1" if need_reboot else "0",                      # Do we need to restart the app
+                          '&'])
 
-    except Exception as e:
+    except Exception as e :
         log.error(str(e))
         return False
 

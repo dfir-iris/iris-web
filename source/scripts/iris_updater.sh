@@ -33,32 +33,18 @@ then
   # cd to update directory
   cd $2
 
-  # if in docker, call the entrypoint
-  if [[ $5 -eq 1 ]]
+  if [ $4 == "worker" ]
   then
-
-    echo "Restarting IRIS"
-    exec celery -A app.celery control shutdown
-    nohup ./iris-entrypoint.sh $4
+    echo "Restarting IRIS worker"
+    celery -A app.celery control shutdown
+    sleep 2
+    exec celery -A app.celery worker -E -l INFO
 
   else
+    echo "Restarting IRIS Web app"
+    exec gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info
 
-    # Otherwise, not in docker, directly call the methods
-    if [[ $4 -eq "worker" ]]
-    then
-      echo "Skipping IRIS worker due to autoreload"
-#      celery -A app.celery control shutdown
-#      sleep 2
-#      nohup celery -A app.celery worker -E -l INFO
-
-    else
-
-      echo "Restarting IRIS web app"
-      exec gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info
-
-    fi # worker condition
-
-  fi # docker condition
+  fi # Worker condition
 
 fi # restart condition
 
