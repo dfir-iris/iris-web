@@ -34,7 +34,7 @@ from flask_socketio import join_room, emit
 from packaging import version
 from pathlib import Path
 
-from app import app, celery, socket_io
+from app import app, celery, socket_io, db
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.iris_engine.backup.backup import backup_iris_db
 from app.models import ServerSettings
@@ -582,7 +582,7 @@ def task_update_get_version(self):
 @celery.on_after_finalize.connect
 def setup_periodic_update_checks(sender, **kwargs):
     sender.add_periodic_task(
-        1.0,
+        crontab(hour=0, minute=0),
         task_check_available_updates.s(),
     )
 
@@ -595,9 +595,10 @@ def task_check_available_updates():
     if not srv_settings:
         return IStatus.I2Error('Unable to fetch server settings. Please reach out for help')
 
-    srv_settings.updates_available = has_updates
+    srv_settings.has_updates_available = has_updates
+    db.session.commit()
 
-    if srv_settings.updates_available:
+    if srv_settings.has_updates_available:
         log.info('Updates are available for this server')
 
-    return IStatus.I2Success(f'Successfully checked updates. Available : {srv_settings.updates_available}')
+    return IStatus.I2Success(f'Successfully checked updates. Available : {srv_settings.has_updates_available}')
