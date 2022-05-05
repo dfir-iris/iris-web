@@ -27,6 +27,7 @@ import requests
 import shutil
 import tempfile
 import time
+from celery.schedules import crontab
 from datetime import datetime
 from flask_login import current_user
 from flask_socketio import join_room, emit
@@ -36,6 +37,7 @@ from pathlib import Path
 from app import app, celery, socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.iris_engine.backup.backup import backup_iris_db
+from app.models import ServerSettings
 from app.util import admin_required, api_admin_required
 from iris_interface import IrisInterfaceStatus as IStatus
 
@@ -569,13 +571,33 @@ def task_update_worker(self, update_archive, updates_config):
 
         return IStatus.I2Success(message="Unable to spawn updater")
 
-    # if updates_config.get('need_worker_reboot') is True:
-    #     celery.control.revoke(self.request.id)
-    #     celery.control.broadcast("pool_restart", arguments={"reload_modules": True})
-
     return IStatus.I2Success(message="Worker updater called")
 
 
 @celery.task(bind=True)
 def task_update_get_version(self):
     return IStatus.I2Success(data=app.config.get('IRIS_VERSION'))
+
+
+@celery.on_after_configure.connect
+def setup_periodic_update_checks(sender, **kwargs):
+    sender.add_periodic_task(
+        crontab(hour=0, minute=0),
+        task_check_available_updates.s(),
+    )
+
+
+@celery.task
+def task_check_available_updates(self):
+    log.info('Cron - Checking if updates are available')
+    has_updates, _ = is_updates_available()
+    srv_settings = ServerSettings.query.first()
+    if not srv_settings:
+        return IStatus.I2Error('Unable to fetch server settings. Please reach out for help')
+
+    srv_settings.updates_available = has_updates
+
+    if srv_settings.updates_available:
+        log.info('Updates are available for this server')
+
+    return IStatus.I2Success(f'Successfully checked updates. Available : {srv_settings.updates_available}')
