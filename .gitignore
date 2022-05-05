@@ -21,3 +21,4 @@ venv1/
 .venv/
 .vscode/
 nohup.out
+celerybeat-schedule.db

@@ -23,6 +23,8 @@ import configparser
 
 # --------- Configuration ---------
 # read the private configuration file
+from celery.schedules import crontab
+
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
@@ -66,11 +68,6 @@ class CeleryConfig():
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
-
-    task_routes = ([
-        ('app.iris_engine.tasker.tasks.task_kbh_import', { 'route' : 'case_import'}),
-        ('app.iris_engine.tasker.tasks.task_feed_iris', { 'route' : 'case_import'})
-    ],)
 
 
 # --------- APP ---------

@@ -163,7 +163,7 @@ def is_updates_available():
     current_version = app.config.get('IRIS_VERSION')
 
     if has_error:
-        return False, release.get('message')
+        return False, release.get('message'), None
 
     release_version = release.get('name')
 
@@ -579,18 +579,18 @@ def task_update_get_version(self):
     return IStatus.I2Success(data=app.config.get('IRIS_VERSION'))
 
 
-@celery.on_after_configure.connect
+@celery.on_after_finalize.connect
 def setup_periodic_update_checks(sender, **kwargs):
     sender.add_periodic_task(
-        crontab(hour=0, minute=0),
+        1.0,
         task_check_available_updates.s(),
     )
 
 
 @celery.task
-def task_check_available_updates(self):
+def task_check_available_updates():
     log.info('Cron - Checking if updates are available')
-    has_updates, _ = is_updates_available()
+    has_updates, _, _ = is_updates_available()
     srv_settings = ServerSettings.query.first()
     if not srv_settings:
         return IStatus.I2Error('Unable to fetch server settings. Please reach out for help')
