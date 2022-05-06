@@ -22,6 +22,7 @@ import random
 import secrets
 import string
 import os
+import glob
 from alembic.config import Config
 from alembic import command, context
 
@@ -29,12 +30,12 @@ from sqlalchemy import create_engine, and_
 from sqlalchemy_utils import database_exists, create_database
 
 from app import db, bc, app, celery
-from app.configuration import SQLALCHEMY_BASE_URI
+#from app.config import SQLALCHEMY_BASE_URI
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name, register_module, \
     check_module_health
 from app.models.cases import Cases, Client
-from app.models.models import Role, Languages, User, get_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
+from app.models.models import Role, Languages, User, get_or_create, get_by_value_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
     IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook, CustomAttribute, \
     create_safe_attr, ServerSettings
 
@@ -59,7 +60,7 @@ def run_post_init(development=False):
         log.info("Running DB migration")
 
         alembic_cfg = Config(file_='app/alembic.ini')
-        alembic_cfg.set_main_option('sqlalchemy.url',  SQLALCHEMY_BASE_URI + 'iris_db')
+        alembic_cfg.set_main_option('sqlalchemy.url',  app.config['SQLALCHEMY_DATABASE_URI'])
         command.upgrade(alembic_cfg, 'head')
 
         log.info("Creating base languages")
@@ -115,6 +116,10 @@ def run_post_init(development=False):
             user=admin,
             client=client
         )
+
+        # setup symlinks for custom_assets
+        log.info("Creating symlinks for custom asset icons")
+        custom_assets_symlinks()
 
     if development:
         if os.getenv("IRIS_WORKER") is None:
@@ -345,33 +350,27 @@ def create_safe_task_status():
 
 
 def create_safe_assets():
-    get_or_create(db.session, AssetsType, asset_name="Account", asset_description="Generic Account")
-    get_or_create(db.session, AssetsType, asset_name="Firewall", asset_description="Firewall")
-    get_or_create(db.session, AssetsType, asset_name="Linux - Server", asset_description="Linux server")
-    get_or_create(db.session, AssetsType, asset_name="Linux - Computer", asset_description="Linux computer")
-    get_or_create(db.session, AssetsType, asset_name="Linux Account", asset_description="Linux Account")
-    get_or_create(db.session, AssetsType, asset_name="Mac - Computer", asset_description="Mac computer")
-    get_or_create(db.session, AssetsType, asset_name="Phone - Android", asset_description="Android Phone")
-    get_or_create(db.session, AssetsType, asset_name="Phone - IOS", asset_description="Apple Phone")
-    get_or_create(db.session, AssetsType, asset_name="Windows - Computer", asset_description="Standard Windows Computer")
-    get_or_create(db.session, AssetsType, asset_name="Windows - Server", asset_description="Standard Windows Server")
-    get_or_create(db.session, AssetsType, asset_name="Windows - DC", asset_description="Domain Controller")
-    get_or_create(db.session, AssetsType, asset_name="Router", asset_description="Router")
-    get_or_create(db.session, AssetsType, asset_name="Switch", asset_description="Switch")
-    get_or_create(db.session, AssetsType, asset_name="VPN", asset_description="VPN")
-    get_or_create(db.session, AssetsType, asset_name="WAF", asset_description="WAF")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - Local",
-                                          asset_description="Windows Account - Local")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - Local - Admin",
-                                          asset_description="Windows Account - Local - Admin")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - AD",
-                                          asset_description="Windows Account - AD")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - Admin",
-                                          asset_description="Windows Account - AD - Admin")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - krbtgt",
-                                          asset_description="Windows Account - AD - krbtgt")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - Service",
-                                          asset_description="Windows Account - AD - krbtgt")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Account", asset_description="Generic Account", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Firewall", asset_description="Firewall", asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux - Server", asset_description="Linux server", asset_icon_not_compromised="server.png", asset_icon_compromised="ioc_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux - Computer", asset_description="Linux computer", asset_icon_not_compromised="desktop.png", asset_icon_compromised="ioc_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux Account", asset_description="Linux Account", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Mac - Computer", asset_description="Mac computer", asset_icon_not_compromised="desktop.png", asset_icon_compromised="ioc_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Phone - Android", asset_description="Android Phone", asset_icon_not_compromised="phone.png", asset_icon_compromised="ioc_phone.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Phone - IOS", asset_description="Apple Phone", asset_icon_not_compromised="phone.png", asset_icon_compromised="ioc_phone.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - Computer", asset_description="Standard Windows Computer", asset_icon_not_compromised="windows_desktop.png", asset_icon_compromised="ioc_windows_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - Server", asset_description="Standard Windows Server", asset_icon_not_compromised="windows_server.png", asset_icon_compromised="ioc_windows_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - DC", asset_description="Domain Controller", asset_icon_not_compromised="windows_server.png", asset_icon_compromised="ioc_windows_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Router", asset_description="Router", asset_icon_not_compromised="router.png", asset_icon_compromised="ioc_router.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Switch", asset_description="Switch", asset_icon_not_compromised="switch.png", asset_icon_compromised="ioc_switch.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="VPN", asset_description="VPN", asset_icon_not_compromised="vpn.png", asset_icon_compromised="ioc_vpn.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="WAF", asset_description="WAF", asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - Local", asset_description="Windows Account - Local", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - Local - Admin", asset_description="Windows Account - Local - Admin", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD", asset_description="Windows Account - AD", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - Admin", asset_description="Windows Account - AD - Admin", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - krbtgt", asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - Service", asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
 
 
 def create_safe_client():
@@ -858,3 +857,21 @@ def register_default_modules():
         else:
             iris_module_disable_by_id(mod_id)
             log.info('Successfully registered {mod}'.format(mod=module))
+        
+def custom_assets_symlinks():
+    try:
+        source_paths = glob.glob(os.path.join(app.config['ASSET_STORE_PATH'],"*"))
+        log.info("Attempting to add symlinks for:")
+        log.info(source_paths)
+        for store_fullpath in source_paths:
+            filename = store_fullpath.split(os.path.sep)[-1]
+            show_fullpath = os.path.join(app.config['APP_PATH'],'app', app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
+            if not os.path.islink(show_fullpath):
+                os.symlink(store_fullpath, show_fullpath)
+                log.info(f"Created symlink {store_fullpath} -> {show_fullpath}")
+            log.info(f"Created symlink {store_fullpath} -> {show_fullpath}")
+    except Exception as e:
+        log.error(f"Error: {e}")
+
+
+

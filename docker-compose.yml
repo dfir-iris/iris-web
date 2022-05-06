@@ -54,6 +54,7 @@ services:
     volumes:
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
+      - server_data:/home/iris/server_data
     restart: always
     depends_on:
       - "rabbitmq"
@@ -129,6 +130,7 @@ services:
 volumes:
   iris-downloads:
   user_templates:
+  server_data:
   db_data:
 
 networks:

@@ -48,6 +48,16 @@ def create_safe(session, model, **kwargs):
         session.commit()
         return True
 
+def get_by_value_or_create(session, model, fieldname, **kwargs):
+    select_value = {fieldname: kwargs.get(fieldname)}
+    instance = session.query(model).filter_by(**select_value).first()
+    if instance:
+        return instance
+    else:
+        instance = model(**kwargs)
+        session.add(instance)
+        session.commit()
+        return instance
 
 def get_or_create(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).first()
@@ -75,7 +85,8 @@ class AssetsType(db.Model):
     asset_id = Column(Integer, primary_key=True)
     asset_name = Column(String(155))
     asset_description = Column(String(255))
-
+    asset_icon_not_compromised = Column(String(255))
+    asset_icon_compromised = Column(String(255))
 
 class CaseAssets(db.Model):
     __tablename__ = 'case_assets'
