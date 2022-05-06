@@ -584,6 +584,7 @@ def setup_periodic_update_checks(sender, **kwargs):
     sender.add_periodic_task(
         crontab(hour=0, minute=0),
         task_check_available_updates.s(),
+        name='iris_auto_check_updates'
     )
 
 
