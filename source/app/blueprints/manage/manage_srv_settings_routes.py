@@ -26,10 +26,11 @@ from flask import Blueprint, url_for, render_template, request
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app import db, app
+from app import db, app, celery
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_alembic_revision
 from app.iris_engine.backup.backup import backup_iris_db
-from app.iris_engine.updater.updater import is_updates_available, inner_init_server_update
+from app.iris_engine.updater.updater import is_updates_available, inner_init_server_update, \
+    remove_periodic_update_checks, setup_periodic_update_checks
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import ServerSettingsSchema
 from app.util import admin_required, api_admin_required, response_error, response_success
@@ -117,11 +118,18 @@ def manage_update_settings(caseid):
 
     srv_settings_schema = ServerSettingsSchema()
     server_settings = get_srv_settings()
+    original_update_check = server_settings.enable_updates_check
 
     try:
 
         srv_settings_sc = srv_settings_schema.load(request.get_json(), instance=server_settings)
         db.session.commit()
+
+        if original_update_check != srv_settings_sc.enable_updates_check:
+            if srv_settings_sc.enable_updates_check:
+                setup_periodic_update_checks(celery)
+            else:
+                remove_periodic_update_checks()
 
         if srv_settings_sc:
             track_activity("Server settings updated", caseid=caseid)

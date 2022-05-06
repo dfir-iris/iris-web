@@ -588,6 +588,10 @@ def setup_periodic_update_checks(sender, **kwargs):
     )
 
 
+def remove_periodic_update_checks():
+    del celery.config.beat_schedule['iris_auto_check_updates']
+
+
 @celery.task
 def task_check_available_updates():
     log.info('Cron - Checking if updates are available')

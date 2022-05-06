@@ -7361,19 +7361,16 @@ body[data-background-color="dark"] .badge-danger {
     box-sizing: content-box;
 }
 
-
-/*     Alert    */
-
 .alert {
     border: 0px;
     position: relative;
     padding: .95rem 1.25rem;
-    border-radius: 1px;
+    border-radius: 0.42rem;
     color: inherit;
     background-color: #ffffff;
-    -webkit-box-shadow: 1px 1px 14px 0px rgba(18, 38, 63, 0.26);
-    -moz-box-shadow: 1px 1px 14px 0px rgba(18, 38, 63, 0.26);
-    box-shadow: 1px 1px 14px 0px rgba(18, 38, 63, 0.26);
+    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
+    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
 }
 
 .alert [data-notify="icon"] {
