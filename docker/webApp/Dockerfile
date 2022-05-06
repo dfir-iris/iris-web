@@ -53,6 +53,9 @@ RUN apt install -y p7zip-full pgp rsync postgresql-client
 
 RUN mkdir /iriswebapp/
 RUN mkdir -p /home/iris/user_templates
+RUN mkdir -p /home/iris/server_data
+RUN mkdir -p /home/iris/server_data/backup
+RUN mkdir -p /home/iris/server_data/updates
 
 WORKDIR /iriswebapp
 
