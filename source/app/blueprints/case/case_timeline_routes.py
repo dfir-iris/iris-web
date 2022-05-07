@@ -627,7 +627,6 @@ def case_edit_event(cur_id, caseid):
         event.case_id = caseid
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
-        event.event_tags = request_data.get(u'event_tags')
 
         update_timeline_state(caseid=caseid)
         db.session.commit()
