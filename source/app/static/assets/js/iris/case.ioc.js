@@ -103,6 +103,17 @@ Table = $("#ioc_table").DataTable({
     ordering: true,
     processing: true,
     retrieve: true,
+    responsive: {
+        details: {
+            display: $.fn.dataTable.Responsive.display.modal( {
+                header: function ( row ) {
+                    var data = row.data();
+                    return 'Details for '+data[0]+' '+data[1];
+                }
+            } ),
+            renderer: $.fn.dataTable.Responsive.renderer.tableAll()
+        }
+    },
     buttons: [],
     orderCellsTop: true,
     initComplete: function () {
@@ -120,6 +131,10 @@ var buttons = new $.fn.dataTable.Buttons(Table, {
         , "titleAttr": 'Copy' },
     ]
 }).container().appendTo($('#tables_button'));
+
+Table.on( 'responsive-resize', function ( e, datatable, columns ) {
+        hide_table_search_input( columns );
+});
 
 /* Fetch a modal that is compatible with the requested ioc type */ 
 function add_ioc() {

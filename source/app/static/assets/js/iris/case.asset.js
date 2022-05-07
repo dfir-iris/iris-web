@@ -263,7 +263,7 @@ var buttons = new $.fn.dataTable.Buttons(Table, {
 }).container().appendTo($('#tables_button'));
 
 Table.on( 'responsive-resize', function ( e, datatable, columns ) {
-        hideSearchInputs( columns );
+        hide_table_search_input( columns );
 });
 
 /* Retrieve the list of assets and build a datatable for each type of asset */
@@ -456,16 +456,6 @@ function upload_assets() {
 
     return false;
 }
-
-  function hideSearchInputs(columns) {
-    for (i=0; i<columns.length; i++) {
-      if (columns[i]) {
-        $('.filters th:eq(' + i + ')' ).show();
-      } else {
-        $('.filters th:eq(' + i + ')' ).hide();
-      }
-    }
-  }
 
 function generate_sample_csv(){
     csv_data = "asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags\n"
