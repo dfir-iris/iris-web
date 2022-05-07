@@ -20,5 +20,6 @@ venv1/
 .env*
 .venv/
 .vscode/
-*.png
 *.code-workspace
+nohup.out
+celerybeat-schedule.db

@@ -50,7 +50,7 @@ services:
       context: .
       dockerfile: docker/webApp/Dockerfile
     image: iriswebapp_app:latest
-    command: ['./iris-entrypoint.sh', 'iriswebapp']
+    command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
@@ -85,6 +85,7 @@ services:
     volumes:
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
+      - server_data:/home/iris/server_data
     depends_on:
       - "rabbitmq"
       - "db"

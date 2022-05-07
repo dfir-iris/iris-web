@@ -25,3 +25,57 @@ function update_settings() {
     });
 }
 
+function unescapeHTML( text ) {
+    return text.replace( /&amp;/g, "&" )
+               .replace( /&lt;/g, "<" )
+               .replace( /&gt;/g, ">" )
+               .replace( /&quot;/g, "\"" )
+               .replace( /&#39;/g, "'" )
+               .replace( /\n/g, "\n\n");
+  }
+
+
+function check_updates() {
+    $('#modal_updates').modal({ show: true });
+    $('#modal_updates_content').load(
+        '/manage/server/check-updates/modal' + case_param(),
+        function () {
+            var conv = new showdown.Converter();
+            var txt = document.getElementById('updates_content_md').innerHTML;
+
+            document.getElementById('updates_content_md').innerHTML = conv.makeHtml(txt);
+            $('#modal_updates').modal({ show: true });
+        });
+}
+
+function init_db_backup() {
+
+    $.ajax({
+        url: '/manage/server/backups/make-db' + case_param(),
+        type: "GET",
+        dataType: "json",
+        timeout: 1000,
+        success: function (data) {
+            msg = ""
+            for (idx in data.data) {
+                msg += data.data[idx] + '\n';
+            }
+            swal("Done",
+                 msg,
+                {
+                    icon: "success"
+                });
+        },
+        error: function (error) {
+            for (idx in error.responseJSON.data) {
+                msg += data.data[idx] + '\n';
+            }
+
+            swal("Error",
+                 msg,
+                {
+                    icon: "error"
+                });
+        }
+    });
+}

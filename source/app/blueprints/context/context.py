@@ -22,7 +22,7 @@
 from app import app
 from app import db
 from app.models.cases import Cases
-from app.models.models import Client
+from app.models.models import Client, ServerSettings
 from app.util import response_success, get_urlcasename
 
 from flask_login import current_user
@@ -61,6 +61,15 @@ def set_ctx():
 @app.context_processor
 def iris_version():
     return dict(iris_version=app.config.get('IRIS_VERSION'))
+
+
+@app.context_processor
+def has_updates():
+    if not current_user.is_admin():
+        return dict(has_updates=False)
+
+    server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
+    return dict(has_updates=server_settings[0])
 
 
 @app.context_processor

@@ -77,7 +77,7 @@ function notify_error(message) {
         data = message;
     }
     $.notify({
-        icon: 'flaticon-error',
+        icon: 'fas fa-times',
         title: 'Error',
         message: message
     }, {
@@ -88,12 +88,16 @@ function notify_error(message) {
         },
         time: 4000,
         z_index: 2000,
+        animate: {
+            enter: 'animate__animated animate__fadeIn',
+            exit: 'animate__animated animate__fadeOut'
+        }
     });
 }
 
 function notify_success(message) {
     $.notify({
-        icon: 'flaticon-hands',
+        icon: 'fas fa-check',
         title: 'Done',
         message: message,
     }, {
@@ -104,6 +108,10 @@ function notify_success(message) {
         },
         z_index: 2000,
         time: 2000,
+        animate: {
+                    enter: 'animate__animated animate__fadeIn',
+                    exit: 'animate__animated animate__fadeOut'
+        }
     });
 }
 
