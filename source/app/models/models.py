@@ -48,6 +48,7 @@ def create_safe(session, model, **kwargs):
         session.commit()
         return True
 
+
 def get_by_value_or_create(session, model, fieldname, **kwargs):
     select_value = {fieldname: kwargs.get(fieldname)}
     instance = session.query(model).filter_by(**select_value).first()
@@ -58,6 +59,7 @@ def get_by_value_or_create(session, model, fieldname, **kwargs):
         session.add(instance)
         session.commit()
         return instance
+
 
 def get_or_create(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).first()
