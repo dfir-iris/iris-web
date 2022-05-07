@@ -31,7 +31,7 @@ function add_asset_type() {
                 },
                 error: function (error) {
                     $('#modal_add_type').text('Save');
-                    swal("Oh no !", error.statusText, "error")
+                    propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
@@ -126,7 +126,7 @@ function assettype_detail(asset_id) {
                 },
                 error: function (error) {
                     $('#modal_add_type').text('Save');
-                    swal("Oh no !", error.statusText, "error")
+                    propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
