@@ -15870,8 +15870,9 @@ div.dataTables_processing { z-index: 1; }
     }
 }
 
-
 .update-overflow {
   max-height: 95%;
   overflow-y: scroll;
 }
+
+td.dt-nowrap { white-space: nowrap }

@@ -88,6 +88,7 @@ Table = $("#assets_table").DataTable({
     aoColumns: [
       {
         "data": "asset_name",
+        "className": "dt-nowrap",
         "render": function (data, type, row, meta) {
           if (type === 'display') {
             if (row['asset_domain']) {
