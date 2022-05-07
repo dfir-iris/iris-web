@@ -1,7 +1,7 @@
 """Add server settings updates info
 
 Revision ID: 79a9a54e8f9d
-Revises: c832bd69f827
+Revises: ff917e2ab02e
 Create Date: 2022-05-05 18:39:19.027828
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection
 
 revision = '79a9a54e8f9d'
-down_revision = 'c832bd69f827'
+down_revision = 'ff917e2ab02e'
 branch_labels = None
 depends_on = None
 

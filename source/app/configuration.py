@@ -132,7 +132,6 @@ class Config():
                                                                             fallback=False) else "/home/iris/server_data/custom_assets"
     ASSET_SHOW_PATH = "/static/assets/img/graph"
 
-
     UPDATE_DIR_NAME = '_updates_'
 
     DROPZONE_MAX_FILE_SIZE = 1024
