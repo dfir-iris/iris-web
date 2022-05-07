@@ -133,7 +133,7 @@ def view_assets(cur_id, caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    return response_success("Unexpected error server-side. Nothing updated", data=asset_type)
+    return response_error("Unexpected error server-side. Nothing updated")
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
@@ -150,29 +150,31 @@ def add_assets_modal(caseid, url_redir):
 @api_admin_required
 def add_assets(caseid):
 
-    form = AddAssetForm()
+    asset_schema = AssetSchema()
+    try:
 
-    asset_type = AssetsType()
+        asset_sc = asset_schema.load(request.form)
+        fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
+                                                'asset_icon_not_compromised')
 
-    if form.is_submitted():
-        
-        asset_type.asset_name = request.form.get('asset_name','', type=str)
-        asset_type.asset_description = request.form.get('asset_description','', type=str)
-        for icon in ['asset_icon_compromised','asset_icon_not_compromised']:
-            file = request.files[icon]
+        fpath_c = asset_schema.load_store_icon(request.files.get('asset_icon_compromised'), 'asset_icon_compromised')
 
-            store_icon(file, icon, asset_type)
+        if fpath_nc is not None:
+            asset_sc.asset_icon_not_compromised = fpath_nc
+        if fpath_c is not None:
+            asset_sc.asset_icon_compromised = fpath_c
 
+        if asset_sc:
+            db.session.add(asset_sc)
+            db.session.commit()
 
-        db.session.add(asset_type)
-        db.session.commit()
-        track_activity("Added asset type {asset_name}".format(asset_name=asset_type.asset_name), caseid=caseid, ctx_less=True)
-    else:
-        print("invalid")
+            track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
+            return response_success("Asset type updated", asset_sc)
 
-    
-    # Return the assets
-    return response_success("Added successfully", data=asset_type.asset_name)
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    return response_error("Unexpected error server-side. Nothing updated")
 
 
 @manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])
