@@ -90,6 +90,7 @@ class AssetsType(db.Model):
     asset_icon_not_compromised = Column(String(255))
     asset_icon_compromised = Column(String(255))
 
+
 class CaseAssets(db.Model):
     __tablename__ = 'case_assets'
 
