@@ -23,3 +23,6 @@ venv1/
 *.code-workspace
 nohup.out
 celerybeat-schedule.db
+
+source/app/static/assets/img/graph/*
+!source/app/static/assets/img/graph/*.png
