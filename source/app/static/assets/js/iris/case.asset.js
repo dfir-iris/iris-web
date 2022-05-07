@@ -103,7 +103,14 @@ Table = $("#assets_table").DataTable({
                 datak = '#' + row['asset_id'];
             }
             share_link = buildShareLink(row['asset_id']);
-            ret = '<a href="' + share_link + '" data-selector="true" title="Asset ID #'+ row['asset_id'] +'" onclick="asset_details(\'' + row['asset_id'] + '\');return false;">' + datak +'</a>';
+            if (row['asset_compromised']) {
+                src_icon = row['asset_icon_compromised'];
+            } else {
+                src_icon = row['asset_icon_not_compromised'];
+            }
+            ret = '<img class="mr-2" title="'+ sanitizeHTML(row['asset_type']) +'" style="width:2em;height:2em" src=\'/static/assets/img/graph/' + src_icon +
+            '\'> <a href="' + share_link + '" data-selector="true" title="Asset ID #'+ row['asset_id'] +
+            '" onclick="asset_details(\'' + row['asset_id'] + '\');return false;">' + datak +'</a>';
 
             if (row.link.length > 0) {
                 var has_compro = false;

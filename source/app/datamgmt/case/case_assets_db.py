@@ -46,6 +46,8 @@ def get_assets(caseid):
         CaseAssets.asset_id,
         CaseAssets.asset_name,
         AssetsType.asset_name.label('asset_type'),
+        AssetsType.asset_icon_compromised,
+        AssetsType.asset_icon_not_compromised,
         CaseAssets.asset_description,
         CaseAssets.asset_domain,
         CaseAssets.asset_compromised,

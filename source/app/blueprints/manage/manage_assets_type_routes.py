@@ -100,7 +100,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
     form.asset_icon_compromised.render_kw = {'value': asset.asset_icon_compromised}
     form.asset_icon_not_compromised.render_kw = {'value': asset.asset_icon_not_compromised}
     setattr(asset, 'asset_icon_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_compromised))
-    setattr(asset, 'asset_icon_not_compromised_path',os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_not_compromised))
+    setattr(asset, 'asset_icon_not_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_not_compromised))
 
     return render_template("modal_add_asset_type.html", form=form, assettype=asset)
 
