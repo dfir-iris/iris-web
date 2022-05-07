@@ -51,8 +51,8 @@
                 <div class="col-md-12">
                     <div class="card" id="card_main_load" style="display:none;">
                         <div class="card-body">
-                            <div class="table-responsive" id="assets_table_wrapper">
-                              <table class="table display table-bordered table-striped table-hover" width="100%" cellspacing="0" id="assets_table" >
+                            <div class="col" id="assets_table_wrapper">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="assets_table" >
                                 <thead>
                                   <tr>
                                       <th>Name</th>
@@ -140,5 +140,6 @@
 {% include 'includes/footer_case.html' %}
 
 <script src="/static/assets/js/iris/case.asset.js"></script>
+
 
 {% endblock javascripts %}
