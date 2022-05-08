@@ -103,21 +103,23 @@ def save_event_category(event_id, category_id):
     db.session.commit()
 
 
-def get_event_assets_ids(event_id):
+def get_event_assets_ids(event_id, caseid):
     assets_list = CaseEventsAssets.query.with_entities(
         CaseEventsAssets.asset_id
     ).filter(
-        CaseEventsAssets.event_id == event_id
+        CaseEventsAssets.event_id == event_id,
+        CaseEventsAssets.case_id == caseid
     ).all()
 
     return [x for x in assets_list]
 
 
-def get_event_iocs_ids(event_id):
+def get_event_iocs_ids(event_id, caseid):
     iocs_list = CaseEventsIoc.query.with_entities(
         CaseEventsIoc.ioc_id
     ).filter(
-        CaseEventsIoc.event_id == event_id
+        CaseEventsIoc.event_id == event_id,
+        CaseEventsIoc.case_id == caseid
     ).all()
 
     return [x for x in iocs_list]
@@ -180,17 +182,6 @@ def update_event_iocs(event_id, caseid, iocs_list):
 
     db.session.commit()
     return True, ''
-
-
-def get_linked_assets_for_event(event_id, caseid):
-    linked_assets = CaseEventsAssets.query.with_entities(
-        CaseEventsAssets.asset_id
-    ).filter(
-        CaseEventsAssets.event_id == event_id,
-        CaseEventsAssets.case_id == caseid
-    ).all()
-
-    return linked_assets
 
 
 def get_case_assets_for_tm(caseid):

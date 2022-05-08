@@ -43,7 +43,7 @@ from app.util import response_success, response_error, login_required, api_login
 from app.datamgmt.case.case_events_db import get_events_categories, save_event_category, \
     get_default_cat, \
     delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids, \
-    get_case_iocs_for_tm, get_case_assets_for_tm, get_linked_assets_for_event, update_event_iocs, get_event_iocs_ids
+    get_case_iocs_for_tm, get_case_assets_for_tm, update_event_iocs, get_event_iocs_ids
 from app.iris_engine.utils.tracker import track_activity
 
 import urllib.parse
@@ -553,10 +553,12 @@ def event_view(cur_id, caseid):
 
     event_schema = EventSchema()
 
-    linked_assets = get_linked_assets_for_event(cur_id, caseid)
+    linked_assets = get_event_assets_ids(cur_id, caseid)
+    linked_iocs = get_event_iocs_ids(cur_id, caseid)
 
     output = event_schema.dump(event)
-    output['event_assets'] = [asset[0] for asset in linked_assets]
+    output['event_assets'] = linked_assets
+    output['event_iocs'] = linked_iocs
     output['event_category_id'] = event.category[0].id
 
     return response_success(data=output)
@@ -586,15 +588,15 @@ def event_view_modal(cur_id, caseid, url_redir):
     assets = get_case_assets_for_tm(caseid)
     iocs = get_case_iocs_for_tm(caseid)
 
-    assets_prefill = get_linked_assets_for_event(cur_id, caseid)
-
-    assets_prefill = [row[0] for row in assets_prefill]
+    assets_prefill = get_event_assets_ids(cur_id, caseid)
+    iocs_prefill = get_event_iocs_ids(cur_id, caseid)
 
     usr_name, = User.query.filter(User.id == event.user_id).with_entities(User.name).first()
 
     return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
                            assets=assets, iocs=iocs,
-                           assets_prefill=assets_prefill, category=event.category, attributes=event.custom_attributes)
+                           assets_prefill=assets_prefill, iocs_prefill=iocs_prefill,
+                           category=event.category, attributes=event.custom_attributes)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
@@ -757,7 +759,7 @@ def case_duplicate_event(cur_id, caseid):
             save_event_category(event.event_id, old_event_category.category_id)
 
         # Update assets mapping
-        assets_list = get_event_assets_ids(old_event.event_id)
+        assets_list = get_event_assets_ids(old_event.event_id, caseid)
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
                                            assets_list=assets_list)
@@ -765,7 +767,7 @@ def case_duplicate_event(cur_id, caseid):
             return response_error('Error while saving linked iocs', data=log)
 
         # Update iocs mapping
-        iocs_list = get_event_iocs_ids(old_event.event_id)
+        iocs_list = get_event_iocs_ids(old_event.event_id, caseid)
         success, log = update_event_iocs(event_id=event.event_id,
                                          caseid=caseid,
                                          iocs_list=iocs_list)
