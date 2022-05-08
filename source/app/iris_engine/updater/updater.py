@@ -332,7 +332,11 @@ def call_ext_updater(update_archive, scope, need_reboot):
         docker = 1
     else:
         source_dir = Path.cwd().absolute() / 'scripts'
-        target_dir = Path('../../update_server/test_update') # TODO change
+        if app.config["DEVELOPMENT"]:
+            target_dir = Path('../../update_server/test_update')
+        else:
+            target_dir = Path.cwd()
+
         docker = 0
 
     try:
