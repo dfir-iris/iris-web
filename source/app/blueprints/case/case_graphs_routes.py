@@ -26,7 +26,7 @@ from flask import render_template, url_for, redirect
 from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_events_db import get_case_events_graph
+from app.datamgmt.case.case_events_db import get_case_events_assets_graph, get_case_events_ioc_graph
 from app.util import response_success, login_required, api_login_required
 
 case_graph_blueprint = Blueprint('case_graph',
@@ -50,7 +50,8 @@ def case_graph(caseid, url_redir):
 @case_graph_blueprint.route('/case/graph/getdata', methods=['GET'])
 @api_login_required
 def case_graph_get_data(caseid):
-    events = get_case_events_graph(caseid)
+    events = get_case_events_assets_graph(caseid)
+    events.extend(get_case_events_ioc_graph(caseid))
 
     nodes = []
     edges = []
@@ -60,18 +61,29 @@ def case_graph_get_data(caseid):
     }
 
     tmp = {}
-
+    idx = ''
     for event in events:
-        img = ""
-        if event.asset_compromised:
-            img = event.asset_icon_compromised
-            is_master_atype = True
-        elif not event.asset_compromised:
-            img = event.asset_icon_not_compromised
-            is_master_atype = False
-        else:
-            img = 'question-mark.png'
+        if hasattr(event, 'asset_compromised'):
+            if event.asset_compromised:
+                img = event.asset_icon_compromised
+                is_master_atype = True
+            elif not event.asset_compromised:
+                img = event.asset_icon_not_compromised
+                is_master_atype = False
+            else:
+                img = 'question-mark.png'
 
+            if event.asset_ip:
+                title = "{} -{}".format(event.asset_ip, event.asset_description)
+            else:
+                title = "{}".format(event.asset_description)
+            label = event.asset_name
+            idx = f'a{event.asset_id}'
+        else:
+            img = 'virus-covid-solid.png'
+            label = event.ioc_value
+            title = event.ioc_description
+            idx = f'a{event.ioc_id}'
         try:
             date = "{}-{}-{}".format(event.event_date.day, event.event_date.month, event.event_date.year)
         except:
@@ -81,32 +93,27 @@ def case_graph_get_data(caseid):
             dates['human'].append(date)
             dates['machine'].append(datetime.timestamp(event.event_date))
 
-        if event.asset_ip:
-            title = "{} -{}".format(event.asset_ip, event.asset_description)
-        else:
-            title = "{}".format(event.asset_description)
-
         new_node = {
-            'id': event.asset_id,
-            'label': event.asset_name,
+            'id': idx,
+            'label': label,
             'image': '/static/assets/img/graph/' + img,
             'shape': 'image',
             'title': title,
             'value': 1
         }
-        if not any(node['id'] == event.asset_id for node in nodes):
+        if not any(node['id'] == idx for node in nodes):
             nodes.append(new_node)
 
         ak = {
-            'node_id': event.asset_id,
+            'node_id': idx,
             'node_title': "{} -{}".format(event.event_date, event.event_title),
-            'node_name': event.asset_name,
-            'node_type': event.asset_description
+            'node_name': label,
+            'node_type': 'type'
         }
         if tmp.get(event.event_id):
             tmp[event.event_id]['list'].append(ak)
             if is_master_atype:
-                tmp[event.event_id]['master_node'].append(event.asset_id)
+                tmp[event.event_id]['master_node'].append(idx)
         else:
             tmp[event.event_id] = {
                 'master_node': [event.asset_id] if is_master_atype else [],

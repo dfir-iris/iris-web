@@ -21,17 +21,17 @@
 from sqlalchemy import and_
 
 from app.models import CaseAssets, AssetsType, EventCategory, CaseEventCategory, CasesEvent, CaseEventsAssets, Ioc, \
-    IocLink, CaseEventsIoc
+    IocLink, CaseEventsIoc, IocType
 from app import db
 
 
-def get_case_events_graph(caseid):
+def get_case_events_assets_graph(caseid):
     events = CaseEventsAssets.query.with_entities(
         CaseEventsAssets.event_id,
         CasesEvent.event_title,
         CaseAssets.asset_name,
         CaseAssets.asset_id,
-        AssetsType.asset_name.label('asset_type'),
+        AssetsType.asset_name.label('type_name'),
         AssetsType.asset_icon_not_compromised,
         AssetsType.asset_icon_compromised,
         CasesEvent.event_color,
@@ -47,6 +47,27 @@ def get_case_events_graph(caseid):
         CaseEventsAssets.event,
         CaseEventsAssets.asset,
         CaseAssets.asset_type,
+    ).all()
+
+    return events
+
+
+def get_case_events_ioc_graph(caseid):
+    events = CaseEventsIoc.query.with_entities(
+        CaseEventsIoc.event_id,
+        CasesEvent.event_title,
+        CasesEvent.event_date,
+        Ioc.ioc_id,
+        Ioc.ioc_value,
+        Ioc.ioc_description,
+        IocType.type_name
+    ).filter(and_(
+        CaseEventsIoc.case_id == caseid,
+        CasesEvent.event_in_graph == True
+    )).join(
+        CaseEventsIoc.event,
+        CaseEventsIoc.ioc,
+        Ioc.ioc_type,
     ).all()
 
     return events
