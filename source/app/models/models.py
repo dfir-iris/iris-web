@@ -136,6 +136,19 @@ class CaseEventsAssets(db.Model):
     case = relationship('Cases')
 
 
+class CaseEventsIoc(db.Model):
+    __tablename__ = 'case_events_ioc'
+
+    id = Column(Integer, primary_key=True)
+    event_id = Column(ForeignKey('cases_events.event_id'))
+    ioc_id = Column(ForeignKey('ioc.ioc_id'))
+    case_id = Column(ForeignKey('cases.case_id'))
+
+    event = relationship('CasesEvent')
+    ioc = relationship('Ioc')
+    case = relationship('Cases')
+
+
 class ObjectState(db.Model):
     object_id = Column(Integer, primary_key=True)
     object_case_id = Column(ForeignKey('cases.case_id'))
