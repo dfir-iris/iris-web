@@ -61,7 +61,6 @@ def case_graph_get_data(caseid):
     }
 
     tmp = {}
-    idx = ''
     for event in events:
         if hasattr(event, 'asset_compromised'):
             if event.asset_compromised:
@@ -83,7 +82,8 @@ def case_graph_get_data(caseid):
             img = 'virus-covid-solid.png'
             label = event.ioc_value
             title = event.ioc_description
-            idx = f'a{event.ioc_id}'
+            idx = f'b{event.ioc_id}'
+
         try:
             date = "{}-{}-{}".format(event.event_date.day, event.event_date.month, event.event_date.year)
         except:
@@ -135,7 +135,8 @@ def case_graph_get_data(caseid):
                             'from': master_node,
                             'to': subset['node_id'],
                             'title': subset['node_title'],
-                            'color': tmp[event_id]['color']
+                            'color': tmp[event_id]['color'],
+                            'dashes': True
                         }
                         edges.append(edge)
                         node_dedup[master_node].append(subset['node_id'])

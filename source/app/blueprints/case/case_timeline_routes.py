@@ -364,12 +364,13 @@ def case_filter_timeline(caseid):
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
 
-    inner_condition = and_()
-    for ioc in iocs:
-        inner_condition = or_(
-            inner_condition,
-            Ioc.ioc_value == ioc
-        )
+    inner_condition = or_()
+    if iocs is not None:
+        for ioc in iocs:
+            inner_condition = or_(
+                inner_condition,
+                Ioc.ioc_value == ioc
+            )
 
     iocs_cache = CaseEventsIoc.query.with_entities(
         CaseEventsIoc.event_id,
@@ -377,8 +378,7 @@ def case_filter_timeline(caseid):
         Ioc.ioc_value,
         Ioc.ioc_description
     ).filter(
-        and_(CaseEventsIoc.case_id == caseid,
-             inner_condition)
+        CaseEventsIoc.case_id == caseid
     ).join(
         CaseEventsIoc.ioc
     ).all()
@@ -403,16 +403,16 @@ def case_filter_timeline(caseid):
 
     iocs_filter = []
     for ioc in iocs_cache:
-        if ioc.event_id not in iocs_filter:
+        if ioc.event_id not in iocs_filter and ioc.ioc_value in iocs:
             iocs_filter.append(ioc.event_id)
 
     tim = []
     for row in timeline:
-        if assets is not None and len(assets_filter) > 0:
+        if assets is not None:
             if row.event_id not in assets_filter:
                 continue
 
-        if iocs is not None and len(iocs_filter) > 0:
+        if iocs is not None:
             if row.event_id not in iocs_filter:
                 continue
 
