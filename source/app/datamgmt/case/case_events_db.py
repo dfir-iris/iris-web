@@ -20,7 +20,8 @@
 
 from sqlalchemy import and_
 
-from app.models import CaseAssets, AssetsType, EventCategory, CaseEventCategory, CasesEvent, CaseEventsAssets
+from app.models import CaseAssets, AssetsType, EventCategory, CaseEventCategory, CasesEvent, CaseEventsAssets, Ioc, \
+    IocLink
 from app import db
 
 
@@ -161,3 +162,23 @@ def get_case_assets(caseid):
         })
 
     return assets
+
+
+def get_case_iocs_for_tm(caseid):
+    iocs = [{'ioc_value': '', 'ioc_id': '0'}]
+
+    iocs_list = Ioc.query.with_entities(
+        Ioc.ioc_value,
+        Ioc.ioc_id
+    ).filter(
+        IocLink.case_id == caseid
+    ).join(IocLink.ioc
+    ).order_by(Ioc.ioc_value).all()
+
+    for ioc in iocs_list:
+        iocs.append({
+            'ioc_value': "{}".format(ioc.ioc_value),
+            'ioc_id': ioc.ioc_id
+        })
+
+    return iocs
