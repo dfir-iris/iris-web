@@ -5669,7 +5669,7 @@ label {
     line-height: 0.8;
     color: #1572E8;
     transition: all .2s;
-    font-family: 'Font Awesome 5 Solid';
+    font-family: 'FontAwesome';
 }
 
 .form-check [type="checkbox"]:not(:checked)+.form-check-sign:after {
