@@ -124,6 +124,7 @@ class CasesEvent(db.Model):
     event_in_graph = Column(Boolean)
     event_in_summary = Column(Boolean)
     user_id = Column(ForeignKey('user.id'))
+    modification_history = Column(JSONB)
     event_color = Column(Text)
     event_tags = Column(Text)
     event_tz = Column(Text)

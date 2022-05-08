@@ -8074,6 +8074,9 @@ body[data-background-color="dark"] .badge-danger {
 
 .popover .popover-body {
     margin-bottom: 5px;
+    max-height: 60rem;
+    overflow-y: auto;
+    white-space:pre-wrap;
 }
 
 .popover .popover-body p {

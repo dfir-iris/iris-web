@@ -35,6 +35,7 @@ from pyunpack import Archive
 from flask import json, url_for, request, render_template
 from flask_login import current_user
 from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
 from functools import wraps
@@ -360,6 +361,32 @@ def get_random_suffix(length):
     letters = string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
+
+
+def add_obj_history_entry(obj, action):
+    if hasattr(obj, 'modification_history'):
+
+        if isinstance(obj.modification_history, dict):
+
+            obj.modification_history.update({
+                datetime.datetime.now().timestamp(): {
+                    'user': current_user.user,
+                    'user_id': current_user.id,
+                    'action': action
+                }
+            })
+
+        else:
+
+            obj.modification_history = {
+                datetime.datetime.now().timestamp(): {
+                    'user': current_user.user,
+                    'user_id': current_user.id,
+                    'action': action
+                }
+            }
+    flag_modified(obj, "modification_history")
+    return obj
 
 
 # Set basic 404
