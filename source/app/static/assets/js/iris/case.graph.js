@@ -60,24 +60,6 @@ function redrawAll(data) {
     "minVelocity": 0.41,
     "solver": "forceAtlas2Based",
     "timestep": 0.45
-    },
-    groups: {
-        computer: {
-            shape: 'icon',
-            icon: {
-              face: "'Font Awesome 5 Solid'",
-              weight: "bold", // Font Awesome 5 doesn't work properly unless bold.
-              code: '\uf109'
-            }
-        },
-        account: {
-            shape: 'icon',
-            icon: {
-              face: "'Font Awesome 5 Solid'",
-              weight: "bold", // Font Awesome 5 doesn't work properly unless bold.
-              code: '\uf007'
-            }
-        }
     }
   };
 

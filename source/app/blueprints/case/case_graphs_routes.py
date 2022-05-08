@@ -134,8 +134,7 @@ def case_graph_get_data(caseid):
                 'from': subset[0]['node_id'],
                 'to': subset[1]['node_id'],
                 'title': subset[0]['node_title'],
-                'dashes': subset[0]['node_type'] == 'ioc' or subset[1]['node_type'] == 'ioc',
-                'color': 'dark' if subset[0]['node_type'] == 'ioc' or subset[1]['node_type'] == 'ioc' else 'blue'
+                'dashes': subset[0]['node_type'] == 'ioc' or subset[1]['node_type'] == 'ioc'
             }
             edges.append(edge)
 
