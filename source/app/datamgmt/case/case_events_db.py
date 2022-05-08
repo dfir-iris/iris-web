@@ -21,7 +21,7 @@
 from sqlalchemy import and_
 
 from app.models import CaseAssets, AssetsType, EventCategory, CaseEventCategory, CasesEvent, CaseEventsAssets, Ioc, \
-    IocLink
+    IocLink, CaseEventsIoc
 from app import db
 
 
@@ -138,6 +138,35 @@ def update_event_assets(event_id, caseid, assets_list):
 
     db.session.commit()
     return True
+
+
+def update_event_iocs(event_id, caseid, iocs_list):
+
+    CaseEventsAssets.query.filter(
+        CaseEventsAssets.event_id == event_id
+    ).delete()
+
+    for ioc in iocs_list:
+        try:
+            da = CaseEventsIoc.query.filter(
+                CaseEventsIoc.event_id == event_id,
+                CaseEventsIoc.ioc_id == int(ioc),
+                CaseEventsIoc.case_id == caseid
+            ).first()
+
+            if not da:
+                cea = CaseEventsIoc()
+                cea.ioc_id = int(ioc)
+                cea.event_id = event_id
+                cea.case_id = caseid
+
+                db.session.add(cea)
+
+        except Exception as e:
+            return False, str(e)
+
+    db.session.commit()
+    return True, ''
 
 
 def get_linked_assets_for_event(event_id, caseid):

@@ -43,7 +43,7 @@ from app.util import response_success, response_error, login_required, api_login
 from app.datamgmt.case.case_events_db import get_events_categories, save_event_category, \
     get_default_cat, \
     delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids, \
-    get_case_iocs_for_tm, get_case_assets_for_tm, get_linked_assets_for_event
+    get_case_iocs_for_tm, get_case_assets_for_tm, get_linked_assets_for_event, update_event_iocs
 from app.iris_engine.utils.tracker import track_activity
 
 import urllib.parse
@@ -632,6 +632,10 @@ def case_edit_event(cur_id, caseid):
         update_event_assets(event_id=event.event_id,
                             caseid=caseid,
                             assets_list=request_data.get('event_assets'))
+
+        update_event_iocs(event_id=event.event_id,
+                          caseid=caseid,
+                          iocs_list=request_data.get('event_iocs'))
 
         event = call_modules_hook('on_postload_event_update', data=event, caseid=caseid)
 
