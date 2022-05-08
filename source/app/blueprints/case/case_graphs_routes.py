@@ -65,10 +65,12 @@ def case_graph_get_data(caseid):
         if hasattr(event, 'asset_compromised'):
             if event.asset_compromised:
                 img = event.asset_icon_compromised
-                is_master_atype = True
+                #is_master_atype = True
+
             elif not event.asset_compromised:
                 img = event.asset_icon_not_compromised
-                is_master_atype = False
+                #is_master_atype = False
+
             else:
                 img = 'question-mark.png'
 
@@ -78,11 +80,14 @@ def case_graph_get_data(caseid):
                 title = "{}".format(event.asset_description)
             label = event.asset_name
             idx = f'a{event.asset_id}'
+            node_type = 'asset'
+
         else:
             img = 'virus-covid-solid.png'
             label = event.ioc_value
             title = event.ioc_description
             idx = f'b{event.ioc_id}'
+            node_type = 'ioc'
 
         try:
             date = "{}-{}-{}".format(event.event_date.day, event.event_date.month, event.event_date.year)
@@ -106,49 +111,33 @@ def case_graph_get_data(caseid):
 
         ak = {
             'node_id': idx,
-            'node_title': "{} -{}".format(event.event_date, event.event_title),
+            'node_title': "{} - {}".format(event.event_date, event.event_title),
             'node_name': label,
-            'node_type': 'type'
+            'node_type': node_type
         }
         if tmp.get(event.event_id):
             tmp[event.event_id]['list'].append(ak)
-            if is_master_atype:
-                tmp[event.event_id]['master_node'].append(idx)
+
         else:
             tmp[event.event_id] = {
-                'master_node': [event.asset_id] if is_master_atype else [],
+                'master_node':  [],
                 'list': [ak],
                 'color': event.event_color
             }
 
-    node_dedup = {}
     for event_id in tmp:
-        if tmp[event_id]['master_node']:
-            for master_node in tmp[event_id]['master_node']:
-                node_dedup[master_node] = []
-                for subset in tmp[event_id]['list']:
-                    if subset['node_id'] != master_node:
-                        if subset['node_id'] in node_dedup and master_node in node_dedup.get(subset['node_id']):
-                            continue
-
-                        edge = {
-                            'from': master_node,
-                            'to': subset['node_id'],
-                            'title': subset['node_title'],
-                            'color': tmp[event_id]['color'],
-                            'dashes': True
-                        }
-                        edges.append(edge)
-                        node_dedup[master_node].append(subset['node_id'])
-        else:
-            for subset in itertools.combinations(tmp[event_id]['list'], 2):
-                edge = {
-                    'from': subset[0]['node_id'],
-                    'to': subset[1]['node_id'],
-                    'title': subset[0]['node_title'],
-                    'color': tmp[event_id]['color']
-                }
-                edges.append(edge)
+        for subset in itertools.combinations(tmp[event_id]['list'], 2):
+            if subset[0]['node_type'] == 'ioc' and subset[1]['node_type'] == 'ioc':
+                continue
+                
+            edge = {
+                'from': subset[0]['node_id'],
+                'to': subset[1]['node_id'],
+                'title': subset[0]['node_title'],
+                'dashes': subset[0]['node_type'] == 'ioc' or subset[1]['node_type'] == 'ioc',
+                'color': 'dark' if subset[0]['node_type'] == 'ioc' or subset[1]['node_type'] == 'ioc' else 'blue'
+            }
+            edges.append(edge)
 
     resp = {
         'nodes': nodes,

@@ -402,9 +402,10 @@ def case_filter_timeline(caseid):
             assets_filter.append(event_id)
 
     iocs_filter = []
-    for ioc in iocs_cache:
-        if ioc.event_id not in iocs_filter and ioc.ioc_value in iocs:
-            iocs_filter.append(ioc.event_id)
+    if iocs:
+        for ioc in iocs_cache:
+                if ioc.event_id not in iocs_filter and ioc.ioc_value in iocs:
+                    iocs_filter.append(ioc.event_id)
 
     tim = []
     for row in timeline:
