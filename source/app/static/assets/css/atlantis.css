@@ -6850,6 +6850,12 @@ body[data-background-color="dark"] .badge-success {
     color: #ffffff !important;
 }
 
+.badge-warning-event {
+    background: #EED3B28C;
+    color: #000 !important;
+}
+
+
 body[data-background-color="dark"] .badge-warning {
     background: #DF7D03A3;
     color: #ffffff !important;
