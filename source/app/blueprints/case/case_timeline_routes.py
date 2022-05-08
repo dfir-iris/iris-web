@@ -40,8 +40,10 @@ from app.models.cases import Cases, CasesEvent
 from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory
 from app.schema.marshables import EventSchema
 from app.util import response_success, response_error, login_required, api_login_required
-from app.datamgmt.case.case_events_db import get_case_assets, get_events_categories, save_event_category, get_default_cat, \
-    delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids
+from app.datamgmt.case.case_events_db import get_events_categories, save_event_category, \
+    get_default_cat, \
+    delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids, \
+    get_case_iocs_for_tm, get_case_assets_for_tm
 from app.iris_engine.utils.tracker import track_activity
 
 import urllib.parse
@@ -576,7 +578,6 @@ def event_view_modal(cur_id, caseid, url_redir):
         return response_error("Invalid event ID for this case")
 
     form = CaseEventForm()
-    form.event_assets.choices = [("{}".format(c['asset_id']), c['asset_name']) for c in get_case_assets(caseid)]
     form.event_title.render_kw = {'value': event.event_title}
     form.event_content.data = event.event_content
     form.event_raw.data = event.event_raw
@@ -586,6 +587,9 @@ def event_view_modal(cur_id, caseid, url_redir):
 
     categories = get_events_categories()
     form.event_category_id.choices = categories
+
+    assets = get_case_assets_for_tm(caseid)
+    iocs = get_case_iocs_for_tm(caseid)
 
     assets_prefill = CaseEventsAssets.query.with_entities(
         CaseEventsAssets.asset_id
@@ -599,7 +603,7 @@ def event_view_modal(cur_id, caseid, url_redir):
     usr_name, = User.query.filter(User.id == event.user_id).with_entities(User.name).first()
 
     return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
-                           assets=get_case_assets(caseid),
+                           assets=assets, iocs=iocs,
                            assets_prefill=assets_prefill, category=event.category, attributes=event.custom_attributes)
 
 
@@ -657,14 +661,15 @@ def case_add_event_modal(caseid, url_redir):
     event = CasesEvent()
     event.custom_attributes = get_default_custom_attributes('event')
     form = CaseEventForm()
-    assets = get_case_assets(caseid)
+    assets = get_case_assets_for_tm(caseid)
+    iocs = get_case_iocs_for_tm(caseid)
     def_cat = get_default_cat()
     categories = get_events_categories()
     form.event_category_id.choices = categories
     form.event_in_graph.data = True
 
     return render_template("modal_add_case_event.html", form=form, event=event,
-                           tags=event_tags, assets=assets, assets_prefill=None, category=def_cat,
+                           tags=event_tags, assets=assets, iocs=iocs, assets_prefill=None, category=def_cat,
                            attributes=event.custom_attributes)
 
 

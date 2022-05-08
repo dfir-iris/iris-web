@@ -140,7 +140,7 @@ def update_event_assets(event_id, caseid, assets_list):
     return True
 
 
-def get_case_assets(caseid):
+def get_case_assets_for_tm(caseid):
     """
     Return a list of all assets linked to the current case
     :return: Tuple of assets
@@ -172,8 +172,11 @@ def get_case_iocs_for_tm(caseid):
         Ioc.ioc_id
     ).filter(
         IocLink.case_id == caseid
-    ).join(IocLink.ioc
-    ).order_by(Ioc.ioc_value).all()
+    ).join(
+        IocLink.ioc
+    ).order_by(
+        Ioc.ioc_value
+    ).all()
 
     for ioc in iocs_list:
         iocs.append({
