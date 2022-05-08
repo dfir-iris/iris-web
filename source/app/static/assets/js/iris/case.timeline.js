@@ -318,7 +318,7 @@ function build_timeline(data) {
         
         if (evt.iocs != null && evt.iocs.length > 0) {
             for (ioc in evt.iocs) {
-                tags += `<span class="badge badge-warning-event float-right mr-2 mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="IOC: ${sanitizeHTML(evt.iocs[ioc].description)}"><i class="fas fa-bug"></i> ${sanitizeHTML(evt.iocs[ioc].name)}</span>`;
+                tags += `<span class="badge badge-warning-event float-right mr-2 mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="IOC - ${sanitizeHTML(evt.iocs[ioc].description)}"><i class="fa-solid fa-virus-covid"></i> ${sanitizeHTML(evt.iocs[ioc].name)}</span>`;
             }
         }
 
