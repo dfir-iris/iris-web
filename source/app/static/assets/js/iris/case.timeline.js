@@ -662,7 +662,6 @@ function timelineToCsvWithUI(){
     for (index in current_timeline) {
 
         item = current_timeline[index];
-        console.log(item);
         content = item.event_content.replace(/"/g, '\"');
         content_parsed = content.replace(/(\r?\n)+/g, ' - ');
         title = item.event_title.replace(/"/g, '\"');
