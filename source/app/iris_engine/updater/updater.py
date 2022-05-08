@@ -342,8 +342,8 @@ def call_ext_updater(update_archive, scope, need_reboot):
                           target_dir.as_posix(),            # Target directory of update
                           archive_name,                     # Root directory of the archive
                           scope[0],                        # Scope of the update
-                          "1" if docker else "0",                           # Are we in docker ?
-                          "1" if need_reboot else "0",                      # Do we need to restart the app
+                          '1' if docker else '0',                           # Are we in docker ?
+                          '1' if need_reboot else '0',                      # Do we need to restart the app
                           '&'])
 
     except Exception as e :

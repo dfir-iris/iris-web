@@ -27,7 +27,7 @@ rsync -av --checksum $TMP_DIR/$3/source/ $2
 echo "Done"
 
 # If need reboot
-if [[ $6 ]]
+if [[ $6 -eq 1 ]]
 then
 
   # cd to update directory
