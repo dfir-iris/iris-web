@@ -629,13 +629,17 @@ def case_edit_event(cur_id, caseid):
 
         setattr(event, 'event_category_id', request_data.get('event_category_id'))
 
-        update_event_assets(event_id=event.event_id,
-                            caseid=caseid,
-                            assets_list=request_data.get('event_assets'))
+        success, log = update_event_assets(event_id=event.event_id,
+                                           caseid=caseid,
+                                           assets_list=request_data.get('event_assets'))
+        if not success:
+            return response_error('Error while saving linked assets', data=log)
 
-        update_event_iocs(event_id=event.event_id,
-                          caseid=caseid,
-                          iocs_list=request_data.get('event_iocs'))
+        success, log = update_event_iocs(event_id=event.event_id,
+                                         caseid=caseid,
+                                         iocs_list=request_data.get('event_iocs'))
+        if not success:
+            return response_error('Error while saving linked iocs', data=log)
 
         event = call_modules_hook('on_postload_event_update', data=event, caseid=caseid)
 

@@ -133,11 +133,12 @@ def update_event_assets(event_id, caseid, assets_list):
                 cea.case_id = caseid
 
                 db.session.add(cea)
+
         except Exception as e:
-            pass
+            return False, str(e)
 
     db.session.commit()
-    return True
+    return True, ''
 
 
 def update_event_iocs(event_id, caseid, iocs_list):
