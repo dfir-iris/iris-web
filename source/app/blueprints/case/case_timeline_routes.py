@@ -693,7 +693,17 @@ def case_add_event(caseid):
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
-        save_event_category(event.event_id, request_data.get('event_category_id'))
+        success, log = update_event_assets(event_id=event.event_id,
+                                           caseid=caseid,
+                                           assets_list=request_data.get('event_assets'))
+        if not success:
+            return response_error('Error while saving linked assets', data=log)
+
+        success, log = update_event_iocs(event_id=event.event_id,
+                                         caseid=caseid,
+                                         iocs_list=request_data.get('event_iocs'))
+        if not success:
+            return response_error('Error while saving linked iocs', data=log)
 
         setattr(event, 'event_category_id', request_data.get('event_category_id'))
 
