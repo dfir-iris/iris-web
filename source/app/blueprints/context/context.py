@@ -66,7 +66,7 @@ def iris_version():
 @app.context_processor
 def has_updates():
 
-    if not current_user.is_authenticated and current_user.is_admin():
+    if not current_user.is_authenticated or current_user.is_admin():
         return dict(has_updates=False)
 
     server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()

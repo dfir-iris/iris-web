@@ -35,6 +35,7 @@ from pyunpack import Archive
 from flask import json, url_for, request, render_template
 from flask_login import current_user
 from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
 from functools import wraps
@@ -384,7 +385,9 @@ def add_obj_history_entry(obj, action):
                     'action': action
                 }
             }
+    flag_modified(obj, "modification_history")
     return obj
+
 
 # Set basic 404
 @app.errorhandler(404)
