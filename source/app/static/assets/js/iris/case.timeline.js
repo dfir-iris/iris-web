@@ -250,6 +250,7 @@ function build_timeline(data) {
                 {value: 'title:', score: 10, meta: 'Match title of events'},
                 {value: 'source:', score: 10, meta: 'Match source of events'},
                 {value: 'raw:', score: 10, meta: 'Match raw data of events'},
+                {value: 'ioc', score: 10, meta: "Match ioc in events"},
                 {value: 'AND ', score: 10, meta: 'AND operator'}
               ]
 
@@ -317,7 +318,7 @@ function build_timeline(data) {
         
         if (evt.iocs != null && evt.iocs.length > 0) {
             for (ioc in evt.iocs) {
-                tags += `<span class="badge badge-warning-event float-right mr-2 mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${sanitizeHTML(evt.iocs[ioc].description)}">${sanitizeHTML(evt.iocs[ioc].name)}</span>`;
+                tags += `<span class="badge badge-warning-event float-right mr-2 mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="IOC: ${sanitizeHTML(evt.iocs[ioc].description)}"><i class="fas fa-bug"></i> ${sanitizeHTML(evt.iocs[ioc].name)}</span>`;
             }
         }
 
@@ -351,9 +352,9 @@ function build_timeline(data) {
                 cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                 cpn = sanitizeHTML(cpn)
                 if (evt.assets[ide]["compromised"]) {
-                    asset += `<span class="badge badge-warning-event mr-2 float-right link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
+                    asset += `<span class="badge badge-warning-event mr-2 float-right link_asset mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
                 } else {
-                    asset += `<span class="badge badge-light mr-2 float-right link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
+                    asset += `<span class="badge badge-light mr-2 float-right link_asset mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
                 }
             }
         }
@@ -670,7 +671,7 @@ function split_bool(split_str) {
 }
 
 var parsed_filter = {};
-var keywords = ['asset', 'tag', 'title', 'description', 'raw', 'category', 'source', 'startDate', 'endDate'];
+var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'startDate', 'endDate'];
 
 
 function parse_filter(str_filter, keywords) {
@@ -713,7 +714,7 @@ function filter_timeline() {
 }
 
 function apply_filtering() {
-    keywords = ['asset', 'tag', 'title', 'description', 'category', 'source',  'raw', 'startDate', 'endDate'];
+    keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'category', 'source',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));

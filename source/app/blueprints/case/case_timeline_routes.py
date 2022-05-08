@@ -268,6 +268,7 @@ def case_filter_timeline(caseid):
         return response_error('Invalid query string')
 
     assets = filter_d.get('asset')
+    iocs = filter_d.get('ioc')
     tags = filter_d.get('tag')
     descriptions = filter_d.get('description')
     categories = filter_d.get('category')
@@ -281,6 +282,9 @@ def case_filter_timeline(caseid):
 
     if assets:
         assets = [asset.lower() for asset in assets]
+
+    if iocs:
+        iocs = [ioc.lower() for ioc in iocs]
 
     if tags:
         for tag in tags:
@@ -360,6 +364,25 @@ def case_filter_timeline(caseid):
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
 
+    inner_condition = and_()
+    for ioc in iocs:
+        inner_condition = or_(
+            inner_condition,
+            Ioc.ioc_value == ioc
+        )
+
+    iocs_cache = CaseEventsIoc.query.with_entities(
+        CaseEventsIoc.event_id,
+        CaseEventsIoc.ioc_id,
+        Ioc.ioc_value,
+        Ioc.ioc_description
+    ).filter(
+        and_(CaseEventsIoc.case_id == caseid,
+             inner_condition)
+    ).join(
+        CaseEventsIoc.ioc
+    ).all()
+
     assets_map = {}
     cache = {}
     for asset in assets_cache:
@@ -378,10 +401,19 @@ def case_filter_timeline(caseid):
         if assets_map[event_id] == len(assets):
             assets_filter.append(event_id)
 
+    iocs_filter = []
+    for ioc in iocs_cache:
+        if ioc.event_id not in iocs_filter:
+            iocs_filter.append(ioc.event_id)
+
     tim = []
     for row in timeline:
         if assets is not None and len(assets_filter) > 0:
             if row.event_id not in assets_filter:
+                continue
+
+        if iocs is not None and len(iocs_filter) > 0:
+            if row.event_id not in iocs_filter:
                 continue
 
         ras = row._asdict()
@@ -403,6 +435,21 @@ def case_filter_timeline(caseid):
                 )
 
         ras['assets'] = alki
+
+        alki = []
+        for ioc in iocs_cache:
+            if ioc.event_id == ras['event_id']:
+                if ioc.ioc_id not in cache:
+                    cache[ioc.ioc_id] = [ioc.ioc_value]
+
+                alki.append(
+                    {
+                        "name": "{}".format(ioc.ioc_value),
+                        "description": ioc.ioc_description
+                    }
+                )
+
+        ras['iocs'] = alki
 
         tim.append(ras)
 

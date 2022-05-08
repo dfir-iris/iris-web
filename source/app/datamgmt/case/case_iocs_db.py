@@ -23,7 +23,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.datamgmt.states import update_ioc_state
-from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType, CustomAttribute
+from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType, CustomAttribute, CaseEventsIoc
 from app import db
 
 
@@ -89,6 +89,10 @@ def delete_ioc(ioc, caseid):
 
     IocAssetLink.query.filter(
         IocAssetLink.ioc_id == ioc.ioc_id
+    ).delete()
+
+    CaseEventsIoc.query.filter(
+        CaseEventsIoc.ioc_id == ioc.ioc_id
     ).delete()
 
     db.session.delete(ioc)
