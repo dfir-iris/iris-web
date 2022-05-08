@@ -362,6 +362,30 @@ def get_random_suffix(length):
     return result_str
 
 
+def add_obj_history_entry(obj, action):
+    if hasattr(obj, 'modification_history'):
+
+        if isinstance(obj.modification_history, dict):
+
+            obj.modification_history.update({
+                datetime.datetime.now().timestamp(): {
+                    'user': current_user.user,
+                    'user_id': current_user.id,
+                    'action': action
+                }
+            })
+
+        else:
+
+            obj.modification_history = {
+                datetime.datetime.now().timestamp(): {
+                    'user': current_user.user,
+                    'user_id': current_user.id,
+                    'action': action
+                }
+            }
+    return obj
+
 # Set basic 404
 @app.errorhandler(404)
 def page_not_found(e):

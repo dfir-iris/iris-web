@@ -192,6 +192,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
     event_tz = fields.String(required=True, allow_none=False)
     event_category_id = fields.Integer(required=True, allow_none=False)
     event_date_wtz = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
+    modification_history = auto_field('modification_history', required=False, readonly=True)
 
     class Meta:
         model = CasesEvent

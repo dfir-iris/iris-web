@@ -121,7 +121,6 @@ class CasesEvent(db.Model):
     event_raw = Column(Text)
     event_date = Column(DateTime)
     event_added = Column(DateTime)
-    event_updated = Column(DateTime)
     event_in_graph = Column(Boolean)
     event_in_summary = Column(Boolean)
     user_id = Column(ForeignKey('user.id'))

@@ -39,7 +39,7 @@ from app.iris_engine.utils.common import parse_bf_date_format
 from app.models.cases import Cases, CasesEvent
 from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory, CaseEventsIoc
 from app.schema.marshables import EventSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.util import response_success, response_error, login_required, api_login_required, add_obj_history_entry
 from app.datamgmt.case.case_events_db import get_events_categories, save_event_category, \
     get_default_cat, \
     delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids, \
@@ -714,8 +714,7 @@ def case_edit_event(cur_id, caseid):
             )
 
         event.case_id = caseid
-        event.event_added = datetime.utcnow()
-        event.user_id = current_user.id
+        add_obj_history_entry(event, 'updated')
 
         update_timeline_state(caseid=caseid)
         db.session.commit()
@@ -783,6 +782,8 @@ def case_add_event(caseid):
         event.case_id = caseid
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
+
+        add_obj_history_entry(event, 'created')
 
         db.session.add(event)
         update_timeline_state(caseid=caseid)
