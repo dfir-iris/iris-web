@@ -293,7 +293,7 @@ function build_timeline(data) {
                + escapeRegExp(sanitizeHTML(ioc_list[ioc]['ioc_value']))
                + avoid_inception_end
                ,"g");
-        replacement = '$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc]['ioc_description']) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc]['ioc_value']) + '</span> $3';
+        replacement = `$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="${sanitizeHTML(ioc_list[ioc]['ioc_description'])}" title="IOC">${sanitizeHTML(ioc_list[ioc]['ioc_value'])}</span> $3`;
         reap.push([re, replacement]);
     }
     idx = 0;
@@ -309,9 +309,9 @@ function build_timeline(data) {
 
         /* If IOC then build a tag */
         if(evt.category_name && evt.category_name != 'Unspecified') {
-            tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
+            tags += `<span class="badge badge-light ml-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
             if (evt.category_name != 'Unspecified') {
-                cats += '<span class="badge badge-light mr-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
+                cats += `<span class="badge badge-light mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
             }
         }
 
@@ -338,16 +338,16 @@ function build_timeline(data) {
                 cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                 cpn = sanitizeHTML(cpn)
                 if (evt.assets[ide]["compromised"]) {
-                    asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
+                    asset += `<span class="text-warning-high mr-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>${sanitizeHTML(evt.assets[ide]["name"])}</span>|`;
                 } else {
-                    asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '">'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
+                    asset += `<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>|`;
                 }
             }
         }
 
         ori_date = '<span class="ml-3"></span>';
         if (evt.event_date_wtz != evt.event_date) {
-            ori_date += `<i class="fas fa-info-circle mr-1" title="Locale date time ` + evt.event_date_wtz + evt.event_tz + `"></i>`
+            ori_date += `<i class="fas fa-info-circle mr-1" title="Locale date time ${evt.event_date_wtz}${evt.event_tz}"></i>`
         }
 
         if(evt.event_in_summary) {
@@ -361,7 +361,7 @@ function build_timeline(data) {
         if (evt.event_tags != null) {
         sp_tag = evt.event_tags.split(',');
         for (tag_i in sp_tag) {
-                tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(sp_tag[tag_i]) + '</span>';
+                tags += `<span class="badge badge-light ml-2 mb-1">${sanitizeHTML(sp_tag[tag_i])}</span>`;
             }
         }
 
@@ -370,9 +370,9 @@ function build_timeline(data) {
         if (!tmb.includes(day)) {
             tmb.push(day);
             if (!compact) {
-                tmb_d = '<div class="time-badge" id="time_'+ idx +'"><small class="text-muted">'+ day + '</small><br/></div>';
+                tmb_d = `<div class="time-badge" id="time_${idx}"><small class="text-muted">${day}</small><br/></div>`;
             } else {
-                tmb_d = '<div class="time-badge-compact" id="time_'+ idx +'"><small class="text-muted">'+ day + '</small><br/></div>';
+                tmb_d = `<div class="time-badge-compact" id="time_${idx}"><small class="text-muted">${day}</small><br/></div>`;
             }
             idx += 1;
             mtop_day = 'mt-4';
@@ -393,12 +393,10 @@ function build_timeline(data) {
                     short_content = match_replace_ioc(content_parsed.slice(0, 150 + offset), reap);
                     long_content = match_replace_ioc(content_parsed.slice(150 + offset), reap);
                 }
-                formatted_content = short_content + `<div class="collapse" id="collapseContent-`
-                    + evt.event_id + `">
-                    `+ long_content +`
+                formatted_content = short_content + `<div class="collapse" id="collapseContent-${evt.event_id}">
+                ${long_content}
                 </div>
-                <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-`
-                    + evt.event_id + `" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
+                <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
             } else {
                 formatted_content = match_replace_ioc(content_parsed, reap);
             }
