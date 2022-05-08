@@ -741,6 +741,13 @@ function filter_timeline() {
     window.location = new_path;
 }
 
+function reset_filters() {
+    current_path = location.protocol + '//' + location.host + location.pathname;
+    new_path = current_path + case_param();
+    window.location = new_path;
+}
+
+
 function apply_filtering() {
     keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'category', 'source',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
