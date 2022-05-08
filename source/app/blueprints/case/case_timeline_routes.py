@@ -37,7 +37,7 @@ from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.models.cases import Cases, CasesEvent
-from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory
+from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory, CaseEventsIoc
 from app.schema.marshables import EventSchema
 from app.util import response_success, response_error, login_required, api_login_required
 from app.datamgmt.case.case_events_db import get_events_categories, save_event_category, \
@@ -208,6 +208,16 @@ def case_gettimeline_api(asset_id, caseid):
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset).all()
 
+    iocs_cache = CaseEventsIoc.query.with_entities(
+        Ioc.ioc_id,
+        Ioc.ioc_value,
+        CaseEventsIoc.event_id
+    ).filter(
+        CaseEventsIoc.case_id == caseid
+    ).join(
+        CaseEventsIoc.ioc
+    ).all()
+
     tim = []
     for row in timeline:
         ras = row._asdict()
@@ -223,7 +233,16 @@ def case_gettimeline_api(asset_id, caseid):
 
                 alki.append(asset._asdict())
 
-        ras['assets'] = alki
+        alki = []
+        cache = {}
+        for ioc in iocs_cache:
+            if ioc.event_id == ras['event_id']:
+                if ioc.ioc_id not in cache:
+                    cache[ioc.ioc_id] = ioc.ioc_value
+
+                alki.append(ioc._asdict())
+
+        ras['iocs'] = alki
 
         tim.append(ras)
 
@@ -458,6 +477,17 @@ def case_gettimeline(asset_id, caseid):
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
 
+    iocs_cache = CaseEventsIoc.query.with_entities(
+        Ioc.ioc_id,
+        Ioc.ioc_value,
+        Ioc.ioc_description,
+        CaseEventsIoc.event_id
+    ).filter(
+        CaseEventsIoc.case_id == caseid
+    ).join(
+        CaseEventsIoc.ioc
+    ).all()
+
     tim = []
     cache = {}
     for row in timeline:
@@ -481,6 +511,21 @@ def case_gettimeline(asset_id, caseid):
                 )
 
         ras['assets'] = alki
+
+        alki = []
+        for ioc in iocs_cache:
+            if ioc.event_id == ras['event_id']:
+                if ioc.ioc_id not in cache:
+                    cache[ioc.ioc_id] = [ioc.ioc_value]
+
+                alki.append(
+                    {
+                        "name": "{}".format(ioc.ioc_value),
+                        "description": ioc.ioc_description
+                    }
+                )
+
+        ras['iocs'] = alki
 
         tim.append(ras)
 

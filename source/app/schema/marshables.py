@@ -187,6 +187,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 class EventSchema(ma.SQLAlchemyAutoSchema):
     event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
     event_assets = fields.List(fields.Integer, required=True, allow_none=False)
+    event_iocs = fields.List(fields.Integer, required=True, allow_none=False)
     event_date = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=True, allow_none=False)
     event_tz = fields.String(required=True, allow_none=False)
     event_category_id = fields.Integer(required=True, allow_none=False)
@@ -223,6 +224,12 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             ast = CaseAssets.query.filter(CaseAssets.asset_id == asset).count()
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid assets ID",
+                                                             field_name="event_assets")
+
+        for ioc in data.get('event_iocs'):
+            ast = Ioc.query.filter(Ioc.ioc_id == ioc).count()
+            if not ast:
+                raise marshmallow.exceptions.ValidationError("Invalid IOC ID",
                                                              field_name="event_assets")
 
         return data

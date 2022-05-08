@@ -111,7 +111,7 @@ def get_event_assets_ids(event_id, caseid):
         CaseEventsAssets.case_id == caseid
     ).all()
 
-    return [x for x in assets_list]
+    return [x[0] for x in assets_list]
 
 
 def get_event_iocs_ids(event_id, caseid):
@@ -122,31 +122,25 @@ def get_event_iocs_ids(event_id, caseid):
         CaseEventsIoc.case_id == caseid
     ).all()
 
-    return [x for x in iocs_list]
+    return [x[0] for x in iocs_list]
 
 
 def update_event_assets(event_id, caseid, assets_list):
 
     CaseEventsAssets.query.filter(
-        CaseEventsAssets.event_id == event_id
+        CaseEventsAssets.event_id == event_id,
+        CaseEventsAssets.case_id == caseid
     ).delete()
 
     for asset in assets_list:
         try:
 
-            da = CaseEventsAssets.query.filter(
-                CaseEventsAssets.event_id == event_id,
-                CaseEventsAssets.asset_id == int(asset),
-                CaseEventsAssets.case_id == caseid
-            ).first()
+            cea = CaseEventsAssets()
+            cea.asset_id = int(asset)
+            cea.event_id = event_id
+            cea.case_id = caseid
 
-            if not da:
-                cea = CaseEventsAssets()
-                cea.asset_id = int(asset)
-                cea.event_id = event_id
-                cea.case_id = caseid
-
-                db.session.add(cea)
+            db.session.add(cea)
 
         except Exception as e:
             return False, str(e)
@@ -157,25 +151,20 @@ def update_event_assets(event_id, caseid, assets_list):
 
 def update_event_iocs(event_id, caseid, iocs_list):
 
-    CaseEventsAssets.query.filter(
-        CaseEventsAssets.event_id == event_id
+    CaseEventsIoc.query.filter(
+        CaseEventsIoc.event_id == event_id,
+        CaseEventsIoc.case_id == caseid
     ).delete()
 
     for ioc in iocs_list:
         try:
-            da = CaseEventsIoc.query.filter(
-                CaseEventsIoc.event_id == event_id,
-                CaseEventsIoc.ioc_id == int(ioc),
-                CaseEventsIoc.case_id == caseid
-            ).first()
 
-            if not da:
-                cea = CaseEventsIoc()
-                cea.ioc_id = int(ioc)
-                cea.event_id = event_id
-                cea.case_id = caseid
+            cea = CaseEventsIoc()
+            cea.ioc_id = int(ioc)
+            cea.event_id = event_id
+            cea.case_id = caseid
 
-                db.session.add(cea)
+            db.session.add(cea)
 
         except Exception as e:
             return False, str(e)

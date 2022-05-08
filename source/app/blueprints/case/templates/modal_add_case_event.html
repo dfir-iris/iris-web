@@ -259,3 +259,12 @@ $('#event_category_id').selectpicker({
         $('#event_assets').trigger('change');
     </script>
 {% endif %}
+
+{% if iocs_prefill %}
+    <script>
+        $('#event_iocs').val([
+            {% for ioc in iocs_prefill %} {{ ioc }}, {% endfor %}
+        ]);
+        $('#event_iocs').trigger('change');
+    </script>
+{% endif %}
