@@ -140,6 +140,17 @@ def update_event_assets(event_id, caseid, assets_list):
     return True
 
 
+def get_linked_assets_for_event(event_id, caseid):
+    linked_assets = CaseEventsAssets.query.with_entities(
+        CaseEventsAssets.asset_id
+    ).filter(
+        CaseEventsAssets.event_id == event_id,
+        CaseEventsAssets.case_id == caseid
+    ).all()
+
+    return linked_assets
+
+
 def get_case_assets_for_tm(caseid):
     """
     Return a list of all assets linked to the current case

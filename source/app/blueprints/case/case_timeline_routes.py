@@ -43,7 +43,7 @@ from app.util import response_success, response_error, login_required, api_login
 from app.datamgmt.case.case_events_db import get_events_categories, save_event_category, \
     get_default_cat, \
     delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids, \
-    get_case_iocs_for_tm, get_case_assets_for_tm
+    get_case_iocs_for_tm, get_case_assets_for_tm, get_linked_assets_for_event
 from app.iris_engine.utils.tracker import track_activity
 
 import urllib.parse
@@ -553,12 +553,7 @@ def event_view(cur_id, caseid):
 
     event_schema = EventSchema()
 
-    linked_assets = CaseEventsAssets.query.with_entities(
-        CaseEventsAssets.asset_id
-    ).filter(
-        CaseEventsAssets.event_id == cur_id,
-        CaseEventsAssets.case_id == caseid
-    ).all()
+    linked_assets = get_linked_assets_for_event(cur_id, caseid)
 
     output = event_schema.dump(event)
     output['event_assets'] = [asset[0] for asset in linked_assets]
@@ -591,12 +586,7 @@ def event_view_modal(cur_id, caseid, url_redir):
     assets = get_case_assets_for_tm(caseid)
     iocs = get_case_iocs_for_tm(caseid)
 
-    assets_prefill = CaseEventsAssets.query.with_entities(
-        CaseEventsAssets.asset_id
-    ).filter(
-        CaseEventsAssets.event_id == cur_id,
-        CaseEventsAssets.case_id == caseid
-    ).all()
+    assets_prefill = get_linked_assets_for_event(cur_id, caseid)
 
     assets_prefill = [row[0] for row in assets_prefill]
 
