@@ -782,8 +782,6 @@ class CeleryTaskMeta(db.Model):
     retries = Column(Integer)
     queue = Column(String(155))
 
-    def __repr__(self):
-        return str(self.id) + ' - ' + str(self.user)
 
 
 def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):

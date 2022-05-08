@@ -175,14 +175,14 @@ def dim_hooks_call(caseid):
 @dim_tasks_blueprint.route('/dim/tasks/list', methods=['GET'])
 @api_login_required
 def list_dim_tasks(caseid):
-    tasks = CeleryTaskMeta.query.order_by(desc(CeleryTaskMeta.date_done)).limit(200).all()
+    tasks = CeleryTaskMeta.query.order_by(desc(CeleryTaskMeta.date_done)).limit(10000).all()
 
     data = []
 
     for row in tasks:
-        task = app.celery.AsyncResult(row.task_id)
 
         tkp = {}
+        print(dir(row))
         tkp['state'] = row.status
         tkp['case'] = "Unknown"
         tkp['module'] = row.name
@@ -191,36 +191,44 @@ def list_dim_tasks(caseid):
         tkp['user'] = "Unknown"
 
         try:
-            tinfo = task.info
+            tinfo = row.result
         except AttributeError:
             # Legacy task
             data.append(tkp)
             continue
 
-        if 'task_hook_wrapper' in row.name:
-            task_name = f"{task.kwargs.get('module_name')}::{task.kwargs.get('hook_name')}"
+        if row.name is not None and 'app.iris_engine.updater.updater.' in row.name:
+            continue
+
+        if row.name is not None and 'task_hook_wrapper' in row.name:
+             task_name = f"{row.kwargs}::{row.kwargs}"
         else:
-            task_name = task.name
+            task_name = row.name
 
-        if task.kwargs:
-            user = task.kwargs.get('init_user')
-            case_name = f"Case #{task.kwargs.get('caseid')}"
-        else:
-            user = "Shadow Iris"
-            case_name = "Unknown"
+        user = None
+        case_name = None
+        if row.kwargs and row.kwargs != b'{}':
+            kwargs = json.loads(row.kwargs.decode('utf-8'))
+            if kwargs:
+                user = kwargs.get('init_user')
+                case_name = f"Case #{kwargs.get('caseid')}"
+                task_name = f"{kwargs.get('module_name')}::{kwargs.get('hook_name')}"
 
-        if isinstance(task.result, IIStatus):
+        try:
+            result = pickle.loads(row.result)
+        except:
+            result = None
 
+        if isinstance(result, IIStatus):
             try:
-                success = task.result.is_success()
+                success = result.is_success()
             except:
                 success = None
-
         else:
             success = None
 
-        tkp['state'] = "success" if success else str(task.result)
-        tkp['user'] = user
+        tkp['state'] = "success" if success else str(row.result)
+        tkp['user'] = user if user else "Shadow Iris"
         tkp['module'] = task_name
         tkp['case'] = case_name if case_name else ""
 
@@ -232,14 +240,14 @@ def list_dim_tasks(caseid):
 @dim_tasks_blueprint.route('/dim/tasks/limited-list', methods=['GET'])
 @api_login_required
 def list_limited_dim_tasks(caseid):
-    tasks = CeleryTaskMeta.query.order_by(desc(CeleryTaskMeta.date_done)).limit(40).all()
+    tasks = CeleryTaskMeta.query.order_by(desc(CeleryTaskMeta.date_done)).limit(100).all()
 
     data = []
 
     for row in tasks:
-        task = app.celery.AsyncResult(row.task_id)
 
         tkp = {}
+        print(dir(row))
         tkp['state'] = row.status
         tkp['case'] = "Unknown"
         tkp['module'] = row.name
@@ -248,36 +256,44 @@ def list_limited_dim_tasks(caseid):
         tkp['user'] = "Unknown"
 
         try:
-            tinfo = task.info
+            tinfo = row.result
         except AttributeError:
             # Legacy task
             data.append(tkp)
             continue
 
-        if 'task_hook_wrapper' in row.name:
-            task_name = f"{task.kwargs.get('module_name')}::{task.kwargs.get('hook_name')}"
+        if row.name is not None and 'app.iris_engine.updater.updater.' in row.name:
+            continue
+
+        if row.name is not None and 'task_hook_wrapper' in row.name:
+             task_name = f"{row.kwargs}::{row.kwargs}"
         else:
-            task_name = task.name
+            task_name = row.name
 
-        if task.kwargs:
-            user = task.kwargs.get('init_user')
-            case_name = f"Case #{task.kwargs.get('caseid')}"
-        else:
-            user = "Shadow Iris"
-            case_name = "Unknown"
+        user = None
+        case_name = None
+        if row.kwargs and row.kwargs != b'{}':
+            kwargs = json.loads(row.kwargs.decode('utf-8'))
+            if kwargs:
+                user = kwargs.get('init_user')
+                case_name = f"Case #{kwargs.get('caseid')}"
+                task_name = f"{kwargs.get('module_name')}::{kwargs.get('hook_name')}"
 
-        if isinstance(task.result, IIStatus):
+        try:
+            result = pickle.loads(row.result)
+        except:
+            result = None
 
+        if isinstance(result, IIStatus):
             try:
-                success = task.result.is_success()
+                success = result.is_success()
             except:
                 success = None
-
         else:
             success = None
 
-        tkp['state'] = "success" if success else str(task.result)
-        tkp['user'] = user
+        tkp['state'] = "success" if success else str(row.result)
+        tkp['user'] = user if user else "Shadow Iris"
         tkp['module'] = task_name
         tkp['case'] = case_name if case_name else ""
 
