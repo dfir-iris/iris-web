@@ -345,11 +345,15 @@ def case_filter_timeline(caseid):
             CasesEvent.event_content,
             CasesEvent.event_in_summary,
             CasesEvent.event_in_graph,
+            User.user,
+            CasesEvent.event_added,
             EventCategory.name.label("category_name")
         ).filter(condition).order_by(
             CasesEvent.event_date
         ).outerjoin(
             CasesEvent.category
+        ).join(
+            CasesEvent.user
         ).all()
 
     assets_cache = CaseAssets.query.with_entities(
@@ -421,6 +425,7 @@ def case_filter_timeline(caseid):
 
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S')
 
         alki = []
         for asset in assets_cache:
@@ -506,11 +511,15 @@ def case_gettimeline(asset_id, caseid):
             CasesEvent.event_content,
             CasesEvent.event_in_summary,
             CasesEvent.event_in_graph,
+            User.user,
+            CasesEvent.event_added,
             EventCategory.name.label("category_name")
         ).filter(condition).order_by(
             CasesEvent.event_date
         ).outerjoin(
             CasesEvent.category
+        ).join(
+            CasesEvent.user
         ).all()
 
     assets_cache = CaseAssets.query.with_entities(
@@ -542,6 +551,7 @@ def case_gettimeline(asset_id, caseid):
         ras = row._asdict()
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S.%f')
 
         alki = []
         for asset in assets_cache:
