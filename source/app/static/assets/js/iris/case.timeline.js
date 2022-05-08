@@ -407,13 +407,13 @@ function build_timeline(data) {
         shared_link = buildShareLink(evt.event_id);
 
         if (compact) {
-            entry = `<li class="timeline-inverted `+ mtop_day +`" title="Event ID #`+ evt.event_id + `">
-                ` + tmb_d + `
-                    <div class="timeline-panel `+ style +`" `+ style_s +` id="event_`+ evt.event_id + `" >
+            entry = `<li class="timeline-inverted ${mtop_day} " title="Event ID #${evt.event_id}">
+                ${tmb_d}
+                    <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
-                                ` + cats + `
-                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
+                                ${cats}
+                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
                                     <span class="btn-label">
                                         <i class="fa fa-pen"></i>
                                     </span>
@@ -424,37 +424,37 @@ function build_timeline(data) {
                                     </span>
                                 </button>
                                 <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(`+ evt.event_id +`);return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
+                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                         <div class="dropdown-divider"></div>
-                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
                                 </div>
                             </div>
-                            <div class="collapsed" id="dropa_`+ evt.event_id +`" data-toggle="collapse" data-target="#drop_`+ evt.event_id +`" aria-expanded="false" aria-controls="drop_`+ evt.event_id +`" role="button" style="cursor: pointer;">
-                                <span class="text-muted text-sm float-left mb--2"><small>`+ evt.event_date + `</small></span>
-                                <a class="text-dark text-sm ml-3" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
+                            <div class="collapsed" id="dropa_${evt.event_id}" data-toggle="collapse" data-target="#drop_${evt.event_id}" aria-expanded="false" aria-controls="drop_${evt.event_id}" role="button" style="cursor: pointer;">
+                                <span class="text-muted text-sm float-left mb--2"><small>${evt.event_date}</small></span>
+                                <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
-                            <div id="drop_`+ evt.event_id +`" class="collapse" aria-labelledby="dropa_`+ evt.event_id +`" style="">
+                            <div id="drop_${evt.event_id}" class="collapse" aria-labelledby="dropa_${evt.event_id}" style="">
                                 <div class="card-body">
-                                    `+ content_parsed +`
+                                ${content_parsed}
                                 </div>
                                 <div class="bottom-hour mt-2">
-                                    <span class="float-right">`+ asset + tags +`</span>
+                                    <span class="float-right">${asset}${tags}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </li>`
         } else {
-            entry = `<li class="timeline-inverted" title="Event ID #`+ evt.event_id + `">
-                ` + tmb_d + `
-                    <div class="timeline-panel `+ style +`" `+ style_s +` id="event_`+ evt.event_id + `" >
+            entry = `<li class="timeline-inverted" title="Event ID #${evt.event_id}">
+                    ${tmb_d}
+                    <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
 
-                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
+                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
                                     <span class="btn-label">
                                         <i class="fa fa-pen"></i>
                                     </span>
@@ -465,22 +465,22 @@ function build_timeline(data) {
                                     </span>
                                 </button>
                                 <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(`+ evt.event_id +`);return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
+                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                         <div class="dropdown-divider"></div>
-                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
                                 </div>
                             </div>
                             <div class="row mb-2">
-                                <a class="timeline-title" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
+                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
-                            <span>` + formatted_content + `</span>
+                            <span>${formatted_content}</span>
                         </div>
                         <div class="bottom-hour mt-2">
-                            <span class="float-right">`+ asset + tags +`</span>
-                            <span class="text-muted text-sm float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>`+ evt.event_date + ori_date + `</small></span>
+                            <span class="float-right">${asset}${tags}</span>
+                            <span class="text-muted text-sm float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${evt.event_date}${ori_date}</small></span>
                         <div>
                     </div>
                 </li>`
