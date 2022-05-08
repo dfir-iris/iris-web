@@ -82,11 +82,13 @@ def delete_event_category(event_id):
         CaseEventCategory.event_id == event_id
     ).delete()
 
+
 def get_event_category(event_id):
     cec = CaseEventCategory.query.filter(
         CaseEventCategory.event_id == event_id
     ).first()
     return cec
+
 
 def save_event_category(event_id, category_id):
     CaseEventCategory.query.filter(
@@ -109,6 +111,16 @@ def get_event_assets_ids(event_id):
     ).all()
 
     return [x for x in assets_list]
+
+
+def get_event_iocs_ids(event_id):
+    iocs_list = CaseEventsIoc.query.with_entities(
+        CaseEventsIoc.ioc_id
+    ).filter(
+        CaseEventsIoc.event_id == event_id
+    ).all()
+
+    return [x for x in iocs_list]
 
 
 def update_event_assets(event_id, caseid, assets_list):

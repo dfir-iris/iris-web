@@ -43,7 +43,7 @@ from app.util import response_success, response_error, login_required, api_login
 from app.datamgmt.case.case_events_db import get_events_categories, save_event_category, \
     get_default_cat, \
     delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids, \
-    get_case_iocs_for_tm, get_case_assets_for_tm, get_linked_assets_for_event, update_event_iocs
+    get_case_iocs_for_tm, get_case_assets_for_tm, get_linked_assets_for_event, update_event_iocs, get_event_iocs_ids
 from app.iris_engine.utils.tracker import track_activity
 
 import urllib.parse
@@ -758,9 +758,19 @@ def case_duplicate_event(cur_id, caseid):
 
         # Update assets mapping
         assets_list = get_event_assets_ids(old_event.event_id)
-        update_event_assets(event_id=event.event_id,
-                            caseid=caseid,
-                            assets_list=assets_list)
+        success, log = update_event_assets(event_id=event.event_id,
+                                           caseid=caseid,
+                                           assets_list=assets_list)
+        if not success:
+            return response_error('Error while saving linked iocs', data=log)
+
+        # Update iocs mapping
+        iocs_list = get_event_iocs_ids(old_event.event_id)
+        success, log = update_event_iocs(event_id=event.event_id,
+                                         caseid=caseid,
+                                         iocs_list=iocs_list)
+        if not success:
+            return response_error('Error while saving linked iocs', data=log)
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
