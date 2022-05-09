@@ -3,6 +3,13 @@ function reload_assets() {
     get_case_assets();
 }
 
+function add_asset_save_notify_btn() {
+    $('#submit_new_asset').text('Saving data..')
+        .attr("disabled", true)
+        .removeClass('bt-outline-success')
+        .addClass('btn-success', 'text-dark');
+}
+
 /* Fetch a modal that is compatible with the requested asset type */
 function add_asset() {
     url = 'assets/add/modal' + case_param();
@@ -29,47 +36,27 @@ function add_asset() {
 
             data['custom_attributes'] = attributes;
 
-            $.ajax({
-                url: 'assets/add' + case_param(),
-                type: "POST",
-                data: JSON.stringify(data),
-                contentType: "application/json;charset=UTF-8",
-                dataType: "json",
-                beforeSend: function () {
-                    $('#submit_new_asset').text('Saving data..')
-                        .attr("disabled", true)
-                        .removeClass('bt-outline-success')
-                        .addClass('btn-success', 'text-dark');
-                },
-                complete: function () {
-                    $('#submit_new_asset')
-                        .attr("disabled", false)
-                        .addClass('bt-outline-success')
-                        .removeClass('btn-success', 'text-dark');
-                },
-                success: function (data) {
+            post_request_wrapper('assets/add', JSON.stringify(data), true, add_asset_save_notify_btn)
+            .done(function (data) {
                     if (data.status == 'success') {
-                        swal("Done !",
-                        "Your asset has been created successfully",
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            reload_assets();
-                            $('#modal_add_asset').modal('hide');
-
-                        });
+                        $('#modal_add_asset').modal('hide');
+                        notify_success("Asset created");
+                        reload_assets();
                     } else {
                         $('#submit_new_asset').text('Save again');
                         swal("Oh no !", data.message, "error")
                     }
-                },
-                error: function (error) {
+                })
+            .always(function () {
+                    $('#submit_new_asset')
+                        .attr("disabled", false)
+                        .addClass('bt-outline-success')
+                        .removeClass('btn-success', 'text-dark');
+                })
+            .fail(function (error) {
                     $('#submit_new_asset').text('Save');
                     propagate_form_api_errors(error.responseJSON.data);
-                }
-            });
+            })
 
             return false;
         })

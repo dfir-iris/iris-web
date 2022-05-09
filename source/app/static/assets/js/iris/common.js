@@ -68,6 +68,12 @@ function propagate_form_api_errors(data_error) {
 }
 
 function ajax_notify_error(jqXHR, textStatus, errorThrown) {
+    if (textStatus === undefined) {
+        textStatus = jqXHR.status;
+    }
+    if (errorThrown === undefined ) {
+        errorThrown = jqXHR.statusText;
+    }
     message = `<b>We got error ${jqXHR.status}</b><br/>${textStatus} - ${errorThrown}`;
     notify_error(message);
 }
@@ -109,7 +115,7 @@ function notify_success(message) {
     }, {
         type: 'success',
         placement: {
-            from: 'bottom',
+            from: 'top',
             align: 'right'
         },
         z_index: 2000,
@@ -121,18 +127,42 @@ function notify_success(message) {
     });
 }
 
-function get_request_wrapper(uri, success_fn) {
-    request_wrapper(uri, 'GET', success_fn);
+function get_request_wrapper(uri, propagate_api_error, beforeSend_fn) {
+    return $.ajax({
+        url: uri + case_param(),
+        type: 'GET',
+        dataType: "json",
+        beforeSend: function(jqXHR, settings) { beforeSend_fn(jqXHR, settings); },
+        error: function(jqXHR, textStatus, errorThrown) {
+            if (propagate_api_error) {
+                propagate_form_api_errors(jqXHR.responseJSON.data);
+
+            } else {
+                ajax_notify_error(jqXHR, textStatus, errorThrown);
+            }
+        }
+    });
 }
 
-function request_wrapper(uri, method, success_fn) {
-    $.ajax({
+function post_request_wrapper(uri, data, propagate_api_error, beforeSend_fn) {
+   return $.ajax({
         url: uri + case_param(),
-        type: method,
+        type: 'POST',
+        data: data,
         dataType: "json",
-        success: function(data) { success_fn(data); },
-        error: function(jqXHR, textStatus, errorThrown) {
-            ajax_notify_error(jqXHR, textStatus, errorThrown);
+        contentType: "application/json;charset=UTF-8",
+        beforeSend: function(jqXHR, settings) { beforeSend_fn(jqXHR, settings); },
+        error: function(jqXHR) {
+            if (propagate_api_error) {
+                if(jqXHR.responseJSON) {
+                    propagate_form_api_errors(jqXHR.responseJSON.data);
+                } else {
+                    console.log(jqXHR);
+                    ajax_notify_error(jqXHR);
+                }
+            } else {
+                ajax_notify_error(jqXHR, textStatus, errorThrown);
+            }
         }
     });
 }

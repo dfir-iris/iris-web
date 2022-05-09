@@ -65,20 +65,20 @@ $("#activities_table").css("font-size", 12);
 
 
 function get_activities () {
-    function load_draw_dim_table(jsdata) {
-        if (jsdata.status == "success") {
-            content = jsdata.data;
+
+    get_request_wrapper('/dim/tasks/list/1000')
+    .done( function(data) {
+         if (data.status == "success") {
+            content = data.data;
             Table.clear();
             Table.rows.add(content);
             Table.columns.adjust().draw();
             $('#feed_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
             hide_loader();
         } else {
-            $('#modal_customer_message').text(jsdata.message);
+            $('#modal_customer_message').text(data.message);
         }
-    }
-
-    get_request_wrapper('/dim/tasks/list/1000', load_draw_dim_table);
+    });
 
 }
 
