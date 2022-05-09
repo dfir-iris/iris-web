@@ -3,17 +3,15 @@ function reload_assets() {
     get_case_assets();
 }
 
-function add_asset_save_notify_btn() {
-    $('#submit_new_asset').text('Saving data..')
-        .attr("disabled", true)
-        .removeClass('bt-outline-success')
-        .addClass('btn-success', 'text-dark');
-}
 
 /* Fetch a modal that is compatible with the requested asset type */
 function add_asset() {
     url = 'assets/add/modal' + case_param();
-    $('#modal_add_asset_content').load(url, function () {
+    $('#modal_add_asset_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#ioc_links').select2({});
 
@@ -36,26 +34,31 @@ function add_asset() {
 
             data['custom_attributes'] = attributes;
 
-            post_request_wrapper('assets/add', JSON.stringify(data), true, add_asset_save_notify_btn)
+            post_request_api('assets/add', JSON.stringify(data), true, function() {
+                    $('#submit_new_asset').text('Saving data..')
+                    .attr("disabled", true)
+                    .removeClass('bt-outline-success')
+                    .addClass('btn-success', 'text-dark');
+            })
             .done(function (data) {
-                    if (data.status == 'success') {
-                        $('#modal_add_asset').modal('hide');
-                        notify_success("Asset created");
-                        reload_assets();
-                    } else {
-                        $('#submit_new_asset').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                })
+                if (data.status == 'success') {
+                    reload_assets();
+                    $('#modal_add_asset').modal('hide');
+                    notify_success("Asset created");
+                } else {
+                    $('#submit_new_asset').text('Save again');
+                    swal("Oh no !", data.message, "error")
+                }
+            })
             .always(function () {
-                    $('#submit_new_asset')
-                        .attr("disabled", false)
-                        .addClass('bt-outline-success')
-                        .removeClass('btn-success', 'text-dark');
-                })
+                $('#submit_new_asset')
+                    .attr("disabled", false)
+                    .addClass('bt-outline-success')
+                    .removeClass('btn-success', 'text-dark');
+            })
             .fail(function (error) {
-                    $('#submit_new_asset').text('Save');
-                    propagate_form_api_errors(error.responseJSON.data);
+                $('#submit_new_asset').text('Save');
+                propagate_form_api_errors(error.responseJSON.data);
             })
 
             return false;
@@ -257,59 +260,63 @@ Table.on( 'responsive-resize', function ( e, datatable, columns ) {
 function get_case_assets() {
     show_loader();
 
-    get_request_wrapper('/case/assets/list')
+    get_request_api('/case/assets/list')
     .done(function (response) {
-            if (response.status == 'success') {
-                if (response.data != null) {
-                    jsdata = response.data;
-                    Table.clear();
-                    Table.rows.add(jsdata.assets);
-                    Table.columns.adjust().draw();
-                    load_menu_mod_options('asset', Table);
+        if (response.status == 'success') {
+            if (response.data != null) {
+                jsdata = response.data;
+                Table.clear();
+                Table.rows.add(jsdata.assets);
+                Table.columns.adjust().draw();
+                load_menu_mod_options('asset', Table);
 
-                    set_last_state(jsdata.state);
-                    hide_loader();
-                    $('#assets_table').on('click', function(e){
-                        if($('.popover-link').length>1)
-                            $('.popover-link').popover('hide');
-                            $(e.target).popover('toggle');
-                        });
+                set_last_state(jsdata.state);
+                hide_loader();
+                $('#assets_table').on('click', function(e){
+                    if($('.popover-link').length>1)
+                        $('.popover-link').popover('hide');
+                        $(e.target).popover('toggle');
+                    });
 
-                } else {
-                    Table.clear().draw();
-                    swal("Oh no !", data.message, "error")
-                }
             } else {
-                Table.clear().draw()
+                Table.clear().draw();
+                swal("Oh no !", data.message, "error")
             }
-        })
+        } else {
+            Table.clear().draw()
+        }
+    })
 }
 
 /* Delete an asset */
 function delete_asset(asset_id) {
-    get_request_wrapper('assets/delete/' + asset_id)
+    get_request_api('assets/delete/' + asset_id)
     .done(function (data) {
-            if (data.status == 'success') {
+        if (data.status == 'success') {
 
-                $('#modal_add_asset').modal('hide');
-                notify_success('Asset deleted');
-                reload_assets();
+            reload_assets();
+            $('#modal_add_asset').modal('hide');
+            notify_success('Asset deleted');
 
-            } else {
 
-                swal("Oh no !", data.message, "error")
+        } else {
 
-            }
-        })
+            swal("Oh no !", data.message, "error")
+
+        }
+    })
 }
-
 
 
 /* Fetch the details of an asset and allow modification */
 function asset_details(asset_id) {
 
     url = 'assets/' + asset_id + '/modal' + case_param();
-    $('#modal_add_asset_content').load(url, function () {
+    $('#modal_add_asset_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#ioc_links').select2({});
 
@@ -347,17 +354,17 @@ function asset_details(asset_id) {
 
             data['custom_attributes'] = attributes;
 
-            post_request_wrapper('assets/update/' + asset_id, JSON.stringify(data),  true)
+            post_request_api('assets/update/' + asset_id, JSON.stringify(data),  true)
             .done(function (data) {
-                    if (data.status == 'success') {
-                        $('#modal_add_asset').modal('hide');
-                        notify_success('Asset updated');
-                        reload_assets();
-                    } else {
-                        $('#submit_new_asset').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                })
+                if (data.status == 'success') {
+                    reload_assets();
+                    $('#modal_add_asset').modal('hide');
+                    notify_success('Asset updated');
+                } else {
+                    $('#submit_new_asset').text('Save again');
+                    swal("Oh no !", data.message, "error")
+                }
+            })
 
             return false;
         })
@@ -383,18 +390,18 @@ function upload_assets() {
         data['csrf_token'] = $('#csrf_token').val();
         data['CSVData'] = fileData;
 
-        post_request_wrapper('/case/assets/upload', JSON.stringify(data), true)
+        post_request_api('/case/assets/upload', JSON.stringify(data), true)
         .done(function (data) {
-                jsdata = data;
-                if (jsdata.status == "success") {
-                    reload_assets();
-                    $('#modal_upload_assets').modal('hide');
-                    swal("Got news for you", data.message, "success");
+            jsdata = data;
+            if (jsdata.status == "success") {
+                reload_assets();
+                $('#modal_upload_assets').modal('hide');
+                swal("Got news for you", data.message, "success");
 
-                } else {
-                    swal("Got bad news for you", data.message, "error");
-                }
-            })
+            } else {
+                swal("Got bad news for you", data.message, "error");
+            }
+        })
 
     };
     reader.readAsText(file)

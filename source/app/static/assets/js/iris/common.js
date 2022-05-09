@@ -67,14 +67,8 @@ function propagate_form_api_errors(data_error) {
     }
 }
 
-function ajax_notify_error(jqXHR, textStatus, errorThrown) {
-    if (textStatus === undefined) {
-        textStatus = jqXHR.status;
-    }
-    if (errorThrown === undefined ) {
-        errorThrown = jqXHR.statusText;
-    }
-    message = `<b>We got error ${jqXHR.status}</b><br/>${textStatus} - ${errorThrown}`;
+function ajax_notify_error(jqXHR, url) {
+    message = `We got error ${jqXHR.status} - ${jqXHR.statusText} requesting ${url}`;
     notify_error(message);
 }
 
@@ -88,46 +82,58 @@ function notify_error(message) {
     } else {
         data = message;
     }
+    data = sanitizeHTML(data);
     $.notify({
         icon: 'fas fa-times',
-        title: 'Error',
         message: data
     }, {
         type: 'danger',
         placement: {
-            from: 'top',
-            align: 'right'
+            from: 'bottom',
+            align: 'left'
         },
-        time: 8000,
         z_index: 2000,
+        time: 8000,
         animate: {
-            enter: 'animate__animated animate__fadeIn',
-            exit: 'animate__animated animate__fadeOut'
+            enter: 'animated fadeIn',
+            exit: 'animated fadeOut'
         }
     });
 }
 
 function notify_success(message) {
+    message = sanitizeHTML(message);
     $.notify({
         icon: 'fas fa-check',
-        title: 'Done',
         message: message,
     }, {
         type: 'success',
         placement: {
-            from: 'top',
-            align: 'right'
+            from: 'bottom',
+            align: 'left'
         },
         z_index: 2000,
-        time: 2000,
+        time: 6000,
         animate: {
-                    enter: 'animate__animated animate__fadeIn',
-                    exit: 'animate__animated animate__fadeOut'
+                    enter: 'animated fadeIn',
+                    exit: 'animated fadeOut'
         }
     });
 }
 
-function get_request_wrapper(uri, propagate_api_error, beforeSend_fn) {
+function notify_auto_api(data, silent_success) {
+    if (data.status == 'success') {
+        if (silent_success === undefined) {
+            notify_success(data.message);
+        }
+        return true;
+    } else {
+        notify_error(data.message);
+        return false;
+    }
+}
+
+function get_request_api(uri, propagate_api_error, beforeSend_fn) {
     return $.ajax({
         url: uri + case_param(),
         type: 'GET',
@@ -137,18 +143,56 @@ function get_request_wrapper(uri, propagate_api_error, beforeSend_fn) {
                 beforeSend_fn(jqXHR, settings);
             }
         },
-        error: function(jqXHR, textStatus, errorThrown) {
+        error: function(jqXHR) {
             if (propagate_api_error) {
-                propagate_form_api_errors(jqXHR.responseJSON.data);
-
+                if(jqXHR.responseJSON && jqXHR.status == 400) {
+                    propagate_form_api_errors(jqXHR.responseJSON.data);
+                } else {
+                    ajax_notify_error(jqXHR, this.url);
+                }
             } else {
-                ajax_notify_error(jqXHR, textStatus, errorThrown);
+                if(jqXHR.responseJSON) {
+                    notify_error(jqXHR.responseJSON.message);
+                } else {
+                    ajax_notify_error(jqXHR, this.url);
+                }
             }
         }
     });
 }
 
-function post_request_wrapper(uri, data, propagate_api_error, beforeSend_fn) {
+
+function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
+    return $.ajax({
+        url: uri + case_param(),
+        type: 'GET',
+        data: data,
+        dataType: "json",
+        beforeSend: function(jqXHR, settings) {
+            if (beforeSend_fn !== undefined) {
+                beforeSend_fn(jqXHR, settings);
+            }
+        },
+        error: function(jqXHR) {
+            if (propagate_api_error) {
+                if(jqXHR.responseJSON && jqXHR.status == 400) {
+                    propagate_form_api_errors(jqXHR.responseJSON.data);
+                } else {
+                    ajax_notify_error(jqXHR, this.url);
+                }
+            } else {
+                if(jqXHR.responseJSON) {
+                    notify_error(jqXHR.responseJSON.message);
+                } else {
+                    ajax_notify_error(jqXHR, this.url);
+                }
+            }
+        }
+    });
+}
+
+
+function post_request_api(uri, data, propagate_api_error, beforeSend_fn) {
    return $.ajax({
         url: uri + case_param(),
         type: 'POST',
@@ -162,14 +206,17 @@ function post_request_wrapper(uri, data, propagate_api_error, beforeSend_fn) {
         },
         error: function(jqXHR) {
             if (propagate_api_error) {
-                if(jqXHR.responseJSON) {
+                if(jqXHR.responseJSON && jqXHR.status == 400) {
                     propagate_form_api_errors(jqXHR.responseJSON.data);
                 } else {
-                    console.log(jqXHR);
-                    ajax_notify_error(jqXHR);
+                    ajax_notify_error(jqXHR, this.url);
                 }
             } else {
-                ajax_notify_error(jqXHR);
+                if(jqXHR.responseJSON) {
+                    notify_error(jqXHR.responseJSON.message);
+                } else {
+                    ajax_notify_error(jqXHR, this.url);
+                }
             }
         }
     });
@@ -225,38 +272,22 @@ $('#submit_set_context').click(function () {
     var data_sent = new Object();
     data_sent.ctx = $('#user_context').val();
     data_sent.ctx_h = $("#user_context option:selected").text();
-    $.ajax({
-        url: '/context/set?cid=' + data_sent.ctx,
-        type: "POST",
-        data: data_sent,
-        dataType: "json",
-        success: function (data) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                $('#modal_switch_context').modal('hide');
-                swal({
-                    title: 'Context changed successfully',
-                    text: 'Reloading...',
-                    icon: 'success',
-                    timer: 500,
-                    buttons: false,
-                })
-                    .then(() => {
-                        var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
-                        window.history.replaceState('', '', newURL);
-                        location.reload();
-                    })
-            } else {
-                swal({
-                    title: 'Ooops',
-                    text: jsdata.message,
-                    icon: 'error',
-                    buttons: true,
-                })
-            }
-        },
-        error: function (error) {
-            notify_error(error);
+    post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
+    .done(function (data) {
+        if(notify_auto_api(data, true)) {
+            $('#modal_switch_context').modal('hide');
+            swal({
+                title: 'Context changed successfully',
+                text: 'Reloading...',
+                icon: 'success',
+                timer: 500,
+                buttons: false,
+            })
+            .then(() => {
+                var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
+                window.history.replaceState('', '', newURL);
+                location.reload();
+            })
         }
     });
 });
@@ -314,24 +345,11 @@ $('#form_add_tasklog').submit(function () {
     event.stopImmediatePropagation();
     var data = $('form#form_add_tasklog').serializeObject();
     data['csrf_token'] = $('#csrf_token').val();
-    $.ajax({
-        url: '/case/tasklog/add' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                $('#modal_add_tasklog').modal('hide');
-                notify_success("Task log registered");
-            } else {
-                notify_error("Unable to add task log. " + jsdata.message)
-            }
-        },
-        error: function (error) {
-            notify_error(error.responseJSON.message);
-            propagate_form_api_errors(error.responseJSON.data);
+
+    post_request_api('/case/tasklog/add', JSON.stringify(data), true)
+    .done(function (data){
+        if(notify_auto_api(data)){
+            $('#modal_add_tasklog').modal('hide');
         }
     });
     return false;
@@ -372,16 +390,18 @@ function check_update(url) {
                             }
                         }
                     }
-                ).then((value) => {
-                    switch (value) {
-                        case "dash":
-                            location.reload();
-                            break;
+                    ).then((value) => {
+                        switch (value) {
+                            case "dash":
+                                location.reload();
+                                break;
 
-                        default:
-                            location.reload();
-                    }
-                });
+                            default:
+                                location.reload();
+                        }
+                    });
+                } else {
+                    notify_error('Connection with server lost');
                 }
             }
         });
@@ -457,65 +477,61 @@ function copy_object_link(node_id) {
 }
 
 function load_case_activity(){
-    $.ajax({
-        url: '/case/activities/list' + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-                js_data = data.data;
-                $('#case_activities').empty();
-                for (index in js_data) {
+    get_request_api('/case/activities/list')
+    .done(function (data) {
+        js_data = data.data;
+        $('#case_activities').empty();
+        for (index in js_data) {
 
-                    if (js_data[index].is_from_api) {
-                        api_flag = 'feed-item-primary';
-                        title = 'Activity issued from API';
-                    } else {
-                        api_flag = 'feed-item-default';
-                        title = 'Activity issued from GUI';
-                    }
-
-                    entry =	`<li class="feed-item ${api_flag}" title='${sanitizeHTML(title)}'>
-							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
-							<span class="text">${sanitizeHTML(js_data[index].name)} - ${sanitizeHTML(js_data[index].activity_desc)}</span>
-						    </li>`
-                    $('#case_activities').append(entry);
-                }
+            if (js_data[index].is_from_api) {
+                api_flag = 'feed-item-primary';
+                title = 'Activity issued from API';
+            } else {
+                api_flag = 'feed-item-default';
+                title = 'Activity issued from GUI';
             }
+
+            entry =	`<li class="feed-item ${api_flag}" title='${sanitizeHTML(title)}'>
+                    <time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
+                    <span class="text">${sanitizeHTML(js_data[index].name)} - ${sanitizeHTML(js_data[index].activity_desc)}</span>
+                    </li>`
+            $('#case_activities').append(entry);
+        }
     });
 }
 
 
 function load_dim_limited_tasks(){
-    $.ajax({
-        url: '/dim/tasks/list/100' + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-                js_data = data.data;
-                $('#dim_tasks_feed').empty();
-                for (index in js_data) {
+    get_request_api('/dim/tasks/list/100')
+    .done(function (data) {
+        js_data = data.data;
+        $('#dim_tasks_feed').empty();
+        for (index in js_data) {
 
-                    if (js_data[index].state == 'success') {
-                        api_flag = 'feed-item-success';
-                        title = 'Task succeeded';
-                    } else {
-                        api_flag = 'feed-item-warning';
-                        title = 'Task pending or failed';
-                    }
-
-                    entry =	`<li class="feed-item ${api_flag}" title='${title}'>
-							<time class="date" datetime="${js_data[index].activity_date}">${js_data[index].date_done}</time>
-							<span class="text" title="${js_data[index].task_id}"><a href="#" onclick='dim_task_status("${js_data[index].task_id}");return false;'>${js_data[index].module}</a> - ${js_data[index].user}</span>
-						    </li>`
-                    $('#dim_tasks_feed').append(entry);
-                }
+            if (js_data[index].state == 'success') {
+                api_flag = 'feed-item-success';
+                title = 'Task succeeded';
+            } else {
+                api_flag = 'feed-item-warning';
+                title = 'Task pending or failed';
             }
+
+            entry =	`<li class="feed-item ${api_flag}" title='${title}'>
+                    <time class="date" datetime="${js_data[index].activity_date}">${js_data[index].date_done}</time>
+                    <span class="text" title="${js_data[index].task_id}"><a href="#" onclick='dim_task_status("${js_data[index].task_id}");return false;'>${js_data[index].module}</a> - ${js_data[index].user}</span>
+                    </li>`
+            $('#dim_tasks_feed').append(entry);
+        }
     });
 }
 
 function dim_task_status(id) {
     url = '/dim/tasks/status/'+id + case_param();
-    $('#info_dim_task_modal_body').load(url, function(){
+    $('#info_dim_task_modal_body').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
         $('#modal_dim_task_detail').modal({show:true});
     });
 }
@@ -545,50 +561,30 @@ function init_module_processing(rows, hook_name, hook_ui_name, module_name, data
         }
     }
 
-    $.ajax({
-        url: "/dim/hooks/call" + case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        dataType: 'json',
-        success: function (response) {
-            if (response.status == 'success') {
-                    notify_success('Data sent to module');
-            }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
-        }
+    post_request_api("/dim/hooks/call", JSON.stringify(data), true)
+    .done(function (data){
+        notify_auto_api(data)
     });
 }
 
 function load_menu_mod_options_modal(element_id, data_type, anchor) {
-
-    $.ajax({
-        url: '/dim/hooks/options/'+ data_type +'/list' + case_param(),
-        type: "GET",
-        dataType: 'json',
-        success: function (response) {
-            if (response.status == 'success') {
-                if (response.data != null) {
-                    jsdata = response.data;
-                    if (jsdata.length != 0) {
-                        anchor.append('<div class="dropdown-divider"></div>');
-                    }
-                    for (option in jsdata) {
-                        opt = jsdata[option];
-                        menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
-                                    `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
-                        anchor.append(menu_opt);
-                    }
+    get_request_api('/dim/hooks/options/'+ data_type +'/list')
+    .done(function (data){
+        if(notify_auto_api(data, true)) {
+            if (data.data != null) {
+                jsdata = data.data;
+                if (jsdata.length != 0) {
+                    anchor.append('<div class="dropdown-divider"></div>');
+                }
+                for (option in jsdata) {
+                    opt = jsdata[option];
+                    menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
+                                `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+                    anchor.append(menu_opt);
                 }
             }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
         }
-    });
+    })
 }
 
 function get_row_id(row) {
@@ -625,52 +621,45 @@ function load_menu_mod_options(data_type, table) {
         items: [],
     };
 
-    $.ajax({
-        url: "/dim/hooks/options/"+ data_type +"/list" + case_param(),
-        type: "GET",
-        dataType: 'json',
-        success: function (response) {
-            if (response.status == 'success') {
-                if (response.data != null) {
-                    jsdata = response.data;
+    get_request_api("/dim/hooks/options/"+ data_type +"/list")
+    .done(function (data) {
+        if(notify_auto_api(data, true)) {
+            if (data.data != null) {
+                jsdata = data.data;
 
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Share',
+                    multi: false,
+                    iconClass: 'fas fa-share',
+                    buttonClasses: ['btn', 'btn-outline-primary'],
+                    action: function(rows){
+                        row = rows[0];
+                        copy_object_link(get_row_id(row));
+                    }
+                });
+                actionOptions.items.push({
+                    type: 'divider',
+                });
+                for (option in jsdata) {
+                    opt = jsdata[option];
                     actionOptions.items.push({
                         type: 'option',
-                        title: 'Share',
-                        multi: false,
-                        iconClass: 'fas fa-share',
+                        title: opt.manual_hook_ui_name,
+                        multi: true,
+                        multiTitle: opt.manual_hook_ui_name,
+                        iconClass: 'fas fa-arrow-alt-circle-right',
                         buttonClasses: ['btn', 'btn-outline-primary'],
-                        action: function(rows){
-                            row = rows[0];
-                            copy_object_link(get_row_id(row));
-                        }
-                    });
-                    actionOptions.items.push({
-                        type: 'divider',
-                    });
-                    for (option in jsdata) {
-                        opt = jsdata[option];
-                        actionOptions.items.push({
-                            type: 'option',
-                            title: opt.manual_hook_ui_name,
-                            multi: true,
-                            multiTitle: opt.manual_hook_ui_name,
-                            iconClass: 'fas fa-arrow-alt-circle-right',
-                            buttonClasses: ['btn', 'btn-outline-primary'],
-                            contextMenuClasses: ['text-dark'],
-                            action: function (rows) {
-                                init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
-                            },
-                        })
-                    }
-                    table.contextualActions(actionOptions);
+                        contextMenuClasses: ['text-dark'],
+                        action: function (rows) {
+                            init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
+                        },
+                    })
                 }
+                table.contextualActions(actionOptions);
             }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
         }
-    });
+    })
 }
 
 function get_custom_attributes_fields() {

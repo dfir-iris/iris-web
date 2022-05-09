@@ -66,7 +66,7 @@ $("#activities_table").css("font-size", 12);
 
 function get_activities () {
 
-    get_request_wrapper('/dim/tasks/list/1000')
+    get_request_api('/dim/tasks/list/1000')
     .done( function(data) {
          if (data.status == "success") {
             content = data.data;

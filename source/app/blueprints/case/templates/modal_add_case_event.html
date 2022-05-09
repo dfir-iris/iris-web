@@ -1,7 +1,7 @@
 <div class="modal-header">
         <h4 class="modal-title mt-1 mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
             {% if event.modification_history %}
-                <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history"
+                <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
                         title="Modifications history"
                         data-content="{% for mod in event.modification_history %}
 <code id='mh-{{loop.index}}'></code> -  {{ event.modification_history[mod].action }} by {{ event.modification_history[mod].user }}<br/>{% endfor %}">
@@ -254,6 +254,11 @@ $('#event_category_id').selectpicker({
         ]);
         $('#event_category_id').trigger('change');
     </script>
+{% else %}
+    <script>
+        $('#event_category_id').val(1);
+        $('#event_category_id').trigger('change');
+    </script>
 {% endif %}
 
 {% if assets_prefill %}
@@ -280,7 +285,6 @@ $('#event_category_id').selectpicker({
         {% for mod in event.modification_history %}
             di = new Date({{mod}} * 1000).toLocaleString();
             $('#mh-{{loop.index}}').text(di);
-            console.log(di);
         {% endfor %}
    })
 </script>

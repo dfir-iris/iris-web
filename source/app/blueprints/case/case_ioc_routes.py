@@ -120,7 +120,7 @@ def case_add_ioc(caseid):
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
         if link_existed:
-            return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
+            return response_success("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
 
         if not link_existed:
             ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)

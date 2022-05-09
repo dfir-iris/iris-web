@@ -103,7 +103,12 @@ var buttons = new $.fn.dataTable.Buttons(Table, {
 /* Fetch a modal that allows to add an event */
 function add_task() {
     url = 'tasks/add/modal' + case_param();
-    $('#modal_add_task_content').load(url, function () {
+    $('#modal_add_task_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
         $('#submit_new_task').on("click", function () {
 
             clear_api_error();
@@ -123,36 +128,14 @@ function add_task() {
 
             data_sent['custom_attributes'] = attributes;
 
-            $.ajax({
-                url: 'tasks/add' + case_param(),
-                type: "POST",
-                data: JSON.stringify(data_sent),
-                contentType: "application/json;charset=UTF-8",
-                dataType: "json",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("Done !",
-                        "Your task has been created successfully",
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            get_tasks();
-                            $('#modal_add_task').modal('hide');
-
-                        });
-                    } else {
-                        $('#submit_new_task').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    $('#submit_new_task').text('Save');
-                    propagate_form_api_errors(error.responseJSON.data);
+            post_request_api('tasks/add', JSON.stringify(data_sent), true)
+            .done(function (data) {
+                if(notify_auto_api(data)) {
+                    get_tasks();
+                    $('#modal_add_task').modal('hide');
                 }
             });
-        
+
             return false;
         })
 
@@ -180,33 +163,11 @@ function update_task(id) {
 
     data_sent['custom_attributes'] = attributes;
 
-    $.ajax({
-        url: 'tasks/update/' + id + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                "Updated successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    get_tasks();
-                    $('#modal_add_task').modal('hide');
-
-                });
-            } else {
-                $('#submit_new_task').text('Save again');
-                swal("Oh no !", data.message, "error");
-            }
-        },
-        error: function (error) {
-            $('#submit_new_task').text('Save');
-            propagate_form_api_errors(error.responseJSON.data);
+    post_request_api('tasks/update/' + id, JSON.stringify(data_sent), true)
+    .done(function (data) {
+        if(notify_auto_api(data)) {
+            get_tasks();
+            $('#modal_add_task').modal('hide');
         }
     });
 }
@@ -214,27 +175,11 @@ function update_task(id) {
 /* Delete an event from the timeline thank to its id */ 
 function delete_task(id) {
 
-    $.ajax({
-        url: "tasks/delete/" + id + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                        "Your task has been deleted successfully",
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                    );
-                get_tasks();
-                $('#modal_add_task').modal('hide');
-            } else {
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            notify_error("Oh no !", error.statusText, "error")
+    get_request_api("tasks/delete/" + id)
+    .done(function (data) {
+        if(notify_auto_api(data)) {
+            get_tasks();
+            $('#modal_add_task').modal('hide');
         }
     });
 }
@@ -242,7 +187,12 @@ function delete_task(id) {
 /* Edit and event from the timeline thanks to its ID */
 function edit_task(id) {
   url = '/case/tasks/'+ id + '/modal' + case_param();
-  $('#modal_add_task_content').load(url, function(){
+  $('#modal_add_task_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
         load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
         $('#modal_add_task').modal({show:true});
   });
@@ -252,82 +202,64 @@ function edit_task(id) {
 function get_tasks() {
     $('#tasks_list').empty();
     show_loader();
-    $.ajax({
-        url: "tasks/list" +  case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                    Table.MakeCellsEditable("destroy");
-                    tasks_list = data.data.tasks;
 
-                    options_l = data.data.tasks_status;
-                    options = [];
-                    for (index in options_l) {
-                        option = options_l[index];
-                        options.push({ "value": option.id, "display": option.status_name })
-                    }
-                    console.log(options);
-                    Table.clear();
-                    Table.rows.add(tasks_list);
-                    hide_loader();
-                    Table.MakeCellsEditable({
-                        "onUpdate": callBackEditTaskStatus,
-                        "inputCss": 'form-control col-12',
-                        "columns": [2],
-                        "allowNulls": {
-                          "columns": [2],
-                          "errorClass": 'error'
-                        },
-                        "confirmationButton": {
-                          "confirmCss": 'my-confirm-class',
-                          "cancelCss": 'my-cancel-class'
-                        },
-                        "inputTypes": [
-                          {
-                            "column": 2,
-                            "type": "list",
-                            "options": options
-                          }
-                        ]
-                      });
+    get_request_api("tasks/list")
+    .done(function (data) {
+        if (data.status == 'success') {
+                Table.MakeCellsEditable("destroy");
+                tasks_list = data.data.tasks;
 
-                    Table.columns.adjust().draw();
-                    load_menu_mod_options('task', Table);
-                    $('[data-toggle="popover"]').popover();
-
-                    set_last_state(data.data.state);
-                    hide_loader();
+                options_l = data.data.tasks_status;
+                options = [];
+                for (index in options_l) {
+                    option = options_l[index];
+                    options.push({ "value": option.id, "display": option.status_name })
                 }
+                console.log(options);
+                Table.clear();
+                Table.rows.add(tasks_list);
+                hide_loader();
+                Table.MakeCellsEditable({
+                    "onUpdate": callBackEditTaskStatus,
+                    "inputCss": 'form-control col-12',
+                    "columns": [2],
+                    "allowNulls": {
+                      "columns": [2],
+                      "errorClass": 'error'
+                    },
+                    "confirmationButton": {
+                      "confirmCss": 'my-confirm-class',
+                      "cancelCss": 'my-cancel-class'
+                    },
+                    "inputTypes": [
+                      {
+                        "column": 2,
+                        "type": "list",
+                        "options": options
+                      }
+                    ]
+                  });
 
-        },
-        error: function (error) {
-            notify_error(error.statusText);
-        }
+                Table.columns.adjust().draw();
+                load_menu_mod_options('task', Table);
+                $('[data-toggle="popover"]').popover();
+
+                set_last_state(data.data.state);
+                hide_loader();
+            }
+
     });
-    
 }
 
 function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {
   data_send = updatedRow.data();
   data_send['csrf_token'] = $('#csrf_token').val();
   tid = data_send['task_id'];
-  $.ajax({
-    url: "tasks/status/update/" + tid + case_param(),
-    type: "POST",
-    data: JSON.stringify(data_send),
-    dataType: "json",
-    contentType: "application/json;charset=UTF-8",
-    success: function (response) {
-      if (response.status == 'success') {
-            get_tasks();
-            notify_success("Changes saved");
-      } else {
-        notify_error('Error :' + response.message)
-      }
-    },
-    error: function (jqXHR, textStatus, errorThrown) {
-        notify_error('Error :' + textStatus)
+
+  post_request_api("tasks/status/update/" + tid, JSON.stringify(data_send))
+  .done(function (data){
+    if(notify_auto_api(data)) {
+         get_tasks();
     }
   });
 }

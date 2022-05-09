@@ -29,7 +29,12 @@ function on_done_hash(result) {
 
 function add_modal_rfile() {
     url = 'evidences/add/modal' + case_param();
-    $('#modal_add_rfiles_content').load(url, function () {});
+    $('#modal_add_rfiles_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+    });
     $('#modal_add_rfiles').modal({ show: true });
 }
 
@@ -44,28 +49,13 @@ function add_rfile() {
 
     data_sent['custom_attributes'] = attributes;
 
-    $.ajax({
-        url: '/case/evidences/add' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                if (typeof reload_rfiles != "undefined") { reload_rfiles(); }
-                $('#modal_add_rfiles').modal('hide');
-                notify_success("File registered");
-
-            } else {
-                notify_error("Unable to register file. " + jsdata.message)
-            }
-        },
-        error: function (error) {
-            notify_error(error.responseJSON.message);
-            propagate_form_api_errors(error.responseJSON.data);
-        }
+    post_request_api('/case/evidences/add', JSON.stringify(data_sent), true)
+    .done(function (data) {
+        notify_auto_api(data);
+        get_case_rfiles();
+        $('#modal_add_rfiles').modal("hide");
     });
+
     return false;
 }
 
@@ -195,43 +185,42 @@ var buttons = new $.fn.dataTable.Buttons(Table, {
 
 /* Retrieve the list of rfiles and build a datatable for each type of rfiles */
 function get_case_rfiles() {
-    $.ajax({
-        url: "/case/evidences/list" + case_param(),
-        type: "GET",
-        dataType: 'json',
-        success: function (response) {
-            if (response.status == 'success') {
-                if (response.data != null) {
-                    jsdata = response.data;
-                    Table.clear();
-                    Table.rows.add(jsdata.evidences);
-                    Table.columns.adjust().draw();
 
-                    load_menu_mod_options('evidence', Table);
+    get_request_api("/case/evidences/list")
+    .done(function (response) {
+        if (response.status == 'success') {
+            if (response.data != null) {
+                jsdata = response.data;
+                Table.clear();
+                Table.rows.add(jsdata.evidences);
+                Table.columns.adjust().draw();
 
-                    set_last_state(jsdata.state);
-                    hide_loader();
+                load_menu_mod_options('evidence', Table);
 
-                    $('#rfiles_table_wrapper').show();
+                set_last_state(jsdata.state);
+                hide_loader();
 
-                } else {
-                    Table.clear().draw();
-                    swal("Oh no !", data.message, "error")
-                }
+                $('#rfiles_table_wrapper').show();
+
             } else {
-                Table.clear().draw()
+                Table.clear().draw();
+                swal("Oh no !", data.message, "error")
             }
-        },
-        error: function (error) {
-            swal("Oh no !", error.statusText, "error")
+        } else {
+            Table.clear().draw()
         }
     });
+
 }
 
 /* Edit an rfiles */
 function edit_rfiles(rfiles_id) {
     url = 'evidences/' + rfiles_id + '/modal' + case_param();
-    $('#modal_add_rfiles_content').load(url, function () {
+    $('#modal_add_rfiles_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
         load_menu_mod_options_modal(rfiles_id, 'evidence', $("#evidence_modal_quick_actions"));
     });
     $('#modal_add_rfiles').modal({ show: true });
@@ -249,64 +238,21 @@ function update_rfile(rfiles_id) {
 
     data_sent['custom_attributes'] = attributes;
 
-
-    $.ajax({
-        url: 'evidences/update/' + rfiles_id + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("You're set !",
-                    "The file has been updated on register successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    reload_rfiles();
-                    $('#modal_add_rfiles').modal('hide');
-                });
-
-            } else {
-                $('#submit_new_rfiles').text('Save again');
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            notify_error(error.responseJSON.message);
-            propagate_form_api_errors(error.responseJSON.data);
-        }
+    post_request_api('evidences/update/' + rfiles_id, JSON.stringify(data_sent), true)
+    .done(function (data) {
+        notify_auto_api(data);
+        reload_rfiles();
     });
 }
 
 /* Delete an rfiles */
 function delete_rfile(rfiles_id) {
-    $.ajax({
-        url: 'evidences/delete/' + rfiles_id + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Good !",
-                    "The file has been deleted from register successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    reload_rfiles();
-                    $('#modal_add_rfiles').modal('hide');
-                });
 
-            } else {
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            swal("Oh no !", error.statusText, "error")
-            }
+    get_request_api('evidences/delete/' + rfiles_id)
+    .done(function(data){
+       reload_rfiles();
+       $('#modal_add_rfiles').modal('hide');
+       notify_auto_api(data);
     });
 }
 

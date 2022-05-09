@@ -6,67 +6,60 @@ function visualizeTimeline(group) {
         src = '/case/timeline/visualize/data/by-category';
     }
 
-    $.ajax({
-        url: src + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                  var items = new vis.DataSet();
+    get_request_api(src)
+    .done(function (data) {
+        if (data.status == 'success') {
+              var items = new vis.DataSet();
 
-                  groups = new vis.DataSet();
-                  groups_l = []
-                  if (data.data.events.length == 0) {
-                        $('#card_main_load').show();
-                        $('#visualization').text('No events in summary');
-                        hide_loader();
-                        return true;
-                  }
-                  for (index in data.data.events) {
-                        event = data.data.events[index];
-                        if (!groups_l.includes(event.group)){
-                            groups.add({
-                                id: groups_l.length,
-                                content: event.group
-                            })
-                            groups_l.push(event.group);
-                        }
-                        items.add({
-                            id: index,
-                            group: groups_l.indexOf(event.group),
-                            start: event.date,
-                            content: event.content,
-                            style: event.style,
-                            title: event.title
+              groups = new vis.DataSet();
+              groups_l = []
+              if (data.data.events.length == 0) {
+                    $('#card_main_load').show();
+                    $('#visualization').text('No events in summary');
+                    hide_loader();
+                    return true;
+              }
+              for (index in data.data.events) {
+                    event = data.data.events[index];
+                    if (!groups_l.includes(event.group)){
+                        groups.add({
+                            id: groups_l.length,
+                            content: event.group
                         })
-
+                        groups_l.push(event.group);
                     }
+                    items.add({
+                        id: index,
+                        group: groups_l.indexOf(event.group),
+                        start: event.date,
+                        content: event.content,
+                        style: event.style,
+                        title: event.title
+                    })
 
-                  // specify options
-                  var options = {
-                    stack: true,
-                    minHeight: '400px',
-                    maxHeight: $(window).height() - 250,
-                    start: data.data.events[0].date,
-                    end: data.data.events[data.data.events.length - 1].date,
-                  };
+                }
 
-                  // create a Timeline
+              // specify options
+              var options = {
+                stack: true,
+                minHeight: '400px',
+                maxHeight: $(window).height() - 250,
+                start: data.data.events[0].date,
+                end: data.data.events[data.data.events.length - 1].date,
+              };
 
-                  var container = document.getElementById('visualization');
-                  container.innerHTML = '';
-                  $('#card_main_load').show();
-                  timeline = new vis.Timeline(container, null, options);
-                  if (ggr.includes(group)) {
-                    timeline.setGroups(groups);
-                  }
-                  timeline.setItems(items);
-                  hide_loader();
+              // create a Timeline
 
-            }
-        },
-        error: function (error) {
-            notify_error(error.message);
+              var container = document.getElementById('visualization');
+              container.innerHTML = '';
+              $('#card_main_load').show();
+              timeline = new vis.Timeline(container, null, options);
+              if (ggr.includes(group)) {
+                timeline.setGroups(groups);
+              }
+              timeline.setItems(items);
+              hide_loader();
+
         }
     });
 }

@@ -1,11 +1,7 @@
 
 function get_case_graph() {
-
-    $.ajax({
-        url: 'graph/getdata' + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
+    get_request_api('graph/getdata')
+    .done(function (data) {
             if (data.status == 'success') {
                 redrawAll(data.data);
                 hide_loader();
@@ -13,13 +9,7 @@ function get_case_graph() {
                 $('#submit_new_asset').text('Save again');
                 swal("Oh no !", data.message, "error")
             }
-        },
-        error: function (error) {
-            $('#submit_new_asset').text('Save');
-            swal("Oh no !", error.statusText, "error")
-        }
-    });
-
+        })
 }
 
 var network;

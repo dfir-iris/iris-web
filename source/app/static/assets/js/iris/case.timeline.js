@@ -26,7 +26,12 @@ tm_filter.commands.addCommand({
 /* Fetch a modal that allows to add an event */
 function add_event() {
     url = 'timeline/events/add/modal' + case_param();
-    $('#modal_add_event_content').load(url, function () {   
+    $('#modal_add_event_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
         $('#submit_new_event').on("click", function () {
             clear_api_error();
             var data_sent = $('#form_new_event').serializeObject();
@@ -45,37 +50,15 @@ function add_event() {
 
             data_sent['custom_attributes'] = attributes;
 
-            $.ajax({
-                url: 'timeline/events/add' + case_param(),
-                type: "POST",
-                data: JSON.stringify(data_sent),
-                contentType: "application/json;charset=UTF-8",
-                dataType: "json",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("Done !",
-                        "Your event has been created successfully",
-                            {
-                                icon: "success",
-                                timer: 400
-                            }
-                        ).then((value) => {
-                            window.location.hash = data.data.event_id;
-                            draw_timeline();
-                            $('#modal_add_event').modal('hide');
-
-                        });
-                    } else {
-                        $('#submit_new_event').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    $('#submit_new_event').text('Save');
-                    propagate_form_api_errors(error.responseJSON.data);
+            post_request_api('timeline/events/add', JSON.stringify(data_sent), true)
+            .done(function (data) {
+                if(notify_auto_api(data)) {
+                    window.location.hash = data.data.event_id;
+                    draw_timeline();
+                    $('#modal_add_event').modal('hide');
                 }
             });
-        
+
             return false;
         })
     });
@@ -87,28 +70,14 @@ function add_event() {
 function duplicate_event(id) {
     window.location.hash = id;
     clear_api_error();
-    $.ajax({
-        url: "timeline/events/duplicate/" + id + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                     data.message,
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                );
-                draw_timeline()
-            } else {
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
+
+    get_request_api("timeline/events/duplicate/" + id)
+    .done(function (data) {
+        if(notify_auto_api(data)) {
+            draw_timeline();
         }
     });
+
 }
 
 function update_event(id) {
@@ -130,72 +99,41 @@ function update_event(id) {
 
     data_sent['custom_attributes'] = attributes;
 
-    $.ajax({
-        url: 'timeline/events/update/' + id + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                "Updated successfully",
-                    {
-                        icon: "success",
-                        timer: 400
-                    }
-                ).then((value) => {
-                    draw_timeline();
-                    $('#modal_add_event').modal('hide');
-
-                });
-            } else {
-                $('#submit_new_event').text('Save again');
-                swal("Oh no !", data.message, "error");
-            }
-        },
-        error: function (error) {
-            $('#submit_new_event').text('Save');
-            propagate_form_api_errors(error.responseJSON.data);
+    post_request_api('timeline/events/update/' + id, JSON.stringify(data_sent), true)
+    .done(function(data) {
+        if(notify_auto_api(data)) {
+            draw_timeline();
+            $('#modal_add_event').modal('hide');
         }
     });
+
 }
 
 
 /* Delete an event from the timeline thank to its id */ 
 function delete_event(id) {
     window.location.hash = id;
-    $.ajax({
-        url: "timeline/events/delete/" + id + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                     data.message,
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                );
-                $('#modal_add_event').modal('hide');
-                draw_timeline()
-            } else {
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
+
+    get_request_api("timeline/events/delete/" + id)
+    .done(function(data) {
+        if(notify_auto_api(data)) {
+            draw_timeline();
+            $('#modal_add_event').modal('hide');
         }
     });
+
 }
 
 /* Edit an event from the timeline thanks to its ID */
 function edit_event(id) {
   url = '/case/timeline/events/' + id + '/modal' + case_param();
   window.location.hash = id;
-  $('#modal_add_event_content').load(url, function(){
-         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
+  $('#modal_add_event_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
   });
 }
@@ -531,25 +469,17 @@ function draw_timeline() {
     rid = $('#assets_timeline_select').val();
     if (rid == null) { rid = 0; }
 
-    $.ajax({
-        url: "timeline/filter/" + rid + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                build_timeline(data);
-            } else {
-                swal.close();
-                $('#submit_new_event').text('Save again');
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
+    get_request_api("timeline/filter/" + rid)
+    .done(function (data) {
+        if (data.status == 'success') {
+            build_timeline(data);
+        } else {
             swal.close();
-            $('#submit_new_event').text('Save');
-            swal("Oh no !", error.statusText, "error")
+            $('#submit_new_event').text('Save again');
+            swal("Oh no !", data.message, "error")
         }
-    }).done(function() {goToSharedLink()});
+        goToSharedLink();
+    });
 }
 
 function escapeRegExp(text) {
@@ -596,25 +526,18 @@ function time_converter(){
     data_sent['date_value'] = date_val;
     data_sent['csrf_token'] = $('#csrf_token').val();
 
-
-    $.ajax({
-        url: 'timeline/events/convert-date' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                $('#event_date').val(data.data.date);
-                $('#event_time').val(data.data.time);
-                $('#event_tz').val(data.data.tz);
-                hide_time_converter();
-                $('#convert_bad_feedback').text('');
-            }
-        },
-        error: function (error) {
-            $('#convert_bad_feedback').text('Unable to find a matching pattern for the date');
+    post_request_api('timeline/events/convert-date', JSON.stringify(data_sent))
+    .done(function(data) {
+        if(notify_auto_api(data)) {
+            $('#event_date').val(data.data.date);
+            $('#event_time').val(data.data.time);
+            $('#event_tz').val(data.data.tz);
+            hide_time_converter();
+            $('#convert_bad_feedback').text('');
         }
+    })
+    .fail(function() {
+        $('#convert_bad_feedback').text('Unable to find a matching pattern for the date');
     });
 }
 
@@ -756,26 +679,13 @@ function apply_filtering() {
 
     $('#timeline_list').empty();
     show_loader();
-     $.ajax({
-        url: "/case/timeline/advanced-filter" + case_param(),
-        type: "GET",
-        data: { 'q': filter_query },
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                build_timeline(data);
-            } else {
-                swal.close();
-                $('#submit_new_event').text('Save again');
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            swal.close();
-            $('#submit_new_event').text('Save');
-            swal("Oh no !", error.statusText, "error")
+    get_request_data_api("/case/timeline/advanced-filter",{ 'q': filter_query })
+    .done(function (data) {
+        if(notify_auto_api(data, true)) {
+            build_timeline(data);
         }
-     }).done(function() {goToSharedLink()});
+        goToSharedLink();
+    });
 }
 
 function getFilterFromLink(){

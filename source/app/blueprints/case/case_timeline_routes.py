@@ -632,6 +632,11 @@ def case_delete_event(cur_id, caseid):
         CaseEventsAssets.case_id == caseid
     ).delete()
 
+    CaseEventsIoc.query.filter(
+        CaseEventsIoc.event_id == cur_id,
+        CaseEventsIoc.case_id == caseid
+    ).delete()
+
     db.session.commit()
 
     db.session.delete(event)
@@ -748,7 +753,7 @@ def case_edit_event(cur_id, caseid):
         event = call_modules_hook('on_postload_event_update', data=event, caseid=caseid)
 
         track_activity("updated event {}".format(cur_id), caseid=caseid)
-        return response_success("Event added", data=event_schema.dump(event))
+        return response_success("Event updated", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
@@ -881,7 +886,7 @@ def case_duplicate_event(cur_id, caseid):
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
         track_activity("added event {}".format(event.event_id), caseid=caseid)
-        return response_success("Event added", data=event_schema.dump(event))
+        return response_success("Event duplicated", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)

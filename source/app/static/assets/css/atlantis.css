@@ -7370,13 +7370,28 @@ body[data-background-color="dark"] .badge-danger {
 .alert {
     border: 0px;
     position: relative;
-    padding: .95rem 1.25rem;
-    border-radius: 0.42rem;
+    border-radius: 1rem;
     color: inherit;
     background-color: #ffffff;
-    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
-    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
-    box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
+    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+}
+
+.alert[data-notify] {
+  min-width: 100px;
+  max-width: 250px;
+}
+
+.alert.alert-success {
+  background: linear-gradient(45deg, rgba(55,167,115,0.96) 0%, rgba(52,144,101,1) 100%);
+  /*background: linear-gradient(45deg, rgba(65,150,68,1) 0%, rgba(94,166,96,1) 100%);*/
+  color: #ffffff;
+}
+
+.alert.alert-danger {
+  background: linear-gradient(45deg, rgba(186,88,88,0.94) 0%, rgba(171,67,67,0.94) 100%);
+  color: #ffffff;
 }
 
 .alert [data-notify="icon"] {
@@ -7400,24 +7415,22 @@ body[data-background-color="dark"] .badge-danger {
 
 .alert [data-notify="title"] {
     display: block;
-    color: #2b2b2b;
+    color: #fff;
     font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 5px;
+    font-size: 13px;
+    margin-bottom: 2px;
 }
 
 .alert [data-notify="message"] {
     font-size: 13px;
-    color: #908e8e;
+    color: #fff;
 }
 
 .alert .close {
-    background: rgba(255, 255, 255, 0.8);
     width: 25px;
     height: 25px;
     line-height: 25px;
-    top: 12px !important;
-    border-radius: 50%;
+    top: 10px !important;
 }
 
 
@@ -7455,13 +7468,13 @@ body[data-background-color="dark"] .badge-danger {
     background: #48ABF7;
 }
 
-.alert-success {
+/*.alert-success {
     border-left: 4px solid #31CE36;
 }
 
 .alert-success [data-notify="icon"]:before {
     background: #31CE36;
-}
+}*/
 
 .alert-warning {
     border-left: 4px solid #FFAD46;
@@ -7471,13 +7484,13 @@ body[data-background-color="dark"] .badge-danger {
     background: #FFAD46;
 }
 
-.alert-danger {
+/*.alert-danger {
     border-left: 4px solid #F25961;
 }
 
 .alert-danger [data-notify="icon"]:before {
     background: #F25961;
-}
+}*/
 
 
 /*    Button    */
