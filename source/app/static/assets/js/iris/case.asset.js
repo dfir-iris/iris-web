@@ -256,11 +256,9 @@ Table.on( 'responsive-resize', function ( e, datatable, columns ) {
 /* Retrieve the list of assets and build a datatable for each type of asset */
 function get_case_assets() {
     show_loader();
-    $.ajax({
-        url: "/case/assets/list" + case_param(),
-        type: "GET",
-        dataType: 'json',
-        success: function (response) {
+
+    get_request_wrapper('/case/assets/list')
+    .done(function (response) {
             if (response.status == 'success') {
                 if (response.data != null) {
                     jsdata = response.data;
@@ -284,40 +282,25 @@ function get_case_assets() {
             } else {
                 Table.clear().draw()
             }
-        },
-        error: function (error) {
-            swal("Oh no !", error.statusText, "error")
-        }
-    });
+        })
 }
 
 /* Delete an asset */
 function delete_asset(asset_id) {
-    $.ajax({
-        url: 'assets/delete/' + asset_id + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
+    get_request_wrapper('assets/delete/' + asset_id)
+    .done(function (data) {
             if (data.status == 'success') {
-                swal("Good !",
-                    "The asset has been deleted successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    reload_assets();
-                    $('#modal_add_asset').modal('hide');
-                });
+
+                $('#modal_add_asset').modal('hide');
+                notify_success('Asset deleted');
+                reload_assets();
 
             } else {
+
                 swal("Oh no !", data.message, "error")
+
             }
-        },
-        error: function (error) {
-            swal("Oh no !", error.statusText, "error")
-        }
-    });
+        })
 }
 
 
@@ -364,34 +347,17 @@ function asset_details(asset_id) {
 
             data['custom_attributes'] = attributes;
 
-            $.ajax({
-                url: 'assets/update/' + asset_id + case_param(),
-                type: "POST",
-                data: JSON.stringify(data),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
-                success: function (data) {
+            post_request_wrapper('assets/update/' + asset_id, JSON.stringify(data),  true)
+            .done(function (data) {
                     if (data.status == 'success') {
-                        swal("You're set !",
-                            "The asset has been updated successfully",
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            reload_assets();
-                            $('#modal_add_asset').modal('hide');
-                        });
-
+                        $('#modal_add_asset').modal('hide');
+                        notify_success('Asset updated');
+                        reload_assets();
                     } else {
                         $('#submit_new_asset').text('Save again');
                         swal("Oh no !", data.message, "error")
                     }
-                },
-                error: function (error) {
-                   propagate_form_api_errors(error.responseJSON.data);
-                }
-            });
+                })
 
             return false;
         })
@@ -416,13 +382,9 @@ function upload_assets() {
         var data = new Object();
         data['csrf_token'] = $('#csrf_token').val();
         data['CSVData'] = fileData;
-        $.ajax({
-            url: '/case/assets/upload' + case_param(),
-            type: "POST",
-            data: JSON.stringify(data),
-            contentType: "application/json;charset=UTF-8",
-            dataType: "json",
-            success: function (data) {
+
+        post_request_wrapper('/case/assets/upload', JSON.stringify(data), true)
+        .done(function (data) {
                 jsdata = data;
                 if (jsdata.status == "success") {
                     reload_assets();
@@ -432,12 +394,8 @@ function upload_assets() {
                 } else {
                     swal("Got bad news for you", data.message, "error");
                 }
-            },
-            error: function (error) {
-                notify_error(error.responseJSON.message);
-                propagate_form_api_errors(error.responseJSON.data);
-            }
-        });
+            })
+
     };
     reader.readAsText(file)
 

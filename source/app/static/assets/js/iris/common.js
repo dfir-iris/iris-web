@@ -132,7 +132,11 @@ function get_request_wrapper(uri, propagate_api_error, beforeSend_fn) {
         url: uri + case_param(),
         type: 'GET',
         dataType: "json",
-        beforeSend: function(jqXHR, settings) { beforeSend_fn(jqXHR, settings); },
+        beforeSend: function(jqXHR, settings) {
+            if (beforeSend_fn !== undefined) {
+                beforeSend_fn(jqXHR, settings);
+            }
+        },
         error: function(jqXHR, textStatus, errorThrown) {
             if (propagate_api_error) {
                 propagate_form_api_errors(jqXHR.responseJSON.data);
@@ -151,7 +155,11 @@ function post_request_wrapper(uri, data, propagate_api_error, beforeSend_fn) {
         data: data,
         dataType: "json",
         contentType: "application/json;charset=UTF-8",
-        beforeSend: function(jqXHR, settings) { beforeSend_fn(jqXHR, settings); },
+        beforeSend: function(jqXHR, settings) {
+            if (beforeSend_fn !== undefined) {
+                beforeSend_fn(jqXHR, settings);
+            }
+        },
         error: function(jqXHR) {
             if (propagate_api_error) {
                 if(jqXHR.responseJSON) {
@@ -161,7 +169,7 @@ function post_request_wrapper(uri, data, propagate_api_error, beforeSend_fn) {
                     ajax_notify_error(jqXHR);
                 }
             } else {
-                ajax_notify_error(jqXHR, textStatus, errorThrown);
+                ajax_notify_error(jqXHR);
             }
         }
     });
