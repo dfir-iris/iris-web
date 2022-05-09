@@ -66,7 +66,7 @@ $("#activities_table").css("font-size", 12);
 
 function get_activities () {
     $.ajax({
-        url: '/dim/tasks/list' + case_param(),
+        url: '/dim/tasks/list/10000' + case_param(),
         type: "GET",
         dataType: "json",
         success: function (data) {

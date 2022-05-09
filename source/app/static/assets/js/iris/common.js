@@ -427,7 +427,7 @@ function load_case_activity(){
 
 function load_dim_limited_tasks(){
     $.ajax({
-        url: '/dim/tasks/limited-list' + case_param(),
+        url: '/dim/tasks/list/100' + case_param(),
         type: "GET",
         dataType: "json",
         success: function (data) {
