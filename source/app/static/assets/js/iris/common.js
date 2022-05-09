@@ -67,7 +67,13 @@ function propagate_form_api_errors(data_error) {
     }
 }
 
+function ajax_notify_error(jqXHR, textStatus, errorThrown) {
+    message = `<b>We got error ${jqXHR.status}</b><br/>${textStatus} - ${errorThrown}`;
+    notify_error(message);
+}
+
 function notify_error(message) {
+
     data = "";
     if (typeof (message) == typeof ([])) {
         for (element in message) {
@@ -79,14 +85,14 @@ function notify_error(message) {
     $.notify({
         icon: 'fas fa-times',
         title: 'Error',
-        message: message
+        message: data
     }, {
         type: 'danger',
         placement: {
             from: 'top',
             align: 'right'
         },
-        time: 4000,
+        time: 8000,
         z_index: 2000,
         animate: {
             enter: 'animate__animated animate__fadeIn',
@@ -111,6 +117,22 @@ function notify_success(message) {
         animate: {
                     enter: 'animate__animated animate__fadeIn',
                     exit: 'animate__animated animate__fadeOut'
+        }
+    });
+}
+
+function get_request_wrapper(uri, success_fn) {
+    request_wrapper(uri, 'GET', success_fn);
+}
+
+function request_wrapper(uri, method, success_fn) {
+    $.ajax({
+        url: uri + case_param(),
+        type: method,
+        dataType: "json",
+        success: function(data) { success_fn(data); },
+        error: function(jqXHR, textStatus, errorThrown) {
+            ajax_notify_error(jqXHR, textStatus, errorThrown);
         }
     });
 }
