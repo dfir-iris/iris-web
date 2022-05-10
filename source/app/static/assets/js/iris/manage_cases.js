@@ -54,71 +54,57 @@ function submit_new_case() {
 
     data_sent['custom_attributes'] = attributes;
 
-    $.ajax({
-        url: '/manage/cases/add' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        beforeSend: function () {
-            $('#submit_new_case_btn').text('Checking data..')
-                .attr("disabled", true)
-                .removeClass('bt-outline-success')
-                .addClass('btn-success', 'text-dark');
-        },
-        complete: function () {
-            $('#submit_new_case_btn')
-                .attr("disabled", false)
-                .addClass('bt-outline-success')
-                .removeClass('btn-success', 'text-dark');
-        },
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("That's done !",
-                    "Case has been successfully created",
-                    "success",
-                    {
-                        buttons: {
-                            again: {
-                                text: "Create a case again",
-                                value: "again",
-                                dangerMode: true
-                            },
-                            dash: {
-                                text: "Go to dashboard",
-                                value: "dash",
-                            }
+    post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {
+        $('#submit_new_case_btn').text('Checking data..')
+            .attr("disabled", true)
+            .removeClass('bt-outline-success')
+            .addClass('btn-success', 'text-dark');
+    })
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            swal("That's done !",
+                "Case has been successfully created",
+                "success",
+                {
+                    buttons: {
+                        again: {
+                            text: "Create a case again",
+                            value: "again",
+                            dangerMode: true
+                        },
+                        dash: {
+                            text: "Go to dashboard",
+                            value: "dash",
                         }
                     }
-                ).then((value) => {
-                    switch (value) {
+                }
+            ).then((value) => {
+                switch (value) {
 
-                        case "dash":
-                            window.location.replace("/dashboard" + case_param());
-                            break;
+                    case "dash":
+                        window.location.replace("/dashboard" + case_param());
+                        break;
 
-                        case "again":
-                            window.location.replace("/manage/cases" + case_param());
-                            break;
+                    case "again":
+                        window.location.replace("/manage/cases" + case_param());
+                        break;
 
-                        default:
-                            window.location.replace("/dashboard" + case_param());
-                    }
-                });
-            } else {
-                $('#submit_new_case_btn').text('Submit again');
-                propagate_form_api_errors(data.data);
-                return false;
-            }
-        },
-        error: function (error) {
-            $('#submit_new_case_btn').text('Save');
-            propagate_form_api_errors(error.responseJSON.data);
-            return false;
+                    default:
+                        window.location.replace("/dashboard" + case_param());
+                }
+            });
         }
-    });
+    })
+    .always(() => {
+        $('#submit_new_case_btn')
+        .attr("disabled", false)
+        .addClass('bt-outline-success')
+        .removeClass('btn-success', 'text-dark');
+    })
+    .fail(() => {
+        $('#submit_new_case_btn').text('Save');
+    })
 
-    /* Case information will be added on upload completion  */
     return false;
 };
 
@@ -142,9 +128,12 @@ var dropUpdate = new Dropzone("div#files_drop_1", {
             send_update_case_data();
         }
     },
-    error: function (file, message, xhr) {
-         swal("Oh no !", message, "error");
-         return false;
+    error: function(jqXHR) {
+        if(jqXHR.responseJSON) {
+            notify_error(jqXHR.responseJSON.message);
+        } else {
+            ajax_notify_error(jqXHR, this.url);
+        }
     }
 });
 
@@ -167,85 +156,76 @@ function send_update_case_data() {
     args['pipeline'] = $('#update_pipeline_selector').val();
     args['csrf_token'] = $('#csrf_token').val();
 
-    /* Send the request */
-    $.ajax({
-        url: '/manage/cases/update' + case_param(),
-        type: "POST",
-        data: JSON.stringify(args),
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        before: function () {
-            $('#submit_update_case').text('Starting update');
-             $('#submit_update_case')
-                .attr("disabled", true)
-                .addClass('bt-outline-success')
-                .removeClass('btn-success', 'text-dark');
-        },
-        complete: function () {
-            $('#submit_update_case')
-                .attr("disabled", false)
-                .addClass('bt-outline-success')
-                .removeClass('btn-success', 'text-dark');
-        },
-        success: function (data) {
-            if (data.status == 'success') {
-                $('#submit_update_case').text('Saved');
-                swal("That's done !",
-                    "Additional files are being imported in background.\nYou can follow the progress on the dashboard.",
-                    "success",
-                    {
-                        buttons: {
-                            again: {
-                                text: "Import files again",
-                                value: "again",
-                                dangerMode: true
-                            },
-                            dash: {
-                                text: "Go to dashboard",
-                                value: "dash",
-                            }
+    post_request_api('/manage/cases/update', JSON.stringify(args), true, function () {
+        $('#submit_update_case').text('Starting update');
+         $('#submit_update_case')
+            .attr("disabled", true)
+            .addClass('bt-outline-success')
+            .removeClass('btn-success', 'text-dark');
+    })
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            $('#submit_update_case').text('Saved');
+            swal("That's done !",
+                "Additional files are being imported in background.\nYou can follow the progress on the dashboard.",
+                "success",
+                {
+                    buttons: {
+                        again: {
+                            text: "Import files again",
+                            value: "again",
+                            dangerMode: true
+                        },
+                        dash: {
+                            text: "Go to dashboard",
+                            value: "dash",
                         }
                     }
-                ).then((value) => {
-                    switch (value) {
-
-                        case "dash":
-                            window.location.replace("/dashboard" + case_param());
-                            break;
-
-                        case "again":
-                            window.location.replace("/manage/cases" + case_param());
-                            break;
-
-                        default:
-                            window.location.replace("/dashboard" + case_param());
-                    }
-                });
-            } else {
-                $('#submit_update_case').text('Save');
-                mdata = ""
-                for (element in data.data) {
-                    mdata += data.data[element]
                 }
-                $.notify({
-                    icon: 'flaticon-error',
-                    title: data.message,
-                    message: mdata
-                }, {
-                    type: 'danger',
-                    placement: {
-                        from: 'top',
-                        align: 'right'
-                    },
-                    time: 5000,
-                });
-                swal("Oh no !", data.message, "error")
+            ).then((value) => {
+                switch (value) {
+
+                    case "dash":
+                        window.location.replace("/dashboard" + case_param());
+                        break;
+
+                    case "again":
+                        window.location.replace("/manage/cases" + case_param());
+                        break;
+
+                    default:
+                        window.location.replace("/dashboard" + case_param());
+                }
+            });
+        } else {
+            $('#submit_update_case').text('Save');
+            mdata = ""
+            for (element in data.data) {
+                mdata += data.data[element]
             }
-        },
-        error: function (error) {
-            $('#submit_new_case_btn').text('Save');
-            notify_error(error.responseJSON.message);
+            $.notify({
+                icon: 'flaticon-error',
+                title: data.message,
+                message: mdata
+            }, {
+                type: 'danger',
+                placement: {
+                    from: 'top',
+                    align: 'right'
+                },
+                time: 5000,
+            });
+            swal("Oh no !", data.message, "error")
         }
+    })
+    .fail(() => {
+        $('#submit_new_case_btn').text('Save');
+    })
+    .always(() => {
+        $('#submit_update_case')
+        .attr("disabled", false)
+        .addClass('bt-outline-success')
+        .removeClass('btn-success', 'text-dark');
     });
 }
 
@@ -376,23 +356,11 @@ function remove_case(id) {
     })
         .then((willDelete) => {
             if (willDelete) {
-                $.ajax({
-                    url: '/manage/cases/delete/' + id + case_param(),
-                    type: "GET",
-                    success: function (data) {
-                        if (data.status == 'success') {
-                            swal("Case has been deleted !", {
-                                icon: "success",
-                            }).then((value) => {
-                                refresh_case_table();
-                                $('#modal_case_detail').modal('hide');
-                            });
-                        } else {
-                            swal("Oh no !", data.message, "error");
-                        }
-                    },
-                    error: function (error) {
-                        swal("Oh no !", error.responseJSON.message, "error");
+                get_request_api('/manage/cases/delete/' + id)
+                .done((data) => {
+                    if (notify_auto_api(data)) {
+                        refresh_case_table();
+                        $('#modal_case_detail').modal('hide');
                     }
                 });
             } else {
@@ -403,24 +371,10 @@ function remove_case(id) {
 
 /* Reopen case function */
 function reopen_case(id) {
-    $.ajax({
-        url: '/manage/cases/reopen/' + id + case_param(),
-        type: "GET",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal(data.message, {
-                    icon: "success",
-                }).then((value) => {
-                    refresh_case_table();
-                    $('#modal_case_detail').modal('hide');
-                });
-            } else {
-                swal("Oh no !", data.message, "error");
-            }
-        },
-        error: function (error) {
-            swal("Oh no !", error.responseJSON.message, "error");
-        }
+    get_request_api('/manage/cases/reopen/' + id)
+    .done((data) => {
+        refresh_case_table();
+        $('#modal_case_detail').modal('hide');
     });
 }
 
@@ -436,29 +390,15 @@ function close_case(id) {
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes, close it!'
     })
-        .then((willDelete) => {
-            if (willDelete) {
-                $.ajax({
-                    url: '/manage/cases/close/' + id + case_param(),
-                    type: "GET",
-                    success: function (data) {
-                        if (data.status == 'success') {
-                            swal(data.message, {
-                                icon: "success",
-                            }).then((value) => {
-                                refresh_case_table();
-                                $('#modal_case_detail').modal('hide');
-                            });
-                        } else {
-                            swal("Oh no !", data.message, "error");
-                        }
-                    },
-                    error: function (error) {
-                        swal("Oh no !", error.responseJSON.message, "error");
-                    }
-                });
-            }
-        });
+    .then((willClose) => {
+        if (willClose) {
+            get_request_api('/manage/cases/close/' + id)
+            .done((data) => {
+                refresh_case_table();
+                $('#modal_case_detail').modal('hide');
+            });
+        }
+    });
 }
 
 
