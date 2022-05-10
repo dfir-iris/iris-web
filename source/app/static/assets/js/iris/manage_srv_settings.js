@@ -2,26 +2,9 @@ function update_settings() {
     var data_sent = $('form#form_srv_settings').serializeObject();
     data_sent['prevent_post_mod_repush'] = $('#prevent_post_mod_repush').is(":checked");
 
-    $.ajax({
-        url: '/manage/settings/update' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        send: function () {$('#save_srv_settings').text("Submitting settings.. ");},
-        success: function (data) {
-            if (data.status == 'success') {
-                notify_success('Settings saved');
-            } else {
-                notify_error(data.message);
-            }
-        },
-        error: function (error) {
-            data = error.responseJSON;
-            notify_error(data.message);
-            propagate_form_api_errors(data.data);
-            $('#save_srv_settings').text("Retry");
-        }
+    post_request_api('/manage/settings/update', JSON.stringify(data_sent), true)
+    .done((data) => {
+        notify_auto_api(data);
     });
 }
 
@@ -39,7 +22,11 @@ function check_updates() {
     $('#modal_updates').modal({ show: true });
     $('#modal_updates_content').load(
         '/manage/server/check-updates/modal' + case_param(),
-        function () {
+        function (response, status, xhr) {
+            if (status !== "success") {
+                 ajax_notify_error(xhr, url);
+                 return false;
+            }
             var conv = new showdown.Converter();
             var txt = document.getElementById('updates_content_md').innerHTML;
 
@@ -50,32 +37,27 @@ function check_updates() {
 
 function init_db_backup() {
 
-    $.ajax({
-        url: '/manage/server/backups/make-db' + case_param(),
-        type: "GET",
-        dataType: "json",
-        timeout: 1000,
-        success: function (data) {
+    get_request_api('/manage/server/backups/make-db')
+    .done((data) => {
             msg = ""
             for (idx in data.data) {
                 msg += data.data[idx] + '\n';
             }
             swal("Done",
-                 msg,
-                {
-                    icon: "success"
-                });
-        },
-        error: function (error) {
-            for (idx in error.responseJSON.data) {
-                msg += data.data[idx] + '\n';
-            }
-
-            swal("Error",
-                 msg,
-                {
-                    icon: "error"
-                });
+             msg,
+            {
+                icon: "success"
+            });
+    })
+    .fail((error) => {
+        for (idx in error.responseJSON.data) {
+            msg += data.data[idx] + '\n';
         }
+
+        swal("Error",
+         msg,
+        {
+            icon: "error"
+        });
     });
 }
