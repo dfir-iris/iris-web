@@ -351,7 +351,7 @@ function build_timeline(data) {
         shared_link = buildShareLink(evt.event_id);
 
         if (compact) {
-            entry = `<li class="timeline-inverted ${mtop_day} " title="Event ID #${evt.event_id}">
+            entry = `<li class="timeline-inverted ${mtop_day}" title="Event ID #${evt.event_id}">
                 ${tmb_d}
                     <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
                         <div class="timeline-heading">
