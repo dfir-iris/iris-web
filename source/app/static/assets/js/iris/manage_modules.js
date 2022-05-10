@@ -337,7 +337,7 @@ function remove_module(id) {
             }
         });
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
 }

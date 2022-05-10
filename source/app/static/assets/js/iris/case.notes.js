@@ -196,7 +196,7 @@ function delete_remote_groupnote(group_id) {
             }
         })
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
 

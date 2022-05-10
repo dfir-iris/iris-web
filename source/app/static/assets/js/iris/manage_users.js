@@ -149,7 +149,7 @@ function delete_user(id) {
             }
         });
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
 }

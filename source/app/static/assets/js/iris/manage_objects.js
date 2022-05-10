@@ -151,7 +151,7 @@ function delete_asset_type(id) {
                 $('#modal_add_type').modal('hide');
             });
         } else {
-            swal("Pfew, that's was close");
+            swal("Pfew, that was close");
         }
     });
 }
@@ -267,7 +267,7 @@ function delete_asset_type(id) {
                 $('#modal_add_type').modal('hide');
             });
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
 }
