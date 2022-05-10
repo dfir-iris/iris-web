@@ -129,7 +129,7 @@ function add_task() {
             data_sent['custom_attributes'] = attributes;
 
             post_request_api('tasks/add', JSON.stringify(data_sent), true)
-            .done(function (data) {
+            .done((data) => {
                 if(notify_auto_api(data)) {
                     get_tasks();
                     $('#modal_add_task').modal('hide');
@@ -164,7 +164,7 @@ function update_task(id) {
     data_sent['custom_attributes'] = attributes;
 
     post_request_api('tasks/update/' + id, JSON.stringify(data_sent), true)
-    .done(function (data) {
+    .done((data) => {
         if(notify_auto_api(data)) {
             get_tasks();
             $('#modal_add_task').modal('hide');
@@ -176,7 +176,7 @@ function update_task(id) {
 function delete_task(id) {
 
     get_request_api("tasks/delete/" + id)
-    .done(function (data) {
+    .done((data) => {
         if(notify_auto_api(data)) {
             get_tasks();
             $('#modal_add_task').modal('hide');
@@ -204,7 +204,7 @@ function get_tasks() {
     show_loader();
 
     get_request_api("tasks/list")
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
                 Table.MakeCellsEditable("destroy");
                 tasks_list = data.data.tasks;

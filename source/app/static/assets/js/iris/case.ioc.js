@@ -169,7 +169,7 @@ function add_ioc() {
                         .removeClass('bt-outline-success')
                         .addClass('btn-success', 'text-dark');
                 })
-            .done(function (data) {
+            .done((data) => {
                 if (data.status == 'success') {
                         reload_iocs();
                         notify_success(data.message);
@@ -264,7 +264,7 @@ function update_ioc(ioc_id) {
     data['custom_attributes'] = attributes;
 
     post_request_api('ioc/update/' + ioc_id, JSON.stringify(data), true)
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
             reload_iocs();
             $('#modal_add_ioc').modal('hide');
@@ -281,7 +281,7 @@ function update_ioc(ioc_id) {
 /* Delete an ioc */
 function delete_ioc(ioc_id) {
     get_request_api('ioc/delete/' + ioc_id)
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
             reload_iocs();
             notify_success(data.message);
@@ -308,7 +308,7 @@ function upload_ioc() {
         data['CSVData'] = fileData;
 
         post_request_api('/case/ioc/upload', JSON.stringify(data), true)
-        .done(function (data) {
+        .done((data) => {
             jsdata = data;
             if (jsdata.status == "success") {
                 reload_iocs();

@@ -75,7 +75,7 @@ function refresh_activities() {
 function get_activities () {
     show_loader();
     get_request_api('/activities/list')
-    .done(function (data) {
+    .done((data) => {
             jsdata = data;
             if (jsdata.status == "success") {
                   Table.clear();

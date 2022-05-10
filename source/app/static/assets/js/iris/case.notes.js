@@ -136,7 +136,7 @@ function add_remote_note(group_id) {
         data['csrf_token'] = $('#csrf_token').val();
 
         post_request_api('/case/notes/add', JSON.stringify(data), false)
-        .done(function (data) {
+        .done((data) => {
             if (data.status == 'success') {
                 draw_kanban();
             } else {
@@ -154,7 +154,7 @@ function add_remote_groupnote() {
     data['csrf_token'] = $('#csrf_token').val();
 
     post_request_api('/case/notes/groups/add', JSON.stringify(data), false)
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
             nextGroupNote(data.data.group_title, data.data.group_id);
         } else {
@@ -185,7 +185,7 @@ function delete_remote_groupnote(group_id) {
         data['csrf_token'] = $('#csrf_token').val();
 
         get_request_api('/case/notes/groups/delete/'+ group_id)
-        .done(function (data) {
+        .done((data) => {
             if (data.status == 'success') {
                 swal("Done !", data.message, "success");
                 draw_kanban();
@@ -216,7 +216,7 @@ function edit_remote_groupnote(group_id) {
     data["csrf_token"] = $('#csrf_token').val();
 
     post_request_api('/case/notes/groups/update/'+ group_id, JSON.stringify(data))
-    .done(function (data) {
+    .done((data) => {
         notify_auto_api(data);
         draw_kanban();
     })
@@ -228,7 +228,7 @@ function delete_note(_item) {
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
     get_request_api('/case/notes/delete/' + n_id)
-    .done(function (data) {
+    .done((data) => {
        $('#modal_note_detail').modal('hide');
        notify_auto_api(data);
     })
@@ -371,7 +371,7 @@ function search_notes() {
     data['csrf_token'] = $("#csrf_token").val();
 
     post_request_api('/case/notes/search', JSON.stringify(data))
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
             $('#notes_search_list').empty();
             for (e in data.data) {
@@ -406,7 +406,7 @@ function save_note(this_item) {
     data_sent['custom_attributes'] = attributes;
 
     post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent))
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
             $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');

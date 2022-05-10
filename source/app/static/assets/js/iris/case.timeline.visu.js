@@ -7,7 +7,7 @@ function visualizeTimeline(group) {
     }
 
     get_request_api(src)
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
               var items = new vis.DataSet();
 

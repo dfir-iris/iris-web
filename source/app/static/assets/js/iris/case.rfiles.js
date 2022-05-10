@@ -50,7 +50,7 @@ function add_rfile() {
     data_sent['custom_attributes'] = attributes;
 
     post_request_api('/case/evidences/add', JSON.stringify(data_sent), true)
-    .done(function (data) {
+    .done((data) => {
         notify_auto_api(data);
         get_case_rfiles();
         $('#modal_add_rfiles').modal("hide");
@@ -239,7 +239,7 @@ function update_rfile(rfiles_id) {
     data_sent['custom_attributes'] = attributes;
 
     post_request_api('evidences/update/' + rfiles_id, JSON.stringify(data_sent), true)
-    .done(function (data) {
+    .done((data) => {
         notify_auto_api(data);
         reload_rfiles();
     });

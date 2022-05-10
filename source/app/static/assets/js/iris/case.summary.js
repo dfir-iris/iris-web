@@ -154,7 +154,7 @@ function sync_editor(no_check) {
     $('#last_saved').text('Syncing..').addClass('badge-danger').removeClass('badge-success');
 
     get_request_api('/case/summary/fetch')
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
             if (no_check) {
                 // Set the content from remote server

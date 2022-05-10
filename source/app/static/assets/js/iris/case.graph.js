@@ -1,7 +1,7 @@
 
 function get_case_graph() {
     get_request_api('graph/getdata')
-    .done(function (data) {
+    .done((data) => {
             if (data.status == 'success') {
                 redrawAll(data.data);
                 hide_loader();

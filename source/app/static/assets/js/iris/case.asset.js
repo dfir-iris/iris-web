@@ -40,7 +40,7 @@ function add_asset() {
                     .removeClass('bt-outline-success')
                     .addClass('btn-success', 'text-dark');
             })
-            .done(function (data) {
+            .done((data) => {
                 if (data.status == 'success') {
                     reload_assets();
                     $('#modal_add_asset').modal('hide');
@@ -291,7 +291,7 @@ function get_case_assets() {
 /* Delete an asset */
 function delete_asset(asset_id) {
     get_request_api('assets/delete/' + asset_id)
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
 
             reload_assets();
@@ -355,7 +355,7 @@ function asset_details(asset_id) {
             data['custom_attributes'] = attributes;
 
             post_request_api('assets/update/' + asset_id, JSON.stringify(data),  true)
-            .done(function (data) {
+            .done((data) => {
                 if (data.status == 'success') {
                     reload_assets();
                     $('#modal_add_asset').modal('hide');
@@ -391,7 +391,7 @@ function upload_assets() {
         data['CSVData'] = fileData;
 
         post_request_api('/case/assets/upload', JSON.stringify(data), true)
-        .done(function (data) {
+        .done((data) => {
             jsdata = data;
             if (jsdata.status == "success") {
                 reload_assets();

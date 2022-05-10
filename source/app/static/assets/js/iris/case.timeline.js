@@ -51,7 +51,7 @@ function add_event() {
             data_sent['custom_attributes'] = attributes;
 
             post_request_api('timeline/events/add', JSON.stringify(data_sent), true)
-            .done(function (data) {
+            .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.hash = data.data.event_id;
                     draw_timeline();
@@ -72,7 +72,7 @@ function duplicate_event(id) {
     clear_api_error();
 
     get_request_api("timeline/events/duplicate/" + id)
-    .done(function (data) {
+    .done((data) => {
         if(notify_auto_api(data)) {
             draw_timeline();
         }
@@ -470,7 +470,7 @@ function draw_timeline() {
     if (rid == null) { rid = 0; }
 
     get_request_api("timeline/filter/" + rid)
-    .done(function (data) {
+    .done((data) => {
         if (data.status == 'success') {
             build_timeline(data);
         } else {
@@ -680,7 +680,7 @@ function apply_filtering() {
     $('#timeline_list').empty();
     show_loader();
     get_request_data_api("/case/timeline/advanced-filter",{ 'q': filter_query })
-    .done(function (data) {
+    .done((data) => {
         if(notify_auto_api(data, true)) {
             build_timeline(data);
         }

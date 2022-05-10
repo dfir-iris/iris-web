@@ -273,7 +273,7 @@ $('#submit_set_context').click(function () {
     data_sent.ctx = $('#user_context').val();
     data_sent.ctx_h = $("#user_context option:selected").text();
     post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
-    .done(function (data) {
+    .done((data) => {
         if(notify_auto_api(data, true)) {
             $('#modal_switch_context').modal('hide');
             swal({
@@ -478,7 +478,7 @@ function copy_object_link(node_id) {
 
 function load_case_activity(){
     get_request_api('/case/activities/list')
-    .done(function (data) {
+    .done((data) => {
         js_data = data.data;
         $('#case_activities').empty();
         for (index in js_data) {
@@ -503,7 +503,7 @@ function load_case_activity(){
 
 function load_dim_limited_tasks(){
     get_request_api('/dim/tasks/list/100')
-    .done(function (data) {
+    .done((data) => {
         js_data = data.data;
         $('#dim_tasks_feed').empty();
         for (index in js_data) {
@@ -622,7 +622,7 @@ function load_menu_mod_options(data_type, table) {
     };
 
     get_request_api("/dim/hooks/options/"+ data_type +"/list")
-    .done(function (data) {
+    .done((data) => {
         if(notify_auto_api(data, true)) {
             if (data.data != null) {
                 jsdata = data.data;
