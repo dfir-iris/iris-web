@@ -30,7 +30,7 @@ function add_module() {
 
         $('#submit_new_module').on("click", function () {
 
-            post_request_api('modules/add', $('#form_new_module').serializeArray(), true)
+            post_request_api('modules/add', JSON.stringify($('#form_new_module').serializeObject()), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_modules();

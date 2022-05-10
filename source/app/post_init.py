@@ -853,7 +853,7 @@ def register_modules_pipelines():
 
     for module in modules:
         module = module[0]
-        inst = instantiate_module_from_name(module)
+        inst, _ = instantiate_module_from_name(module)
         if not inst:
             continue
 
@@ -879,7 +879,7 @@ def register_default_modules():
 
     modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module']
     for module in modules:
-        class_ = instantiate_module_from_name(module)
+        class_, _ = instantiate_module_from_name(module)
         is_ready, logs = check_module_health(class_)
 
         if not is_ready:

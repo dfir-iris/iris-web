@@ -308,7 +308,7 @@ def manage_cases_uploadfiles(caseid):
     if not iris_module_exists(pipeline_mod):
         return response_error('Missing pipeline', status=400)
 
-    mod = instantiate_module_from_name(pipeline_mod)
+    mod, _ = instantiate_module_from_name(pipeline_mod)
     status = configure_module_on_init(mod)
     if status.is_failure():
         return response_error("Path for upload {} is not built ! Unreachable pipeline".format(

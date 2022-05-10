@@ -154,16 +154,18 @@ def instantiate_module_from_name(module_name):
         if not mod_root_interface:
             return None
     except Exception as e:
-        log.error(f"Could not import root module {module_name}: {e}")
-        return None
+        msg = f"Could not import root module {module_name}: {e}"
+        log.error(msg)
+        return None, msg
     # The whole concept is based on the fact that the root module provides an __iris_module_interface
     # variable pointing to the interface class with which Iris can talk to
     try:
         mod_interface = importlib.import_module("{}.{}".format(module_name,
                                                            mod_root_interface.__iris_module_interface))
     except Exception as e:
-        log.error(f"Could not import module {module_name}: {e}")
-        return None
+        msg = f"Could not import module {module_name}: {e}"
+        log.error(msg)
+        return None, msg
 
     if not mod_interface:
         return None
@@ -172,20 +174,22 @@ def instantiate_module_from_name(module_name):
     try:
         cl_interface = getattr(mod_interface, mod_root_interface.__iris_module_interface)
     except Exception as e:
-        log.error(f"Could not get handle on the interface class of module {module_name}: {e}")
-        return None
+        msg = f"Could not get handle on the interface class of module {module_name}: {e}"
+        log.error(msg)
+        return None, msg
 
     if not cl_interface:
-        return None
+        return None, ''
 
     # Try to instantiate the class
     try:
         mod_inst = cl_interface()
     except Exception as e:
-        log.error(f"Could not instantiate the class for module {module_name}: {e}")
-        return None
+        msg = f"Could not instantiate the class for module {module_name}: {e}"
+        log.error(msg)
+        return None, msg
 
-    return mod_inst
+    return mod_inst, 'Success'
 
 
 def configure_module_on_init(module_instance):
@@ -242,7 +246,7 @@ def register_module(module_name):
 
     try:
 
-        mod_inst = instantiate_module_from_name(module_name=module_name)
+        mod_inst, _ = instantiate_module_from_name(module_name=module_name)
         if not mod_inst:
             log.error("Module could not be instantiated")
             return None, ["Module could not be instantiated"]
@@ -291,7 +295,7 @@ def iris_update_hooks(module_name, module_id):
         return False, ["Module has no names"]
 
     try:
-        mod_inst = instantiate_module_from_name(module_name=module_name)
+        mod_inst,_ = instantiate_module_from_name(module_name=module_name)
         if not mod_inst:
             log.error("Module could not be instantiated")
             return False, ["Module could not be instantiated"]
@@ -433,7 +437,7 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     log.info(f'Calling module {module_name} for hook {hook_name}')
 
     try:
-        mod_inst = instantiate_module_from_name(module_name=module_name)
+        mod_inst, _ = instantiate_module_from_name(module_name=module_name)
 
         if mod_inst:
             task_status = mod_inst.hooks_handler(hook_name, hook_ui_name, data=_obj)
@@ -514,7 +518,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
                 else:
                     data_list = data
 
-                mod_inst = instantiate_module_from_name(module_name=module.module_name)
+                mod_inst, _ = instantiate_module_from_name(module_name=module.module_name)
                 status = mod_inst.hooks_handler(hook_name, module.manual_hook_ui_name, data=data_list)
 
             except Exception as e:
@@ -555,7 +559,7 @@ def pipeline_dispatcher(self, module, pipeline_type, pipeline_data, init_user, c
     """
 
     # Retrieve the handler
-    mod = instantiate_module_from_name(module_name=module)
+    mod, _ = instantiate_module_from_name(module_name=module)
     if mod:
 
         status = configure_module_on_init(mod)

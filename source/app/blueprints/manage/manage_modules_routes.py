@@ -95,13 +95,16 @@ def add_module(caseid, url_redir):
     form = AddModuleForm()
 
     if form.is_submitted():
-        module_name = request.form.get('module_name', type=str)
+        module_name = request.json.get('module_name')
 
         # Try to import the module
         try:
             # Try to instantiate the module
             log.info('Trying to add module {}'.format(module_name))
-            class_ = instantiate_module_from_name(module_name)
+            class_, logs = instantiate_module_from_name(module_name)
+
+            if not class_:
+                return response_error(f"Cannot import module. {logs}")
 
             # Check the health of the module
             is_ready, logs = check_module_health(class_)
