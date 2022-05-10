@@ -27,7 +27,6 @@ editor.commands.addCommand({
     }
 })
 
-
 var session_id = null ;
 var collaborator = null ;
 var buffer_dumped = false ;

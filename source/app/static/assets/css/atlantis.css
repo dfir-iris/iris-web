@@ -7370,7 +7370,7 @@ body[data-background-color="dark"] .badge-danger {
 .alert {
     border: 0px;
     position: relative;
-    border-radius: 1rem;
+    border-radius: 0.5rem;
     color: inherit;
     background-color: #ffffff;
     -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
@@ -7384,13 +7384,13 @@ body[data-background-color="dark"] .badge-danger {
 }
 
 .alert.alert-success {
-  background: linear-gradient(45deg, rgba(55,167,115,0.96) 0%, rgba(52,144,101,1) 100%);
+  background: linear-gradient(45deg, rgba(55,167,115,0.9) 0%, rgba(52,144,101,0.9) 100%);
   /*background: linear-gradient(45deg, rgba(65,150,68,1) 0%, rgba(94,166,96,1) 100%);*/
   color: #ffffff;
 }
 
 .alert.alert-danger {
-  background: linear-gradient(45deg, rgba(186,88,88,0.94) 0%, rgba(171,67,67,0.94) 100%);
+  background: linear-gradient(45deg, rgba(186,88,88,0.9) 0%, rgba(171,67,67,0.9) 100%);
   color: #ffffff;
 }
 
@@ -7422,7 +7422,7 @@ body[data-background-color="dark"] .badge-danger {
 }
 
 .alert [data-notify="message"] {
-    font-size: 13px;
+    font-size: 14px;
     color: #fff;
 }
 
@@ -7431,6 +7431,7 @@ body[data-background-color="dark"] .badge-danger {
     height: 25px;
     line-height: 25px;
     top: 10px !important;
+    color: #fff;
 }
 
 

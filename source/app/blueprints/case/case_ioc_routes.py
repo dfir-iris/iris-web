@@ -262,12 +262,12 @@ def case_delete_ioc(cur_id, caseid):
 
     if not delete_ioc(ioc, caseid):
         track_activity("unlinked IOC ID {}".format(cur_id))
-        return response_success("IOC unlinked")
+        return response_success("IOC {} unlinked".format(cur_id))
 
     call_modules_hook('on_postload_ioc_delete', data=cur_id, caseid=caseid)
 
     track_activity("deleted IOC ID {}".format(cur_id))
-    return response_success("IOC deleted")
+    return response_success("IOC {} deleted".format(cur_id))
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
@@ -299,7 +299,7 @@ def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
-        return response_error("Invalid IOC ID for this case")
+        return response_error("Invalid IOC ID for this case".format(cur_id))
 
     return response_success(data=ioc_schema.dump(ioc))
 

@@ -117,7 +117,7 @@ def case_note_delete(cur_id, caseid):
     call_modules_hook('on_postload_note_delete', data=cur_id, caseid=caseid)
 
     track_activity("deleted note ID {}".format(cur_id), caseid=caseid)
-    return response_success("Deleted")
+    return response_success("Note deleted {}".format(cur_id))
 
 
 @case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
@@ -176,7 +176,7 @@ def case_note_add(caseid):
         if note:
             casenote_schema = CaseNoteSchema()
             track_activity("added note ID {}".format(note.note_id), caseid=caseid)
-            return response_success(data=casenote_schema.dump(note))
+            return response_success('Note added', data=casenote_schema.dump(note))
 
         return response_error("Unable to create note for internal reasons")
 
@@ -256,7 +256,7 @@ def case_add_notes_groups(caseid):
             group_schema = CaseGroupNoteSchema()
             track_activity("added group note ID {}".format(ng.group_id), caseid=caseid)
 
-            return response_success("", data=group_schema.dump(ng))
+            return response_success("Notes group added", data=group_schema.dump(ng))
 
         else:
             return response_error("Unable to add a new group")

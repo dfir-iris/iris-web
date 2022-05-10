@@ -98,7 +98,7 @@ def case_add_rfile(caseid):
 
         if crf:
             track_activity("added evidence {}".format(crf.filename), caseid=caseid)
-            return response_success(data=evidence_schema.dump(crf))
+            return response_success("Evidence added", data=evidence_schema.dump(crf))
 
         return response_error("Unable to create task for internal reasons")
 
@@ -165,7 +165,7 @@ def case_edit_rfile(cur_id, caseid):
 
         if evd:
             track_activity("updated evidence {}".format(evd.filename), caseid=caseid)
-            return response_success(data=evidence_schema.dump(evd))
+            return response_success("Evidence {} updated".format(evd.filename), data=evidence_schema.dump(evd))
 
         return response_error("Unable to update task for internal reasons")
 
