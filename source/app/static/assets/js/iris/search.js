@@ -89,51 +89,39 @@ $('#submit_search').click(function () {
 function search() {
     var data_sent = $('form#form_search').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
-
-    $.ajax({
-        url: '/search' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        beforeSend: function (data) {
+    post_request_api('/search', JSON.stringify(data_sent), true, function (data) {
             $('#submit_search').text("Searching...");
-        },
-        complete: function (data) {
-            $('#submit_search').text("Search");
-        },
-        success: function (data) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                  $('#notes_msearch_list').empty();
-                  Table_1.clear();
-                  $('#search_table_wrapper_1').hide();
-                  $('#search_table_wrapper_2').hide();
-                val = $("input[type='radio']:checked").val();
-                if (val == "ioc") {
-                    Table_1.rows.add(data.data);
-                    Table_1.columns.adjust().draw();
-                    $('#search_table_wrapper_1').show();
+    })
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+              $('#notes_msearch_list').empty();
+              Table_1.clear();
+              $('#search_table_wrapper_1').hide();
+              $('#search_table_wrapper_2').hide();
+            val = $("input[type='radio']:checked").val();
+            if (val == "ioc") {
+                Table_1.rows.add(data.data);
+                Table_1.columns.adjust().draw();
+                $('#search_table_wrapper_1').show();
 
-                    $('#search_table_wrapper_1').on('click', function(e){
-                        if($('.popover').length>1)
-                            $('.popover').popover('hide');
-                            $(e.target).popover('toggle');
-                    });
-                }
-                else if (val == "notes") {
-                    for (e in data.data) {
-                        li = `<li class="list-group-item">
-                        <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_detail(`+ data.data[e]['note_id'] +`);">`+ sanitizeHTML(data.data[e]['note_title']) + ` - ` + sanitizeHTML(data.data[e]['case_name']) + ` - ` + sanitizeHTML(data.data[e]['client_name']) +`</span>
-                        </li>`
-                        $('#notes_msearch_list').append(li);
-                    }
-                    $('#search_table_wrapper_2').show();
-                }
+                $('#search_table_wrapper_1').on('click', function(e){
+                    if($('.popover').length>1)
+                        $('.popover').popover('hide');
+                        $(e.target).popover('toggle');
+                });
             }
-        },
-        error: function (error) {
-            notify_error(error.responseJSON.message);
+            else if (val == "notes") {
+                for (e in data.data) {
+                    li = `<li class="list-group-item">
+                    <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_detail(`+ data.data[e]['note_id'] +`);">`+ sanitizeHTML(data.data[e]['note_title']) + ` - ` + sanitizeHTML(data.data[e]['case_name']) + ` - ` + sanitizeHTML(data.data[e]['client_name']) +`</span>
+                    </li>`
+                    $('#notes_msearch_list').append(li);
+                }
+                $('#search_table_wrapper_2').show();
+            }
         }
+    })
+    .always(() => {
+        $('#submit_search').text("Search");
     });
 }
