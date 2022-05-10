@@ -150,7 +150,7 @@ def desc_fetch(caseid):
 def summary_fetch(caseid):
     desc_crc32, desc = case_get_desc_crc(caseid)
 
-    return response_success("", data={'case_description': desc, 'crc32': desc_crc32})
+    return response_success("Summary fetch", data={'case_description': desc, 'crc32': desc_crc32})
 
 
 @case_blueprint.route('/case/activities/list', methods=['GET'])

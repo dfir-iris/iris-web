@@ -466,10 +466,8 @@ function build_timeline(data) {
 function draw_timeline() {
     $('#timeline_list').empty();
     show_loader();
-    rid = $('#assets_timeline_select').val();
-    if (rid == null) { rid = 0; }
 
-    get_request_api("timeline/filter/" + rid)
+    get_request_data_api("/case/timeline/advanced-filter", 'q={}')
     .done((data) => {
         if (data.status == 'success') {
             build_timeline(data);

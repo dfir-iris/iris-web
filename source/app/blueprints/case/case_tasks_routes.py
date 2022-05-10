@@ -144,7 +144,7 @@ def case_add_task(caseid):
 
         if ctask:
             track_activity("added task {}".format(ctask.task_title), caseid=caseid)
-            return response_success(data=task_schema.dump(ctask))
+            return response_success("Task '{}' added".format(ctask.task_title), data=task_schema.dump(ctask))
 
         return response_error("Unable to create task for internal reasons")
 
@@ -215,7 +215,7 @@ def case_edit_task(cur_id, caseid):
 
         if task:
             track_activity("updated task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
-            return response_success(data=task_schema.dump(task))
+            return response_success("Task '{}' updated".format(task.task_title), data=task_schema.dump(task))
 
         return response_error("Unable to update task for internal reasons")
 
