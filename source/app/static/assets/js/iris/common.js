@@ -751,6 +751,19 @@ function toggle_focus_mode() {
     });
 }
 
+function modal_maximize() {
+    id = $('#minimized_modal_btn').data('target-id');
+    $("#" + id).modal("show");
+    $("#minimized_modal_btn").hide();
+}
+
+function modal_minimized(id, title) {
+    $("#" + id).modal("hide");
+    $("#minimized_modal_title").text(title);
+    $('#minimized_modal_btn').data('target-id',id);
+    $("#minimized_modal_btn").show();
+}
+
 function hide_table_search_input(columns) {
     for (i=0; i<columns.length; i++) {
       if (columns[i]) {

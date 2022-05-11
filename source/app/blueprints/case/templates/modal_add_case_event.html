@@ -21,6 +21,7 @@
                 </div>
             </div>
         {% endif %}
+            <button class="pull-right btn bg-transparent" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
             <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
                 aria-hidden="true"><i class="fa fa-times"></i></span></button>
         </div>

@@ -34,7 +34,11 @@
 		{% block content %}{% endblock content %}
 
 		{% include 'includes/quick-sidebar.html' %}
-
+		<div id="minimized_modal_btn" class="minimized_modal shadow-lg bg-primary" onclick="modal_maximize();">
+			<div class="row d-flex justify-right">
+				<span id="minimized_modal_title float-right"></span><i class="fa-solid fa-maximize float-right"></i>
+			</div>
+		</div>
 	</div>
 
 	<!--   Core JS Files   -->

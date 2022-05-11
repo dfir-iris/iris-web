@@ -706,6 +706,7 @@ function get_or_filter_tm() {
     }
 }
 
+
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
