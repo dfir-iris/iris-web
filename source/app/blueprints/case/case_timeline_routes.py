@@ -676,6 +676,10 @@ def case_add_event(caseid):
         update_timeline_state(caseid=caseid)
         db.session.commit()
 
+        save_event_category(event.event_id, request_data.get('event_category_id'))
+
+        setattr(event, 'event_category_id', request_data.get('event_category_id'))
+
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
                                            assets_list=request_data.get('event_assets'))
@@ -689,10 +693,6 @@ def case_add_event(caseid):
             return response_error('Error while saving linked iocs', data=log)
 
         setattr(event, 'event_category_id', request_data.get('event_category_id'))
-
-        update_event_assets(event_id=event.event_id,
-                            caseid=caseid,
-                            assets_list=request_data.get('event_assets'))
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
