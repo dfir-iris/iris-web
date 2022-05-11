@@ -298,6 +298,7 @@ var sh_ext = showdown.extension('bootstrap-tables', function () {
 function note_detail(id) {
     url = '/case/notes/' + id + "/modal" + case_param();
     $('#info_note_modal_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;

@@ -8,6 +8,7 @@ function reload_assets() {
 function add_asset() {
     url = 'assets/add/modal' + case_param();
     $('#modal_add_asset_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
@@ -313,6 +314,7 @@ function asset_details(asset_id) {
 
     url = 'assets/' + asset_id + '/modal' + case_param();
     $('#modal_add_asset_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;

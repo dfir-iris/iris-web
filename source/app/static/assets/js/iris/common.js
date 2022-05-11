@@ -752,16 +752,22 @@ function toggle_focus_mode() {
 }
 
 function modal_maximize() {
-    id = $('#minimized_modal_btn').data('target-id');
+    id = $('#minimized_modal_box').data('target-id');
     $("#" + id).modal("show");
-    $("#minimized_modal_btn").hide();
+    $("#minimized_modal_box").hide();
 }
 
 function modal_minimized(id, title) {
     $("#" + id).modal("hide");
     $("#minimized_modal_title").text(title);
-    $('#minimized_modal_btn').data('target-id',id);
-    $("#minimized_modal_btn").show();
+    $('#minimized_modal_box').data('target-id',id);
+    $("#minimized_modal_box").show();
+}
+
+function hide_minimized_modal_box() {
+    $("#minimized_modal_box").hide();
+    $("#minimized_modal_title").text('');
+    $('#minimized_modal_box').data('target-id','');
 }
 
 function hide_table_search_input(columns) {

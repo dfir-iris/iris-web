@@ -15908,40 +15908,22 @@ td.dt-nowrap { white-space: nowrap }
     left: 30px;
     position: fixed;
     border-radius: 0.5rem;
-    color: inherit;
     width: 200px;
-    height: 50px;
+    min-height: 40px;
     -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
     -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
     box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
-    background: linear-gradient(45deg, rgba(55,167,115,0.9) 0%, rgba(52,144,101,0.9) 100%);
+    background: linear-gradient(45deg, rgba(110,110,110,1) 0%, rgba(115,115,115,1) 100%);
     color: #ffffff;
-    z-index: 9999;
+    z-index: 9997;
+    display: inline-block;
+    margin: 0px auto;
+    cursor: pointer;
 }
 
-.minimized_modal [data-notify="icon"] {
-    display: block;
-}
-
-.minimized_modal [data-notify="icon"]::before {
-    line-height: 35px;
-    font-size: 22px;
-    display: block;
-    left: 15px;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 35px;
-    height: 35px;
-    border-radius: 30px;
-    text-align: center;
-    color: #fff;
-}
 
 .minimized_modal [data-notify="title"] {
-    display: block;
     color: #fff;
     font-weight: 700;
     font-size: 13px;
-    margin-bottom: 2px;
 }

@@ -3,8 +3,8 @@
 
     {% include 'modals/modal_attributes_nav.html' %}
 
-    {% if rfile.id %}
     <div class="row text-right">
+    {% if rfile.id %}
      <div class="dropdown">
           <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
               <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
@@ -14,6 +14,7 @@
           </div>
      </div>
     {% endif %}
+        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_rfiles', 'Edit registered file');"> <i class='fa fa-minus'></i> </button>
         <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true"><i class="fa fa-times"></i></span></button>
     </div>

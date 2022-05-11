@@ -141,6 +141,7 @@ function add_ioc() {
     url = 'ioc/add/modal' + case_param();
 
     $('#modal_add_ioc_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
@@ -237,6 +238,7 @@ function get_case_ioc() {
 function edit_ioc(ioc_id) {
     url = 'ioc/' + ioc_id + '/modal' + case_param();
     $('#modal_add_ioc_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;

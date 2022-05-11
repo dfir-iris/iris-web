@@ -9,8 +9,8 @@
             {% endif %}
         </h4>
         {% include 'modals/modal_attributes_nav.html' %}
+        <div class="row justify-right">
         {% if event.event_id %}
-            <div class="row text-right">
             <div class="dropdown">
                 <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                     <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
@@ -21,8 +21,8 @@
                 </div>
             </div>
         {% endif %}
-            <button class="pull-right btn bg-transparent" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
-            <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
+            <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
                 aria-hidden="true"><i class="fa fa-times"></i></span></button>
         </div>
 </div>

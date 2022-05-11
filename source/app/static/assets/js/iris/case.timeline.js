@@ -27,6 +27,7 @@ tm_filter.commands.addCommand({
 function add_event() {
     url = 'timeline/events/add/modal' + case_param();
     $('#modal_add_event_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
@@ -129,6 +130,7 @@ function edit_event(id) {
   url = '/case/timeline/events/' + id + '/modal' + case_param();
   window.location.hash = id;
   $('#modal_add_event_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
