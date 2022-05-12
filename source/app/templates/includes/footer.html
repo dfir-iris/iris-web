@@ -42,11 +42,17 @@
             </div>
 
             <div class="modal-body">
-                <input class="form-control" placeholder="Task log description" id="log_content" name="log_content"/>
-            </div>
-
-            <div class="modal-footer">
-              <button type="submit" class="btn btn-success" id="submit_new_tasklog">Submit</button>
+              <div class="row mb-2">
+                  <div class="col-12">
+                    <p class="ml-2">Add a task log that will be registered under activities </p>
+                      <textarea class="form-control" placeholder="Log content" id="log_content" name="log_content" rows="3" ></textarea>
+                  </div>
+              </div>
+              <div class="row mt-4">
+                 <div class="col-12 d-flex">
+                    <button type="submit" class="btn btn-outline-success ml-auto" id="submit_new_tasklog">Submit</button>
+                 </div>
+             </div>
             </div>
           </div><!-- /.modal-content -->
         </form>
