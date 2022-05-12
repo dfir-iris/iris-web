@@ -19,10 +19,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
-from app.util import response_success, response_error
 
 from app.models.models import AnalysisStatus
 from app.util import api_login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_anastatus_blueprint = Blueprint('manage_anastatus',
                                     __name__,

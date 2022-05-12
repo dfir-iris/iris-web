@@ -26,17 +26,38 @@ import string
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine
-from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy_utils import create_database
+from sqlalchemy_utils import database_exists
 
-from app import db, bc, app, celery
+from app import app
+from app import bc
+from app import celery
+from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
-from app.iris_engine.module_handler.module_handler import instantiate_module_from_name, register_module, \
-    check_module_health
-from app.models.cases import Cases, Client
-from app.models.models import Role, Languages, User, get_or_create, get_by_value_or_create, create_safe, UserRoles, \
-    OsType, Tlp, AssetsType, \
-    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook, create_safe_attr, \
-    ServerSettings
+from app.iris_engine.module_handler.module_handler import check_module_health
+from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
+from app.iris_engine.module_handler.module_handler import register_module
+from app.models.cases import Cases
+from app.models.cases import Client
+from app.models.models import AnalysisStatus
+from app.models.models import AssetsType
+from app.models.models import EventCategory
+from app.models.models import IocType
+from app.models.models import IrisHook
+from app.models.models import IrisModule
+from app.models.models import Languages
+from app.models.models import OsType
+from app.models.models import ReportType
+from app.models.models import Role
+from app.models.models import ServerSettings
+from app.models.models import TaskStatus
+from app.models.models import Tlp
+from app.models.models import User
+from app.models.models import UserRoles
+from app.models.models import create_safe
+from app.models.models import create_safe_attr
+from app.models.models import get_by_value_or_create
+from app.models.models import get_or_create
 
 log = app.logger
 

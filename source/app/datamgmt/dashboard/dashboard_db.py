@@ -18,11 +18,15 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from flask_login import current_user
-from sqlalchemy import desc, and_
+from sqlalchemy import and_
+from sqlalchemy import desc
 
 from app import db
-
-from app.models import GlobalTasks, User, Cases, CaseTasks, TaskStatus
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import GlobalTasks
+from app.models import TaskStatus
+from app.models import User
 
 
 def list_global_tasks():

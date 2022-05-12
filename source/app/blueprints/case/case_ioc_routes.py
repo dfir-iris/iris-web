@@ -19,28 +19,44 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-import json
 
 import csv
-import marshmallow
 import logging as log
-from flask import Blueprint, request
-from flask import render_template, url_for, redirect
+import marshmallow
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 
 from app import db
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add_ioc, add_ioc_link, \
-    get_tlps, get_ioc, delete_ioc, get_ioc_types_list, check_ioc_type_id, get_tlps_dict, get_ioc_type_id
+from app.datamgmt.case.case_iocs_db import add_ioc
+from app.datamgmt.case.case_iocs_db import add_ioc_link
+from app.datamgmt.case.case_iocs_db import check_ioc_type_id
+from app.datamgmt.case.case_iocs_db import delete_ioc
+from app.datamgmt.case.case_iocs_db import get_detailed_iocs
+from app.datamgmt.case.case_iocs_db import get_ioc
+from app.datamgmt.case.case_iocs_db import get_ioc_links
+from app.datamgmt.case.case_iocs_db import get_ioc_type_id
+from app.datamgmt.case.case_iocs_db import get_ioc_types_list
+from app.datamgmt.case.case_iocs_db import get_tlps
+from app.datamgmt.case.case_iocs_db import get_tlps_dict
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
-from app.datamgmt.states import get_ioc_state, update_ioc_state
-from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
+from app.datamgmt.states import get_ioc_state
+from app.datamgmt.states import update_ioc_state
+from app.forms import ModalAddCaseAssetForm
+from app.forms import ModalAddCaseIOCForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import Ioc, CustomAttribute
+from app.models.models import Ioc
 from app.schema.marshables import IocSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 case_ioc_blueprint = Blueprint('case_ioc',
                                __name__,

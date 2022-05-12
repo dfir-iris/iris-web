@@ -19,9 +19,9 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-import re
 from unittest import TestCase
 
+import re
 from flask import url_for
 from flask.testing import FlaskClient
 

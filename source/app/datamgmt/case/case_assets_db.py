@@ -19,11 +19,19 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
+from sqlalchemy import and_
+from sqlalchemy import func
 
 from app import db
 from app.datamgmt.states import update_assets_state
-from app.models import AssetsType, IocAssetLink, CaseAssets, Cases, Ioc, AnalysisStatus, CaseEventsAssets, IocType
-from sqlalchemy import and_, func
+from app.models import AnalysisStatus
+from app.models import AssetsType
+from app.models import CaseAssets
+from app.models import CaseEventsAssets
+from app.models import Cases
+from app.models import Ioc
+from app.models import IocAssetLink
+from app.models import IocType
 
 
 def create_asset(asset, caseid, user_id):

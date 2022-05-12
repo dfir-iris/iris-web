@@ -18,19 +18,22 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
+from flask import Blueprint
+from flask import redirect
+from flask import request
+from flask import url_for
+from flask_login import current_user
 from sqlalchemy import desc
 
-from app import app, cache
+from app import app
+from app import cache
 from app import db
 from app.models.cases import Cases
-from app.models.models import Client, ServerSettings
-from app.util import response_success, get_urlcasename, login_required, api_login_required
-
-from flask_login import current_user
-from flask import request, url_for, redirect
-from flask import Blueprint
-
+from app.models.models import Client
+from app.models.models import ServerSettings
+from app.util import api_login_required
+from app.util import get_urlcasename
+from app.util import response_success
 
 # CONTENT ------------------------------------------------
 ctx_blueprint = Blueprint('context',

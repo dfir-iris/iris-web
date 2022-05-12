@@ -18,18 +18,24 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import marshmallow
-from flask import Blueprint, request, jsonify, url_for, render_template
+from flask import Blueprint
+from flask import render_template
+from flask import request
+from flask import url_for
 from werkzeug.utils import redirect
 
 from app import db
+from app.datamgmt.case.case_iocs_db import get_ioc_types_list
 from app.forms import AddIocTypeForm
 from app.iris_engine.utils.tracker import track_activity
-from app.models import IocType, IocLink, Ioc
+from app.models import Ioc
+from app.models import IocType
 from app.schema.marshables import IocTypeSchema
-from app.util import response_success, api_admin_required, response_error, admin_required
-
-from app.datamgmt.case.case_iocs_db import get_ioc_types_list, add_ioc_type
+from app.util import admin_required
+from app.util import api_admin_required
 from app.util import api_login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_ioc_type_blueprint = Blueprint('manage_ioc_types',
                                       __name__,

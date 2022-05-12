@@ -22,18 +22,29 @@
 
 import eventlet
 import marshmallow
-from flask import Blueprint, url_for, render_template, request
+from flask import Blueprint
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app import db, app, celery
-from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_alembic_revision
+from app import app
+from app import celery
+from app import db
+from app.datamgmt.manage.manage_srv_settings_db import get_alembic_revision
+from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.iris_engine.backup.backup import backup_iris_db
-from app.iris_engine.updater.updater import is_updates_available, inner_init_server_update, \
-    remove_periodic_update_checks, setup_periodic_update_checks
+from app.iris_engine.updater.updater import inner_init_server_update
+from app.iris_engine.updater.updater import is_updates_available
+from app.iris_engine.updater.updater import remove_periodic_update_checks
+from app.iris_engine.updater.updater import setup_periodic_update_checks
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import ServerSettingsSchema
-from app.util import admin_required, api_admin_required, response_error, response_success
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import response_error
+from app.util import response_success
 
 manage_srv_settings_blueprint = Blueprint(
     'manage_srv_settings_blueprint',

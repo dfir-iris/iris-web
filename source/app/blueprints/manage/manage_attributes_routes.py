@@ -21,14 +21,22 @@
 # IMPORTS ------------------------------------------------
 import json
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 
 from app import db
-from app.datamgmt.manage.manage_attribute_db import update_all_attributes, validate_attribute
-from app.forms import AddAssetForm, AttributeForm
+from app.datamgmt.manage.manage_attribute_db import update_all_attributes
+from app.datamgmt.manage.manage_attribute_db import validate_attribute
+from app.forms import AddAssetForm
+from app.forms import AttributeForm
 from app.models.models import CustomAttribute
-from app.util import response_success, response_error, admin_required, api_admin_required, \
-    api_login_required
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import api_login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_attributes_blueprint = Blueprint('manage_attributes',
                                           __name__,

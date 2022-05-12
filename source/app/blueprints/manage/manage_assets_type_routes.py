@@ -19,22 +19,28 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-from cmath import log
 import logging
-import marshmallow, string, random
-from flask import Blueprint, flash
-from flask import render_template, request, url_for, redirect
-
-from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AssetsType, CaseAssets
-from app.forms import AddAssetForm
-from app import db, app
-from app.schema.marshables import AssetSchema
+import marshmallow
 import os
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 
-
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
-    api_login_required
+from app import app
+from app import db
+from app.forms import AddAssetForm
+from app.iris_engine.utils.tracker import track_activity
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
+from app.schema.marshables import AssetSchema
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_assets_blueprint = Blueprint('manage_assets',
                                     __name__,

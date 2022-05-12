@@ -22,15 +22,26 @@
 import secrets
 
 from flask_login import UserMixin
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, LargeBinary, DateTime, Sequence, or_, \
-    BigInteger, TIMESTAMP
+from sqlalchemy import BigInteger
+from sqlalchemy import Boolean
+from sqlalchemy import Column
+from sqlalchemy import DateTime
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+from sqlalchemy import LargeBinary
+from sqlalchemy import Sequence
+from sqlalchemy import String
+from sqlalchemy import TIMESTAMP
+from sqlalchemy import Text
 from sqlalchemy import create_engine
+from sqlalchemy import or_
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
-from app import db, app
+from app import app
+from app import db
 
 Base = declarative_base()
 metadata = Base.metadata

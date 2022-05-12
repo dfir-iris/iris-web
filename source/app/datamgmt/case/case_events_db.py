@@ -20,9 +20,17 @@
 
 from sqlalchemy import and_
 
-from app.models import CaseAssets, AssetsType, EventCategory, CaseEventCategory, CasesEvent, CaseEventsAssets, Ioc, \
-    IocLink, CaseEventsIoc, IocType
 from app import db
+from app.models import AssetsType
+from app.models import CaseAssets
+from app.models import CaseEventCategory
+from app.models import CaseEventsAssets
+from app.models import CaseEventsIoc
+from app.models import CasesEvent
+from app.models import EventCategory
+from app.models import Ioc
+from app.models import IocLink
+from app.models import IocType
 
 
 def get_case_events_assets_graph(caseid):

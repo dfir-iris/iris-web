@@ -17,26 +17,40 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import os
-
-import random
-import string
-
-import re
-
 import dateutil.parser
 import marshmallow
-from marshmallow import fields, post_load, pre_load
+import os
+import random
+import re
+import string
+from marshmallow import fields
+from marshmallow import post_load
+from marshmallow import pre_load
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
 
-from app import ma, app
-from app.datamgmt.dashboard.dashboard_db import get_task_status
+from app import app
+from app import ma
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
-from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp, EventCategory, ServerSettings
-
+from app.models import AnalysisStatus
+from app.models import AssetsType
+from app.models import CaseAssets
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import Client
+from app.models import EventCategory
+from app.models import GlobalTasks
+from app.models import Ioc
+from app.models import IocType
+from app.models import Notes
+from app.models import NotesGroup
+from app.models import ServerSettings
+from app.models import TaskStatus
+from app.models import Tlp
+from app.models import User
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
 

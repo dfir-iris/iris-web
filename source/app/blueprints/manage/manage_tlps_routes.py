@@ -21,7 +21,8 @@ from flask import Blueprint
 
 from app.models import Tlp
 from app.util import api_login_required
-from app.util import response_success, response_error
+from app.util import response_error
+from app.util import response_success
 
 manage_tlp_type_blueprint = Blueprint('manage_tlp_types',
                                       __name__,

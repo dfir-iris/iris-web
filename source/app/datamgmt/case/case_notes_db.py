@@ -23,7 +23,10 @@ from sqlalchemy import and_
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
-from app.models import Notes, NotesGroupLink, NotesGroup, User
+from app.models import Notes
+from app.models import NotesGroup
+from app.models import NotesGroupLink
+from app.models import User
 
 
 def get_note(note_id, caseid=None):

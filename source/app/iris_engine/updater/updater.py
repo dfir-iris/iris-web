@@ -17,28 +17,30 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import subprocess
-
 import gnupg
 import hashlib
 import json
 import os
 import requests
 import shutil
+import subprocess
 import tempfile
 import time
 from celery.schedules import crontab
 from datetime import datetime
 from flask_login import current_user
-from flask_socketio import join_room, emit
+from flask_socketio import emit
+from flask_socketio import join_room
 from packaging import version
 from pathlib import Path
 
-from app import app, celery, socket_io, db
+from app import app
+from app import celery
+from app import db
+from app import socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.iris_engine.backup.backup import backup_iris_db
 from app.models import ServerSettings
-from app.util import admin_required, api_admin_required
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = app.logger

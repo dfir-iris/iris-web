@@ -20,13 +20,15 @@
 
 # IMPORTS ------------------------------------------------
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
-
-from app.util import admin_required
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 
 from app import bc
 from app.forms import RegisterForm
 from app.models.models import User
+from app.util import admin_required
 
 register_blueprint = Blueprint('register',
                                __name__,

@@ -20,33 +20,55 @@
 
 # IMPORTS ------------------------------------------------
 import json
-
-from datetime import datetime
-
 import marshmallow
+import urllib.parse
+from datetime import datetime
 from flask import Blueprint
-from flask import render_template, url_for, redirect, request
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
+from sqlalchemy import or_
 
 from app import db
+from app.datamgmt.case.case_events_db import delete_event_category
+from app.datamgmt.case.case_events_db import get_case_assets_for_tm
+from app.datamgmt.case.case_events_db import get_case_event
+from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
+from app.datamgmt.case.case_events_db import get_default_cat
+from app.datamgmt.case.case_events_db import get_event_assets_ids
+from app.datamgmt.case.case_events_db import get_event_category
+from app.datamgmt.case.case_events_db import get_event_iocs_ids
+from app.datamgmt.case.case_events_db import get_events_categories
+from app.datamgmt.case.case_events_db import save_event_category
+from app.datamgmt.case.case_events_db import update_event_assets
+from app.datamgmt.case.case_events_db import update_event_iocs
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
-from app.datamgmt.states import get_timeline_state, update_timeline_state
+from app.datamgmt.states import get_timeline_state
+from app.datamgmt.states import update_timeline_state
 from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.common import parse_bf_date_format
-from app.models.cases import Cases, CasesEvent
-from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory, CaseEventsIoc
-from app.schema.marshables import EventSchema
-from app.util import response_success, response_error, login_required, api_login_required, add_obj_history_entry
-from app.datamgmt.case.case_events_db import get_events_categories, save_event_category, \
-    get_default_cat, \
-    delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids, \
-    get_case_iocs_for_tm, get_case_assets_for_tm, update_event_iocs, get_event_iocs_ids
 from app.iris_engine.utils.tracker import track_activity
-
-import urllib.parse
+from app.models.cases import Cases
+from app.models.cases import CasesEvent
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
+from app.models.models import CaseEventsAssets
+from app.models.models import CaseEventsIoc
+from app.models.models import EventCategory
+from app.models.models import Ioc
+from app.models.models import IocLink
+from app.models.models import User
+from app.schema.marshables import EventSchema
+from app.util import add_obj_history_entry
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
 

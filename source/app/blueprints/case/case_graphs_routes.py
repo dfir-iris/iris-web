@@ -20,14 +20,18 @@
 
 import itertools
 from datetime import datetime
-
 from flask import Blueprint
-from flask import render_template, url_for, redirect
+from flask import redirect
+from flask import render_template
+from flask import url_for
 from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_events_db import get_case_events_assets_graph, get_case_events_ioc_graph
-from app.util import response_success, login_required, api_login_required
+from app.datamgmt.case.case_events_db import get_case_events_assets_graph
+from app.datamgmt.case.case_events_db import get_case_events_ioc_graph
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_success
 
 case_graph_blueprint = Blueprint('case_graph',
                                  __name__,

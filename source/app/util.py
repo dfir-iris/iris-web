@@ -18,30 +18,32 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import traceback
+import weakref
+
 import datetime
 import decimal
+import logging as log
 import pickle
 import random
 import shutil
 import string
-import traceback
-import weakref
-import logging as log
-from pathlib import Path
-
-from flask_wtf import FlaskForm
-from pyunpack import Archive
-
-from flask import json, url_for, request, render_template
+from flask import json
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
+from flask_wtf import FlaskForm
+from functools import wraps
+from pathlib import Path
+from pyunpack import Archive
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
-from functools import wraps
-
-from app import app, db, TEMPLATE_PATH
-
+from app import TEMPLATE_PATH
+from app import app
+from app import db
 # build a Json response
 from app.datamgmt.case.case_db import get_case
 from app.models import Cases

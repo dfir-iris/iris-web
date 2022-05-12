@@ -17,21 +17,25 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import base64
-import logging
 import traceback
 
+import base64
 import importlib
 from flask_login import current_user
-
-from pickle import loads, dumps
+from pickle import dumps
+from pickle import loads
 from sqlalchemy import and_
 
-from app import app, db, celery
-
-from app.datamgmt.iris_engine.modules_db import iris_module_exists, iris_module_add, modules_list_pipelines, \
-     get_module_config_from_hname
-from app.models import IrisHook, IrisModuleHook, IrisModule
+from app import app
+from app import celery
+from app import db
+from app.datamgmt.iris_engine.modules_db import get_module_config_from_hname
+from app.datamgmt.iris_engine.modules_db import iris_module_add
+from app.datamgmt.iris_engine.modules_db import iris_module_exists
+from app.datamgmt.iris_engine.modules_db import modules_list_pipelines
+from app.models import IrisHook
+from app.models import IrisModule
+from app.models import IrisModuleHook
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = app.logger

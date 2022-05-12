@@ -20,14 +20,24 @@
 
 # IMPORTS ------------------------------------------------
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from sqlalchemy import and_
 
 from app.forms import SearchForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.models.models import Ioc, IocLink, Client, Tlp, Notes, IocType
-from app.util import response_success, login_required, api_login_required
+from app.models.models import Client
+from app.models.models import Ioc
+from app.models.models import IocLink
+from app.models.models import IocType
+from app.models.models import Notes
+from app.models.models import Tlp
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_success
 
 search_blueprint = Blueprint('search',
                              __name__,

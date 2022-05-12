@@ -16,11 +16,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import gzip
-from datetime import datetime
-from app import app
 import subprocess
+from datetime import datetime
 from pathlib import Path
+
+from app import app
 
 log = app.logger
 

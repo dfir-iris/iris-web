@@ -19,11 +19,25 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
-
 from sqlalchemy import desc
 
-from app.models import User, Cases, Client, CaseReceivedFile, CasesEvent, CaseEventsAssets, CaseAssets, \
-    AssetsType, IocLink, Ioc, IocAssetLink, AnalysisStatus, CaseTasks, Notes, EventCategory, IocType, TaskStatus
+from app.models import AnalysisStatus
+from app.models import AssetsType
+from app.models import CaseAssets
+from app.models import CaseEventsAssets
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import Client
+from app.models import EventCategory
+from app.models import Ioc
+from app.models import IocAssetLink
+from app.models import IocLink
+from app.models import IocType
+from app.models import Notes
+from app.models import TaskStatus
+from app.models import User
 
 
 def export_case_json(case_id):

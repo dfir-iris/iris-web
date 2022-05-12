@@ -24,6 +24,7 @@ import os
 import urllib.parse
 from flask import Flask
 from flask_bcrypt import Bcrypt
+from flask_caching import Cache
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO
@@ -31,7 +32,6 @@ from flask_sqlalchemy import SQLAlchemy
 from functools import partial
 from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask_caching import Cache
 
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery

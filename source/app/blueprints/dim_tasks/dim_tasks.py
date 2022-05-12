@@ -21,24 +21,35 @@
 
 # IMPORTS ------------------------------------------------
 import json
-
-import pickle
-
 import os
-
-from flask import Blueprint, request
-from flask import render_template, url_for, redirect
+import pickle
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_wtf import FlaskForm
-
-from app.iris_engine.module_handler.module_handler import call_modules_hook
-from iris_interface.IrisInterfaceStatus import IIStatus
 from sqlalchemy import desc
 
 import app
-from app.datamgmt.activities.activities_db import get_all_user_activities
-from app.models import CeleryTaskMeta, IrisModuleHook, IrisHook, IrisModule, Ioc, CaseAssets, Notes, CasesEvent, \
-    CaseTasks, CaseReceivedFile, GlobalTasks, Cases
-from app.util import response_success, login_required, api_login_required, response_error
+from app.iris_engine.module_handler.module_handler import call_modules_hook
+from app.models import CaseAssets
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import CeleryTaskMeta
+from app.models import GlobalTasks
+from app.models import Ioc
+from app.models import IrisHook
+from app.models import IrisModule
+from app.models import IrisModuleHook
+from app.models import Notes
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
+from iris_interface.IrisInterfaceStatus import IIStatus
 
 dim_tasks_blueprint = Blueprint(
     'dim_tasks',
