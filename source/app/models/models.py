@@ -21,18 +21,16 @@
 # IMPORTS ------------------------------------------------
 import secrets
 
-from app import db, app
 from flask_login import UserMixin
-
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, text, \
-    LargeBinary, DateTime, Sequence, or_, BigInteger, TIMESTAMP
-from sqlalchemy.dialects.postgresql import UUID, JSON, JSON
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, LargeBinary, DateTime, Sequence, or_, \
+    BigInteger, TIMESTAMP
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, backref
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
 
+from app import db, app
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -202,87 +200,6 @@ class CaseGraphLinks(db.Model):
     case = relationship('Cases')
 
 
-class FileBehavior(db.Model):
-    __tablename__ = 'file_behaviors'
-
-    id = Column(UUID, primary_key=True)
-    behaviors = Column(String(256), unique=True)
-
-
-class FileContentHash(db.Model):
-    __tablename__ = 'file_content_hash'
-
-    content_hash = Column(UUID, primary_key=True)
-    vt_url = Column(String(512))
-    vt_score = Column(Numeric)
-    comment = Column(String(2048))
-    flag = Column(String(256))
-    seen_count = Column(Integer)
-    last_update = Column(Date)
-    sha256 = Column(String(128))
-    misp = Column(Text)
-
-
-class FileEdna(db.Model):
-    __tablename__ = 'file_edna'
-
-    id = Column(UUID, primary_key=True)
-    edna = Column(Text, unique=True)
-
-
-class FileImphash(db.Model):
-    __tablename__ = 'file_imphash'
-
-    id = Column(UUID, primary_key=True)
-    imphash = Column(String(256), unique=True)
-
-
-class FileImport(db.Model):
-    __tablename__ = 'file_imports'
-
-    id = Column(UUID, primary_key=True)
-    imports = Column(Integer, unique=True)
-
-
-class FileName(db.Model):
-    __tablename__ = 'file_name'
-
-    fn_hash = Column(UUID, primary_key=True)
-    filename = Column(String(256))
-
-
-class FileSection(db.Model):
-    __tablename__ = 'file_sections'
-
-    id = Column(UUID, primary_key=True)
-    sections = Column(String(512), unique=True)
-
-
-class PathName(db.Model):
-    __tablename__ = 'path_name'
-
-    path_hash = Column(UUID, primary_key=True)
-    path = Column(String(1024))
-
-"""
-class TemplateGroup(db.Model):
-    __tablename__ = 'template_group'
-
-    group_id = Column(Integer, primary_key=True, server_default=text("nextval('template_group_group_id_seq'::regclass)"))
-    name = Column(String(256), unique=True)
-    description = Column(String(2048))
-    author = Column(String(256))
-
-
-class TemplateSne(db.Model):
-    __tablename__ = 'template_sne'
-
-    template_id = Column(Integer, primary_key=True, server_default=text("nextval('template_template_id_seq'::regclass)"))
-    template_name = Column(String(256), unique=True)
-    template_desc = Column(String(2048))
-    registration_date = Column(Date)
-"""
-
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer(), primary_key=True)
@@ -387,18 +304,6 @@ class User(UserMixin, db.Model):
         return False
 
 
-class Fullpath(db.Model):
-    __tablename__ = 'fullpath'
-
-    full_path_hash = Column(UUID, primary_key=True)
-    full_path = Column(String(2048))
-    path_hash = Column(ForeignKey('path_name.path_hash'))
-    fn_hash = Column(ForeignKey('file_name.fn_hash'))
-
-    file_name = relationship('FileName')
-    path_name = relationship('PathName')
-
-
 class Tlp(db.Model):
     __tablename__ = 'tlp'
 
@@ -464,45 +369,6 @@ class IocAssetLink(db.Model):
 
     ioc = relationship('Ioc')
     asset = relationship('CaseAssets')
-
-
-class HashLink(db.Model):
-    __tablename__ = 'hash_link'
-
-    link_key = Column(UUID, primary_key=True)
-    content_hash = Column(ForeignKey('file_content_hash.content_hash'))
-    fn_hash = Column(ForeignKey('file_name.fn_hash'))
-    path_hash = Column(ForeignKey('path_name.path_hash'))
-    seen_count = Column(Integer)
-    edna_id = Column(ForeignKey('file_edna.id'))
-    imphash_id = Column(ForeignKey('file_imphash.id'))
-    behaviors_id = Column(ForeignKey('file_behaviors.id'))
-    sections_id = Column(ForeignKey('file_sections.id'))
-    imports_id = Column(ForeignKey('file_imports.id'))
-
-    behaviors = relationship('FileBehavior')
-    file_content_hash = relationship('FileContentHash')
-    edna = relationship('FileEdna')
-    file_name = relationship('FileName')
-    imphash = relationship('FileImphash')
-    imports = relationship('FileImport')
-    path_name = relationship('PathName')
-    sections = relationship('FileSection')
-
-
-class CasesDatum(db.Model):
-    __tablename__ = 'cases_data'
-    __table_args__ = (
-        UniqueConstraint('case_id', 'link_key'),
-        Index('idx_invest_data', 'id', 'case_id', 'link_key', unique=True)
-    )
-
-    id = Column(Integer, primary_key=True)
-    case_id = Column(ForeignKey('cases.case_id'), nullable=False, )
-    link_key = Column(ForeignKey('hash_link.link_key'))
-
-    case = relationship('Cases', backref=backref("CasesDatum", cascade="all,delete,delete-orphan"))
-    hash_link = relationship('HashLink')
 
 
 class OsType(db.Model):
@@ -781,7 +647,6 @@ class CeleryTaskMeta(db.Model):
     worker = Column(String(155))
     retries = Column(Integer)
     queue = Column(String(155))
-
 
 
 def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):
