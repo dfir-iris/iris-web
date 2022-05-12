@@ -1,7 +1,9 @@
 /* reload the rfiles table */
-function reload_rfiles() {
+function reload_rfiles(notify) {
     get_case_rfiles();
-    notify_success("Refreshed");
+    if (notify !== undefined) {
+        notify_success("Refreshed");
+    }
 }
 
 

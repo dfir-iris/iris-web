@@ -72,16 +72,15 @@ class CeleryConfig():
 class Config():
 
     # Handled by bumpversion
-    IRIS_VERSION = "v1.4.1"
+    IRIS_VERSION = "v1.4.2"
 
     API_MIN_VERSION = "1.0.1"
-    API_MAX_VERSION = "1.0.2"
+    API_MAX_VERSION = "1.0.3"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.1'
 
-    #RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
-    RELEASE_URL = 'http://192.168.1.11:8088/releases'
+    RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
     RELEASE_SIGNATURE_KEY = "B9B762555CE8751E57B178DD3003B1BA1A2E235E"
 
     if os.environ.get('IRIS_WORKER') is None:
