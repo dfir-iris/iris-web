@@ -147,8 +147,10 @@ function delete_asset_type(id) {
         if (willDelete) {
             get_request_api('/manage/asset-type/delete/' + id)
             .done((data) => {
-                refresh_asset_table();
-                $('#modal_add_type').modal('hide');
+                if(notify_auto_api(data)) {
+                    refresh_asset_table();
+                    $('#modal_add_type').modal('hide');
+                }
             });
         } else {
             swal("Pfew, that was close");
@@ -167,8 +169,10 @@ function add_ioc_type() {
 
             post_request_api('/manage/ioc-types/add', JSON.stringify(form), true)
             .done((data) => {
-                refresh_ioc_table();
-                $('#modal_add_type').modal('hide');
+                if(notify_auto_api(data)) {
+                    refresh_ioc_table();
+                    $('#modal_add_type').modal('hide');
+                }
             });
 
             return false;
@@ -236,8 +240,10 @@ function ioc_type_detail(ioc_id) {
 
             post_request_api('/manage/ioc-types/update/' + ioc_id, JSON.stringify(form), true)
             .done((data) => {
-                refresh_ioc_table();
-                $('#modal_add_type').modal('hide');
+                if(notify_auto_api(data)) {
+                    refresh_ioc_table();
+                    $('#modal_add_type').modal('hide');
+                }
             });
 
             return false;
@@ -247,7 +253,7 @@ function ioc_type_detail(ioc_id) {
     });
     $('#modal_add_type').modal({ show: true });
 }
-function delete_asset_type(id) {
+function delete_ioc_type(id) {
 
     swal({
       title: "Are you sure?",
@@ -261,10 +267,12 @@ function delete_asset_type(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-            get_request_api('/manage/asset-type/delete/' + id)
+            get_request_api('/manage/ioc-types/delete/' + id)
             .done((data) => {
-                refresh_asset_table();
-                $('#modal_add_type').modal('hide');
+                if(notify_auto_api(data)) {
+                    refresh_ioc_table();
+                    $('#modal_add_type').modal('hide');
+                }
             });
       } else {
         swal("Pfew, that was close");
