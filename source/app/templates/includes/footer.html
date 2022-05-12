@@ -12,22 +12,18 @@
                         aria-hidden="true">&times;</span></button>
                   </div>
                   <div class="modal-body">
-                  <select class="selectpicker form-control btn-outline-white dropdown-submenu" data-show-subtext="true" data-live-search="true" id="user_context">
-                      <optgroup label="Opened">
-                        {% for case in cases_context_selector %}
-                              <option value="{{ case[2] }}">{{ case[0]|unquote }} ({{ case[1] }})</option>
-                        {% endfor %}
-                      </optgroup>
-                      <optgroup label="Closed">
-                        {% for case in cases_close_context_selector %}
-                              <option value="{{ case[2] }}">{{ case[0]|unquote }} ({{ case[1] }})</option>
-                        {% endfor %}
-                      </optgroup>
-                  </select>
-                  </div>
-                  <div class="modal-footer">
-                      <button type="button" class="btn btn-default mr-auto" data-dismiss="modal">Close</button>
-                      <button type="button" class="btn btn-outline-success" id="submit_set_context">Save</button>
+                      <div class="row mb-2">
+                          <div class="col-12">
+                            <select class="selectpicker form-control btn-outline-white dropdown-submenu" data-show-subtext="true" data-live-search="true" id="user_context">
+                            </select>
+                          </div>
+                      </div>
+                     <div class="row mt-4">
+                         <div class="col-12 d-flex">
+                             <button type="button" class="btn btn-default mr-auto" data-dismiss="modal">Close</button>
+                             <button type="button" class="btn btn-outline-success ml-auto" id="submit_set_context">Save</button>
+                         </div>
+                     </div>
                   </div>
             </form>
           </div><!-- /.modal-content -->

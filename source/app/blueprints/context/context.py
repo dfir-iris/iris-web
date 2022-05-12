@@ -19,11 +19,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+from sqlalchemy import desc
+
 from app import app, cache
 from app import db
 from app.models.cases import Cases
 from app.models.models import Client, ServerSettings
-from app.util import response_success, get_urlcasename
+from app.util import response_success, get_urlcasename, login_required, api_login_required
 
 from flask_login import current_user
 from flask import request, url_for, redirect
@@ -79,35 +81,35 @@ def case_name():
     return dict(case_name=get_urlcasename())
 
 
-@app.context_processor
-@cache.cached(timeout=3600, key_prefix='iris_cases_context')
-def cases_context():
+@ctx_blueprint.route('/context/get-cases', methods=['GET'])
+@api_login_required
+def cases_context(caseid):
     # Get all investigations not closed
     res = Cases.query.with_entities(
         Cases.name,
-        Client.name,
+        Client.name.label('customer_name'),
         Cases.case_id,
         Cases.close_date)\
         .join(Cases.client)\
         .filter(Cases.close_date == None)\
-        .order_by(Cases.name)\
+        .order_by(desc(Cases.case_id))\
         .all()
 
-    datao = [row for row in res]
+    datao = [row._asdict() for row in res]
 
     res = Cases.query.with_entities(
         Cases.name,
-        Client.name,
+        Client.name.label('customer_name'),
         Cases.case_id,
         Cases.close_date)\
         .join(Cases.client)\
         .filter(Cases.close_date != None)\
-        .order_by(Cases.name)\
+        .order_by(desc(Cases.case_id))\
         .all()
 
-    datac = [row for row in res]
+    datac = [row._asdict() for row in res]
 
-    return dict(cases_context_selector=datao, cases_close_context_selector=datac)
+    return response_success(data=dict(cases_context_selector=datao, cases_close_context_selector=datac))
 
 
 def update_user_case_ctx():

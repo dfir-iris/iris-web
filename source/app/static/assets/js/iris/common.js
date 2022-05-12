@@ -780,6 +780,36 @@ function hide_table_search_input(columns) {
     }
   }
 
+function load_context_switcher() {
+    $('#user_context').selectpicker({liveSearch: true,
+        title: "None",
+        style: "btn-outline-white"
+    });
+
+    get_request_api('/context/get-cases')
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            $('#user_context').empty();
+            $('#user_context').append('<optgroup label="Opened" id="switch_case_opened_opt">');
+            ocs = data.data.cases_context_selector;
+            for (index in ocs) {
+                $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`);
+            }
+            $('#user_context').append('</optgroup>');
+
+            $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt">');
+            ocs = data.data.cases_close_context_selector;
+            for (index in ocs) {
+                $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`);
+            }
+            $('#user_context').append('</optgroup>');
+
+            $('#user_context').selectpicker("refresh");
+            $('#user_context').selectpicker('val', get_caseid());
+            $('#modal_switch_context').modal("show");
+        }
+    });
+}
 
 $('#user_context').selectpicker({liveSearch: true,
     title: "None",
