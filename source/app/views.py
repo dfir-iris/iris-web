@@ -49,7 +49,6 @@ from app.blueprints.manage.manage_templates_routes import manage_templates_bluep
 from app.blueprints.manage.manage_tlps_routes import manage_tlp_type_blueprint
 from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
-from app.blueprints.register.register_routes import register_blueprint
 from app.blueprints.reports.reports_route import reports_blueprint
 from app.blueprints.search.search_routes import search_blueprint
 from app.models.models import User
@@ -57,7 +56,6 @@ from app.post_init import run_post_init
 
 app.register_blueprint(dashboard_blueprint)
 app.register_blueprint(login_blueprint)
-app.register_blueprint(register_blueprint)
 app.register_blueprint(profile_blueprint)
 app.register_blueprint(search_blueprint)
 app.register_blueprint(manage_cases_blueprint)
