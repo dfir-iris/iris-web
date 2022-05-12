@@ -19,7 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-from app import app
+from app import app, cache
 from app import db
 from app.models.cases import Cases
 from app.models.models import Client, ServerSettings
@@ -64,12 +64,13 @@ def iris_version():
 
 
 @app.context_processor
+@cache.cached(timeout=3600, key_prefix='iris_has_updates')
 def has_updates():
-
-    if not current_user.is_authenticated or current_user.is_admin():
+    if not current_user.is_authenticated or not current_user.is_admin():
         return dict(has_updates=False)
 
     server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
+
     return dict(has_updates=server_settings[0])
 
 

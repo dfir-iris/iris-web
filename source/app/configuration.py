@@ -24,6 +24,7 @@ import configparser
 # --------- Configuration ---------
 # read the private configuration file
 from celery.schedules import crontab
+from flask_caching import SimpleCache
 
 config = configparser.ConfigParser()
 
@@ -149,3 +150,8 @@ class Config():
         DEVELOPMENT = True
     else:
         DEVELOPMENT = config.get('DEVELOPMENT', 'IS_DEV_INSTANCE') == "True"
+
+    """ Caching 
+    """
+    CACHE_TYPE = SimpleCache
+    CACHE_DEFAULT_TIMEOUT = 300

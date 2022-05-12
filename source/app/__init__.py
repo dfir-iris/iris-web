@@ -31,6 +31,7 @@ from flask_sqlalchemy import SQLAlchemy
 from functools import partial
 from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_caching import Cache
 
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery
@@ -58,6 +59,8 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 app = Flask(__name__)
+
+cache = Cache(app)
 
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
