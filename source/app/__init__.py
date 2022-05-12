@@ -60,12 +60,12 @@ logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT
 
 app = Flask(__name__)
 
-cache = Cache(app)
-
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
 app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
 app.config.from_object('app.configuration.Config')
+
+cache = Cache(app)
 
 SQLALCHEMY_ENGINE_OPTIONS = {
     "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict)

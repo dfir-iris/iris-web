@@ -153,5 +153,5 @@ class Config():
 
     """ Caching 
     """
-    CACHE_TYPE = SimpleCache
+    CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 300

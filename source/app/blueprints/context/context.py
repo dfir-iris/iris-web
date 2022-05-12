@@ -80,6 +80,7 @@ def case_name():
 
 
 @app.context_processor
+@cache.cached(timeout=3600, key_prefix='iris_cases_context')
 def cases_context():
     # Get all investigations not closed
     res = Cases.query.with_entities(
@@ -106,7 +107,7 @@ def cases_context():
 
     datac = [row for row in res]
 
-    return dict(cases_context_selector=datao,cases_close_context_selector=datac)
+    return dict(cases_context_selector=datao, cases_close_context_selector=datac)
 
 
 def update_user_case_ctx():
