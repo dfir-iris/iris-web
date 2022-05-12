@@ -290,14 +290,6 @@ def init_server_update(release_config):
         call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
                          need_reboot=updates_config.get('need_app_reboot'))
 
-    if updates_config.get('need_app_reboot') is True:
-        import app
-
-        app.socket_io.stop()
-
-    else:
-        notify_server_has_updated()
-
     return True
 
 

@@ -24,6 +24,11 @@ echo "Done"
 
 echo "Applying updates"
 rsync -av --checksum $TMP_DIR/$3/source/ $2
+
+echo "Upgrading packages"
+cd $2
+pip3 install -r requirements.txt
+
 echo "Done"
 
 # If need reboot
