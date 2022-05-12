@@ -153,7 +153,7 @@
 				</div>
 
 				<div class="d-flex justify-content-center text-faded">
-					<a href="https://github.com/dfir-iris/iris-web" >IRIS {{ iris_version }} {% if has_updates %}<i class="text-warning fas fa-exclamation-circle" title="Updates are available for the server"></i>{% endif %}</a>
+					<a href="https://github.com/dfir-iris/iris-web" >IRIS {{ iris_version }}</a> {% if has_updates %}<a href="/manage/settings?cid={{case_name[2]}}"><i class="text-warning fas fa-exclamation-circle" title="Updates are available for the server"></i></a>{% endif %}
 				</div>
 			</div>
 		</div>
