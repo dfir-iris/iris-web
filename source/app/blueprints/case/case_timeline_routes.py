@@ -742,7 +742,7 @@ def case_duplicate_event(cur_id, caseid):
         orig_event_id = event.event_id
         # Transfer duplicated event's attributes to new event
         for key in dir(old_event):
-            if not key.startswith('_'):
+            if not key.startswith('_') and key not in ['query', 'query_class', 'registry', 'metadata']:
                 setattr(event, key, getattr(old_event, key))
 
         event.event_id = orig_event_id
