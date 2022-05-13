@@ -18,29 +18,32 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import traceback
+import weakref
+
 import datetime
 import decimal
+import logging as log
 import pickle
 import random
 import shutil
 import string
-import traceback
-import weakref
-import logging as log
-from pathlib import Path
-
-from flask_wtf import FlaskForm
-from pyunpack import Archive
-
-from flask import json, url_for, request, render_template
+from flask import json
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
+from flask_wtf import FlaskForm
+from functools import wraps
+from pathlib import Path
+from pyunpack import Archive
 from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
-from functools import wraps
-
-from app import app, db, TEMPLATE_PATH
-
+from app import TEMPLATE_PATH
+from app import app
+from app import db
 # build a Json response
 from app.datamgmt.case.case_db import get_case
 from app.models import Cases
@@ -195,7 +198,6 @@ def get_urlcase(request):
             js_d = request.get_json()
             if js_d:
                 caseid = js_d.get('cid')
-                print(caseid)
                 request.json.pop('cid')
             else:
                 caseid = current_user.ctx_case
@@ -312,7 +314,6 @@ def api_login_required(f):
 def api_admin_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
-
         if request.method == 'POST':
             cookie_session = request.cookies.get('session')
             if cookie_session:
@@ -321,7 +322,6 @@ def api_admin_required(f):
                     return response_error('Invalid CSRF token')
                 elif request.is_json:
                     request.json.pop('csrf_token')
-
         if not current_user.is_authenticated:
             return response_error("Authentication required", status=401)
 
@@ -363,6 +363,32 @@ def get_random_suffix(length):
     letters = string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
+
+
+def add_obj_history_entry(obj, action):
+    if hasattr(obj, 'modification_history'):
+
+        if isinstance(obj.modification_history, dict):
+
+            obj.modification_history.update({
+                datetime.datetime.now().timestamp(): {
+                    'user': current_user.user,
+                    'user_id': current_user.id,
+                    'action': action
+                }
+            })
+
+        else:
+
+            obj.modification_history = {
+                datetime.datetime.now().timestamp(): {
+                    'user': current_user.user,
+                    'user_id': current_user.id,
+                    'action': action
+                }
+            }
+    flag_modified(obj, "modification_history")
+    return obj
 
 
 # Set basic 404

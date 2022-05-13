@@ -19,18 +19,28 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import logging
 import marshmallow
+import os
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 
-from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AssetsType, CaseAssets
-from app.forms import AddAssetForm
+from app import app
 from app import db
+from app.forms import AddAssetForm
+from app.iris_engine.utils.tracker import track_activity
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
 from app.schema.marshables import AssetSchema
-
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
-    api_login_required
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_assets_blueprint = Blueprint('manage_assets',
                                     __name__,
@@ -44,10 +54,18 @@ def list_assets(caseid):
     assets = AssetsType.query.with_entities(
         AssetsType.asset_name,
         AssetsType.asset_description,
-        AssetsType.asset_id
+        AssetsType.asset_id,
+        AssetsType.asset_icon_compromised,
+        AssetsType.asset_icon_not_compromised,
     ).all()
 
-    data = [row._asdict() for row in assets]
+    data = []
+    for row in assets:
+        row_dict = row._asdict()
+        row_dict['asset_icon_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'],row_dict['asset_icon_compromised'])
+        row_dict['asset_icon_not_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'],row_dict['asset_icon_not_compromised'])
+        data.append(row_dict)
+    # data = [row._asdict() for row in assets]
 
     # Return the assets
     return response_success("", data=data)
@@ -85,6 +103,10 @@ def view_assets_modal(cur_id, caseid, url_redir):
 
     form.asset_name.render_kw = {'value': asset.asset_name}
     form.asset_description.render_kw = {'value': asset.asset_description}
+    form.asset_icon_compromised.render_kw = {'value': asset.asset_icon_compromised}
+    form.asset_icon_not_compromised.render_kw = {'value': asset.asset_icon_not_compromised}
+    setattr(asset, 'asset_icon_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_compromised))
+    setattr(asset, 'asset_icon_not_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_not_compromised))
 
     return render_template("modal_add_asset_type.html", form=form, assettype=asset)
 
@@ -92,18 +114,23 @@ def view_assets_modal(cur_id, caseid, url_redir):
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
 @api_admin_required
 def view_assets(cur_id, caseid):
-    if not request.is_json:
-        return response_error("Invalid request")
-
-    asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
-    if not asset:
+    asset_type = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
+    if not asset_type:
         return response_error("Invalid asset type ID")
 
     asset_schema = AssetSchema()
-
     try:
 
-        asset_sc = asset_schema.load(request.get_json(), instance=asset)
+        asset_sc = asset_schema.load(request.form, instance=asset_type)
+        fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
+                                                'asset_icon_not_compromised')
+
+        fpath_c = asset_schema.load_store_icon(request.files.get('asset_icon_compromised'), 'asset_icon_compromised')
+
+        if fpath_nc is not None:
+            asset_sc.asset_icon_not_compromised = fpath_nc
+        if fpath_c is not None:
+            asset_sc.asset_icon_compromised = fpath_c
 
         if asset_sc:
             track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
@@ -112,7 +139,7 @@ def view_assets(cur_id, caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    return response_success("Unexpected error server-side. Nothing updated", data=asset)
+    return response_error("Unexpected error server-side. Nothing updated")
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
@@ -128,23 +155,32 @@ def add_assets_modal(caseid, url_redir):
 @manage_assets_blueprint.route('/manage/asset-type/add', methods=['POST'])
 @api_admin_required
 def add_assets(caseid):
-    if not request.is_json:
-        return response_error("Invalid request")
 
     asset_schema = AssetSchema()
-
     try:
 
-        asset_sc = asset_schema.load(request.get_json())
-        db.session.add(asset_sc)
-        db.session.commit()
+        asset_sc = asset_schema.load(request.form)
+        fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
+                                                'asset_icon_not_compromised')
+
+        fpath_c = asset_schema.load_store_icon(request.files.get('asset_icon_compromised'), 'asset_icon_compromised')
+
+        if fpath_nc is not None:
+            asset_sc.asset_icon_not_compromised = fpath_nc
+        if fpath_c is not None:
+            asset_sc.asset_icon_compromised = fpath_c
+
+        if asset_sc:
+            db.session.add(asset_sc)
+            db.session.commit()
+
+            track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
+            return response_success("Asset type updated", asset_sc)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    track_activity("Added asset type {asset_name}".format(asset_name=asset_sc.asset_name), caseid=caseid, ctx_less=True)
-    # Return the assets
-    return response_success("Added successfully", data=asset_sc)
+    return response_error("Unexpected error server-side. Nothing updated")
 
 
 @manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])
@@ -158,7 +194,21 @@ def delete_assets(cur_id, caseid):
     if case_linked:
         return response_error("Cannot delete a referenced asset type. Please delete any assets of this type first.")
 
+    
+    try:
+        #not deleting icons for now because multiple asset_types might rely on the same icon
+        
+        #only delete icons if there is only one AssetType linked to it
+        if(len(AssetsType.query.filter(AssetsType.asset_icon_compromised == asset.asset_icon_compromised).all()) == 1):
+            os.unlink(os.path.join(app.config['ASSET_STORE_PATH'], asset.asset_icon_compromised))
+        if(len(AssetsType.query.filter(AssetsType.asset_icon_not_compromised == asset.asset_icon_not_compromised).all()) == 1):
+            os.unlink(os.path.join(app.config['ASSET_STORE_PATH'], asset.asset_icon_not_compromised))
+
+    except Exception as e:
+        logging.error(f"Unable to delete {e}")
+    
     db.session.delete(asset)
+
     track_activity("Deleted asset type ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)
 
     return response_success("Deleted asset type ID {cur_id} successfully".format(cur_id=cur_id))

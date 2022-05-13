@@ -1,12 +1,16 @@
 <div class="modal-header">
         <h4 class="modal-title mt-1 mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
-                     <i class="fas fa-info-circle ml-3 mt-2" data-toggle="popover"
-            title="Task info"
-            data-content="Last edited {{ event.event_added }} by {{ user_name }}"></i>
+            {% if event.modification_history %}
+                <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
+                        title="Modifications history"
+                        data-content="{% for mod in event.modification_history %}
+<code id='mh-{{loop.index}}'></code> -  {{ event.modification_history[mod].action }} by {{ event.modification_history[mod].user }}<br/>{% endfor %}">
+                </i>
+            {% endif %}
         </h4>
         {% include 'modals/modal_attributes_nav.html' %}
+        <div class="row justify-right">
         {% if event.event_id %}
-            <div class="row text-right">
             <div class="dropdown">
                 <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                     <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
@@ -17,7 +21,8 @@
                 </div>
             </div>
         {% endif %}
-            <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
+            <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
                 aria-hidden="true"><i class="fa fa-times"></i></span></button>
         </div>
 </div>
@@ -30,12 +35,12 @@
                             <div class="col-md-12 col-lg-12 col-sm-12">
                                 {{ form.hidden_tag() }}
                                 <div class="row">
-                                    <div class="form-group col-5">
+                                    <div class="form-group col-xl-5 col-md-12">
                                         <label for="event_title" class="placeholder">{{ form.event_title.label.text }} *</label>
                                         {{ form.event_title(class='form-control col-md-12 col-sm-12',  autocomplete="off") }}
                                     </div>
-                                    <div class="form-group col-7">
-                                        <label for="event_timetitle" class="placeholder mr-2">Event Time *</label>
+                                    <div class="form-group col-xl-7 col-md-12">
+                                        <label for="event_timetitle" class="placeholder ml-2">Event Time *</label>
                                         <div class="row ml-2" id="event_date_inputs">
                                                 <input class="form-control col-5 mr-2" type="date" id="event_date" {% if event.event_date_wtz %} value="{{ event.event_date_wtz.strftime('%Y-%m-%d') }}"{% endif %}>
                                                 <span></span>
@@ -74,11 +79,11 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="form-group col-6">
+                                    <div class="form-group col-xl-6 col-md-12">
                                         <label for="event_title" class="placeholder">{{ form.event_source.label.text }}</label>
                                         {{ form.event_source(class='form-control col-md-12 col-sm-12',  autocomplete="off") }}
                                     </div>
-                                    <div class="form-group col-6">
+                                    <div class="form-group col-xl-6 col-md-12">
                                         <label for="event_tags">Event tags
                                         </label>
                                         <input type="text" id="event_tags"
@@ -86,7 +91,7 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="form-group col-12">
+                                    <div class="form-group col-xl-6 col-md-12">
                                         <label for="event_assets">Link to assets
                                         </label>
                                         <div class="select2-input ml-12" data-select2-id="6">
@@ -94,15 +99,26 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="form-group col-xl-6 col-md-12">
+                                        <label for="event_assets">Link to IOCs
+                                        </label>
+                                        <div class="select2-input ml-12" data-select2-id="6">
+                                            <select id="event_iocs" name="event_iocs" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="event_iocs" tabindex="-1" aria-hidden="true" style="width: 100%">
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+
                                 </div>
                                 <div class="row">
                                     <div class="form-group col-5">
                                         <label for="event_category_id" class="form-label">{{ form.event_category_id.label.text }}</label>
                                         <div class="row col-12">
-                                            {{ form.event_category_id(class="selectpicker col-12") }}
+                                            {{ form.event_category_id(class="selectpicker") }}
                                         </div>
                                     </div>
-                                    <div class="form-group col-2">
+                                    <div class="form-group col-xl-2 col-md-12">
                                         <div class="form-check">
                                             <label class="form-check-label mt-3">
                                                 {{ form.event_in_summary(class="form-check-input", type="checkbox") }}
@@ -111,7 +127,7 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="form-group col-2">
+                                    <div class="form-group col-xl-2 col-md-12">
                                         <div class="form-check">
                                             <label class="form-check-label mt-3">
                                                 {{ form.event_in_graph(class="form-check-input", type="checkbox") }}
@@ -120,7 +136,7 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="form-group col-3">
+                                    <div class="form-group col-xl-3 col-md-12">
                                         <label class="form-label">Event color</label>
                                         <div class="row gutters-xs">
                                             <div class="col-auto">
@@ -190,11 +206,18 @@
 </div>
 <script>
     $('#event_tags').amsifySuggestags({
-        printValues: false,
-        suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
+        printValues: true,
+        suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ],
+        whiteList: false,
+        selectOnHover: false,
     });
 $('[data-toggle="popover"]').popover();
-$('#event_category_id').select2({width:"100%"});
+$('#event_category_id').selectpicker({
+    width:"100%",
+    liveSearch: true,
+    title: "None",
+    style: "btn-outline-white",
+    });
 </script>
 
 {% if assets %}
@@ -211,11 +234,30 @@ $('#event_category_id').select2({width:"100%"});
     </script>
 {% endif %}
 
+{% if iocs %}
+    <script>
+        var data = [
+            {% for e in iocs %}
+                {
+                    id: {{ e.ioc_id }},
+                    text: {{ e.ioc_value| tojson  }}
+                },
+            {% endfor %}
+        ];
+        $('#event_iocs').select2({ data: data });
+    </script>
+{% endif %}
+
 {% if category %}
     <script>
         $('#event_category_id').val([
             {{ category[0].id }},
         ]);
+        $('#event_category_id').trigger('change');
+    </script>
+{% else %}
+    <script>
+        $('#event_category_id').val(1);
         $('#event_category_id').trigger('change');
     </script>
 {% endif %}
@@ -227,4 +269,24 @@ $('#event_category_id').select2({width:"100%"});
         ]);
         $('#event_assets').trigger('change');
     </script>
+{% endif %}
+
+{% if iocs_prefill %}
+    <script>
+        $('#event_iocs').val([
+            {% for ioc in iocs_prefill %} {{ ioc }}, {% endfor %}
+        ]);
+        $('#event_iocs').trigger('change');
+    </script>
+{% endif %}
+
+{% if event.modification_history %}
+<script>
+    $('#pop_history').on('shown.bs.popover', function () {
+        {% for mod in event.modification_history %}
+            di = new Date({{mod}} * 1000).toLocaleString();
+            $('#mh-{{loop.index}}').text(di);
+        {% endfor %}
+   })
+</script>
 {% endif %}

@@ -18,12 +18,19 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import json
-
 import logging as logger
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import db
-from app.models import Ioc, CustomAttribute, CasesEvent, CaseAssets, CaseTasks, Notes, CaseReceivedFile, Cases, Client
+from app.models import CaseAssets
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import Client
+from app.models import CustomAttribute
+from app.models import Ioc
+from app.models import Notes
 
 log = logger.getLogger(__name__)
 

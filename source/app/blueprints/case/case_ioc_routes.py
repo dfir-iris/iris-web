@@ -19,28 +19,44 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-import json
 
 import csv
-import marshmallow
 import logging as log
-from flask import Blueprint, request
-from flask import render_template, url_for, redirect
+import marshmallow
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 
 from app import db
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add_ioc, add_ioc_link, \
-    get_tlps, get_ioc, delete_ioc, get_ioc_types_list, check_ioc_type_id, get_tlps_dict, get_ioc_type_id
+from app.datamgmt.case.case_iocs_db import add_ioc
+from app.datamgmt.case.case_iocs_db import add_ioc_link
+from app.datamgmt.case.case_iocs_db import check_ioc_type_id
+from app.datamgmt.case.case_iocs_db import delete_ioc
+from app.datamgmt.case.case_iocs_db import get_detailed_iocs
+from app.datamgmt.case.case_iocs_db import get_ioc
+from app.datamgmt.case.case_iocs_db import get_ioc_links
+from app.datamgmt.case.case_iocs_db import get_ioc_type_id
+from app.datamgmt.case.case_iocs_db import get_ioc_types_list
+from app.datamgmt.case.case_iocs_db import get_tlps
+from app.datamgmt.case.case_iocs_db import get_tlps_dict
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
-from app.datamgmt.states import get_ioc_state, update_ioc_state
-from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
+from app.datamgmt.states import get_ioc_state
+from app.datamgmt.states import update_ioc_state
+from app.forms import ModalAddCaseAssetForm
+from app.forms import ModalAddCaseIOCForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import Ioc, CustomAttribute
+from app.models.models import Ioc
 from app.schema.marshables import IocSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 case_ioc_blueprint = Blueprint('case_ioc',
                                __name__,
@@ -120,7 +136,7 @@ def case_add_ioc(caseid):
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
         if link_existed:
-            return response_error("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
+            return response_success("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
 
         if not link_existed:
             ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
@@ -262,12 +278,12 @@ def case_delete_ioc(cur_id, caseid):
 
     if not delete_ioc(ioc, caseid):
         track_activity("unlinked IOC ID {}".format(cur_id))
-        return response_success("IOC unlinked")
+        return response_success("IOC {} unlinked".format(cur_id))
 
     call_modules_hook('on_postload_ioc_delete', data=cur_id, caseid=caseid)
 
     track_activity("deleted IOC ID {}".format(cur_id))
-    return response_success("IOC deleted")
+    return response_success("IOC {} deleted".format(cur_id))
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
@@ -299,7 +315,7 @@ def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
-        return response_error("Invalid IOC ID for this case")
+        return response_error("Invalid IOC ID for this case".format(cur_id))
 
     return response_success(data=ioc_schema.dump(ioc))
 

@@ -18,25 +18,41 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import marshmallow
 # IMPORTS ------------------------------------------------
 from datetime import datetime
-
-import marshmallow
 from flask import Blueprint
-from flask import render_template, url_for, redirect, request
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
-from app.datamgmt.case.case_db import get_case, case_get_desc_crc
-from app.datamgmt.case.case_notes_db import get_note, delete_note, add_note, update_note, get_groups_detail, \
-    get_groups_short, find_pattern_in_notes, add_note_group, delete_note_group, update_note_group, get_notes_from_group, \
-    get_group_details
+from app.datamgmt.case.case_db import case_get_desc_crc
+from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_notes_db import add_note
+from app.datamgmt.case.case_notes_db import add_note_group
+from app.datamgmt.case.case_notes_db import delete_note
+from app.datamgmt.case.case_notes_db import delete_note_group
+from app.datamgmt.case.case_notes_db import find_pattern_in_notes
+from app.datamgmt.case.case_notes_db import get_group_details
+from app.datamgmt.case.case_notes_db import get_groups_short
+from app.datamgmt.case.case_notes_db import get_note
+from app.datamgmt.case.case_notes_db import get_notes_from_group
+from app.datamgmt.case.case_notes_db import update_note
+from app.datamgmt.case.case_notes_db import update_note_group
 from app.datamgmt.states import get_notes_state
 from app.forms import CaseNoteForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.schema.marshables import CaseNoteSchema, CaseAddNoteSchema, CaseGroupNoteSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.schema.marshables import CaseAddNoteSchema
+from app.schema.marshables import CaseGroupNoteSchema
+from app.schema.marshables import CaseNoteSchema
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 case_notes_blueprint = Blueprint('case_notes',
                                  __name__,
@@ -117,7 +133,7 @@ def case_note_delete(cur_id, caseid):
     call_modules_hook('on_postload_note_delete', data=cur_id, caseid=caseid)
 
     track_activity("deleted note ID {}".format(cur_id), caseid=caseid)
-    return response_success("Deleted")
+    return response_success("Note deleted {}".format(cur_id))
 
 
 @case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
@@ -176,7 +192,7 @@ def case_note_add(caseid):
         if note:
             casenote_schema = CaseNoteSchema()
             track_activity("added note ID {}".format(note.note_id), caseid=caseid)
-            return response_success(data=casenote_schema.dump(note))
+            return response_success('Note added', data=casenote_schema.dump(note))
 
         return response_error("Unable to create note for internal reasons")
 
@@ -256,7 +272,7 @@ def case_add_notes_groups(caseid):
             group_schema = CaseGroupNoteSchema()
             track_activity("added group note ID {}".format(ng.group_id), caseid=caseid)
 
-            return response_success("", data=group_schema.dump(ng))
+            return response_success("Notes group added", data=group_schema.dump(ng))
 
         else:
             return response_error("Unable to add a new group")

@@ -20,31 +20,55 @@
 
 # IMPORTS ------------------------------------------------
 import json
-
-from datetime import datetime
-
 import marshmallow
+import urllib.parse
+from datetime import datetime
 from flask import Blueprint
-from flask import render_template, url_for, redirect, request
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
+from sqlalchemy import or_
 
 from app import db
+from app.datamgmt.case.case_events_db import delete_event_category
+from app.datamgmt.case.case_events_db import get_case_assets_for_tm
+from app.datamgmt.case.case_events_db import get_case_event
+from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
+from app.datamgmt.case.case_events_db import get_default_cat
+from app.datamgmt.case.case_events_db import get_event_assets_ids
+from app.datamgmt.case.case_events_db import get_event_category
+from app.datamgmt.case.case_events_db import get_event_iocs_ids
+from app.datamgmt.case.case_events_db import get_events_categories
+from app.datamgmt.case.case_events_db import save_event_category
+from app.datamgmt.case.case_events_db import update_event_assets
+from app.datamgmt.case.case_events_db import update_event_iocs
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
-from app.datamgmt.states import get_timeline_state, update_timeline_state
+from app.datamgmt.states import get_timeline_state
+from app.datamgmt.states import update_timeline_state
 from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.common import parse_bf_date_format
-from app.models.cases import Cases, CasesEvent
-from app.models.models import CaseAssets, AssetsType, User, CaseEventsAssets, IocLink, Ioc, EventCategory
-from app.schema.marshables import EventSchema
-from app.util import response_success, response_error, login_required, api_login_required
-from app.datamgmt.case.case_events_db import get_case_assets, get_events_categories, save_event_category, get_default_cat, \
-    delete_event_category, get_case_event, update_event_assets, get_event_category, get_event_assets_ids
 from app.iris_engine.utils.tracker import track_activity
-
-import urllib.parse
+from app.models.cases import Cases
+from app.models.cases import CasesEvent
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
+from app.models.models import CaseEventsAssets
+from app.models.models import CaseEventsIoc
+from app.models.models import EventCategory
+from app.models.models import Ioc
+from app.models.models import IocLink
+from app.models.models import User
+from app.schema.marshables import EventSchema
+from app.util import add_obj_history_entry
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
 
@@ -206,6 +230,16 @@ def case_gettimeline_api(asset_id, caseid):
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset).all()
 
+    iocs_cache = CaseEventsIoc.query.with_entities(
+        Ioc.ioc_id,
+        Ioc.ioc_value,
+        CaseEventsIoc.event_id
+    ).filter(
+        CaseEventsIoc.case_id == caseid
+    ).join(
+        CaseEventsIoc.ioc
+    ).all()
+
     tim = []
     for row in timeline:
         ras = row._asdict()
@@ -221,7 +255,16 @@ def case_gettimeline_api(asset_id, caseid):
 
                 alki.append(asset._asdict())
 
-        ras['assets'] = alki
+        alki = []
+        cache = {}
+        for ioc in iocs_cache:
+            if ioc.event_id == ras['event_id']:
+                if ioc.ioc_id not in cache:
+                    cache[ioc.ioc_id] = ioc.ioc_value
+
+                alki.append(ioc._asdict())
+
+        ras['iocs'] = alki
 
         tim.append(ras)
 
@@ -247,6 +290,7 @@ def case_filter_timeline(caseid):
         return response_error('Invalid query string')
 
     assets = filter_d.get('asset')
+    iocs = filter_d.get('ioc')
     tags = filter_d.get('tag')
     descriptions = filter_d.get('description')
     categories = filter_d.get('category')
@@ -260,6 +304,9 @@ def case_filter_timeline(caseid):
 
     if assets:
         assets = [asset.lower() for asset in assets]
+
+    if iocs:
+        iocs = [ioc.lower() for ioc in iocs]
 
     if tags:
         for tag in tags:
@@ -320,11 +367,15 @@ def case_filter_timeline(caseid):
             CasesEvent.event_content,
             CasesEvent.event_in_summary,
             CasesEvent.event_in_graph,
+            User.user,
+            CasesEvent.event_added,
             EventCategory.name.label("category_name")
         ).filter(condition).order_by(
             CasesEvent.event_date
         ).outerjoin(
             CasesEvent.category
+        ).join(
+            CasesEvent.user
         ).all()
 
     assets_cache = CaseAssets.query.with_entities(
@@ -338,6 +389,25 @@ def case_filter_timeline(caseid):
     ).filter(
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+
+    inner_condition = or_()
+    if iocs is not None:
+        for ioc in iocs:
+            inner_condition = or_(
+                inner_condition,
+                Ioc.ioc_value == ioc
+            )
+
+    iocs_cache = CaseEventsIoc.query.with_entities(
+        CaseEventsIoc.event_id,
+        CaseEventsIoc.ioc_id,
+        Ioc.ioc_value,
+        Ioc.ioc_description
+    ).filter(
+        CaseEventsIoc.case_id == caseid
+    ).join(
+        CaseEventsIoc.ioc
+    ).all()
 
     assets_map = {}
     cache = {}
@@ -357,16 +427,27 @@ def case_filter_timeline(caseid):
         if assets_map[event_id] == len(assets):
             assets_filter.append(event_id)
 
+    iocs_filter = []
+    if iocs:
+        for ioc in iocs_cache:
+                if ioc.event_id not in iocs_filter and ioc.ioc_value in iocs:
+                    iocs_filter.append(ioc.event_id)
+
     tim = []
     for row in timeline:
-        if assets is not None and len(assets_filter) > 0:
+        if assets is not None:
             if row.event_id not in assets_filter:
+                continue
+
+        if iocs is not None:
+            if row.event_id not in iocs_filter:
                 continue
 
         ras = row._asdict()
 
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S')
 
         alki = []
         for asset in assets_cache:
@@ -382,6 +463,21 @@ def case_filter_timeline(caseid):
                 )
 
         ras['assets'] = alki
+
+        alki = []
+        for ioc in iocs_cache:
+            if ioc.event_id == ras['event_id']:
+                if ioc.ioc_id not in cache:
+                    cache[ioc.ioc_id] = [ioc.ioc_value]
+
+                alki.append(
+                    {
+                        "name": "{}".format(ioc.ioc_value),
+                        "description": ioc.ioc_description
+                    }
+                )
+
+        ras['iocs'] = alki
 
         tim.append(ras)
 
@@ -413,103 +509,6 @@ def case_filter_timeline(caseid):
     return response_success("ok", data=resp)
 
 
-@case_timeline_blueprint.route('/case/timeline/filter/<int:asset_id>', methods=['GET'])
-@api_login_required
-def case_gettimeline(asset_id, caseid):
-
-    if asset_id:
-        condition = and_(
-                CasesEvent.case_id == caseid,
-                CaseEventsAssets.asset_id == asset_id,
-                CaseEventsAssets.event_id == CasesEvent.event_id
-        )
-    else:
-        condition = CasesEvent.case_id == caseid
-
-    timeline = CasesEvent.query.with_entities(
-            CasesEvent.event_id,
-            CasesEvent.event_date,
-            CasesEvent.event_date_wtz,
-            CasesEvent.event_tz,
-            CasesEvent.event_title,
-            CasesEvent.event_color,
-            CasesEvent.event_tags,
-            CasesEvent.event_content,
-            CasesEvent.event_in_summary,
-            CasesEvent.event_in_graph,
-            EventCategory.name.label("category_name")
-        ).filter(condition).order_by(
-            CasesEvent.event_date
-        ).outerjoin(
-            CasesEvent.category
-        ).all()
-
-    assets_cache = CaseAssets.query.with_entities(
-        CaseEventsAssets.event_id,
-        CaseAssets.asset_id,
-        CaseAssets.asset_name,
-        AssetsType.asset_name.label('type'),
-        CaseAssets.asset_ip,
-        CaseAssets.asset_description,
-        CaseAssets.asset_compromised
-    ).filter(
-        CaseEventsAssets.case_id == caseid,
-    ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
-
-    tim = []
-    cache = {}
-    for row in timeline:
-        ras = row._asdict()
-        ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
-        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
-
-        alki = []
-        for asset in assets_cache:
-            if asset.event_id == ras['event_id']:
-                if asset.asset_id not in cache:
-                    cache[asset.asset_id] = [asset.asset_name, asset.type]
-
-                alki.append(
-                    {
-                        "name": "{} ({})".format(asset.asset_name, asset.type),
-                        "ip": asset.asset_ip,
-                        "description": asset.asset_description,
-                        "compromised": asset.asset_compromised
-                    }
-                )
-
-        ras['assets'] = alki
-
-        tim.append(ras)
-
-    if request.cookies.get('session'):
-
-        iocs = IocLink.query.with_entities(
-            Ioc.ioc_id,
-            Ioc.ioc_value,
-            Ioc.ioc_description,
-        ).filter(
-            IocLink.case_id == caseid,
-            Ioc.ioc_id == IocLink.ioc_id
-        ).all()
-
-        resp = {
-            "tim": tim,
-            "assets": cache,
-            "iocs": [ioc._asdict() for ioc in iocs],
-            "categories": [cat.name for cat in get_events_categories()],
-            "state": get_timeline_state(caseid=caseid)
-        }
-
-    else:
-        resp = {
-            "timeline": tim,
-            "state": get_timeline_state(caseid=caseid)
-        }
-
-    return response_success("", data=resp)
-
-
 @case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_delete_event(cur_id, caseid):
@@ -525,6 +524,11 @@ def case_delete_event(cur_id, caseid):
     CaseEventsAssets.query.filter(
         CaseEventsAssets.event_id == cur_id,
         CaseEventsAssets.case_id == caseid
+    ).delete()
+
+    CaseEventsIoc.query.filter(
+        CaseEventsIoc.event_id == cur_id,
+        CaseEventsIoc.case_id == caseid
     ).delete()
 
     db.session.commit()
@@ -551,15 +555,12 @@ def event_view(cur_id, caseid):
 
     event_schema = EventSchema()
 
-    linked_assets = CaseEventsAssets.query.with_entities(
-        CaseEventsAssets.asset_id
-    ).filter(
-        CaseEventsAssets.event_id == cur_id,
-        CaseEventsAssets.case_id == caseid
-    ).all()
+    linked_assets = get_event_assets_ids(cur_id, caseid)
+    linked_iocs = get_event_iocs_ids(cur_id, caseid)
 
     output = event_schema.dump(event)
-    output['event_assets'] = [asset[0] for asset in linked_assets]
+    output['event_assets'] = linked_assets
+    output['event_iocs'] = linked_iocs
     output['event_category_id'] = event.category[0].id
 
     return response_success(data=output)
@@ -576,7 +577,6 @@ def event_view_modal(cur_id, caseid, url_redir):
         return response_error("Invalid event ID for this case")
 
     form = CaseEventForm()
-    form.event_assets.choices = [("{}".format(c['asset_id']), c['asset_name']) for c in get_case_assets(caseid)]
     form.event_title.render_kw = {'value': event.event_title}
     form.event_content.data = event.event_content
     form.event_raw.data = event.event_raw
@@ -587,20 +587,18 @@ def event_view_modal(cur_id, caseid, url_redir):
     categories = get_events_categories()
     form.event_category_id.choices = categories
 
-    assets_prefill = CaseEventsAssets.query.with_entities(
-        CaseEventsAssets.asset_id
-    ).filter(
-        CaseEventsAssets.event_id == cur_id,
-        CaseEventsAssets.case_id == caseid
-    ).all()
+    assets = get_case_assets_for_tm(caseid)
+    iocs = get_case_iocs_for_tm(caseid)
 
-    assets_prefill = [row[0] for row in assets_prefill]
+    assets_prefill = get_event_assets_ids(cur_id, caseid)
+    iocs_prefill = get_event_iocs_ids(cur_id, caseid)
 
     usr_name, = User.query.filter(User.id == event.user_id).with_entities(User.name).first()
 
     return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
-                           assets=get_case_assets(caseid),
-                           assets_prefill=assets_prefill, category=event.category, attributes=event.custom_attributes)
+                           assets=assets, iocs=iocs,
+                           assets_prefill=assets_prefill, iocs_prefill=iocs_prefill,
+                           category=event.category, attributes=event.custom_attributes)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
@@ -625,8 +623,7 @@ def case_edit_event(cur_id, caseid):
             )
 
         event.case_id = caseid
-        event.event_added = datetime.utcnow()
-        event.user_id = current_user.id
+        add_obj_history_entry(event, 'updated')
 
         update_timeline_state(caseid=caseid)
         db.session.commit()
@@ -635,14 +632,22 @@ def case_edit_event(cur_id, caseid):
 
         setattr(event, 'event_category_id', request_data.get('event_category_id'))
 
-        update_event_assets(event_id=event.event_id,
-                            caseid=caseid,
-                            assets_list=request_data.get('event_assets'))
+        success, log = update_event_assets(event_id=event.event_id,
+                                           caseid=caseid,
+                                           assets_list=request_data.get('event_assets'))
+        if not success:
+            return response_error('Error while saving linked assets', data=log)
+
+        success, log = update_event_iocs(event_id=event.event_id,
+                                         caseid=caseid,
+                                         iocs_list=request_data.get('event_iocs'))
+        if not success:
+            return response_error('Error while saving linked iocs', data=log)
 
         event = call_modules_hook('on_postload_event_update', data=event, caseid=caseid)
 
         track_activity("updated event {}".format(cur_id), caseid=caseid)
-        return response_success("Event added", data=event_schema.dump(event))
+        return response_success("Event updated", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
@@ -657,14 +662,15 @@ def case_add_event_modal(caseid, url_redir):
     event = CasesEvent()
     event.custom_attributes = get_default_custom_attributes('event')
     form = CaseEventForm()
-    assets = get_case_assets(caseid)
+    assets = get_case_assets_for_tm(caseid)
+    iocs = get_case_iocs_for_tm(caseid)
     def_cat = get_default_cat()
     categories = get_events_categories()
     form.event_category_id.choices = categories
     form.event_in_graph.data = True
 
     return render_template("modal_add_case_event.html", form=form, event=event,
-                           tags=event_tags, assets=assets, assets_prefill=None, category=def_cat,
+                           tags=event_tags, assets=assets, iocs=iocs, assets_prefill=None, category=def_cat,
                            attributes=event.custom_attributes)
 
 
@@ -686,6 +692,8 @@ def case_add_event(caseid):
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
 
+        add_obj_history_entry(event, 'created')
+
         db.session.add(event)
         update_timeline_state(caseid=caseid)
         db.session.commit()
@@ -694,9 +702,19 @@ def case_add_event(caseid):
 
         setattr(event, 'event_category_id', request_data.get('event_category_id'))
 
-        update_event_assets(event_id=event.event_id,
-                            caseid=caseid,
-                            assets_list=request_data.get('event_assets'))
+        success, log = update_event_assets(event_id=event.event_id,
+                                           caseid=caseid,
+                                           assets_list=request_data.get('event_assets'))
+        if not success:
+            return response_error('Error while saving linked assets', data=log)
+
+        success, log = update_event_iocs(event_id=event.event_id,
+                                         caseid=caseid,
+                                         iocs_list=request_data.get('event_iocs'))
+        if not success:
+            return response_error('Error while saving linked iocs', data=log)
+
+        setattr(event, 'event_category_id', request_data.get('event_category_id'))
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
@@ -721,11 +739,10 @@ def case_duplicate_event(cur_id, caseid):
 
         # Create new Event
         event = CasesEvent()
-
         orig_event_id = event.event_id
         # Transfer duplicated event's attributes to new event
         for key in dir(old_event):
-            if not key.startswith('_'):
+            if not key.startswith('_') and key not in ['query', 'query_class', 'registry', 'metadata']:
                 setattr(event, key, getattr(old_event, key))
 
         event.event_id = orig_event_id
@@ -745,15 +762,25 @@ def case_duplicate_event(cur_id, caseid):
             save_event_category(event.event_id, old_event_category.category_id)
 
         # Update assets mapping
-        assets_list = get_event_assets_ids(old_event.event_id)
-        update_event_assets(event_id=event.event_id,
-                            caseid=caseid,
-                            assets_list=assets_list)
+        assets_list = get_event_assets_ids(old_event.event_id, caseid)
+        success, log = update_event_assets(event_id=event.event_id,
+                                           caseid=caseid,
+                                           assets_list=assets_list)
+        if not success:
+            return response_error('Error while saving linked assets', data=log)
+
+        # Update iocs mapping
+        iocs_list = get_event_iocs_ids(old_event.event_id, caseid)
+        success, log = update_event_iocs(event_id=event.event_id,
+                                         caseid=caseid,
+                                         iocs_list=iocs_list)
+        if not success:
+            return response_error('Error while saving linked iocs', data=log)
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
         track_activity("added event {}".format(event.event_id), caseid=caseid)
-        return response_success("Event added", data=event_schema.dump(event))
+        return response_success("Event duplicated", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)

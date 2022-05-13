@@ -19,11 +19,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
-
 from flask_login import current_user
 
 from app import db
-from app.models import IrisModule, User, IrisModuleHook, IrisHook
+from app.models import IrisHook
+from app.models import IrisModule
+from app.models import IrisModuleHook
+from app.models import User
 
 
 def iris_module_exists(module_name):

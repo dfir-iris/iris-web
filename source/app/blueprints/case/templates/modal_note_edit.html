@@ -14,6 +14,7 @@
                   <a class="dropdown-item" href="#" onclick='copy_object_link({{note.note_id if note.note_id|length else id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
               </div>
          </div>
+        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_note_detail', '{{ note.title }}');"> <i class='fa fa-minus'></i> </button>
         <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true"><i class="fa fa-times"></i></span></button>
         </div>

@@ -50,10 +50,11 @@ services:
       context: .
       dockerfile: docker/webApp/Dockerfile
     image: iriswebapp_app:latest
-    command: ['./iris-entrypoint.sh', 'iriswebapp']
+    command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
+      - server_data:/home/iris/server_data
     restart: always
     depends_on:
       - "rabbitmq"
@@ -84,6 +85,7 @@ services:
     volumes:
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
+      - server_data:/home/iris/server_data
     depends_on:
       - "rabbitmq"
       - "db"
@@ -129,6 +131,7 @@ services:
 volumes:
   iris-downloads:
   user_templates:
+  server_data:
   db_data:
 
 networks:

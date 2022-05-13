@@ -24,6 +24,7 @@ import os
 import urllib.parse
 from flask import Flask
 from flask_bcrypt import Bcrypt
+from flask_caching import Cache
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO
@@ -63,6 +64,8 @@ app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
 app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
 app.config.from_object('app.configuration.Config')
+
+cache = Cache(app)
 
 SQLALCHEMY_ENGINE_OPTIONS = {
     "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict)

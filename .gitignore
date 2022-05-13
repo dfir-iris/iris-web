@@ -17,6 +17,12 @@ libesedb-*/
 orcparser/
 venv1/
 .DS_Store
-.env
+.env*
 .venv/
 .vscode/
+*.code-workspace
+nohup.out
+celerybeat-schedule.db
+
+source/app/static/assets/img/graph/*
+!source/app/static/assets/img/graph/*.png

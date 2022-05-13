@@ -19,10 +19,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
-from app.util import response_success, response_error
 
-from app.models.models import AnalysisStatus, EventCategory
+from app.models.models import EventCategory
 from app.util import api_login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_event_cat_blueprint = Blueprint('manage_event_cat',
                                         __name__,

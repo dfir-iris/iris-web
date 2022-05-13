@@ -12,6 +12,7 @@
                   </div>
              </div>
             {% endif %}
+        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_asset', '{{ "Asset {}".format(asset.asset_name) if asset.asset_name else "Add asset" }}');"> <i class='fa fa-minus'></i> </button>
         <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true"><i class="fa fa-times"></i></span></button>
     </div>
@@ -24,33 +25,28 @@
                         <form method="post" action="" id="form_new_asset">
                             <div class="col-md-12 col-lg-12 col-sm-12">
                                 {{ form.hidden_tag() }}
-                                <div class="form-group row">
-                                    <div class="col">
+                                <div class="form-row ml-2">
+                                    <div class="form-group col-6">
                                         <label for="name" class="placeholder">Asset Name *</label>
                                         {{ form.asset_name(class='form-control',  autocomplete="off") }}
                                     </div>
-                                    <div class="col">
+                                    <div class="form-group col-6">
                                         <label for="asset_type" class="placeholder">Asset Type *</label>
-                                        {{ form.asset_type_id(class="selectpicker pl--6  col-md-12") }}
+                                        {{ form.asset_type_id(class="selectpicker form-control") }}
                                     </div>
                                 </div>
-
                                 <div class="form-group">
                                         <label for="asset_description" class="placeholder">Description</label>
                                         {{ form.asset_description(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
                                 </div>
-                                <div class="form-group row">
-                                    <div class="col">
-                                        <div class="form-group">
-                                                <label for="asset_domain" class="placeholder">Domain</label>
-                                                {{ form.asset_domain(class='form-control',  autocomplete="off") }}
-                                        </div>
+                                <div class="form-row ml-2">
+                                    <div class="form-group col-6">
+                                            <label for="asset_domain" class="placeholder">Domain</label>
+                                            {{ form.asset_domain(class='form-control',  autocomplete="off") }}
                                     </div>
-                                    <div class="col">
-                                        <div class="form-group">
-                                                <label for="asset_ip" class="placeholder">IP</label>
-                                                {{ form.asset_ip(class='form-control',  autocomplete="off") }}
-                                        </div>
+                                    <div class="form-group col-6">
+                                            <label for="asset_ip" class="placeholder">IP</label>
+                                            {{ form.asset_ip(class='form-control',  autocomplete="off") }}
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -62,7 +58,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="form-row ml-2">
                                     <div class="form-group col-6">
                                         <div class="form-check">
                                             <label class="form-check-label">
@@ -73,11 +69,11 @@
                                         </div>
                                     </div>
                                     <div class="form-group col-6">
-                                        <label for="analysis_status_id" class="placeholder">Analysis Status</label>
-                                        {{ form.analysis_status_id(class="selectpicker pl--6  col-md-12") }}
+                                        <label for="analysis_status_id" class="placeholder mt-2">Analysis Status  </label>
+                                        {{ form.analysis_status_id(class="selectpicker col-9 float-right") }}
                                     </div>
                                 </div>
-                                <div class="form-group mt-3">
+                                <div class="form-group">
                                     <label for="asset_tags">Asset tags
                                     </label>
                                     <input type="text" id="asset_tags"

@@ -18,8 +18,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from app import bc, db
-from app.models import User, UserRoles, Role
+from app import bc
+from app import db
+from app.models import Role
+from app.models import User
+from app.models import UserRoles
 
 
 def get_user(user_id):

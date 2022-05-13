@@ -18,27 +18,40 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
-from datetime import datetime, timedelta
-
 import marshmallow
+# IMPORTS ------------------------------------------------
+from datetime import datetime
+from datetime import timedelta
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
-from flask_login import logout_user, current_user
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
+from flask_login import current_user
+from flask_login import logout_user
 from sqlalchemy import distinct
 
 from app import db
-#from app.datamgmt.case.case_tasks_db import get_tasks_status
-from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_status, list_user_tasks, \
-    update_utask_status, get_tasks_status, get_global_task
-from app.forms import CustomerForm, CaseGlobalTaskForm
+from app.datamgmt.dashboard.dashboard_db import get_global_task
+from app.datamgmt.dashboard.dashboard_db import get_tasks_status
+from app.datamgmt.dashboard.dashboard_db import list_global_tasks
+from app.datamgmt.dashboard.dashboard_db import list_user_tasks
+from app.forms import CaseGlobalTaskForm
+from app.forms import CustomerForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.models.models import Client, UserActivity, TaskStatus
-from app.models.models import FileContentHash, GlobalTasks, User, Ioc, CaseTasks
-from app.schema.marshables import GlobalTasksSchema, CaseTaskSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.models.models import CaseTasks
+from app.models.models import GlobalTasks
+from app.models.models import TaskStatus
+from app.models.models import User
+from app.models.models import UserActivity
+from app.schema.marshables import CaseTaskSchema
+from app.schema.marshables import GlobalTasksSchema
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 # CONTENT ------------------------------------------------
 dashboard_blueprint = Blueprint(

@@ -17,12 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import jinja2
-import os
 import configparser
+import os
 
 # --------- Configuration ---------
 # read the private configuration file
+
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
@@ -65,10 +65,7 @@ class CeleryConfig():
     broker_url = "amqp://localhost" if not os.getenv('DOCKERIZED') else "amqp://rabbitmq"
     result_extended = True
     result_serializer = "json"
-    task_routes = ([
-        ('app.iris_engine.tasker.tasks.task_kbh_import', { 'route' : 'case_import'}),
-        ('app.iris_engine.tasker.tasks.task_feed_iris', { 'route' : 'case_import'})
-    ],)
+    worker_pool_restarts = True
 
 
 # --------- APP ---------
@@ -78,10 +75,13 @@ class Config():
     IRIS_VERSION = "v1.4.2"
 
     API_MIN_VERSION = "1.0.1"
-    API_MAX_VERSION = "1.0.2"
+    API_MAX_VERSION = "1.0.3"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.1'
+
+    RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
+    RELEASE_SIGNATURE_KEY = "B9B762555CE8751E57B178DD3003B1BA1A2E235E"
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True
@@ -114,8 +114,20 @@ class Config():
     Set download path, max file upload size and timeout
     """
     APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    UPLOADED_PATH = config.get('IRIS', 'UPLOADED_PATH') if config.get('IRIS', 'UPLOADED_PATH', fallback=False) else "/home/iris/downloads"
-    TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH', fallback=False) else "/home/iris/user_templates"
+
+    UPLOADED_PATH = config.get('IRIS', 'UPLOADED_PATH') if config.get('IRIS', 'UPLOADED_PATH',
+                                                                      fallback=False) else "/home/iris/downloads"
+    TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH',
+                                                                        fallback=False) else "/home/iris/user_templates"
+    BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
+                                                                        fallback=False) else "/home/iris/server_data/backup"
+    UPDATES_PATH = os.path.join(BACKUP_PATH, 'updates')
+
+    PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
+                                                                        fallback=False) else "/usr/bin"
+    ASSET_STORE_PATH = config.get('IRIS', 'ASSET_STORE_PATH') if config.get('IRIS', 'ASSET_STORE_PATH',
+                                                                            fallback=False) else "/home/iris/server_data/custom_assets"
+    ASSET_SHOW_PATH = "/static/assets/img/graph"
 
     UPDATE_DIR_NAME = '_updates_'
 
@@ -134,3 +146,8 @@ class Config():
         DEVELOPMENT = True
     else:
         DEVELOPMENT = config.get('DEVELOPMENT', 'IS_DEV_INSTANCE') == "True"
+
+    """ Caching 
+    """
+    CACHE_TYPE = "SimpleCache"
+    CACHE_DEFAULT_TIMEOUT = 300

@@ -134,13 +134,9 @@ function add_remote_note(group_id) {
 
         data['group_id'] = group_id;
         data['csrf_token'] = $('#csrf_token').val();
-        $.ajax({
-        url: '/case/notes/add' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        dataType: 'JSON',
-        contentType: "application/json;charset=UTF-8",
-        success: function (data) {
+
+        post_request_api('/case/notes/add', JSON.stringify(data), false)
+        .done((data) => {
             if (data.status == 'success') {
                 draw_kanban();
             } else {
@@ -148,36 +144,25 @@ function add_remote_note(group_id) {
                     swal("Oh no !", data.message, "error");
                 }
             }
-        },
-        error: function (error) {
-            swal("Oh no !", error.responseJSON.message, "error");
-        }
-    });
+        })
+
 }
 
 /* Add a group note remotely */
 function add_remote_groupnote() {
     var data = Object();
     data['csrf_token'] = $('#csrf_token').val();
-    $.ajax({
-        url: '/case/notes/groups/add' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        dataType: 'JSON',
-        contentType: "application/json;charset=UTF-8",
-        success: function (data) {
-            if (data.status == 'success') {
-                nextGroupNote(data.data.group_title, data.data.group_id);
-            } else {
-                if (data.message != "No data to load for dashboard") {
-                    swal("Oh no !", data.message, "error");
-                }
+
+    post_request_api('/case/notes/groups/add', JSON.stringify(data), false)
+    .done((data) => {
+        if (data.status == 'success') {
+            nextGroupNote(data.data.group_title, data.data.group_id);
+        } else {
+            if (data.message != "No data to load for dashboard") {
+                swal("Oh no !", data.message, "error");
             }
-        },
-        error: function (error) {
-            swal("Oh no !", error.responseJSON.message, "error");
         }
-    });
+    })
 }
 
 /* Delete a group of the dashboard */
@@ -198,28 +183,23 @@ function delete_remote_groupnote(group_id) {
         var data = Object();
         data['group_id'] = group_id;
         data['csrf_token'] = $('#csrf_token').val();
-        $.ajax({
-            url: '/case/notes/groups/delete/'+ group_id + case_param(),
-            type: "GET",
-            dataType: 'JSON',
-            success: function (data) {
-                if (data.status == 'success') {
-                    swal("Done !", data.message, "success");
-                    draw_kanban();
-                } else {
-                    if (data.message != "No data to load for dashboard") {
-                        swal("Oh no !", data.message, "error");
-                    }
+
+        get_request_api('/case/notes/groups/delete/'+ group_id)
+        .done((data) => {
+            if (data.status == 'success') {
+                swal("Done !", data.message, "success");
+                draw_kanban();
+            } else {
+                if (data.message != "No data to load for dashboard") {
+                    swal("Oh no !", data.message, "error");
                 }
-            },
-            error: function (error) {
-                swal("Oh no !", error.responseJSON.message, "error");
             }
-        });
+        })
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
+
 }
 
 /* Add a button to save group name */
@@ -235,26 +215,11 @@ function edit_remote_groupnote(group_id) {
     data['group_title'] = $("#group-" + group_id).find('div.kanban-title-board').text();
     data["csrf_token"] = $('#csrf_token').val();
 
-    $.ajax({
-        url: '/case/notes/groups/update/'+ group_id + case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        dataType: 'JSON',
-        contentType: "application/json;charset=UTF-8",
-        success: function (data) {
-            if (data.status == 'success') {
-                notify_success("Changes saved");
-                draw_kanban();
-            } else {
-                if (data.message != "No data to load for dashboard") {
-                    swal("Oh no !", data.message, "error");
-                }
-            }
-        },
-        error: function (error) {
-            swal("Oh no !", error, "error");
-        }
-    });
+    post_request_api('/case/notes/groups/update/'+ group_id, JSON.stringify(data))
+    .done((data) => {
+        notify_auto_api(data);
+        draw_kanban();
+    })
 }
 
 /* Delete a group of the dashboard */
@@ -262,19 +227,15 @@ function delete_note(_item) {
 
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
-    $.ajax({
-        url: '/case/notes/delete/' + n_id + case_param(),
-        type: "GET",
-        success: function (data) {
-            if (data.status == 'success') {
-                $('#modal_note_detail').modal('hide');
-            }
-        },
-        error: function (error) {
-            draw_kanban();
-            swal( 'Oh no :(', error.message, 'error');
-        }
-    });
+    get_request_api('/case/notes/delete/' + n_id)
+    .done((data) => {
+       $('#modal_note_detail').modal('hide');
+       notify_auto_api(data);
+    })
+    .fail(function (error) {
+        draw_kanban();
+        swal( 'Oh no :(', error.message, 'error');
+    })
 }
 
 /* List all the notes on the dashboard */
@@ -336,7 +297,13 @@ var sh_ext = showdown.extension('bootstrap-tables', function () {
 /* Fetch the edit modal with content from server */
 function note_detail(id) {
     url = '/case/notes/' + id + "/modal" + case_param();
-    $('#info_note_modal_content').load(url, function () {
+    $('#info_note_modal_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
         var editor = ace.edit("editor_detail",
             {
                 autoScrollEditorIntoView: true,
@@ -404,37 +371,29 @@ function search_notes() {
     data['search_term'] = $("#search_note_input").val();
     data['csrf_token'] = $("#csrf_token").val();
 
-    $.ajax({
-        url: '/case/notes/search' +  case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        contentType: "application/json;charset=UTF-8",
-        dataType: 'JSON',
-        success: function (data) {
-            if (data.status == 'success') {
-                $('#notes_search_list').empty();
-                for (e in data.data) {
-                    li = `<li class="list-group-item list-group-item-action">
-                    <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_detail(`+ data.data[e]['note_id'] +`);">`+ data.data[e]['note_title'] +`</span>
-                    </li>`
-                    $('#notes_search_list').append(li);
-                }
-                $('#notes_search_list').show();
-
-            } else {
-                if (data.message != "No data to load for dashboard") {
-                    swal("Oh no !", data.message, "error");
-                }
+    post_request_api('/case/notes/search', JSON.stringify(data))
+    .done((data) => {
+        if (data.status == 'success') {
+            $('#notes_search_list').empty();
+            for (e in data.data) {
+                li = `<li class="list-group-item list-group-item-action">
+                <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_detail(`+ data.data[e]['note_id'] +`);">`+ data.data[e]['note_title'] +`</span>
+                </li>`
+                $('#notes_search_list').append(li);
             }
-        },
-        error: function (error) {
-            swal("Oh no !", error, "error");
+            $('#notes_search_list').show();
+
+        } else {
+            if (data.message != "No data to load for dashboard") {
+                swal("Oh no !", data.message, "error");
+            }
         }
-    });
+    })
 }
 
 /* Save a note into db */
 function save_note(this_item) {
+    clear_api_error();
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
     var data_sent = $('#form_note').serializeObject();
@@ -447,25 +406,18 @@ function save_note(this_item) {
 
     data_sent['custom_attributes'] = attributes;
 
-    $.ajax({
-        url: '/case/notes/update/'+ n_id + case_param(),
-        type: "POST",
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        data: JSON.stringify(data_sent),
-        success: function (data) {
-            if (data.status == 'success') {
-                $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
-                $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
-            }
-        },
-        error: function (error) {
-            $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
-            $('#last_saved').text('Error saving !').addClass('badge-danger').removeClass('badge-success');
-            propagate_form_api_errors(error.responseJSON.data);
+    post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent))
+    .done((data) => {
+        if (data.status == 'success') {
+            $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
+            $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
         }
-    });
-
+    })
+    .fail(function (error) {
+        $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
+        $('#last_saved').text('Error saving !').addClass('badge-danger').removeClass('badge-success');
+        propagate_form_api_errors(error.responseJSON.data);
+    })
 }
 
 /* Span for note edition */
