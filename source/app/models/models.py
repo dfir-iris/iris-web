@@ -351,6 +351,39 @@ class CustomAttribute(db.Model):
     attribute_content = Column(JSON)
 
 
+class DataStorePath(db.mMdel):
+    __tablename__ = 'data_store_path'
+
+    path_id = Column(Integer, primary_key=True)
+    path_name = Column(Text, nullable=False)
+    path_parent_id = Column(Integer)
+    path_is_root = Column(Boolean)
+    path_case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    case = relationship('Cases')
+
+
+class DataStoreFile(db.Model):
+    __tablename__ = 'data_store_file'
+
+    data_id = Column(Integer, primary_key=True)
+    data_original_filename = Column(Text, nullable=False)
+    data_local_filename = Column(Text, nullable=False)
+    data_description = Column(Text)
+    date_added = Column(DateTime)
+    data_tags = Column(Text)
+    data_is_ioc = Column(Text)
+    data_password = Column(Text)
+    data_parent = Column(ForeignKey('data_store_path.path_id'), nullable=False)
+    added_by = Column(ForeignKey('user.id'), nullable=False)
+    modification_history = Column(JSON)
+    data_case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    case = relationship('Cases')
+    user = relationship('User')
+    parent = relationship('DataStorePath')
+
+
 class IocType(db.Model):
     __tablename__ = 'ioc_type'
 
