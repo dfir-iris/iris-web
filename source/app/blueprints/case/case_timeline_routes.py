@@ -767,7 +767,7 @@ def case_duplicate_event(cur_id, caseid):
                                            caseid=caseid,
                                            assets_list=assets_list)
         if not success:
-            return response_error('Error while saving linked iocs', data=log)
+            return response_error('Error while saving linked assets', data=log)
 
         # Update iocs mapping
         iocs_list = get_event_iocs_ids(old_event.event_id, caseid)
