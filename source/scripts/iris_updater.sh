@@ -43,7 +43,7 @@ then
     echo "Restarting IRIS worker"
     celery -A app.celery control shutdown
     sleep 2
-    exec celery -A app.celery worker -E -l INFO
+    exec celery -A app.celery worker -E -B -l INFO
 
   else
     echo "Restarting IRIS Web app"
