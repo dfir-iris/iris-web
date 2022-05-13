@@ -351,7 +351,7 @@ class CustomAttribute(db.Model):
     attribute_content = Column(JSON)
 
 
-class DataStorePath(db.mMdel):
+class DataStorePath(db.Model):
     __tablename__ = 'data_store_path'
 
     path_id = Column(Integer, primary_key=True)
@@ -372,7 +372,8 @@ class DataStoreFile(db.Model):
     data_description = Column(Text)
     date_added = Column(DateTime)
     data_tags = Column(Text)
-    data_is_ioc = Column(Text)
+    data_is_ioc = Column(Boolean)
+    data_is_evidence = Column(Boolean)
     data_password = Column(Text)
     data_parent = Column(ForeignKey('data_store_path.path_id'), nullable=False)
     added_by = Column(ForeignKey('user.id'), nullable=False)

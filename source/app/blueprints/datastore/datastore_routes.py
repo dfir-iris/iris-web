@@ -19,7 +19,13 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from flask import Blueprint
+from flask import request
 
+from app import db
+from app.datamgmt.datastore.datastore_db import ds_list_tree
+from app.models import DataStorePath
+from app.util import api_login_required
+from app.util import response_success
 
 datastore_blueprint = Blueprint(
     'datastore',
@@ -27,3 +33,30 @@ datastore_blueprint = Blueprint(
     template_folder='templates'
 )
 
+
+@datastore_blueprint.route('/datastore/list/tree', methods=['GET'])
+@api_login_required
+def datastore_list_tree(caseid):
+
+    data = ds_list_tree(caseid)
+
+    return response_success("", data=data)
+
+
+@datastore_blueprint.route('/datastore/push/tree', methods=['POST'])
+@api_login_required
+def datastore_push_tree(caseid: int):
+
+    data = request.json
+
+    for node in data:
+        dsp = DataStorePath()
+        dsp.path_is_root = node.get("is_root")
+        dsp.path_name = node.get("name")
+        dsp.path_parent_id = node.get("parent")
+        dsp.path_case_id = caseid
+
+        db.session.add(dsp)
+        db.session.commit()
+
+    return response_success("", data=data)
