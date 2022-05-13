@@ -32,6 +32,7 @@ from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.context.context import ctx_blueprint
 # Blueprints
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
+from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
@@ -78,6 +79,7 @@ app.register_blueprint(case_blueprint)
 app.register_blueprint(reports_blueprint)
 app.register_blueprint(activities_blueprint)
 app.register_blueprint(dim_tasks_blueprint)
+app.register_blueprint(datastore_blueprint)
 
 app.register_blueprint(api_blueprint)
 
