@@ -131,7 +131,7 @@ def case_graph_get_data(caseid):
     for event_id in tmp:
         for subset in itertools.combinations(tmp[event_id]['list'], 2):
 
-            if subset[0]['node_type'] == 'ioc' and subset[1]['node_type'] == 'ioc' and len(subset) != 2:
+            if subset[0]['node_type'] == 'ioc' and subset[1]['node_type'] == 'ioc' and len(tmp[event_id]['list']) != 2:
                 continue
                 
             edge = {
