@@ -15635,8 +15635,8 @@ body[data-background-color="dark"] .modal-footer {
   position: fixed;
   top: 0;
   bottom: 0;
-  right: -380px;
-  width: 380px;
+  right: -60%;
+  width: 60%;
   overflow: auto;
   overflow-x: hidden;
   height: 100vh;
