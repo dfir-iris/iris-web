@@ -20,9 +20,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from flask import Blueprint
 from flask import request
+from flask_login import current_user
 
 from app import db
 from app.datamgmt.datastore.datastore_db import ds_list_tree
+from app.models import DataStoreFile
 from app.models import DataStorePath
 from app.util import api_login_required
 from app.util import response_success
@@ -57,6 +59,25 @@ def datastore_push_tree(caseid: int):
         dsp.path_case_id = caseid
 
         db.session.add(dsp)
+        db.session.commit()
+
+    return response_success("", data=data)
+
+
+@datastore_blueprint.route('/datastore/push/file', methods=['POST'])
+@api_login_required
+def datastore_push_file(caseid: int):
+    data = request.json
+
+    for file in data:
+        dsf = DataStoreFile()
+        dsf.data_parent_id = file.get('parent')
+        dsf.data_case_id = caseid
+        dsf.added_by_user_id = current_user.id
+        dsf.data_original_filename = file.get('name')
+        dsf.data_local_filename = file.get('name')
+
+        db.session.add(dsf)
         db.session.commit()
 
     return response_success("", data=data)
