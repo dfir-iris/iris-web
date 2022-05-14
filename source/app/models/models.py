@@ -375,14 +375,14 @@ class DataStoreFile(db.Model):
     data_is_ioc = Column(Boolean)
     data_is_evidence = Column(Boolean)
     data_password = Column(Text)
-    data_parent = Column(ForeignKey('data_store_path.path_id'), nullable=False)
-    added_by = Column(ForeignKey('user.id'), nullable=False)
+    data_parent_id = Column(ForeignKey('data_store_path.path_id'), nullable=False)
+    added_by_user_id = Column(ForeignKey('user.id'), nullable=False)
     modification_history = Column(JSON)
     data_case_id = Column(ForeignKey('cases.case_id'), nullable=False)
 
     case = relationship('Cases')
     user = relationship('User')
-    parent = relationship('DataStorePath')
+    data_parent = relationship('DataStorePath')
 
 
 class IocType(db.Model):

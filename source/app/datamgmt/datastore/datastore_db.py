@@ -20,6 +20,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from sqlalchemy import and_
 
+from app.models import DataStoreFile
 from app.models import DataStorePath
 
 
@@ -38,6 +39,10 @@ def ds_list_tree(cid):
         DataStorePath.path_parent_id
     ).all()
 
+    dsf = DataStoreFile.query.filter(
+        and_(DataStoreFile.data_case_id == cid)
+    ).all()
+
     if not dsp_root:
         return {}
 
@@ -52,6 +57,19 @@ def ds_list_tree(cid):
     }
 
     droot_children = path_tree[dsp_root.path_id]["children"]
+    files_nodes = {}
+    for dfile in dsf:
+        dfnode = dfile._asdict()
+        dfnode['type'] = "file"
+
+        if dfile.data_parent_id == dsp_root.path_id:
+            droot_children.update(dfnode)
+
+        elif dfile.data_parent_id in files_nodes:
+            files_nodes[dfile.data_parent_id].update(dfnode)
+
+        else:
+            files_nodes[dfile.data_parent_id] = {dfnode}
 
     for dpath in dsp:
 
@@ -63,22 +81,26 @@ def ds_list_tree(cid):
             }
         }
 
-        if dpath.path_parent_id ==  dsp_root.path_id:
+        path_node_files = files_nodes.get(dpath.path_id)
+        if path_node_files:
+            path_node[dpath.path_id]["children"].update(path_node_files)
+
+        if dpath.path_parent_id == dsp_root.path_id:
             droot_children.update(path_node)
 
         else:
-            datastore_iter_tree(dpath.path_parent_id, path_node, droot_children)
+            datastore_iter_tree(dpath.path_parent_id, path_node, files_nodes, droot_children)
 
     return path_tree
 
 
-def datastore_iter_tree(path_parent_id, path_node, tree):
-    for k, v in tree.items():
-        if k == path_parent_id:
-            v["children"].update(path_node)
+def datastore_iter_tree(path_parent_id, path_node, files_nodes, tree):
+    for parent_id, node in tree.items():
+        if parent_id == path_parent_id:
+            node["children"].update(path_node)
             return tree
 
-        if isinstance(v, dict):
-            datastore_iter_tree(path_parent_id, path_node, v)
+        if isinstance(node, dict):
+            datastore_iter_tree(path_parent_id, path_node, files_nodes, node)
 
     return None
