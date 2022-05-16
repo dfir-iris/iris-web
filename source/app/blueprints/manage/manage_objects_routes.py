@@ -20,14 +20,12 @@
 
 # IMPORTS ------------------------------------------------
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
+from flask import redirect
+from flask import render_template
+from flask import url_for
 
-from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AssetsType, CaseAssets
 from app.forms import AddAssetForm
-from app import db
-
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required
+from app.util import admin_required
 
 manage_objects_blueprint = Blueprint('manage_objects',
                                           __name__,

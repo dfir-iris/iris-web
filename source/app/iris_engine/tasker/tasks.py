@@ -24,12 +24,12 @@ import urllib.parse
 from celery.signals import task_prerun
 from flask_login import current_user
 
-from app import db, app
+from app import app
+from app import db
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.module_handler.module_handler import pipeline_dispatcher
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
-from app.models.cases import Cases
 from iris_interface import IrisInterfaceStatus as IStatus
 from iris_interface.IrisModuleInterface import IrisPipelineTypes
 

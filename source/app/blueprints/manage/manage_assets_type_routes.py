@@ -19,54 +19,32 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-from cmath import log
 import logging
-import marshmallow, string, random
-from flask import Blueprint, flash
-from flask import render_template, request, url_for, redirect
-
-from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AssetsType, CaseAssets
-from app.forms import AddAssetForm
-from app import db, app
-from app.schema.marshables import AssetSchema
+import marshmallow
 import os
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 
-
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
-    api_login_required
+from app import app
+from app import db
+from app.forms import AddAssetForm
+from app.iris_engine.utils.tracker import track_activity
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
+from app.schema.marshables import AssetSchema
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_assets_blueprint = Blueprint('manage_assets',
                                     __name__,
                                     template_folder='templates')
-
-
-ALLOWED_EXTENSIONS = {'png', 'svg'}
-
-def store_icon(file, icon, asset_type):
-    if file and allowed_file(file.filename):
-        filename = get_random_string(18)
-
-        try:
-            store_fullpath = os.path.join(app.config['ASSET_STORE_PATH'], filename)
-            show_fullpath = os.path.join(app.config['APP_PATH'],'app',app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
-            file.save(store_fullpath)
-            os.symlink(store_fullpath, show_fullpath)  
-        except Exception as e:
-            return response_error(f"Unable to add icon {e}")
-
-        setattr(asset_type, icon, filename)
-    
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def get_random_string(length):
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    return result_str
 
 
 @manage_assets_blueprint.route('/manage/asset-type/list')
@@ -128,8 +106,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
     form.asset_icon_compromised.render_kw = {'value': asset.asset_icon_compromised}
     form.asset_icon_not_compromised.render_kw = {'value': asset.asset_icon_not_compromised}
     setattr(asset, 'asset_icon_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_compromised))
-    setattr(asset, 'asset_icon_not_compromised_path',os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_not_compromised))
-
+    setattr(asset, 'asset_icon_not_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_not_compromised))
 
     return render_template("modal_add_asset_type.html", form=form, assettype=asset)
 
@@ -141,26 +118,28 @@ def view_assets(cur_id, caseid):
     if not asset_type:
         return response_error("Invalid asset type ID")
 
-    form = AddAssetForm()
-    
-    if form.is_submitted():
-        
-        asset_type.asset_name = request.form.get('asset_name','', type=str)
-        asset_type.asset_description = request.form.get('asset_description','', type=str)
-        for icon in ['asset_icon_compromised','asset_icon_not_compromised']:
-            file = request.files[icon]
+    asset_schema = AssetSchema()
+    try:
 
-            store_icon(file, icon, asset_type)
-            
+        asset_sc = asset_schema.load(request.form, instance=asset_type)
+        fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
+                                                'asset_icon_not_compromised')
 
-        db.session.commit()
-        track_activity("Updated asset type {asset_name}".format(asset_name=asset_type.asset_name), caseid=caseid, ctx_less=True)
-    else:
-        print("invalid")
+        fpath_c = asset_schema.load_store_icon(request.files.get('asset_icon_compromised'), 'asset_icon_compromised')
 
-    
-    # Return the assets
-    return response_success("Added successfully", data=asset_type.asset_name)
+        if fpath_nc is not None:
+            asset_sc.asset_icon_not_compromised = fpath_nc
+        if fpath_c is not None:
+            asset_sc.asset_icon_compromised = fpath_c
+
+        if asset_sc:
+            track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
+            return response_success("Asset type updated", asset_sc)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    return response_error("Unexpected error server-side. Nothing updated")
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
@@ -177,29 +156,31 @@ def add_assets_modal(caseid, url_redir):
 @api_admin_required
 def add_assets(caseid):
 
-    form = AddAssetForm()
+    asset_schema = AssetSchema()
+    try:
 
-    asset_type = AssetsType()
+        asset_sc = asset_schema.load(request.form)
+        fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
+                                                'asset_icon_not_compromised')
 
-    if form.is_submitted():
-        
-        asset_type.asset_name = request.form.get('asset_name','', type=str)
-        asset_type.asset_description = request.form.get('asset_description','', type=str)
-        for icon in ['asset_icon_compromised','asset_icon_not_compromised']:
-            file = request.files[icon]
+        fpath_c = asset_schema.load_store_icon(request.files.get('asset_icon_compromised'), 'asset_icon_compromised')
 
-            store_icon(file, icon, asset_type)
+        if fpath_nc is not None:
+            asset_sc.asset_icon_not_compromised = fpath_nc
+        if fpath_c is not None:
+            asset_sc.asset_icon_compromised = fpath_c
 
+        if asset_sc:
+            db.session.add(asset_sc)
+            db.session.commit()
 
-        db.session.add(asset_type)
-        db.session.commit()
-        track_activity("Added asset type {asset_name}".format(asset_name=asset_type.asset_name), caseid=caseid, ctx_less=True)
-    else:
-        print("invalid")
+            track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
+            return response_success("Asset type updated", asset_sc)
 
-    
-    # Return the assets
-    return response_success("Added successfully", data=asset_type.asset_name)
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    return response_error("Unexpected error server-side. Nothing updated")
 
 
 @manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])

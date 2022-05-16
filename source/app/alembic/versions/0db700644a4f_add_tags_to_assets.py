@@ -5,8 +5,8 @@ Revises: 6a3b3b627d45
 Create Date: 2022-01-06 13:47:12.648707
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection
 

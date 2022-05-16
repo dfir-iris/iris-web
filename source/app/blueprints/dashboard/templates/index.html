@@ -186,30 +186,6 @@
         </div>
     </div>
 
-    <div class="modal fade " tabindex="-1" role="dialog" id="modal_add_customer" data-backdrop="true">
-      <div class="modal-lg modal-dialog" role="document">
-        <form method="post" action="" id="form_new_customer">
-          {{ form.hidden_tag() }}
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5>Add customer</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                  aria-hidden="true">&times;</span></button>
-            </div>
-            
-            <div class="modal-body">
-              {{ form.customer_name(placeholder="Customer name", class="form-control") }}
-                <div class="text-danger ml-2 mt-2" id="modal_customer_message"></div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-success" type="submit" id="submit_new_customer">Submit</button>
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-          </div><!-- /.modal-content -->
-        </form>
-      </div><!-- /.modal-dialog -->
-    </div>
-
     <div class="modal " tabindex="-1" role="dialog" id="modal_add_gtask" data-backdrop="true">
         <div class="modal-xl modal-dialog" role="document">
             <div class="modal-content" id="modal_add_gtask_content">

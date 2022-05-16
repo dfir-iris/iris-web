@@ -20,19 +20,29 @@
 
 # IMPORTS ------------------------------------------------
 import marshmallow
-from flask import Blueprint, request
-from flask import render_template, url_for, redirect
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_rfiles_db import get_rfiles, add_rfile, get_rfile, update_rfile, delete_rfile
+from app.datamgmt.case.case_rfiles_db import add_rfile
+from app.datamgmt.case.case_rfiles_db import delete_rfile
+from app.datamgmt.case.case_rfiles_db import get_rfile
+from app.datamgmt.case.case_rfiles_db import get_rfiles
+from app.datamgmt.case.case_rfiles_db import update_rfile
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_evidences_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseEvidenceSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 case_rfiles_blueprint = Blueprint(
     'case_rfiles',
@@ -98,7 +108,7 @@ def case_add_rfile(caseid):
 
         if crf:
             track_activity("added evidence {}".format(crf.filename), caseid=caseid)
-            return response_success(data=evidence_schema.dump(crf))
+            return response_success("Evidence added", data=evidence_schema.dump(crf))
 
         return response_error("Unable to create task for internal reasons")
 
@@ -165,7 +175,7 @@ def case_edit_rfile(cur_id, caseid):
 
         if evd:
             track_activity("updated evidence {}".format(evd.filename), caseid=caseid)
-            return response_success(data=evidence_schema.dump(evd))
+            return response_success("Evidence {} updated".format(evd.filename), data=evidence_schema.dump(evd))
 
         return response_error("Unable to update task for internal reasons")
 

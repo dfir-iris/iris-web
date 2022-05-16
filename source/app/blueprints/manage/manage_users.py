@@ -20,18 +20,31 @@
 
 # IMPORTS ------------------------------------------------
 import marshmallow
-from flask import Blueprint, request, redirect, url_for
+from flask import Blueprint
+from flask import redirect
 from flask import render_template
+from flask import request
+from flask import url_for
 from flask_wtf import FlaskForm
 
 from app import db
-from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, \
-    get_user_by_username, get_user_details, get_users_list_restricted, delete_user
+from app.datamgmt.manage.manage_users_db import create_user
+from app.datamgmt.manage.manage_users_db import delete_user
+from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import get_user_by_username
+from app.datamgmt.manage.manage_users_db import get_user_details
+from app.datamgmt.manage.manage_users_db import get_users_list
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted
+from app.datamgmt.manage.manage_users_db import update_user
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
-from app.util import admin_required, login_required, response_error, response_success, api_admin_required, \
-    api_login_required
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_users_blueprint = Blueprint('manage_users',
                                    __name__,

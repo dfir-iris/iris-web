@@ -17,21 +17,77 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-import re
-
 import dateutil.parser
 import marshmallow
-from marshmallow import fields, post_load, pre_load
+import os
+import random
+import re
+import string
+from marshmallow import fields
+from marshmallow import post_load
+from marshmallow import pre_load
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
 
+from app import app
 from app import ma
-from app.datamgmt.dashboard.dashboard_db import get_task_status
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
-from app.models import Cases, GlobalTasks, User, Client, Notes, NotesGroup, CaseAssets, Ioc, CasesEvent, CaseTasks, \
-    CaseReceivedFile, AssetsType, IocType, TaskStatus, AnalysisStatus, Tlp, EventCategory, ServerSettings
+from app.models import AnalysisStatus
+from app.models import AssetsType
+from app.models import CaseAssets
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import Client
+from app.models import EventCategory
+from app.models import GlobalTasks
+from app.models import Ioc
+from app.models import IocType
+from app.models import Notes
+from app.models import NotesGroup
+from app.models import ServerSettings
+from app.models import TaskStatus
+from app.models import Tlp
+from app.models import User
+
+ALLOWED_EXTENSIONS = {'png', 'svg'}
+
+
+def allowed_file_icon(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def get_random_string(length):
+    letters = string.ascii_lowercase
+    result_str = ''.join(random.choice(letters) for i in range(length))
+    return result_str
+
+
+def store_icon(file):
+    if not file:
+        return None, 'Icon file is not valid'
+
+    if not allowed_file_icon(file.filename):
+        return None, 'Icon filetype is not allowed'
+
+    filename = get_random_string(18)
+
+    try:
+
+        store_fullpath = os.path.join(app.config['ASSET_STORE_PATH'], filename)
+        show_fullpath = os.path.join(app.config['APP_PATH'], 'app',
+                                     app.config['ASSET_SHOW_PATH'].strip(os.path.sep),
+                                     filename)
+        file.save(store_fullpath)
+        os.symlink(store_fullpath, show_fullpath)
+
+    except Exception as e:
+        return None, f"Unable to add icon {e}"
+
+    return filename, 'Saved'
 
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
@@ -145,10 +201,12 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 class EventSchema(ma.SQLAlchemyAutoSchema):
     event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
     event_assets = fields.List(fields.Integer, required=True, allow_none=False)
+    event_iocs = fields.List(fields.Integer, required=True, allow_none=False)
     event_date = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=True, allow_none=False)
     event_tz = fields.String(required=True, allow_none=False)
     event_category_id = fields.Integer(required=True, allow_none=False)
     event_date_wtz = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
+    modification_history = auto_field('modification_history', required=False, readonly=True)
 
     class Meta:
         model = CasesEvent
@@ -172,7 +230,11 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
-        event_cat = EventCategory.query.filter(EventCategory.id == data.get('event_category_id')).count()
+        if not isinstance(int(data.get('event_category_id')), int):
+            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
+                                                         field_name="event_category_id")
+
+        event_cat = EventCategory.query.filter(EventCategory.id == int(data.get('event_category_id'))).count()
         if not event_cat:
             raise marshmallow.exceptions.ValidationError("Invalid event category ID",
                                                          field_name="event_category_id")
@@ -181,6 +243,12 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             ast = CaseAssets.query.filter(CaseAssets.asset_id == asset).count()
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid assets ID",
+                                                             field_name="event_assets")
+
+        for ioc in data.get('event_iocs'):
+            ast = Ioc.query.filter(Ioc.ioc_id == ioc).count()
+            if not ast:
+                raise marshmallow.exceptions.ValidationError("Invalid IOC ID",
                                                              field_name="event_assets")
 
         return data
@@ -195,8 +263,11 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
 
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):
+    csrf_token = fields.String(required=False)
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
+    asset_icon_compromised = auto_field('asset_icon_compromised')
+    asset_icon_not_compromised =auto_field('asset_icon_not_compromised')
 
     class Meta:
         model = AssetsType
@@ -215,6 +286,22 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
             )
 
         return data
+
+    def load_store_icon(self, file_storage, type):
+        if not file_storage.filename:
+            return None
+
+        fpath, message = store_icon(file_storage)
+
+        if fpath is None:
+            raise marshmallow.exceptions.ValidationError(
+                message,
+                field_name=type
+            )
+
+        setattr(self, type, fpath)
+
+        return fpath
 
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):

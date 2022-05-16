@@ -5,18 +5,16 @@ Revises: c832bd69f827
 Create Date: 2022-04-21 22:14:55.815983
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
+from sqlalchemy import engine_from_config
+from sqlalchemy.engine import reflection
 
 # revision identifiers, used by Alembic.
 revision = 'ff917e2ab02e'
 down_revision = 'c832bd69f827'
 branch_labels = None
 depends_on = None
-
-from sqlalchemy import engine_from_config
-from sqlalchemy.engine import reflection
 
 
 def upgrade():
@@ -25,7 +23,6 @@ def upgrade():
                       sa.Column('asset_icon_not_compromised', sa.String(255))
                       )
 
-        
     if not _table_has_column('assets_type', 'asset_icon_compromised'):
         op.add_column('assets_type',
                       sa.Column('asset_icon_compromised', sa.String(255))
@@ -35,24 +32,28 @@ def upgrade():
         'assets_type',
         sa.MetaData(),
         sa.Column('asset_id', sa.Integer, primary_key=True),
-        sa.Column('asset_name', sa.String(155))
+        sa.Column('asset_name', sa.String(155)),
+        sa.Column('asset_icon_not_compromised', sa.String(255)),
+        sa.Column('asset_icon_compromised', sa.String(255))
     )
     
     # Migrate existing Asset_types
     conn = op.get_bind()
-    res = conn.execute("SELECT asset_id FROM public.assets_type;")
+    res = conn.execute("SELECT asset_id, asset_name FROM public.assets_type;")
     results = res.fetchall()
 
     if results:
         for res in results:
-            icon_not_compromised, icon_compromised = _get_icons(res[0])
+            icon_not_compromised, icon_compromised = _get_icons(res[1])
             conn.execute(t_assets_type.update().where(t_assets_type.c.asset_id == res[0]).values(
                 asset_icon_not_compromised=icon_not_compromised,
                 asset_icon_compromised=icon_compromised
             ))
 
+
 def downgrade():
     pass
+
 
 def _table_has_column(table, column):
     config = op.get_context().config
@@ -66,6 +67,7 @@ def _table_has_column(table, column):
             continue
         has_column = True
     return has_column
+
 
 def _get_icons(asset_name):
     assets = {

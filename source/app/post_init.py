@@ -17,34 +17,53 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import logging
-import random
-import secrets
-import string
-import os
 import glob
-from tkinter import E
+import secrets
+
+import os
+import random
+import string
+from alembic import command
 from alembic.config import Config
-from alembic import command, context
+from sqlalchemy import create_engine
+from sqlalchemy_utils import create_database
+from sqlalchemy_utils import database_exists
 
-from sqlalchemy import create_engine, and_
-from sqlalchemy_utils import database_exists, create_database
-
-from app import db, bc, app, celery
-#from app.config import SQLALCHEMY_BASE_URI
+from app import app
+from app import bc
+from app import celery
+from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
-from app.iris_engine.module_handler.module_handler import instantiate_module_from_name, register_module, \
-    check_module_health
-from app.models.cases import Cases, Client
-from app.models.models import Role, Languages, User, get_or_create, get_by_value_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
-    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType, TaskStatus, IrisHook, CustomAttribute, \
-    create_safe_attr, ServerSettings
+from app.iris_engine.module_handler.module_handler import check_module_health
+from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
+from app.iris_engine.module_handler.module_handler import register_module
+from app.models.cases import Cases
+from app.models.cases import Client
+from app.models.models import AnalysisStatus
+from app.models.models import AssetsType
+from app.models.models import EventCategory
+from app.models.models import IocType
+from app.models.models import IrisHook
+from app.models.models import IrisModule
+from app.models.models import Languages
+from app.models.models import OsType
+from app.models.models import ReportType
+from app.models.models import Role
+from app.models.models import ServerSettings
+from app.models.models import TaskStatus
+from app.models.models import Tlp
+from app.models.models import User
+from app.models.models import UserRoles
+from app.models.models import create_safe
+from app.models.models import create_safe_attr
+from app.models.models import get_by_value_or_create
+from app.models.models import get_or_create
 
 log = app.logger
 
 
 def run_post_init(development=False):
-
+    log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
 
     if os.getenv("IRIS_WORKER") is None:
@@ -61,7 +80,7 @@ def run_post_init(development=False):
         log.info("Running DB migration")
 
         alembic_cfg = Config(file_='app/alembic.ini')
-        alembic_cfg.set_main_option('sqlalchemy.url',  app.config['SQLALCHEMY_DATABASE_URI'])
+        alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
         command.upgrade(alembic_cfg, 'head')
 
         log.info("Creating base languages")
@@ -193,7 +212,7 @@ def create_safe_hooks():
 
     create_safe(db.session, IrisHook, hook_name='on_manual_trigger_note',
                 hook_description='Triggered upon user action')
-    
+
     # --- iocs
     create_safe(db.session, IrisHook, hook_name='on_preload_ioc_create',
                 hook_description='Triggered on ioc creation, before commit in DB')
@@ -233,7 +252,7 @@ def create_safe_hooks():
 
     create_safe(db.session, IrisHook, hook_name='on_manual_trigger_event',
                 hook_description='Triggered upon user action')
-    
+
     # --- evidence
     create_safe(db.session, IrisHook, hook_name='on_preload_evidence_create',
                 hook_description='Triggered on evidence creation, before commit in DB')
@@ -252,7 +271,7 @@ def create_safe_hooks():
 
     create_safe(db.session, IrisHook, hook_name='on_manual_trigger_evidence',
                 hook_description='Triggered upon user action')
-    
+
     # --- tasks
     create_safe(db.session, IrisHook, hook_name='on_preload_task_create',
                 hook_description='Triggered on task creation, before commit in DB')
@@ -290,7 +309,7 @@ def create_safe_hooks():
 
     create_safe(db.session, IrisHook, hook_name='on_manual_trigger_global_task',
                 hook_description='Triggered upon user action')
-    
+
     # --- reports
     create_safe(db.session, IrisHook, hook_name='on_preload_report_create',
                 hook_description='Triggered on report creation, before generation in DB')
@@ -312,7 +331,7 @@ def create_safe_languages():
 def create_safe_events_cats():
     create_safe(db.session, EventCategory, name="Unspecified")
     create_safe(db.session, EventCategory, name="Legitimate")
-    create_safe(db.session, EventCategory, name="Remediation") 
+    create_safe(db.session, EventCategory, name="Remediation")
     create_safe(db.session, EventCategory, name="Initial Access")
     create_safe(db.session, EventCategory, name="Execution")
     create_safe(db.session, EventCategory, name="Persistence")
@@ -351,27 +370,65 @@ def create_safe_task_status():
 
 
 def create_safe_assets():
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Account", asset_description="Generic Account", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Firewall", asset_description="Firewall", asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux - Server", asset_description="Linux server", asset_icon_not_compromised="server.png", asset_icon_compromised="ioc_server.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux - Computer", asset_description="Linux computer", asset_icon_not_compromised="desktop.png", asset_icon_compromised="ioc_desktop.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux Account", asset_description="Linux Account", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Mac - Computer", asset_description="Mac computer", asset_icon_not_compromised="desktop.png", asset_icon_compromised="ioc_desktop.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Phone - Android", asset_description="Android Phone", asset_icon_not_compromised="phone.png", asset_icon_compromised="ioc_phone.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Phone - IOS", asset_description="Apple Phone", asset_icon_not_compromised="phone.png", asset_icon_compromised="ioc_phone.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - Computer", asset_description="Standard Windows Computer", asset_icon_not_compromised="windows_desktop.png", asset_icon_compromised="ioc_windows_desktop.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - Server", asset_description="Standard Windows Server", asset_icon_not_compromised="windows_server.png", asset_icon_compromised="ioc_windows_server.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - DC", asset_description="Domain Controller", asset_icon_not_compromised="windows_server.png", asset_icon_compromised="ioc_windows_server.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Router", asset_description="Router", asset_icon_not_compromised="router.png", asset_icon_compromised="ioc_router.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Switch", asset_description="Switch", asset_icon_not_compromised="switch.png", asset_icon_compromised="ioc_switch.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="VPN", asset_description="VPN", asset_icon_not_compromised="vpn.png", asset_icon_compromised="ioc_vpn.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="WAF", asset_description="WAF", asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - Local", asset_description="Windows Account - Local", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - Local - Admin", asset_description="Windows Account - Local - Admin", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD", asset_description="Windows Account - AD", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - Admin", asset_description="Windows Account - AD - Admin", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - krbtgt", asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
-    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - Service", asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png", asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Account",
+                           asset_description="Generic Account", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Firewall", asset_description="Firewall",
+                           asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux - Server",
+                           asset_description="Linux server", asset_icon_not_compromised="server.png",
+                           asset_icon_compromised="ioc_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux - Computer",
+                           asset_description="Linux computer", asset_icon_not_compromised="desktop.png",
+                           asset_icon_compromised="ioc_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux Account",
+                           asset_description="Linux Account", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Mac - Computer",
+                           asset_description="Mac computer", asset_icon_not_compromised="desktop.png",
+                           asset_icon_compromised="ioc_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Phone - Android",
+                           asset_description="Android Phone", asset_icon_not_compromised="phone.png",
+                           asset_icon_compromised="ioc_phone.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Phone - IOS",
+                           asset_description="Apple Phone", asset_icon_not_compromised="phone.png",
+                           asset_icon_compromised="ioc_phone.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - Computer",
+                           asset_description="Standard Windows Computer",
+                           asset_icon_not_compromised="windows_desktop.png",
+                           asset_icon_compromised="ioc_windows_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - Server",
+                           asset_description="Standard Windows Server", asset_icon_not_compromised="windows_server.png",
+                           asset_icon_compromised="ioc_windows_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - DC",
+                           asset_description="Domain Controller", asset_icon_not_compromised="windows_server.png",
+                           asset_icon_compromised="ioc_windows_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Router", asset_description="Router",
+                           asset_icon_not_compromised="router.png", asset_icon_compromised="ioc_router.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Switch", asset_description="Switch",
+                           asset_icon_not_compromised="switch.png", asset_icon_compromised="ioc_switch.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="VPN", asset_description="VPN",
+                           asset_icon_not_compromised="vpn.png", asset_icon_compromised="ioc_vpn.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="WAF", asset_description="WAF",
+                           asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - Local",
+                           asset_description="Windows Account - Local", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - Local - Admin",
+                           asset_description="Windows Account - Local - Admin", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD",
+                           asset_description="Windows Account - AD", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - Admin",
+                           asset_description="Windows Account - AD - Admin", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - krbtgt",
+                           asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - Service",
+                           asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
 
 
 def create_safe_client():
@@ -418,7 +475,7 @@ def create_safe_admin():
 
 def create_safe_case(user, client):
     case = Cases.query.filter(
-            Cases.client_id == client.client_id
+        Cases.client_id == client.client_id
     ).first()
 
     if not case:
@@ -817,7 +874,7 @@ def register_modules_pipelines():
 
     for module in modules:
         module = module[0]
-        inst = instantiate_module_from_name(module)
+        inst, _ = instantiate_module_from_name(module)
         if not inst:
             continue
 
@@ -835,7 +892,6 @@ def register_modules_pipelines():
 
 
 def register_default_modules():
-
     srv_settings = ServerSettings.query.first()
 
     if srv_settings.prevent_post_mod_repush is True:
@@ -844,7 +900,7 @@ def register_default_modules():
 
     modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module']
     for module in modules:
-        class_ = instantiate_module_from_name(module)
+        class_, _ = instantiate_module_from_name(module)
         is_ready, logs = check_module_health(class_)
 
         if not is_ready:
@@ -858,19 +914,21 @@ def register_default_modules():
         else:
             iris_module_disable_by_id(mod_id)
             log.info('Successfully registered {mod}'.format(mod=module))
-        
+
+
 def custom_assets_symlinks():
     try:
-        source_paths = glob.glob(os.path.join(app.config['ASSET_STORE_PATH'],"*"))
-        log.info("Attempting to add symlinks for:")
-        log.info(source_paths)
+
+        source_paths = glob.glob(os.path.join(app.config['ASSET_STORE_PATH'], "*"))
+
         for store_fullpath in source_paths:
+
             filename = store_fullpath.split(os.path.sep)[-1]
-            show_fullpath = os.path.join(app.config['APP_PATH'],'app', app.config['ASSET_SHOW_PATH'].strip(os.path.sep),filename)
-            os.symlink(store_fullpath, show_fullpath)  
-            log.info(f"Created symlink {store_fullpath} -> {show_fullpath}")
+            show_fullpath = os.path.join(app.config['APP_PATH'], 'app',
+                                         app.config['ASSET_SHOW_PATH'].strip(os.path.sep), filename)
+            if not os.path.islink(show_fullpath):
+                os.symlink(store_fullpath, show_fullpath)
+                log.info(f"Created assets img symlink {store_fullpath} -> {show_fullpath}")
+
     except Exception as e:
         log.error(f"Error: {e}")
-
-
-

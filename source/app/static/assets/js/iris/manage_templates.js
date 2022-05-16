@@ -1,89 +1,10 @@
-$('#form_new_asset').submit(function () {
-
-    $.ajax({
-        url: '/manage/assets/add' + case_param(),
-        type: "POST",
-        data:  $('form#form_new_asset').serializeArray(),
-        dataType: "json",
-        beforeSend: function() {
-            $('#submit_new_asset').text('Saving..')
-                .attr("disabled", true)
-                .removeClass('bt-outline-success')
-                .addClass('btn-success', 'text-dark');
-        },
-        complete : function() {
-             $('#submit_new_asset')
-                .attr("disabled", false)
-                .addClass('bt-outline-success')
-                .removeClass('btn-success', 'text-dark');
-        },
-        success: function (data) {
-            if (data.status == 'success') {
-                $('#submit_new_asset').text('Saved');
-
-
-                swal ( "That's done !" ,
-                "Your new asset is now available" ,
-                "success",
-                {
-                     buttons: {
-                         again: {
-                             text: "Create an asset again",
-                             value: "again"
-                         },
-                         case: {
-                           text: "Go to case",
-                           value: "case",
-                         }
-                     }
-                 }
-                ).then((value) => {
-                   switch (value) {
-
-                     case "case":
-                       window.location.replace("/case/summary" + case_param());
-                       break;
-
-                     case "again":
-                       window.location.replace("/manage/assets" + case_param());
-                       break;
-
-                     default:
-                      window.location.replace("/manage/assets" + case_param());
-                   }
-             });
-            } else {
-                $('#submit_new_asset').text('Save');
-                mdata = ""
-                for (element in data.data) {
-                    mdata += data.data[element]
-                }
-                $.notify({
-                    icon: 'flaticon-error',
-                    title: data.message,
-                    message: mdata
-                }, {
-                    type: 'danger',
-                    placement: {
-                        from: 'top',
-                        align: 'right'
-                    },
-                    time: 5000,
-                });
-                }
-            },
-        error: function (error) {
-            $('#submit_new_asset').text('Save');
-            notify_error(error);
-        }
-    });
-    return false;
-});
-
-
 function add_report_template() {
     url = 'templates/add' + case_param();
-    $('#modal_report_template_content').load(url, function () {
+    $('#modal_report_template_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         /* create the select picker for language  */
         $('#report_language').selectpicker({
@@ -109,26 +30,17 @@ function add_report_template() {
                 contentType: false,
                 processData: false,
                 success: function (data) {
-                    if (data.status == 'success') {
-                        swal("Done !",
-                        "Your report template has been created successfully",
-                            {
-                                icon: "success",
-                                timer: 400
-                            }
-                        ).then((value) => {
-                            refresh_template_table();
-                            $('#modal_add_report_template').modal('hide');
-
-                        });
-                    } else {
-                        $('#modal_add_report_template').text('Save again');
-                        swal("Oh no !", data.message, "error")
+                    if (notify_auto_api(data)) {
+                        refresh_template_table();
+                        $('#modal_add_report_template').modal('hide');
                     }
                 },
                 error: function (error) {
-                    $('#modal_add_report_template').text('Save');
-                    swal("Oh no !", error.statusText, "error")
+                    if(error.responseJSON) {
+                        notify_error(error.responseJSON.message);
+                    } else {
+                        ajax_notify_error(error, this.url);
+                    }
                 }
             });
 
@@ -204,7 +116,11 @@ function refresh_template_table() {
 /* Fetch the details of an asset and allow modification */
 function report_detail(report_id) {
     url = 'templates/update/' + report_id + case_param();
-    $('#modal_report_template_content').load(url, function () {
+    $('#modal_report_template_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#submit_new_report_template').on("click", function () {
             $.ajax({
@@ -213,26 +129,17 @@ function report_detail(report_id) {
                 data: $('#form_new_report_template').serializeArray(),
                 dataType: "json",
                 success: function (data) {
-                    if (data.status == 'success') {
-                        swal("You're set !",
-                            "The report has been updated successfully",
-                            {
-                                icon: "success",
-                                timer: 400
-                            }
-                        ).then((value) => {
-                            refresh_template_table();
-                            $('#modal_report_template').modal('hide');
-                        });
-
-                    } else {
-                        $('#modal_report_template').text('Save again');
-                        swal("Oh no !", data.message, "error")
+                    if (notify_auto_api(data)) {
+                        refresh_template_table();
+                        $('#modal_add_report_template').modal('hide');
                     }
                 },
                 error: function (error) {
-                    notify_error(error.responseJSON.message);
-                    propagate_form_api_errors(data.data);
+                    if(error.responseJSON) {
+                        notify_error(error.responseJSON.message);
+                    } else {
+                        ajax_notify_error(error, this.url);
+                    }
                 }
             });
 
@@ -258,30 +165,15 @@ function delete_report(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-          $.ajax({
-              url: '/manage/templates/delete/' + id + case_param(),
-              type: "GET",
-              dataType: 'JSON',
-              success: function (data) {
-                  if (data.status == 'success') {
-                      swal("Template deleted !", {
-                          icon: "success",
-                          timer: 400
-                      }).then((value) => {
-                          refresh_template_table();
-                          $('#modal_add_type').modal('hide');
-                      });
-                  } else {
-                      swal ( "Oh no !" ,  data.message ,  "error" );
-                  }
-              },
-              error: function (error) {
-                notify_error(error.responseJSON.message);
-                propagate_form_api_errors(data.data);
-              }
+          get_request_api('/manage/templates/delete/' + id)
+          .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_template_table();
+                    $('#modal_add_report_template').modal('hide');
+                }
           });
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
 }

@@ -18,9 +18,12 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from sqlalchemy import and_
+from sqlalchemy import desc
+
 from app.models import Cases
-from app.models.models import UserActivity, User
-from sqlalchemy import desc, and_
+from app.models.models import User
+from app.models.models import UserActivity
 
 
 def get_auto_activities(caseid):

@@ -18,7 +18,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import logging
-from app import app, socket_io
+
+from app import app
+from app import socket_io
 
 if __name__ != '__main__':
     gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -28,3 +30,4 @@ if __name__ != '__main__':
 
 if __name__ == "__main__":
     socket_io.run(app, host='0.0.0.0', port=8000, debug=True)
+

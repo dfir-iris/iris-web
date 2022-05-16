@@ -103,6 +103,17 @@ Table = $("#ioc_table").DataTable({
     ordering: true,
     processing: true,
     retrieve: true,
+    responsive: {
+        details: {
+            display: $.fn.dataTable.Responsive.display.modal( {
+                header: function ( row ) {
+                    var data = row.data();
+                    return 'Details for '+data[0]+' '+data[1];
+                }
+            } ),
+            renderer: $.fn.dataTable.Responsive.renderer.tableAll()
+        }
+    },
     buttons: [],
     orderCellsTop: true,
     initComplete: function () {
@@ -121,11 +132,21 @@ var buttons = new $.fn.dataTable.Buttons(Table, {
     ]
 }).container().appendTo($('#tables_button'));
 
+Table.on( 'responsive-resize', function ( e, datatable, columns ) {
+        hide_table_search_input( columns );
+});
+
 /* Fetch a modal that is compatible with the requested ioc type */ 
 function add_ioc() {
     url = 'ioc/add/modal' + case_param();
 
-    $('#modal_add_ioc_content').load(url, function () {   
+    $('#modal_add_ioc_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
         $('#submit_new_ioc').on("click", function () {
             if(!$('form#form_new_ioc').valid()) {
                 return false;
@@ -142,54 +163,31 @@ function add_ioc() {
             data['custom_attributes'] = attributes;
 
             id = $('#ioc_id').val();
-            $.ajax({
-                url: 'ioc/add' + case_param(),
-                type: "POST",
-                data: JSON.stringify(data),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
-                beforeSend: function () {
+
+            post_request_api('ioc/add', JSON.stringify(data), true, function () {
                     $('#submit_new_ioc').text('Saving data..')
                         .attr("disabled", true)
                         .removeClass('bt-outline-success')
                         .addClass('btn-success', 'text-dark');
-                },
-                complete: function () {
-                    $('#submit_new_ioc')
-                        .attr("disabled", false)
-                        .addClass('bt-outline-success')
-                        .removeClass('btn-success', 'text-dark');
-                },
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("Done !",
-                            data.message,
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            reload_iocs();
-                            $('#modal_add_ioc').modal('hide');
+                })
+            .done((data) => {
+                if (data.status == 'success') {
+                        reload_iocs();
+                        notify_success(data.message);
+                        $('#modal_add_ioc').modal('hide');
 
-                        });
-                    } else {
-                        $('#submit_new_ioc').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    if (error.responseJSON.message != '') {
-                        $('#ioc-invalid-msg').text(error.responseJSON.message);
-                        $('#ioc-invalid-msg').show();
-                        $('#submit_new_ioc').text('Save again');
-                    } else {
-                        $('#submit_new_ioc').text('Save');
-                    }
-                    propagate_form_api_errors(error.responseJSON.data);
+                } else {
+                    $('#submit_new_ioc').text('Save again');
+                    swal("Oh no !", data.message, "error")
                 }
-            });
-        
+            })
+            .always(function () {
+                $('#submit_new_ioc')
+                    .attr("disabled", false)
+                    .addClass('bt-outline-success')
+                    .removeClass('btn-success', 'text-dark');
+            })
+
             return false;
         })
     });
@@ -199,53 +197,53 @@ function add_ioc() {
 /* Retrieve the list of iocs and build a datatable for each type of ioc */
 function get_case_ioc() {
     show_loader();
-    $.ajax({
-        url: "/case/ioc/list" + case_param(),
-        type: "GET",
-        dataType: 'json',
-        success: function (response) {
-            if (response.status == 'success') {
-                if (response.data != null) {
-                    jsdata = response.data;
-                    Table.clear();
-                    Table.rows.add(jsdata.ioc);
 
-                    Table.columns.adjust().draw();
+    get_request_api("/case/ioc/list")
+    .done(function (response) {
+        if (response.status == 'success') {
+            if (response.data != null) {
+                jsdata = response.data;
+                Table.clear();
+                Table.rows.add(jsdata.ioc);
 
-                    set_last_state(jsdata.state);
-                    hide_loader();
-                    $('#ioc_table_wrapper').on('click', function(e){
-                        if($('.popover').length>1)
-                            $('.popover').popover('hide');
-                            $(e.target).popover('toggle');
-                        });
+                Table.columns.adjust().draw();
+
+                set_last_state(jsdata.state);
+                hide_loader();
+                $('#ioc_table_wrapper').on('click', function(e){
+                    if($('.popover').length>1)
+                        $('.popover').popover('hide');
+                        $(e.target).popover('toggle');
+                    });
 
 
-                    $('#ioc_table_filter').addClass('mt--4');
+                $('#ioc_table_filter').addClass('mt--4');
 
-                    $('#ioc_table_wrapper').show();
-                    $('[data-toggle="popover"]').popover();
-                    Table.columns.adjust().draw();
-                    load_menu_mod_options('ioc', Table);
+                $('#ioc_table_wrapper').show();
+                $('[data-toggle="popover"]').popover();
+                Table.columns.adjust().draw();
+                load_menu_mod_options('ioc', Table);
 
-                } else {
-                    Table.clear().draw();
-                    swal("Oh no !", data.message, "error")
-                }
             } else {
-                Table.clear().draw()
+                Table.clear().draw();
+                swal("Oh no !", data.message, "error")
             }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
+        } else {
+            Table.clear().draw()
         }
-    });
+    })
 }
 
 /* Edit an ioc */
 function edit_ioc(ioc_id) {
     url = 'ioc/' + ioc_id + '/modal' + case_param();
-    $('#modal_add_ioc_content').load(url, function () {
+    $('#modal_add_ioc_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
         load_menu_mod_options_modal(ioc_id, 'ioc', $("#ioc_modal_quick_actions"));
     });
     $('#modal_add_ioc').modal({ show: true });
@@ -267,70 +265,34 @@ function update_ioc(ioc_id) {
 
     data['custom_attributes'] = attributes;
 
-    $.ajax({
-        url: 'ioc/update/' + ioc_id + case_param(),
-        type: "POST",
-        data: JSON.stringify(data),
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("You're set !",
-                    "The IOC has been updated successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    reload_iocs();
-                    $('#modal_add_ioc').modal('hide');
-                });
+    post_request_api('ioc/update/' + ioc_id, JSON.stringify(data), true)
+    .done((data) => {
+        if (data.status == 'success') {
+            reload_iocs();
+            $('#modal_add_ioc').modal('hide');
+            notify_success(data.message);
 
-            } else {
-                $('#submit_new_ioc').text('Save again');
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            if (error.responseJSON.message != '') {
-                $('#ioc-invalid-msg').text(error.responseJSON.message);
-                $('#ioc-invalid-msg').show();
-                $('#submit_new_ioc').text('Save again');
-            } else {
-                $('#submit_new_ioc').text('Save');
-            }
-            propagate_form_api_errors(error.responseJSON.data);
+        } else {
+            $('#submit_new_ioc').text('Save again');
+            swal("Oh no !", data.message, "error")
         }
-    });
+    })
+
 }
 
 /* Delete an ioc */
 function delete_ioc(ioc_id) {
-    $.ajax({
-        url: 'ioc/delete/' + ioc_id + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Good !",
-                    "The ioc has been deleted successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    reload_iocs();
-                    $('#modal_add_ioc').modal('hide');
-                });
+    get_request_api('ioc/delete/' + ioc_id)
+    .done((data) => {
+        if (data.status == 'success') {
+            reload_iocs();
+            notify_success(data.message);
+            $('#modal_add_ioc').modal('hide');
 
-            } else {
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            swal("Oh no !", error.statusText, "error")
+        } else {
+            swal("Oh no !", data.message, "error")
         }
-    });
+    })
 }
 
 function fire_upload_iocs() {
@@ -346,28 +308,19 @@ function upload_ioc() {
         var data = new Object();
         data['csrf_token'] = $('#csrf_token').val();
         data['CSVData'] = fileData;
-        $.ajax({
-            url: '/case/ioc/upload' + case_param(),
-            type: "POST",
-            data: JSON.stringify(data),
-            contentType: "application/json;charset=UTF-8",
-            dataType: "json",
-            success: function (data) {
-                jsdata = data;
-                if (jsdata.status == "success") {
-                    reload_iocs();
-                    $('#modal_upload_ioc').modal('hide');
-                    swal("Got news for you", data.message, "success");
 
-                } else {
-                    swal("Got bad news for you", data.message, "error");
-                }
-            },
-            error: function (error) {
-                notify_error(error.responseJSON.message);
-                propagate_form_api_errors(error.responseJSON.data);
+        post_request_api('/case/ioc/upload', JSON.stringify(data), true)
+        .done((data) => {
+            jsdata = data;
+            if (jsdata.status == "success") {
+                reload_iocs();
+                $('#modal_upload_ioc').modal('hide');
+                swal("Got news for you", data.message, "success");
+
+            } else {
+                swal("Got bad news for you", data.message, "error");
             }
-        });
+        })
     };
     reader.readAsText(file)
 

@@ -22,7 +22,8 @@ from flask import Blueprint
 
 from app.models.models import TaskStatus
 from app.util import api_login_required
-from app.util import response_success, response_error
+from app.util import response_error
+from app.util import response_success
 
 manage_task_status_blueprint = Blueprint('manage_task_status',
                                        __name__,

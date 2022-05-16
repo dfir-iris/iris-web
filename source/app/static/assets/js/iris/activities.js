@@ -67,28 +67,24 @@ Table = $("#activities_table").DataTable({
 $("#activities_table").css("font-size", 12);
 
 
+function refresh_activities() {
+    get_activities ();
+    notify_success('Refreshed');
+}
+
 function get_activities () {
-    $.ajax({
-        url: '/activities/list' + case_param(),
-        type: "GET",
-        dataType: "JSON",
-        success: function (data) {
+    show_loader();
+    get_request_api('/activities/list')
+    .done((data) => {
             jsdata = data;
             if (jsdata.status == "success") {
                   Table.clear();
                   Table.rows.add(data.data);
                   Table.columns.adjust().draw();
                   Table.buttons().container().appendTo($('#activities_table_info'));
-
                 hide_loader();
-                notify_success("Activities refreshed");
-            } 
-        },
-        error: function (error) {
-            notify_error(error);
-        }
-    });
-
+            }
+        })
 }
 
 $(document).ready(function(){

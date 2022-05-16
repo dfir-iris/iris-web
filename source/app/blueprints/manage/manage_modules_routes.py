@@ -18,25 +18,41 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import traceback
+
 # IMPORTS ------------------------------------------------
 import base64
 import json
 import logging as log
-import traceback
-
-from flask import Blueprint, request, redirect, url_for
+from flask import Blueprint
+from flask import redirect
 from flask import render_template
+from flask import request
+from flask import url_for
 from flask_wtf import FlaskForm
 
 from app import app
-from app.datamgmt.iris_engine.modules_db import iris_modules_list, get_module_from_id, delete_module_from_id, \
-    get_module_config_from_id, is_mod_configured, iris_module_save_parameter, iris_module_enable_by_id, \
-    iris_module_disable_by_id, module_list_hooks_view
-from app.forms import AddModuleForm, UpdateModuleParameterForm
-from app.iris_engine.module_handler.module_handler import check_module_health, register_module, \
-    instantiate_module_from_name, iris_update_hooks
+from app.datamgmt.iris_engine.modules_db import delete_module_from_id
+from app.datamgmt.iris_engine.modules_db import get_module_config_from_id
+from app.datamgmt.iris_engine.modules_db import get_module_from_id
+from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.datamgmt.iris_engine.modules_db import iris_module_enable_by_id
+from app.datamgmt.iris_engine.modules_db import iris_module_save_parameter
+from app.datamgmt.iris_engine.modules_db import iris_modules_list
+from app.datamgmt.iris_engine.modules_db import is_mod_configured
+from app.datamgmt.iris_engine.modules_db import module_list_hooks_view
+from app.forms import AddModuleForm
+from app.forms import UpdateModuleParameterForm
+from app.iris_engine.module_handler.module_handler import check_module_health
+from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
+from app.iris_engine.module_handler.module_handler import iris_update_hooks
+from app.iris_engine.module_handler.module_handler import register_module
 from app.iris_engine.utils.tracker import track_activity
-from app.util import admin_required, response_error, response_success, api_admin_required, login_required
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_modules_blueprint = Blueprint(
     'manage_module',
@@ -95,13 +111,16 @@ def add_module(caseid, url_redir):
     form = AddModuleForm()
 
     if form.is_submitted():
-        module_name = request.form.get('module_name', type=str)
+        module_name = request.json.get('module_name')
 
         # Try to import the module
         try:
             # Try to instantiate the module
             log.info('Trying to add module {}'.format(module_name))
-            class_ = instantiate_module_from_name(module_name)
+            class_, logs = instantiate_module_from_name(module_name)
+
+            if not class_:
+                return response_error(f"Cannot import module. {logs}")
 
             # Check the health of the module
             is_ready, logs = check_module_health(class_)

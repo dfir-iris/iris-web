@@ -19,13 +19,15 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import binascii
-
 from sqlalchemy import and_
 
 from app import db
 from app.models.cases import Cases
+from app.models.models import CaseTemplateReport
+from app.models.models import Client
+from app.models.models import Languages
 from app.models.models import ReportType
-from app.models.models import User, Client, CaseTemplateReport, Languages
+from app.models.models import User
 
 
 def get_case_summary(caseid):

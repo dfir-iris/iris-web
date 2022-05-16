@@ -65,27 +65,19 @@ $("#activities_table").css("font-size", 12);
 
 
 function get_activities () {
-    $.ajax({
-        url: '/dim/tasks/list' + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                content = jsdata.data;
-                Table.clear();
-                Table.rows.add(content);
-                Table.columns.adjust().draw();
-                $('#feed_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
-                hide_loader();
-            } else {
-                $('#modal_customer_message').text(jsdata.message);
-            }
-        },
-        error: function (error) {
-            notify_error(error);
+
+    get_request_api('/dim/tasks/list/1000')
+    .done((data) => {
+         if (notify_auto_api(data, true)) {
+            content = data.data;
+            Table.clear();
+            Table.rows.add(content);
+            Table.columns.adjust().draw();
+            $('#feed_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
+            hide_loader();
         }
     });
+
 }
 
 

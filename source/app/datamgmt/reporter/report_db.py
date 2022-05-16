@@ -19,11 +19,27 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
-
 from sqlalchemy import desc
 
-from app.models import User, Cases, Client, CaseReceivedFile, CasesEvent, CaseEventsAssets, CaseAssets, \
-    AssetsType, IocLink, Ioc, IocAssetLink, AnalysisStatus, CaseTasks, Notes, EventCategory, IocType, TaskStatus
+from app.models import AnalysisStatus
+from app.models import AssetsType
+from app.models import CaseAssets
+from app.models import CaseEventsAssets
+from app.models import CaseEventsIoc
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import Client
+from app.models import EventCategory
+from app.models import Ioc
+from app.models import IocAssetLink
+from app.models import IocLink
+from app.models import IocType
+from app.models import Notes
+from app.models import TaskStatus
+from app.models import Tlp
+from app.models import User
 
 
 def export_case_json(case_id):
@@ -153,6 +169,20 @@ def export_case_tm_json(case_id):
             alki.append("{} ({})".format(asset.asset_name, asset.type))
 
         ras['assets'] = alki
+
+        iocs_list = CaseEventsIoc.query.with_entities(
+            CaseEventsIoc.ioc_id,
+            Ioc.ioc_value,
+            Ioc.ioc_description,
+            Tlp.tlp_name,
+            IocType.type_name.label('type')
+        ).filter(
+            CaseEventsIoc.event_id == row.event_id
+        ).join(
+            CaseEventsIoc.ioc, Ioc.ioc_type, Ioc.tlp
+        ).all()
+
+        ras['iocs'] = [ioc._asdict() for ioc in iocs_list]
 
         tim.append(ras)
 
