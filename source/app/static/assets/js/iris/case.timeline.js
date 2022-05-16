@@ -224,13 +224,7 @@ function events_set_attribute(attribute, color) {
 
     var attribute_value;
 
-
-    console.log("events_toggle_graph called");
-
     var selected_rows = $(".timeline-selected");
-    console.log("selected rows: ");
-    console.log(selected_rows);
-
 
     if(selected_rows.length <= 0) {
         console.log("no rows selected, returning");
@@ -305,18 +299,13 @@ function events_set_attribute(attribute, color) {
                     //pass 
                 }
             });
-            var log_line = `set attribute ${attribute} of event_id ${event_id} to value ${attribute_value}`;
-            console.log(log_line);
         });
 
     });
 
     //draw updated timeline
     //TODO rewrite draw_timeline to reflect previous state of selection
-    draw_timeline();
-
-    // console.log("graph selector is: " + graph_selector);
-    // console.log(current_timeline);
+    // draw_timeline();
 }
 
 
