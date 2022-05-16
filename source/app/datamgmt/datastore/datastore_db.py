@@ -69,7 +69,9 @@ def ds_list_tree(cid):
         dnode_parent_id = f"d-{dfile.data_parent_id}"
 
         if dnode_parent_id == droot_id:
-            droot_children.update(dfnode)
+            droot_children.update({
+                dnode_id: dfnode
+            })
 
         elif dnode_parent_id in files_nodes:
             files_nodes[dnode_parent_id].update({

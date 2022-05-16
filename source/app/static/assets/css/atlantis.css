@@ -16089,6 +16089,11 @@ td.dt-nowrap { white-space: nowrap }
 .tree li:last-child::before {
     height:30px
 }
+
+.tree li.parent_li>span {
+     background:#eee;
+}
+
 .tree li.parent_li>span:hover, .tree li.parent_li>span:hover+ul li span {
     background:#eee;
     border:1px solid #94a0b4;

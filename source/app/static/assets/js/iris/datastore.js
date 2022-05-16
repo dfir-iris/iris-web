@@ -4,7 +4,7 @@ function load_datastore() {
     .done(function (data){
         if(notify_auto_api(data, true)){
 
-            build_ds_tree(data.data, 'ds_tree_root');
+            build_ds_tree(data.data, 'ds-tree-root');
             reparse_activate_tree();
             show_datastore();
         }
@@ -19,15 +19,14 @@ function build_ds_tree(data, tree_node) {
         }
 
         if (data[node].type == 'directory') {
-            console.log(data[node].name);
             jnode = `<li>
-                    <span><i class="fa-solid fa-folder mr-1"></i> ${data[node].name}</span><a href=""></a>
+                    <span><i class="fa-regular fa-folder"></i> ${data[node].name}</span><a href=""></a>
                     <ul id='tree-${node}'></ul>
                 </li>`;
             $('#'+ tree_node).append(jnode);
             build_ds_tree(data[node].children, 'tree-' + node);
         } else {
-            jnode = `<li><span><i class="fa-solid fa-file mr-1"></i> ${data[node].data_original_filename}</span><a href=""></a></li>`;
+            jnode = `<li><span><i class="fa-regular fa-file"></i> ${data[node].data_original_filename}</span><a href=""></a></li>`;
             $('#'+ tree_node).append(jnode);
         }
     }
