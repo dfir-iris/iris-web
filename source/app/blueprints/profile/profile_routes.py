@@ -22,16 +22,23 @@
 import secrets
 
 import marshmallow
-from flask import Blueprint, request
-from flask import render_template, url_for, redirect
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app import db
-from app.datamgmt.manage.manage_users_db import get_user, update_user
+from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import update_user
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
-from app.util import login_required, api_login_required, response_success, response_error
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 profile_blueprint = Blueprint('profile',
                               __name__,

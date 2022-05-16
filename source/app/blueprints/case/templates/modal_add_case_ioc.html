@@ -1,9 +1,9 @@
 <div class="modal-header">
-    <h4 class="modal-title mt-2 mr-4">{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
+    <h4 class="modal-title mt-2 mr-4">{% if ioc.ioc_id %}Edit {{ ioc.ioc_value }} {% else %} Add IOC {% endif %}</h4>
     {% include 'modals/modal_attributes_nav.html' %}
 
-    {% if ioc.ioc_id %}
     <div class="row text-right">
+    {% if ioc.ioc_id %}
      <div class="dropdown">
           <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
               <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
@@ -13,6 +13,7 @@
           </div>
      </div>
     {% endif %}
+        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_ioc', '{% if ioc.ioc_id %}Edit {{ ioc.ioc_value }} {% else %} Add IOC {% endif %}');"> <i class='fa fa-minus'></i> </button>
         <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true"><i class="fa fa-times"></i></span></button>
     </div>

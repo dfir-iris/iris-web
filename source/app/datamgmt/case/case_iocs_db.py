@@ -17,14 +17,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import json
 
 from sqlalchemy import and_
-from sqlalchemy.orm.attributes import flag_modified
 
-from app.datamgmt.states import update_ioc_state
-from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType, CustomAttribute
 from app import db
+from app.datamgmt.states import update_ioc_state
+from app.models import CaseEventsIoc
+from app.models import Cases
+from app.models import Client
+from app.models import Ioc
+from app.models import IocAssetLink
+from app.models import IocLink
+from app.models import IocType
+from app.models import Tlp
 
 
 def get_iocs(caseid):
@@ -89,6 +94,10 @@ def delete_ioc(ioc, caseid):
 
     IocAssetLink.query.filter(
         IocAssetLink.ioc_id == ioc.ioc_id
+    ).delete()
+
+    CaseEventsIoc.query.filter(
+        CaseEventsIoc.ioc_id == ioc.ioc_id
     ).delete()
 
     db.session.delete(ioc)

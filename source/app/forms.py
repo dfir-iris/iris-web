@@ -19,10 +19,16 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, PasswordField, IntegerField, BooleanField, \
-    widgets, SelectMultipleField, SelectField, DateTimeField
-from wtforms.validators import InputRequired, Email, DataRequired, Regexp
-from flask_wtf.file import FileAllowed, FileRequired, FileField
+from wtforms import BooleanField
+from wtforms import PasswordField
+from wtforms import SelectField
+from wtforms import SelectMultipleField
+from wtforms import StringField
+from wtforms import TextAreaField
+from wtforms import widgets
+from wtforms.validators import DataRequired
+from wtforms.validators import Email
+from wtforms.validators import InputRequired
 
 
 class LoginForm(FlaskForm):

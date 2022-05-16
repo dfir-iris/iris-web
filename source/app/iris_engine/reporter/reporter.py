@@ -32,11 +32,19 @@ from flask_login import current_user
 from sqlalchemy import desc
 
 from app import app
-from app.datamgmt.activities.activities_db import get_auto_activities, get_manual_activities
+from app.datamgmt.activities.activities_db import get_auto_activities
+from app.datamgmt.activities.activities_db import get_manual_activities
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.reporter.report_db import export_case_json
-from app.models import CasesEvent, IocLink, Ioc, \
-    IocAssetLink, CaseAssets, AssetsType, CaseEventsAssets, CaseReceivedFile, CaseTemplateReport
+from app.models import AssetsType
+from app.models import CaseAssets
+from app.models import CaseEventsAssets
+from app.models import CaseReceivedFile
+from app.models import CaseTemplateReport
+from app.models import CasesEvent
+from app.models import Ioc
+from app.models import IocAssetLink
+from app.models import IocLink
 
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)

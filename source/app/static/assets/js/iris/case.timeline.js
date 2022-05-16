@@ -26,7 +26,13 @@ var selector_active;
 /* Fetch a modal that allows to add an event */
 function add_event() {
     url = 'timeline/events/add/modal' + case_param();
-    $('#modal_add_event_content').load(url, function () {   
+    $('#modal_add_event_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
         $('#submit_new_event').on("click", function () {
             clear_api_error();
             var data_sent = $('#form_new_event').serializeObject();
@@ -35,6 +41,7 @@ function add_event() {
             data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
             data_sent['event_tags'] = $('#event_tags').val();
             data_sent['event_assets'] = $('#event_assets').val();
+            data_sent['event_iocs'] = $('#event_iocs').val();
             data_sent['event_tz'] = $('#event_tz').val();
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
@@ -44,37 +51,15 @@ function add_event() {
 
             data_sent['custom_attributes'] = attributes;
 
-            $.ajax({
-                url: 'timeline/events/add' + case_param(),
-                type: "POST",
-                data: JSON.stringify(data_sent),
-                contentType: "application/json;charset=UTF-8",
-                dataType: "json",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("Done !",
-                        "Your event has been created successfully",
-                            {
-                                icon: "success",
-                                timer: 400
-                            }
-                        ).then((value) => {
-                            window.location.hash = data.data.event_id;
-                            draw_timeline();
-                            $('#modal_add_event').modal('hide');
-
-                        });
-                    } else {
-                        $('#submit_new_event').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    $('#submit_new_event').text('Save');
-                    propagate_form_api_errors(error.responseJSON.data);
+            post_request_api('timeline/events/add', JSON.stringify(data_sent), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    window.location.hash = data.data.event_id;
+                    draw_timeline();
+                    $('#modal_add_event').modal('hide');
                 }
             });
-        
+
             return false;
         })
     });
@@ -86,28 +71,14 @@ function add_event() {
 function duplicate_event(id) {
     window.location.hash = id;
     clear_api_error();
-    $.ajax({
-        url: "timeline/events/duplicate/" + id + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                     data.message,
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                );
-                draw_timeline()
-            } else {
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
+
+    get_request_api("timeline/events/duplicate/" + id)
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            draw_timeline();
         }
     });
+
 }
 
 function update_event(id) {
@@ -119,6 +90,7 @@ function update_event(id) {
     data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
     data_sent['event_tags'] = $('#event_tags').val();
     data_sent['event_assets'] = $('#event_assets').val();
+    data_sent['event_iocs'] = $('#event_iocs').val();
     data_sent['event_tz'] = $('#event_tz').val();
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
@@ -128,72 +100,42 @@ function update_event(id) {
 
     data_sent['custom_attributes'] = attributes;
 
-    $.ajax({
-        url: 'timeline/events/update/' + id + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                "Updated successfully",
-                    {
-                        icon: "success",
-                        timer: 400
-                    }
-                ).then((value) => {
-                    draw_timeline();
-                    $('#modal_add_event').modal('hide');
-
-                });
-            } else {
-                $('#submit_new_event').text('Save again');
-                swal("Oh no !", data.message, "error");
-            }
-        },
-        error: function (error) {
-            $('#submit_new_event').text('Save');
-            propagate_form_api_errors(error.responseJSON.data);
+    post_request_api('timeline/events/update/' + id, JSON.stringify(data_sent), true)
+    .done(function(data) {
+        if(notify_auto_api(data)) {
+            draw_timeline();
+            $('#modal_add_event').modal('hide');
         }
     });
+
 }
 
 
 /* Delete an event from the timeline thank to its id */ 
 function delete_event(id) {
     window.location.hash = id;
-    $.ajax({
-        url: "timeline/events/delete/" + id + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                     data.message,
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                );
-                $('#modal_add_event').modal('hide');
-                draw_timeline()
-            } else {
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            notify_error(error.statusText);
+
+    get_request_api("timeline/events/delete/" + id)
+    .done(function(data) {
+        if(notify_auto_api(data)) {
+            draw_timeline();
+            $('#modal_add_event').modal('hide');
         }
     });
+
 }
 
 /* Edit an event from the timeline thanks to its ID */
 function edit_event(id) {
   url = '/case/timeline/events/' + id + '/modal' + case_param();
   window.location.hash = id;
-  $('#modal_add_event_content').load(url, function(){
-         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
+  $('#modal_add_event_content').load(url, function (response, status, xhr) {
+        hide_minimized_modal_box();
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
   });
 }
@@ -280,6 +222,7 @@ function build_timeline(data) {
                 {value: 'title:', score: 10, meta: 'Match title of events'},
                 {value: 'source:', score: 10, meta: 'Match source of events'},
                 {value: 'raw:', score: 10, meta: 'Match raw data of events'},
+                {value: 'ioc', score: 10, meta: "Match ioc in events"},
                 {value: 'AND ', score: 10, meta: 'AND operator'}
               ]
 
@@ -323,7 +266,7 @@ function build_timeline(data) {
                + escapeRegExp(sanitizeHTML(ioc_list[ioc]['ioc_value']))
                + avoid_inception_end
                ,"g");
-        replacement = '$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-content="'+ sanitizeHTML(ioc_list[ioc]['ioc_description']) + '" title="IOC">'+ sanitizeHTML(ioc_list[ioc]['ioc_value']) + '</span> $3';
+        replacement = `$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-trigger="hover" data-content="${sanitizeHTML(ioc_list[ioc]['ioc_description'])}" title="IOC">${sanitizeHTML(ioc_list[ioc]['ioc_value'])}</span> $3`;
         reap.push([re, replacement]);
     }
     idx = 0;
@@ -336,13 +279,26 @@ function build_timeline(data) {
         tmb_d = '';
         style = '';
         asset = '';
+        
 
-        /* If IOC then build a tag */
         if(evt.category_name && evt.category_name != 'Unspecified') {
-            tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
+            tags += `<span class="badge badge-light float-right mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
             if (evt.category_name != 'Unspecified') {
-                cats += '<span class="badge badge-light mr-2 mb-1">' + sanitizeHTML(evt.category_name) +'</span>';
+                cats += `<span class="badge badge-light float-right mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
             }
+        }
+        
+        if (evt.iocs != null && evt.iocs.length > 0) {
+            for (ioc in evt.iocs) {
+                tags += `<span class="badge badge-warning-event float-right mr-2 mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="IOC - ${sanitizeHTML(evt.iocs[ioc].description)}"><i class="fa-solid fa-virus-covid"></i> ${sanitizeHTML(evt.iocs[ioc].name)}</span>`;
+            }
+        }
+
+        if (evt.event_tags != null && evt.event_tags.length > 0) {
+            sp_tag = evt.event_tags.split(',');
+            for (tag_i in sp_tag) {
+                    tags += `<span class="badge badge-light float-right mr-2 mb-1">${sanitizeHTML(sp_tag[tag_i])}</span>`;
+                }
         }
 
         /* Do we have a border color to set ? */
@@ -368,16 +324,16 @@ function build_timeline(data) {
                 cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                 cpn = sanitizeHTML(cpn)
                 if (evt.assets[ide]["compromised"]) {
-                    asset += '<span class="text-warning-high mr-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '"><i class="fas fa-crosshdairs mr-1 ml-2 text-danger"></i>'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
+                    asset += `<span class="badge badge-warning-event mr-2 float-right link_asset mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
                 } else {
-                    asset += '<span class="text-primary mr-2 ml-2 link_asset" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="'+ cpn + '" title="' + sanitizeHTML(evt.assets[ide]["name"]) + '">'+ sanitizeHTML(evt.assets[ide]["name"]) + '</span>|';
+                    asset += `<span class="badge badge-light mr-2 float-right link_asset mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
                 }
             }
         }
 
         ori_date = '<span class="ml-3"></span>';
         if (evt.event_date_wtz != evt.event_date) {
-            ori_date += `<i class="fas fa-info-circle mr-1" title="Locale date time ` + evt.event_date_wtz + evt.event_tz + `"></i>`
+            ori_date += `<i class="fas fa-info-circle mr-1" title="Locale date time ${evt.event_date_wtz}${evt.event_tz}"></i>`
         }
 
         if(evt.event_in_summary) {
@@ -387,22 +343,16 @@ function build_timeline(data) {
         if(evt.event_in_graph) {
             ori_date += `<i class="fas fa-share-alt mr-1" title="Showed in graph"></i>`
         }
-
-        if (evt.event_tags != null) {
-        sp_tag = evt.event_tags.split(',');
-        for (tag_i in sp_tag) {
-                tags += '<span class="badge badge-light ml-2 mb-1">' + sanitizeHTML(sp_tag[tag_i]) + '</span>';
-            }
-        }
+        
 
         day = dta[0];
         mtop_day = '';
         if (!tmb.includes(day)) {
             tmb.push(day);
             if (!compact) {
-                tmb_d = '<div class="time-badge" id="time_'+ idx +'"><small class="text-muted">'+ day + '</small><br/></div>';
+                tmb_d = `<div class="time-badge" id="time_${idx}"><small class="text-muted">${day}</small><br/></div>`;
             } else {
-                tmb_d = '<div class="time-badge-compact" id="time_'+ idx +'"><small class="text-muted">'+ day + '</small><br/></div>';
+                tmb_d = `<div class="time-badge-compact" id="time_${idx}"><small class="text-muted">${day}</small><br/></div>`;
             }
             idx += 1;
             mtop_day = 'mt-4';
@@ -423,12 +373,10 @@ function build_timeline(data) {
                     short_content = match_replace_ioc(content_parsed.slice(0, 150 + offset), reap);
                     long_content = match_replace_ioc(content_parsed.slice(150 + offset), reap);
                 }
-                formatted_content = short_content + `<div class="collapse" id="collapseContent-`
-                    + evt.event_id + `">
-                    `+ long_content +`
+                formatted_content = short_content + `<div class="collapse" id="collapseContent-${evt.event_id}">
+                ${long_content}
                 </div>
-                <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-`
-                    + evt.event_id + `" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
+                <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
             } else {
                 formatted_content = match_replace_ioc(content_parsed, reap);
             }
@@ -437,13 +385,13 @@ function build_timeline(data) {
         shared_link = buildShareLink(evt.event_id);
 
         if (compact) {
-            entry = `<li class="timeline-inverted `+ mtop_day +`" title="Event ID #`+ evt.event_id + `">
-                ` + tmb_d + `
-                    <div class="timeline-panel `+ style +`" `+ style_s +` id="event_`+ evt.event_id + `" >
+            entry = `<li class="timeline-inverted ${mtop_day}" title="Event ID #${evt.event_id}">
+                ${tmb_d}
+                    <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
-                                ` + cats + `
-                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
+                                ${cats}
+                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
                                     <span class="btn-label">
                                         <i class="fa fa-pen"></i>
                                     </span>
@@ -454,37 +402,37 @@ function build_timeline(data) {
                                     </span>
                                 </button>
                                 <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(`+ evt.event_id +`);return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
+                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                         <div class="dropdown-divider"></div>
-                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
                                 </div>
                             </div>
-                            <div class="collapsed" id="dropa_`+ evt.event_id +`" data-toggle="collapse" data-target="#drop_`+ evt.event_id +`" aria-expanded="false" aria-controls="drop_`+ evt.event_id +`" role="button" style="cursor: pointer;">
-                                <span class="text-muted text-sm float-left mb--2"><small>`+ evt.event_date + `</small></span>
-                                <a class="text-dark text-sm ml-3" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
+                            <div class="collapsed" id="dropa_${evt.event_id}" data-toggle="collapse" data-target="#drop_${evt.event_id}" aria-expanded="false" aria-controls="drop_${evt.event_id}" role="button" style="cursor: pointer;">
+                                <span class="text-muted text-sm float-left mb--2"><small>${evt.event_date}</small></span>
+                                <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
-                            <div id="drop_`+ evt.event_id +`" class="collapse" aria-labelledby="dropa_`+ evt.event_id +`" style="">
+                            <div id="drop_${evt.event_id}" class="collapse" aria-labelledby="dropa_${evt.event_id}" style="">
                                 <div class="card-body">
-                                    `+ content_parsed +`
+                                ${content_parsed}
                                 </div>
                                 <div class="bottom-hour mt-2">
-                                    <span class="float-right">`+ asset + tags +`</span>
+                                    <span class="float-right">${tags}${asset} </span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </li>`
         } else {
-            entry = `<li class="timeline-inverted" title="Event ID #`+ evt.event_id + `">
-                ` + tmb_d + `
-                    <div class="timeline-panel `+ style +`" `+ style_s +` id="event_`+ evt.event_id + `" >
+            entry = `<li class="timeline-inverted" title="Event ID #${evt.event_id}">
+                    ${tmb_d}
+                    <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
 
-                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(`+ evt.event_id +`)" title="Edit">
+                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
                                     <span class="btn-label">
                                         <i class="fa fa-pen"></i>
                                     </span>
@@ -495,22 +443,28 @@ function build_timeline(data) {
                                     </span>
                                 </button>
                                 <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(`+ evt.event_id +`);return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(`+ evt.event_id +`);return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
+                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                         <div class="dropdown-divider"></div>
-                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(`+ evt.event_id +`);"><small class="fa fa-trash mr-2"></small>Delete</a>
+                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
                                 </div>
                             </div>
                             <div class="row mb-2">
-                                <a class="timeline-title" href="` + shared_link + `" onclick="edit_event(`+ evt.event_id +`);return false;">` + title_parsed + `</a>
+                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
-                            <span>` + formatted_content + `</span>
+                            <span>${formatted_content}</span>
                         </div>
                         <div class="bottom-hour mt-2">
-                            <span class="float-right">`+ asset + tags +`</span>
-                            <span class="text-muted text-sm float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>`+ evt.event_date + ori_date + `</small></span>
+                            <div class="row">
+                                <div class="col-4 d-flex">
+                                    <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${evt.event_date}${ori_date}</small></span>
+                                </div>
+                                <div class="col-8 ">
+                                    <span class="float-right">${tags}${asset} </span>
+                                </div>
+                            </div>
                         <div>
                     </div>
                 </li>`
@@ -546,28 +500,18 @@ function build_timeline(data) {
 function draw_timeline() {
     $('#timeline_list').empty();
     show_loader();
-    rid = $('#assets_timeline_select').val();
-    if (rid == null) { rid = 0; }
 
-    $.ajax({
-        url: "timeline/filter/" + rid + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                build_timeline(data);
-            } else {
-                swal.close();
-                $('#submit_new_event').text('Save again');
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
+    get_request_data_api("/case/timeline/advanced-filter", 'q={}')
+    .done((data) => {
+        if (data.status == 'success') {
+            build_timeline(data);
+        } else {
             swal.close();
-            $('#submit_new_event').text('Save');
-            swal("Oh no !", error.statusText, "error")
+            $('#submit_new_event').text('Save again');
+            swal("Oh no !", data.message, "error")
         }
-    }).done(function() {goToSharedLink()});
+        goToSharedLink();
+    });
 }
 
 function escapeRegExp(text) {
@@ -614,25 +558,18 @@ function time_converter(){
     data_sent['date_value'] = date_val;
     data_sent['csrf_token'] = $('#csrf_token').val();
 
-
-    $.ajax({
-        url: 'timeline/events/convert-date' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                $('#event_date').val(data.data.date);
-                $('#event_time').val(data.data.time);
-                $('#event_tz').val(data.data.tz);
-                hide_time_converter();
-                $('#convert_bad_feedback').text('');
-            }
-        },
-        error: function (error) {
-            $('#convert_bad_feedback').text('Unable to find a matching pattern for the date');
+    post_request_api('timeline/events/convert-date', JSON.stringify(data_sent))
+    .done(function(data) {
+        if(notify_auto_api(data)) {
+            $('#event_date').val(data.data.date);
+            $('#event_time').val(data.data.time);
+            $('#event_tz').val(data.data.tz);
+            hide_time_converter();
+            $('#convert_bad_feedback').text('');
         }
+    })
+    .fail(function() {
+        $('#convert_bad_feedback').text('Unable to find a matching pattern for the date');
     });
 }
 
@@ -653,7 +590,7 @@ function goToSharedLink(){
 }
 
 function timelineToCsv(){
-    csv_data = "event_date(UTC),event_title,event_description,event_tz,event_date_wtz,event_category,event_tags,linked_assets\n";
+    csv_data = "event_date(UTC),event_title,event_description,event_tz,event_date_wtz,event_category,event_tags,linked_assets,linked_iocs\n";
     for (index in current_timeline) {
         item = current_timeline[index];
         content = item.event_content.replace(/"/g, '\"');
@@ -665,11 +602,39 @@ function timelineToCsv(){
             asset = item.assets[k].name.replace(/"/g, '\"');
             assets += `${asset};`;
         }
-        csv_data += `"${item.event_date}","${title}","${content_parsed}","${item.event_tz}","${item.event_date_wtz}","${item.category_name}","${tags}","${assets}"\n`;
+        iocs = "";
+        for (k in item.iocs) {
+            ioc = item.iocs[k].name.replace(/"/g, '\"');
+            iocs += `${ioc};`;
+        }
+        csv_data += `"${item.event_date}","${title}","${content_parsed}","${item.event_tz}","${item.event_date_wtz}","${item.category_name}","${tags}","${assets}","${iocs}"\n`;
     }
     download_file("iris_timeline.csv", "text/csv", csv_data);
 }
 
+function timelineToCsvWithUI(){
+    csv_data = "event_date(UTC),event_title,event_description,event_tz,event_date_wtz,event_category,event_tags,linked_assets,linked_iocs,created_by,creation_date\n";
+    for (index in current_timeline) {
+
+        item = current_timeline[index];
+        content = item.event_content.replace(/"/g, '\"');
+        content_parsed = content.replace(/(\r?\n)+/g, ' - ');
+        title = item.event_title.replace(/"/g, '\"');
+        tags = item.event_tags.replace(/"/g, '\"');
+        assets = "";
+        for (k in item.assets) {
+            asset = item.assets[k].name.replace(/"/g, '\"');
+            assets += `${asset};`;
+        }
+        iocs = "";
+        for (k in item.iocs) {
+            ioc = item.iocs[k].name.replace(/"/g, '\"');
+            iocs += `${ioc};`;
+        }
+        csv_data += `"${item.event_date}","${title}","${content_parsed}","${item.event_tz}","${item.event_date_wtz}","${item.category_name}","${tags}","${assets}","${iocs}","${item.user}","${item.event_added}"\n`;
+    }
+    download_file("iris_timeline.csv", "text/csv", csv_data);
+}
 
 
 function split_bool(split_str) {
@@ -689,7 +654,7 @@ function split_bool(split_str) {
 }
 
 var parsed_filter = {};
-var keywords = ['asset', 'tag', 'title', 'description', 'raw', 'category', 'source', 'startDate', 'endDate'];
+var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'startDate', 'endDate'];
 
 
 function parse_filter(str_filter, keywords) {
@@ -731,34 +696,28 @@ function filter_timeline() {
     window.location = new_path;
 }
 
+function reset_filters() {
+    current_path = location.protocol + '//' + location.host + location.pathname;
+    new_path = current_path + case_param();
+    window.location = new_path;
+}
+
+
 function apply_filtering() {
-    keywords = ['asset', 'tag', 'title', 'description', 'category', 'source',  'raw', 'startDate', 'endDate'];
+    keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'category', 'source',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
 
     $('#timeline_list').empty();
     show_loader();
-     $.ajax({
-        url: "/case/timeline/advanced-filter" + case_param(),
-        type: "GET",
-        data: { 'q': filter_query },
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                build_timeline(data);
-            } else {
-                swal.close();
-                $('#submit_new_event').text('Save again');
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            swal.close();
-            $('#submit_new_event').text('Save');
-            swal("Oh no !", error.statusText, "error")
+    get_request_data_api("/case/timeline/advanced-filter",{ 'q': filter_query })
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            build_timeline(data);
         }
-     }).done(function() {goToSharedLink()});
+        goToSharedLink();
+    });
 }
 
 function getFilterFromLink(){
@@ -780,6 +739,7 @@ function get_or_filter_tm() {
         draw_timeline();
     }
 }
+
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){

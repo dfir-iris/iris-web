@@ -19,13 +19,25 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from datetime import datetime
-
 from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.states import delete_case_states
-from app.models import Cases, Client, User, UserActivity, CaseReceivedFile, CaseAssets, IocLink, Notes, NotesGroupLink, \
-    NotesGroup, CaseTasks, CaseEventsAssets, IocAssetLink, CasesEvent, CaseEventCategory
+from app.models import CaseAssets
+from app.models import CaseEventCategory
+from app.models import CaseEventsAssets
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import Client
+from app.models import IocAssetLink
+from app.models import IocLink
+from app.models import Notes
+from app.models import NotesGroup
+from app.models import NotesGroupLink
+from app.models import User
+from app.models import UserActivity
 
 
 def list_cases_dict():

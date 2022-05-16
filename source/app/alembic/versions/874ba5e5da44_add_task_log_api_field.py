@@ -5,10 +5,8 @@ Revises: c773a35c280f
 Create Date: 2022-02-03 16:22:37.506019
 
 """
-from alembic import op
 import sqlalchemy as sa
-
-
+from alembic import op
 # revision identifiers, used by Alembic.
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection

@@ -19,9 +19,10 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
-from app import app
 
-from app.util import api_login_required, response_success
+from app import app
+from app.util import api_login_required
+from app.util import response_success
 
 api_blueprint = Blueprint(
     'api',

@@ -22,18 +22,30 @@
 import traceback
 
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from marshmallow import ValidationError
 
-from app.datamgmt.client.client_db import get_client_list, get_client, update_client, create_client, delete_client, \
-    get_client_api
-from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException, ElementInUseException
+from app.datamgmt.client.client_db import create_client
+from app.datamgmt.client.client_db import delete_client
+from app.datamgmt.client.client_db import get_client
+from app.datamgmt.client.client_db import get_client_api
+from app.datamgmt.client.client_db import get_client_list
+from app.datamgmt.client.client_db import update_client
+from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
+from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.forms import AddCustomerForm
 from app.iris_engine.utils.tracker import track_activity
-from app.util import response_success, response_error, login_required, admin_required, api_admin_required, \
-    api_login_required
 from app.schema.marshables import CustomerSchema
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_customers_blueprint = Blueprint(
     'manage_customers',

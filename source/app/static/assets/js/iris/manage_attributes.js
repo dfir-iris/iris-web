@@ -1,37 +1,19 @@
 function add_object_attribute() {
     url = '/manage/attributes/add/modal' + case_param();
-    $('#modal_add_attribute_content').load(url, function () {
+    $('#modal_add_attribute_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#submit_new_attribute').on("click", function () {
             var form = $('#form_new_attribute').serializeObject();
 
-            $.ajax({
-                url: '/manage/attributes/add' + case_param(),
-                type: "POST",
-                data: JSON.stringify(form),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
-                success: function (data) {
-                    console.log(data);
-                    if (data.status == 'success') {
-                        swal("Done !",
-                            data.message,
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            refresh_attribute_table();
-                            $('#modal_add_attribute').modal('hide');
-
-                        });
-                    } else {
-                        $('#modal_add_attribute').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    propagate_form_api_errors(error.responseJSON.data);
+            post_request_api('/manage/attributes/add', JSON.stringify(form), true)
+            .done((data) => {
+                if (notify_auto_api(data, true)) {
+                    refresh_attribute_table();
+                    $('#modal_add_attribute').modal('hide');
                 }
             });
 
@@ -83,7 +65,11 @@ function refresh_attribute_table() {
 
 function attribute_detail(attr_id) {
     url = '/manage/attributes/' + attr_id + '/modal' + case_param();
-    $('#modal_add_attribute_content').load(url, function () {
+    $('#modal_add_attribute_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         var editor = ace.edit("editor_detail",
             {
@@ -128,19 +114,12 @@ function attribute_detail(attr_id) {
             data_sent['attribute_content'] = editor.getSession().getValue();
             data_sent['csrf_token'] = $("#csrf_token").val();
 
-            $.ajax({
-                url: '/manage/attributes/preview' + case_param(),
-                type: "POST",
-                data: JSON.stringify(data_sent),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
-                success: function(data) {
+            post_request_api('/manage/attributes/preview', JSON.stringify(data_sent), true)
+            .done((data) => {
+                if (notify_auto_api(data, true)) {
                     $('#modal_preview_attribute_content').html(data.data);
 
                     $('#modal_preview_attribute').modal({ show: true });
-                },
-                error:function(request, status, error) {
-                    notify_error(request.responseText);
                 }
             });
         });
@@ -173,48 +152,36 @@ function update_attribute(attr_id, editor, partial, complete){
     $('#alert_attributes_details').hide();
     $('#attributes_err_details_list').empty();
 
-    $.ajax({
-        url:  '/manage/attributes/update/' + attr_id + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
-        beforeSend: function() {
-            window.swal({
-                  title: "Updating and migrating...",
-                  text: "Please wait",
-                  imageUrl: "images/ajaxloader.gif",
-                  showConfirmButton: false,
-                  allowOutsideClick: false
-            });
-        },
-        complete: function() {
-            window.swal.close();
-        },
-        success: function (data) {
-            if (data.status == 'success') {
-                notify_success(data.message);
-            } else {
-                $('#modal_add_attribute').text('Save again');
-                swal("Oh no !", data.message, "error")
+    post_request_api('/manage/attributes/update/' + attr_id, JSON.stringify(data_sent), false, function() {
+        window.swal({
+              title: "Updating and migrating...",
+              text: "Please wait",
+              imageUrl: "images/ajaxloader.gif",
+              showConfirmButton: false,
+              allowOutsideClick: false
+        });
+    })
+    .done((data) => {
+        notify_auto_api(data, true)
+    })
+    .fail((error) => {
+        data = error.responseJSON;
+        $('#submit_new_attribute').text('Save');
+        $('#alert_attributes_edit').text(data.message);
+        if (data.data && data.data.length > 0) {
+            for(var i in data.data)
+            {
+               var output='<li>'+ sanitizeHTML(data.data[i]) +'</li>';
+               $('#attributes_err_details_list').append(output);
             }
-        },
-        error: function (error) {
-            data = error.responseJSON;
-            $('#submit_new_attribute').text('Save');
-            $('#alert_attributes_edit').text(data.message);
-            if (data.data && data.data.length > 0) {
-                for(var i in data.data)
-                {
-                   var output='<li>'+ sanitizeHTML(data.data[i]) +'</li>';
-                   $('#attributes_err_details_list').append(output);
-                }
 
-                $('#alert_attributes_details').show();
-            }
-            $('#alert_attributes_edit').show();
-            $('#submit_new_module').text("Retry");
+            $('#alert_attributes_details').show();
         }
+        $('#alert_attributes_edit').show();
+        $('#submit_new_module').text("Retry");
+    })
+    .always((data) => {
+        window.swal.close();
     });
 
     return false;

@@ -5,10 +5,8 @@ Revises: 0db700644a4f
 Create Date: 2022-01-18 07:51:43.714021
 
 """
-from alembic import op
 import sqlalchemy as sa
-
-
+from alembic import op
 # revision identifiers, used by Alembic.
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection

@@ -51,8 +51,8 @@
                 <div class="col-md-12">
                     <div class="card" id="card_main_load" style="display:none;">
                         <div class="card-body">
-                            <div class="table-responsive" id="assets_table_wrapper">
-                              <table class="table display table-bordered table-striped table-hover" width="100%" cellspacing="0" id="assets_table" >
+                            <div class="col" id="assets_table_wrapper">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="assets_table" >
                                 <thead>
                                   <tr>
                                       <th>Name</th>
@@ -126,7 +126,7 @@
             <div class='invalid-feedback' id='ioc-invalid-msg'></div>
             <div class="modal-footer">
                     <button type="button" class="btn btn-outline-dark mr-auto" onclick="generate_sample_csv();">Download sample CSV</button>
-                    <button type="button" class="btn btn-success" onclick="upload_assets();">Upload</button>
+                    <button type="button" class="btn btn-outline-success" onclick="upload_assets();">Upload</button>
             </div>
           </div><!-- /.modal-content -->
         </form>
@@ -140,5 +140,6 @@
 {% include 'includes/footer_case.html' %}
 
 <script src="/static/assets/js/iris/case.asset.js"></script>
+
 
 {% endblock javascripts %}

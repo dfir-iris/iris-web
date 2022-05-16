@@ -5,9 +5,8 @@ Revises:
 Create Date: 2022-01-01 23:40:35.283005
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.engine.reflection import Inspector
+from alembic import op
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection
 

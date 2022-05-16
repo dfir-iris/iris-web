@@ -18,26 +18,37 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import marshmallow
 # IMPORTS ------------------------------------------------
 from datetime import datetime
-
-import marshmallow
-from flask import Blueprint, request
-from flask import render_template, url_for, redirect
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_tasks_db import get_tasks, get_task, update_task_status, add_task, get_tasks_status
+from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.case.case_tasks_db import get_task
+from app.datamgmt.case.case_tasks_db import get_tasks
+from app.datamgmt.case.case_tasks_db import get_tasks_status
+from app.datamgmt.case.case_tasks_db import update_task_status
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
-from app.datamgmt.states import get_tasks_state, update_tasks_state
+from app.datamgmt.states import get_tasks_state
+from app.datamgmt.states import update_tasks_state
 from app.forms import CaseTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.models.models import User, CaseTasks
-from app.schema.marshables import CaseTaskSchema
-from app.util import response_success, response_error, login_required, api_login_required
 from app.iris_engine.utils.tracker import track_activity
+from app.models.models import CaseTasks
+from app.models.models import User
+from app.schema.marshables import CaseTaskSchema
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
@@ -144,7 +155,7 @@ def case_add_task(caseid):
 
         if ctask:
             track_activity("added task {}".format(ctask.task_title), caseid=caseid)
-            return response_success(data=task_schema.dump(ctask))
+            return response_success("Task '{}' added".format(ctask.task_title), data=task_schema.dump(ctask))
 
         return response_error("Unable to create task for internal reasons")
 
@@ -215,7 +226,7 @@ def case_edit_task(cur_id, caseid):
 
         if task:
             track_activity("updated task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
-            return response_success(data=task_schema.dump(task))
+            return response_success("Task '{}' updated".format(task.task_title), data=task_schema.dump(task))
 
         return response_error("Unable to update task for internal reasons")
 
