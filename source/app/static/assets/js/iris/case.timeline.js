@@ -21,7 +21,10 @@ tm_filter.commands.addCommand({
                               filter_timeline();
                     }
 });
-
+var selector_active;
+var graph_selector;
+var summary_selector;
+var current_timeline;
 
 /* Fetch a modal that allows to add an event */
 function add_event() {
@@ -166,9 +169,145 @@ function toggle_compact_view() {
     }
 }
 
+function toggle_selector() {
+    //activating selector toggle
+    if(selector_active == false) {
+        selector_active = true;
 
+        //setup variables to track multi event selectors
+        summary_selector = false;
+        graph_selector = false;
 
-var current_timeline;
+        //blend in conditional buttons to perform actions on selected rows - e.g. select graph, summary, color
+        $(".btn-conditional").show(250);
+        //highligh the selection button
+        $("#selector-btn").addClass("btn-active");
+        //$("#selector-btn").load();
+        //remove data toggle attribute to disable expand feature
+        $("[id^=dropa_]").removeAttr('data-toggle');
+
+        //create click handler for timeline events
+        $(".timeline li .timeline-panel").on('click', function(){
+            if($(this).hasClass("timeline-selected")) {
+                $(this).removeClass("timeline-selected");
+            } else {
+                $(this).addClass("timeline-selected");
+            }
+        });
+    
+
+    }
+
+    //deactivating selector toggle
+    else if(selector_active == true) {
+        selector_active = false;
+        $(".btn-conditional").hide(250);
+        $(".btn-conditional-2").hide(250);
+        $("#selector-btn").removeClass("btn-active");
+        //restore the collapse feature
+        $("[id^=dropa_]").attr('data-toggle','collapse');
+        $(".timeline-selected").removeClass("timeline-selected");
+
+        $(".timeline li .timeline-panel").off('click');
+        draw_timeline();
+    }
+}
+
+function toggle_colors() { 
+    // console.log("toggling colors");
+    var color_buttons = $(".btn-conditional-2");
+    color_buttons.slideToggle(250);
+    // console.log(color_buttons);
+}
+
+function events_set_attribute(attribute, color) {
+
+    var attribute_value;
+
+    var selected_rows = $(".timeline-selected");
+
+    if(selected_rows.length <= 0) {
+        console.log("no rows selected, returning");
+        return true;
+    }
+
+    switch(attribute) {
+        case "event_in_graph":
+            //deselect graph option for events
+            if (graph_selector == true) {
+                //switch off graph selector
+                graph_selector = false;
+                attribute_value = false;            
+            }
+            //select graph option for events
+            else {
+                //switch on graph selector
+                graph_selector = true;
+                attribute_value = true;
+            }
+            break;
+        case "event_in_summary":
+            //deselect graph option for events
+            if (summary_selector == true) {
+                //switch off graph selector
+                summary_selector = false;
+                attribute_value = false;            
+            }
+            //select graph option for events
+            else {
+                //switch on graph selector
+                summary_selector = true;
+                attribute_value = true;
+            }
+            break;
+        case "event_color":
+            attribute_value = color;
+            break;
+        default:
+            console.log("invalid argument given");
+            return false;
+    }
+    
+
+    //loop through events and unset graph attribute
+    selected_rows.each(function(index) {
+        var object = selected_rows[index];
+        var event_id = object.getAttribute('id').replace("event_",""); 
+
+        var original_event;
+
+        //get event data
+        get_request_api("timeline/events/" + event_id)
+        .done((data) => {
+            original_event = data['data'];
+            // if(notify_auto_api(data)) {
+                
+            // }
+            //change graph attribute to selected value
+            original_event[attribute] = attribute_value;
+
+            //get csrf token
+            var csrf_token = $("#csrf_token").val();
+
+            //add csrf token to request
+            original_event['csrf_token'] = csrf_token;
+
+            //send updated event to API
+            post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
+            .done(function(data) {
+                if(notify_auto_api(data)) {
+                    //pass 
+                }
+            });
+        });
+
+    });
+
+    //draw updated timeline
+    //TODO rewrite draw_timeline to reflect previous state of selection
+    // draw_timeline();
+}
+
 
 function build_timeline(data) {
     var compact = is_timeline_compact_view();
@@ -711,6 +850,8 @@ function get_or_filter_tm() {
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
+
+    selector_active = false;
 
     get_or_filter_tm();
 
