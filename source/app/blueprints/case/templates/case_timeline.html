@@ -89,6 +89,7 @@
                 </div>
             </div>
             <div id="side_timeline">
+
             <div class="btn_over_page_a">
                 <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-white" title="color1" onclick="events_set_attribute('event_color', '#fff')"></button>
                 <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-primary" title="color2" onclick="events_set_attribute('event_color', '#1572E899')"></button>
@@ -99,6 +100,8 @@
                 <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-warning" title="color5" onclick="events_set_attribute('event_color', '#FFAD4699')"></button>
                 <button class="btn btn-round btn-light btn-conditional" title="Change color" onclick="toggle_colors()"><i class="fas fa-tint"></i></button>
             </div>
+                <button class="btn btn-round btn-light btn_over_page_a btn-conditional" title="Delete selected events" onclick="events_bulk_delete();"><i class="fas fa-trash text-danger"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_b btn-conditional" title="Delete selected events" onclick="events_bulk_delete();"><i class="fas fa-newspaper"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_b btn-conditional" title="Toggle Summary" onclick="events_set_attribute('event_in_summary')"><i class="fas fa-newspaper"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_c btn-conditional" title="Toggle Graph" onclick="events_set_attribute('event_in_graph')"><i class="fas fa-share-alt"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_d" title="Select rows" onclick="toggle_selector();" id="selector-btn"><i class="fas fa-check"></i></button>

@@ -279,10 +279,24 @@ function events_set_attribute(attribute, color) {
         //get event data
         get_request_api("timeline/events/" + event_id)
         .done((data) => {
-            original_event = data['data'];
-            // if(notify_auto_api(data)) {
-                
-            // }
+            original_event = data.data;
+            if(notify_auto_api(data, true)) {
+                //change graph attribute to selected value
+                original_event[attribute] = attribute_value;
+
+                //get csrf token
+                var csrf_token = $("#csrf_token").val();
+
+                //add csrf token to request
+                original_event['csrf_token'] = csrf_token;
+
+                //send updated event to API
+                post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
+                .done(function(data) {
+                    notify_auto_api(data);
+                });
+            }
+
             //change graph attribute to selected value
             original_event[attribute] = attribute_value;
 
@@ -295,17 +309,48 @@ function events_set_attribute(attribute, color) {
             //send updated event to API
             post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
             .done(function(data) {
-                if(notify_auto_api(data)) {
-                    //pass 
-                }
+                notify_auto_api(data);
             });
         });
-
     });
 
     //draw updated timeline
     //TODO rewrite draw_timeline to reflect previous state of selection
     // draw_timeline();
+}
+
+function events_bulk_delete() {
+    var selected_rows = $(".timeline-selected");
+    if(selected_rows.length <= 0) {
+        console.log("no rows selected, returning");
+        return true;
+    }
+
+    swal({
+        title: "Are you sure?",
+        text: "You are about to delete " + selected_rows.length + " events.\nThere is no coming back.",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete them'
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            selected_rows.each(function(index) {
+                var object = selected_rows[index];
+                var event_id = object.getAttribute('id').replace("event_","");
+                get_request_api("timeline/events/delete/" + event_id)
+                .done(function(data) {
+                    notify_auto_api(data);
+                });
+            });
+            draw_timeline();
+        } else {
+            swal("Pfew, that was close");
+        }
+    });
 }
 
 
