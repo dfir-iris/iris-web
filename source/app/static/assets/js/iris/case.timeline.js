@@ -305,14 +305,6 @@ function events_set_attribute(attribute, color) {
             }
         });
     });
-
-//    //draw updated timeline and select again
-//    get_or_filter_tm(function() {
-//        selected_rows.each(function() {
-//            var event_id = this.getAttribute('id')
-//            $('#' + event_id).addClass("timeline-selected");
-//        });
-//    });
 }
 
 function events_bulk_delete() {
@@ -340,9 +332,11 @@ function events_bulk_delete() {
                 get_request_api("timeline/events/delete/" + event_id)
                 .done(function(data) {
                     notify_auto_api(data);
+                    if (index === selected_rows.length - 1) {
+                        get_or_filter_tm();
+                    }
                 });
             });
-            get_or_filter_tm();
         } else {
             swal("Pfew, that was close");
         }
