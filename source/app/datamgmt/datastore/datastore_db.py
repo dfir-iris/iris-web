@@ -229,7 +229,19 @@ def datastore_iter_deletion(dsp, cid):
     for dsp_child in dsp_children:
         datastore_iter_deletion(dsp_child, cid)
 
+    datastore_delete_files_of_path(dsp.path_id, cid)
+
     db.session.delete(dsp)
     db.session.commit()
 
     return None
+
+
+def datastore_delete_files_of_path(node_id, cid):
+    DataStoreFile.query.filter(
+        and_(DataStoreFile.data_parent_id == node_id,
+             DataStoreFile.data_case_id == cid
+             )
+    ).delete()
+
+    return
