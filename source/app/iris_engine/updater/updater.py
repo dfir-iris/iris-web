@@ -35,6 +35,7 @@ from packaging import version
 from pathlib import Path
 
 from app import app
+from app import cache
 from app import celery
 from app import db
 from app import socket_io
@@ -169,10 +170,20 @@ def is_updates_available():
 
     release_version = release.get('name')
 
+    cache.delete('iris_has_updates')
+
+    srv_settings = ServerSettings.query.first()
+    if not srv_settings:
+        raise Exception('Unable to fetch server settings. Please reach out for help')
+
     if version.parse(current_version) < version.parse(release_version):
+        srv_settings.has_updates_available = True
+        db.session.commit()
         return True, f'# New version {release_version} available\n\n{release.get("body")}', release
 
     else:
+        srv_settings.has_updates_available = False
+        db.session.commit()
         return False, f'**Current server is up-to-date with {release_version}**', None
 
 
