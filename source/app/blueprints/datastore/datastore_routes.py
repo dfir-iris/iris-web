@@ -20,8 +20,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from flask import Blueprint
+from flask import render_template
 from flask import request
+from flask import url_for
 from flask_login import current_user
+from werkzeug.utils import redirect
 
 from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
@@ -31,6 +34,7 @@ from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.models import DataStoreFile
 from app.models import DataStorePath
 from app.util import api_login_required
+from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 
@@ -48,6 +52,16 @@ def datastore_list_tree(caseid):
     data = ds_list_tree(caseid)
 
     return response_success("", data=data)
+
+
+@datastore_blueprint.route('/datastore/file/add/modal', methods=['GET'])
+@login_required
+def datastore_add_file_modal(caseid: int, url_redir: bool):
+
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    return render_template("modal_ds_file.html")
 
 
 @datastore_blueprint.route('/datastore/folder/add', methods=['POST'])
