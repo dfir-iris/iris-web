@@ -215,8 +215,7 @@ def init_server_update(release_config):
         return False
 
     update_log('Backing up current version')
-    #has_error = update_backup_current_version()
-    has_error = False
+    has_error = update_backup_current_version()
     if has_error:
         update_log_error('Aborting upgrades - see previous errors')
         notify_update_failed()
@@ -287,8 +286,10 @@ def init_server_update(release_config):
 
     if 'iriswebapp' in updates_config.get('scope'):
 
-        call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
-                         need_reboot=updates_config.get('need_app_reboot'))
+        if call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+                            need_reboot=updates_config.get('need_app_reboot')):
+
+            socket_io.stop()
 
     return True
 
