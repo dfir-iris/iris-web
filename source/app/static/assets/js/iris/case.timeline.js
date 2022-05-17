@@ -293,18 +293,26 @@ function events_set_attribute(attribute, color) {
                 post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
                 .done(function(data) {
                     notify_auto_api(data);
+                    if (index === selected_rows.length - 1) {
+                        get_or_filter_tm(function() {
+                            selected_rows.each(function() {
+                                var event_id = this.getAttribute('id')
+                                $('#' + event_id).addClass("timeline-selected");
+                            });
+                        });
+                    }
                 });
             }
         });
     });
 
-    //draw updated timeline and select again
-    get_or_filter_tm(function() {
-        selected_rows.each(function() {
-            var event_id = this.getAttribute('id')
-            $('#' + event_id).addClass("timeline-selected");
-        });
-    });
+//    //draw updated timeline and select again
+//    get_or_filter_tm(function() {
+//        selected_rows.each(function() {
+//            var event_id = this.getAttribute('id')
+//            $('#' + event_id).addClass("timeline-selected");
+//        });
+//    });
 }
 
 function events_bulk_delete() {
@@ -623,7 +631,7 @@ function build_timeline(data) {
        $('#timeline_list').append('<h3 class="ml-mr-auto text-center">No events in current view</h3>');
     }
 
-    last_state = data.data.state.object_state;
+    set_last_state(data.data.state);
     hide_loader();
 
     if (location.href.indexOf("#") != -1) {
@@ -634,24 +642,6 @@ function build_timeline(data) {
             $('#event_'+id).addClass('fade-it');
         }
     }
-}
-
-/* Fetch and draw the timeline */
-function draw_timeline(post_request_fn) {
-    $('#timeline_list').empty();
-    show_loader();
-
-    get_request_data_api("/case/timeline/advanced-filter", 'q={}')
-    .done((data) => {
-        if (data.status == 'success') {
-            build_timeline(data);
-        } else {
-            swal.close();
-            $('#submit_new_event').text('Save again');
-            swal("Oh no !", data.message, "error")
-        }
-        goToSharedLink();
-    });
 }
 
 function escapeRegExp(text) {
