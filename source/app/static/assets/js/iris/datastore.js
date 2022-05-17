@@ -17,8 +17,9 @@ function build_ds_tree(data, tree_node) {
         if (data[node] === null) {
             break;
         }
-        console.log(data[node]);
+
         if (data[node].type == 'directory') {
+            data[node].name = sanitizeHTML(data[node].name);
             can_delete = '';
             if (!data[node].is_root) {
                 can_delete = `<div class="dropdown-divider"></div><a href="#" class="dropdown-item text-danger" onclick="delete_ds_folder('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>`;
@@ -28,6 +29,7 @@ function build_ds_tree(data, tree_node) {
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="add_ds_folder('${node}');return false;"><small class="fa-regular fa-folder mr-2"></small>Add folder</a>
                                 <a href="#" class="dropdown-item" onclick="add_ds_file('${node}');return false;"><small class="fa-regular fa-file mr-2"></small>Add file</a>
+                                <a href="#" class="dropdown-item" onclick="rename_ds_folder('${node}', '${data[node].name}');return false;"><small class="fa-solid fa-pencil mr-2"></small>Rename folder</a>
                                 ${can_delete}
                         </div>
                     <ul id='tree-${node}'></ul>
@@ -35,6 +37,7 @@ function build_ds_tree(data, tree_node) {
             $('#'+ tree_node).append(jnode);
             build_ds_tree(data[node].children, 'tree-' + node);
         } else {
+            data[node].data_original_filename = sanitizeHTML(data[node].data_original_filename);
             jnode = `<li>
                 <span><i class="fa-regular fa-file" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i> ${data[node].data_original_filename}
                         <div class="dropdown-menu" role="menu">
@@ -77,7 +80,15 @@ function reparse_activate_tree() {
 
 function add_ds_folder(parent_node) {
     $('#ds_mod_folder_name').data('parent-node', parent_node);
+    $('#ds_mod_folder_name').data('node-update', false);
     $('#ds_mod_folder_name').val('');
+    $('#modal_ds_folder').modal("show");
+}
+
+function rename_ds_folder(parent_node, name) {
+    $('#ds_mod_folder_name').data('parent-node', parent_node);
+    $('#ds_mod_folder_name').data('node-update', true);
+    $('#ds_mod_folder_name').val(name);
     $('#modal_ds_folder').modal("show");
 }
 
@@ -114,7 +125,13 @@ function save_ds_mod_folder() {
     data['folder_name'] =  $('#ds_mod_folder_name').val();
     data['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('/datastore/folder/add', JSON.stringify(data))
+    if ($('#ds_mod_folder_name').data('node-update')) {
+        uri = '/datastore/folder/rename/' + data['parent_node'];
+    } else {
+        uri = '/datastore/folder/add';
+    }
+
+    post_request_api(uri, JSON.stringify(data))
     .done(function (data){
         if(notify_auto_api(data)){
             $('#modal_ds_folder').modal("hide");
@@ -122,4 +139,5 @@ function save_ds_mod_folder() {
         }
     });
 }
+
 

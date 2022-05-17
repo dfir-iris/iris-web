@@ -26,6 +26,7 @@ from flask_login import current_user
 from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
+from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.models import DataStoreFile
 from app.models import DataStorePath
@@ -63,6 +64,27 @@ def datastore_add_folder(caseid: int):
         return response_error('Invalid data')
 
     has_error, logs = datastore_add_child_node(parent_node, folder_name, caseid)
+
+    return response_success(logs) if not has_error else response_error(logs)
+
+
+@datastore_blueprint.route('/datastore/folder/rename/<int:cur_id>', methods=['POST'])
+@api_login_required
+def datastore_rename_folder(cur_id: int, caseid: int):
+    data = request.json
+    if not data:
+        return response_error('Invalid data')
+
+    parent_node = data.get('parent_node')
+    folder_name = data.get('folder_name')
+
+    if not parent_node or not folder_name:
+        return response_error('Invalid data')
+
+    if int(parent_node) != cur_id:
+        return response_error('Invalid data')
+
+    has_error, logs = datastore_rename_node(parent_node, folder_name, caseid)
 
     return response_success(logs) if not has_error else response_error(logs)
 

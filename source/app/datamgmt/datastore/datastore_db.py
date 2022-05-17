@@ -183,6 +183,26 @@ def datastore_add_child_node(parent_node, folder_name, cid):
     return False, 'Folder added'
 
 
+def datastore_rename_node(parent_node, folder_name, cid):
+    try:
+
+        dsp_base = DataStorePath.query.filter(
+            DataStorePath.path_id == parent_node,
+            DataStorePath.path_case_id == cid
+        ).first()
+
+    except Exception as e:
+        return True, f'Unable to request datastore for parent node : {parent_node}'
+
+    if dsp_base is None:
+        return True, 'Parent node is invalid for this case'
+
+    dsp_base.path_name = folder_name
+    db.session.commit()
+
+    return False, 'Folder renamed'
+
+
 def datastore_delete_node(node_id, cid):
     try:
 
