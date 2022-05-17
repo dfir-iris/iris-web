@@ -354,9 +354,9 @@ class CustomAttribute(db.Model):
 class DataStorePath(db.Model):
     __tablename__ = 'data_store_path'
 
-    path_id = Column(Integer, primary_key=True)
+    path_id = Column(BigInteger, primary_key=True)
     path_name = Column(Text, nullable=False)
-    path_parent_id = Column(Integer)
+    path_parent_id = Column(BigInteger)
     path_is_root = Column(Boolean)
     path_case_id = Column(ForeignKey('cases.case_id'), nullable=False)
 
@@ -366,7 +366,7 @@ class DataStorePath(db.Model):
 class DataStoreFile(db.Model):
     __tablename__ = 'data_store_file'
 
-    data_id = Column(Integer, primary_key=True)
+    data_id = Column(BigInteger, primary_key=True)
     data_original_filename = Column(Text, nullable=False)
     data_local_filename = Column(Text, nullable=False)
     data_description = Column(Text)
