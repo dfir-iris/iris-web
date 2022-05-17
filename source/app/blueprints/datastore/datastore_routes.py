@@ -4,6 +4,7 @@
 #  IRIS Source Code
 #  Copyright (C) 2022 - DFIR IRIS Team
 #  contact@dfir-iris.org
+#  Created by whitekernel - 2022-05-17
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -23,10 +24,13 @@ from flask import request
 from flask_login import current_user
 
 from app import db
+from app.datamgmt.datastore.datastore_db import datastore_add_child_node
+from app.datamgmt.datastore.datastore_db import datastore_delete_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.models import DataStoreFile
 from app.models import DataStorePath
 from app.util import api_login_required
+from app.util import response_error
 from app.util import response_success
 
 datastore_blueprint = Blueprint(
@@ -43,6 +47,33 @@ def datastore_list_tree(caseid):
     data = ds_list_tree(caseid)
 
     return response_success("", data=data)
+
+
+@datastore_blueprint.route('/datastore/folder/add', methods=['POST'])
+@api_login_required
+def datastore_add_folder(caseid: int):
+    data = request.json
+    if not data:
+        return response_error('Invalid data')
+
+    parent_node = data.get('parent_node')
+    folder_name = data.get('folder_name')
+
+    if not parent_node or not folder_name:
+        return response_error('Invalid data')
+
+    has_error, logs = datastore_add_child_node(parent_node, folder_name, caseid)
+
+    return response_success(logs) if not has_error else response_error(logs)
+
+
+@datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['GET'])
+@api_login_required
+def datastore_delete_folder(cur_id: int, caseid: int):
+
+    has_error, logs = datastore_delete_node(cur_id, caseid)
+
+    return response_success(logs) if not has_error else response_error(logs)
 
 
 @datastore_blueprint.route('/datastore/push/tree', methods=['POST'])

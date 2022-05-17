@@ -15647,7 +15647,7 @@ body[data-background-color="dark"] .modal-footer {
   background-position: center center;
   box-shadow: -10px 0px 15px 0px rgba(69, 65, 78, 0.1);
   transition: all .3s;
-  z-index: 1101;
+  z-index: 1001;
   padding: 20px 20px 0; }
   .ds-sidebar .scroll-wrapper .scroll-element {
     opacity: 0.4 !important; }
@@ -15679,7 +15679,7 @@ body[data-background-color="dark"] .modal-footer {
 
 .ds-sidebar-overlay {
   position: fixed;
-  z-index: 1100;
+  z-index: 1000;
   width: 100%;
   height: 100%;
   left: 0;
@@ -16095,7 +16095,7 @@ td.dt-nowrap { white-space: nowrap }
 }
 
 .tree li.parent_li>span:hover, .tree li.parent_li>span:hover+ul li span {
-    background:#eee;
+    background: #fff;
     border:1px solid #94a0b4;
-    color:#000
+    color: #000;
 }

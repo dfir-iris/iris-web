@@ -3,7 +3,7 @@ function load_datastore() {
     get_request_api('/datastore/list/tree')
     .done(function (data){
         if(notify_auto_api(data, true)){
-
+            $('#ds-tree-root').empty();
             build_ds_tree(data.data, 'ds-tree-root');
             reparse_activate_tree();
             show_datastore();
@@ -17,16 +17,34 @@ function build_ds_tree(data, tree_node) {
         if (data[node] === null) {
             break;
         }
-
+        console.log(data[node]);
         if (data[node].type == 'directory') {
+            can_delete = '';
+            if (!data[node].is_root) {
+                can_delete = `<div class="dropdown-divider"></div><a href="#" class="dropdown-item text-danger" onclick="delete_ds_folder('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>`;
+            }
             jnode = `<li>
-                    <span><i class="fa-regular fa-folder"></i> ${data[node].name}</span><a href=""></a>
+                    <span><i class="fa-regular fa-folder"></i> ${data[node].name}</span> <i class="fas fa-plus" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i>
+                        <div class="dropdown-menu" role="menu">
+                                <a href="#" class="dropdown-item" onclick="add_ds_folder('${node}');return false;"><small class="fa-regular fa-folder mr-2"></small>Add folder</a>
+                                <a href="#" class="dropdown-item" onclick="add_ds_file('${node}');return false;"><small class="fa-regular fa-file mr-2"></small>Add file</a>
+                                ${can_delete}
+                        </div>
                     <ul id='tree-${node}'></ul>
                 </li>`;
             $('#'+ tree_node).append(jnode);
             build_ds_tree(data[node].children, 'tree-' + node);
         } else {
-            jnode = `<li><span><i class="fa-regular fa-file"></i> ${data[node].data_original_filename}</span><a href=""></a></li>`;
+            jnode = `<li>
+                <span><i class="fa-regular fa-file" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i> ${data[node].data_original_filename}
+                        <div class="dropdown-menu" role="menu">
+                                <a href="#" class="dropdown-item" onclick="copy_object_link('${node}');return false;"><small class="fa fa-share mr-2"></small>Get link</a>
+                                <a href="#" class="dropdown-item" onclick="duplicate_event('${node}');return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item text-danger" onclick="delete_ds_file('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>
+                        </div>
+                    </span>
+                </li>`;
             $('#'+ tree_node).append(jnode);
         }
     }
@@ -56,3 +74,52 @@ function reparse_activate_tree() {
         e.stopPropagation();
     });
 }
+
+function add_ds_folder(parent_node) {
+    $('#ds_mod_folder_name').data('parent-node', parent_node);
+    $('#ds_mod_folder_name').val('');
+    $('#modal_ds_folder').modal("show");
+}
+
+function delete_ds_folder(node) {
+    node = node.replace('d-', '');
+    swal({
+        title: "Are you sure?",
+        text: "This will delete all files included and sub-folders",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            get_request_api('/datastore/folder/delete/' + node)
+            .done((data) => {
+                if (notify_auto_api(data)) {
+                    load_datastore();
+                }
+            });
+        } else {
+            swal("Pfew, that was close");
+        }
+    });
+}
+
+function save_ds_mod_folder() {
+    var data = Object();
+
+    data['parent_node'] = $('#ds_mod_folder_name').data('parent-node').replace('d-', '');
+    data['folder_name'] =  $('#ds_mod_folder_name').val();
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api('/datastore/folder/add', JSON.stringify(data))
+    .done(function (data){
+        if(notify_auto_api(data)){
+            $('#modal_ds_folder').modal("hide");
+            load_datastore();
+        }
+    });
+}
+

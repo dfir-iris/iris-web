@@ -4,6 +4,7 @@
 #  IRIS Source Code
 #  Copyright (C) 2022 - DFIR IRIS Team
 #  contact@dfir-iris.org
+#  Created by whitekernel - 2022-05-17
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from sqlalchemy import and_
 
+from app import db
 from app.models import DataStoreFile
 from app.models import DataStorePath
 
@@ -29,7 +31,16 @@ def ds_list_tree(cid):
         and_(DataStorePath.path_case_id == cid,
              DataStorePath.path_is_root == True
              )
-    ).all()
+    ).first()
+
+    if dsp_root is None:
+        init_ds_tree(cid)
+
+        dsp_root = DataStorePath.query.filter(
+            and_(DataStorePath.path_case_id == cid,
+                 DataStorePath.path_is_root == True
+                 )
+        ).first()
 
     dsp = DataStorePath.query.filter(
         and_(DataStorePath.path_case_id == cid,
@@ -43,16 +54,14 @@ def ds_list_tree(cid):
         DataStoreFile.data_case_id == cid
     ).all()
 
-    if not dsp_root:
-        return {}
-
-    dsp_root = dsp_root[0]
+    dsp_root = dsp_root
     droot_id = f"d-{dsp_root.path_id}"
 
     path_tree = {
         droot_id: {
             "name": dsp_root.path_name,
             "type": "directory",
+            "is_root": True,
             "children": {}
         }
     }
@@ -105,6 +114,37 @@ def ds_list_tree(cid):
     return path_tree
 
 
+def init_ds_tree(cid):
+    dsp_root = DataStorePath.query.filter(
+        and_(DataStorePath.path_case_id == cid,
+             DataStorePath.path_is_root == True
+             )
+    ).all()
+
+    if dsp_root:
+      return dsp_root
+
+    dsp_root = DataStorePath()
+    dsp_root.path_name = f'Case {cid}'
+    dsp_root.path_is_root = True
+    dsp_root.path_case_id = cid
+    dsp_root.path_parent_id = 0
+
+    db.session.add(dsp_root)
+    db.session.commit()
+
+    for path in ['Evidences', 'IOCs', 'Images']:
+        dsp_init = DataStorePath()
+        dsp_init.path_parent_id = dsp_root.path_id
+        dsp_init.path_case_id = cid
+        dsp_init.path_name = path
+        dsp_init.path_is_root = False
+        db.session.add(dsp_init)
+
+    db.session.commit()
+    return dsp_root
+
+
 def datastore_iter_tree(path_parent_id, path_node, tree):
     for parent_id, node in tree.items():
         if parent_id == path_parent_id:
@@ -115,3 +155,46 @@ def datastore_iter_tree(path_parent_id, path_node, tree):
             datastore_iter_tree(path_parent_id, path_node, node)
 
     return None
+
+
+def datastore_add_child_node(parent_node, folder_name, cid):
+    try:
+
+        dsp_base = DataStorePath.query.filter(
+            DataStorePath.path_id == parent_node,
+            DataStorePath.path_case_id == cid
+        ).first()
+
+    except Exception as e:
+        return True, f'Unable to request datastore for parent node : {parent_node}'
+
+    if dsp_base is None:
+        return True, 'Parent node is invalid for this case'
+
+    dsp = DataStorePath()
+    dsp.path_case_id = cid
+    dsp.path_name = folder_name
+    dsp.path_parent_id = parent_node
+    dsp.path_is_root = False
+
+    db.session.add(dsp)
+    db.session.commit()
+
+    return False, 'Folder added'
+
+
+def datastore_delete_node(node_id, cid):
+    try:
+
+        dsp_base = DataStorePath.query.filter(
+            DataStorePath.path_id == node_id,
+            DataStorePath.path_case_id == cid
+        ).first()
+
+    except Exception as e:
+        return True, f'Unable to request datastore for parent node : {node_id}'
+
+    db.session.delete(dsp_base)
+    db.session.commit()
+
+    return False, 'Folder deleted'
