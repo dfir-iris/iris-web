@@ -58,7 +58,7 @@ function add_event() {
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.hash = data.data.event_id;
-                    draw_timeline();
+                    apply_filtering();
                     $('#modal_add_event').modal('hide');
                 }
             });
@@ -78,7 +78,7 @@ function duplicate_event(id) {
     get_request_api("timeline/events/duplicate/" + id)
     .done((data) => {
         if(notify_auto_api(data)) {
-            draw_timeline();
+            apply_filtering();
         }
     });
 
@@ -106,7 +106,7 @@ function update_event(id) {
     post_request_api('timeline/events/update/' + id, JSON.stringify(data_sent), true)
     .done(function(data) {
         if(notify_auto_api(data)) {
-            draw_timeline();
+            apply_filtering();
             $('#modal_add_event').modal('hide');
         }
     });
@@ -121,7 +121,7 @@ function delete_event(id) {
     get_request_api("timeline/events/delete/" + id)
     .done(function(data) {
         if(notify_auto_api(data)) {
-            draw_timeline();
+            apply_filtering();
             $('#modal_add_event').modal('hide');
         }
     });
@@ -209,7 +209,7 @@ function toggle_selector() {
         $(".timeline-selected").removeClass("timeline-selected");
 
         $(".timeline li .timeline-panel").off('click');
-        draw_timeline();
+        apply_filtering();
     }
 }
 
@@ -267,7 +267,6 @@ function events_set_attribute(attribute, color) {
             console.log("invalid argument given");
             return false;
     }
-    
 
     //loop through events and unset graph attribute
     selected_rows.each(function(index) {
@@ -296,27 +295,16 @@ function events_set_attribute(attribute, color) {
                     notify_auto_api(data);
                 });
             }
-
-            //change graph attribute to selected value
-            original_event[attribute] = attribute_value;
-
-            //get csrf token
-            var csrf_token = $("#csrf_token").val();
-
-            //add csrf token to request
-            original_event['csrf_token'] = csrf_token;
-
-            //send updated event to API
-            post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
-            .done(function(data) {
-                notify_auto_api(data);
-            });
         });
     });
 
-    //draw updated timeline
-    //TODO rewrite draw_timeline to reflect previous state of selection
-    // draw_timeline();
+    //draw updated timeline and select again
+    get_or_filter_tm(function() {
+        selected_rows.each(function() {
+            var event_id = this.getAttribute('id')
+            $('#' + event_id).addClass("timeline-selected");
+        });
+    });
 }
 
 function events_bulk_delete() {
@@ -346,7 +334,7 @@ function events_bulk_delete() {
                     notify_auto_api(data);
                 });
             });
-            draw_timeline();
+            get_or_filter_tm();
         } else {
             swal("Pfew, that was close");
         }
@@ -649,7 +637,7 @@ function build_timeline(data) {
 }
 
 /* Fetch and draw the timeline */
-function draw_timeline() {
+function draw_timeline(post_request_fn) {
     $('#timeline_list').empty();
     show_loader();
 
@@ -855,7 +843,7 @@ function reset_filters() {
 }
 
 
-function apply_filtering() {
+function apply_filtering(post_req_fn) {
     keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'category', 'source',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
@@ -867,6 +855,9 @@ function apply_filtering() {
     .done((data) => {
         if(notify_auto_api(data, true)) {
             build_timeline(data);
+            if(post_req_fn !== undefined) {
+                post_req_fn();
+            }
         }
         goToSharedLink();
     });
@@ -882,13 +873,13 @@ function getFilterFromLink(){
     return null;
 }
 
-function get_or_filter_tm() {
+function get_or_filter_tm(post_req_fn) {
     filter = getFilterFromLink();
     if (filter) {
         tm_filter.setValue(filter);
-        apply_filtering();
+        apply_filtering(post_req_fn);
     } else {
-        draw_timeline();
+        apply_filtering(post_req_fn);
     }
 }
 

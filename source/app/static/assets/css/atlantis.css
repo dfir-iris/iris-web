@@ -15619,13 +15619,22 @@ body[data-background-color="dark"] .modal-footer {
 }
 
 .btn-conditional-2 {
-    display: none
+    display: none;
+    box-shadow: 0px 0px 4px #222;
 }
 
 .btn-active {
     background: rgba(255, 160, 36,.5) !important;
 }
 
+
+.btn_over_page_delete {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 500px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
 
 .btn_over_page_a {
     position: fixed; /* Fixed/sticky position */
