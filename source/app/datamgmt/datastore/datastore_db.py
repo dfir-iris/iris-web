@@ -214,7 +214,22 @@ def datastore_delete_node(node_id, cid):
     except Exception as e:
         return True, f'Unable to request datastore for parent node : {node_id}'
 
-    db.session.delete(dsp_base)
+    datastore_iter_deletion(dsp_base, cid)
+
+    return False, 'Folder and children deleted'
+
+
+def datastore_iter_deletion(dsp, cid):
+    dsp_children = DataStorePath.query.filter(
+        and_(DataStorePath.path_case_id == cid,
+             DataStorePath.path_is_root == False,
+             DataStorePath.path_parent_id == dsp.path_id
+             )
+    ).all()
+    for dsp_child in dsp_children:
+        datastore_iter_deletion(dsp_child, cid)
+
+    db.session.delete(dsp)
     db.session.commit()
 
-    return False, 'Folder deleted'
+    return None

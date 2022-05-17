@@ -25,7 +25,7 @@ function build_ds_tree(data, tree_node) {
                 can_delete = `<div class="dropdown-divider"></div><a href="#" class="dropdown-item text-danger" onclick="delete_ds_folder('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>`;
             }
             jnode = `<li>
-                    <span><i class="fa-regular fa-folder"></i> ${data[node].name}</span> <i class="fas fa-plus" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i>
+                    <span><i class="fa-regular fa-folder"></i> ${data[node].name}</span> <i class="fas fa-plus ds-folder-menu" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i>
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="add_ds_folder('${node}');return false;"><small class="fa-regular fa-folder mr-2"></small>Add folder</a>
                                 <a href="#" class="dropdown-item" onclick="add_ds_file('${node}');return false;"><small class="fa-regular fa-file mr-2"></small>Add file</a>
