@@ -127,6 +127,8 @@ class Config():
                                                                         fallback=False) else "/usr/bin"
     ASSET_STORE_PATH = config.get('IRIS', 'ASSET_STORE_PATH') if config.get('IRIS', 'ASSET_STORE_PATH',
                                                                             fallback=False) else "/home/iris/server_data/custom_assets"
+    DATASTORE_PATH = config.get('IRIS', 'DATASTORE_PATH') if config.get('IRIS', 'DATASTORE_PATH',
+                                                                        fallback=False) else "/home/iris/server_data/datastore"
     ASSET_SHOW_PATH = "/static/assets/img/graph"
 
     UPDATE_DIR_NAME = '_updates_'
