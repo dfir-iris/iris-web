@@ -51,7 +51,7 @@ def ds_list_tree(cid):
     ).all()
 
     dsf = DataStoreFile.query.filter(
-        DataStoreFile.data_case_id == cid
+        DataStoreFile.file_case_id == cid
     ).all()
 
     dsp_root = dsp_root
@@ -74,8 +74,8 @@ def ds_list_tree(cid):
         dfnode = dfile.__dict__
         dfnode.pop('_sa_instance_state')
         dfnode['type'] = "file"
-        dnode_id = f"f-{dfile.data_id}"
-        dnode_parent_id = f"d-{dfile.data_parent_id}"
+        dnode_id = f"f-{dfile.file_id}"
+        dnode_parent_id = f"d-{dfile.file_parent_id}"
 
         if dnode_parent_id == droot_id:
             droot_children.update({
@@ -239,8 +239,8 @@ def datastore_iter_deletion(dsp, cid):
 
 def datastore_delete_files_of_path(node_id, cid):
     DataStoreFile.query.filter(
-        and_(DataStoreFile.data_parent_id == node_id,
-             DataStoreFile.data_case_id == cid
+        and_(DataStoreFile.file_parent_id == node_id,
+             DataStoreFile.file_case_id == cid
              )
     ).delete()
 

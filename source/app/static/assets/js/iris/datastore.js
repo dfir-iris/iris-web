@@ -37,9 +37,9 @@ function build_ds_tree(data, tree_node) {
             $('#'+ tree_node).append(jnode);
             build_ds_tree(data[node].children, 'tree-' + node);
         } else {
-            data[node].data_original_filename = sanitizeHTML(data[node].data_original_filename);
+            data[node].file_original_name = sanitizeHTML(data[node].file_original_name);
             jnode = `<li>
-                <span><i class="fa-regular fa-file" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i> ${data[node].data_original_filename}
+                <span><i class="fa-regular fa-file" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i> ${data[node].file_original_name}
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="copy_object_link('${node}');return false;"><small class="fa fa-share mr-2"></small>Get link</a>
                                 <a href="#" class="dropdown-item" onclick="duplicate_event('${node}');return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
