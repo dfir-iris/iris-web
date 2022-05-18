@@ -21,7 +21,8 @@ tm_filter.commands.addCommand({
                               filter_timeline();
                     }
 });
-
+var selector_active;
+var current_timeline;
 
 /* Fetch a modal that allows to add an event */
 function add_event() {
@@ -55,7 +56,7 @@ function add_event() {
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.hash = data.data.event_id;
-                    draw_timeline();
+                    apply_filtering();
                     $('#modal_add_event').modal('hide');
                 }
             });
@@ -75,7 +76,7 @@ function duplicate_event(id) {
     get_request_api("timeline/events/duplicate/" + id)
     .done((data) => {
         if(notify_auto_api(data)) {
-            draw_timeline();
+            apply_filtering();
         }
     });
 
@@ -103,7 +104,7 @@ function update_event(id) {
     post_request_api('timeline/events/update/' + id, JSON.stringify(data_sent), true)
     .done(function(data) {
         if(notify_auto_api(data)) {
-            draw_timeline();
+            apply_filtering();
             $('#modal_add_event').modal('hide');
         }
     });
@@ -118,7 +119,7 @@ function delete_event(id) {
     get_request_api("timeline/events/delete/" + id)
     .done(function(data) {
         if(notify_auto_api(data)) {
-            draw_timeline();
+            apply_filtering();
             $('#modal_add_event').modal('hide');
         }
     });
@@ -166,9 +167,160 @@ function toggle_compact_view() {
     }
 }
 
+function toggle_selector() {
+    //activating selector toggle
+    if(selector_active == false) {
+        selector_active = true;
 
+        //blend in conditional buttons to perform actions on selected rows - e.g. select graph, summary, color
+        $(".btn-conditional").show(250);
+        //highligh the selection button
+        $("#selector-btn").addClass("btn-active");
+        //$("#selector-btn").load();
+        //remove data toggle attribute to disable expand feature
+        $("[id^=dropa_]").removeAttr('data-toggle');
 
-var current_timeline;
+        //create click handler for timeline events
+        $(".timeline li .timeline-panel").on('click', function(){
+            if($(this).hasClass("timeline-selected")) {
+                $(this).removeClass("timeline-selected");
+            } else {
+                $(this).addClass("timeline-selected");
+            }
+        });
+    
+
+    }
+
+    //deactivating selector toggle
+    else if(selector_active == true) {
+        selector_active = false;
+        $(".btn-conditional").hide(250);
+        $(".btn-conditional-2").hide(250);
+        $("#selector-btn").removeClass("btn-active");
+        //restore the collapse feature
+        $("[id^=dropa_]").attr('data-toggle','collapse');
+        $(".timeline-selected").removeClass("timeline-selected");
+
+        $(".timeline li .timeline-panel").off('click');
+        apply_filtering();
+    }
+}
+
+function toggle_colors() { 
+    // console.log("toggling colors");
+    var color_buttons = $(".btn-conditional-2");
+    color_buttons.slideToggle(250);
+    // console.log(color_buttons);
+}
+
+function events_set_attribute(attribute, color) {
+
+    var attribute_value;
+
+    var selected_rows = $(".timeline-selected");
+
+    if(selected_rows.length <= 0) {
+        console.log("no rows selected, returning");
+        return true;
+    }
+
+    switch(attribute) {
+        case "event_in_graph":
+            break;
+        case "event_in_summary":
+            break;
+        case "event_color":
+            attribute_value = color;
+            var color_buttons = $(".btn-conditional-2");
+            color_buttons.slideToggle(250);
+            break;
+        default:
+            console.log("invalid argument given");
+            return false;
+    }
+
+    //loop through events and toggle/set selected attribute
+    selected_rows.each(function(index) {
+        var object = selected_rows[index];
+        var event_id = object.getAttribute('id').replace("event_",""); 
+
+        var original_event;
+
+        //get event data
+        get_request_api("timeline/events/" + event_id)
+        .done((data) => {
+            original_event = data.data;
+            if(notify_auto_api(data, true)) {
+                //change attribute to selected value
+                if(attribute == 'event_in_graph' || attribute == 'event_in_summary'){
+                    attribute_value = original_event[attribute];
+                    original_event[attribute] = !attribute_value;
+                } else if(attribute == 'event_color') {
+                    // attribute value already set to color L240
+                    original_event[attribute] = attribute_value;
+                }
+
+                //get csrf token
+                var csrf_token = $("#csrf_token").val();
+
+                //add csrf token to request
+                original_event['csrf_token'] = csrf_token;
+
+                //send updated event to API
+                post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
+                .done(function(data) {
+                    notify_auto_api(data);
+                    if (index === selected_rows.length - 1) {
+                        get_or_filter_tm(function() {
+                            selected_rows.each(function() {
+                                var event_id = this.getAttribute('id')
+                                $('#' + event_id).addClass("timeline-selected");
+                            });
+                        });
+                    }
+                });
+            }
+        });
+    });
+}
+
+function events_bulk_delete() {
+    var selected_rows = $(".timeline-selected");
+    if(selected_rows.length <= 0) {
+        console.log("no rows selected, returning");
+        return true;
+    }
+
+    swal({
+        title: "Are you sure?",
+        text: "You are about to delete " + selected_rows.length + " events.\nThere is no coming back.",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete them'
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            selected_rows.each(function(index) {
+                var object = selected_rows[index];
+                var event_id = object.getAttribute('id').replace("event_","");
+                get_request_api("timeline/events/delete/" + event_id)
+                .done(function(data) {
+                    notify_auto_api(data);
+                    if (index === selected_rows.length - 1) {
+                        get_or_filter_tm();
+                    }
+                });
+            });
+        } else {
+            swal("Pfew, that was close");
+        }
+    });
+}
+
 
 function build_timeline(data) {
     var compact = is_timeline_compact_view();
@@ -451,7 +603,7 @@ function build_timeline(data) {
        $('#timeline_list').append('<h3 class="ml-mr-auto text-center">No events in current view</h3>');
     }
 
-    last_state = data.data.state.object_state;
+    set_last_state(data.data.state);
     hide_loader();
 
     if (location.href.indexOf("#") != -1) {
@@ -462,24 +614,17 @@ function build_timeline(data) {
             $('#event_'+id).addClass('fade-it');
         }
     }
-}
 
-/* Fetch and draw the timeline */
-function draw_timeline() {
-    $('#timeline_list').empty();
-    show_loader();
-
-    get_request_data_api("/case/timeline/advanced-filter", 'q={}')
-    .done((data) => {
-        if (data.status == 'success') {
-            build_timeline(data);
-        } else {
-            swal.close();
-            $('#submit_new_event').text('Save again');
-            swal("Oh no !", data.message, "error")
-        }
-        goToSharedLink();
-    });
+    // re-enable onclick event on timeline if selector_active is true
+    if(selector_active == true) {
+        $(".timeline li .timeline-panel").on('click', function(){
+            if($(this).hasClass("timeline-selected")) {
+                $(this).removeClass("timeline-selected");
+            } else {
+                $(this).addClass("timeline-selected");
+            }
+        });
+    }
 }
 
 function escapeRegExp(text) {
@@ -671,7 +816,7 @@ function reset_filters() {
 }
 
 
-function apply_filtering() {
+function apply_filtering(post_req_fn) {
     keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'category', 'source',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
@@ -683,6 +828,9 @@ function apply_filtering() {
     .done((data) => {
         if(notify_auto_api(data, true)) {
             build_timeline(data);
+            if(post_req_fn !== undefined) {
+                post_req_fn();
+            }
         }
         goToSharedLink();
     });
@@ -698,19 +846,21 @@ function getFilterFromLink(){
     return null;
 }
 
-function get_or_filter_tm() {
+function get_or_filter_tm(post_req_fn) {
     filter = getFilterFromLink();
     if (filter) {
         tm_filter.setValue(filter);
-        apply_filtering();
+        apply_filtering(post_req_fn);
     } else {
-        draw_timeline();
+        apply_filtering(post_req_fn);
     }
 }
 
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
+
+    selector_active = false;
 
     get_or_filter_tm();
 

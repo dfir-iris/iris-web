@@ -89,11 +89,26 @@
                 </div>
             </div>
             <div id="side_timeline">
-                <button class="btn btn-round btn-light btn_over_page_a" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_b" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_c" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_d" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_e" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>
+
+            <div class="btn_over_page_a">
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-white" title="color1" onclick="events_set_attribute('event_color', '#fff')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-primary" title="color2" onclick="events_set_attribute('event_color', '#1572E899')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-secondary" title="color3" onclick="events_set_attribute('event_color', '#6861CE99')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-info" title="color4" onclick="events_set_attribute('event_color', '#48ABF799')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-success" title="color5" onclick="events_set_attribute('event_color', '#31CE3699')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-danger" title="color5" onclick="events_set_attribute('event_color', '#F2596199')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-warning" title="color5" onclick="events_set_attribute('event_color', '#FFAD4699')"></button>
+                <button class="btn btn-round btn-light btn-conditional" title="Change color" onclick="toggle_colors()"><i class="fas fa-tint"></i></button>
+            </div>
+                <button class="btn btn-round btn-light btn_over_page_delete btn-conditional" title="Delete selected events" onclick="events_bulk_delete();"><i class="fas fa-trash text-danger"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_b btn-conditional" title="Toggle Summary" onclick="events_set_attribute('event_in_summary')"><i class="fas fa-newspaper"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_c btn-conditional" title="Toggle Graph" onclick="events_set_attribute('event_in_graph')"><i class="fas fa-share-alt"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_d" title="Select rows" onclick="toggle_selector();" id="selector-btn"><i class="fas fa-check"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_e" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_f" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_g" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_h" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_i" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>
             </div>
         
         </div>

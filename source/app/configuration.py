@@ -72,16 +72,13 @@ class CeleryConfig():
 class Config():
 
     # Handled by bumpversion
-    IRIS_VERSION = "v1.4.3"
+    IRIS_VERSION = "v1.4.4"
 
     API_MIN_VERSION = "1.0.1"
     API_MAX_VERSION = "1.0.3"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.1'
-
-    RELEASE_URL = 'https://api.github.com/repos/dfir-iris/iris-web/releases'
-    RELEASE_SIGNATURE_KEY = "B9B762555CE8751E57B178DD3003B1BA1A2E235E"
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True
@@ -122,6 +119,12 @@ class Config():
     BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
                                                                         fallback=False) else "/home/iris/server_data/backup"
     UPDATES_PATH = os.path.join(BACKUP_PATH, 'updates')
+
+    RELEASE_URL = config.get('IRIS', 'RELEASE_URL') if config.get('IRIS', 'RELEASE_URL',
+                                                                   fallback=False) else "https://api.github.com/repos/dfir-iris/iris-web/releases"
+
+    RELEASE_SIGNATURE_KEY = config.get('IRIS', 'RELEASE_SIGNATURE_KEY') if config.get('IRIS', 'RELEASE_SIGNATURE_KEY',
+                                                                  fallback=False) else "dependencies/DFIR-IRIS_pkey.asc"
 
     PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
                                                                         fallback=False) else "/usr/bin"
