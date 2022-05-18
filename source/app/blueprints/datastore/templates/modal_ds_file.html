@@ -73,6 +73,11 @@
                     </div>
                 </div>
             </div>
+            {% if file.file_id %}
+                <button type="button" class="btn btn-outline-danger ml-4 mt-5"
+                onclick="delete_file({{ file.file_id }});">Delete</button>
+            {% endif %}
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  id="add_new_ds_file();return false;">Save</button>
         </form>
     </div>
 </div>
