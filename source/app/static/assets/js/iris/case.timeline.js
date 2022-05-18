@@ -233,32 +233,8 @@ function events_set_attribute(attribute, color) {
 
     switch(attribute) {
         case "event_in_graph":
-            //deselect graph option for events
-            if (graph_selector == true) {
-                //switch off graph selector
-                graph_selector = false;
-                attribute_value = false;            
-            }
-            //select graph option for events
-            else {
-                //switch on graph selector
-                graph_selector = true;
-                attribute_value = true;
-            }
             break;
         case "event_in_summary":
-            //deselect graph option for events
-            if (summary_selector == true) {
-                //switch off graph selector
-                summary_selector = false;
-                attribute_value = false;            
-            }
-            //select graph option for events
-            else {
-                //switch on graph selector
-                summary_selector = true;
-                attribute_value = true;
-            }
             break;
         case "event_color":
             attribute_value = color;
@@ -268,7 +244,7 @@ function events_set_attribute(attribute, color) {
             return false;
     }
 
-    //loop through events and unset graph attribute
+    //loop through events and toggle/set selected attribute
     selected_rows.each(function(index) {
         var object = selected_rows[index];
         var event_id = object.getAttribute('id').replace("event_",""); 
@@ -280,8 +256,14 @@ function events_set_attribute(attribute, color) {
         .done((data) => {
             original_event = data.data;
             if(notify_auto_api(data, true)) {
-                //change graph attribute to selected value
-                original_event[attribute] = attribute_value;
+                //change attribute to selected value
+                if(attribute == 'event_in_graph' || attribute == 'event_in_summary'){
+                    attribute_value = original_event[attribute];
+                    original_event[attribute] = !attribute_value;
+                } else if(attribute == 'event_color') {
+                    // attribute value already set to color L240
+                    original_event[attribute] = attribute_value;
+                }
 
                 //get csrf token
                 var csrf_token = $("#csrf_token").val();
