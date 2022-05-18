@@ -10,6 +10,9 @@
         <form method="post" action="" id="form_new_asset">
             <div class="col-md-12 col-lg-12 col-sm-12">
                 {{ form.hidden_tag() }}
+                 <div class="form-row ml-2">
+                     <p>The file will be saved in folder <code>{{ dsp.path_name }}</code>.</p>
+                 </div>
                 <div class="form-row ml-2">
                     <div class="form-group col-12">
                         <label for="filename" class="placeholder">Filename *</label>

@@ -29,6 +29,7 @@ from werkzeug.utils import redirect
 from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
+from app.datamgmt.datastore.datastore_db import datastore_get_path_node
 from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.forms import ModalDSFileForm
@@ -55,16 +56,20 @@ def datastore_list_tree(caseid):
     return response_success("", data=data)
 
 
-@datastore_blueprint.route('/datastore/file/add/modal', methods=['GET'])
+@datastore_blueprint.route('/datastore/file/add/<int:cur_id>/modal', methods=['GET'])
 @login_required
-def datastore_add_file_modal(caseid: int, url_redir: bool):
+def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
         return redirect(url_for('index.index', cid=caseid, redirect=True))
 
+    dsp = datastore_get_path_node(cur_id, caseid)
+    if not dsp:
+        return response_error('Invalid path node for this case')
+
     form = ModalDSFileForm()
 
-    return render_template("modal_ds_file.html", form=form, file=None)
+    return render_template("modal_ds_file.html", form=form, file=None, dsp=dsp)
 
 
 @datastore_blueprint.route('/datastore/folder/add', methods=['POST'])

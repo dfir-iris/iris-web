@@ -245,3 +245,10 @@ def datastore_delete_files_of_path(node_id, cid):
     ).delete()
 
     return
+
+
+def datastore_get_path_node(node_id, cid):
+    return DataStorePath.query.filter(
+        DataStorePath.path_id == node_id,
+        DataStorePath.path_case_id == cid
+    ).first()
