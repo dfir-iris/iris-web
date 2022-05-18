@@ -22,8 +22,6 @@ tm_filter.commands.addCommand({
                     }
 });
 var selector_active;
-var graph_selector;
-var summary_selector;
 var current_timeline;
 
 /* Fetch a modal that allows to add an event */
@@ -173,10 +171,6 @@ function toggle_selector() {
     //activating selector toggle
     if(selector_active == false) {
         selector_active = true;
-
-        //setup variables to track multi event selectors
-        summary_selector = false;
-        graph_selector = false;
 
         //blend in conditional buttons to perform actions on selected rows - e.g. select graph, summary, color
         $(".btn-conditional").show(250);
