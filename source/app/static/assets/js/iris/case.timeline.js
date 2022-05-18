@@ -232,6 +232,8 @@ function events_set_attribute(attribute, color) {
             break;
         case "event_color":
             attribute_value = color;
+            var color_buttons = $(".btn-conditional-2");
+            color_buttons.slideToggle(250);
             break;
         default:
             console.log("invalid argument given");
@@ -611,6 +613,17 @@ function build_timeline(data) {
             $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
             $('#event_'+id).addClass('fade-it');
         }
+    }
+
+    // re-enable onclick event on timeline if selector_active is true
+    if(selector_active == true) {
+        $(".timeline li .timeline-panel").on('click', function(){
+            if($(this).hasClass("timeline-selected")) {
+                $(this).removeClass("timeline-selected");
+            } else {
+                $(this).addClass("timeline-selected");
+            }
+        });
     }
 }
 
