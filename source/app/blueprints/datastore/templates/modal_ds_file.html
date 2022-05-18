@@ -41,7 +41,12 @@
                         <div class="form-check">
                             <label class="form-check-label">
                                 {{ form.file_is_ioc(class="form-check-input", type="checkbox") }}
-                                <span class="form-check-sign"> File is IOC</span>
+                                <span class="form-check-sign"> File is IOC <i class="ml-1 mt-1 fa-regular text-dark fa-circle-question"
+                                                                                  title="Help" data-toggle="popover" data-html="true"
+                                                                                  data-trigger="hover" style="cursor: pointer;"
+                                                                                  data-content="If set, the file is stored in a dedicated IOC folder on the server and is encrypted with password <code>infected</code> unless specified otherwise in the password field.<br/> The file is also added to the case IOC.">
+
+                                </i></span>
                             </label>
                         </div>
                     </div>
@@ -49,7 +54,12 @@
                         <div class="form-check">
                             <label class="form-check-label">
                                 {{ form.file_is_evidence(class="form-check-input", type="checkbox") }}
-                                <span class="form-check-sign"> File is Evidence</span>
+                                <span class="form-check-sign"> File is Evidence <i class="ml-1 mt-1 fa-regular text-dark fa-circle-question"
+                                                                                  title="Help" data-toggle="popover" data-html="true"
+                                                                                  data-trigger="hover" style="cursor: pointer;"
+                                                                                  data-content="If set, the file is stored in a dedicated Evidence folder on the server and added to the case Evidences.">
+
+                                </i></span>
                             </label>
                         </div>
                     </div>
