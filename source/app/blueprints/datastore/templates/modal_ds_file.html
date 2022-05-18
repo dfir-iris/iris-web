@@ -16,9 +16,11 @@
                         {{ form.filename(class='form-control',  autocomplete="off") }}
                     </div>
                 </div>
-                <div class="form-group">
-                        <label for="file_description" class="placeholder">Description</label>
-                        {{ form.file_description(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
+                <div class="form-row ml-2">
+                    <div class="form-group col-12">
+                            <label for="file_description" class="placeholder">Description</label>
+                            {{ form.file_description(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
+                    </div>
                 </div>
                 <div class="form-row ml-2">
                     <div class="form-group col-6 col-xs-12">
@@ -65,9 +67,9 @@
                     </div>
                 </div>
                 <div class="form-row ml-2">
-                    <div class="form-group">
-                        <label class="placeholder">Choose file to upload : </label>
-                        <input id="input_upload_ds_file" type="file">
+                    <div class="form-group col-12">
+                        <label for="input_upload_ds_file" class="form-label">Choose file to upload : </label>
+                        <input id="input_upload_ds_file" class="form-control" type="file">
                     </div>
                 </div>
             </div>
