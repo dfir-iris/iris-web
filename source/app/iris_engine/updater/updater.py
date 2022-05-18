@@ -514,7 +514,7 @@ def verify_assets_signatures(target_directory, release_assets_info):
     update_log("Importing DFIR-IRIS GPG key")
     gpg = gnupg.GPG()
 
-    with open('dependencies/DFIR-IRIS_pkey.asc', 'rb') as pkey:
+    with open(app.config.get("RELEASE_SIGNATURE_KEY"), 'rb') as pkey:
         import_result = gpg.import_keys(pkey.read())
 
     if import_result.count < 1:
