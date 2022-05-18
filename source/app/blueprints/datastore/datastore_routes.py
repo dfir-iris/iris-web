@@ -31,6 +31,7 @@ from app.datamgmt.datastore.datastore_db import datastore_add_child_node
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
 from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
+from app.forms import ModalDSFileForm
 from app.models import DataStoreFile
 from app.models import DataStorePath
 from app.util import api_login_required
@@ -61,7 +62,9 @@ def datastore_add_file_modal(caseid: int, url_redir: bool):
     if url_redir:
         return redirect(url_for('index.index', cid=caseid, redirect=True))
 
-    return render_template("modal_ds_file.html")
+    form = ModalDSFileForm()
+
+    return render_template("modal_ds_file.html", form=form, file=None)
 
 
 @datastore_blueprint.route('/datastore/folder/add', methods=['POST'])
