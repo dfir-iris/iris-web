@@ -69,17 +69,17 @@ You can skip this part if you just want to try or develop. If used in production
 
 ## Showcase
 For a more comprehensive overview of the case features, 
-you can head to [tutorials](https://dfir-iris.github.io/operations/tutorials/), we've put some videos there.  
+you can head to [tutorials](https://docs.dfir-iris.org/operations/tutorials/), we've put some videos there.  
 
 ## Upgrades
 Please read the release notes when upgrading versions. Most of the time the migrations are handled automatically, but some
 changes might require manual labor depending on the version. 
 
 ## Documentation
-A comprehensive documentation is available on [dfir-iris.github.io](https://dfir-iris.github.io).
+A comprehensive documentation is available on [docs.dfir-iris.org](https://docs.dfir-iris.org).
 
 ## API
-The API reference is available in the [documentation](https://dfir-iris.github.io/operations/api/#references) or [documentation repository](https://github.com/dfir-iris/iris-doc-src).
+The API reference is available in the [documentation](https://docs.dfir-iris.org/operations/api/#references) or [documentation repository](https://github.com/dfir-iris/iris-doc-src).
 
 ## Help
 You can reach us on [Discord](https://discord.gg/76tM6QUJza) or by [mail](mailto:contact@dfir-iris.org) if you have any question, issue or idea !
