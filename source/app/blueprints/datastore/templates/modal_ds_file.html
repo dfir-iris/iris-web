@@ -30,7 +30,7 @@
                         <label for="file_password" class="placeholder">Password<i class="ml-1 mt-1 fa-regular text-dark fa-circle-question"
                                                                                   title="Help" data-toggle="popover" data-html="true"
                                                                                   data-trigger="hover" style="cursor: pointer;"
-                                                                                  data-content="If set, the file is locally encrypted with this password.<br/>Encrypted files cannot be used in notes.<br/>IOC are automatically encrypted with password <code>infected</code> unless specified otherwise here.">
+                                                                                  data-content="If set, the file is locally encrypted with this password.<br/><b class='text-danger'>Passwords are stored in clear text server side. Do not put sensitive password here.</b><br/>Encrypted files cannot be used in notes.<br/>IOC are automatically encrypted with password <code>infected</code> unless specified otherwise here.">
 
                         </i></label>
                             {{ form.file_password(class='form-control',  autocomplete="off") }}
