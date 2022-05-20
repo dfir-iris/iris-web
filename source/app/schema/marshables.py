@@ -41,6 +41,7 @@ from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
 from app.models import Client
+from app.models import DataStoreFile
 from app.models import EventCategory
 from app.models import GlobalTasks
 from app.models import Ioc
@@ -260,6 +261,33 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
+
+
+class DSFileSchema(ma.SQLAlchemyAutoSchema):
+    csrf_token = fields.String(required=False)
+    file_original_name = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
+    file_description = auto_field('file_description', allow_none=False)
+
+    class Meta:
+        model = DataStoreFile
+        include_fk = True
+        load_instance = True
+
+    def ds_store_file(self, file_storage, location):
+        if not file_storage.filename:
+            return None
+
+        fpath, message = store_icon(file_storage)
+
+        if fpath is None:
+            raise marshmallow.exceptions.ValidationError(
+                message,
+                field_name='file_content'
+            )
+
+        setattr(self, 'file_local_path', fpath)
+
+        return fpath
 
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):
