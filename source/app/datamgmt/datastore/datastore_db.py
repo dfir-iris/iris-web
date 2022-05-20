@@ -258,7 +258,7 @@ def datastore_get_path_node(node_id, cid):
 
 
 def datastore_get_standard_path(datastore_file, cid):
-    root_path = Path(app.config['DATASTORE_PATH']) / cid
+    root_path = Path(app.config['DATASTORE_PATH']) / f"case-{cid}"
 
     if datastore_file.file_is_ioc:
         target_path = root_path / 'IOCs'
@@ -268,6 +268,6 @@ def datastore_get_standard_path(datastore_file, cid):
         target_path = root_path / 'Regulars'
 
     if not target_path.is_dir():
-        root_path.mkdir(parents=True, exist_ok=True)
+        target_path.mkdir(parents=True, exist_ok=True)
 
-    return root_path / datastore_file.file_id
+    return target_path / f"dsf-{datastore_file.file_id}"

@@ -173,7 +173,7 @@ class ModalAddCaseIOCForm(FlaskForm):
 
 
 class ModalDSFileForm(FlaskForm):
-    filename = StringField(u'Filename', validators=[DataRequired()])
+    file_original_name = StringField(u'Filename', validators=[DataRequired()])
     file_description = TextAreaField(u'file_description')
     file_password = StringField(u'File password')
     file_is_ioc = BooleanField(u'File is IOC')

@@ -19,6 +19,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
+
 import marshmallow.exceptions
 from flask import Blueprint
 from flask import render_template
@@ -75,7 +77,7 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
     return render_template("modal_ds_file.html", form=form, file=None, dsp=dsp)
 
 
-@datastore_blueprint.route('/datastore/file/add/<int:cur_id>', methods=['GET'])
+@datastore_blueprint.route('/datastore/file/add/<int:cur_id>', methods=['POST'])
 @api_login_required
 def datastore_add_file(cur_id: int, caseid: int):
 
@@ -86,12 +88,23 @@ def datastore_add_file(cur_id: int, caseid: int):
     dsf_schema = DSFileSchema()
     try:
 
-        dsf_sc = dsf_schema.load(request.form)
+        dsf_sc = dsf_schema.load(request.form, partial=True)
+
+        dsf_sc.file_parent_id = dsp.path_id
+        dsf_sc.added_by_user_id = current_user.id
+        dsf_sc.file_date_added = datetime.datetime.now()
+        dsf_sc.file_local_name = 'tmp_xc'
+        dsf_sc.file_case_id = caseid
+        #dsf_sc.modification_history = Column(JSON)
+
         db.session.add(dsf_sc)
         db.session.commit()
 
         ds_location = datastore_get_standard_path(dsf_sc, caseid)
         dsf_schema.ds_store_file(request.files.get('file_content'), ds_location)
+
+        dsf_sc.file_local_name = ds_location.as_posix()
+        db.session.commit()
 
         return response_success('File saved in datastore')
 

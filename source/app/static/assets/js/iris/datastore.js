@@ -155,6 +155,7 @@ function add_ds_file(node) {
 
 function save_ds_file(node) {
     var formData = new FormData($('#form_new_ds_file')[0]);
+    formData.append('file_content', $('#input_upload_ds_file').prop('files')[0]);
 
     post_request_data_api('/datastore/file/add/' + node, formData, true)
     .done(function (data){
