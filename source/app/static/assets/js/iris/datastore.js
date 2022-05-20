@@ -25,7 +25,7 @@ function build_ds_tree(data, tree_node) {
                 can_delete = `<div class="dropdown-divider"></div><a href="#" class="dropdown-item text-danger" onclick="delete_ds_folder('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>`;
             }
             jnode = `<li>
-                    <span><i class="fa-regular fa-folder"></i> ${data[node].name}</span> <i class="fas fa-plus ds-folder-menu" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i>
+                    <span data-node-id="${node}"><i class="fa-regular fa-folder"></i> ${data[node].name}</span> <i class="fas fa-plus ds-folder-menu" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i>
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="add_ds_folder('${node}');return false;"><small class="fa-solid fa-folder mr-2"></small>Add subfolder</a>
                                 <a href="#" class="dropdown-item" onclick="add_ds_file('${node}');return false;"><small class="fa-solid fa-file mr-2"></small>Add file</a>
@@ -52,8 +52,9 @@ function build_ds_tree(data, tree_node) {
                                 <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${data[node].file_original_name}', '${icon}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
                                 <a href="#" class="dropdown-item" onclick="download_ds_file('${node}', '${data[node].file_original_name}');return false;"><small class="fa-solid fa-download mr-2"></small>Download</a>
                                 <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item" onclick="edit_ds_file('${node}');return false;"><small class="fa fa-eye mr-2"></small>Info</a>
                                 <a href="#" class="dropdown-item" onclick="edit_ds_file('${node}');return false;"><small class="fa fa-pencil mr-2"></small>Edit</a>
-                                <a href="#" class="dropdown-item" onclick="get_link_ds_file('${node}');return false;"><small class="fa fa-arrow-right-arrow-left mr-2"></small>Move</a>
+                                <a href="#" class="dropdown-item" onclick="move_ds_file('${node}');return false;"><small class="fa fa-arrow-right-arrow-left mr-2"></small>Move</a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item text-danger" onclick="delete_ds_file('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>
                         </div>
@@ -196,6 +197,11 @@ function save_ds_file(node, file_id) {
     })
 }
 
+function move_ds_file(node, file_id) {
+    reparse_activate_tree_selection();
+    $('#msg_select_destination_folder').show();
+}
+
 function delete_ds_file(file_id) {
     file_id = file_id.replace('f-', '');
     swal({
@@ -269,4 +275,19 @@ function get_mk_link_ds_file(file_id, filename, file_icon) {
 function download_ds_file(file_id, filename) {
     link = build_dsfile_view_link(file_id);
     downloadURI(link, name);
+}
+
+
+function reparse_activate_tree_selection() {
+    $('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
+    $('.tree li.parent_li > span').on('click', function (e) {
+
+        if ($(this).hasClass('node-selected')) {
+            $(this).removeClass('node-selected');
+        } else {
+            $(".node-selected").removeClass("node-selected");
+            $(this).addClass('node-selected');
+        }
+        e.stopPropagation();
+    });
 }
