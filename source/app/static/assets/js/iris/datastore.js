@@ -199,7 +199,22 @@ function save_ds_file(node, file_id) {
 
 function move_ds_file(node, file_id) {
     reparse_activate_tree_selection();
+    $('#msg_select_destination_folder').data('file-id', file_id);
     $('#msg_select_destination_folder').show();
+}
+
+function validate_ds_file_move() {
+    var data_sent = Object();
+    data_sent['destination-node'] = $(".node-selected")[0].data('node-id')
+    data_sent['csrf_token'] = $('csrf_token').val();
+
+    post_request_api('/datastore/file/move/' + $('#msg_select_destination_folder').data('file_id'), data_sent)
+    .done((data) => {
+        if (notify_auto_api(data)) {
+            $(".node-selected").removeClass("node-selected");
+            $('#msg_select_destination_folder').hide();
+        }
+    });
 }
 
 function delete_ds_file(file_id) {

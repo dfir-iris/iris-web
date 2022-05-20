@@ -145,6 +145,26 @@ def datastore_update_file(cur_id: int, caseid: int):
         return response_error(msg="Data error", data=e.messages)
 
 
+@datastore_blueprint.route('/datastore/file/move/<int:cur_id>', methods=['POST'])
+@api_login_required
+def datastore_move_file(cur_id: int, caseid: int):
+
+    if not request.json:
+        return response_error("Invalid data")
+
+    dsf = datastore_get_file(cur_id, caseid)
+    if not dsf:
+        return response_error('Invalid file ID for this case')
+
+    dsp = datastore_get_path_node(request.json.get('destination-node'), caseid)
+    if not dsp:
+        return response_error('Invalid destination node ID for this case')
+
+    dsf.file_parent_id = dsp.path_id
+    db.session.commit()
+
+    return response_success(f"File successfully moved to {dsp.path_name}")
+
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
 @api_login_required
 def datastore_view_file(cur_id: int, caseid: int):
