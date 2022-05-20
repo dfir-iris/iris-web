@@ -156,7 +156,7 @@ def datastore_rename_folder(cur_id: int, caseid: int):
 
 @datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
-def datastore_delete_folder(cur_id: int, caseid: int):
+def datastore_delete_folder_route(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_node(cur_id, caseid)
 
@@ -165,7 +165,7 @@ def datastore_delete_folder(cur_id: int, caseid: int):
 
 @datastore_blueprint.route('/datastore/file/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
-def datastore_delete_folder(cur_id: int, caseid: int):
+def datastore_delete_file_route(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_file(cur_id, caseid)
 
