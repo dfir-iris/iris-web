@@ -19,8 +19,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from pathlib import Path
+
 from sqlalchemy import and_
 
+from app import app
 from app import db
 from app.models import DataStoreFile
 from app.models import DataStorePath
@@ -252,3 +255,19 @@ def datastore_get_path_node(node_id, cid):
         DataStorePath.path_id == node_id,
         DataStorePath.path_case_id == cid
     ).first()
+
+
+def datastore_get_standard_path(datastore_file, cid):
+    root_path = Path(app.config['DATASTORE_PATH']) / cid
+
+    if datastore_file.file_is_ioc:
+        target_path = root_path / 'IOCs'
+    elif datastore_file.file_is_evidence:
+        target_path = root_path / 'Evidences'
+    else:
+        target_path = root_path / 'Regulars'
+
+    if not target_path.is_dir():
+        root_path.mkdir(parents=True, exist_ok=True)
+
+    return root_path / datastore_file.file_id

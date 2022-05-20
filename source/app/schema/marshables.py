@@ -277,17 +277,23 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         if not file_storage.filename:
             return None
 
-        fpath, message = store_icon(file_storage)
-
-        if fpath is None:
+        try:
+            file_storage.save(location)
+        except Exception as e:
             raise marshmallow.exceptions.ValidationError(
-                message,
+                str(e),
                 field_name='file_content'
             )
 
-        setattr(self, 'file_local_path', fpath)
+        if location is None:
+            raise marshmallow.exceptions.ValidationError(
+                f"Unable to save file in target location",
+                field_name='file_content'
+            )
 
-        return fpath
+        setattr(self, 'file_local_path', str(location))
+
+        return location
 
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):

@@ -19,6 +19,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import marshmallow.exceptions
 from flask import Blueprint
 from flask import render_template
 from flask import request
@@ -30,11 +31,13 @@ from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
 from app.datamgmt.datastore.datastore_db import datastore_get_path_node
+from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.forms import ModalDSFileForm
 from app.models import DataStoreFile
 from app.models import DataStorePath
+from app.schema.marshables import DSFileSchema
 from app.util import api_login_required
 from app.util import login_required
 from app.util import response_error
@@ -70,6 +73,30 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
     form = ModalDSFileForm()
 
     return render_template("modal_ds_file.html", form=form, file=None, dsp=dsp)
+
+
+@datastore_blueprint.route('/datastore/file/add/<int:cur_id>', methods=['GET'])
+@api_login_required
+def datastore_add_file(cur_id: int, caseid: int):
+
+    dsp = datastore_get_path_node(cur_id, caseid)
+    if not dsp:
+        return response_error('Invalid path node for this case')
+
+    dsf_schema = DSFileSchema()
+    try:
+
+        dsf_sc = dsf_schema.load(request.form)
+        db.session.add(dsf_sc)
+        db.session.commit()
+
+        ds_location = datastore_get_standard_path(dsf_sc, caseid)
+        dsf_schema.ds_store_file(request.files.get('file_content'), ds_location)
+
+        return response_success('File saved in datastore')
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages)
 
 
 @datastore_blueprint.route('/datastore/folder/add', methods=['POST'])
