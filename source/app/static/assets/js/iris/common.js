@@ -500,7 +500,6 @@ function downloadURI(uri, name) {
     link.download = name;
     link.href = uri;
     document.body.appendChild(link);
-    console.log(link);
     link.click();
     link.remove();
 }

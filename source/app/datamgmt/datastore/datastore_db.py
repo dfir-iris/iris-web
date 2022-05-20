@@ -19,14 +19,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from flask_login import current_user
 from pathlib import Path
 
 from sqlalchemy import and_
 
 from app import app
 from app import db
+from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.models import DataStoreFile
 from app.models import DataStorePath
+from app.models import Ioc
+from app.models import IocType
+from app.models import Tlp
 
 
 def ds_list_tree(cid):
@@ -275,6 +280,15 @@ def datastore_get_standard_path(datastore_file, cid):
     return target_path / f"dsf-{datastore_file.file_uuid}"
 
 
+def datastore_get_file(file_id, cid):
+    dsf = DataStoreFile.query.filter(
+        DataStoreFile.file_id == file_id,
+        DataStoreFile.file_case_id == cid
+    ).first()
+
+    return dsf
+
+
 def datastore_delete_file(cur_id, cid):
     dsf = DataStoreFile.query.filter(
         DataStoreFile.file_id == cur_id,
@@ -292,3 +306,45 @@ def datastore_delete_file(cur_id, cid):
     db.session.commit()
 
     return False, f'File {cur_id} deleted'
+
+
+def datastore_add_file_as_ioc(dsf, caseid):
+    ioc = Ioc.query.filter(
+        Ioc.ioc_value == dsf.file_sha256
+    ).first()
+
+    ioc_type_id = IocType.query.filter(
+        IocType.type_name == 'sha256'
+    ).first()
+
+    ioc_tlp_id = Tlp.query.filter(
+        Tlp.tlp_name == 'amber'
+    ).first()
+
+    if ioc is None:
+        ioc = Ioc()
+        ioc.ioc_value = dsf.file_sha256
+        ioc.ioc_description = f"SHA256 of {dsf.file_original_name}. Imported from datastore."
+        ioc.ioc_type_id = ioc_type_id.type_id
+        ioc.ioc_tlp_id = ioc_tlp_id.tlp_id
+        ioc.ioc_tags = "datastore"
+        ioc.user_id = current_user.id
+
+        db.session.add(ioc)
+        db.session.commit()
+
+    add_ioc_link(ioc.ioc_id, caseid)
+
+    return
+
+
+def datastore_get_local_file_path(file_id, caseid):
+    dsf = DataStoreFile.query.filter(
+        DataStoreFile.file_id == file_id,
+        DataStoreFile.file_case_id == caseid
+    ).first()
+
+    if dsf is None:
+        return True, 'Invalid DS file ID for this case'
+
+    return False, dsf

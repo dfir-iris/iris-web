@@ -25,14 +25,18 @@ import marshmallow.exceptions
 from flask import Blueprint
 from flask import render_template
 from flask import request
+from flask import send_file
 from flask import url_for
 from flask_login import current_user
 from werkzeug.utils import redirect
 
 from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
+from app.datamgmt.datastore.datastore_db import datastore_add_file_as_ioc
 from app.datamgmt.datastore.datastore_db import datastore_delete_file
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
+from app.datamgmt.datastore.datastore_db import datastore_get_file
+from app.datamgmt.datastore.datastore_db import datastore_get_local_file_path
 from app.datamgmt.datastore.datastore_db import datastore_get_path_node
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.datastore.datastore_db import datastore_rename_node
@@ -42,6 +46,7 @@ from app.models import DataStoreFile
 from app.models import DataStorePath
 from app.schema.marshables import DSFileSchema
 from app.util import api_login_required
+from app.util import file_sha256sum
 from app.util import login_required
 from app.util import response_error
 from app.util import response_success
@@ -80,6 +85,79 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
     return render_template("modal_ds_file.html", form=form, file=None, dsp=dsp)
 
 
+@datastore_blueprint.route('/datastore/file/update/<int:cur_id>/modal', methods=['GET'])
+@login_required
+def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
+
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    file = datastore_get_file(cur_id, caseid)
+    if not file:
+        return response_error('Invalid file ID for this case')
+
+    dsp = datastore_get_path_node(file.file_parent_id, caseid)
+
+    form = ModalDSFileForm()
+    form.file_is_ioc.data = file.file_is_ioc
+    form.file_original_name.data = file.file_original_name
+    form.file_password.data = file.file_password
+    form.file_description.data = file.file_description
+    form.file_is_evidence.data = file.file_is_evidence
+
+    return render_template("modal_ds_file.html", form=form, file=file, dsp=dsp)
+
+
+@datastore_blueprint.route('/datastore/file/update/<int:cur_id>', methods=['POST'])
+@api_login_required
+def datastore_update_file(cur_id: int, caseid: int):
+
+    dsf = datastore_get_file(cur_id, caseid)
+    if not dsf:
+        return response_error('Invalid file ID for this case')
+
+    dsf_schema = DSFileSchema()
+    try:
+
+        dsf_sc = dsf_schema.load(request.form, instance=dsf, partial=True)
+        add_obj_history_entry(dsf_sc, 'updated')
+
+        dsf.file_is_ioc = request.form.get('file_is_ioc') is not None or request.form.get('file_is_ioc') is True
+        dsf.file_is_evidence = request.form.get('file_is_evidence') is not None or request.form.get('file_is_evidence') is True
+
+        db.session.commit()
+
+        if request.files.get('file_content'):
+            ds_location = datastore_get_standard_path(dsf_sc, caseid)
+            dsf_schema.ds_store_file(request.files.get('file_content'), ds_location)
+
+            dsf_sc.file_local_name = ds_location.as_posix()
+            dsf_sc.file_sha256 = file_sha256sum(ds_location.as_posix())
+            db.session.commit()
+
+        if dsf_sc.file_is_ioc:
+            datastore_add_file_as_ioc(dsf_sc, caseid)
+            return response_success('File saved in datastore and added as IOC')
+
+        return response_success('File updated in datastore')
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages)
+
+
+@datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
+@api_login_required
+def datastore_view_file(cur_id: int, caseid: int):
+    has_error, dsf = datastore_get_local_file_path(cur_id, caseid)
+    if has_error:
+        return response_error('Unable to get request file ID', data=dsf)
+
+    resp = send_file(dsf.file_local_name, as_attachment=True,
+                     attachment_filename=dsf.file_original_name)
+
+    return resp
+
+
 @datastore_blueprint.route('/datastore/file/add/<int:cur_id>', methods=['POST'])
 @api_login_required
 def datastore_add_file(cur_id: int, caseid: int):
@@ -107,7 +185,12 @@ def datastore_add_file(cur_id: int, caseid: int):
         dsf_schema.ds_store_file(request.files.get('file_content'), ds_location)
 
         dsf_sc.file_local_name = ds_location.as_posix()
+        dsf_sc.file_sha256 = file_sha256sum(ds_location.as_posix())
         db.session.commit()
+
+        if dsf_sc.file_is_ioc:
+            datastore_add_file_as_ioc(dsf_sc, caseid)
+            return response_success('File saved in datastore and added as IOC')
 
         return response_success('File saved in datastore')
 

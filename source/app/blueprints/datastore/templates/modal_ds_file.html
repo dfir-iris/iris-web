@@ -10,9 +10,17 @@
         <form method="post" action="" id="form_new_ds_file">
             <div class="col-md-12 col-lg-12 col-sm-12">
                 {{ form.hidden_tag() }}
-                 <div class="form-row ml-2">
+                 <div class="row ml-2">
                      <p>The file will be saved in folder <code>{{ dsp.path_name }}</code>.</p>
                  </div>
+                {% if file.file_id %}
+                     <div class="row ml-2">
+                             <p><b>Original file name</b>:  {{ file.file_original_name }}</p>
+                     </div>
+                    <div class="row ml-2">
+                             <p><b>File SHA256 </b>:  {{ file.file_sha256 }}</p>
+                     </div>
+                {% endif %}
                 <div class="form-row ml-2">
                     <div class="form-group col-12">
                         <label for="file_original_name" class="placeholder">Filename *</label>
@@ -80,7 +88,7 @@
                 <button type="button" class="btn btn-outline-danger ml-4 mt-5"
                 onclick="delete_ds_file({{ file.file_id }});">Delete</button>
             {% endif %}
-            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  onclick="save_ds_file({{dsp.path_id}});return false;">Save</button>
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  onclick="save_ds_file({{dsp.path_id}}, {{ file.file_id }});return false;">Save</button>
         </form>
     </div>
 </div>

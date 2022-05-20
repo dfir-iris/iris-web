@@ -267,6 +267,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
     csrf_token = fields.String(required=False)
     file_original_name = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
     file_description = auto_field('file_description', allow_none=False)
+    file_content = fields.Raw(required=False)
 
     class Meta:
         model = DataStoreFile

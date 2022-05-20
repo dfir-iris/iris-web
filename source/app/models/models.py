@@ -380,6 +380,7 @@ class DataStoreFile(db.Model):
     file_is_evidence = Column(Boolean)
     file_password = Column(Text)
     file_parent_id = Column(ForeignKey('data_store_path.path_id'), nullable=False)
+    file_sha256 = Column(Text)
     added_by_user_id = Column(ForeignKey('user.id'), nullable=False)
     modification_history = Column(JSON)
     file_case_id = Column(ForeignKey('cases.case_id'), nullable=False)

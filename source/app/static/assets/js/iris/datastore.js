@@ -27,9 +27,9 @@ function build_ds_tree(data, tree_node) {
             jnode = `<li>
                     <span><i class="fa-regular fa-folder"></i> ${data[node].name}</span> <i class="fas fa-plus ds-folder-menu" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i>
                         <div class="dropdown-menu" role="menu">
-                                <a href="#" class="dropdown-item" onclick="add_ds_folder('${node}');return false;"><small class="fa-regular fa-folder mr-2"></small>Add folder</a>
-                                <a href="#" class="dropdown-item" onclick="add_ds_file('${node}');return false;"><small class="fa-regular fa-file mr-2"></small>Add file</a>
-                                <a href="#" class="dropdown-item" onclick="rename_ds_folder('${node}', '${data[node].name}');return false;"><small class="fa-solid fa-pencil mr-2"></small>Rename folder</a>
+                                <a href="#" class="dropdown-item" onclick="add_ds_folder('${node}');return false;"><small class="fa-solid fa-folder mr-2"></small>Add subfolder</a>
+                                <a href="#" class="dropdown-item" onclick="add_ds_file('${node}');return false;"><small class="fa-solid fa-file mr-2"></small>Add file</a>
+                                <a href="#" class="dropdown-item" onclick="rename_ds_folder('${node}', '${data[node].name}');return false;"><small class="fa-solid fa-pencil mr-2"></small>Rename</a>
                                 ${can_delete}
                         </div>
                     <ul id='tree-${node}'></ul>
@@ -38,11 +38,22 @@ function build_ds_tree(data, tree_node) {
             build_ds_tree(data[node].children, 'tree-' + node);
         } else {
             data[node].file_original_name = sanitizeHTML(data[node].file_original_name);
+            if (data[node].file_is_ioc) {
+                icon = 'fa-solid fa-virus-covid text-danger';
+            } else if (data[node].file_is_evidence) {
+                icon = 'fa-solid fa-file-shield text-success';
+            } else {
+                icon = 'fa-regular fa-file';
+            }
             jnode = `<li>
-                <span><i class="fa-regular fa-file" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i> ${data[node].file_original_name}
+                <span><span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"><i class="${icon} mr-1"></i> ${data[node].file_original_name}</span>
                         <div class="dropdown-menu" role="menu">
-                                <a href="#" class="dropdown-item" onclick="copy_object_link('${node}');return false;"><small class="fa fa-share mr-2"></small>Get link</a>
-                                <a href="#" class="dropdown-item" onclick="duplicate_event('${node}');return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
+                                <a href="#" class="dropdown-item" onclick="get_link_ds_file('${node}');return false;"><small class="fa fa-link mr-2"></small>Link</a>
+                                <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${data[node].file_original_name}', '${icon}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
+                                <a href="#" class="dropdown-item" onclick="download_ds_file('${node}', '${data[node].file_original_name}');return false;"><small class="fa-solid fa-download mr-2"></small>Download</a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item" onclick="edit_ds_file('${node}');return false;"><small class="fa fa-pencil mr-2"></small>Edit</a>
+                                <a href="#" class="dropdown-item" onclick="get_link_ds_file('${node}');return false;"><small class="fa fa-arrow-right-arrow-left mr-2"></small>Move</a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item text-danger" onclick="delete_ds_file('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>
                         </div>
@@ -153,11 +164,30 @@ function add_ds_file(node) {
     });
 }
 
-function save_ds_file(node) {
+function edit_ds_file(node) {
+    node = node.replace('f-', '');
+    url = '/datastore/file/update/'+ node +'/modal' + case_param();
+    $('#modal_ds_file_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
+        $('#modal_ds_file').modal("show");
+    });
+}
+
+function save_ds_file(node, file_id) {
     var formData = new FormData($('#form_new_ds_file')[0]);
     formData.append('file_content', $('#input_upload_ds_file').prop('files')[0]);
 
-    post_request_data_api('/datastore/file/add/' + node, formData, true)
+    if (file_id === undefined) {
+        uri = '/datastore/file/add/' + node;
+    } else {
+        uri = '/datastore/file/update/' + file_id;
+    }
+
+    post_request_data_api(uri, formData, true)
     .done(function (data){
         if(notify_auto_api(data)){
             $('#modal_ds_file').modal("hide");
@@ -190,4 +220,53 @@ function delete_ds_file(file_id) {
             swal("Pfew, that was close");
         }
     });
+}
+
+function get_link_ds_file(file_id) {
+
+   file_id = file_id.replace('f-', '');
+
+   link = location.protocol + '//' + location.host + '/datastore/file/view/' + file_id;
+   link = link + case_param();
+
+   navigator.clipboard.writeText(link).then(function() {
+          notify_success('File link copied')
+    }, function(err) {
+        notify_error('Unable to copy link. Error ' + err);
+        console.error('File link link', err);
+    });
+
+}
+
+function build_dsfile_view_link(file_id) {
+   file_id = file_id.replace('f-', '');
+
+   link = location.protocol + '//' + location.host + '/datastore/file/view/' + file_id;
+   link = link + case_param();
+
+   return link;
+}
+
+function get_mk_link_ds_file(file_id, filename, file_icon) {
+
+   link = build_dsfile_view_link(file_id);
+
+   if (['png', 'svg', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'].includes(filename.split('.').pop())) {
+        mk_link = `![${filename}](${link})`;
+    } else {
+        mk_link = `[<i class="${file_icon} mr-1"></i>[DS] ${filename}](${link})`;
+    }
+
+   navigator.clipboard.writeText(mk_link).then(function() {
+          notify_success('Markdown file link copied')
+    }, function(err) {
+        notify_error('Unable to copy link. Error ' + err);
+        console.error('Markdown file link  link', err);
+    });
+
+}
+
+function download_ds_file(file_id, filename) {
+    link = build_dsfile_view_link(file_id);
+    downloadURI(link, name);
 }
