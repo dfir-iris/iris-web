@@ -46,7 +46,7 @@ function build_ds_tree(data, tree_node) {
                 icon = 'fa-regular fa-file';
             }
             jnode = `<li>
-                <span data-file-id="${node}" id='${node}'><span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"><i class="${icon} mr-1"></i> ${data[node].file_original_name}</span>
+                <span data-file-id="${node}" id='${node}' class='tree-leaf'><span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"><i class="${icon} mr-1"></i> ${data[node].file_original_name}</span>
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="get_link_ds_file('${node}');return false;"><small class="fa fa-link mr-2"></small>Link</a>
                                 <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${data[node].file_original_name}', '${icon}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
@@ -207,17 +207,22 @@ function validate_ds_file_move() {
     var data_sent = Object();
     data_sent['destination-node'] = $(".node-selected").data('node-id').replace('d-', '');
     data_sent['csrf_token'] = $('#csrf_token').val();
-
-    file_id = $(".file-selected").data('file-id').replace('f-', '');
-
-    post_request_api('/datastore/file/move/' + file_id, JSON.stringify(data_sent))
-    .done((data) => {
-        if (notify_auto_api(data)) {
-            $(".node-selected").removeClass("node-selected");
-            $('#msg_select_destination_folder').attr("data-file-id", '');
-            $('#msg_select_destination_folder').hide();
-            load_datastore();
-        }
+    index = 0;
+    selected_files = $(".file-selected")
+    selected_files.each((index) => {
+        file_id = $(selected_files[index]).data('file-id').replace('f-', '');
+        post_request_api('/datastore/file/move/' + file_id, JSON.stringify(data_sent))
+        .done((data) => {
+            if (notify_auto_api(data)) {
+                if (index == $(".file-selected").length - 1) {
+                    $(".node-selected").removeClass("node-selected");
+                    $('#msg_select_destination_folder').attr("data-file-id", '');
+                    $('#msg_select_destination_folder').hide();
+                    load_datastore();
+                }
+                index +=1;
+            }
+        });
     });
 }
 
@@ -298,7 +303,6 @@ function download_ds_file(file_id, filename) {
 
 
 function reparse_activate_tree_selection() {
-    $('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
     $('.tree li.parent_li > span').on('click', function (e) {
 
         if ($(this).hasClass('node-selected')) {
@@ -307,6 +311,13 @@ function reparse_activate_tree_selection() {
             $(".node-selected").removeClass("node-selected");
             $(this).addClass('node-selected');
         }
-        e.stopPropagation();
+    });
+
+    $('.tree .tree-leaf').on('click', function (e) {
+        if ($(this).hasClass('file-selected')) {
+            $(this).removeClass('file-selected');
+        } else {
+            $(this).addClass('file-selected');
+        }
     });
 }
