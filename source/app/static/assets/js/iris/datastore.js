@@ -46,7 +46,7 @@ function build_ds_tree(data, tree_node) {
                 icon = 'fa-regular fa-file';
             }
             jnode = `<li>
-                <span><span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"><i class="${icon} mr-1"></i> ${data[node].file_original_name}</span>
+                <span data-file-id="${node}" id='${node}'><span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"><i class="${icon} mr-1"></i> ${data[node].file_original_name}</span>
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="get_link_ds_file('${node}');return false;"><small class="fa fa-link mr-2"></small>Link</a>
                                 <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${data[node].file_original_name}', '${icon}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
@@ -197,22 +197,26 @@ function save_ds_file(node, file_id) {
     })
 }
 
-function move_ds_file(node, file_id) {
+function move_ds_file(file_id) {
     reparse_activate_tree_selection();
-    $('#msg_select_destination_folder').data('file-id', file_id);
+    $('#' + file_id).addClass('file-selected');
     $('#msg_select_destination_folder').show();
 }
 
 function validate_ds_file_move() {
     var data_sent = Object();
-    data_sent['destination-node'] = $(".node-selected")[0].data('node-id')
-    data_sent['csrf_token'] = $('csrf_token').val();
+    data_sent['destination-node'] = $(".node-selected").data('node-id').replace('d-', '');
+    data_sent['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('/datastore/file/move/' + $('#msg_select_destination_folder').data('file_id'), data_sent)
+    file_id = $(".file-selected").data('file-id').replace('f-', '');
+
+    post_request_api('/datastore/file/move/' + file_id, JSON.stringify(data_sent))
     .done((data) => {
         if (notify_auto_api(data)) {
             $(".node-selected").removeClass("node-selected");
+            $('#msg_select_destination_folder').attr("data-file-id", '');
             $('#msg_select_destination_folder').hide();
+            load_datastore();
         }
     });
 }

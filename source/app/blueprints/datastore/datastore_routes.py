@@ -165,6 +165,7 @@ def datastore_move_file(cur_id: int, caseid: int):
 
     return response_success(f"File successfully moved to {dsp.path_name}")
 
+
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
 @api_login_required
 def datastore_view_file(cur_id: int, caseid: int):
