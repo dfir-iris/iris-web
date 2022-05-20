@@ -272,7 +272,7 @@ def datastore_get_standard_path(datastore_file, cid):
     if not target_path.is_dir():
         target_path.mkdir(parents=True, exist_ok=True)
 
-    return target_path / f"dsf-{datastore_file.file_id}"
+    return target_path / f"dsf-{datastore_file.file_uuid}"
 
 
 def datastore_delete_file(cur_id, cid):
