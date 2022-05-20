@@ -258,7 +258,7 @@ def datastore_get_path_node(node_id, cid):
 
 
 def datastore_get_standard_path(datastore_file, cid):
-    root_path = Path(app.config['DATASTORE_PATH']) / f"case-{cid}"
+    root_path = Path(app.config['DATASTORE_PATH'])
 
     if datastore_file.file_is_ioc:
         target_path = root_path / 'IOCs'
@@ -267,7 +267,28 @@ def datastore_get_standard_path(datastore_file, cid):
     else:
         target_path = root_path / 'Regulars'
 
+    target_path = target_path / f"case-{cid}"
+
     if not target_path.is_dir():
         target_path.mkdir(parents=True, exist_ok=True)
 
     return target_path / f"dsf-{datastore_file.file_id}"
+
+
+def datastore_delete_file(cur_id, cid):
+    dsf = DataStoreFile.query.filter(
+        DataStoreFile.file_id == cur_id,
+        DataStoreFile.file_case_id == cid
+    ).first()
+
+    if dsf is None:
+        return True, 'Invalid DS file ID for this case'
+
+    fln = Path(dsf.file_local_name)
+    if fln.is_file():
+        fln.unlink(missing_ok=True)
+
+    db.session.delete(dsf)
+    db.session.commit()
+
+    return False, f'File {cur_id} deleted'

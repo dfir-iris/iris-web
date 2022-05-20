@@ -31,6 +31,7 @@ from werkzeug.utils import redirect
 
 from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
+from app.datamgmt.datastore.datastore_db import datastore_delete_file
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
 from app.datamgmt.datastore.datastore_db import datastore_get_path_node
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
@@ -44,6 +45,8 @@ from app.util import api_login_required
 from app.util import login_required
 from app.util import response_error
 from app.util import response_success
+from app.util import add_obj_history_entry
+
 
 datastore_blueprint = Blueprint(
     'datastore',
@@ -95,7 +98,7 @@ def datastore_add_file(cur_id: int, caseid: int):
         dsf_sc.file_date_added = datetime.datetime.now()
         dsf_sc.file_local_name = 'tmp_xc'
         dsf_sc.file_case_id = caseid
-        #dsf_sc.modification_history = Column(JSON)
+        add_obj_history_entry(dsf_sc, 'created')
 
         db.session.add(dsf_sc)
         db.session.commit()
@@ -156,6 +159,15 @@ def datastore_rename_folder(cur_id: int, caseid: int):
 def datastore_delete_folder(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_node(cur_id, caseid)
+
+    return response_success(logs) if not has_error else response_error(logs)
+
+
+@datastore_blueprint.route('/datastore/file/delete/<int:cur_id>', methods=['GET'])
+@api_login_required
+def datastore_delete_folder(cur_id: int, caseid: int):
+
+    has_error, logs = datastore_delete_file(cur_id, caseid)
 
     return response_success(logs) if not has_error else response_error(logs)
 
