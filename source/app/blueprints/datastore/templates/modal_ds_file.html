@@ -7,7 +7,7 @@
 </div>
 <div class="modal-body">
     <div class="container col-md-12">
-        <form method="post" action="" id="form_new_asset">
+        <form method="post" action="" id="form_new_ds_file">
             <div class="col-md-12 col-lg-12 col-sm-12">
                 {{ form.hidden_tag() }}
                  <div class="form-row ml-2">
@@ -80,7 +80,7 @@
                 <button type="button" class="btn btn-outline-danger ml-4 mt-5"
                 onclick="delete_file({{ file.file_id }});">Delete</button>
             {% endif %}
-            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  id="add_new_ds_file();return false;">Save</button>
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  onclick="save_ds_file({{dsp.path_id}});return false;">Save</button>
         </form>
     </div>
 </div>

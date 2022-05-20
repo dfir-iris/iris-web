@@ -152,3 +152,15 @@ function add_ds_file(node) {
         $('#modal_ds_file').modal("show");
     });
 }
+
+function save_ds_file(node) {
+    var formData = new FormData($('#form_new_ds_file')[0]);
+
+    post_request_data_api('/datastore/file/add/' + node, formData, true)
+    .done(function (data){
+        if(notify_auto_api(data)){
+            $('#modal_ds_file').modal("hide");
+            load_datastore();
+        }
+    })
+}

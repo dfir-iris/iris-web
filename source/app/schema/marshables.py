@@ -301,7 +301,7 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
     asset_icon_compromised = auto_field('asset_icon_compromised')
-    asset_icon_not_compromised =auto_field('asset_icon_not_compromised')
+    asset_icon_not_compromised = auto_field('asset_icon_not_compromised')
 
     class Meta:
         model = AssetsType
