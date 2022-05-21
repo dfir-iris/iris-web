@@ -199,8 +199,21 @@ function save_ds_file(node, file_id) {
 }
 
 function toggle_select_file() {
-    $('.ds-file-selector').show(250);
-    $('.btn-ds-bulk').show(250);
+    if ($('.btn-ds-bulk-selector').hasClass('active')) {
+        $('.ds-file-selector').hide(250);
+        $('.btn-ds-bulk').hide(250);
+        $('.btn-ds-bulk-selector').removeClass('active');
+        $(".node-selected").removeClass("node-selected");
+        $(".file-selected").removeClass("file-selected");
+        $('.ds-file-selector').hide();
+        $('#msg_select_destination_folder').attr("data-file-id", '');
+        $('#msg_select_destination_folder').hide();
+    load_datastore();
+    } else {
+        $('.ds-file-selector').show(250);
+        $('.btn-ds-bulk').show(250);
+        $('.btn-ds-bulk-selector').addClass('active');
+    }
 }
 
 function move_ds_file(file_id) {
@@ -286,6 +299,41 @@ function delete_ds_file(file_id) {
                 if (notify_auto_api(data)) {
                     load_datastore();
                 }
+            });
+        } else {
+            swal("Pfew, that was close");
+        }
+    });
+}
+
+
+function delete_bulk_ds_file() {
+
+    selected_files = $(".file-selected");
+    swal({
+        title: "Are you sure?",
+        text: `You are about to delete ${selected_files.length} files\nThis will delete the files on the server and any manual reference will become invalid`,
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            selected_files.each((index) => {
+                file_id = $(selected_files[index]).data('file-id').replace('f-', '');
+                get_request_api('/datastore/file/delete/' + file_id)
+                .done((data) => {
+                    if (notify_auto_api(data)) {
+                        if (index == $(".file-selected").length - 1) {
+                            $(".file-selected").removeClass("file-selected");
+                            load_datastore();
+                        }
+                        index +=1;
+                    }
+                });
             });
         } else {
             swal("Pfew, that was close");

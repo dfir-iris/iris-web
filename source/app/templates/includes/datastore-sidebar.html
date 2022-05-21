@@ -15,10 +15,10 @@
 							<button type="button" class="btn btn-outline-dark mr-4" onclick="cancel_ds_file_move();">Cancel</button>
 						</div>
 					</div>
-					<div class="row justify-content-right">
-						<button type="button" class="btn btn-sm btn-outline-danger mb-1 ml-auto mr-4 btn-ds-bulk" style="display:none;" onclick="toggle_select_file();"><i class="fa fa-trash text-danger"></i> Delete</button>
-						<button type="button" class="btn btn-sm btn-outline-dark mb-1 mr-2 btn-ds-bulk" style="display:none;" onclick="move_ds_file();"><i class="fa-solid fa-arrow-right-arrow-left"></i> Move</button>
-						<button type="button" class="btn btn-sm btn-outline-dark mb-1 mr-3" onclick="toggle_select_file();"><i class="fa-solid fa-check-double"></i> Toggle multi select</button>
+					<div class="row justify-content-end">
+						<button type="button" class="btn btn-sm btn-outline-danger mb-1 ml-auto mr-4 btn-ds-bulk" style="display:none;" onclick="delete_bulk_ds_file();"><i class="fa fa-trash text-danger mr-1"></i> Delete</button>
+						<button type="button" class="btn btn-sm btn-outline-dark mb-1 mr-2 btn-ds-bulk" style="display:none;" onclick="move_ds_file();"><i class="fa-solid fa-arrow-right-arrow-left mr-1"></i> Move</button>
+						<button type="button" class="btn btn-sm btn-outline-dark mb-1 mr-3 btn-ds-bulk-selector" onclick="toggle_select_file();"><i class="fa-solid fa-check-double mr-1"></i> Toggle multi select</button>
 					</div>
 					<div class="tree well" id="ds-tree-container">
 						<ul id="ds-tree-root">
