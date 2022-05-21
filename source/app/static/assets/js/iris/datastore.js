@@ -54,7 +54,7 @@ function build_ds_tree(data, tree_node) {
                                 <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${data[node].file_original_name}', '${icon}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
                                 <a href="#" class="dropdown-item" onclick="download_ds_file('${node}', '${data[node].file_original_name}');return false;"><small class="fa-solid fa-download mr-2"></small>Download</a>
                                 <div class="dropdown-divider"></div>
-                                <a href="#" class="dropdown-item" onclick="edit_ds_file('${node}');return false;"><small class="fa fa-eye mr-2"></small>Info</a>
+                                <a href="#" class="dropdown-item" onclick="info_ds_file('${node}');return false;"><small class="fa fa-eye mr-2"></small>Info</a>
                                 <a href="#" class="dropdown-item" onclick="edit_ds_file('${node}');return false;"><small class="fa fa-pencil mr-2"></small>Edit</a>
                                 <a href="#" class="dropdown-item" onclick="move_ds_file('${node}');return false;"><small class="fa fa-arrow-right-arrow-left mr-2"></small>Move</a>
                                 <div class="dropdown-divider"></div>
@@ -180,6 +180,20 @@ function edit_ds_file(node) {
         $('#modal_ds_file').modal("show");
     });
 }
+
+function info_ds_file(node) {
+    node = node.replace('f-', '');
+    url = '/datastore/file/info/'+ node +'/modal' + case_param();
+    $('#modal_ds_file_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
+        $('#modal_ds_file').modal("show");
+    });
+}
+
 
 function save_ds_file(node, file_id) {
     var formData = new FormData($('#form_new_ds_file')[0]);

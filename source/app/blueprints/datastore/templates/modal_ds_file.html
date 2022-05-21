@@ -10,17 +10,36 @@
         <form method="post" action="" id="form_new_ds_file">
             <div class="col-md-12 col-lg-12 col-sm-12">
                 {{ form.hidden_tag() }}
-                 <div class="row ml-2">
+                {% if file.file_id %}
+                <h3>File information</h3>
+                <dl class="row mt-2">
+                    <dt class="col-sm-3">Virtual location: </dt>
+                    <dd class="col-sm-8">{{ dsp.path_name }}</dd>
+
+                    <dt class="col-sm-3">Original file name: </dt>
+                    <dd class="col-sm-8">{{ file.file_original_name }}</dd>
+
+                    <dt class="col-sm-3">Storage UUID: </dt>
+                    <dd class="col-sm-8">dsf-{{ file.file_uuid }}</dd>
+
+                    <dt class="col-sm-3">File SHA256: </dt>
+                    <dd class="col-sm-8">{{ file.file_sha256 }}</dd>
+
+                    <dt class="col-sm-3">File size (bytes): </dt>
+                    <dd class="col-sm-8">{{ file.file_size }}</dd>
+                </dl>
+                <hr/>
+                {% else %}
+                <div class="row ml-2">
                      <p>The file will be saved in virtual folder <code>{{ dsp.path_name }}</code>.</p>
                  </div>
-                {% if file.file_id %}
-                     <div class="row ml-2">
-                             <p><b>Original file name</b>:  {{ file.file_original_name }}</p>
-                     </div>
-                    <div class="row ml-2">
-                             <p><b>File SHA256 </b>:  {{ file.file_sha256 }}</p>
-                     </div>
                 {% endif %}
+                <div class="form-row ml-2">
+                    <div class="form-group col-12">
+                        <label for="input_upload_ds_file" class="form-label">Choose file to upload : </label>
+                        <input id="input_upload_ds_file" class="form-control" type="file">
+                    </div>
+                </div>
                 <div class="form-row ml-2">
                     <div class="form-group col-12">
                         <label for="file_original_name" class="placeholder">Filename *</label>
@@ -75,12 +94,6 @@
                                 </i></span>
                             </label>
                         </div>
-                    </div>
-                </div>
-                <div class="form-row ml-2">
-                    <div class="form-group col-12">
-                        <label for="input_upload_ds_file" class="form-label">Choose file to upload : </label>
-                        <input id="input_upload_ds_file" class="form-control" type="file">
                     </div>
                 </div>
             </div>

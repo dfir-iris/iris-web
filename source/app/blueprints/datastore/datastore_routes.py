@@ -109,6 +109,22 @@ def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
     return render_template("modal_ds_file.html", form=form, file=file, dsp=dsp)
 
 
+@datastore_blueprint.route('/datastore/file/info/<int:cur_id>/modal', methods=['GET'])
+@login_required
+def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
+
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    file = datastore_get_file(cur_id, caseid)
+    if not file:
+        return response_error('Invalid file ID for this case')
+
+    dsp = datastore_get_path_node(file.file_parent_id, caseid)
+
+    return render_template("modal_ds_file_info.html", file=file, dsp=dsp)
+
+
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>', methods=['POST'])
 @api_login_required
 def datastore_update_file(cur_id: int, caseid: int):
