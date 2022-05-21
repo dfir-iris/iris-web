@@ -193,6 +193,7 @@ function save_ds_file(node, file_id) {
     .done(function (data){
         if(notify_auto_api(data)){
             $('#modal_ds_file').modal("hide");
+            reset_ds_file_view();
             load_datastore();
         }
     })
@@ -200,14 +201,7 @@ function save_ds_file(node, file_id) {
 
 function toggle_select_file() {
     if ($('.btn-ds-bulk-selector').hasClass('active')) {
-        $('.ds-file-selector').hide(250);
-        $('.btn-ds-bulk').hide(250);
-        $('.btn-ds-bulk-selector').removeClass('active');
-        $(".node-selected").removeClass("node-selected");
-        $(".file-selected").removeClass("file-selected");
-        $('.ds-file-selector').hide();
-        $('#msg_select_destination_folder').attr("data-file-id", '');
-        $('#msg_select_destination_folder').hide();
+        reset_ds_file_view();
     load_datastore();
     } else {
         $('.ds-file-selector').show(250);
@@ -225,13 +219,15 @@ function move_ds_file(file_id) {
     ds_file_select(file_id);
 }
 
-function cancel_ds_file_move() {
+function reset_ds_file_view() {
     $(".node-selected").removeClass("node-selected");
     $(".file-selected").removeClass("file-selected");
     $('.ds-file-selector').hide();
     $('#msg_select_destination_folder').attr("data-file-id", '');
     $('#msg_select_destination_folder').hide();
-    load_datastore();
+    $('.ds-file-selector').hide();
+    $('.btn-ds-bulk').hide();
+    $('.btn-ds-bulk-selector').removeClass('active');
 }
 
 function ds_file_select(file_id) {
