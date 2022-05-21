@@ -46,7 +46,7 @@ function build_ds_tree(data, tree_node) {
                 icon = 'fa-regular fa-file';
             }
             jnode = `<li>
-                <span data-file-id="${node}" id='${node}' class='tree-leaf'><span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"><i class="${icon} mr-1"></i> ${data[node].file_original_name}</span>
+                <span id='${node}' data-file-id="${node}"  class='tree-leaf'><span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"><i class="${icon} mr-1"></i> ${data[node].file_original_name}</span><i class="fa-regular fa-circle ds-file-selector" style="cursor:pointer;display:none;" onclick="ds_file_select('${node}');"></i>
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="get_link_ds_file('${node}');return false;"><small class="fa fa-link mr-2"></small>Link</a>
                                 <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${data[node].file_original_name}', '${icon}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
@@ -103,6 +103,7 @@ function rename_ds_folder(parent_node, name) {
     $('#ds_mod_folder_name').val(name);
     $('#modal_ds_folder').modal("show");
 }
+
 
 function delete_ds_folder(node) {
     node = node.replace('d-', '');
@@ -199,8 +200,24 @@ function save_ds_file(node, file_id) {
 
 function move_ds_file(file_id) {
     reparse_activate_tree_selection();
-    $('#' + file_id).addClass('file-selected');
+    $('.ds-file-selector').show();
     $('#msg_select_destination_folder').show();
+
+    ds_file_select(file_id);
+}
+
+
+function ds_file_select(file_id) {
+    file_id = '#'+ file_id;
+    if ($(file_id).hasClass('file-selected')) {
+        $(file_id + '> i').removeClass('fa-circle-check');
+        $(file_id + '> i').addClass('fa-circle');
+        $(file_id).removeClass('file-selected');
+    } else {
+        $(file_id+ '> i').removeClass('fa-circle');
+        $(file_id+ '> i').addClass('fa-circle-check');
+        $(file_id).addClass('file-selected');
+    }
 }
 
 function validate_ds_file_move() {
@@ -310,14 +327,6 @@ function reparse_activate_tree_selection() {
         } else {
             $(".node-selected").removeClass("node-selected");
             $(this).addClass('node-selected');
-        }
-    });
-
-    $('.tree .tree-leaf').on('click', function (e) {
-        if ($(this).hasClass('file-selected')) {
-            $(this).removeClass('file-selected');
-        } else {
-            $(this).addClass('file-selected');
         }
     });
 }
