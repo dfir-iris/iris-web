@@ -892,3 +892,5 @@ $(document).ready(function(){
         })
     })
 });
+
+$('.modal-dialog').draggable();

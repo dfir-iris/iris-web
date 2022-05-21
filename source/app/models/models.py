@@ -376,6 +376,7 @@ class DataStoreFile(db.Model):
     file_description = Column(Text)
     file_date_added = Column(DateTime)
     file_tags = Column(Text)
+    file_size = Column(BigInteger)
     file_is_ioc = Column(Boolean)
     file_is_evidence = Column(Boolean)
     file_password = Column(Text)

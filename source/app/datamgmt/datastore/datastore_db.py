@@ -19,6 +19,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
+
 from flask_login import current_user
 from pathlib import Path
 
@@ -27,6 +29,7 @@ from sqlalchemy import and_
 from app import app
 from app import db
 from app.datamgmt.case.case_iocs_db import add_ioc_link
+from app.models import CaseReceivedFile
 from app.models import DataStoreFile
 from app.models import DataStorePath
 from app.models import Ioc
@@ -334,6 +337,26 @@ def datastore_add_file_as_ioc(dsf, caseid):
         db.session.commit()
 
     add_ioc_link(ioc.ioc_id, caseid)
+
+    return
+
+
+def datastore_add_file_as_evidence(dsf, caseid):
+    crf = CaseReceivedFile.query.filter(
+        CaseReceivedFile.file_hash == dsf.file_sha256
+    ).first()
+
+    if crf is None:
+        crf = CaseReceivedFile()
+        crf.file_hash = dsf.file_sha256
+        crf.file_description = f"Imported from datastore. {dsf.file_description}"
+        crf.case_id = caseid
+        crf.date_added = datetime.datetime.now()
+        crf.filename = dsf.file_original_name
+        crf.file_size = dsf.file_size
+
+        db.session.add(crf)
+        db.session.commit()
 
     return
 

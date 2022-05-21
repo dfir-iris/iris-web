@@ -32,6 +32,7 @@ from werkzeug.utils import redirect
 
 from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
+from app.datamgmt.datastore.datastore_db import datastore_add_file_as_evidence
 from app.datamgmt.datastore.datastore_db import datastore_add_file_as_ioc
 from app.datamgmt.datastore.datastore_db import datastore_delete_file
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
@@ -135,9 +136,14 @@ def datastore_update_file(cur_id: int, caseid: int):
             dsf_sc.file_sha256 = file_sha256sum(ds_location.as_posix())
             db.session.commit()
 
-        if dsf_sc.file_is_ioc:
-            datastore_add_file_as_ioc(dsf_sc, caseid)
-            return response_success('File saved in datastore and added as IOC')
+        msg_added_as = ''
+        if dsf.file_is_ioc:
+            datastore_add_file_as_ioc(dsf, caseid)
+            msg_added_as += 'and added in IOC'
+
+        if dsf.file_is_evidence:
+            datastore_add_file_as_evidence(dsf, caseid)
+            msg_added_as += ' and evidence' if len(msg_added_as) > 0 else 'and added in evidence'
 
         return response_success('File updated in datastore')
 
@@ -231,13 +237,19 @@ def datastore_add_file(cur_id: int, caseid: int):
 
         dsf_sc.file_local_name = ds_location.as_posix()
         dsf_sc.file_sha256 = file_sha256sum(ds_location.as_posix())
-        db.session.commit()
+        dsf_sc.file_size = ds_location.stat().st_size
 
+        db.session.commit()
+        msg_added_as = ''
         if dsf_sc.file_is_ioc:
             datastore_add_file_as_ioc(dsf_sc, caseid)
-            return response_success('File saved in datastore and added as IOC')
+            msg_added_as += 'and added in IOC'
 
-        return response_success('File saved in datastore')
+        if dsf_sc.file_is_evidence:
+            datastore_add_file_as_evidence(dsf_sc, caseid)
+            msg_added_as += ' and evidence' if len(msg_added_as) > 0 else 'and added in evidence'
+
+        return response_success(f'File saved in datastore {msg_added_as}')
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
