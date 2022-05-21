@@ -181,10 +181,13 @@ def datastore_move_folder(cur_id: int, caseid: int):
     if not dsp_dst:
         return response_error('Invalid destination node ID for this case')
 
+    if dsp.path_id == dsp_dst.path_id:
+        return response_error("If that's true, then I've made a mistake, and you should kill me now.")
+
     dsp.path_parent_id = dsp_dst.path_id
     db.session.commit()
 
-    return response_success(f"File successfully moved to {dsp.path_name}")
+    return response_success(f"Folder {dsp.path_name} successfully moved to {dsp_dst.path_name}")
 
 
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
@@ -295,41 +298,3 @@ def datastore_delete_file_route(cur_id: int, caseid: int):
     has_error, logs = datastore_delete_file(cur_id, caseid)
 
     return response_success(logs) if not has_error else response_error(logs)
-
-
-@datastore_blueprint.route('/datastore/push/tree', methods=['POST'])
-@api_login_required
-def datastore_push_tree(caseid: int):
-
-    data = request.json
-
-    for node in data:
-        dsp = DataStorePath()
-        dsp.path_is_root = node.get("is_root")
-        dsp.path_name = node.get("name")
-        dsp.path_parent_id = node.get("parent")
-        dsp.path_case_id = caseid
-
-        db.session.add(dsp)
-        db.session.commit()
-
-    return response_success("", data=data)
-
-
-@datastore_blueprint.route('/datastore/push/file', methods=['POST'])
-@api_login_required
-def datastore_push_file(caseid: int):
-    data = request.json
-
-    for file in data:
-        dsf = DataStoreFile()
-        dsf.data_parent_id = file.get('parent')
-        dsf.data_case_id = caseid
-        dsf.added_by_user_id = current_user.id
-        dsf.data_original_filename = file.get('name')
-        dsf.data_local_filename = file.get('name')
-
-        db.session.add(dsf)
-        db.session.commit()
-
-    return response_success("", data=data)

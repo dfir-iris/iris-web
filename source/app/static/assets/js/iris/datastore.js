@@ -204,7 +204,7 @@ function save_ds_file(node, file_id) {
 function toggle_select_file() {
     if ($('.btn-ds-bulk-selector').hasClass('active')) {
         reset_ds_file_view();
-    load_datastore();
+        load_datastore();
     } else {
         $('.ds-file-selector').show(250);
         $('.btn-ds-bulk').show(250);
@@ -268,9 +268,7 @@ function validate_ds_file_move() {
         .done((data) => {
             if (notify_auto_api(data)) {
                 if (index == $(".file-selected").length - 1) {
-                    $(".node-selected").removeClass("node-selected");
-                    $('#msg_select_destination_folder').attr("data-file-id", '');
-                    $('#msg_select_destination_folder').hide();
+                    reset_ds_file_view();
                     load_datastore();
                 }
                 index +=1;
@@ -281,6 +279,11 @@ function validate_ds_file_move() {
 
 function move_ds_folder(node_id) {
     reparse_activate_tree_selection();
+
+     $('.ds-file-selector').hide();
+     $('.btn-ds-bulk').hide();
+     $('.btn-ds-bulk-selector').removeClass('active');
+     $(".file-selected").removeClass('file-selected');
 
     $('#msg_mv_folder').text($('#' + node_id).text());
     $('#msg_mv_dst_folder_folder').text('unselected destination');
@@ -307,9 +310,7 @@ function validate_ds_folder_move() {
     post_request_api('/datastore/folder/move/' + node_id, JSON.stringify(data_sent))
     .done((data) => {
         if (notify_auto_api(data)) {
-            $(".node-selected").removeClass("node-selected");
-            $('#msg_select_destination_folder').attr("data-file-id", '');
-            $('#msg_select_destination_folder').hide();
+            reset_ds_file_view();
             load_datastore();
         }
     });
