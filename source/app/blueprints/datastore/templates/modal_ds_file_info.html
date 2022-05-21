@@ -1,0 +1,43 @@
+<div class="modal-header">
+    <h4 class="modal-title mt-2 mr-4">Datastore File {{ file.file_original_name }}</h4>
+    <div class="row text-right">
+         <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="container col-md-12">
+        <div class="col-md-12 col-lg-12 col-sm-12">
+            <h3>File information</h3>
+            <dl class="row mt-2">
+                <dt class="col-sm-3">Virtual location: </dt>
+                <dd class="col-sm-8">{{ dsp.path_name }}</dd>
+
+                <dt class="col-sm-3">Original file name: </dt>
+                <dd class="col-sm-8">{{ file.file_original_name }}</dd>
+
+                <dt class="col-sm-3">Storage UUID: </dt>
+                <dd class="col-sm-8">dsf-{{ file.file_uuid }}</dd>
+
+                <dt class="col-sm-3">SHA256: </dt>
+                <dd class="col-sm-8">{{ file.file_sha256 }}</dd>
+
+                <dt class="col-sm-3">Size (bytes): </dt>
+                <dd class="col-sm-8">{{ file.file_size }}</dd>
+
+                <dt class="col-sm-3">Is evidence: </dt>
+                <dd class="col-sm-8">{{ file.file_is_evidence }}</dd>
+
+                <dt class="col-sm-3">Is IOC: </dt>
+                <dd class="col-sm-8">{{ file.file_is_ioc }}</dd>
+
+                <dt class="col-sm-3">Modification history: </dt>
+                <ul>
+                {% for mod in file.modification_history %}
+                    <li>{{ mod|format_datetime('%Y-%m-%d %H:%M') }} - {{ file.modification_history[mod].action }} by {{ file.modification_history[mod].user }} </li>
+                {% endfor %}
+                </ul>
+            </dl>
+        </div>
+    </div>
+</div>
