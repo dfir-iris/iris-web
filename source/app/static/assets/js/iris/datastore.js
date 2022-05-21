@@ -25,10 +25,12 @@ function build_ds_tree(data, tree_node) {
                 can_delete = `<div class="dropdown-divider"></div><a href="#" class="dropdown-item text-danger" onclick="delete_ds_folder('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>`;
             }
             jnode = `<li>
-                    <span data-node-id="${node}"><i class="fa-regular fa-folder"></i> ${data[node].name}</span> <i class="fas fa-plus ds-folder-menu" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i>
+                    <span id='${node}' data-node-id="${node}"><i class="fa-regular fa-folder"></i> ${data[node].name}</span> <i class="fas fa-plus ds-folder-menu" role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"></i>
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="add_ds_folder('${node}');return false;"><small class="fa-solid fa-folder mr-2"></small>Add subfolder</a>
                                 <a href="#" class="dropdown-item" onclick="add_ds_file('${node}');return false;"><small class="fa-solid fa-file mr-2"></small>Add file</a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item" onclick="move_ds_folder('${node}');return false;"><small class="fa fa-arrow-right-arrow-left mr-2"></small>Move</a>
                                 <a href="#" class="dropdown-item" onclick="rename_ds_folder('${node}', '${data[node].name}');return false;"><small class="fa-solid fa-pencil mr-2"></small>Rename</a>
                                 ${can_delete}
                         </div>
@@ -225,6 +227,7 @@ function reset_ds_file_view() {
     $('.ds-file-selector').hide();
     $('#msg_select_destination_folder').attr("data-file-id", '');
     $('#msg_select_destination_folder').hide();
+     $('#msg_select_destination_folder_folder').hide();
     $('.ds-file-selector').hide();
     $('.btn-ds-bulk').hide();
     $('.btn-ds-bulk-selector').removeClass('active');
@@ -273,6 +276,42 @@ function validate_ds_file_move() {
                 index +=1;
             }
         });
+    });
+}
+
+function move_ds_folder(node_id) {
+    reparse_activate_tree_selection();
+
+    $('#msg_mv_folder').text($('#' + node_id).text());
+    $('#msg_mv_dst_folder_folder').text('unselected destination');
+    $('#msg_select_destination_folder_folder').show();
+
+    $('#' + node_id).addClass('node-source-selected');
+}
+
+function validate_ds_folder_move() {
+    var data_sent = Object();
+    if ($(".node-selected").length === 0) {
+        notify_error('No destination folder selected');
+        return false;
+    }
+    if ($(".node-source-selected").length === 0) {
+        notify_error('No initial folder to move');
+        return false;
+    }
+
+    data_sent['destination-node'] = $(".node-selected").data('node-id').replace('d-', '');
+    data_sent['csrf_token'] = $('#csrf_token').val();
+
+    node_id = $(".node-source-selected").data('node-id').replace('d-', '');
+    post_request_api('/datastore/folder/move/' + node_id, JSON.stringify(data_sent))
+    .done((data) => {
+        if (notify_auto_api(data)) {
+            $(".node-selected").removeClass("node-selected");
+            $('#msg_select_destination_folder').attr("data-file-id", '');
+            $('#msg_select_destination_folder').hide();
+            load_datastore();
+        }
     });
 }
 
@@ -390,10 +429,13 @@ function reparse_activate_tree_selection() {
     $('.tree li.parent_li > span').on('click', function (e) {
         if ($(this).hasClass('node-selected')) {
             $(this).removeClass('node-selected');
+            $('#msg_mv_dst_folder').text('unselected destination');
+            $('#msg_mv_dst_folder_folder').text('unselected destination');
         } else {
             $(".node-selected").removeClass("node-selected");
             $(this).addClass('node-selected');
             $('#msg_mv_dst_folder').text($(".node-selected").text());
+            $('#msg_mv_dst_folder_folder').text($(".node-selected").text());
         }
     });
 }
