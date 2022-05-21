@@ -20,7 +20,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
-
 import marshmallow.exceptions
 from flask import Blueprint
 from flask import render_template
@@ -43,16 +42,12 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.forms import ModalDSFileForm
-from app.models import DataStoreFile
-from app.models import DataStorePath
 from app.schema.marshables import DSFileSchema
+from app.util import add_obj_history_entry
 from app.util import api_login_required
-from app.util import file_sha256sum
 from app.util import login_required
 from app.util import response_error
 from app.util import response_success
-from app.util import add_obj_history_entry
-
 
 datastore_blueprint = Blueprint(
     'datastore',
@@ -251,15 +246,14 @@ def datastore_add_file(cur_id: int, caseid: int):
         db.session.commit()
 
         ds_location = datastore_get_standard_path(dsf_sc, caseid)
-        dsf_sc.file_original_name, dsf_sc.file_size, dsf_sc.file_sha256 = dsf_schema.ds_store_file(
+        dsf_sc.file_local_name, dsf_sc.file_size, dsf_sc.file_sha256 = dsf_schema.ds_store_file(
             request.files.get('file_content'),
             ds_location,
             dsf_sc.file_is_ioc,
             dsf_sc.file_password)
 
-        dsf_sc.file_local_name = ds_location.as_posix()
-
         db.session.commit()
+
         msg_added_as = ''
         if dsf_sc.file_is_ioc:
             datastore_add_file_as_ioc(dsf_sc, caseid)
