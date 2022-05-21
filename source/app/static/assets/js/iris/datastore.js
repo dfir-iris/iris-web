@@ -227,7 +227,7 @@ function reset_ds_file_view() {
     $('.ds-file-selector').hide();
     $('#msg_select_destination_folder').attr("data-file-id", '');
     $('#msg_select_destination_folder').hide();
-     $('#msg_select_destination_folder_folder').hide();
+    $('#msg_select_destination_folder_folder').hide();
     $('.ds-file-selector').hide();
     $('.btn-ds-bulk').hide();
     $('.btn-ds-bulk-selector').removeClass('active');
@@ -278,8 +278,7 @@ function validate_ds_file_move() {
 }
 
 function move_ds_folder(node_id) {
-    reparse_activate_tree_selection();
-
+     $('.node-source-selected').removeClass('node-source-selected');
      $('.ds-file-selector').hide();
      $('.btn-ds-bulk').hide();
      $('.btn-ds-bulk-selector').removeClass('active');
@@ -289,6 +288,7 @@ function move_ds_folder(node_id) {
     $('#msg_mv_dst_folder_folder').text('unselected destination');
     $('#msg_select_destination_folder_folder').show();
 
+    reparse_activate_tree_selection();
     $('#' + node_id).addClass('node-source-selected');
 }
 
