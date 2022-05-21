@@ -146,10 +146,12 @@ def datastore_update_file(cur_id: int, caseid: int):
 
         if request.files.get('file_content'):
             ds_location = datastore_get_standard_path(dsf_sc, caseid)
-            dsf_schema.ds_store_file(request.files.get('file_content'), ds_location)
+            dsf_sc.file_local_name, dsf_sc.file_size, dsf_sc.file_sha256 = dsf_schema.ds_store_file(
+                request.files.get('file_content'),
+                ds_location,
+                dsf_sc.file_is_ioc,
+                dsf_sc.file_password)
 
-            dsf_sc.file_local_name = ds_location.as_posix()
-            dsf_sc.file_sha256 = file_sha256sum(ds_location.as_posix())
             db.session.commit()
 
         msg_added_as = ''
@@ -249,11 +251,13 @@ def datastore_add_file(cur_id: int, caseid: int):
         db.session.commit()
 
         ds_location = datastore_get_standard_path(dsf_sc, caseid)
-        dsf_schema.ds_store_file(request.files.get('file_content'), ds_location)
+        dsf_sc.file_original_name, dsf_sc.file_size, dsf_sc.file_sha256 = dsf_schema.ds_store_file(
+            request.files.get('file_content'),
+            ds_location,
+            dsf_sc.file_is_ioc,
+            dsf_sc.file_password)
 
         dsf_sc.file_local_name = ds_location.as_posix()
-        dsf_sc.file_sha256 = file_sha256sum(ds_location.as_posix())
-        dsf_sc.file_size = ds_location.stat().st_size
 
         db.session.commit()
         msg_added_as = ''

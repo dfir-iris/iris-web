@@ -17,18 +17,22 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from pathlib import Path
+
 import dateutil.parser
 import marshmallow
 import os
 import random
 import re
 import string
+import tempfile
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
+import pyminizip
 
 from app import app
 from app import ma
@@ -52,6 +56,7 @@ from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models import User
+from app.util import file_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
 
@@ -274,12 +279,46 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
 
-    def ds_store_file(self, file_storage, location):
+    def ds_store_file(self, file_storage, location, is_ioc, password):
         if not file_storage.filename:
             return None
 
+        passwd = None
+
         try:
-            file_storage.save(location)
+            if is_ioc and not password:
+                passwd = 'infected'
+            elif password:
+                passwd = password
+
+            if passwd:
+                try:
+
+                    temp_location = Path('/tmp/') / location.name
+                    file_storage.save(temp_location)
+                    file_hash = file_sha256sum(temp_location)
+                    file_size = temp_location.stat().st_size
+
+                    temp_location.rename(file_hash)
+
+                    pyminizip.compress(temp_location.as_posix(), None, location.as_posix() + '.zip', passwd, 0)
+
+                    Path(temp_location).unlink()
+
+                    file_path = location.as_posix() + '.zip'
+
+                except Exception as e:
+                    raise marshmallow.exceptions.ValidationError(
+                        str(e),
+                        field_name='file_password'
+                    )
+
+            else:
+                file_storage.save(location)
+                file_path = location.as_posix()
+                file_size = location.stat().st_size
+                file_hash = file_sha256sum(file_path)
+
         except Exception as e:
             raise marshmallow.exceptions.ValidationError(
                 str(e),
@@ -294,7 +333,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
         setattr(self, 'file_local_path', str(location))
 
-        return location
+        return file_path, file_size, file_hash
 
 
 class AssetSchema(ma.SQLAlchemyAutoSchema):
