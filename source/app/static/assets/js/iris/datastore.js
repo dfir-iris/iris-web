@@ -198,14 +198,28 @@ function save_ds_file(node, file_id) {
     })
 }
 
+function toggle_select_file() {
+    $('.ds-file-selector').show(250);
+    $('.btn-ds-bulk').show(250);
+}
+
 function move_ds_file(file_id) {
     reparse_activate_tree_selection();
     $('.ds-file-selector').show();
+    $('#msg_mv_dst_folder').text('unselected destination');
     $('#msg_select_destination_folder').show();
 
     ds_file_select(file_id);
 }
 
+function cancel_ds_file_move() {
+    $(".node-selected").removeClass("node-selected");
+    $(".file-selected").removeClass("file-selected");
+    $('.ds-file-selector').hide();
+    $('#msg_select_destination_folder').attr("data-file-id", '');
+    $('#msg_select_destination_folder').hide();
+    load_datastore();
+}
 
 function ds_file_select(file_id) {
     file_id = '#'+ file_id;
@@ -218,14 +232,24 @@ function ds_file_select(file_id) {
         $(file_id+ '> i').addClass('fa-circle-check');
         $(file_id).addClass('file-selected');
     }
+    $('#msg_mv_files').text($('.file-selected').length);
 }
 
 function validate_ds_file_move() {
     var data_sent = Object();
+    if ($(".node-selected").length === 0) {
+        notify_error('No destination folder selected');
+        return false;
+    }
+    if ($(".file-selected").length === 0) {
+        notify_error('No file to move selected');
+        return false;
+    }
+
     data_sent['destination-node'] = $(".node-selected").data('node-id').replace('d-', '');
     data_sent['csrf_token'] = $('#csrf_token').val();
     index = 0;
-    selected_files = $(".file-selected")
+    selected_files = $(".file-selected");
     selected_files.each((index) => {
         file_id = $(selected_files[index]).data('file-id').replace('f-', '');
         post_request_api('/datastore/file/move/' + file_id, JSON.stringify(data_sent))
@@ -318,15 +342,14 @@ function download_ds_file(file_id, filename) {
     downloadURI(link, name);
 }
 
-
 function reparse_activate_tree_selection() {
     $('.tree li.parent_li > span').on('click', function (e) {
-
         if ($(this).hasClass('node-selected')) {
             $(this).removeClass('node-selected');
         } else {
             $(".node-selected").removeClass("node-selected");
             $(this).addClass('node-selected');
+            $('#msg_mv_dst_folder').text($(".node-selected").text());
         }
     });
 }
