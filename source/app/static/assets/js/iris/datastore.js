@@ -40,18 +40,30 @@ function build_ds_tree(data, tree_node) {
             build_ds_tree(data[node].children, 'tree-' + node);
         } else {
             data[node].file_original_name = sanitizeHTML(data[node].file_original_name);
+            data[node].file_password = sanitizeHTML(data[node].file_password);
+            data[node].file_description = sanitizeHTML(data[node].file_description);
+
             if (data[node].file_is_ioc) {
-                icon = 'fa-solid fa-virus-covid text-danger';
+                icn_content = 'fa-solid fa-virus-covid text-danger';
+                icon = '<i class="fa-solid fa-virus-covid text-danger mr-1" title="File is an IOC"></i>';
             } else if (data[node].file_is_evidence) {
-                icon = 'fa-solid fa-file-shield text-success';
+                icn_content = 'fa-solid fa-file-shield text-success';
+                icon = '<i class="fa-solid fa-file-shield text-success mr-1" title="File is an evidence"></i>';
             } else {
-                icon = 'fa-regular fa-file';
+                icn_content = 'fa-regular fa-file';
+                icon = '<i class="fa-regular fa-file mr-1" title="Regular file"></i>';
+            }
+            icon_lock = '';
+            if (data[node].file_password) {
+                icon_lock = '<i title="Password protected" class="fa-solid fa-lock text-success mr-1"></i>'
             }
             jnode = `<li>
-                <span id='${node}' data-file-id="${node}"  class='tree-leaf'><span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false"><i class="${icon} mr-1"></i> ${data[node].file_original_name}</span><i class="fa-regular fa-circle ds-file-selector" style="cursor:pointer;display:none;" onclick="ds_file_select('${node}');"></i>
+                <span id='${node}' data-file-id="${node}"  class='tree-leaf'>
+                      <span role="menu" style="cursor:pointer;" data-toggle="dropdown" aria-expanded="false">${icon}${icon_lock} ${data[node].file_original_name}</span>
+                      <i class="fa-regular fa-circle ds-file-selector" style="cursor:pointer;display:none;" onclick="ds_file_select('${node}');"></i>
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="get_link_ds_file('${node}');return false;"><small class="fa fa-link mr-2"></small>Link</a>
-                                <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${data[node].file_original_name}', '${icon}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
+                                <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${data[node].file_original_name}', '${icn_content}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
                                 <a href="#" class="dropdown-item" onclick="download_ds_file('${node}', '${data[node].file_original_name}');return false;"><small class="fa-solid fa-download mr-2"></small>Download</a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item" onclick="info_ds_file('${node}');return false;"><small class="fa fa-eye mr-2"></small>Info</a>

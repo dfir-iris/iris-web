@@ -45,7 +45,7 @@
                                                                                   data-content="If set, the file is locally encrypted with this password.<br/><b class='text-danger'>Passwords are stored in clear text server side. Do not put sensitive password here.</b><br/>Encrypted files cannot be used in notes.<br/>IOC are automatically encrypted with password <code>infected</code> unless specified otherwise here.">
 
                         </i></label>
-                            {{ form.file_password(class='form-control',  autocomplete="off") }}
+                            {{ form.file_password(class='form-control',  autocomplete="off", type="password") }}
                     </div>
                     <div class="form-group col-6 col-xs-12">
                         <label for="asset_tags">File tags</label>
