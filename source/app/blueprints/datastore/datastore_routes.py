@@ -19,6 +19,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from pathlib import Path
+
 import datetime
 import marshmallow.exceptions
 from flask import Blueprint
@@ -219,6 +221,9 @@ def datastore_view_file(cur_id: int, caseid: int):
 
     if dsf.file_is_ioc or dsf.file_password:
         dsf.file_original_name += ".zip"
+
+    if not Path(dsf.file_local_name).is_file():
+        return response_error(f'File {dsf.file_local_name} does not exists on the server. Update or delete virtual entry')
 
     resp = send_file(dsf.file_local_name, as_attachment=True,
                      attachment_filename=dsf.file_original_name)
