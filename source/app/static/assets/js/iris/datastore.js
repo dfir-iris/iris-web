@@ -30,6 +30,7 @@ function load_datastore() {
             build_ds_tree(data.data, 'ds-tree-root');
             reparse_activate_tree();
             show_datastore();
+            $('[data-toggle="popover"]').popover();
         }
     });
 }
@@ -39,7 +40,6 @@ function build_ds_tree(data, tree_node) {
     var standard_files_filters = [
                 {value: 'name:', score: 10, meta: 'Match filename'},
                 {value: 'storage_name:', score: 10, meta: 'Match local storage filename'},
-                {value: 'addedAfter:', score: 10, meta: 'Match date added after'},
                 {value: 'tag:', score: 10, meta: 'Match tag of file'},
                 {value: 'description:', score: 10, meta: 'Match description of file'},
                 {value: 'is_ioc', score: 10, meta: "Match file is IOC"},
@@ -575,3 +575,4 @@ function reset_ds_files_filter() {
     ds_filter.setValue("");
     load_datastore();
 }
+
