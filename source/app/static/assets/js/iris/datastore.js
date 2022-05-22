@@ -1,3 +1,26 @@
+var ds_filter = ace.edit("ds_file_search",
+{
+    autoScrollEditorIntoView: true,
+    minLines: 1,
+    maxLines: 5
+});
+ds_filter.setTheme("ace/theme/tomorrow");
+ds_filter.session.setMode("ace/mode/json");
+ds_filter.renderer.setShowGutter(false);
+ds_filter.setShowPrintMargin(false);
+ds_filter.renderer.setScrollMargin(10, 10);
+ds_filter.setOption("displayIndentGuides", true);
+ds_filter.setOption("indentedSoftWrap", true);
+ds_filter.setOption("showLineNumbers", false);
+ds_filter.setOption("placeholder", "Search files");
+ds_filter.setOption("highlightActiveLine", false);
+ds_filter.commands.addCommand({
+        name: "Do filter",
+        bindKey: { win: "Enter", mac: "Enter" },
+        exec: function (editor) {
+                  filter_files();
+        }
+});
 
 function load_datastore() {
     get_request_api('/datastore/list/tree')
@@ -12,6 +35,19 @@ function load_datastore() {
 }
 
 function build_ds_tree(data, tree_node) {
+
+    var standard_files_filters = [
+                {value: 'name:', score: 10, meta: 'Match filename'},
+                {value: 'storage_name:', score: 10, meta: 'Match local storage filename'},
+                {value: 'addedAfter:', score: 10, meta: 'Match date added after'},
+                {value: 'tag:', score: 10, meta: 'Match tag of file'},
+                {value: 'description:', score: 10, meta: 'Match description of file'},
+                {value: 'is_ioc', score: 10, meta: "Match file is IOC"},
+                {value: 'is_evidence', score: 10, meta: "Match file is evidence"},
+                {value: 'has_password', score: 10, meta: "Match file is password protected"},
+                {value: 'AND ', score: 10, meta: 'AND operator'}
+              ]
+
     for (node in data) {
 
         if (data[node] === null) {
@@ -42,7 +78,11 @@ function build_ds_tree(data, tree_node) {
             data[node].file_original_name = sanitizeHTML(data[node].file_original_name);
             data[node].file_password = sanitizeHTML(data[node].file_password);
             data[node].file_description = sanitizeHTML(data[node].file_description);
-
+            standard_files_filters.push({
+                value: data[node].file_original_name,
+                score: 1,
+                meta: data[node].file_description
+            });
             if (data[node].file_is_ioc) {
                 icn_content = 'fa-solid fa-virus-covid text-danger';
                 icon = '<i class="fa-solid fa-virus-covid text-danger mr-1" title="File is an IOC"></i>';
@@ -77,6 +117,14 @@ function build_ds_tree(data, tree_node) {
             $('#'+ tree_node).append(jnode);
         }
     }
+    ds_filter.setOptions({
+          enableBasicAutocompletion: [{
+            getCompletions: (editor, session, pos, prefix, callback) => {
+              callback(null, standard_files_filters);
+            },
+          }],
+          enableLiveAutocompletion: true,
+    });
 }
 
 function show_datastore() {
@@ -239,7 +287,7 @@ function toggle_select_file() {
 }
 
 function move_ds_file(file_id) {
-    reset_ds_file_view();
+
     reparse_activate_tree_selection();
     $('.ds-file-selector').show();
     $('#msg_mv_dst_folder').text('unselected destination');
@@ -464,26 +512,7 @@ function reparse_activate_tree_selection() {
     });
 }
 
-var ds_filter = ace.edit("ds_file_search",
-{
-    autoScrollEditorIntoView: true,
-    minLines: 1,
-    maxLines: 5
-});
-ds_filter.setTheme("ace/theme/tomorrow");
-ds_filter.session.setMode("ace/mode/json");
-ds_filter.renderer.setShowGutter(false);
-ds_filter.setShowPrintMargin(false);
-ds_filter.renderer.setScrollMargin(10, 10);
-ds_filter.setOption("displayIndentGuides", true);
-ds_filter.setOption("indentedSoftWrap", true);
-ds_filter.setOption("showLineNumbers", false);
-ds_filter.setOption("placeholder", "Search files");
-ds_filter.setOption("highlightActiveLine", false);
-ds_filter.commands.addCommand({
-        name: "Do filter",
-        bindKey: { win: "Enter", mac: "Enter" },
-        exec: function (editor) {
-                  filter_timeline();
-        }
-});
+
+function filter_files() {
+
+}
