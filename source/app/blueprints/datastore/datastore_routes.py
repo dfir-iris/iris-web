@@ -98,6 +98,7 @@ def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
     form.file_is_ioc.data = file.file_is_ioc
     form.file_original_name.data = file.file_original_name
     form.file_password.data = file.file_password
+    form.file_password.render_kw = {'disabled': 'disabled'}
     form.file_description.data = file.file_description
     form.file_is_evidence.data = file.file_is_evidence
 
