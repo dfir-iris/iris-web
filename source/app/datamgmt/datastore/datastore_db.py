@@ -25,6 +25,7 @@ from flask_login import current_user
 from pathlib import Path
 
 from sqlalchemy import and_
+from sqlalchemy import or_
 
 from app import app
 from app import db
@@ -371,3 +372,136 @@ def datastore_get_local_file_path(file_id, caseid):
         return True, 'Invalid DS file ID for this case'
 
     return False, dsf
+
+
+def datastore_filter_tree(filter_d, caseid):
+    names = filter_d.get('name')
+    storage_names = filter_d.get('storage_name')
+    tags = filter_d.get('tag')
+    descriptions = filter_d.get('description')
+    is_ioc = filter_d.get('is_ioc')
+    is_evidence = filter_d.get('is_evidence')
+    has_password = filter_d.get('has_password')
+
+    condition = (DataStoreFile.file_case_id == caseid)
+
+    if names:
+        for name in names:
+            condition = and_(condition,
+                            DataStoreFile.file_original_name.ilike(f'%{name}%'))
+
+    if storage_names:
+        for name in storage_names:
+            condition = or_(condition,
+                            DataStoreFile.file_local_name.ilike(f'%{name}%'))
+
+    if tags:
+        for tag in tags:
+            condition = and_(condition,
+                             DataStoreFile.file_tags.ilike(f'%{tag}%'))
+
+    if descriptions:
+        for description in descriptions:
+            condition = and_(condition,
+                             DataStoreFile.file_description.ilike(f'%{description}%'))
+
+    if is_ioc is not None:
+        condition = and_(condition,
+                         (DataStoreFile.file_is_ioc == True))
+
+    if is_evidence is not None:
+        condition = and_(condition,
+                         (DataStoreFile.file_is_evidence == True))
+
+    if has_password is not None:
+        condition = and_(condition,
+                         (~ DataStoreFile.file_password == None))
+
+    dsp_root = DataStorePath.query.filter(
+        and_(DataStorePath.path_case_id == caseid,
+             DataStorePath.path_is_root == True
+             )
+    ).first()
+
+    if dsp_root is None:
+        init_ds_tree(caseid)
+
+        dsp_root = DataStorePath.query.filter(
+            and_(DataStorePath.path_case_id == caseid,
+                 DataStorePath.path_is_root == True
+                 )
+        ).first()
+
+    dsp = DataStorePath.query.filter(
+        and_(DataStorePath.path_case_id == caseid,
+             DataStorePath.path_is_root == False
+             )
+    ).order_by(
+        DataStorePath.path_parent_id
+    ).all()
+
+    dsf = DataStoreFile.query.filter(
+        condition
+    ).all()
+
+    files_filter = [file.file_id for file in dsf]
+
+    dsp_root = dsp_root
+    droot_id = f"d-{dsp_root.path_id}"
+
+    path_tree = {
+        droot_id: {
+            "name": dsp_root.path_name,
+            "type": "directory",
+            "is_root": True,
+            "children": {}
+        }
+    }
+
+    droot_children = path_tree[droot_id]["children"]
+
+    files_nodes = {}
+
+    for dfile in dsf:
+        dfnode = dfile.__dict__
+        dfnode.pop('_sa_instance_state')
+        dfnode['type'] = "file"
+        dnode_id = f"f-{dfile.file_id}"
+        dnode_parent_id = f"d-{dfile.file_parent_id}"
+
+        if dnode_parent_id == droot_id:
+            droot_children.update({
+                dnode_id: dfnode
+            })
+
+        elif dnode_parent_id in files_nodes:
+            files_nodes[dnode_parent_id].update({
+                dnode_id: dfnode
+            })
+
+        else:
+            files_nodes[dnode_parent_id] = {dnode_id: dfnode}
+
+    for dpath in dsp:
+        dpath_id = f"d-{dpath.path_id}"
+        dpath_parent_id = f"d-{dpath.path_parent_id}"
+        path_node = {
+            dpath_id: {
+                "name": dpath.path_name,
+                "type": "directory",
+                "children": {}
+            }
+        }
+
+        path_node_files = files_nodes.get(dpath_id)
+        if path_node_files:
+            path_node[dpath_id]["children"].update(path_node_files)
+
+        if dpath_parent_id == droot_id:
+            droot_children.update(path_node)
+
+        else:
+            datastore_iter_tree(dpath_parent_id, path_node, droot_children)
+
+    return path_tree
+

@@ -19,6 +19,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
+import urllib.parse
 from pathlib import Path
 
 import datetime
@@ -37,6 +39,7 @@ from app.datamgmt.datastore.datastore_db import datastore_add_file_as_evidence
 from app.datamgmt.datastore.datastore_db import datastore_add_file_as_ioc
 from app.datamgmt.datastore.datastore_db import datastore_delete_file
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
+from app.datamgmt.datastore.datastore_db import datastore_filter_tree
 from app.datamgmt.datastore.datastore_db import datastore_get_file
 from app.datamgmt.datastore.datastore_db import datastore_get_local_file_path
 from app.datamgmt.datastore.datastore_db import datastore_get_path_node
@@ -63,6 +66,24 @@ datastore_blueprint = Blueprint(
 def datastore_list_tree(caseid):
 
     data = ds_list_tree(caseid)
+
+    return response_success("", data=data)
+
+
+@datastore_blueprint.route('/datastore/list/filter', methods=['GET'])
+@api_login_required
+def datastore_list_filter(caseid):
+
+    args = request.args.to_dict()
+    query_filter = args.get('q')
+    try:
+
+        filter_d = dict(json.loads(urllib.parse.unquote_plus(query_filter)))
+
+    except Exception as e:
+        return response_error('Invalid query string')
+
+    data = datastore_filter_tree(filter_d, caseid)
 
     return response_success("", data=data)
 

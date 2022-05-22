@@ -549,14 +549,14 @@ function parse_filter(str_filter, keywords) {
 }
 
 
-function filter_files() {
+function filter_ds_files() {
 
     ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password'];
     parsed_filter = {};
     parse_filter(ds_filter.getValue(), ds_keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
 
-    console.log(filter_query);
+    $('#btn_filter_ds_files').text('Searching..');
     get_request_data_api("/datastore/list/filter",{ 'q': filter_query })
     .done(function (data){
         if(notify_auto_api(data, true)){
@@ -565,5 +565,8 @@ function filter_files() {
             reparse_activate_tree();
             show_datastore();
         }
+    })
+    .always(() => {
+        $('#btn_filter_ds_files').text('Search');
     });
 }
