@@ -41,7 +41,7 @@
                 <dd class="col-sm-8">
                     <div class="row">
                         <input class="form_control ml-3" style="border:none;" type="password" value="{{ file.file_password }}" id="ds_file_password" disabled>
-                        <div class="file_show_password" id="toggle_file_password"><i class="icon-eye"></i></div>
+                        <div class="file_show_password" id="toggle_file_password"><i class="fa-solid fa-eye"></i></div>
                     </div>
                 </dd>
 
@@ -61,5 +61,6 @@
     $('#toggle_file_password').on('click', function (e) {
         const type = $('#ds_file_password').attr('type') === 'password' ? 'text' : 'password';
         $('#ds_file_password').attr('type', type);
+        $('#toggle_file_password > i').attr('class', type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash');
     });
 </script>
