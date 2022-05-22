@@ -570,3 +570,8 @@ function filter_ds_files() {
         $('#btn_filter_ds_files').text('Search');
     });
 }
+
+function reset_ds_files_filter() {
+    ds_filter.setValue("");
+    load_datastore();
+}
