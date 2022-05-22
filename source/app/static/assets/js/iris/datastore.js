@@ -512,7 +512,58 @@ function reparse_activate_tree_selection() {
     });
 }
 
+var parsed_filter_ds = {};
+var ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password'];
+
+
+function parse_filter(str_filter, keywords) {
+  for (var k = 0; k < keywords.length; k++) {
+  	keyword = keywords[k];
+    items = str_filter.split(keyword + ':');
+
+    ita = items[1];
+
+    if (ita === undefined) {
+    	continue;
+    }
+
+    item = split_bool(ita);
+
+    if (item != null) {
+      if (!(keyword in parsed_filter)) {
+        parsed_filter_ds[keyword] = [];
+      }
+      if (!parsed_filter[keyword].includes(item)) {
+        parsed_filter_ds[keyword].push(item.trim());
+      }
+
+      if (items[1] != undefined) {
+        str_filter = str_filter.replace(keyword + ':' + item, '');
+        if (parse_filter(str_filter, keywords)) {
+        	keywords.shift();
+        }
+      }
+    }
+  }
+  return true;
+}
+
 
 function filter_files() {
 
+    ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password'];
+    parsed_filter = {};
+    parse_filter(ds_filter.getValue(), ds_keywords);
+    filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
+
+    console.log(filter_query);
+    get_request_data_api("/datastore/list/filter",{ 'q': filter_query })
+    .done(function (data){
+        if(notify_auto_api(data, true)){
+            $('#ds-tree-root').empty();
+            build_ds_tree(data.data, 'ds-tree-root');
+            reparse_activate_tree();
+            show_datastore();
+        }
+    });
 }
