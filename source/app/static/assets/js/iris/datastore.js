@@ -239,6 +239,7 @@ function toggle_select_file() {
 }
 
 function move_ds_file(file_id) {
+    reset_ds_file_view();
     reparse_activate_tree_selection();
     $('.ds-file-selector').show();
     $('#msg_mv_dst_folder').text('unselected destination');
@@ -304,11 +305,7 @@ function validate_ds_file_move() {
 }
 
 function move_ds_folder(node_id) {
-     $('.node-source-selected').removeClass('node-source-selected');
-     $('.ds-file-selector').hide();
-     $('.btn-ds-bulk').hide();
-     $('.btn-ds-bulk-selector').removeClass('active');
-     $(".file-selected").removeClass('file-selected');
+     reset_ds_file_view();
 
     $('#msg_mv_folder').text($('#' + node_id).text());
     $('#msg_mv_dst_folder_folder').text('unselected destination');
@@ -466,3 +463,27 @@ function reparse_activate_tree_selection() {
         }
     });
 }
+
+var ds_filter = ace.edit("ds_file_search",
+{
+    autoScrollEditorIntoView: true,
+    minLines: 1,
+    maxLines: 5
+});
+ds_filter.setTheme("ace/theme/tomorrow");
+ds_filter.session.setMode("ace/mode/json");
+ds_filter.renderer.setShowGutter(false);
+ds_filter.setShowPrintMargin(false);
+ds_filter.renderer.setScrollMargin(10, 10);
+ds_filter.setOption("displayIndentGuides", true);
+ds_filter.setOption("indentedSoftWrap", true);
+ds_filter.setOption("showLineNumbers", false);
+ds_filter.setOption("placeholder", "Search files");
+ds_filter.setOption("highlightActiveLine", false);
+ds_filter.commands.addCommand({
+        name: "Do filter",
+        bindKey: { win: "Enter", mac: "Enter" },
+        exec: function (editor) {
+                  filter_timeline();
+        }
+});

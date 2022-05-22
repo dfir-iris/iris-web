@@ -8,6 +8,9 @@
 			</ul>
 			<div class="tab-content mt-3">
 				<div class="tab-pane fade show active" id="ds" role="tabpanel">
+					<div class="row">
+
+					</div>
 					<div class="tree well" id="msg_select_destination_folder" style="display:none;">
 						<div class="row">
 							<p class="mt-3 ml-3">Select the files and destination folder below. <span id="msg_mv_files" class="text-primary"></span> files selected to be moved to <span id="msg_mv_dst_folder" class="text-primary"></span></p>
@@ -22,10 +25,20 @@
 							<button type="button" class="btn btn-outline-dark mr-4" onclick="reset_ds_file_view();load_datastore();">Cancel</button>
 						</div>
 					</div>
-					<div class="row justify-content-end">
-						<button type="button" class="btn btn-sm btn-outline-danger mb-1 ml-auto mr-4 btn-ds-bulk" style="display:none;" onclick="delete_bulk_ds_file();"><i class="fa fa-trash text-danger mr-1"></i> Delete</button>
-						<button type="button" class="btn btn-sm btn-outline-dark mb-1 mr-2 btn-ds-bulk" style="display:none;" onclick="move_ds_file();"><i class="fa-solid fa-arrow-right-arrow-left mr-1"></i> Move</button>
-						<button type="button" class="btn btn-sm btn-outline-dark mb-1 mr-3 btn-ds-bulk-selector" onclick="toggle_select_file();"><i class="fa-solid fa-check-double mr-1"></i> Toggle multi select</button>
+					<div class="row mb-3">
+						<div class="col-10">
+							<div class="row">
+								<div id='ds_file_search' class="ml-3 pt-2 pl-2" style="width:85%;border-radius:3px;border-color:#fff;background:rgb(234, 234, 234);" ></div>
+								<button class="btn btn-sm btn-light ml-2 pt-2" onclick="filter_ds();">
+									   Search
+								</button>
+							</div>
+						</div>
+						<div class="col-2 justify-content-end">
+							<button type="button" class="btn btn-sm btn-outline-danger mb-1 ml-auto mr-4 btn-ds-bulk" style="display:none;" onclick="delete_bulk_ds_file();"><i class="fa fa-trash text-danger mr-1"></i> Delete</button>
+							<button type="button" class="btn btn-sm btn-outline-dark mb-1 mr-2 btn-ds-bulk" style="display:none;" onclick="move_ds_file();"><i class="fa-solid fa-arrow-right-arrow-left mr-1"></i> Move</button>
+							<button type="button" class="btn btn-sm btn-outline-dark mb-1 mr-3 btn-ds-bulk-selector" onclick="toggle_select_file();"><i class="fa-solid fa-check-double mr-1"></i> Toggle multi select</button>
+						</div>
 					</div>
 					<div class="tree well" id="ds-tree-container">
 						<ul id="ds-tree-root">
