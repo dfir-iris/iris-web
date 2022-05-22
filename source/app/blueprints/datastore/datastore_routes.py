@@ -216,6 +216,9 @@ def datastore_view_file(cur_id: int, caseid: int):
     if has_error:
         return response_error('Unable to get request file ID', data=dsf)
 
+    if dsf.file_is_ioc or dsf.file_password:
+        dsf.file_original_name += ".zip"
+
     resp = send_file(dsf.file_local_name, as_attachment=True,
                      attachment_filename=dsf.file_original_name)
 

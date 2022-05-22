@@ -291,17 +291,20 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
             elif password:
                 passwd = password
 
-            if passwd:
+            if passwd is not None:
                 try:
 
                     temp_location = Path('/tmp/') / location.name
+                    print(f'temp_location : {temp_location}')
                     file_storage.save(temp_location)
                     file_hash = file_sha256sum(temp_location)
                     file_size = temp_location.stat().st_size
 
-                    temp_location.rename(file_hash)
+                    temp_location = temp_location.rename(Path('/tmp/') / file_hash)
+                    print(f'New temp_location : {temp_location}')
 
                     pyminizip.compress(temp_location.as_posix(), None, location.as_posix() + '.zip', passwd, 0)
+                    print(f'Zip location : {location.as_posix()}')
 
                     Path(temp_location).unlink()
 
