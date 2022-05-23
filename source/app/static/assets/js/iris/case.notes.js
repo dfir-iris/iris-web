@@ -380,19 +380,6 @@ function note_detail(id) {
                 editor.insertSnippet('#### ${1:$SELECTION}');
             }
         });
-        note_editor.commands.addCommand({
-            name: 'head_4',
-            bindKey: {win: "Ctrl-Shift-V", "mac": "Cmd-Shift-V"},
-            exec: function(editor) {
-                navigator.clipboard.readText()
-                  .then(text => {
-                    console.log('Pasted content: ', text);
-                  })
-                  .catch(err => {
-                    console.error('Failed to read clipboard contents: ', err);
-                  });
-            }
-        });
 
         var textarea = $('#note_content');
         note_editor.getSession().on("change", function () {

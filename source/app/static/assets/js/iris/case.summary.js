@@ -26,6 +26,52 @@ editor.commands.addCommand({
         sync_editor(false);
     }
 })
+editor.commands.addCommand({
+    name: 'bold',
+    bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
+    exec: function(editor) {
+        editor.insertSnippet('**${1:$SELECTION}**');
+    }
+});
+editor.commands.addCommand({
+    name: 'italic',
+    bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
+    exec: function(editor) {
+        editor.insertSnippet('*${1:$SELECTION}*');
+    }
+});
+editor.commands.addCommand({
+    name: 'head_1',
+    bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
+    exec: function(editor) {
+        editor.insertSnippet('# ${1:$SELECTION}');
+    }
+});
+editor.commands.addCommand({
+    name: 'head_2',
+    bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
+    exec: function(editor) {
+        editor.insertSnippet('## ${1:$SELECTION}');
+    }
+});
+editor.commands.addCommand({
+    name: 'head_3',
+    bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
+    exec: function(editor) {
+        editor.insertSnippet('### ${1:$SELECTION}');
+    }
+});
+editor.commands.addCommand({
+    name: 'head_4',
+    bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
+    exec: function(editor) {
+        editor.insertSnippet('#### ${1:$SELECTION}');
+    }
+});
+$('#editor_summary').on('paste', (event) => {
+    event.preventDefault();
+    handle_ed_paste(event);
+});
 
 var session_id = null ;
 var collaborator = null ;
@@ -91,7 +137,40 @@ function body_loaded() {
     just_cleared_buffer = false ;
 }
 
+function handle_ed_paste(event) {
+    filename = null;
+    const { items } = event.originalEvent.clipboardData;
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
 
+      if (item.kind === 'string') {
+        item.getAsString(function (s){
+            filename = $.trim(s.replace(/\t|\n|\r/g, '')).substring(0, 40);
+        });
+      }
+
+      if (item.kind === 'file') {
+        console.log(item.type);
+        const blob = item.getAsFile();
+
+        if (blob !== null) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                notify_success('The file is uploading in background. Don\'t leave the page');
+                upload_interactive_data(e.target.result, filename, function(data){
+                    url = data.data.file_url + case_param();
+                    event.preventDefault();
+                    editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
+                });
+
+            };
+            reader.readAsDataURL(blob);
+        } else {
+            notify_error('Unsupported direct paste of this item. Use datastore to upload.');
+        }
+      }
+    }
+}
 
 var sh_ext = showdown.extension('bootstrap-tables', function () {
   return [{
@@ -118,7 +197,8 @@ editor.getSession().on("change", function () {
     target = document.getElementById('targetDiv'),
     converter = new showdown.Converter({
         tables: true,
-        extensions: ['bootstrap-tables']
+        extensions: ['bootstrap-tables'],
+        parseImgDimensions: true
     }),
     html = converter.makeHtml(editor.getSession().getValue());
 
