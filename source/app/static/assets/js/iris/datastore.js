@@ -82,13 +82,16 @@ function build_ds_tree(data, tree_node) {
                 score: 1,
                 meta: data[node].file_description
             });
+            icon = '';
             if (data[node].file_is_ioc) {
                 icn_content = 'fa-solid fa-virus-covid text-danger';
-                icon = '<i class="fa-solid fa-virus-covid text-danger mr-1" title="File is an IOC"></i>';
-            } else if (data[node].file_is_evidence) {
+                icon += '<i class="fa-solid fa-virus-covid text-danger mr-1" title="File is an IOC"></i>';
+            }
+            if (data[node].file_is_evidence) {
                 icn_content = 'fa-solid fa-file-shield text-success';
-                icon = '<i class="fa-solid fa-file-shield text-success mr-1" title="File is an evidence"></i>';
-            } else {
+                icon += '<i class="fa-solid fa-file-shield text-success mr-1" title="File is an evidence"></i>';
+            }
+            if (icon.length === 0) {
                 icn_content = 'fa-regular fa-file';
                 icon = '<i class="fa-regular fa-file mr-1" title="Regular file"></i>';
             }

@@ -355,6 +355,7 @@ def datastore_add_file_as_evidence(dsf, caseid):
         crf.date_added = datetime.datetime.now()
         crf.filename = dsf.file_original_name
         crf.file_size = dsf.file_size
+        crf.user_id = current_user.id
 
         db.session.add(crf)
         db.session.commit()
