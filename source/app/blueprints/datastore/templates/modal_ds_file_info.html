@@ -22,6 +22,9 @@
                 <dt class="col-sm-3">Storage UUID: </dt>
                 <dd class="col-sm-8">dsf-{{ file.file_uuid }}</dd>
 
+                <dt class="col-sm-3">Tags: </dt>
+                <dd class="col-sm-8">{% for tag in file.file_tags.split(',') %} <div class="badge badge-light">{{ tag }}</div> {% endfor %}</dd>
+
                 <dt class="col-sm-3">SHA256: </dt>
                 <dd class="col-sm-8">{{ file.file_sha256 }}</dd>
 
