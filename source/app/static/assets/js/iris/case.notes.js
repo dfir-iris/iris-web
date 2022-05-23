@@ -294,6 +294,7 @@ var sh_ext = showdown.extension('bootstrap-tables', function () {
   }];
 });
 
+var note_editor;
 /* Fetch the edit modal with content from server */
 function note_detail(id) {
     url = '/case/notes/' + id + "/modal" + case_param();
@@ -304,58 +305,101 @@ function note_detail(id) {
              return false;
         }
 
-        var editor = ace.edit("editor_detail",
+        note_editor = ace.edit("editor_detail",
             {
                 autoScrollEditorIntoView: true,
                 minLines: 4
             });
 
         if ($("#editor_detail").attr("data-theme") != "dark") {
-            editor.setTheme("ace/theme/tomorrow");
+            note_editor.setTheme("ace/theme/tomorrow");
         } else {
-            editor.setTheme("ace/theme/tomorrow_night");
+            note_editor.setTheme("ace/theme/tomorrow_night");
         }
-        editor.session.setMode("ace/mode/markdown");
-        editor.renderer.setShowGutter(true);
-        editor.setOption("showLineNumbers", true);
-        editor.setOption("showPrintMargin", false);
-        editor.setOption("displayIndentGuides", true);
-        editor.setOption("maxLines", "Infinity");
-        editor.session.setUseWrapMode(true);
-        editor.setOption("indentedSoftWrap", false);
-        editor.renderer.setScrollMargin(8, 5)
-        editor.setOption("enableBasicAutocompletion", true);
-        editor.commands.addCommand({
+        note_editor.session.setMode("ace/mode/markdown");
+        note_editor.renderer.setShowGutter(true);
+        note_editor.setOption("showLineNumbers", true);
+        note_editor.setOption("showPrintMargin", false);
+        note_editor.setOption("displayIndentGuides", true);
+        note_editor.setOption("maxLines", "Infinity");
+        note_editor.session.setUseWrapMode(true);
+        note_editor.setOption("indentedSoftWrap", false);
+        note_editor.renderer.setScrollMargin(8, 5)
+        note_editor.setOption("enableBasicAutocompletion", true);
+        note_editor.commands.addCommand({
             name: 'save',
             bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
             exec: function(editor) {
                 save_note(this);
             }
         })
+        note_editor.commands.addCommand({
+            name: 'bold',
+            bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
+            exec: function(editor) {
+                editor.insertSnippet('**${1:$SELECTION}**');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'italic',
+            bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
+            exec: function(editor) {
+                editor.insertSnippet('*${1:$SELECTION}*');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'head_1',
+            bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
+            exec: function(editor) {
+                editor.insertSnippet('# ${1:$SELECTION}');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'head_2',
+            bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
+            exec: function(editor) {
+                editor.insertSnippet('## ${1:$SELECTION}');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'head_3',
+            bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
+            exec: function(editor) {
+                editor.insertSnippet('### ${1:$SELECTION}');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'head_4',
+            bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
+            exec: function(editor) {
+                editor.insertSnippet('#### ${1:$SELECTION}');
+            }
+        });
+
         var textarea = $('#note_content');
-        editor.getSession().on("change", function () {
+        note_editor.getSession().on("change", function () {
             $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
             $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
 
-            textarea.val(editor.getSession().getValue());
+            textarea.val(note_editor.getSession().getValue());
             target = document.getElementById('targetDiv'),
                 converter = new showdown.Converter({
                     tables: true,
                     extensions: ['bootstrap-tables']
                 }),
 
-                html = converter.makeHtml(editor.getSession().getValue());
+                html = converter.makeHtml(note_editor.getSession().getValue());
 
             target.innerHTML = html;
         });
 
-        textarea.val(editor.getSession().getValue());
+        textarea.val(note_editor.getSession().getValue());
         target = document.getElementById('targetDiv'),
             converter = new showdown.Converter({
                 tables: true,
                 extensions: ['bootstrap-tables']
             }),
-            html = converter.makeHtml(editor.getSession().getValue());
+            html = converter.makeHtml(note_editor.getSession().getValue());
 
         target.innerHTML = html;
 
