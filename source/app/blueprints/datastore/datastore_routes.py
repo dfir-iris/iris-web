@@ -104,6 +104,15 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
     return render_template("modal_ds_file.html", form=form, file=None, dsp=dsp)
 
 
+@datastore_blueprint.route('/datastore/filter-help/modal', methods=['GET'])
+@login_required
+def datastore_filter_help_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    return render_template("modal_help_filter_ds.html")
+
+
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>/modal', methods=['GET'])
 @login_required
 def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):

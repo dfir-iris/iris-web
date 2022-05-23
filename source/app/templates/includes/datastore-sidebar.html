@@ -35,23 +35,7 @@
 								<button class="btn btn-sm btn-light ml-2 pt-2" onclick="reset_ds_files_filter();">
 									   Reset
 								</button>
-								<div class="ml-1 mt-1 fa-regular text-dark fa-circle-question" title="Filter help" data-toggle="popover" data-html="true" id="popover_ft_files_help"
-                                                                                  data-trigger="focus" style="cursor: pointer;" data-container="body"
-                                                                                  data-content="<p>Files can be filtered thanks to simple queries. The query schema is :  <code>target_element:search_value AND target_element2:search_value2</code>.<br/>
-                                There is no <code>OR</code> condition and searching without target does not work.
-                                <p>The following target elements can be used to filter :</p>
-                                <ul>
-                                    <li><code>name</code>: Name of the file</li>
-                                    <li><code>storage_name</code>: Name of the file on the FS</li>
-                                    <li><code>tag</code>: Tag of the file</li>
-                                    <li><code>description</code>: Description of the file</li>
-                                    <li><code>is_ioc</code> : Set to any value to filter files which are IOCs</li>
-                                    <li><code>is_evidence</code>: Set to any value to filter files which are evidences</li>
-                                    <li><code>has_password</code>: Set to any value to filter files which have passwords</li>
-                                </ul>
-                                The dates filters uses the same guessing as the date parser in events, so a lots of format are handled.<br/>
-                                Example of filter :
-                                <code>name: .exe AND is_ioc: true</code>"></div>
+								<div class="ml-1 mt-1 fa-regular text-dark fa-circle-question" title="Filter help" onclick="show_ds_filter_help();"></div>
 							</div>
 						</div>
 						<div class="col-2 justify-content-end">

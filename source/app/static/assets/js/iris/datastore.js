@@ -30,7 +30,6 @@ function load_datastore() {
             build_ds_tree(data.data, 'ds-tree-root');
             reparse_activate_tree();
             show_datastore();
-            $('[data-toggle="popover"]').popover();
         }
     });
 }
@@ -574,5 +573,15 @@ function filter_ds_files() {
 function reset_ds_files_filter() {
     ds_filter.setValue("");
     load_datastore();
+}
+
+function show_ds_filter_help() {
+    $('#modal_help').load('/datastore/filter-help/modal' + case_param(), function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_help').modal('show');
+    });
 }
 
