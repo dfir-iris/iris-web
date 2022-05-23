@@ -279,6 +279,12 @@ function save_ds_file(node, file_id) {
     })
 }
 
+function refresh_ds(){
+    reset_ds_file_view();
+    load_datastore();
+    notify_success('Datastore refreshed');
+}
+
 function upload_interactive_data(data_blob, filename, completion_callback) {
 
     var data_sent = Object()
