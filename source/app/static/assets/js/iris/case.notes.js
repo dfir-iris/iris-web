@@ -429,7 +429,7 @@ function handle_ed_paste(event) {
       }
 
       if (item.kind === 'file') {
-
+        console.log(item.type);
         const blob = item.getAsFile();
 
         if (blob !== null) {

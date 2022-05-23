@@ -288,9 +288,8 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
     def ds_store_file_b64(self, filename, file_content, dsp, cid):
         try:
-
+            filename = filename.rstrip().replace('\t', '').replace('\n', '').replace('\r', '')
             file_hash = stream_sha256sum(file_content)
-            print(file_hash)
 
             dsf = DataStoreFile.query.filter(DataStoreFile.file_sha256 == file_hash).first()
             if dsf:
