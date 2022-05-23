@@ -112,5 +112,8 @@
         whiteList: false,
         selectOnHover: false,
     });
-
+    $("#input_upload_ds_file").on("change", function(e) {
+        var file = e.target.files[0].name;
+        $('#file_original_name').val(file);
+    });
 </script>
