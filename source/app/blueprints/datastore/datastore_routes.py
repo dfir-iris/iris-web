@@ -331,7 +331,7 @@ def datastore_add_interactive_file(caseid: int):
 
         dsf_sc, existed = dsf_schema.ds_store_file_b64(filename, file_content, dsp, caseid)
 
-        if not dsf_sc:
+        if not existed:
             msg = "File saved in datastore"
 
         else:
