@@ -435,8 +435,10 @@ function handle_ed_paste(event) {
         if (blob !== null) {
             const reader = new FileReader();
             reader.onload = (e) => {
+                notify_success('The file is uploading in background. Don\'t leave the page');
                 upload_interactive_data(e.target.result, filename, function(data){
                     url = data.data.file_url + case_param();
+                    event.preventDefault();
                     note_editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
                 });
 
