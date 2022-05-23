@@ -35,8 +35,8 @@
 								<button class="btn btn-sm btn-light ml-2 pt-2" onclick="reset_ds_files_filter();">
 									   Reset
 								</button>
-								<i class="ml-1 mt-1 fa-regular text-dark fa-circle-question" title="Filter help" data-toggle="popover" data-html="true"
-                                                                                  data-trigger="hover" style="cursor: pointer;"
+								<div class="ml-1 mt-1 fa-regular text-dark fa-circle-question" title="Filter help" data-toggle="popover" data-html="true" id="popover_ft_files_help"
+                                                                                  data-trigger="focus" style="cursor: pointer;" data-container="body"
                                                                                   data-content="<p>Files can be filtered thanks to simple queries. The query schema is :  <code>target_element:search_value AND target_element2:search_value2</code>.<br/>
                                 There is no <code>OR</code> condition and searching without target does not work.
                                 <p>The following target elements can be used to filter :</p>
@@ -51,7 +51,7 @@
                                 </ul>
                                 The dates filters uses the same guessing as the date parser in events, so a lots of format are handled.<br/>
                                 Example of filter :
-                                <code>name: .exe AND is_ioc: true</code>"></i>
+                                <code>name: .exe AND is_ioc: true</code>"></div>
 							</div>
 						</div>
 						<div class="col-2 justify-content-end">

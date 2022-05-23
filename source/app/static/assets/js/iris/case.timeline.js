@@ -708,6 +708,15 @@ function get_or_filter_tm() {
     }
 }
 
+function show_timeline_filter_help() {
+    $('#modal_help').load('/case/timeline/filter-help/modal' + case_param(), function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_help').modal('show');
+    });
+}
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
