@@ -378,7 +378,8 @@ function note_detail(id) {
 
         var textarea = $('#note_content');
         note_editor.getSession().on("change", function () {
-            $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
+            $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
             $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
 
             textarea.val(note_editor.getSession().getValue());
@@ -454,12 +455,14 @@ function save_note(this_item) {
     .done((data) => {
         if (data.status == 'success') {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
-            $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
         }
     })
     .fail(function (error) {
         $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
-        $('#last_saved').text('Error saving !').addClass('badge-danger').removeClass('badge-success');
+        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-xmark");
+        $('#last_saved').addClass('btn-danger').removeClass('btn-success');
         propagate_form_api_errors(error.responseJSON.data);
     })
 }
@@ -468,8 +471,10 @@ function save_note(this_item) {
 function edit_innote() {
     $('#container_note_content').toggle();
     if ($('#container_note_content').is(':visible')) {
+        $('#notes_edition_btn').show(100);
         $('#ctrd_notesum').removeClass('col-md-12').addClass('col-md-6');
     } else {
+        $('#notes_edition_btn').hide();
         $('#ctrd_notesum').removeClass('col-md-6').addClass('col-md-12');
     }
     return false;
