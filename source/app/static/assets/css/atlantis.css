@@ -8420,6 +8420,10 @@ body[data-background-color="dark"] .badge-danger {
     clear: both;
 }
 
+.timeline-panel.timeline-selected {
+    box-shadow: 0px 0px 5px 5px rgba(255, 160, 36,.5),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12) !important;
+}
+
 .timeline>li>.timeline-panel {
     width: 87%;
     float: left;
@@ -15630,6 +15634,18 @@ body[data-background-color="dark"] .modal-footer {
     width: 100%;
     padding: 20px; } }
 
+.btn-conditional {
+    display: none
+}
+
+.btn-conditional-2 {
+    display: none;
+    box-shadow: 0px 0px 4px #222;
+}
+
+.btn-active {
+    background: rgba(255, 160, 36,.5) !important;
+}
 
 .ds-sidebar {
   position: fixed;
@@ -15700,9 +15716,25 @@ body[data-background-color="dark"] .modal-footer {
     width: 100%;
     padding: 20px; } }
 
+.btn_over_page_delete {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 500px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
 .btn_over_page_a {
     position: fixed; /* Fixed/sticky position */
-    bottom: 220px; /* Place the button at the bottom of the page */
+    bottom: 420px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
+.div_btn_over_page_a {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 420px; /* Place the button at the bottom of the page */
     right: 20px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
@@ -15710,7 +15742,7 @@ body[data-background-color="dark"] .modal-footer {
 
 .btn_over_page_b {
     position: fixed; /* Fixed/sticky position */
-    bottom: 170px; /* Place the button at the bottom of the page */
+    bottom: 370px; /* Place the button at the bottom of the page */
     right: 20px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
@@ -15718,7 +15750,7 @@ body[data-background-color="dark"] .modal-footer {
 
 .btn_over_page_c {
     position: fixed; /* Fixed/sticky position */
-    bottom: 120px; /* Place the button at the bottom of the page */
+    bottom: 320px; /* Place the button at the bottom of the page */
     right: 20px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
@@ -15726,13 +15758,45 @@ body[data-background-color="dark"] .modal-footer {
 
 .btn_over_page_d {
     position: fixed; /* Fixed/sticky position */
-    bottom: 70px; /* Place the button at the bottom of the page */
+    bottom: 270px; /* Place the button at the bottom of the page */
     right: 20px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
 
 .btn_over_page_e {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 220px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
+.btn_over_page_f {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 170px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
+.btn_over_page_g {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 120px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
+.btn_over_page_h {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 70px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
+.btn_over_page_i {
     position: fixed; /* Fixed/sticky position */
     bottom: 20px; /* Place the button at the bottom of the page */
     right: 20px; /* Place the button 30px from the right */
@@ -16030,7 +16094,6 @@ td.dt-nowrap { white-space: nowrap }
     font-weight: 700;
     font-size: 13px;
 }
-
 
 .tree {
     min-height:20px;

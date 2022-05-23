@@ -35,6 +35,7 @@ from packaging import version
 from pathlib import Path
 
 from app import app
+from app import cache
 from app import celery
 from app import db
 from app import socket_io
@@ -169,10 +170,20 @@ def is_updates_available():
 
     release_version = release.get('name')
 
+    cache.delete('iris_has_updates')
+
+    srv_settings = ServerSettings.query.first()
+    if not srv_settings:
+        raise Exception('Unable to fetch server settings. Please reach out for help')
+
     if version.parse(current_version) < version.parse(release_version):
+        srv_settings.has_updates_available = True
+        db.session.commit()
         return True, f'# New version {release_version} available\n\n{release.get("body")}', release
 
     else:
+        srv_settings.has_updates_available = False
+        db.session.commit()
         return False, f'**Current server is up-to-date with {release_version}**', None
 
 
@@ -215,8 +226,7 @@ def init_server_update(release_config):
         return False
 
     update_log('Backing up current version')
-    #has_error = update_backup_current_version()
-    has_error = False
+    has_error = update_backup_current_version()
     if has_error:
         update_log_error('Aborting upgrades - see previous errors')
         notify_update_failed()
@@ -287,8 +297,10 @@ def init_server_update(release_config):
 
     if 'iriswebapp' in updates_config.get('scope'):
 
-        call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
-                         need_reboot=updates_config.get('need_app_reboot'))
+        if call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+                            need_reboot=updates_config.get('need_app_reboot')):
+
+            socket_io.stop()
 
     return True
 
@@ -502,7 +514,7 @@ def verify_assets_signatures(target_directory, release_assets_info):
     update_log("Importing DFIR-IRIS GPG key")
     gpg = gnupg.GPG()
 
-    with open('dependencies/DFIR-IRIS_pkey.asc', 'rb') as pkey:
+    with open(app.config.get("RELEASE_SIGNATURE_KEY"), 'rb') as pkey:
         import_result = gpg.import_keys(pkey.read())
 
     if import_result.count < 1:

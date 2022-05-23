@@ -23,7 +23,7 @@ unzip -q $1 -d /tmp/iris_updates
 echo "Done"
 
 echo "Applying updates"
-rsync -av --checksum $TMP_DIR/$3/source/ $2
+rsync -av --checksum $TMP_DIR/source/ $2
 
 echo "Upgrading packages"
 cd $2
