@@ -22,7 +22,7 @@ function load_datastore() {
             name: "Do filter",
             bindKey: { win: "Enter", mac: "Enter" },
             exec: function (editor) {
-                      filter_files();
+                      filter_ds_files();
             }
     });
 
@@ -554,10 +554,10 @@ function parse_filter(str_filter, keywords) {
     item = split_bool(ita);
 
     if (item != null) {
-      if (!(keyword in parsed_filter)) {
+      if (!(keyword in parsed_filter_ds)) {
         parsed_filter_ds[keyword] = [];
       }
-      if (!parsed_filter[keyword].includes(item)) {
+      if (!parsed_filter_ds[keyword].includes(item)) {
         parsed_filter_ds[keyword].push(item.trim());
       }
 
@@ -575,9 +575,9 @@ function parse_filter(str_filter, keywords) {
 function filter_ds_files() {
 
     ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password'];
-    parsed_filter = {};
+    parsed_filter_ds = {};
     parse_filter(ds_filter.getValue(), ds_keywords);
-    filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
+    filter_query = encodeURIComponent(JSON.stringify(parsed_filter_ds));
 
     $('#btn_filter_ds_files').text('Searching..');
     get_request_data_api("/datastore/list/filter",{ 'q': filter_query })

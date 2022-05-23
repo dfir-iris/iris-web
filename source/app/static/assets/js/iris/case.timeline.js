@@ -604,23 +604,6 @@ function timelineToCsvWithUI(){
     download_file("iris_timeline.csv", "text/csv", csv_data);
 }
 
-
-function split_bool(split_str) {
-    and_split = split_str.split(' AND ');
-
-    if (and_split[0]) {
-      return and_split[0];
-    }
-
-    or_split = split_str.split(' OR ');
-
-    if (or_split[0]) {
-      return or_split[0].trim();
-    }
-
-    return null;
-}
-
 var parsed_filter = {};
 var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'startDate', 'endDate'];
 

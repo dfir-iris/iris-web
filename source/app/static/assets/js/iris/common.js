@@ -848,6 +848,17 @@ $('#user_context').selectpicker({liveSearch: true,
 });
 $('#user_context').selectpicker('val', get_caseid());
 
+function split_bool(split_str) {
+    and_split = split_str.split(' AND ');
+
+    if (and_split[0]) {
+      return and_split[0];
+    }
+
+    return null;
+}
+
+
 $(document).ready(function(){
     notify_redirect();
     update_time();
