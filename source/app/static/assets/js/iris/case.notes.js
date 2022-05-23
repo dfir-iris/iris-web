@@ -311,6 +311,10 @@ function note_detail(id) {
                 minLines: 4
             });
 
+        $('#editor_detail').on('paste', (event) => {
+            handle_ed_paste(event);
+        });
+
         if ($("#editor_detail").attr("data-theme") != "dark") {
             note_editor.setTheme("ace/theme/tomorrow");
         } else {
@@ -386,7 +390,8 @@ function note_detail(id) {
             target = document.getElementById('targetDiv'),
                 converter = new showdown.Converter({
                     tables: true,
-                    extensions: ['bootstrap-tables']
+                    extensions: ['bootstrap-tables'],
+                    parseImgDimensions: true
                 }),
 
                 html = converter.makeHtml(note_editor.getSession().getValue());
@@ -398,7 +403,8 @@ function note_detail(id) {
         target = document.getElementById('targetDiv'),
             converter = new showdown.Converter({
                 tables: true,
-                extensions: ['bootstrap-tables']
+                extensions: ['bootstrap-tables'],
+                parseImgDimensions: true
             }),
             html = converter.makeHtml(note_editor.getSession().getValue());
 
@@ -408,6 +414,39 @@ function note_detail(id) {
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
         $('#modal_note_detail').modal({ show: true, backdrop: 'static', keyboard: false });
     });
+}
+
+function handle_ed_paste(event) {
+    filename = null;
+    const { items } = event.originalEvent.clipboardData;
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+
+      if (item.kind === 'string') {
+        item.getAsString(function (s){
+            filename = s;
+        });
+      }
+
+      if (item.kind === 'file') {
+
+        const blob = item.getAsFile();
+
+        if (blob !== null) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                upload_interactive_data(e.target.result, filename, function(data){
+                    url = data.data.file_url + case_param();
+                    note_editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
+                });
+
+            };
+            reader.readAsDataURL(blob);
+        } else {
+            notify_error('Unsupported direct paste of this item. Use datastore to upload.');
+        }
+      }
+    }
 }
 
 /* Delete a group of the dashboard */

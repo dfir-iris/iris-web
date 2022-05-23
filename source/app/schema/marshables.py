@@ -17,6 +17,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
+from flask_login import current_user
+
 from pathlib import Path
 
 import dateutil.parser
@@ -35,7 +38,10 @@ from sqlalchemy import func
 import pyminizip
 
 from app import app
+from app import db
 from app import ma
+from app.datamgmt.datastore.datastore_db import datastore_get_interactive_path_node
+from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.models import AnalysisStatus
 from app.models import AssetsType
@@ -57,6 +63,7 @@ from app.models import TaskStatus
 from app.models import Tlp
 from app.models import User
 from app.util import file_sha256sum
+from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
 
@@ -278,6 +285,52 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         model = DataStoreFile
         include_fk = True
         load_instance = True
+
+    def ds_store_file_b64(self, filename, file_content, dsp, cid):
+        try:
+
+            file_hash = stream_sha256sum(file_content)
+            print(file_hash)
+
+            dsf = DataStoreFile.query.filter(DataStoreFile.file_sha256 == file_hash).first()
+            if dsf:
+                exists = True
+
+            else:
+                dsf = DataStoreFile()
+                dsf.file_original_name = filename
+                dsf.file_description = "Pasted in notes"
+                dsf.file_tags = "notes"
+                dsf.file_password = ""
+                dsf.file_is_ioc = False
+                dsf.file_is_evidence = False
+                dsf.file_case_id = cid
+                dsf.file_date_added = datetime.datetime.now()
+                dsf.added_by_user_id = current_user.id
+                dsf.file_local_name = 'tmp_xc'
+                dsf.file_parent_id = dsp.path_id
+                dsf.file_sha256 = file_hash
+
+                db.session.add(dsf)
+                db.session.commit()
+
+                dsf.file_local_name = datastore_get_standard_path(dsf, cid).as_posix()
+                db.session.commit()
+
+                with open(dsf.file_local_name, 'wb') as fout:
+                    fout.write(file_content)
+
+                exists = False
+
+        except Exception as e:
+            raise marshmallow.exceptions.ValidationError(
+                str(e),
+                field_name='file_password'
+            )
+
+        setattr(self, 'file_local_path', str(dsf.file_local_name))
+
+        return dsf, exists
 
     def ds_store_file(self, file_storage, location, is_ioc, password):
         if not file_storage.filename:

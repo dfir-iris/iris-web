@@ -259,7 +259,6 @@ function info_ds_file(node) {
     });
 }
 
-
 function save_ds_file(node, file_id) {
     var formData = new FormData($('#form_new_ds_file')[0]);
     formData.append('file_content', $('#input_upload_ds_file').prop('files')[0]);
@@ -278,6 +277,23 @@ function save_ds_file(node, file_id) {
             load_datastore();
         }
     })
+}
+
+function upload_interactive_data(data_blob, filename, completion_callback) {
+
+    var data_sent = Object()
+    data_sent["csrf_token"] = $('#csrf_token').val();
+    data_sent["file_content"] = data_blob.split(';base64,')[1];
+    data_sent["file_original_name"] = filename;
+
+    post_request_api('/datastore/file/add-interactive', JSON.stringify(data_sent), true)
+    .done(function (data){
+        if(notify_auto_api(data)) {
+            if (completion_callback !== undefined) {
+                completion_callback(data);
+            }
+        }
+    });
 }
 
 function toggle_select_file() {
@@ -418,7 +434,6 @@ function delete_ds_file(file_id) {
     });
 }
 
-
 function delete_bulk_ds_file() {
 
     selected_files = $(".file-selected");
@@ -520,7 +535,6 @@ function reparse_activate_tree_selection() {
 var parsed_filter_ds = {};
 var ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password'];
 
-
 function parse_filter(str_filter, keywords) {
   for (var k = 0; k < keywords.length; k++) {
   	keyword = keywords[k];
@@ -552,7 +566,6 @@ function parse_filter(str_filter, keywords) {
   }
   return true;
 }
-
 
 function filter_ds_files() {
 

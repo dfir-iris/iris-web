@@ -51,9 +51,11 @@
                 <dt class="col-sm-3 mt-4">Modification history: </dt>
                 <dd class="mt-4">
                 <ul>
-                {% for mod in file.modification_history %}
-                    <li>{{ mod|format_datetime('%Y-%m-%d %H:%M') }} - {{ file.modification_history[mod].action }} by {{ file.modification_history[mod].user }} </li>
-                {% endfor %}
+                {% if file.modification_history %}
+                    {% for mod in file.modification_history %}
+                        <li>{{ mod|format_datetime('%Y-%m-%d %H:%M') }} - {{ file.modification_history[mod].action }} by {{ file.modification_history[mod].user }} </li>
+                    {% endfor %}
+                {% endif %}
                 </ul>
                 </dd>
             </dl>

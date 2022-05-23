@@ -19,6 +19,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import base64
 import json
 import urllib.parse
 from pathlib import Path
@@ -41,12 +42,14 @@ from app.datamgmt.datastore.datastore_db import datastore_delete_file
 from app.datamgmt.datastore.datastore_db import datastore_delete_node
 from app.datamgmt.datastore.datastore_db import datastore_filter_tree
 from app.datamgmt.datastore.datastore_db import datastore_get_file
+from app.datamgmt.datastore.datastore_db import datastore_get_interactive_path_node
 from app.datamgmt.datastore.datastore_db import datastore_get_local_file_path
 from app.datamgmt.datastore.datastore_db import datastore_get_path_node
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.forms import ModalDSFileForm
+from app.models import DataStoreFile
 from app.schema.marshables import DSFileSchema
 from app.util import add_obj_history_entry
 from app.util import api_login_required
@@ -303,6 +306,38 @@ def datastore_add_file(cur_id: int, caseid: int):
             msg_added_as += ' and evidence' if len(msg_added_as) > 0 else 'and added in evidence'
 
         return response_success(f'File saved in datastore {msg_added_as}')
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages)
+
+
+@datastore_blueprint.route('/datastore/file/add-interactive', methods=['POST'])
+@api_login_required
+def datastore_add_interactive_file(caseid: int):
+
+    dsp = datastore_get_interactive_path_node(caseid)
+    if not dsp:
+        return response_error('Invalid path node for this case')
+
+    dsf_schema = DSFileSchema()
+    try:
+        js_data = request.json
+
+        try:
+            file_content = base64.b64decode(js_data.get('file_content'))
+            filename = js_data.get('file_original_name')
+        except Exception as e:
+            return response_error(msg=str(e))
+
+        dsf_sc, existed = dsf_schema.ds_store_file_b64(filename, file_content, dsp, caseid)
+
+        if not dsf_sc:
+            msg = "File saved in datastore"
+
+        else:
+            msg = "File already existing in datastore. Using it."
+
+        return response_success(msg, data={"file_url": f"/datastore/file/view/{dsf_sc.file_id}"})
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)

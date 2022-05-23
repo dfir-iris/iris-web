@@ -416,6 +416,11 @@ def file_sha256sum(file_path):
         return sha256_hash.hexdigest().upper()
 
 
+def stream_sha256sum(stream):
+
+    return hashlib.sha256(stream).hexdigest().upper()
+
+
 @app.template_filter()
 def format_datetime(value, frmt):
     return datetime.datetime.fromtimestamp(float(value)).strftime(frmt)

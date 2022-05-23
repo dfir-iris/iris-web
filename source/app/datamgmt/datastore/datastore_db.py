@@ -38,7 +38,7 @@ from app.models import IocType
 from app.models import Tlp
 
 
-def ds_list_tree(cid):
+def datastore_get_root(cid):
     dsp_root = DataStorePath.query.filter(
         and_(DataStorePath.path_case_id == cid,
              DataStorePath.path_is_root == True
@@ -53,6 +53,11 @@ def ds_list_tree(cid):
                  DataStorePath.path_is_root == True
                  )
         ).first()
+
+    return dsp_root
+
+def ds_list_tree(cid):
+    dsp_root = datastore_get_root(cid)
 
     dsp = DataStorePath.query.filter(
         and_(DataStorePath.path_case_id == cid,
@@ -266,6 +271,26 @@ def datastore_get_path_node(node_id, cid):
     ).first()
 
 
+def datastore_get_interactive_path_node(cid):
+    dsp = DataStorePath.query.filter(
+        DataStorePath.path_name == 'Notes Upload',
+        DataStorePath.path_case_id == cid
+    ).first()
+
+    if not dsp:
+        dsp_root = datastore_get_root(cid)
+        dsp = DataStorePath()
+        dsp.path_case_id = cid
+        dsp.path_parent_id = dsp_root.path_id
+        dsp.path_name = 'Notes Upload'
+        dsp.path_is_root = False
+
+        db.session.add(dsp)
+        db.session.commit()
+
+    return dsp
+
+
 def datastore_get_standard_path(datastore_file, cid):
     root_path = Path(app.config['DATASTORE_PATH'])
 
@@ -444,8 +469,6 @@ def datastore_filter_tree(filter_d, caseid):
     dsf = DataStoreFile.query.filter(
         condition
     ).all()
-
-    files_filter = [file.file_id for file in dsf]
 
     dsp_root = dsp_root
     droot_id = f"d-{dsp_root.path_id}"
