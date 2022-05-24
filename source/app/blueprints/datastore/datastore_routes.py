@@ -183,6 +183,9 @@ def datastore_update_file(cur_id: int, caseid: int):
                 dsf_sc.file_is_ioc,
                 dsf_sc.file_password)
 
+            if dsf_sc.file_is_ioc and not dsf_sc.file_password:
+                dsf_sc.file_password = 'infected'
+
             db.session.commit()
 
         msg_added_as = ''
