@@ -284,6 +284,9 @@ def datastore_add_file(cur_id: int, caseid: int):
         dsf_sc.file_case_id = caseid
         add_obj_history_entry(dsf_sc, 'created')
 
+        if dsf_sc.file_is_ioc and not dsf_sc.file_password:
+            dsf_sc.file_password = 'infected'
+
         db.session.add(dsf_sc)
         db.session.commit()
 
