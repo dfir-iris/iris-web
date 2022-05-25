@@ -554,8 +554,8 @@ class ServerSettings(db.Model):
     enable_updates_check = Column(Boolean)
     password_policy_min_length = Column(Integer)
     password_policy_upper_case = Column(Boolean)
-    password_policy_digit = Column(Boolean)
     password_policy_lower_case = Column(Boolean)
+    password_policy_digit = Column(Boolean)
     password_policy_special_chars = Column(Text)
 
 
