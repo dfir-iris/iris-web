@@ -437,6 +437,11 @@ function handle_ed_paste(event) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 notify_success('The file is uploading in background. Don\'t leave the page');
+
+                if (filename === null) {
+                    filename = random_filename(25);
+                }
+
                 upload_interactive_data(e.target.result, filename, function(data){
                     url = data.data.file_url + case_param();
                     event.preventDefault();
