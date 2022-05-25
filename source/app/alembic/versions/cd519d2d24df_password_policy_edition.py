@@ -30,7 +30,7 @@ def upgrade():
 
     for col in columns:
         if not _table_has_column('server_settings', col):
-            op.add_column('cases_events',
+            op.add_column('server_settings',
                           sa.Column(col, columns[col])
                           )
 
