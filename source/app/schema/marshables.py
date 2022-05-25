@@ -33,6 +33,7 @@ from sqlalchemy import func
 from app import app
 from app import ma
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
+from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.models import AnalysisStatus
 from app.models import AssetsType
 from app.models import CaseAssets
@@ -529,18 +530,31 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load()
     def verify_password(self, data, **kwargs):
+        server_settings = get_srv_settings()
         password = data.get('user_password')
         if data.get('user_password') == '' and data.get('user_id') != 0:
             # Update
             data.pop('user_password')
 
         else:
-            if not re.match('\d.*[A-Z]|[A-Z].*\d', password):
-                raise marshmallow.exceptions.ValidationError('Password must contain 1 capital letter and 1 number',
-                                                             field_name="user_password")
+            password_error = ""
+            if len(password) < server_settings.password_policy_min_length:
+                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters."
 
-            if len(password) < 12:
-                raise marshmallow.exceptions.ValidationError('Password must be longer than 12 characters',
+            if server_settings.password_policy_upper_case:
+                if not any(char.isupper() for char in password):
+                    password_error += "Password must contain uppercase char."
+
+            if server_settings.password_policy_lower_case:
+                if not any(char.islower() for char in password):
+                    password_error += "Password must contain lowercase char."
+
+            if len(server_settings.password_policy_special_chars > 0):
+                if not any(char in server_settings.password_policy_special_chars for char in password):
+                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]."
+
+            if len(password_error) > 0:
+                raise marshmallow.exceptions.ValidationError(password_error,
                                                              field_name="user_password")
 
         return data
