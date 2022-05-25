@@ -39,7 +39,14 @@
                             <li class="text-sm"><small>Must contain at least one of : {{ server_settings.password_policy_special_chars }}</small></li>
                         {% endif %}
                     </ul>
-                    {{ form.user_password(class='form-control',  autocomplete="off") }}
+                    <div class="input-group mb-3">
+                        {{ form.user_password(class='form-control', autocomplete="off") }}
+                        <div class="input-group-append">
+                            <span class="input-group-text">
+                                <div class="user_show_password" id="toggle_user_password"><i class="fa-solid fa-eye"></i></div>
+                            </span>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-check mt-3">
                     <label class="form-check-label">
@@ -71,3 +78,11 @@
     </div>
 
 </div>
+
+<script>
+    $('#toggle_user_password').on('click', function (e) {
+        const type = $('#user_password').attr('type') === 'password' ? 'text' : 'password';
+        $('#user_password').attr('type', type);
+        $('#toggle_user_password > i').attr('class', type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash');
+    });
+</script>
