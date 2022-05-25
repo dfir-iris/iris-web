@@ -34,6 +34,25 @@ def upgrade():
                           sa.Column(col, columns[col])
                           )
 
+    t_ua = sa.Table(
+        'server_settings',
+        sa.MetaData(),
+        sa.Column('id', sa.Integer, primary_key=True),
+        sa.Column('password_policy_min_length', sa.Integer),
+        sa.Column('password_policy_upper_case', sa.Boolean),
+        sa.Column('password_policy_lower_case', sa.Boolean),
+        sa.Column('password_policy_digit', sa.Boolean),
+        sa.Column('password_policy_special_chars', sa.Text)
+    )
+    conn = op.get_bind()
+    conn.execute(t_ua.update().values(
+        password_policy_min_length=12,
+        password_policy_upper_case=True,
+        password_policy_lower_case=True,
+        password_policy_digit=True,
+        password_policy_special_chars=''
+    ))
+
     pass
 
 
