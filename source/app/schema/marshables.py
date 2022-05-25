@@ -547,6 +547,10 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
                 if not any(char.islower() for char in password):
                     password_error += "Password must contain lowercase char. "
 
+            if server_settings.password_policy_digit:
+                if not any(char.isdigit() for char in password):
+                    password_error += "Password must contain digit. "
+
             if len(server_settings.password_policy_special_chars) > 0:
                 if not any(char in server_settings.password_policy_special_chars for char in password):
                     password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
