@@ -82,7 +82,7 @@ def add_user_modal(caseid, url_redir):
     user = None
     form = AddUserForm()
     server_settings = get_srv_settings()
-
+    print(server_settings.password_policy_upper_case)
     return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
 
 
