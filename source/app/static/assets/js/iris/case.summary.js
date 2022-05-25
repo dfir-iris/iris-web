@@ -253,7 +253,10 @@ function sync_editor(no_check) {
                 if (data.data.crc32 != $('#fetched_crc').val()) {
                     // Content has changed remotely
                     // Check if we have changes locally
-                    local_crc = CRC32(st).toString();
+                    local_crc = crc32(st).toString();
+                    console.log('Content changed. Local CRC is ' + local_crc);
+                    console.log('Saved CRC is ' + $('#fetched_crc').val());
+                    console.log('Remote CRC is ' + data.data.crc32);
                     if (local_crc == $('#fetched_crc').val()) {
                         // No local change, we can sync and update local CRC
                         editor.getSession().setValue(data.data.case_description);
@@ -282,7 +285,8 @@ function sync_editor(no_check) {
                     // Check local change
                     local_crc = crc32(st).toString();
                     if (local_crc != $('#fetched_crc').val()) {
-                        console.log('Updating with CRC ' + local_crc);
+                        console.log('Local change. Old CRC is ' + local_crc);
+                        console.log('New CRC is ' + $('#fetched_crc').val());
                         var data = Object();
                         data['case_description'] = st;
                         data['csrf_token'] = $('#csrf_token').val();
@@ -297,7 +301,7 @@ function sync_editor(no_check) {
                                 if (data.status == 'success') {
                                     collaborator.save();
                                     $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
-                                    $('#fetched_crc').val(local_crc);
+                                    $('#fetched_crc').val(data.data);
                                     $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
                                 } else {
                                     notify_error("Unable to save content to remote server");

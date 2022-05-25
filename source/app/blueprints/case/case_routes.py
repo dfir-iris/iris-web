@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import binascii
+
 import marshmallow
 from flask import Blueprint
 from flask import redirect
@@ -142,7 +144,7 @@ def desc_fetch(caseid):
         return response_error('Invalid case ID')
 
     case.description = js_data.get('case_description')
-
+    crc = binascii.crc32(case.description.encode('utf-8'))
     db.session.commit()
     track_activity("updated summary", caseid)
 
@@ -154,7 +156,7 @@ def desc_fetch(caseid):
         }
         socket_io.emit('save', data, to=f"case-{caseid}")
 
-    return response_success("Summary updated")
+    return response_success("Summary updated", data=crc)
 
 
 @case_blueprint.route('/case/summary/fetch', methods=['GET'])
