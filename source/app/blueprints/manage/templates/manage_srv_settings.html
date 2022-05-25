@@ -105,6 +105,52 @@
                                             </label>
                                         </div>
                                     </div>
+                                    <h2 class="mt-4">Password Policy</h2>
+                                    <p>A password policy change applies to new or updated passwords.</p>
+                                    <div class="row mb-2">
+                                        <div class="col-4">
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        Minimum Password Length
+                                                    </span>
+                                                </div>
+                                                <input class="form-control" name="password_policy_min_length" placeholder="12" type="number" value="{{ settings.password_policy_min_length }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-8">
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        Include Special chars
+                                                    </span>
+                                                </div>
+                                                <input class="form-control" name="special_chars_policy" placeholder="Set empty to disable" type="text" value="{{ settings.password_policy_special_chars }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <label class="form-check-label">
+                                                    <input class="form-check-input" type="checkbox" id="password_policy_upper_case" name="password_policy_upper_case" {% if settings.password_policy_upper_case %}checked{% endif %}>
+                                                    <span class="form-check-sign">Must include uppercase char</span>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <label class="form-check-label">
+                                                    <input class="form-check-input" type="checkbox" id="password_policy_lower_case" name="password_policy_lower_case" {% if settings.password_policy_lower_case %}checked{% endif %}>
+                                                    <span class="form-check-sign">Must include lowercase char</span>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <label class="form-check-label">
+                                                    <input class="form-check-input" type="checkbox" id="password_policy_digit" name="password_policy_digit" {% if settings.password_policy_digit %}checked{% endif %}>
+                                                    <span class="form-check-sign">Must include digits</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                             </form>
                             <div class="float-right mt-4">
                                 <button class="btn btn-outline-primary float-right" id="save_srv_settings" type="button" onclick="update_settings()">Save changes</button>
