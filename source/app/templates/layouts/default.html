@@ -25,10 +25,11 @@
 	<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 	<link rel="stylesheet" href="/static/assets/css/suggestags.css">
 
-
     <!-- Specific CSS goes HERE -->
     {% block stylesheets %}{% endblock stylesheets %}
-
+	{% if current_user.in_dark_mode %}
+		<link rel="stylesheet" href="/static/assets/css/dark-theme.css">
+	{% endif %}
 </head>
 <body>
 	<div class="wrapper {% block layout %}{% endblock layout %}">
@@ -81,7 +82,6 @@
 
 	<!-- Atlantis JS -->
 	<script src="/static/assets/js/atlantis.min.js"></script>
-	{% if current_user.in_dark_mode %}<script src="/static/assets/js/dark-mode.js"></script>{% endif %}
 
 	<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 	<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"

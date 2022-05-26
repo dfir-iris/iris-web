@@ -48,6 +48,7 @@ from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_report_template
 from app.datamgmt.reporter.report_db import export_case_json
+from app.datamgmt.reporter.report_db import export_case_json_extended
 from app.iris_engine.utils.tracker import track_activity
 from app.models import User
 from app.models import UserActivity
@@ -191,7 +192,7 @@ def activity_fetch(caseid):
 @case_blueprint.route("/case/export", methods=['GET'])
 @api_login_required
 def export_case(caseid):
-    return response_success('', data=export_case_json(caseid))
+    return response_success('', data=export_case_json_extended(caseid))
 
 
 @case_blueprint.route('/case/tasklog/add', methods=['POST'])
