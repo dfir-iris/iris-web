@@ -237,15 +237,15 @@ body .modal-content {
 
 body .timeline-title,
 body .timeline-body {
-    color: #cac7c7;
+    color: #eee;
 }
 
 body .timeline-inverted {
-    color: #cac7c7;
+    color: #eee;
 }
 
 body .timeline-inverted .text-dark {
-    color: #cac7c7 !important;
+    color: #eee !important;
 }
 
 body .timeline-odd {
@@ -710,4 +710,29 @@ body .input-group-text {
 
 .modal-backdrop.show {
   opacity: 0.9;
+}
+
+.alert-std {
+  background-color: #444;
+}
+
+.accordion .card {
+  background: #444;
+  color: #fff;
+}
+
+.accordion.accordion-primary .card .card-header {
+  color: #fff;
+}
+
+pre {
+  color: #dbdbdb;
+}
+
+.secondary-header .nav-bottom .page-navigation.page-navigation-style-2 > .nav-item:hover > .nav-link, .secondary-header .nav-bottom .page-navigation.page-navigation-style-2 > .nav-item:focus > .nav-link {
+  background: #484848;
+}
+
+.text-muted {
+  color: #9f9f9f !important;
 }
