@@ -14,6 +14,10 @@ body .main-panel {
     color: #d9d6d6 !important;
 }
 
+.logo-header[data-background-color="blue"] {
+  background: #1a2035 !important;
+}
+
 body .card,
 body .row-card-no-pd,
 body .list-group-item,
@@ -439,6 +443,12 @@ body .select2-container--default .select2-selection--single .select2-selection__
 
 .quick-actions.quick-actions-primary .quick-actions-item {
   color: #74A4E1;
+}
+
+.quick-actions .quick-actions-item:hover {
+  background: #30303e;
+  color: #1572E8;
+  box-shadow: none;
 }
 
 .tree li.parent_li > span {
