@@ -342,6 +342,56 @@ body .select2-container--default .select2-selection--single .select2-selection__
     color: #cac7c7;
 }
 
+.ds-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: -60%;
+  width: 60%;
+  overflow: auto;
+    overflow-x: auto;
+  overflow-x: auto;
+  overflow-x: hidden;
+  height: 100vh;
+  display: block;
+  z-index: 1;
+  background: #363e53;
+    background-position-x: 0%;
+    background-position-y: 0%;
+    background-size: auto;
+  background-position-x: 0%;
+  background-position-y: 0%;
+  background-size: auto;
+  background-size: cover;
+  background-position: center center;
+  box-shadow: -50px 0px 30px 0px rgba(30, 30, 30, 0.28);
+  transition: all .3s;
+  z-index: 1001;
+  padding: 20px 20px 0;
+}
+
+.tree {
+  min-height: 20px;
+  padding: 19px;
+  margin-bottom: 20px;
+  background-color: #202940;
+  border: 1px solid #403f3f;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.tree li.parent_li > span {
+  background: #eee;
+}
+
+.tree li.parent_li > span {
+  background: #555353;
+}
+
 body .form-control:disabled,
 body .form-control[readonly] {
     color: #cac7c7;
