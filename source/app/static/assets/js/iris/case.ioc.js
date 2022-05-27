@@ -3,139 +3,6 @@ function reload_iocs() {
     get_case_ioc();
 }
 
-/* add filtering fields for each table of the page (must be done before datatable initialization) */
-$.each($.find("table"), function(index, element){
-    addFilterFields($(element).attr("id"));
-});
-
-Table = $("#ioc_table").DataTable({
-    dom: 'Blfrtip',
-    fixedHeader: true,
-    aaData: [],
-    aoColumns: [
-      {
-        "data": "ioc_value",
-        "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            datak= sanitizeHTML(data);
-            if (data.length > 60) {
-                datak = data.slice(0, 60) + " (..)";
-            }
-
-            if (isWhiteSpace(data)) {
-                datak = '#' + row['ioc_id'];
-            }
-
-            share_link = buildShareLink(row['ioc_id']);
-            data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
-            if (row['ioc_misp'] != null) {
-                jse = JSON.parse(row['ioc_misp']);
-                data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
-                   data-toggle="popover" data-trigger="hover" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
-            }
-          }
-          return data;
-        }
-      },
-      { "data": "ioc_type",
-       "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            data = sanitizeHTML(data);
-          }
-          return data;
-          }
-      },
-      { "data": "ioc_description",
-       "render": function (data, type, row, meta) {
-          if (type === 'display') {
-          data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-            if (data.length > 70) {
-                datas += ' (..)</span>';
-            } else {
-                datas += '</span>';
-            }
-            return datas;
-          }
-          return data;
-        }
-      },
-      { "data": "ioc_tags",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              tags = "";
-              de = data.split(',');
-              for (tag in de) {
-                tags += '<span class="badge badge-light ml-2">' + sanitizeHTML(de[tag]) + '</span>';
-              }
-              return tags;
-          }
-          return data;
-        }
-      },
-      { "data": "link",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              links = "";
-              for (link in data) {
-                links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="hover" class="text-primary mr-3" href="#" title="Case info" data-content="' + sanitizeHTML(data[link]['case_name']) +
-                 ' (' + sanitizeHTML(data[link]['client_name']) + ')' + '">#' + data[link]['case_id'] + '</span>'
-              }
-              return links;
-          }
-          return data;
-        }
-      },
-      {
-        "data": "tlp_name",
-        "render": function(data, type, row, meta) {
-           if (type === 'display') {
-                data = sanitizeHTML(data);
-              data = '<span class="badge badge-'+ row['tlp_bscolor'] +' ml-2">tlp:' + data + '</span>';
-          }
-          return data;
-        }
-      }
-    ],
-    filter: true,
-    info: true,
-    ordering: true,
-    processing: true,
-    retrieve: true,
-    responsive: {
-        details: {
-            display: $.fn.dataTable.Responsive.display.modal( {
-                header: function ( row ) {
-                    var data = row.data();
-                    return 'Details for '+data[0]+' '+data[1];
-                }
-            } ),
-            renderer: $.fn.dataTable.Responsive.renderer.tableAll()
-        }
-    },
-    buttons: [],
-    orderCellsTop: true,
-    initComplete: function () {
-        tableFiltering(this.api());
-    },
-    select: true
-});
-$("#ioc_table").css("font-size", 12);
-
-var buttons = new $.fn.dataTable.Buttons(Table, {
-     buttons: [
-        { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Download as CSV' },
-        { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Copy' },
-    ]
-}).container().appendTo($('#tables_button'));
-
-Table.on( 'responsive-resize', function ( e, datatable, columns ) {
-        hide_table_search_input( columns );
-});
-
 /* Fetch a modal that is compatible with the requested ioc type */ 
 function add_ioc() {
     url = 'ioc/add/modal' + case_param();
@@ -346,6 +213,140 @@ function download_file(filename, contentType, data) {
 
 /* Page is ready, fetch the iocs of the case */
 $(document).ready(function(){
+
+    /* add filtering fields for each table of the page (must be done before datatable initialization) */
+    $.each($.find("table"), function(index, element){
+        addFilterFields($(element).attr("id"));
+    });
+
+    Table = $("#ioc_table").DataTable({
+        dom: 'Blfrtip',
+        fixedHeader: true,
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "ioc_value",
+            "render": function (data, type, row, meta) {
+              if (type === 'display') {
+                datak= sanitizeHTML(data);
+                if (data.length > 60) {
+                    datak = data.slice(0, 60) + " (..)";
+                }
+
+                if (isWhiteSpace(data)) {
+                    datak = '#' + row['ioc_id'];
+                }
+
+                share_link = buildShareLink(row['ioc_id']);
+                data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
+                if (row['ioc_misp'] != null) {
+                    jse = JSON.parse(row['ioc_misp']);
+                    data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
+                       data-toggle="popover" data-trigger="hover" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
+                }
+              }
+              return data;
+            }
+          },
+          { "data": "ioc_type",
+           "render": function (data, type, row, meta) {
+              if (type === 'display') {
+                data = sanitizeHTML(data);
+              }
+              return data;
+              }
+          },
+          { "data": "ioc_description",
+           "render": function (data, type, row, meta) {
+              if (type === 'display') {
+              data = sanitizeHTML(data);
+                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+
+                if (data.length > 70) {
+                    datas += ' (..)</span>';
+                } else {
+                    datas += '</span>';
+                }
+                return datas;
+              }
+              return data;
+            }
+          },
+          { "data": "ioc_tags",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+                  tags = "";
+                  de = data.split(',');
+                  for (tag in de) {
+                    tags += '<span class="badge badge-light ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+                  }
+                  return tags;
+              }
+              return data;
+            }
+          },
+          { "data": "link",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+                  links = "";
+                  for (link in data) {
+                    links += '<span data-toggle="popover" style="cursor: pointer;" data-trigger="hover" class="text-primary mr-3" href="#" title="Case info" data-content="' + sanitizeHTML(data[link]['case_name']) +
+                     ' (' + sanitizeHTML(data[link]['client_name']) + ')' + '">#' + data[link]['case_id'] + '</span>'
+                  }
+                  return links;
+              }
+              return data;
+            }
+          },
+          {
+            "data": "tlp_name",
+            "render": function(data, type, row, meta) {
+               if (type === 'display') {
+                    data = sanitizeHTML(data);
+                  data = '<span class="badge badge-'+ row['tlp_bscolor'] +' ml-2">tlp:' + data + '</span>';
+              }
+              return data;
+            }
+          }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true,
+        retrieve: true,
+        responsive: {
+            details: {
+                display: $.fn.dataTable.Responsive.display.modal( {
+                    header: function ( row ) {
+                        var data = row.data();
+                        return 'Details for '+data[0]+' '+data[1];
+                    }
+                } ),
+                renderer: $.fn.dataTable.Responsive.renderer.tableAll()
+            }
+        },
+        buttons: [],
+        orderCellsTop: true,
+        initComplete: function () {
+            tableFiltering(this.api());
+        },
+        select: true
+    });
+    $("#ioc_table").css("font-size", 12);
+
+    Table.on( 'responsive-resize', function ( e, datatable, columns ) {
+            hide_table_search_input( columns );
+    });
+
+    var buttons = new $.fn.dataTable.Buttons(Table, {
+     buttons: [
+        { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
+        , "titleAttr": 'Download as CSV' },
+        { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
+        , "titleAttr": 'Copy' },
+    ]
+}).container().appendTo($('#tables_button'));
+
     get_case_ioc();
     setInterval(function() { check_update('ioc/state'); }, 3000);
 
