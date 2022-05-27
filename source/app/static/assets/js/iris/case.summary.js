@@ -1,84 +1,10 @@
-var editor = ace.edit("editor_summary",
-    {
-    autoScrollEditorIntoView: true,
-    minLines: 4
-    });
-
-if ($("#editor_summary").attr("data-theme") != "dark") {
-    editor.setTheme("ace/theme/tomorrow");
-} else {
-    editor.setTheme("ace/theme/tomorrow_night");
-}
-editor.session.setMode("ace/mode/markdown");
-editor.renderer.setShowGutter(true);
-editor.setOption("showLineNumbers", true);
-editor.setOption("showPrintMargin", false);
-editor.setOption("displayIndentGuides", true);
-editor.setOption("indentedSoftWrap", false);
-editor.session.setUseWrapMode(true);
-editor.setOption("maxLines", "Infinity")
-editor.renderer.setScrollMargin(8, 5)
-editor.setOption("enableBasicAutocompletion", true);
-editor.commands.addCommand({
-    name: 'save',
-    bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-    exec: function(editor) {
-        sync_editor(false);
-    }
-})
-editor.commands.addCommand({
-    name: 'bold',
-    bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
-    exec: function(editor) {
-        editor.insertSnippet('**${1:$SELECTION}**');
-    }
-});
-editor.commands.addCommand({
-    name: 'italic',
-    bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
-    exec: function(editor) {
-        editor.insertSnippet('*${1:$SELECTION}*');
-    }
-});
-editor.commands.addCommand({
-    name: 'head_1',
-    bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
-    exec: function(editor) {
-        editor.insertSnippet('# ${1:$SELECTION}');
-    }
-});
-editor.commands.addCommand({
-    name: 'head_2',
-    bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
-    exec: function(editor) {
-        editor.insertSnippet('## ${1:$SELECTION}');
-    }
-});
-editor.commands.addCommand({
-    name: 'head_3',
-    bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
-    exec: function(editor) {
-        editor.insertSnippet('### ${1:$SELECTION}');
-    }
-});
-editor.commands.addCommand({
-    name: 'head_4',
-    bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
-    exec: function(editor) {
-        editor.insertSnippet('#### ${1:$SELECTION}');
-    }
-});
-$('#editor_summary').on('paste', (event) => {
-    event.preventDefault();
-    handle_ed_paste(event);
-});
-
 var session_id = null ;
 var collaborator = null ;
 var buffer_dumped = false ;
 var last_applied_change = null ;
 var just_cleared_buffer = null ;
 var from_sync = null;
+var editor = null;
 
 function Collaborator( session_id ) {
     this.collaboration_socket = io.connect() ;
@@ -193,22 +119,6 @@ var sh_ext = showdown.extension('bootstrap-tables', function () {
       return liveHtml.html();
     }
   }];
-});
-
-var textarea = $('#case_summary');
-editor.getSession().on("change", function () {
-    textarea.val(editor.getSession().getValue());
-    $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
-    target = document.getElementById('targetDiv'),
-    converter = new showdown.Converter({
-        tables: true,
-        extensions: ['bootstrap-tables'],
-        parseImgDimensions: true
-    }),
-    html = converter.makeHtml(editor.getSession().getValue());
-
-    target.innerHTML = html;
-    
 });
 
 function report_template_selector() {
@@ -338,6 +248,98 @@ function auto_remove_typing() {
 }
 
 $(document).ready(function() {
+
+    editor = ace.edit("editor_summary",
+        {
+        autoScrollEditorIntoView: true,
+        minLines: 4
+        });
+
+    if ($("#editor_summary").attr("data-theme") != "dark") {
+        editor.setTheme("ace/theme/tomorrow");
+    } else {
+        editor.setTheme("ace/theme/tomorrow_night");
+    }
+    editor.session.setMode("ace/mode/markdown");
+    editor.renderer.setShowGutter(true);
+    editor.setOption("showLineNumbers", true);
+    editor.setOption("showPrintMargin", false);
+    editor.setOption("displayIndentGuides", true);
+    editor.setOption("indentedSoftWrap", false);
+    editor.session.setUseWrapMode(true);
+    editor.setOption("maxLines", "Infinity")
+    editor.renderer.setScrollMargin(8, 5)
+    editor.setOption("enableBasicAutocompletion", true);
+    editor.commands.addCommand({
+        name: 'save',
+        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+        exec: function(editor) {
+            sync_editor(false);
+        }
+    })
+    editor.commands.addCommand({
+        name: 'bold',
+        bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
+        exec: function(editor) {
+            editor.insertSnippet('**${1:$SELECTION}**');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'italic',
+        bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
+        exec: function(editor) {
+            editor.insertSnippet('*${1:$SELECTION}*');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_1',
+        bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
+        exec: function(editor) {
+            editor.insertSnippet('# ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_2',
+        bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
+        exec: function(editor) {
+            editor.insertSnippet('## ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_3',
+        bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
+        exec: function(editor) {
+            editor.insertSnippet('### ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_4',
+        bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
+        exec: function(editor) {
+            editor.insertSnippet('#### ${1:$SELECTION}');
+        }
+    });
+    $('#editor_summary').on('paste', (event) => {
+        event.preventDefault();
+        handle_ed_paste(event);
+    });
+
+    var textarea = $('#case_summary');
+    editor.getSession().on("change", function () {
+        textarea.val(editor.getSession().getValue());
+        $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
+        target = document.getElementById('targetDiv'),
+        converter = new showdown.Converter({
+            tables: true,
+            extensions: ['bootstrap-tables'],
+            parseImgDimensions: true
+        }),
+        html = converter.makeHtml(editor.getSession().getValue());
+
+        target.innerHTML = html;
+
+    });
+
     edit_case_summary();
     body_loaded();
     if (is_db_linked == 1) {

@@ -6,7 +6,6 @@ function reload_rfiles(notify) {
     }
 }
 
-
 function get_hash() {
     if (document.getElementById("input_autofill").files[0] === undefined) {
         $('#btn_rfile_proc').text("Please select a file");
@@ -20,7 +19,6 @@ function get_hash() {
         err => console.error(err)
     );
 }
-
 
 function on_done_hash(result) {
     $('#btn_rfile_proc').text('Done processing');
@@ -116,76 +114,6 @@ function getMD5(blob, cbProgress) {
   });
 }
 
-/* add filtering fields for each table of the page (must be done before datatable initialization) */
-$.each($.find("table"), function(index, element){
-    addFilterFields($(element).attr("id"));
-});
-
-Table = $("#rfiles_table").DataTable({
-    dom: 'Blfrtip',
-    aaData: [],
-    aoColumns: [
-      {
-        "data": "filename",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-            if (isWhiteSpace(data)) {
-                data = '#' + row['id'];
-            } else {
-                data = sanitizeHTML(data);
-            }
-            share_link = buildShareLink(row['id']);
-            data = '<a data-toggle="tooltip" data-selector="true" href="' + share_link + '" title="Evidence ID #' + row['id'] + '" onclick="edit_rfiles(\'' + row['id'] + '\');return false;">' + data +'</a>';
-          }
-          return data;
-        }
-      },
-      { "data": "date_added" },
-      { "data": "file_hash",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          }
-      },
-      { "data": "file_size",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          }},
-      { "data": "file_description",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          }},
-      { "data": "username",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          }}
-    ],
-    filter: true,
-    info: true,
-    ordering: true,
-    processing: true,
-    retrieve: true,
-    buttons: [
-    ],
-    orderCellsTop: true,
-    initComplete: function () {
-        tableFiltering(this.api());
-    },
-    select: true
-});
-$("#rfiles_table").css("font-size", 12);
-var buttons = new $.fn.dataTable.Buttons(Table, {
-     buttons: [
-        { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Download as CSV' },
-        { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Copy' },
-    ]
-}).container().appendTo($('#tables_button'));
-
 /* Retrieve the list of rfiles and build a datatable for each type of rfiles */
 function get_case_rfiles() {
 
@@ -260,16 +188,87 @@ function delete_rfile(rfiles_id) {
     });
 }
 
-/* Modal to add rfiles is closed, clear its contents */
-$('.modal').on('hidden.bs.modal', function () {
-    $(this).find('form').trigger('reset');
-    $('#btn_rfile_proc').text('Process');
-})
-
 /* Page is ready, fetch the rfiles of the case */
 $(document).ready(function(){
+
+    Table = $("#rfiles_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "filename",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+                if (isWhiteSpace(data)) {
+                    data = '#' + row['id'];
+                } else {
+                    data = sanitizeHTML(data);
+                }
+                share_link = buildShareLink(row['id']);
+                data = '<a data-toggle="tooltip" data-selector="true" href="' + share_link + '" title="Evidence ID #' + row['id'] + '" onclick="edit_rfiles(\'' + row['id'] + '\');return false;">' + data +'</a>';
+              }
+              return data;
+            }
+          },
+          { "data": "date_added" },
+          { "data": "file_hash",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }
+          },
+          { "data": "file_size",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }},
+          { "data": "file_description",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }},
+          { "data": "username",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }}
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true,
+        retrieve: true,
+        buttons: [
+        ],
+        orderCellsTop: true,
+        initComplete: function () {
+            tableFiltering(this.api());
+        },
+        select: true
+    });
+    $("#rfiles_table").css("font-size", 12);
+    var buttons = new $.fn.dataTable.Buttons(Table, {
+         buttons: [
+            { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
+            , "titleAttr": 'Download as CSV' },
+            { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
+            , "titleAttr": 'Copy' },
+        ]
+    }).container().appendTo($('#tables_button'));
+
+    /* add filtering fields for each table of the page (must be done before datatable initialization) */
+    $.each($.find("table"), function(index, element){
+        addFilterFields($(element).attr("id"));
+    });
+
     get_case_rfiles();
     setInterval(function() { check_update('evidences/state'); }, 3000);
+
+    /* Modal to add rfiles is closed, clear its contents */
+    $('.modal').on('hidden.bs.modal', function () {
+        $(this).find('form').trigger('reset');
+        $('#btn_rfile_proc').text('Process');
+    })
 
     shared_id = getSharedLink();
     if (shared_id) {

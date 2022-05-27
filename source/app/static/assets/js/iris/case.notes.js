@@ -570,7 +570,6 @@ function draw_kanban() {
     });
 }
 
-
 $(document).ready(function(){
     shared_id = getSharedLink();
     if (shared_id) {
