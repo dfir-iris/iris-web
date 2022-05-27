@@ -239,6 +239,11 @@ function download_file(filename, contentType, data) {
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
+    /* add filtering fields for each table of the page (must be done before datatable initialization) */
+    $.each($.find("table"), function(index, element){
+        addFilterFields($(element).attr("id"));
+    });
+
     Table = $("#assets_table").DataTable({
         dom: 'Blfrtip',
         aaData: [],
@@ -422,11 +427,6 @@ $(document).ready(function(){
         , "titleAttr": 'Copy' },
     ]
 }).container().appendTo($('#tables_button'));
-
-    /* add filtering fields for each table of the page (must be done before datatable initialization) */
-    $.each($.find("table"), function(index, element){
-        addFilterFields($(element).attr("id"));
-    });
 
     get_case_assets();
     setInterval(function() { check_update('assets/state'); }, 3000);

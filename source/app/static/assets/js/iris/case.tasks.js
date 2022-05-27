@@ -166,6 +166,11 @@ function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
+    /* add filtering fields for each table of the page (must be done before datatable initialization) */
+    $.each($.find("table"), function(index, element){
+        addFilterFields($(element).attr("id"));
+    });
+
     Table = $("#tasks_table").DataTable({
         dom: 'Blfrtip',
         aaData: [],
@@ -261,11 +266,6 @@ $(document).ready(function(){
         , "titleAttr": 'Copy' },
     ]
 }).container().appendTo($('#tables_button'));
-
-    /* add filtering fields for each table of the page (must be done before datatable initialization) */
-    $.each($.find("table"), function(index, element){
-        addFilterFields($(element).attr("id"));
-    });
 
     get_tasks();
     setInterval(function() { check_update('tasks/state'); }, 3000);
