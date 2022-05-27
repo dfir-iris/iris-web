@@ -118,7 +118,6 @@ function get_tasks() {
                 console.log(options);
                 Table.clear();
                 Table.rows.add(tasks_list);
-                hide_loader();
                 Table.MakeCellsEditable({
                     "onUpdate": callBackEditTaskStatus,
                     "inputCss": 'form-control col-12',

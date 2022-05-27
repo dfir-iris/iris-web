@@ -76,7 +76,6 @@ function get_case_ioc() {
                 Table.columns.adjust().draw();
 
                 set_last_state(jsdata.state);
-                hide_loader();
                 $('#ioc_table_wrapper').on('click', function(e){
                     if($('.popover').length>1)
                         $('.popover').popover('hide');
@@ -90,6 +89,7 @@ function get_case_ioc() {
                 $('[data-toggle="popover"]').popover();
                 Table.columns.adjust().draw();
                 load_menu_mod_options('ioc', Table);
+                hide_loader();
 
             } else {
                 Table.clear().draw();

@@ -1,26 +1,4 @@
-var tm_filter = ace.edit("timeline_filtering",
-{
-    autoScrollEditorIntoView: true,
-    minLines: 1,
-    maxLines: 5
-});
-tm_filter.setTheme("ace/theme/tomorrow");
-tm_filter.session.setMode("ace/mode/json");
-tm_filter.renderer.setShowGutter(false);
-tm_filter.setShowPrintMargin(false);
-tm_filter.renderer.setScrollMargin(10, 10);
-tm_filter.setOption("displayIndentGuides", true);
-tm_filter.setOption("indentedSoftWrap", true);
-tm_filter.setOption("showLineNumbers", false);
-tm_filter.setOption("placeholder", "Filter timeline");
-tm_filter.setOption("highlightActiveLine", false);
-tm_filter.commands.addCommand({
-                    name: "Do filter",
-                    bindKey: { win: "Enter", mac: "Enter" },
-                    exec: function (editor) {
-                              filter_timeline();
-                    }
-});
+var tm_filter = null;
 var selector_active;
 var current_timeline;
 
@@ -68,7 +46,6 @@ function add_event() {
     $('#modal_add_event').modal({ show: true });
 }
 
-
 function duplicate_event(id) {
     window.location.hash = id;
     clear_api_error();
@@ -110,7 +87,6 @@ function update_event(id) {
     });
 
 }
-
 
 /* Delete an event from the timeline thank to its id */ 
 function delete_event(id) {
@@ -320,7 +296,6 @@ function events_bulk_delete() {
         }
     });
 }
-
 
 function build_timeline(data) {
     var compact = is_timeline_compact_view();
@@ -647,11 +622,6 @@ function to_page_down() {
     window.scrollTo(0,document.body.scrollHeight);
   }
 
-$('#time_timeline_select').on('change', function(e){ 
-    id = $('#time_timeline_select').val();
-    $('html, body').animate({ scrollTop: $('#time_'+id).offset().top - 180 });
-});
-
 function show_time_converter(){
     $('#event_date_convert').show();
     $('#event_date_convert_input').focus();
@@ -685,7 +655,6 @@ function time_converter(){
         $('#convert_bad_feedback').text('Unable to find a matching pattern for the date');
     });
 }
-
 
 function goToSharedLink(){
     if (location.href.indexOf("#") != -1) {
@@ -798,7 +767,6 @@ function reset_filters() {
     window.location = new_path;
 }
 
-
 function apply_filtering(post_req_fn) {
     keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'category', 'source',  'raw', 'startDate', 'endDate'];
     parsed_filter = {};
@@ -853,6 +821,34 @@ function show_timeline_filter_help() {
 $(document).ready(function(){
 
     selector_active = false;
+
+    tm_filter = ace.edit("timeline_filtering",
+    {
+        autoScrollEditorIntoView: true,
+        minLines: 1,
+        maxLines: 5
+    });
+    tm_filter.setTheme("ace/theme/tomorrow");
+    tm_filter.session.setMode("ace/mode/json");
+    tm_filter.renderer.setShowGutter(false);
+    tm_filter.setShowPrintMargin(false);
+    tm_filter.renderer.setScrollMargin(10, 10);
+    tm_filter.setOption("displayIndentGuides", true);
+    tm_filter.setOption("indentedSoftWrap", true);
+    tm_filter.setOption("showLineNumbers", false);
+    tm_filter.setOption("placeholder", "Filter timeline");
+    tm_filter.setOption("highlightActiveLine", false);
+    tm_filter.commands.addCommand({
+                        name: "Do filter",
+                        bindKey: { win: "Enter", mac: "Enter" },
+                        exec: function (editor) {
+                                  filter_timeline();
+                        }
+    });
+    $('#time_timeline_select').on('change', function(e){
+        id = $('#time_timeline_select').val();
+        $('html, body').animate({ scrollTop: $('#time_'+id).offset().top - 180 });
+    });
 
     get_or_filter_tm();
 

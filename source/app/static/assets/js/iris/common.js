@@ -18,7 +18,6 @@ function clear_api_error() {
    $(".invalid-feedback").hide();
 }
 
-
 function setCookie(name,value,days) {
     var expires = "";
     if (days) {
@@ -41,7 +40,6 @@ function getCookie(name) {
 function eraseCookie(name) {
     document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
-
 
 function propagate_form_api_errors(data_error) {
     for (e in data_error) {
@@ -167,7 +165,6 @@ function get_request_api(uri, propagate_api_error, beforeSend_fn) {
     });
 }
 
-
 function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
     return $.ajax({
         url: uri + case_param(),
@@ -196,7 +193,6 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
         }
     });
 }
-
 
 function post_request_api(uri, data, propagate_api_error, beforeSend_fn) {
    return $.ajax({
@@ -259,9 +255,7 @@ function post_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
     });
 }
 
-
-function updateURLParameter(url, param, paramVal)
-{
+function updateURLParameter(url, param, paramVal) {
     var TheAnchor = null;
     var newAdditionalURL = "";
     var tempArray = url.split("?");
@@ -305,44 +299,6 @@ function updateURLParameter(url, param, paramVal)
     return baseURL + "?" + newAdditionalURL + rows_txt;
 }
 
-
-$('#submit_set_context').click(function () {
-    var data_sent = new Object();
-    data_sent.ctx = $('#user_context').val();
-    data_sent.ctx_h = $("#user_context option:selected").text();
-    post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
-    .done((data) => {
-        if(notify_auto_api(data, true)) {
-            $('#modal_switch_context').modal('hide');
-            swal({
-                title: 'Context changed successfully',
-                text: 'Reloading...',
-                icon: 'success',
-                timer: 500,
-                buttons: false,
-            })
-            .then(() => {
-                var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
-                window.history.replaceState('', '', newURL);
-                location.reload();
-            })
-        }
-    });
-});
-
-$(".rotate").click(function () {
-    $(this).toggleClass("down");
-});
-
-$(function () {
-    $('[data-toggle="popover"]').popover({
-        trigger: 'focus',
-        placement: 'auto',
-        container: 'body',
-        html: true
-    });
-})
-
 function get_caseid() {
     queryString = window.location.search;
     urlParams = new URLSearchParams(queryString);
@@ -377,22 +333,6 @@ function case_param() {
     }
     return '?'+ $.param(params);
 }
-
-$('#form_add_tasklog').submit(function () {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    var data = $('form#form_add_tasklog').serializeObject();
-    data['csrf_token'] = $('#csrf_token').val();
-
-    post_request_api('/case/tasklog/add', JSON.stringify(data), true)
-    .done(function (data){
-        if(notify_auto_api(data)){
-            $('#modal_add_tasklog').modal('hide');
-        }
-    });
-    return false;
-});
-
 
 var last_state = null;
 var need_check = true;
@@ -480,8 +420,7 @@ function isWhiteSpace(s) {
   return /^\s+$/.test(s);
 }
 
-function exportInnerPng()
-{
+function exportInnerPng() {
     close_sid_var = document.querySelector(".close-quick-sidebar");
     close_sid_var.click();
     div = document.querySelector(".page-inner");
@@ -536,7 +475,6 @@ function load_case_activity(){
         }
     });
 }
-
 
 function load_dim_limited_tasks(){
     get_request_api('/dim/tasks/list/100')
@@ -842,12 +780,6 @@ function load_context_switcher() {
     });
 }
 
-$('#user_context').selectpicker({liveSearch: true,
-    title: "None",
-    style: "btn-outline-white"
-});
-$('#user_context').selectpicker('val', get_caseid());
-
 function split_bool(split_str) {
     and_split = split_str.split(' AND ');
 
@@ -911,8 +843,69 @@ $(document).ready(function(){
             }
         })
     })
+
+    $('#submit_set_context').click(function () {
+    var data_sent = new Object();
+    data_sent.ctx = $('#user_context').val();
+    data_sent.ctx_h = $("#user_context option:selected").text();
+    post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            $('#modal_switch_context').modal('hide');
+            swal({
+                title: 'Context changed successfully',
+                text: 'Reloading...',
+                icon: 'success',
+                timer: 500,
+                buttons: false,
+            })
+            .then(() => {
+                var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
+                window.history.replaceState('', '', newURL);
+                location.reload();
+            })
+        }
+    });
 });
 
-$('.modal-dialog').draggable({
-    handle: ".modal-header"
+    $(".rotate").click(function () {
+        $(this).toggleClass("down");
+    });
+
+    $(function () {
+        $('[data-toggle="popover"]').popover({
+            trigger: 'focus',
+            placement: 'auto',
+            container: 'body',
+            html: true
+        });
+    });
+
+    $('#user_context').selectpicker({liveSearch: true,
+    title: "None",
+    style: "btn-outline-white"
 });
+    $('#user_context').selectpicker('val', get_caseid());
+
+    $('.modal-dialog').draggable({
+        handle: ".modal-header"
+    });
+
+    $('#form_add_tasklog').submit(function () {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        var data = $('form#form_add_tasklog').serializeObject();
+        data['csrf_token'] = $('#csrf_token').val();
+
+        post_request_api('/case/tasklog/add', JSON.stringify(data), true)
+        .done(function (data){
+            if(notify_auto_api(data)){
+                $('#modal_add_tasklog').modal('hide');
+            }
+        });
+        return false;
+    });
+
+});
+
+
