@@ -748,3 +748,11 @@ pre {
 .text-muted {
   color: #9f9f9f !important;
 }
+
+.sidebar .nav>.nav-item a i, .sidebar .nav>.nav-item a i {
+    color: #dddddd;
+}
+
+.sidebar.sidebar-style-2 .nav .nav-item .active a p, .sidebar.sidebar-style-2 .nav .nav-item .active a i {
+    color: #fff !important;
+}
