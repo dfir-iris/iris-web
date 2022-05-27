@@ -28,6 +28,7 @@ from flask import url_for
 from flask_wtf import FlaskForm
 
 from app import db
+from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import delete_user
 from app.datamgmt.manage.manage_users_db import get_user
@@ -38,6 +39,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.datamgmt.manage.manage_users_db import update_user
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
+from app.models import ServerSettings
 from app.schema.marshables import UserSchema
 from app.util import admin_required
 from app.util import api_admin_required
@@ -79,8 +81,9 @@ def add_user_modal(caseid, url_redir):
 
     user = None
     form = AddUserForm()
-
-    return render_template("modal_add_user.html", form=form, user=user)
+    server_settings = get_srv_settings()
+    print(server_settings.password_policy_upper_case)
+    return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
 
 
 @manage_users_blueprint.route('/manage/users/add', methods=['POST'])
@@ -141,7 +144,9 @@ def view_user_modal(cur_id, caseid, url_redir):
     roles = [role.name for role in user.roles]
     form.user_isadmin.data = 'administrator' in roles
 
-    return render_template("modal_add_user.html", form=form, user=user)
+    server_settings = get_srv_settings()
+
+    return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
 
 
 @manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])

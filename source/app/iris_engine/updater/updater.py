@@ -599,7 +599,7 @@ def setup_periodic_update_checks(sender, **kwargs):
 
 
 def remove_periodic_update_checks():
-    del celery.config.beat_schedule['iris_auto_check_updates']
+    del celery.conf['beat_schedule']['iris_auto_check_updates']
 
 
 @celery.task

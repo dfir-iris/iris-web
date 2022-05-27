@@ -552,6 +552,11 @@ class ServerSettings(db.Model):
     prevent_post_mod_repush = Column(Boolean)
     has_updates_available = Column(Boolean)
     enable_updates_check = Column(Boolean)
+    password_policy_min_length = Column(Integer)
+    password_policy_upper_case = Column(Boolean)
+    password_policy_lower_case = Column(Boolean)
+    password_policy_digit = Column(Boolean)
+    password_policy_special_chars = Column(Text)
 
 
 class IrisModule(db.Model):
