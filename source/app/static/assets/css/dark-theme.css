@@ -15,7 +15,7 @@ body .main-panel {
 }
 
 .logo-header[data-background-color="blue"] {
-  background: #1a2035 !important;
+  background: #1f283e  !important;
 }
 
 body .card,
@@ -255,6 +255,18 @@ body .timeline-odd {
 body .timeline-even {
     background: #24272d !important;
     color: #cac7c7;
+}
+
+.bg-info-gradient {
+  background: #48ABF7 !important;
+  background: -webkit-linear-gradient(legacy-direction(-45deg), #0910159C, #1D283187) !important;
+  background: linear-gradient(-45deg, #0910159C, #1D283187) !important;
+}
+
+.bg-close-gradient {
+  background: #1f283e !important;
+  background: -webkit-linear-gradient(legacy-direction(-45deg), #203C51, #5A7F9B) !important;
+  background: linear-gradient(-45deg, #1E09099C, #1C121287) !important;
 }
 
 body .amsify-suggestags-input {
