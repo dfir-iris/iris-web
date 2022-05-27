@@ -756,3 +756,27 @@ pre {
 .sidebar.sidebar-style-2 .nav .nav-item .active a p, .sidebar.sidebar-style-2 .nav .nav-item .active a i {
     color: #fff !important;
 }
+
+div.dtr-modal div.dtr-modal-display {
+    background-color: #202940 !important;
+    color: #fff;
+    border: 1px solid black;
+    border-radius: 0.5em;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 60%);
+}
+
+div.dtr-modal div.dtr-modal-close {
+    background-color: #f9f9f900;
+    color: #fff;
+    text-align: center;
+    border-radius: 3px;
+    cursor: pointer;
+    z-index: 12;
+}
+
+table.dataTable.display tbody>tr.even.selected>.sorting_1,
+table.dataTable.order-column.stripe tbody>tr.even.selected>.sorting_1,
+table.dataTable.display tbody>tr.odd.selected>.sorting_1,
+table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
+    background-color: #465572;
+}
