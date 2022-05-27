@@ -468,7 +468,7 @@ body .select2-container--default .select2-selection--single .select2-selection__
 }
 
 .tree li.parent_li > span {
-  background: #555353;
+  background: rgba(185, 185, 185, 0.18);
 }
 
 .form-check [type="checkbox"]:not(:checked) + .form-check-sign, .form-check [type="checkbox"]:checked + .form-check-sign, .form-check [type="checkbox"] + .form-check-sign {
@@ -742,7 +742,7 @@ pre {
 }
 
 .secondary-header .nav-bottom .page-navigation.page-navigation-style-2 > .nav-item:hover > .nav-link, .secondary-header .nav-bottom .page-navigation.page-navigation-style-2 > .nav-item:focus > .nav-link {
-  background: #484848;
+  background: rgba(185, 185, 185, 0.18);
 }
 
 .text-muted {
