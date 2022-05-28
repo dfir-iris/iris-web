@@ -192,7 +192,7 @@ def activity_fetch(caseid):
 @case_blueprint.route("/case/export", methods=['GET'])
 @api_login_required
 def export_case(caseid):
-    return response_success('', data=export_case_json_extended(caseid))
+    return response_success('', data=export_case_json(caseid))
 
 
 @case_blueprint.route('/case/tasklog/add', methods=['POST'])
