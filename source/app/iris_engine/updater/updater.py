@@ -297,7 +297,7 @@ def init_server_update(release_config):
 
     if 'iriswebapp' in updates_config.get('scope'):
 
-        if call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+        if call_ext_updater(update_archive=update_archive, scope="iriswebapp",
                             need_reboot=updates_config.get('need_app_reboot')):
 
             socket_io.stop()
@@ -576,7 +576,7 @@ def download_from_url(asset_url, target_file):
 @celery.task(bind=True)
 def task_update_worker(self, update_archive, updates_config):
 
-    if not call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+    if not call_ext_updater(update_archive=update_archive, scope="worker",
                             need_reboot=updates_config.get('need_worker_reboot')):
 
         return IStatus.I2Success(message="Unable to spawn updater")
