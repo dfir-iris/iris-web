@@ -780,3 +780,9 @@ table.dataTable.display tbody>tr.odd.selected>.sorting_1,
 table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
     background-color: #465572;
 }
+
+.btn-light:hover, .btn-light:focus, .btn-light:disabled {
+  background: #ebecec !important;
+  border-color: transparent;
+  color: #000;
+}
