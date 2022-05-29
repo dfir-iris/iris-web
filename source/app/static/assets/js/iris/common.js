@@ -80,10 +80,11 @@ function notify_error(message) {
     } else {
         data = message;
     }
-    data = sanitizeHTML(data);
+    data = '<p>' + sanitizeHTML(data) + '</p>';
     $.notify({
-        icon: 'fas fa-times',
-        message: data
+        icon: 'fas fa-triangle-exclamation',
+        message: data,
+        title: 'Error'
     }, {
         type: 'danger',
         placement: {
@@ -91,7 +92,7 @@ function notify_error(message) {
             align: 'left'
         },
         z_index: 2000,
-        time: 8000,
+        timer: 8000,
         animate: {
             enter: 'animated fadeIn',
             exit: 'animated fadeOut'
@@ -100,10 +101,10 @@ function notify_error(message) {
 }
 
 function notify_success(message) {
-    message = sanitizeHTML(message);
+    message = '<p>' + sanitizeHTML(message) + '</p>';
     $.notify({
         icon: 'fas fa-check',
-        message: message,
+        message: message
     }, {
         type: 'success',
         placement: {
@@ -111,7 +112,7 @@ function notify_success(message) {
             align: 'left'
         },
         z_index: 2000,
-        time: 6000,
+        timer: 6000,
         animate: {
                     enter: 'animated fadeIn',
                     exit: 'animated fadeOut'
