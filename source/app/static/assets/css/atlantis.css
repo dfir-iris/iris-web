@@ -13665,7 +13665,7 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
     }
 
     .ds_sidebar_open .ds-sidebar {
-        width: 350px;
+        width: 80%;
     }
 
     .main-header {
