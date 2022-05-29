@@ -267,7 +267,15 @@ function save_ds_file(node, file_id) {
         uri = '/datastore/file/update/' + file_id;
     }
 
-    post_request_data_api(uri, formData, true)
+    post_request_data_api(uri, formData, true, function() {
+        window.swal({
+              title: "File is uploading",
+              text: "Please wait",
+              imageUrl: "images/ajaxloader.gif",
+              showConfirmButton: false,
+              allowOutsideClick: false
+        });
+    })
     .done(function (data){
         if(notify_auto_api(data)){
             $('#modal_ds_file').modal("hide");
@@ -275,6 +283,9 @@ function save_ds_file(node, file_id) {
             load_datastore();
         }
     })
+    .always((data) => {
+        window.swal.close();
+    });
 }
 
 function refresh_ds(){
