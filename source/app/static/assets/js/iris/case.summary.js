@@ -15,6 +15,7 @@ function Collaborator( session_id ) {
     this.collaboration_socket.on( "change", function(data) {
         delta = JSON.parse( data.delta ) ;
         last_applied_change = delta ;
+        console.log(delta);
         $("#content_typing").text(data.last_change + " is typing..");
         editor.getSession().getDocument().applyDeltas( [delta] ) ;
     }.bind() ) ;
@@ -76,7 +77,6 @@ function handle_ed_paste(event) {
       }
 
       if (item.kind === 'file') {
-        console.log(item.type);
         const blob = item.getAsFile();
 
         if (blob !== null) {
@@ -91,7 +91,18 @@ function handle_ed_paste(event) {
                 upload_interactive_data(e.target.result, filename, function(data){
                     url = data.data.file_url + case_param();
                     event.preventDefault();
+                    cur_pos_row = editor.getCursorPosition().row;
+                    cur_pos_col = editor.getCursorPosition().column;
                     editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
+                    /* Emulate a change event to trigger the change callback */
+                    delta = {
+                        "action": "insert",
+                        "lines": ['', `![${filename}](${url} =40%x40%)`, ''],
+                        "start": { row: cur_pos_row, column: cur_pos_col },
+                        "end": { row: cur_pos_row + 2, column: cur_pos_col },
+                    }
+                    collaborator.change( JSON.stringify(delta) ) ;
+
                 });
 
             };
@@ -155,7 +166,9 @@ function sync_editor(no_check) {
             if (no_check) {
                 // Set the content from remote server
                 from_sync = true;
+                cur_pos = editor.getCursorPosition();
                 editor.getSession().setValue(data.data.case_description);
+                editor.moveCursorTo(cur_pos.row, cur_pos.column);
 
                 // Set the CRC in page
                 $('#fetched_crc').val(data.data.crc32.toString());
@@ -174,7 +187,10 @@ function sync_editor(no_check) {
                     console.log('Remote CRC is ' + data.data.crc32);
                     if (local_crc == $('#fetched_crc').val()) {
                         // No local change, we can sync and update local CRC
+                        cur_pos = editor.getCursorPosition();
                         editor.getSession().setValue(data.data.case_description);
+                        editor.moveCursorTo(cur_pos.row, cur_pos.column);
+
                         $('#fetched_crc').val(data.data.crc32);
                         $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
                         $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
