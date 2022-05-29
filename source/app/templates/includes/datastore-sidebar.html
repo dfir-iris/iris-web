@@ -26,7 +26,7 @@
 						</div>
 					</div>
 					<div class="row mb-3">
-						<div class="col-8">
+						<div class="col-9">
 							<div class="row">
 								<div id='ds_file_search' class="ml-3 pt-2 pl-2" style="width:70%;border-radius:3px;border-color:#fff;background:rgb(234, 234, 234);" ></div>
 								<button class="btn btn-sm btn-light ml-2 pt-2" onclick="filter_ds_files();" id="btn_filter_ds_files">
@@ -38,11 +38,11 @@
 								<div class="ml-1 mt-1 fa-regular text-dark fa-circle-question" title="Filter help" onclick="show_ds_filter_help();"></div>
 							</div>
 						</div>
-						<div class="col-4 justify-content-end">
-							<button type="button" class="btn btn-sm btn-outline-danger mb-1 float-right mr-3 btn-ds-bulk" style="display:none;" onclick="delete_bulk_ds_file();"><i class="fa fa-trash text-danger mr-1"></i> Delete</button>
-							<button type="button" class="btn btn-sm btn-outline-dark float-right mb-1 mr-3 btn-ds-bulk" style="display:none;" onclick="move_ds_file();"><i class="fa-solid fa-arrow-right-arrow-left mr-1"></i> Move</button>
+						<div class="col-3 justify-content-end">
 							<button type="button" class="btn btn-sm btn-outline-dark float-right mb-1 mr-3 btn-ds-bulk-selector" onclick="toggle_select_file();"><i class="fa-solid fa-check-double mr-1"></i> Select</button>
 							<button type="button" class="btn btn-sm btn-outline-dark float-right mb-1 mr-3" onclick="refresh_ds();"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+							<button type="button" class="btn btn-sm btn-outline-danger float-right mt-1 mr-3 btn-ds-bulk" style="display:none;" onclick="delete_bulk_ds_file();"><i class="fa fa-trash text-danger mr-1"></i> Delete</button>
+							<button type="button" class="btn btn-sm btn-outline-dark float-right mt-1 mr-3 btn-ds-bulk" style="display:none;" onclick="move_ds_file();"><i class="fa-solid fa-arrow-right-arrow-left mr-1"></i> Move</button>
 						</div>
 					</div>
 					<div class="tree well" id="ds-tree-container">
