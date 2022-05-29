@@ -270,8 +270,8 @@ function save_ds_file(node, file_id) {
     post_request_data_api(uri, formData, true, function() {
         window.swal({
               title: "File is uploading",
-              text: "Please wait",
-              icon: "images/ajaxloader.gif",
+              text: "Please wait. This window will close automatically when the file is uploaded.",
+              icon: "/static/assets/img/loader.gif",
               button: false,
               allowOutsideClick: false
         });
