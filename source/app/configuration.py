@@ -136,11 +136,9 @@ class Config():
 
     UPDATE_DIR_NAME = '_updates_'
 
-    DROPZONE_MAX_FILE_SIZE = 1024
+    DROPZONE_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 10  # 10 GB
 
-    MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
-
-    DROPZONE_TIMEOUT = 5 * 60 * 10000  # 5 Minutes of uploads per file
+    DROPZONE_TIMEOUT = 15 * 60 * 10000  # 15 Minutes of uploads per file
 
     """ Celery configuration
     Configure URL and backend

@@ -28,7 +28,7 @@ printf "Running ${target} ...\n"
 if [[ "${target}" == iris-worker ]] ; then
     celery -A app.celery worker -E -B -l INFO &
 else
-    gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info &
+    gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=DEBUG &
 fi
 
 while true; do sleep 2; done

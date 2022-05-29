@@ -271,8 +271,8 @@ function save_ds_file(node, file_id) {
         window.swal({
               title: "File is uploading",
               text: "Please wait",
-              imageUrl: "images/ajaxloader.gif",
-              showConfirmButton: false,
+              icon: "images/ajaxloader.gif",
+              button: false,
               allowOutsideClick: false
         });
     })
