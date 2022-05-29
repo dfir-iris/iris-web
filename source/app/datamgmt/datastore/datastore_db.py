@@ -19,6 +19,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import os
+
 import datetime
 
 from flask_login import current_user
@@ -256,11 +258,20 @@ def datastore_iter_deletion(dsp, cid):
 
 
 def datastore_delete_files_of_path(node_id, cid):
-    DataStoreFile.query.filter(
+    dsf_list = DataStoreFile.query.filter(
         and_(DataStoreFile.file_parent_id == node_id,
              DataStoreFile.file_case_id == cid
              )
-    ).delete()
+    ).all()
+
+    for dsf_list_item in dsf_list:
+
+        fln = Path(dsf_list_item.file_local_name)
+        if fln.is_file():
+            fln.unlink(missing_ok=True)
+
+        db.session.delete(dsf_list_item)
+        db.session.commit()
 
     return
 
