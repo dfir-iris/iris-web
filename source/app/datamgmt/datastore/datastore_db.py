@@ -25,6 +25,7 @@ from flask_login import current_user
 from pathlib import Path
 
 from sqlalchemy import and_
+from sqlalchemy import func
 from sqlalchemy import or_
 
 from app import app
@@ -408,13 +409,31 @@ def datastore_filter_tree(filter_d, caseid):
     is_ioc = filter_d.get('is_ioc')
     is_evidence = filter_d.get('is_evidence')
     has_password = filter_d.get('has_password')
+    file_id = filter_d.get('id')
+    file_uuid = filter_d.get('uuid')
+    file_sha256 = filter_d.get('sha256')
 
     condition = (DataStoreFile.file_case_id == caseid)
+    if file_id:
+        for fid in file_id:
+            if fid:
+                condition = and_(condition, DataStoreFile.file_id == fid)
+
+    if file_uuid:
+        for fuid in file_uuid:
+            if fuid:
+                fuid = fuid.replace('dsf-', '')
+                condition = and_(condition, DataStoreFile.file_uuid == fuid)
+
+    if file_sha256:
+        for fsha in file_sha256:
+            if fsha:
+                condition = and_(condition, func.lower(DataStoreFile.file_sha256) == fsha.lower())
 
     if names:
         for name in names:
             condition = and_(condition,
-                            DataStoreFile.file_original_name.ilike(f'%{name}%'))
+                             DataStoreFile.file_original_name.ilike(f'%{name}%'))
 
     if storage_names:
         for name in storage_names:
@@ -466,9 +485,14 @@ def datastore_filter_tree(filter_d, caseid):
         DataStorePath.path_parent_id
     ).all()
 
-    dsf = DataStoreFile.query.filter(
-        condition
-    ).all()
+    try:
+
+        dsf = DataStoreFile.query.filter(
+            condition
+        ).all()
+
+    except Exception as e:
+        return None, str(e)
 
     dsp_root = dsp_root
     droot_id = f"d-{dsp_root.path_id}"
@@ -527,5 +551,5 @@ def datastore_filter_tree(filter_d, caseid):
         else:
             datastore_iter_tree(dpath_parent_id, path_node, droot_children)
 
-    return path_tree
+    return path_tree, 'Success'
 

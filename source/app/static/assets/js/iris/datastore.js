@@ -40,13 +40,16 @@ function load_datastore() {
 function build_ds_tree(data, tree_node) {
 
     var standard_files_filters = [
-                {value: 'name:', score: 10, meta: 'Match filename'},
-                {value: 'storage_name:', score: 10, meta: 'Match local storage filename'},
-                {value: 'tag:', score: 10, meta: 'Match tag of file'},
-                {value: 'description:', score: 10, meta: 'Match description of file'},
-                {value: 'is_ioc', score: 10, meta: "Match file is IOC"},
-                {value: 'is_evidence', score: 10, meta: "Match file is evidence"},
-                {value: 'has_password', score: 10, meta: "Match file is password protected"},
+                {value: 'name: ', score: 10, meta: 'Match filename'},
+                {value: 'storage_name: ', score: 10, meta: 'Match local storage filename'},
+                {value: 'tag: ', score: 10, meta: 'Match tag of file'},
+                {value: 'description: ', score: 10, meta: 'Match description of file'},
+                {value: 'is_ioc: ', score: 10, meta: "Match file is IOC"},
+                {value: 'is_evidence: ', score: 10, meta: "Match file is evidence"},
+                {value: 'has_password: ', score: 10, meta: "Match file is password protected"},
+                {value: 'id: ', score: 10, meta: "Match ID of the file"},
+                {value: 'uuid: ', score: 10, meta: "Match UUID of the file"},
+                {value: 'sha256: ', score: 10, meta: "Match sha256 of the file"},
                 {value: 'AND ', score: 10, meta: 'AND operator'}
               ]
 
@@ -549,7 +552,7 @@ function reparse_activate_tree_selection() {
 }
 
 var parsed_filter_ds = {};
-var ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password'];
+var ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password', 'uuid', 'id', 'sha256'];
 
 function parse_filter(str_filter, keywords) {
   for (var k = 0; k < keywords.length; k++) {
@@ -585,7 +588,7 @@ function parse_filter(str_filter, keywords) {
 
 function filter_ds_files() {
 
-    ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password'];
+    ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password', 'uuid', 'id', 'sha256'];
     parsed_filter_ds = {};
     parse_filter(ds_filter.getValue(), ds_keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter_ds));

@@ -34,6 +34,7 @@ from flask import url_for
 from flask_login import current_user
 from werkzeug.utils import redirect
 
+import app
 from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
 from app.datamgmt.datastore.datastore_db import datastore_add_file_as_evidence
@@ -63,6 +64,8 @@ datastore_blueprint = Blueprint(
     template_folder='templates'
 )
 
+logger = app.logger
+
 
 @datastore_blueprint.route('/datastore/list/tree', methods=['GET'])
 @api_login_required
@@ -84,9 +87,15 @@ def datastore_list_filter(caseid):
         filter_d = dict(json.loads(urllib.parse.unquote_plus(query_filter)))
 
     except Exception as e:
-        return response_error('Invalid query string')
+        logger.error('Error parsing filter: {}'.format(query_filter))
+        logger.error(e)
+        return response_error('Invalid query')
 
-    data = datastore_filter_tree(filter_d, caseid)
+    data, log = datastore_filter_tree(filter_d, caseid)
+    if data is None:
+        logger.error('Error parsing filter: {}'.format(query_filter))
+        logger.error(log)
+        return response_error('Invalid query')
 
     return response_success("", data=data)
 
