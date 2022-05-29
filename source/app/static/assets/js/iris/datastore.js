@@ -190,6 +190,7 @@ function delete_ds_folder(node) {
             get_request_api('/datastore/folder/delete/' + node)
             .done((data) => {
                 if (notify_auto_api(data)) {
+                    reset_ds_file_view();
                     load_datastore();
                 }
             });
@@ -443,6 +444,7 @@ function delete_ds_file(file_id) {
             get_request_api('/datastore/file/delete/' + file_id)
             .done((data) => {
                 if (notify_auto_api(data)) {
+                    reset_ds_file_view();
                     load_datastore();
                 }
             });
@@ -457,7 +459,7 @@ function delete_bulk_ds_file() {
     selected_files = $(".file-selected");
     swal({
         title: "Are you sure?",
-        text: `You are about to delete ${selected_files.length} files\nThis will delete the files on the server and any manual reference will become invalid`,
+        text: `Yu are about to delete ${selected_files.length} files\nThis will delete the files on the server and any manual reference will become invalid`,
         icon: "warning",
         buttons: true,
         dangerMode: true,
@@ -473,7 +475,7 @@ function delete_bulk_ds_file() {
                 .done((data) => {
                     if (notify_auto_api(data)) {
                         if (index == $(".file-selected").length - 1) {
-                            $(".file-selected").removeClass("file-selected");
+                            reset_ds_file_view();
                             load_datastore();
                         }
                         index +=1;
