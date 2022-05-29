@@ -417,6 +417,7 @@ def datastore_filter_tree(filter_d, caseid):
     if file_id:
         for fid in file_id:
             if fid:
+                fid = fid.replace('dsf-', '')
                 condition = and_(condition, DataStoreFile.file_id == fid)
 
     if file_uuid:
