@@ -503,7 +503,8 @@ body .modal-footer {
       border-bottom: none;
 }
 
-body .modal-header .text-right button {
+body .modal-header .text-right button,
+body .modal-header .justify-right button {
     color: #cecece;
 }
 
