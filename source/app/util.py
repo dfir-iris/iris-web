@@ -28,6 +28,7 @@ import pickle
 import random
 import shutil
 import string
+import hashlib
 from flask import json
 from flask import render_template
 from flask import request
@@ -400,3 +401,26 @@ def page_not_found(e):
 
     return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH), 404
 
+
+def file_sha256sum(file_path):
+
+    if not Path(file_path).is_file():
+        return None
+
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        # Read and update hash string value in blocks of 4K
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+
+        return sha256_hash.hexdigest().upper()
+
+
+def stream_sha256sum(stream):
+
+    return hashlib.sha256(stream).hexdigest().upper()
+
+
+@app.template_filter()
+def format_datetime(value, frmt):
+    return datetime.datetime.fromtimestamp(float(value)).strftime(frmt)

@@ -294,6 +294,7 @@ var sh_ext = showdown.extension('bootstrap-tables', function () {
   }];
 });
 
+var note_editor;
 /* Fetch the edit modal with content from server */
 function note_detail(id) {
     url = '/case/notes/' + id + "/modal" + case_param();
@@ -304,58 +305,109 @@ function note_detail(id) {
              return false;
         }
 
-        var editor = ace.edit("editor_detail",
+        note_editor = ace.edit("editor_detail",
             {
                 autoScrollEditorIntoView: true,
                 minLines: 4
             });
 
+        $('#editor_detail').on('paste', (event) => {
+            event.preventDefault();
+            handle_ed_paste(event);
+        });
+
         if ($("#editor_detail").attr("data-theme") != "dark") {
-            editor.setTheme("ace/theme/tomorrow");
+            note_editor.setTheme("ace/theme/tomorrow");
         } else {
-            editor.setTheme("ace/theme/tomorrow_night");
+            note_editor.setTheme("ace/theme/tomorrow_night");
         }
-        editor.session.setMode("ace/mode/markdown");
-        editor.renderer.setShowGutter(true);
-        editor.setOption("showLineNumbers", true);
-        editor.setOption("showPrintMargin", false);
-        editor.setOption("displayIndentGuides", true);
-        editor.setOption("maxLines", "Infinity");
-        editor.session.setUseWrapMode(true);
-        editor.setOption("indentedSoftWrap", false);
-        editor.renderer.setScrollMargin(8, 5)
-        editor.setOption("enableBasicAutocompletion", true);
-        editor.commands.addCommand({
+        note_editor.session.setMode("ace/mode/markdown");
+        note_editor.renderer.setShowGutter(true);
+        note_editor.setOption("showLineNumbers", true);
+        note_editor.setOption("showPrintMargin", false);
+        note_editor.setOption("displayIndentGuides", true);
+        note_editor.setOption("maxLines", "Infinity");
+        note_editor.session.setUseWrapMode(true);
+        note_editor.setOption("indentedSoftWrap", false);
+        note_editor.renderer.setScrollMargin(8, 5)
+        note_editor.setOption("enableBasicAutocompletion", true);
+        note_editor.commands.addCommand({
             name: 'save',
             bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
             exec: function(editor) {
                 save_note(this);
             }
         })
+        note_editor.commands.addCommand({
+            name: 'bold',
+            bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
+            exec: function(editor) {
+                editor.insertSnippet('**${1:$SELECTION}**');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'italic',
+            bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
+            exec: function(editor) {
+                editor.insertSnippet('*${1:$SELECTION}*');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'head_1',
+            bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
+            exec: function(editor) {
+                editor.insertSnippet('# ${1:$SELECTION}');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'head_2',
+            bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
+            exec: function(editor) {
+                editor.insertSnippet('## ${1:$SELECTION}');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'head_3',
+            bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
+            exec: function(editor) {
+                editor.insertSnippet('### ${1:$SELECTION}');
+            }
+        });
+        note_editor.commands.addCommand({
+            name: 'head_4',
+            bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
+            exec: function(editor) {
+                editor.insertSnippet('#### ${1:$SELECTION}');
+            }
+        });
+
         var textarea = $('#note_content');
-        editor.getSession().on("change", function () {
-            $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
+        note_editor.getSession().on("change", function () {
+            $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
             $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
 
-            textarea.val(editor.getSession().getValue());
+            textarea.val(note_editor.getSession().getValue());
             target = document.getElementById('targetDiv'),
                 converter = new showdown.Converter({
                     tables: true,
-                    extensions: ['bootstrap-tables']
+                    extensions: ['bootstrap-tables'],
+                    parseImgDimensions: true
                 }),
 
-                html = converter.makeHtml(editor.getSession().getValue());
+                html = converter.makeHtml(note_editor.getSession().getValue());
 
             target.innerHTML = html;
         });
 
-        textarea.val(editor.getSession().getValue());
+        textarea.val(note_editor.getSession().getValue());
         target = document.getElementById('targetDiv'),
             converter = new showdown.Converter({
                 tables: true,
-                extensions: ['bootstrap-tables']
+                extensions: ['bootstrap-tables'],
+                parseImgDimensions: true
             }),
-            html = converter.makeHtml(editor.getSession().getValue());
+            html = converter.makeHtml(note_editor.getSession().getValue());
 
         target.innerHTML = html;
 
@@ -363,6 +415,46 @@ function note_detail(id) {
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
         $('#modal_note_detail').modal({ show: true, backdrop: 'static', keyboard: false });
     });
+}
+
+function handle_ed_paste(event) {
+    filename = null;
+    const { items } = event.originalEvent.clipboardData;
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+
+      if (item.kind === 'string') {
+        item.getAsString(function (s){
+            filename = $.trim(s.replace(/\t|\n|\r/g, '')).substring(0, 40);
+        });
+      }
+
+      if (item.kind === 'file') {
+        console.log(item.type);
+        const blob = item.getAsFile();
+
+        if (blob !== null) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                notify_success('The file is uploading in background. Don\'t leave the page');
+
+                if (filename === null) {
+                    filename = random_filename(25);
+                }
+
+                upload_interactive_data(e.target.result, filename, function(data){
+                    url = data.data.file_url + case_param();
+                    event.preventDefault();
+                    note_editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
+                });
+
+            };
+            reader.readAsDataURL(blob);
+        } else {
+            notify_error('Unsupported direct paste of this item. Use datastore to upload.');
+        }
+      }
+    }
 }
 
 /* Delete a group of the dashboard */
@@ -410,12 +502,14 @@ function save_note(this_item) {
     .done((data) => {
         if (data.status == 'success') {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
-            $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
         }
     })
     .fail(function (error) {
         $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
-        $('#last_saved').text('Error saving !').addClass('badge-danger').removeClass('badge-success');
+        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-xmark");
+        $('#last_saved').addClass('btn-danger').removeClass('btn-success');
         propagate_form_api_errors(error.responseJSON.data);
     })
 }
@@ -424,8 +518,10 @@ function save_note(this_item) {
 function edit_innote() {
     $('#container_note_content').toggle();
     if ($('#container_note_content').is(':visible')) {
+        $('#notes_edition_btn').show(100);
         $('#ctrd_notesum').removeClass('col-md-12').addClass('col-md-6');
     } else {
+        $('#notes_edition_btn').hide();
         $('#ctrd_notesum').removeClass('col-md-6').addClass('col-md-12');
     }
     return false;
@@ -473,7 +569,6 @@ function draw_kanban() {
         }
     });
 }
-
 
 $(document).ready(function(){
     shared_id = getSharedLink();

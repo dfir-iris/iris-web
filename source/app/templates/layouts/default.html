@@ -23,10 +23,13 @@
 	<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
 	<link rel="stylesheet" href="/static/assets/css/atlantis.css">
 	<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+	<link rel="stylesheet" href="/static/assets/css/suggestags.css">
 
     <!-- Specific CSS goes HERE -->
     {% block stylesheets %}{% endblock stylesheets %}
-
+	{% if current_user.in_dark_mode %}
+		<link rel="stylesheet" href="/static/assets/css/dark-theme.css">
+	{% endif %}
 </head>
 <body>
 	<div class="wrapper {% block layout %}{% endblock layout %}">
@@ -47,7 +50,7 @@
 		</div>
 
 		{% include 'includes/quick-sidebar.html' %}
-
+		{% include 'includes/datastore-sidebar.html' %}
 	</div>
 
 
@@ -56,6 +59,8 @@
 	<script src="/static/assets/js/core/jquery.3.2.1.min.js"></script>
 	<script src="/static/assets/js/core/popper.min.js"></script>
 	<script src="/static/assets/js/core/bootstrap.min.js"></script>
+	<script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
+
 
 	<!-- jQuery UI -->
 	<script src="/static/assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
@@ -77,10 +82,14 @@
 
 	<!-- Atlantis JS -->
 	<script src="/static/assets/js/atlantis.min.js"></script>
-	{% if current_user.in_dark_mode %}<script src="/static/assets/js/dark-mode.js"></script>{% endif %}
+
+	<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
+    charset="utf-8"></script>
 
 	<!-- Iris Common -->
 	<script src="/static/assets/js/iris/common.js"></script>
+	<script src="/static/assets/js/iris/datastore.js"></script>
 
 	<script src="/static/assets/js/core/crypto.core.js"></script>
 	<script src="/static/assets/js/core/crypto.md5.js"></script>

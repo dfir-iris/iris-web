@@ -1,38 +1,10 @@
-var editor = ace.edit("editor_summary",
-    {
-    autoScrollEditorIntoView: true,
-    minLines: 4
-    });
-
-if ($("#editor_summary").attr("data-theme") != "dark") {
-    editor.setTheme("ace/theme/tomorrow");
-} else {
-    editor.setTheme("ace/theme/tomorrow_night");
-}
-editor.session.setMode("ace/mode/markdown");
-editor.renderer.setShowGutter(true);
-editor.setOption("showLineNumbers", true);
-editor.setOption("showPrintMargin", false);
-editor.setOption("displayIndentGuides", true);
-editor.setOption("indentedSoftWrap", false);
-editor.session.setUseWrapMode(true);
-editor.setOption("maxLines", "Infinity")
-editor.renderer.setScrollMargin(8, 5)
-editor.setOption("enableBasicAutocompletion", true);
-editor.commands.addCommand({
-    name: 'save',
-    bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-    exec: function(editor) {
-        sync_editor(false);
-    }
-})
-
 var session_id = null ;
 var collaborator = null ;
 var buffer_dumped = false ;
 var last_applied_change = null ;
 var just_cleared_buffer = null ;
 var from_sync = null;
+var editor = null;
 
 function Collaborator( session_id ) {
     this.collaboration_socket = io.connect() ;
@@ -43,6 +15,7 @@ function Collaborator( session_id ) {
     this.collaboration_socket.on( "change", function(data) {
         delta = JSON.parse( data.delta ) ;
         last_applied_change = delta ;
+        console.log(delta);
         $("#content_typing").text(data.last_change + " is typing..");
         editor.getSession().getDocument().applyDeltas( [delta] ) ;
     }.bind() ) ;
@@ -91,7 +64,55 @@ function body_loaded() {
     just_cleared_buffer = false ;
 }
 
+function handle_ed_paste(event) {
+    filename = null;
+    const { items } = event.originalEvent.clipboardData;
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
 
+      if (item.kind === 'string') {
+        item.getAsString(function (s){
+            filename = $.trim(s.replace(/\t|\n|\r/g, '')).substring(0, 40);
+        });
+      }
+
+      if (item.kind === 'file') {
+        const blob = item.getAsFile();
+
+        if (blob !== null) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                notify_success('The file is uploading in background. Don\'t leave the page');
+
+                if (filename === null) {
+                    filename = random_filename(25);
+                }
+
+                upload_interactive_data(e.target.result, filename, function(data){
+                    url = data.data.file_url + case_param();
+                    event.preventDefault();
+                    cur_pos_row = editor.getCursorPosition().row;
+                    cur_pos_col = editor.getCursorPosition().column;
+                    editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
+                    /* Emulate a change event to trigger the change callback */
+                    delta = {
+                        "action": "insert",
+                        "lines": ['', `![${filename}](${url} =40%x40%)`, ''],
+                        "start": { row: cur_pos_row, column: cur_pos_col },
+                        "end": { row: cur_pos_row + 2, column: cur_pos_col },
+                    }
+                    collaborator.change( JSON.stringify(delta) ) ;
+
+                });
+
+            };
+            reader.readAsDataURL(blob);
+        } else {
+            notify_error('Unsupported direct paste of this item. Use datastore to upload.');
+        }
+      }
+    }
+}
 
 var sh_ext = showdown.extension('bootstrap-tables', function () {
   return [{
@@ -111,21 +132,6 @@ var sh_ext = showdown.extension('bootstrap-tables', function () {
   }];
 });
 
-var textarea = $('#case_summary');
-editor.getSession().on("change", function () {
-    textarea.val(editor.getSession().getValue());
-    $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
-    target = document.getElementById('targetDiv'),
-    converter = new showdown.Converter({
-        tables: true,
-        extensions: ['bootstrap-tables']
-    }),
-    html = converter.makeHtml(editor.getSession().getValue());
-
-    target.innerHTML = html;
-    
-});
-
 function report_template_selector() {
     $('#modal_select_report').modal({ show: true });
 }
@@ -138,8 +144,10 @@ function edit_case_summary() {
     $('#container_editor_summary').toggle();
     if ($('#container_editor_summary').is(':visible')) {
         $('#ctrd_casesum').removeClass('col-md-12').addClass('col-md-6');
+        $('#summary_edition_btn').show(100);
     } else {
         $('#ctrd_casesum').removeClass('col-md-6').addClass('col-md-12');
+        $('#summary_edition_btn').hide();
     }
 }
 
@@ -158,7 +166,9 @@ function sync_editor(no_check) {
             if (no_check) {
                 // Set the content from remote server
                 from_sync = true;
+                cur_pos = editor.getCursorPosition();
                 editor.getSession().setValue(data.data.case_description);
+                editor.moveCursorTo(cur_pos.row, cur_pos.column);
 
                 // Set the CRC in page
                 $('#fetched_crc').val(data.data.crc32.toString());
@@ -171,10 +181,16 @@ function sync_editor(no_check) {
                 if (data.data.crc32 != $('#fetched_crc').val()) {
                     // Content has changed remotely
                     // Check if we have changes locally
-                    local_crc = CRC32(st).toString();
+                    local_crc = crc32(st).toString();
+                    console.log('Content changed. Local CRC is ' + local_crc);
+                    console.log('Saved CRC is ' + $('#fetched_crc').val());
+                    console.log('Remote CRC is ' + data.data.crc32);
                     if (local_crc == $('#fetched_crc').val()) {
                         // No local change, we can sync and update local CRC
+                        cur_pos = editor.getCursorPosition();
                         editor.getSession().setValue(data.data.case_description);
+                        editor.moveCursorTo(cur_pos.row, cur_pos.column);
+
                         $('#fetched_crc').val(data.data.crc32);
                         $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
                         $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
@@ -200,7 +216,8 @@ function sync_editor(no_check) {
                     // Check local change
                     local_crc = crc32(st).toString();
                     if (local_crc != $('#fetched_crc').val()) {
-                        console.log('Updating with CRC ' + local_crc);
+                        console.log('Local change. Old CRC is ' + local_crc);
+                        console.log('New CRC is ' + $('#fetched_crc').val());
                         var data = Object();
                         data['case_description'] = st;
                         data['csrf_token'] = $('#csrf_token').val();
@@ -215,7 +232,7 @@ function sync_editor(no_check) {
                                 if (data.status == 'success') {
                                     collaborator.save();
                                     $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
-                                    $('#fetched_crc').val(local_crc);
+                                    $('#fetched_crc').val(data.data);
                                     $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
                                 } else {
                                     notify_error("Unable to save content to remote server");
@@ -247,6 +264,98 @@ function auto_remove_typing() {
 }
 
 $(document).ready(function() {
+
+    editor = ace.edit("editor_summary",
+        {
+        autoScrollEditorIntoView: true,
+        minLines: 4
+        });
+
+    if ($("#editor_summary").attr("data-theme") != "dark") {
+        editor.setTheme("ace/theme/tomorrow");
+    } else {
+        editor.setTheme("ace/theme/tomorrow_night");
+    }
+    editor.session.setMode("ace/mode/markdown");
+    editor.renderer.setShowGutter(true);
+    editor.setOption("showLineNumbers", true);
+    editor.setOption("showPrintMargin", false);
+    editor.setOption("displayIndentGuides", true);
+    editor.setOption("indentedSoftWrap", false);
+    editor.session.setUseWrapMode(true);
+    editor.setOption("maxLines", "Infinity")
+    editor.renderer.setScrollMargin(8, 5)
+    editor.setOption("enableBasicAutocompletion", true);
+    editor.commands.addCommand({
+        name: 'save',
+        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+        exec: function(editor) {
+            sync_editor(false);
+        }
+    })
+    editor.commands.addCommand({
+        name: 'bold',
+        bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
+        exec: function(editor) {
+            editor.insertSnippet('**${1:$SELECTION}**');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'italic',
+        bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
+        exec: function(editor) {
+            editor.insertSnippet('*${1:$SELECTION}*');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_1',
+        bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
+        exec: function(editor) {
+            editor.insertSnippet('# ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_2',
+        bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
+        exec: function(editor) {
+            editor.insertSnippet('## ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_3',
+        bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
+        exec: function(editor) {
+            editor.insertSnippet('### ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_4',
+        bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
+        exec: function(editor) {
+            editor.insertSnippet('#### ${1:$SELECTION}');
+        }
+    });
+    $('#editor_summary').on('paste', (event) => {
+        event.preventDefault();
+        handle_ed_paste(event);
+    });
+
+    var textarea = $('#case_summary');
+    editor.getSession().on("change", function () {
+        textarea.val(editor.getSession().getValue());
+        $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
+        target = document.getElementById('targetDiv'),
+        converter = new showdown.Converter({
+            tables: true,
+            extensions: ['bootstrap-tables'],
+            parseImgDimensions: true
+        }),
+        html = converter.makeHtml(editor.getSession().getValue());
+
+        target.innerHTML = html;
+
+    });
+
     edit_case_summary();
     body_loaded();
     if (is_db_linked == 1) {

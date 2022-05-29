@@ -674,6 +674,15 @@ def case_add_event_modal(caseid, url_redir):
                            attributes=event.custom_attributes)
 
 
+@case_timeline_blueprint.route('/case/timeline/filter-help/modal', methods=['GET'])
+@login_required
+def case_filter_help_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
+
+    return render_template("modal_help_filter_tm.html")
+
+
 @case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
 @api_login_required
 def case_add_event(caseid):
@@ -808,3 +817,5 @@ def case_event_date_convert(caseid):
         return response_success("Date parsed", data=data)
 
     return response_error("Unable to find a matching date format")
+
+

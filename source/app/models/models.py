@@ -20,6 +20,7 @@
 
 # IMPORTS ------------------------------------------------
 import secrets
+import uuid
 
 from flask_login import UserMixin
 from sqlalchemy import BigInteger
@@ -36,6 +37,7 @@ from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import or_
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
@@ -349,6 +351,44 @@ class CustomAttribute(db.Model):
     attribute_description = Column(Text)
     attribute_for = Column(Text)
     attribute_content = Column(JSON)
+
+
+class DataStorePath(db.Model):
+    __tablename__ = 'data_store_path'
+
+    path_id = Column(BigInteger, primary_key=True)
+    path_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    path_name = Column(Text, nullable=False)
+    path_parent_id = Column(BigInteger)
+    path_is_root = Column(Boolean)
+    path_case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    case = relationship('Cases')
+
+
+class DataStoreFile(db.Model):
+    __tablename__ = 'data_store_file'
+
+    file_id = Column(BigInteger, primary_key=True)
+    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    file_original_name = Column(Text, nullable=False)
+    file_local_name = Column(Text, nullable=False)
+    file_description = Column(Text)
+    file_date_added = Column(DateTime)
+    file_tags = Column(Text)
+    file_size = Column(BigInteger)
+    file_is_ioc = Column(Boolean)
+    file_is_evidence = Column(Boolean)
+    file_password = Column(Text)
+    file_parent_id = Column(ForeignKey('data_store_path.path_id'), nullable=False)
+    file_sha256 = Column(Text)
+    added_by_user_id = Column(ForeignKey('user.id'), nullable=False)
+    modification_history = Column(JSON)
+    file_case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    case = relationship('Cases')
+    user = relationship('User')
+    data_parent = relationship('DataStorePath')
 
 
 class IocType(db.Model):

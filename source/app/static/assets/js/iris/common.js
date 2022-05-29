@@ -18,7 +18,6 @@ function clear_api_error() {
    $(".invalid-feedback").hide();
 }
 
-
 function setCookie(name,value,days) {
     var expires = "";
     if (days) {
@@ -41,7 +40,6 @@ function getCookie(name) {
 function eraseCookie(name) {
     document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
-
 
 function propagate_form_api_errors(data_error) {
     for (e in data_error) {
@@ -82,10 +80,11 @@ function notify_error(message) {
     } else {
         data = message;
     }
-    data = sanitizeHTML(data);
+    data = '<p>' + sanitizeHTML(data) + '</p>';
     $.notify({
-        icon: 'fas fa-times',
-        message: data
+        icon: 'fas fa-triangle-exclamation',
+        message: data,
+        title: 'Error'
     }, {
         type: 'danger',
         placement: {
@@ -93,7 +92,7 @@ function notify_error(message) {
             align: 'left'
         },
         z_index: 2000,
-        time: 8000,
+        timer: 8000,
         animate: {
             enter: 'animated fadeIn',
             exit: 'animated fadeOut'
@@ -102,10 +101,10 @@ function notify_error(message) {
 }
 
 function notify_success(message) {
-    message = sanitizeHTML(message);
+    message = '<p>' + sanitizeHTML(message) + '</p>';
     $.notify({
         icon: 'fas fa-check',
-        message: message,
+        message: message
     }, {
         type: 'success',
         placement: {
@@ -113,7 +112,7 @@ function notify_success(message) {
             align: 'left'
         },
         z_index: 2000,
-        time: 6000,
+        timer: 6000,
         animate: {
                     enter: 'animated fadeIn',
                     exit: 'animated fadeOut'
@@ -167,7 +166,6 @@ function get_request_api(uri, propagate_api_error, beforeSend_fn) {
     });
 }
 
-
 function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
     return $.ajax({
         url: uri + case_param(),
@@ -196,7 +194,6 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
         }
     });
 }
-
 
 function post_request_api(uri, data, propagate_api_error, beforeSend_fn) {
    return $.ajax({
@@ -228,8 +225,38 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn) {
     });
 }
 
-function updateURLParameter(url, param, paramVal)
-{
+function post_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
+   return $.ajax({
+        url: uri + case_param(),
+        type: 'POST',
+        data: data,
+        dataType: "json",
+        contentType: false,
+        processData: false,
+        beforeSend: function(jqXHR, settings) {
+            if (beforeSend_fn !== undefined) {
+                beforeSend_fn(jqXHR, settings);
+            }
+        },
+        error: function(jqXHR) {
+            if (propagate_api_error) {
+                if(jqXHR.responseJSON && jqXHR.status == 400) {
+                    propagate_form_api_errors(jqXHR.responseJSON.data);
+                } else {
+                    ajax_notify_error(jqXHR, this.url);
+                }
+            } else {
+                if(jqXHR.responseJSON) {
+                    notify_error(jqXHR.responseJSON.message);
+                } else {
+                    ajax_notify_error(jqXHR, this.url);
+                }
+            }
+        }
+    });
+}
+
+function updateURLParameter(url, param, paramVal) {
     var TheAnchor = null;
     var newAdditionalURL = "";
     var tempArray = url.split("?");
@@ -273,44 +300,6 @@ function updateURLParameter(url, param, paramVal)
     return baseURL + "?" + newAdditionalURL + rows_txt;
 }
 
-
-$('#submit_set_context').click(function () {
-    var data_sent = new Object();
-    data_sent.ctx = $('#user_context').val();
-    data_sent.ctx_h = $("#user_context option:selected").text();
-    post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
-    .done((data) => {
-        if(notify_auto_api(data, true)) {
-            $('#modal_switch_context').modal('hide');
-            swal({
-                title: 'Context changed successfully',
-                text: 'Reloading...',
-                icon: 'success',
-                timer: 500,
-                buttons: false,
-            })
-            .then(() => {
-                var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
-                window.history.replaceState('', '', newURL);
-                location.reload();
-            })
-        }
-    });
-});
-
-$(".rotate").click(function () {
-    $(this).toggleClass("down");
-});
-
-$(function () {
-    $('[data-toggle="popover"]').popover({
-        trigger: 'focus',
-        placement: 'auto',
-        container: 'body',
-        html: true
-    });
-})
-
 function get_caseid() {
     queryString = window.location.search;
     urlParams = new URLSearchParams(queryString);
@@ -345,22 +334,6 @@ function case_param() {
     }
     return '?'+ $.param(params);
 }
-
-$('#form_add_tasklog').submit(function () {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    var data = $('form#form_add_tasklog').serializeObject();
-    data['csrf_token'] = $('#csrf_token').val();
-
-    post_request_api('/case/tasklog/add', JSON.stringify(data), true)
-    .done(function (data){
-        if(notify_auto_api(data)){
-            $('#modal_add_tasklog').modal('hide');
-        }
-    });
-    return false;
-});
-
 
 var last_state = null;
 var need_check = true;
@@ -448,8 +421,7 @@ function isWhiteSpace(s) {
   return /^\s+$/.test(s);
 }
 
-function exportInnerPng()
-{
+function exportInnerPng() {
     close_sid_var = document.querySelector(".close-quick-sidebar");
     close_sid_var.click();
     div = document.querySelector(".page-inner");
@@ -468,7 +440,6 @@ function downloadURI(uri, name) {
     link.download = name;
     link.href = uri;
     document.body.appendChild(link);
-    console.log(link);
     link.click();
     link.remove();
 }
@@ -505,7 +476,6 @@ function load_case_activity(){
         }
     });
 }
-
 
 function load_dim_limited_tasks(){
     get_request_api('/dim/tasks/list/100')
@@ -811,11 +781,25 @@ function load_context_switcher() {
     });
 }
 
-$('#user_context').selectpicker({liveSearch: true,
-    title: "None",
-    style: "btn-outline-white"
-});
-$('#user_context').selectpicker('val', get_caseid());
+function split_bool(split_str) {
+    and_split = split_str.split(' AND ');
+
+    if (and_split[0]) {
+      return and_split[0];
+    }
+
+    return null;
+}
+
+function random_filename(length) {
+    var filename           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var char_length = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+      filename += characters.charAt(Math.random() * 1000 % char_length);
+   }
+   return filename;
+}
 
 $(document).ready(function(){
     notify_redirect();
@@ -860,4 +844,69 @@ $(document).ready(function(){
             }
         })
     })
+
+    $('#submit_set_context').click(function () {
+    var data_sent = new Object();
+    data_sent.ctx = $('#user_context').val();
+    data_sent.ctx_h = $("#user_context option:selected").text();
+    post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            $('#modal_switch_context').modal('hide');
+            swal({
+                title: 'Context changed successfully',
+                text: 'Reloading...',
+                icon: 'success',
+                timer: 500,
+                buttons: false,
+            })
+            .then(() => {
+                var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
+                window.history.replaceState('', '', newURL);
+                location.reload();
+            })
+        }
+    });
 });
+
+    $(".rotate").click(function () {
+        $(this).toggleClass("down");
+    });
+
+    $(function () {
+        $('[data-toggle="popover"]').popover({
+            trigger: 'focus',
+            placement: 'auto',
+            container: 'body',
+            html: true
+        });
+    });
+
+    $('#user_context').selectpicker({liveSearch: true,
+    title: "None",
+    style: "btn-outline-white"
+});
+    $('#user_context').selectpicker('val', get_caseid());
+
+    $('.modal-dialog').draggable({
+        handle: ".modal-header"
+    });
+
+    $('#form_add_tasklog').submit(function () {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        var data = $('form#form_add_tasklog').serializeObject();
+        data['csrf_token'] = $('#csrf_token').val();
+
+        post_request_api('/case/tasklog/add', JSON.stringify(data), true)
+        .done(function (data){
+            if(notify_auto_api(data)){
+                $('#modal_add_tasklog').modal('hide');
+            }
+        });
+        return false;
+    });
+
+});
+
+

@@ -1,0 +1,33 @@
+            <div class="modal-xl modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title mt-1 mr-4">Timeline filtering help</h4>
+                        <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                    </div>
+                    <div class="modal-body mb-2">
+                        <div class="row">
+                            <div class="col-12">
+                                <p>The timeline can be filtered thanks to simple queries. The query schema is :  <code>target_element:search_value AND target_element2:search_value2</code>.<br/>
+                                There is no <code>OR</code> condition and searching without target does not work.
+                                <p>The following target elements can be used to filter :</p>
+                                <ul>
+                                    <li><code>asset</code>: Asset linked to the event</li>
+                                    <li><code>ioc</code>: IOC linked to the event</li>
+                                    <li><code>tag</code>: Tag within the event</li>
+                                    <li><code>title</code>: Title of the event</li>
+                                    <li><code>description</code>: Description of the event</li>
+                                    <li><code>raw</code> : Raw event content</li>
+                                    <li><code>category</code>: Category of the event</li>
+                                    <li><code>source</code>: Source of the event</li>
+                                    <li><code>startDate</code>: Start date to filter with</li>
+                                    <li><code>endDate</code>: End date to filter with</li>
+                                </ul>
+                                The dates filters uses the same guessing as the date parser in events, so a lots of format are handled.<br/>
+                                Example of filter :
+                                <code>asset: DESKTOP-X5487 AND description: rdp connection to AND source: Windows Security</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>

@@ -17,20 +17,30 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
+from flask_login import current_user
+
+from pathlib import Path
+
 import dateutil.parser
 import marshmallow
 import os
 import random
 import string
+import tempfile
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
+import pyminizip
 
 from app import app
+from app import db
 from app import ma
+from app.datamgmt.datastore.datastore_db import datastore_get_interactive_path_node
+from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.models import AnalysisStatus
 from app.models import AssetsType
@@ -40,6 +50,7 @@ from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
 from app.models import Client
+from app.models import DataStoreFile
 from app.models import EventCategory
 from app.models import GlobalTasks
 from app.models import Ioc
@@ -50,6 +61,8 @@ from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models import User
+from app.util import file_sha256sum
+from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
 
@@ -261,12 +274,125 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class DSFileSchema(ma.SQLAlchemyAutoSchema):
+    csrf_token = fields.String(required=False)
+    file_original_name = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
+    file_description = auto_field('file_description', allow_none=False)
+    file_content = fields.Raw(required=False)
+
+    class Meta:
+        model = DataStoreFile
+        include_fk = True
+        load_instance = True
+
+    def ds_store_file_b64(self, filename, file_content, dsp, cid):
+        try:
+            filename = filename.rstrip().replace('\t', '').replace('\n', '').replace('\r', '')
+            file_hash = stream_sha256sum(file_content)
+
+            dsf = DataStoreFile.query.filter(DataStoreFile.file_sha256 == file_hash).first()
+            if dsf:
+                exists = True
+
+            else:
+                dsf = DataStoreFile()
+                dsf.file_original_name = filename
+                dsf.file_description = "Pasted in notes"
+                dsf.file_tags = "notes"
+                dsf.file_password = ""
+                dsf.file_is_ioc = False
+                dsf.file_is_evidence = False
+                dsf.file_case_id = cid
+                dsf.file_date_added = datetime.datetime.now()
+                dsf.added_by_user_id = current_user.id
+                dsf.file_local_name = 'tmp_xc'
+                dsf.file_parent_id = dsp.path_id
+                dsf.file_sha256 = file_hash
+
+                db.session.add(dsf)
+                db.session.commit()
+
+                dsf.file_local_name = datastore_get_standard_path(dsf, cid).as_posix()
+                db.session.commit()
+
+                with open(dsf.file_local_name, 'wb') as fout:
+                    fout.write(file_content)
+
+                exists = False
+
+        except Exception as e:
+            raise marshmallow.exceptions.ValidationError(
+                str(e),
+                field_name='file_password'
+            )
+
+        setattr(self, 'file_local_path', str(dsf.file_local_name))
+
+        return dsf, exists
+
+    def ds_store_file(self, file_storage, location, is_ioc, password):
+        if not file_storage.filename:
+            return None
+
+        passwd = None
+
+        try:
+            if is_ioc and not password:
+                passwd = 'infected'
+            elif password:
+                passwd = password
+
+            if passwd is not None:
+                try:
+
+                    temp_location = Path('/tmp/') / location.name
+                    file_storage.save(temp_location)
+                    file_hash = file_sha256sum(temp_location)
+                    file_size = temp_location.stat().st_size
+
+                    temp_location = temp_location.rename(Path('/tmp/') / file_hash)
+
+                    pyminizip.compress(temp_location.as_posix(), None, location.as_posix() + '.zip', passwd, 0)
+
+                    Path(temp_location).unlink()
+
+                    file_path = location.as_posix() + '.zip'
+
+                except Exception as e:
+                    raise marshmallow.exceptions.ValidationError(
+                        str(e),
+                        field_name='file_password'
+                    )
+
+            else:
+                file_storage.save(location)
+                file_path = location.as_posix()
+                file_size = location.stat().st_size
+                file_hash = file_sha256sum(file_path)
+
+        except Exception as e:
+            raise marshmallow.exceptions.ValidationError(
+                str(e),
+                field_name='file_content'
+            )
+
+        if location is None:
+            raise marshmallow.exceptions.ValidationError(
+                f"Unable to save file in target location",
+                field_name='file_content'
+            )
+
+        setattr(self, 'file_local_path', str(location))
+
+        return file_path, file_size, file_hash
+
+
 class AssetSchema(ma.SQLAlchemyAutoSchema):
     csrf_token = fields.String(required=False)
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
     asset_icon_compromised = auto_field('asset_icon_compromised')
-    asset_icon_not_compromised =auto_field('asset_icon_not_compromised')
+    asset_icon_not_compromised = auto_field('asset_icon_not_compromised')
 
     class Meta:
         model = AssetsType

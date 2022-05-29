@@ -156,8 +156,8 @@ function update_attribute(attr_id, editor, partial, complete){
         window.swal({
               title: "Updating and migrating...",
               text: "Please wait",
-              imageUrl: "images/ajaxloader.gif",
-              showConfirmButton: false,
+              icon: "/static/assets/img/loader.gif",
+              button: false,
               allowOutsideClick: false
         });
     })
