@@ -112,10 +112,10 @@ function notify_success(message) {
             align: 'left'
         },
         z_index: 2000,
-        timer: 6000,
+        timer: 2500,
         animate: {
-                    enter: 'animated fadeIn',
-                    exit: 'animated fadeOut'
+            enter: 'animated fadeIn',
+            exit: 'animated fadeOut'
         }
     });
 }

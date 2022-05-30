@@ -31,6 +31,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from sqlalchemy import and_
+from sqlalchemy import func
 from sqlalchemy import or_
 
 from app import db
@@ -390,14 +391,6 @@ def case_filter_timeline(caseid):
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
 
-    inner_condition = or_()
-    if iocs is not None:
-        for ioc in iocs:
-            inner_condition = or_(
-                inner_condition,
-                Ioc.ioc_value == ioc
-            )
-
     iocs_cache = CaseEventsIoc.query.with_entities(
         CaseEventsIoc.event_id,
         CaseEventsIoc.ioc_id,
@@ -430,8 +423,8 @@ def case_filter_timeline(caseid):
     iocs_filter = []
     if iocs:
         for ioc in iocs_cache:
-                if ioc.event_id not in iocs_filter and ioc.ioc_value in iocs:
-                    iocs_filter.append(ioc.event_id)
+            if ioc.event_id not in iocs_filter and ioc.ioc_value.lower() in iocs:
+                iocs_filter.append(ioc.event_id)
 
     tim = []
     for row in timeline:
