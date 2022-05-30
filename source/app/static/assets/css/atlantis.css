@@ -668,7 +668,6 @@ body {
     overflow: auto;
     width: 100%;
     z-index: 4;
-    padding-bottom: 100px;
     transition: all .3s;
 }
 
@@ -1084,9 +1083,8 @@ body {
 
 
 /* Sidebar style 2 */
-
 .sidebar.sidebar-style-2 .nav .nav-item {
-    padding: 0 10px;
+    padding: 0 11px;
 }
 
 .sidebar.sidebar-style-2 .nav .nav-item a {
