@@ -1086,12 +1086,17 @@ body {
 /* Sidebar style 2 */
 
 .sidebar.sidebar-style-2 .nav .nav-item {
-    padding: 0 15px;
+    padding: 0 10px;
 }
 
 .sidebar.sidebar-style-2 .nav .nav-item a {
     padding: 8px 10px;
     border-radius: 5px;
+}
+
+.iris-version-menu {
+    padding-left: 14px;
+    margin-right: 10px;
 }
 
 .sidebar.sidebar-style-2 .nav .nav-item a:hover,
