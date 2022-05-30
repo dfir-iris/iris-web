@@ -1084,11 +1084,11 @@ body {
 
 /* Sidebar style 2 */
 .sidebar.sidebar-style-2 .nav .nav-item {
-    padding: 0 11px;
+    padding: 0 15px;
 }
 
 .sidebar.sidebar-style-2 .nav .nav-item a {
-    padding: 8px 10px;
+    padding: 8px 8px;
     border-radius: 5px;
 }
 
