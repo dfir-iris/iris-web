@@ -29,7 +29,7 @@ function check_updates() {
         '/manage/server/check-updates/modal' + case_param(),
         function (response, status, xhr) {
             if (status !== "success") {
-                 ajax_notify_error(xhr, url);
+                 ajax_notify_error(xhr, '/manage/server/check-updates/modal');
                  return false;
             }
             var conv = new showdown.Converter();
