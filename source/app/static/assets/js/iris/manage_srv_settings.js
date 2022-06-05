@@ -30,13 +30,13 @@ function check_updates() {
         function (response, status, xhr) {
             if (status !== "success") {
                  ajax_notify_error(xhr, '/manage/server/check-updates/modal');
+                 document.getElementById('updates_content_md').innerHTML = "Unable to check for updates. Server side error.";
                  return false;
             }
             var conv = new showdown.Converter();
             var txt = document.getElementById('updates_content_md').innerHTML;
 
             document.getElementById('updates_content_md').innerHTML = conv.makeHtml(txt);
-            $('#modal_updates').modal({ show: true });
         });
 }
 
