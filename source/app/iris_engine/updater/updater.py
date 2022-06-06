@@ -590,8 +590,8 @@ def task_update_get_version(self):
 
 
 @celery.on_after_finalize.connect
-def setup_periodic_update_checks(sender, **kwargs):
-    sender.add_periodic_task(
+def setup_periodic_update_checks(self, **kwargs):
+    self.add_periodic_task(
         crontab(hour=0, minute=0),
         task_check_available_updates.s(),
         name='iris_auto_check_updates'
@@ -599,7 +599,8 @@ def setup_periodic_update_checks(sender, **kwargs):
 
 
 def remove_periodic_update_checks():
-    del celery.conf['beat_schedule']['iris_auto_check_updates']
+    if 'iris_auto_check_updates' in celery.conf['beat_schedule']:
+        del celery.conf['beat_schedule']['iris_auto_check_updates']
 
 
 @celery.task
