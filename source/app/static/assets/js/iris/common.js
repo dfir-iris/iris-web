@@ -883,9 +883,9 @@ $(document).ready(function(){
     });
 
     $('#user_context').selectpicker({liveSearch: true,
-    title: "None",
-    style: "btn-outline-white"
-});
+        title: "None",
+        style: "btn-outline-white"
+    });
     $('#user_context').selectpicker('val', get_caseid());
 
     $('.modal-dialog').draggable({
