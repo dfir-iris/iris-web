@@ -56,9 +56,10 @@ function add_ioc() {
             })
 
             return false;
-        })
+        });
     });
     $('#modal_add_ioc').modal({ show: true });
+    return false;
 }
 
 /* Retrieve the list of iocs and build a datatable for each type of ioc */
@@ -111,6 +112,7 @@ function edit_ioc(ioc_id) {
         }
 
         load_menu_mod_options_modal(ioc_id, 'ioc', $("#ioc_modal_quick_actions"));
+        $('.dtr-modal').hide();
     });
     $('#modal_add_ioc').modal({ show: true });
 }

@@ -65,6 +65,7 @@ function add_asset() {
         })
     });
     $('#modal_add_asset').modal({ show: true });
+    $('.dtr-modal').hide();
 }
 
 /* Retrieve the list of assets and build a datatable for each type of asset */
@@ -183,7 +184,9 @@ function asset_details(asset_id) {
         })
 
         load_menu_mod_options_modal(asset_id, 'asset', $("#asset_modal_quick_actions"));
+        $('.dtr-modal').hide();
     });
+
     $('#modal_add_asset').modal({ show: true });
     return false;
 }
