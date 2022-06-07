@@ -83,6 +83,8 @@ function get_case_assets() {
 
                 set_last_state(jsdata.state);
                 hide_loader();
+                Table.responsive.recalc();
+
                 $('#assets_table').on('click', function(e){
                     if($('.popover-link').length>1)
                         $('.popover-link').popover('hide');
@@ -422,7 +424,7 @@ $(document).ready(function(){
         { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white pl--2'
         , "titleAttr": 'Copy' },
     ]
-}).container().appendTo($('#tables_button'));
+    }).container().appendTo($('#tables_button'));
 
     get_case_assets();
     setInterval(function() { check_update('assets/state'); }, 3000);
