@@ -397,7 +397,7 @@ $(document).ready(function(){
                     display: $.fn.dataTable.Responsive.display.modal( {
                         header: function ( row ) {
                             var data = row.data();
-                            return 'Details of '+ data.asset_name +' ('+ data.asset_type  + ')';
+                            return 'Details of '+ sanitizeHTML(data.asset_name) +' ('+ sanitizeHTML(data.asset_type)  + ')';
                         }
                     } ),
                     renderer: $.fn.dataTable.Responsive.renderer.tableAll()

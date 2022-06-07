@@ -320,7 +320,7 @@ $(document).ready(function(){
                 display: $.fn.dataTable.Responsive.display.modal( {
                     header: function ( row ) {
                         var data = row.data();
-                        return 'Details for '+data.ioc_value +'('+ data.ioc_type + ')';
+                        return 'Details for '+ sanitizeHTML(data.ioc_value) +'('+ sanitizeHTML(data.ioc_type) + ')';
                     }
                 } ),
                 renderer: $.fn.dataTable.Responsive.renderer.tableAll()
