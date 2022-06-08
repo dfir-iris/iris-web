@@ -24,6 +24,7 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import url_for
+from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case
@@ -110,6 +111,10 @@ def case_graph_get_data(caseid):
             'title': title,
             'value': 1
         }
+
+        if current_user.in_dark_mode:
+            new_node['font'] = "12px verdana white"
+
         if not any(node['id'] == idx for node in nodes):
             nodes.append(new_node)
 
