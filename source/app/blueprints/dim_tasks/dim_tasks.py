@@ -186,7 +186,6 @@ def dim_hooks_call(caseid):
 @dim_tasks_blueprint.route('/dim/tasks/list/<int:count>', methods=['GET'])
 @api_login_required
 def list_dim_tasks(count, caseid):
-
     tasks = CeleryTaskMeta.query.filter(
         ~ CeleryTaskMeta.name.like('app.iris_engine.updater.updater.%')
     ).order_by(desc(CeleryTaskMeta.date_done)).limit(count).all()
@@ -211,7 +210,7 @@ def list_dim_tasks(count, caseid):
             continue
 
         if row.name is not None and 'task_hook_wrapper' in row.name:
-             task_name = f"{row.kwargs}::{row.kwargs}"
+            task_name = f"{row.kwargs}::{row.kwargs}"
         else:
             task_name = row.name
 
@@ -276,7 +275,8 @@ def task_status(task_id, caseid, url_redir):
 
     task_meta = task._get_task_meta()
 
-    if task_meta.get('name') and 'task_hook_wrapper' in task_meta.get('name'):
+    if task_meta.get('name') \
+            and ('task_hook_wrapper' in task_meta.get('name') or 'pipeline_dispatcher' in task_meta.get('name')):
         task_info['Module name'] = task_meta.get('kwargs').get('module_name')
         task_info['Hook name'] = task_meta.get('kwargs').get('hook_name')
         task_info['User'] = task_meta.get('kwargs').get('init_user')

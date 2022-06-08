@@ -76,7 +76,8 @@ def task_case_update(module, pipeline, pipeline_args, caseid):
 
                 track_activity("started a new analysis import with pipeline {}".format(pipeline))
 
-                pipeline_dispatcher.delay(module=module,
+                pipeline_dispatcher.delay(module_name=module,
+                                          hook_name=IrisPipelineTypes.pipeline_type_update,
                                           pipeline_type=IrisPipelineTypes.pipeline_type_update,
                                           pipeline_data=task_args,
                                           init_user=current_user.name,

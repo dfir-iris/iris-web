@@ -554,7 +554,7 @@ def list_available_pipelines():
 
 
 @celery.task(bind=True)
-def pipeline_dispatcher(self, module, pipeline_type, pipeline_data, init_user, caseid):
+def pipeline_dispatcher(self, module_name, hook_name, pipeline_type, pipeline_data, init_user, caseid):
     """
     Dispatch the pipelines according to their types
     :param pipeline_type: Type of pipeline
@@ -563,7 +563,7 @@ def pipeline_dispatcher(self, module, pipeline_type, pipeline_data, init_user, c
     """
 
     # Retrieve the handler
-    mod, _ = instantiate_module_from_name(module_name=module)
+    mod, _ = instantiate_module_from_name(module_name=module_name)
     if mod:
 
         status = configure_module_on_init(mod)
@@ -574,4 +574,4 @@ def pipeline_dispatcher(self, module, pipeline_type, pipeline_data, init_user, c
         return mod.pipeline_handler(pipeline_type=pipeline_type,
                                     pipeline_data=pipeline_data)
 
-    return IStatus.I2InterfaceNotImplemented("Couldn't instantiate module {}".format(module))
+    return IStatus.I2InterfaceNotImplemented("Couldn't instantiate module {}".format(module_name))
