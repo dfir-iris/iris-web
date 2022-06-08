@@ -449,7 +449,7 @@ def datastore_filter_tree(filter_d, caseid):
 
     if storage_names:
         for name in storage_names:
-            condition = or_(condition,
+            condition = and_(condition,
                             DataStoreFile.file_local_name.ilike(f'%{name}%'))
 
     if tags:
@@ -498,7 +498,7 @@ def datastore_filter_tree(filter_d, caseid):
     ).all()
 
     try:
-
+        print(condition)
         dsf = DataStoreFile.query.filter(
             condition
         ).all()

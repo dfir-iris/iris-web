@@ -554,7 +554,7 @@ function reparse_activate_tree_selection() {
 }
 
 var parsed_filter_ds = {};
-var ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password', 'uuid', 'id', 'sha256'];
+var ds_keywords = ['storage_name', 'name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password', 'uuid', 'id', 'sha256'];
 
 function parse_filter(str_filter, keywords) {
   for (var k = 0; k < keywords.length; k++) {
@@ -590,7 +590,7 @@ function parse_filter(str_filter, keywords) {
 
 function filter_ds_files() {
 
-    ds_keywords = ['name', 'storage_name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password', 'uuid', 'id', 'sha256'];
+    ds_keywords = ['storage_name', 'name', 'tag', 'description', 'is_ioc', 'is_evidence', 'has_password', 'uuid', 'id', 'sha256'];
     parsed_filter_ds = {};
     parse_filter(ds_filter.getValue(), ds_keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter_ds));
