@@ -498,7 +498,6 @@ def datastore_filter_tree(filter_d, caseid):
     ).all()
 
     try:
-        print(condition)
         dsf = DataStoreFile.query.filter(
             condition
         ).all()
