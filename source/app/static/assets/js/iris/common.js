@@ -138,9 +138,15 @@ function notify_auto_api(data, silent_success) {
     }
 }
 
-function get_request_api(uri, propagate_api_error, beforeSend_fn) {
+function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
+    if (cid === undefined ) {
+     cid = case_param();
+    } else {
+     cid = '?cid=' + cid;
+    }
+
     return $.ajax({
-        url: uri + case_param(),
+        url: uri + cid,
         type: 'GET',
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
@@ -195,9 +201,14 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
     });
 }
 
-function post_request_api(uri, data, propagate_api_error, beforeSend_fn) {
+function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid) {
+   if (cid === undefined ) {
+     cid = case_param();
+   } else {
+     cid = '?cid=' + cid;
+   }
    return $.ajax({
-        url: uri + case_param(),
+        url: uri + cid,
         type: 'POST',
         data: data,
         dataType: "json",

@@ -70,6 +70,6 @@
     </div>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-danger mr-auto" onclick="delete_note(this);">Delete note</button>
-    <button type="button" class="btn btn-default" onclick="save_note( this );" id="btn_save_note">Save</button>
+    <button type="button" class="btn btn-outline-danger mr-auto" onclick="delete_note(this, {{ ncid }});">Delete note</button>
+    <button type="button" class="btn btn-default" onclick="save_note( this, {{ ncid }} );" id="btn_save_note">Save</button>
 </div>

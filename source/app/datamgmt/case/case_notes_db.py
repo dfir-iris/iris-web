@@ -38,7 +38,8 @@ def get_note(note_id, caseid=None):
         Notes.note_lastupdate,
         NotesGroupLink.group_id,
         NotesGroup.group_title,
-        Notes.custom_attributes
+        Notes.custom_attributes,
+        Notes.note_case_id
     ).filter(and_(
         Notes.note_id == note_id,
         Notes.note_case_id == caseid

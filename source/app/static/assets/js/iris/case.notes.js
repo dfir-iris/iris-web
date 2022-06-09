@@ -223,11 +223,11 @@ function edit_remote_groupnote(group_id) {
 }
 
 /* Delete a group of the dashboard */
-function delete_note(_item) {
+function delete_note(_item, cid) {
 
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
-    get_request_api('/case/notes/delete/' + n_id)
+    get_request_api('/case/notes/delete/' + n_id, undefined, undefined, cid)
     .done((data) => {
        $('#modal_note_detail').modal('hide');
        notify_auto_api(data);
@@ -296,8 +296,14 @@ var sh_ext = showdown.extension('bootstrap-tables', function () {
 
 var note_editor;
 /* Fetch the edit modal with content from server */
-function note_detail(id) {
-    url = '/case/notes/' + id + "/modal" + case_param();
+function note_detail(id, cid) {
+    if (cid === undefined ) {
+        cid = case_param()
+    } else {
+        cid = '?cid=' + cid;
+    }
+
+    url = '/case/notes/' + id + "/modal" + cid;
     $('#info_note_modal_content').load(url, function (response, status, xhr) {
         hide_minimized_modal_box();
         if (status !== "success") {
@@ -484,7 +490,7 @@ function search_notes() {
 }
 
 /* Save a note into db */
-function save_note(this_item) {
+function save_note(this_item, cid) {
     clear_api_error();
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
@@ -498,7 +504,7 @@ function save_note(this_item) {
 
     data_sent['custom_attributes'] = attributes;
 
-    post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent))
+    post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent), undefined, undefined, cid)
     .done((data) => {
         if (data.status == 'success') {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');

@@ -110,7 +110,9 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
         form.note_title.render_kw = {"value": note.note_title}
         ca = note.custom_attributes
 
-    return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca)
+        return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca, ncid=note.note_case_id)
+
+    return response_error(f'Unable to find note ID {cur_id} for case {caseid}')
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['GET'])
