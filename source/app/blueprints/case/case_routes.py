@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import binascii
+
 import marshmallow
 from flask import Blueprint
 from flask import redirect
@@ -46,6 +48,7 @@ from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_report_template
 from app.datamgmt.reporter.report_db import export_case_json
+from app.datamgmt.reporter.report_db import export_case_json_extended
 from app.iris_engine.utils.tracker import track_activity
 from app.models import User
 from app.models import UserActivity
@@ -142,7 +145,7 @@ def desc_fetch(caseid):
         return response_error('Invalid case ID')
 
     case.description = js_data.get('case_description')
-
+    crc = binascii.crc32(case.description.encode('utf-8'))
     db.session.commit()
     track_activity("updated summary", caseid)
 
@@ -154,7 +157,7 @@ def desc_fetch(caseid):
         }
         socket_io.emit('save', data, to=f"case-{caseid}")
 
-    return response_success("Summary updated")
+    return response_success("Summary updated", data=crc)
 
 
 @case_blueprint.route('/case/summary/fetch', methods=['GET'])

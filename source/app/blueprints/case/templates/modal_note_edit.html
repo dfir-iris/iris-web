@@ -33,9 +33,24 @@
                 {{ note.note_title(class='form-control input') }}
             </div>
             <div class="form-group mt-3">
-                    <span id="last_saved" class="badge"></span>
                     <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();">
                     </button>
+            </div>
+            <div class="row mb-1">
+                <div class="col mb--2" id="notes_edition_btn" style="display:none;">
+                        <div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="save_note( this );"><i class="fa-solid fa-file-circle-check"></i></div>
+                        <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="note_editor.insertSnippet('**${1:$SELECTION}**');note_editor.focus();"><i class="fa-solid fa-bold"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="note_editor.insertSnippet('*${1:$SELECTION}*');note_editor.focus();"><i class="fa-solid fa-italic"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="note_editor.insertSnippet('# ${1:$SELECTION}');note_editor.focus();">H1</div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="note_editor.insertSnippet('## ${1:$SELECTION}');note_editor.focus();">H2</div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="note_editor.insertSnippet('### ${1:$SELECTION}');note_editor.focus();">H3</div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="note_editor.insertSnippet('#### ${1:$SELECTION}');note_editor.focus();">H4</div>
+                        <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="note_editor.insertSnippet('```${1:$SELECTION}```');note_editor.focus();"><i class="fa-solid fa-code"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="note_editor.insertSnippet('[New link](${1:$SELECTION})');note_editor.focus();"><i class="fa-solid fa-link"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="note_editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');note_editor.focus();"><i class="fa-solid fa-table"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="note_editor.insertSnippet('\n- \n- \n- ');note_editor.focus();"><i class="fa-solid fa-list"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="note_editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');note_editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
+                </div>
             </div>
             <div class="row">
                 <div class="col-md-6" id="container_note_content">
@@ -55,6 +70,6 @@
     </div>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-danger mr-auto" onclick="delete_note(this);">Delete note</button>
-    <button type="button" class="btn btn-default" onclick="save_note( this );" id="btn_save_note">Save</button>
+    <button type="button" class="btn btn-outline-danger mr-auto" onclick="delete_note(this, {{ ncid }});">Delete note</button>
+    <button type="button" class="btn btn-default" onclick="save_note( this, {{ ncid }} );" id="btn_save_note">Save</button>
 </div>

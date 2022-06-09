@@ -1,0 +1,74 @@
+<div class="modal-header">
+    <h4 class="modal-title mt-2 mr-4">Datastore File {{ file.file_original_name }}</h4>
+    <div class="row text-right">
+         <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="container col-md-12">
+        <div class="col-md-12 col-lg-12 col-sm-12">
+            <h3>File information</h3>
+            <dl class="row mt-2">
+                <dt class="col-sm-3">Virtual location: </dt>
+                <dd class="col-sm-8">{{ dsp.path_name }}</dd>
+
+                <dt class="col-sm-3">Original file name: </dt>
+                <dd class="col-sm-8">{{ file.file_original_name }}</dd>
+
+                <dt class="col-sm-3">File description: </dt>
+                <dd class="col-sm-8">{{ file.file_description }}</dd>
+
+                <dt class="col-sm-3">Storage UUID: </dt>
+                <dd class="col-sm-8">dsf-{{ file.file_uuid }}</dd>
+
+                <dt class="col-sm-3">Storage ID: </dt>
+                <dd class="col-sm-8">dsf-{{ file.file_id }}</dd>
+
+                <dt class="col-sm-3">Tags: </dt>
+                <dd class="col-sm-8">{% for tag in file.file_tags.split(',') %} <div class="badge badge-light">{{ tag }}</div> {% endfor %}</dd>
+
+                <dt class="col-sm-3">SHA256: </dt>
+                <dd class="col-sm-8">{{ file.file_sha256 }}</dd>
+
+                <dt class="col-sm-3">Size (bytes): </dt>
+                <dd class="col-sm-8">{{ file.file_size }}</dd>
+
+                <dt class="col-sm-3">Is evidence: </dt>
+                <dd class="col-sm-8">{{ file.file_is_evidence }}</dd>
+
+                <dt class="col-sm-3">Is IOC: </dt>
+                <dd class="col-sm-8">{{ file.file_is_ioc }}</dd>
+
+                <dt class="col-sm-3">Is password protected: </dt>
+                <dd class="col-sm-8">{% if file.file_password %} True {% else %} False {% endif %}</dd>
+
+                <dt class="col-sm-3">Password: </dt>
+                <dd class="col-sm-8">
+                    <div class="row">
+                        <input class="form_control ml-3" style="border:none;" type="password" value="{{ file.file_password }}" id="ds_file_password" disabled>
+                        <div class="file_show_password" id="toggle_file_password"><i class="fa-solid fa-eye"></i></div>
+                    </div>
+                </dd>
+
+                <dt class="col-sm-3 mt-4">Modification history: </dt>
+                <dd class="mt-4">
+                <ul>
+                {% if file.modification_history %}
+                    {% for mod in file.modification_history %}
+                        <li>{{ mod|format_datetime('%Y-%m-%d %H:%M') }} - {{ file.modification_history[mod].action }} by {{ file.modification_history[mod].user }} </li>
+                    {% endfor %}
+                {% endif %}
+                </ul>
+                </dd>
+            </dl>
+        </div>
+    </div>
+</div>
+<script>
+    $('#toggle_file_password').on('click', function (e) {
+        const type = $('#ds_file_password').attr('type') === 'password' ? 'text' : 'password';
+        $('#ds_file_password').attr('type', type);
+        $('#toggle_file_password > i').attr('class', type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash');
+    });
+</script>

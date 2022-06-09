@@ -1,6 +1,11 @@
 function update_settings() {
     var data_sent = $('form#form_srv_settings').serializeObject();
     data_sent['prevent_post_mod_repush'] = $('#prevent_post_mod_repush').is(":checked");
+    data_sent['enable_updates_check'] = $('#enable_updates_check').is(":checked");
+    data_sent['prevent_post_mod_repush'] = $('#prevent_post_mod_repush').is(":checked");
+    data_sent['password_policy_upper_case'] = $('#password_policy_upper_case').is(":checked");
+    data_sent['password_policy_lower_case'] = $('#password_policy_lower_case').is(":checked");
+    data_sent['password_policy_digit'] = $('#password_policy_digit').is(":checked");
 
     post_request_api('/manage/settings/update', JSON.stringify(data_sent), true)
     .done((data) => {
@@ -24,14 +29,14 @@ function check_updates() {
         '/manage/server/check-updates/modal' + case_param(),
         function (response, status, xhr) {
             if (status !== "success") {
-                 ajax_notify_error(xhr, url);
+                 ajax_notify_error(xhr, '/manage/server/check-updates/modal');
+                 document.getElementById('updates_content_md').innerHTML = "Unable to check for updates. Server side error.";
                  return false;
             }
             var conv = new showdown.Converter();
             var txt = document.getElementById('updates_content_md').innerHTML;
 
             document.getElementById('updates_content_md').innerHTML = conv.makeHtml(txt);
-            $('#modal_updates').modal({ show: true });
         });
 }
 

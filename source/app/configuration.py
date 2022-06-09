@@ -72,10 +72,10 @@ class CeleryConfig():
 class Config():
 
     # Handled by bumpversion
-    IRIS_VERSION = "v1.4.4"
+    IRIS_VERSION = "v1.4.5"
 
     API_MIN_VERSION = "1.0.1"
-    API_MAX_VERSION = "1.0.3"
+    API_MAX_VERSION = "1.0.4"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.1'
@@ -130,15 +130,15 @@ class Config():
                                                                         fallback=False) else "/usr/bin"
     ASSET_STORE_PATH = config.get('IRIS', 'ASSET_STORE_PATH') if config.get('IRIS', 'ASSET_STORE_PATH',
                                                                             fallback=False) else "/home/iris/server_data/custom_assets"
+    DATASTORE_PATH = config.get('IRIS', 'DATASTORE_PATH') if config.get('IRIS', 'DATASTORE_PATH',
+                                                                        fallback=False) else "/home/iris/server_data/datastore"
     ASSET_SHOW_PATH = "/static/assets/img/graph"
 
     UPDATE_DIR_NAME = '_updates_'
 
-    DROPZONE_MAX_FILE_SIZE = 1024
+    DROPZONE_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 10  # 10 GB
 
-    MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
-
-    DROPZONE_TIMEOUT = 5 * 60 * 10000  # 5 Minutes of uploads per file
+    DROPZONE_TIMEOUT = 15 * 60 * 10000  # 15 Minutes of uploads per file
 
     """ Celery configuration
     Configure URL and backend

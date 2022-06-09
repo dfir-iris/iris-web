@@ -59,6 +59,43 @@
       </div><!-- /.modal-dialog -->
     </div>
 
+    <div class="modal" tabindex="-1" role="dialog" id="modal_ds_folder" data-backdrop="true">
+      <div class="modal-lg modal-dialog" role="document">
+        <form method="post" action="" id="form_ds_directory">
+
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5>Datastore folder</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                  aria-hidden="true">&times;</span></button>
+            </div>
+
+            <div class="modal-body">
+              <div class="row mb-2">
+                  <div class="col-12">
+                    <p class="ml-2">Input the folder name below</p>
+                      <input class="form-control" placeholder="Folder name" id="ds_mod_folder_name" name="ds_folder_name">
+                  </div>
+              </div>
+              <div class="row mt-4">
+                 <div class="col-12 d-flex">
+                    <button class="btn btn-outline-success ml-auto" onclick="save_ds_mod_folder();return false;">Submit</button>
+                 </div>
+             </div>
+            </div>
+          </div><!-- /.modal-content -->
+        </form>
+      </div><!-- /.modal-dialog -->
+    </div>
+
+    <div class="modal" tabindex="-1" role="dialog" id="modal_ds_file" data-backdrop="true">
+      <div class="modal-lg modal-dialog" role="document">
+          <div class="modal-content" id="modal_ds_file_content">
+
+          </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
 <div class="modal " tabindex="-1" role="dialog" id="modal_dim_task_detail" data-backdrop="true">
   <div class="modal-xl modal-dialog" role="document">
       <div class="modal-content">
@@ -77,5 +114,7 @@
   </div><!-- /.modal-dialog -->
 </div>
 
+<div class="modal" tabindex="-1" role="dialog" id="modal_help" data-backdrop="true">
+</div>
 
 {% endif %}

@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from pathlib import Path
 
 from datetime import datetime
 from sqlalchemy import and_
@@ -26,11 +27,14 @@ from app.datamgmt.states import delete_case_states
 from app.models import CaseAssets
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
+from app.models import CaseEventsIoc
 from app.models import CaseReceivedFile
 from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
 from app.models import Client
+from app.models import DataStoreFile
+from app.models import DataStorePath
 from app.models import IocAssetLink
 from app.models import IocLink
 from app.models import Notes
@@ -126,12 +130,25 @@ def delete_case(case_id):
     UserActivity.query.filter(UserActivity.case_id == case_id).delete()
     CaseReceivedFile.query.filter(CaseReceivedFile.case_id == case_id).delete()
     IocLink.query.filter(IocLink.case_id == case_id).delete()
+    dsf_list = DataStoreFile.query.filter(DataStoreFile.file_case_id == case_id).all()
+
+    for dsf_list_item in dsf_list:
+
+        fln = Path(dsf_list_item.file_local_name)
+        if fln.is_file():
+            fln.unlink(missing_ok=True)
+
+        db.session.delete(dsf_list_item)
+    db.session.commit()
+
+    DataStorePath.query.filter(DataStorePath.path_case_id == case_id).delete()
 
     da = CaseAssets.query.with_entities(CaseAssets.asset_id).filter(CaseAssets.case_id == case_id).all()
     for asset in da:
         IocAssetLink.query.filter(asset.asset_id == asset.asset_id).delete()
 
     CaseEventsAssets.query.filter(CaseEventsAssets.case_id == case_id).delete()
+    CaseEventsIoc.query.filter(CaseEventsIoc.case_id == case_id).delete()
     CaseAssets.query.filter(CaseAssets.case_id == case_id).delete()
     NotesGroupLink.query.filter(NotesGroupLink.case_id == case_id).delete()
     NotesGroup.query.filter(NotesGroup.group_case_id == case_id).delete()

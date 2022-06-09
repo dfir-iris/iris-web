@@ -192,7 +192,7 @@ def merge_custom_attributes(data, obj_id, object_type, overwrite=False):
             return data
 
         if overwrite:
-            log.error(f'Overwriting all {object_type}')
+            log.warning(f'Overwriting all {object_type}')
             return get_default_custom_attributes(object_type)
 
         for tab in data:
@@ -205,6 +205,9 @@ def merge_custom_attributes(data, obj_id, object_type, overwrite=False):
                     log.error(f'Missing field {field} in {object_type}')
 
                 else:
+                    if obj.custom_attributes[tab][field]['type'] == 'html':
+                        continue
+
                     if obj.custom_attributes[tab][field]['value'] != data[tab][field]:
                         flag_modified(obj, "custom_attributes")
                         obj.custom_attributes[tab][field]['value'] = data[tab][field]

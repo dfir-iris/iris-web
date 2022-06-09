@@ -1,0 +1,57 @@
+<div class="ds-sidebar" id="ds-sidebar-container">
+		<a href="#" class="close-ds-sidebar"  onclick="hide_datastore();">
+			<i class="flaticon-cross"></i>
+		</a>
+		<div class="ds-sidebar-wrapper">
+			<ul class="nav nav-tabs nav-line nav-color-primary" role="tablist">
+				<li class="nav-item"> <a class="nav-link active show" data-toggle="tab" href="#ds" role="tab" aria-controls="case"  aria-selected="true">Datastore</a> </li>
+			</ul>
+			<div class="tab-content mt-3">
+				<div class="tab-pane fade show active" id="ds" role="tabpanel">
+					<div class="row">
+
+					</div>
+					<div class="tree well" id="msg_select_destination_folder" style="display:none;">
+						<div class="row">
+							<p class="mt-3 ml-3">Select the files and destination folder below. <span id="msg_mv_files" class="text-primary"></span> files selected to be moved to <span id="msg_mv_dst_folder" class="text-primary"></span></p>
+							<button type="button" class="btn btn-sm btn-outline-success ml-auto mr-2" onclick="validate_ds_file_move();">Validate</button>
+							<button type="button" class="btn btn-sm btn-outline-dark mr-4" onclick="reset_ds_file_view();load_datastore();">Cancel</button>
+						</div>
+					</div>
+					<div class="tree well" id="msg_select_destination_folder_folder" style="display:none;">
+						<div class="row">
+							<p class="mt-3 ml-3">Select a destination folder below. <span id="msg_mv_folder" class="text-primary"></span> selected to be moved to <span id="msg_mv_dst_folder_folder" class="text-primary"></span></p>
+							<button type="button" class="btn btn-sm btn-outline-success ml-auto mr-2" onclick="validate_ds_folder_move();">Validate</button>
+							<button type="button" class="btn btn-sm btn-outline-dark mr-4" onclick="reset_ds_file_view();load_datastore();">Cancel</button>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-9">
+							<div class="row">
+								<div id='ds_file_search' class="ml-3 pt-2 pl-2" style="width:70%;border-radius:3px;border-color:#fff;background:rgb(234, 234, 234);" ></div>
+								<button class="btn btn-sm btn-light ml-2 pt-2" onclick="filter_ds_files();" id="btn_filter_ds_files">
+									   Search
+								</button>
+								<button class="btn btn-sm btn-light ml-2 pt-2" onclick="reset_ds_files_filter();">
+									   Reset
+								</button>
+								<div class="ml-1 mt-1 fa-regular text-dark fa-circle-question" title="Filter help" onclick="show_ds_filter_help();"></div>
+							</div>
+						</div>
+						<div class="col-3 justify-content-end">
+							<button type="button" class="btn btn-sm btn-outline-dark float-right mb-1 mr-3 btn-ds-bulk-selector" onclick="toggle_select_file();"><i class="fa-solid fa-check-double mr-1"></i> Select</button>
+							<button type="button" class="btn btn-sm btn-outline-dark float-right mb-1 mr-3" onclick="refresh_ds();"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+							<button type="button" class="btn btn-sm btn-outline-danger float-right mt-1 mr-3 btn-ds-bulk" style="display:none;" onclick="delete_bulk_ds_file();"><i class="fa fa-trash text-danger mr-1"></i> Delete</button>
+							<button type="button" class="btn btn-sm btn-outline-dark float-right mt-1 mr-3 btn-ds-bulk" style="display:none;" onclick="move_ds_file();"><i class="fa-solid fa-arrow-right-arrow-left mr-1"></i> Move</button>
+						</div>
+					</div>
+					<div class="tree well" id="ds-tree-container">
+						<ul id="ds-tree-root">
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="ds-sidebar-container-ctxmenu"></div>

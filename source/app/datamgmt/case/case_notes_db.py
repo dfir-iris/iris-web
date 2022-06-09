@@ -38,7 +38,8 @@ def get_note(note_id, caseid=None):
         Notes.note_lastupdate,
         NotesGroupLink.group_id,
         NotesGroup.group_title,
-        Notes.custom_attributes
+        Notes.custom_attributes,
+        Notes.note_case_id
     ).filter(and_(
         Notes.note_id == note_id,
         Notes.note_case_id == caseid
@@ -122,6 +123,8 @@ def get_groups_short(caseid):
         NotesGroup.group_title
     ).filter(
         NotesGroup.group_case_id == caseid
+    ).order_by(
+        NotesGroup.group_id
     ).all()
 
     return groups_short
@@ -139,6 +142,8 @@ def get_notes_from_group(caseid, group_id):
     ).join(
         NotesGroupLink.note,
         Notes.user
+    ).order_by(
+        Notes.note_id
     ).all()
 
     return notes

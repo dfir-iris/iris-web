@@ -63,6 +63,7 @@ class AddAssetForm(FlaskForm):
     asset_icon_compromised = StringField(u'Asset icon compromised name', default="ioc_question-mark.png")
     asset_icon_not_compromised = StringField(u'Asset icon not compromised name', default="question-mark.png")
 
+
 class AttributeForm(FlaskForm):
     attribute_content = TextAreaField(u'Attribute content', validators=[DataRequired()])
 
@@ -169,6 +170,14 @@ class ModalAddCaseIOCForm(FlaskForm):
     ioc_description = TextAreaField(u'IOC Description')
     ioc_type_id = SelectField(u'IOC Type', validators=[DataRequired()])
     ioc_tlp_id = SelectField(u'IOC TLP', validators=[DataRequired()])
+
+
+class ModalDSFileForm(FlaskForm):
+    file_original_name = StringField(u'Filename', validators=[DataRequired()])
+    file_description = TextAreaField(u'file_description')
+    file_password = StringField(u'File password')
+    file_is_ioc = BooleanField(u'File is IOC')
+    file_is_evidence = BooleanField(u'File is Evidence')
 
 
 class CaseNoteForm(FlaskForm):

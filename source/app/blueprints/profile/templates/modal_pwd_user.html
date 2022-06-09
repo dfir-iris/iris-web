@@ -9,12 +9,28 @@
         <form method="post" action="" id="form_update_pwd">
             <div class="col-md-12 col-lg-12 col-sm-12">
                 {{ form.hidden_tag() }}
+
                 <div class="form-group mt-3">
-                    <label for="user_password" class="placeholder">Password</label>
+                   <label for="user_password" class="placeholder">Password</label>
+                    <ul >
+                        <li><small>Must contain at least {{ server_settings.password_policy_min_length }} chars</small></li>
+                        {% if server_settings.password_policy_upper_case %}
+                            <li class="text-sm"><small>Must contain at least an upper case</small></li>
+                        {% endif %}
+                        {% if server_settings.password_policy_lower_case %}
+                            <li class="text-sm"><small>Must contain at least a lower case</small></li>
+                        {% endif %}
+                        {% if server_settings.password_policy_digit %}
+                            <li class="text-sm"><small>Must contain at least a digit</small></li>
+                        {% endif %}
+                        {% if server_settings.password_policy_special_chars %}
+                            <li class="text-sm"><small>Must contain at least one of : {{ server_settings.password_policy_special_chars }}</small></li>
+                        {% endif %}
+                    </ul>
                     <input type="password" class="form-control" id="user_password" placeholder="Password">
                 </div>
                 <div class="form-group mt-3">
-                    <label for="user_password" class="placeholder">Password</label>
+                    <label for="user_password" class="placeholder">Password verification</label>
                     <input type="password" class="form-control" id="user_password_v" placeholder="Verification">
                 </div>
             </div>

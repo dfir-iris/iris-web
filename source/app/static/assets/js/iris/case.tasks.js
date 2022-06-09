@@ -1,105 +1,3 @@
-
-/* add filtering fields for each table of the page (must be done before datatable initialization) */
-$.each($.find("table"), function(index, element){
-    addFilterFields($(element).attr("id"));
-});
-
-Table = $("#tasks_table").DataTable({
-    dom: 'Blfrtip',
-    aaData: [],
-    aoColumns: [
-      {
-        "data": "task_title",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-
-            if (isWhiteSpace(data)) {
-                data = '#' + row['task_id'];
-            } else {
-                data = sanitizeHTML(data);
-            }
-            share_link = buildShareLink(row['task_id']);
-            data = '<a href="'+ share_link + '" data-selector="true" title="Task ID #'+ row['task_id'] +'"  onclick="edit_task(\'' + row['task_id'] + '\');return false;">' + data +'</a>';
-          }
-          return data;
-        }
-      },
-      { "data": "task_description",
-       "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-            if (data.length > 70) {
-                datas += ' (..)</span>';
-            } else {
-                datas += '</span>';
-            }
-            return datas;
-          }
-          return data;
-        }
-      },
-      {
-        "data": "task_status_id",
-        "render": function(data, type, row, meta) {
-           if (type === 'display') {
-              data = sanitizeHTML(data);
-              data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
-          }
-          return data;
-        }
-      },
-      {
-        "data": "assignee_name",
-        "render": function (data, type, row, meta) { return sanitizeHTML(data);}
-      },
-      {
-        "data": "task_open_date",
-        "render": function (data, type, row, meta) { return sanitizeHTML(data);}
-      },
-      { "data": "task_tags",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              tags = "";
-              de = data.split(',');
-              for (tag in de) {
-                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
-              }
-              return tags;
-          }
-          return data;
-        }
-      }
-    ],
-    rowCallback: function (nRow, data) {
-        nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
-    },
-    filter: true,
-    info: true,
-    ordering: true,
-    processing: true,
-    retrieve: true,
-    pageLength: 50,
-    order: [[ 2, "asc" ]],
-    buttons: [
-    ],
-    orderCellsTop: true,
-    initComplete: function () {
-        tableFiltering(this.api());
-    },
-    select: true
-});
-$("#tasks_table").css("font-size", 12);
-var buttons = new $.fn.dataTable.Buttons(Table, {
-     buttons: [
-        { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Download as CSV' },
-        { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Copy' },
-    ]
-}).container().appendTo($('#tables_button'));
-
 /* Fetch a modal that allows to add an event */
 function add_task() {
     url = 'tasks/add/modal' + case_param();
@@ -220,7 +118,6 @@ function get_tasks() {
                 console.log(options);
                 Table.clear();
                 Table.rows.add(tasks_list);
-                hide_loader();
                 Table.MakeCellsEditable({
                     "onUpdate": callBackEditTaskStatus,
                     "inputCss": 'form-control col-12',
@@ -266,9 +163,110 @@ function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {
   });
 }
 
-
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
+
+    /* add filtering fields for each table of the page (must be done before datatable initialization) */
+    $.each($.find("table"), function(index, element){
+        addFilterFields($(element).attr("id"));
+    });
+
+    Table = $("#tasks_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "task_title",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+
+                if (isWhiteSpace(data)) {
+                    data = '#' + row['task_id'];
+                } else {
+                    data = sanitizeHTML(data);
+                }
+                share_link = buildShareLink(row['task_id']);
+                data = '<a href="'+ share_link + '" data-selector="true" title="Task ID #'+ row['task_id'] +'"  onclick="edit_task(\'' + row['task_id'] + '\');return false;">' + data +'</a>';
+              }
+              return data;
+            }
+          },
+          { "data": "task_description",
+           "render": function (data, type, row, meta) {
+              if (type === 'display') {
+                data = sanitizeHTML(data);
+                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+
+                if (data.length > 70) {
+                    datas += ' (..)</span>';
+                } else {
+                    datas += '</span>';
+                }
+                return datas;
+              }
+              return data;
+            }
+          },
+          {
+            "data": "task_status_id",
+            "render": function(data, type, row, meta) {
+               if (type === 'display') {
+                  data = sanitizeHTML(data);
+                  data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
+              }
+              return data;
+            }
+          },
+          {
+            "data": "assignee_name",
+            "render": function (data, type, row, meta) { return sanitizeHTML(data);}
+          },
+          {
+            "data": "task_open_date",
+            "render": function (data, type, row, meta) { return sanitizeHTML(data);}
+          },
+          { "data": "task_tags",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+                  tags = "";
+                  de = data.split(',');
+                  for (tag in de) {
+                    tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+                  }
+                  return tags;
+              }
+              return data;
+            }
+          }
+        ],
+        rowCallback: function (nRow, data) {
+            nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
+        },
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true,
+        retrieve: true,
+        pageLength: 50,
+        order: [[ 2, "asc" ]],
+        buttons: [
+        ],
+        orderCellsTop: true,
+        initComplete: function () {
+            tableFiltering(this.api());
+        },
+        select: true
+    });
+    $("#tasks_table").css("font-size", 12);
+    var buttons = new $.fn.dataTable.Buttons(Table, {
+     buttons: [
+        { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
+        , "titleAttr": 'Download as CSV' },
+        { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
+        , "titleAttr": 'Copy' },
+    ]
+}).container().appendTo($('#tables_button'));
+
     get_tasks();
     setInterval(function() { check_update('tasks/state'); }, 3000);
 

@@ -1,16 +1,3 @@
-$(function(){
-    var current = location.pathname;
-    $('#h_nav_tab li').each(function(){
-        var $this = $(this);
-        var child = $this.children();
-        // if the current path is like this link, make it active
-        if(child.attr('href').split("?")[0] == current){
-            $this.addClass('active');
-            return;
-        }
-    })
-})
-
 function case_detail(id) {
     url = '/case/details/' + id + case_param();
     $('#info_case_modal_content').load(url, function (response, status, xhr) {
@@ -41,3 +28,18 @@ function getSharedLink(){
     }
     return null;
 }
+
+$(document).ready(function(){
+    $(function(){
+        var current = location.pathname;
+        $('#h_nav_tab li').each(function(){
+            var $this = $(this);
+            var child = $this.children();
+            // if the current path is like this link, make it active
+            if(child.attr('href').split("?")[0] == current){
+                $this.addClass('active');
+                return;
+            }
+        })
+    });
+});

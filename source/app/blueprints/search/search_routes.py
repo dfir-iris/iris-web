@@ -90,7 +90,8 @@ def search_file_post(caseid: int):
                 Notes.note_id,
                 Notes.note_title,
                 Cases.name.label('case_name'),
-                Client.name.label('client_name')
+                Client.name.label('client_name'),
+                Cases.case_id
             ).join(
                 Notes.case
             ).order_by(

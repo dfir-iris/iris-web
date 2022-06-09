@@ -37,7 +37,6 @@
 					</div>
 					{% include 'case-nav.html' %}
 					<ul class="navbar-nav topbar-nav align-items-center">
-
 						<li class="nav-item toggle-nav-search hidden-caret">
 							<a class="nav-link" data-toggle="collapse" href="#search-nav" role="button" aria-expanded="false" aria-controls="search-nav">
 								<i class="fa fa-search"></i>
@@ -54,7 +53,12 @@
 							</a>
 						</li>
 						<li class="nav-item hidden-caret">
-							<a href="#" class="nav-link quick-sidebar-toggler">
+							<a href="#" title="Datastore" class="nav-link ds-sidebar-toggler" onclick="load_datastore();">
+								<i class="flaticon-database"></i>
+							</a>
+						</li>
+						<li class="nav-item hidden-caret">
+							<a href="#" title="Quick actions" class="nav-link quick-sidebar-toggler">
 								<i class="flaticon-shapes-1"></i>
 							</a>
 						</li>

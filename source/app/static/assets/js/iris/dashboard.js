@@ -1,24 +1,3 @@
-$('#form_new_customer').submit(function () {
-    event.preventDefault();
-
-    post_request_api('/manage/customers/add', JSON.stringify($('form#form_new_customer').serializeObject()), true)
-    .done((data) => {
-        if (data.status == "success") {
-            $('#modal_add_customer').modal('hide');
-            notify_success(data.message);
-        } else {
-            $('#modal_customer_message').text(data.message);
-        }
-    });
-});
-
-
-$(document).ready(function() {
-    update_gtasks_list();
-    update_utasks_list();
-    setInterval(check_page_update,30000);
-});
-
 function check_page_update(){
     update_gtasks_list();
     update_utasks_list();
@@ -34,104 +13,6 @@ function task_status(id) {
         $('#modal_task_detail').modal({show:true});
     });
 }
-
-UserTaskTable = $("#utasks_table").DataTable({
-    dom: 'Blfrtip',
-    aaData: [],
-    aoColumns: [
-      {
-        "data": "task_title",
-        "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            if (isWhiteSpace(data)) {
-                data = '#' + row['task_id'];
-            } else {
-                data = sanitizeHTML(data);
-            }
-            data = '<a href="case/tasks?cid='+ row['case_id'] + '&shared=' + row['task_id'] + '">' + data +'</a>';
-          }
-          return data;
-        }
-      },
-      { "data": "task_description",
-       "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-            if (data.length > 70) {
-                datas += ' (..)</span>';
-            } else {
-                datas += '</span>';
-            }
-            return datas;
-          }
-          return data;
-        }
-      },
-      {
-        "data": "task_status_id",
-        "render": function(data, type, row, meta) {
-           if (type === 'display') {
-              data = sanitizeHTML(data);
-              data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
-          }
-          return data;
-        }
-      },
-      {
-        "data": "task_case",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') {
-                data = sanitizeHTML(data);
-                data = '<a href="/case?cid='+ row['case_id'] +'">' + data +'</a>';
-            }
-            return data;
-          }
-      },
-      {
-        "data": "task_last_update",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              data = sanitizeHTML(data);
-              data = data.replace(/GMT/g, "");
-          }
-          return data;
-        }
-      },
-      { "data": "task_tags",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              tags = "";
-              de = data.split(',');
-              for (tag in de) {
-                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
-              }
-              return tags;
-          }
-          return data;
-        }
-      }
-    ],
-    rowCallback: function (nRow, data) {
-        data = sanitizeHTML(data);
-        nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
-    },
-    filter: true,
-    info: true,
-    ordering: true,
-    processing: true,
-    retrieve: true,
-    lengthChange: false,
-    pageLength: 10,
-    order: [[ 2, "asc" ]],
-    buttons: [
-        { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-        { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    ],
-    select: true
-});
-$("#utasks_table").css("font-size", 12);
 
 function update_utasks_list() {
     $('#utasks_list').empty();
@@ -179,7 +60,7 @@ function update_utasks_list() {
 
             UserTaskTable.columns.adjust().draw();
             UserTaskTable.buttons().container().appendTo($('#utasks_table_info'));
-               $('[data-toggle="popover"]').popover();
+            $('[data-toggle="popover"]').popover();
 
             $('#utasks_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
         }
@@ -201,99 +82,6 @@ function callBackEditUserTaskStatus(updatedCell, updatedRow, oldValue) {
 
 
 /**** GTASKS ****/
-Table = $("#gtasks_table").DataTable({
-    dom: 'Blfrtip',
-    aaData: [],
-    aoColumns: [
-      {
-        "data": "task_title",
-        "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            if (isWhiteSpace(data)) {
-                data = '#' + row['task_id'];
-            } else {
-                data = sanitizeHTML(data);
-            }
-            data = '<a href="#" onclick="edit_gtask(\'' + row['task_id'] + '\');">' + data +'</a>';
-          }
-          return data;
-        }
-      },
-      { "data": "task_description",
-       "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-            if (data.length > 70) {
-                datas += ' (..)</span>';
-            } else {
-                datas += '</span>';
-            }
-            return datas;
-          }
-          return data;
-        }
-      },
-      {
-        "data": "task_status_id",
-        "render": function(data, type, row, meta) {
-            if (type === 'display' && data != null) {
-                data = sanitizeHTML(data);
-                data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
-            }
-          return data;
-        }
-      },
-      {
-        "data": "user_name",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          }
-      },
-      {
-        "data": "task_last_update",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              data = sanitizeHTML(data);
-              data = data.replace(/GMT/g, "");
-          }
-          return data;
-        }
-      },
-      { "data": "task_tags",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              tags = "";
-              de = data.split(',');
-              for (tag in de) {
-                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
-              }
-              return tags;
-          }
-          return data;
-        }
-      }
-    ],
-    rowCallback: function (nRow, data) {
-        nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
-    },
-    filter: true,
-    info: true,
-    ordering: true,
-    processing: true,
-    retrieve: true,
-    lengthChange: false,
-    pageLength: 10,
-    order: [[ 2, "asc" ]],
-    buttons: [
-        { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-        { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    ],
-    select: true
-});
-$("#gtasks_table").css("font-size", 12);
 
 /* Fetch a modal that allows to add an event */
 function add_gtask() {
@@ -396,3 +184,203 @@ function update_gtasks_list() {
         }
     });
 }
+
+
+$(document).ready(function() {
+
+    UserTaskTable = $("#utasks_table").DataTable({
+    dom: 'Blfrtip',
+    aaData: [],
+    aoColumns: [
+      {
+        "data": "task_title",
+        "render": function (data, type, row, meta) {
+          if (type === 'display') {
+            if (isWhiteSpace(data)) {
+                data = '#' + row['task_id'];
+            } else {
+                data = sanitizeHTML(data);
+            }
+            data = '<a href="case/tasks?cid='+ row['case_id'] + '&shared=' + row['task_id'] + '">' + data +'</a>';
+          }
+          return data;
+        }
+      },
+      { "data": "task_description",
+       "render": function (data, type, row, meta) {
+          if (type === 'display') {
+            data = sanitizeHTML(data);
+            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+
+            if (data.length > 70) {
+                datas += ' (..)</span>';
+            } else {
+                datas += '</span>';
+            }
+            return datas;
+          }
+          return data;
+        }
+      },
+      {
+        "data": "task_status_id",
+        "render": function(data, type, row, meta) {
+           if (type === 'display') {
+              data = sanitizeHTML(data);
+              data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
+          }
+          return data;
+        }
+      },
+      {
+        "data": "task_case",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') {
+                data = sanitizeHTML(data);
+                data = '<a href="/case?cid='+ row['case_id'] +'">' + data +'</a>';
+            }
+            return data;
+          }
+      },
+      {
+        "data": "task_last_update",
+        "render": function (data, type, row, meta) {
+          if (type === 'display' && data != null) {
+              data = sanitizeHTML(data);
+              data = data.replace(/GMT/g, "");
+          }
+          return data;
+        }
+      },
+      { "data": "task_tags",
+        "render": function (data, type, row, meta) {
+          if (type === 'display' && data != null) {
+              tags = "";
+              de = data.split(',');
+              for (tag in de) {
+                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+              }
+              return tags;
+          }
+          return data;
+        }
+      }
+    ],
+    rowCallback: function (nRow, data) {
+        data = sanitizeHTML(data);
+        nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
+    },
+    filter: true,
+    info: true,
+    ordering: true,
+    processing: true,
+    retrieve: true,
+    lengthChange: false,
+    pageLength: 10,
+    order: [[ 2, "asc" ]],
+    buttons: [
+        { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+        { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+    ],
+    select: true
+});
+    $("#utasks_table").css("font-size", 12);
+
+    Table = $("#gtasks_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "task_title",
+            "render": function (data, type, row, meta) {
+              if (type === 'display') {
+                if (isWhiteSpace(data)) {
+                    data = '#' + row['task_id'];
+                } else {
+                    data = sanitizeHTML(data);
+                }
+                data = '<a href="#" onclick="edit_gtask(\'' + row['task_id'] + '\');">' + data +'</a>';
+              }
+              return data;
+            }
+          },
+          { "data": "task_description",
+           "render": function (data, type, row, meta) {
+              if (type === 'display') {
+                data = sanitizeHTML(data);
+                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+
+                if (data.length > 70) {
+                    datas += ' (..)</span>';
+                } else {
+                    datas += '</span>';
+                }
+                return datas;
+              }
+              return data;
+            }
+          },
+          {
+            "data": "task_status_id",
+            "render": function(data, type, row, meta) {
+                if (type === 'display' && data != null) {
+                    data = sanitizeHTML(data);
+                    data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
+                }
+              return data;
+            }
+          },
+          {
+            "data": "user_name",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+              }
+          },
+          {
+            "data": "task_last_update",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+                  data = sanitizeHTML(data);
+                  data = data.replace(/GMT/g, "");
+              }
+              return data;
+            }
+          },
+          { "data": "task_tags",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+                  tags = "";
+                  de = data.split(',');
+                  for (tag in de) {
+                    tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+                  }
+                  return tags;
+              }
+              return data;
+            }
+          }
+        ],
+        rowCallback: function (nRow, data) {
+            nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
+        },
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true,
+        retrieve: true,
+        lengthChange: false,
+        pageLength: 10,
+        order: [[ 2, "asc" ]],
+        buttons: [
+            { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+            { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+        ],
+        select: true
+    });
+    $("#gtasks_table").css("font-size", 12);
+
+    update_gtasks_list();
+    update_utasks_list();
+    setInterval(check_page_update,30000);
+});

@@ -21,6 +21,7 @@
 import datetime
 from sqlalchemy import desc
 
+from app.datamgmt.case.case_notes_db import get_notes_from_group
 from app.models import AnalysisStatus
 from app.models import AssetsType
 from app.models import CaseAssets
@@ -37,6 +38,8 @@ from app.models import IocAssetLink
 from app.models import IocLink
 from app.models import IocType
 from app.models import Notes
+from app.models import NotesGroup
+from app.models import NotesGroupLink
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models import User
@@ -63,6 +66,91 @@ def export_case_json(case_id):
     export['export_date'] = datetime.datetime.utcnow()
 
     return export
+
+
+def export_case_json_extended(case_id):
+    """
+    Export a case a JSON
+    """
+    export = {}
+    case = export_caseinfo_json_extended(case_id)
+
+    if not case:
+        export['errors'] = ["Invalid case number"]
+        return export
+
+    export['case'] = case
+    export['evidences'] = export_case_evidences_json_extended(case_id)
+    export['timeline'] = export_case_tm_json_extended(case_id)
+    export['iocs'] = export_case_iocs_json_extended(case_id)
+    export['assets'] = export_case_assets_json_extended(case_id)
+    export['tasks'] = export_case_tasks_json_extended(case_id)
+    export['notes'] = export_case_notes_json_extended(case_id)
+    export['export_date'] = datetime.datetime.utcnow()
+
+    return export
+
+
+def export_caseinfo_json_extended(case_id):
+    case = Cases.query.filter(
+        Cases.case_id == case_id
+    ).first()
+
+    return case
+
+
+def export_case_evidences_json_extended(case_id):
+    evidences = CaseReceivedFile.query.filter(
+        CaseReceivedFile.case_id == case_id
+    ).join(CaseReceivedFile.case,
+           CaseReceivedFile.user).all()
+
+    return evidences
+
+
+def export_case_tm_json_extended(case_id):
+    events = CasesEvent.query.filter(
+        CasesEvent.case_id == case_id
+    ).all()
+
+    return events
+
+
+def export_case_iocs_json_extended(case_id):
+    iocs = Ioc.query.filter(
+        IocLink.case_id == case_id
+    ).all()
+
+    return iocs
+
+
+def export_case_assets_json_extended(case_id):
+    assets = CaseAssets.query.filter(
+        CaseAssets.case_id == case_id
+    ).all()
+
+    return assets
+
+
+def export_case_tasks_json_extended(case_id):
+    tasks = CaseTasks.query.filter(
+        CaseTasks.task_case_id == case_id
+    ).all()
+
+    return tasks
+
+
+def export_case_notes_json_extended(case_id):
+    notes_groups = NotesGroup.query.filter(
+        NotesGroup.group_case_id == case_id
+    ).all()
+
+    for notes_group in notes_groups:
+        notes_group = notes_group.__dict__
+        print(notes_group)
+        notes_group['notes'] = get_notes_from_group(notes_group['group_id'], case_id)
+
+    return notes_groups
 
 
 def export_caseinfo_json(case_id):
@@ -104,6 +192,7 @@ def export_case_evidences_json(case_id):
     ).all()
 
     if evidences:
+
         return [row._asdict() for row in evidences]
 
     else:

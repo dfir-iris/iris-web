@@ -297,7 +297,7 @@ def init_server_update(release_config):
 
     if 'iriswebapp' in updates_config.get('scope'):
 
-        if call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+        if call_ext_updater(update_archive=update_archive, scope="iriswebapp",
                             need_reboot=updates_config.get('need_app_reboot')):
 
             socket_io.stop()
@@ -576,7 +576,7 @@ def download_from_url(asset_url, target_file):
 @celery.task(bind=True)
 def task_update_worker(self, update_archive, updates_config):
 
-    if not call_ext_updater(update_archive=update_archive, scope=updates_config.get('scope'),
+    if not call_ext_updater(update_archive=update_archive, scope="worker",
                             need_reboot=updates_config.get('need_worker_reboot')):
 
         return IStatus.I2Success(message="Unable to spawn updater")
@@ -590,8 +590,8 @@ def task_update_get_version(self):
 
 
 @celery.on_after_finalize.connect
-def setup_periodic_update_checks(sender, **kwargs):
-    sender.add_periodic_task(
+def setup_periodic_update_checks(self, **kwargs):
+    self.add_periodic_task(
         crontab(hour=0, minute=0),
         task_check_available_updates.s(),
         name='iris_auto_check_updates'
@@ -599,7 +599,8 @@ def setup_periodic_update_checks(sender, **kwargs):
 
 
 def remove_periodic_update_checks():
-    del celery.config.beat_schedule['iris_auto_check_updates']
+    if 'iris_auto_check_updates' in celery.conf['beat_schedule']:
+        del celery.conf['beat_schedule']['iris_auto_check_updates']
 
 
 @celery.task
