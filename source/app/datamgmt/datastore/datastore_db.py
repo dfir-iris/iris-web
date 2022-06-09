@@ -472,7 +472,7 @@ def datastore_filter_tree(filter_d, caseid):
 
     if has_password is not None:
         condition = and_(condition,
-                         (~ DataStoreFile.file_password == None))
+                         (DataStoreFile.file_password != ""))
 
     dsp_root = DataStorePath.query.filter(
         and_(DataStorePath.path_case_id == caseid,
