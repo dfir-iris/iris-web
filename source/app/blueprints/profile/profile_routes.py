@@ -31,6 +31,7 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app import db
+from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.iris_engine.utils.tracker import track_activity
@@ -86,7 +87,9 @@ def update_pwd_modal(caseid, url_redir):
 
     form = FlaskForm()
 
-    return render_template("modal_pwd_user.html", form=form)
+    server_settings = get_srv_settings()
+
+    return render_template("modal_pwd_user.html", form=form, server_settings=server_settings)
 
 
 @profile_blueprint.route('/user/update', methods=['POST'])
