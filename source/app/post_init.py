@@ -896,6 +896,7 @@ def register_modules_pipelines():
         for task in tasks:
             celery.register_task(task)
 
+
 def register_default_modules():
     srv_settings = ServerSettings.query.first()
 
@@ -920,7 +921,6 @@ def register_default_modules():
             iris_module_disable_by_id(mod_id)
             log.info('Successfully registered {mod}'.format(mod=module))
 
-
 def custom_assets_symlinks():
     try:
 
@@ -937,3 +937,4 @@ def custom_assets_symlinks():
 
     except Exception as e:
         log.error(f"Error: {e}")
+

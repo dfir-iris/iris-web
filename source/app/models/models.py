@@ -709,7 +709,6 @@ class CeleryTaskMeta(db.Model):
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
 
-
 def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):
     cat = CustomAttribute.query.filter(
         CustomAttribute.attribute_display_name == attribute_display_name,
@@ -728,3 +727,4 @@ def create_safe_attr(session, attribute_display_name, attribute_description, att
         session.add(instance)
         session.commit()
         return True
+

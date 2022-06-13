@@ -40,6 +40,7 @@ from app.util import api_login_required
 from app.util import not_authenticated_redirection_url
 from app.util import response_error
 
+
 reports_blueprint = Blueprint('reports',
                               __name__,
                               template_folder='templates')

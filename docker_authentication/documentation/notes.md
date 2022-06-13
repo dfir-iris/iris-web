@@ -65,7 +65,7 @@ Add a new audience mapper in the *Mappers* tab as follows:
 
 ![client_audience_configuration.png](images/client_audience_configuration.png)
 
-Create a role for the administrators in the Role tab.
+Create a role for the administrators in the Role tab. Call it `administrator` to match the default configuration.
 
 The configuration of the client is now finished.
 

@@ -55,6 +55,7 @@ from app.util import not_authenticated_redirection_url
 from app.util import response_error
 from app.util import response_success
 
+
 # CONTENT ------------------------------------------------
 dashboard_blueprint = Blueprint(
     'index',
