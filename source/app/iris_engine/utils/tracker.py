@@ -19,16 +19,14 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+import logging as log
 # IMPORTS ------------------------------------------------
 from datetime import datetime
-
+from flask import request
 from flask_login import current_user
 
-from app.models import UserActivity
-
 from app import db
-
-import logging as log
+from app.models import UserActivity
 
 
 # CONTENT ------------------------------------------------
@@ -59,5 +57,9 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False):
 
     ua.user_input = user_input
 
+    ua.is_from_api = (request.cookies.get('session') is None if request else False)
+
     db.session.add(ua)
     db.session.commit()
+
+    return ua

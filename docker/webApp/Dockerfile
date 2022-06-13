@@ -20,7 +20,7 @@
 #################
 # COMPILE IMAGE #
 #################
-FROM python:3.7 AS compile-image
+FROM python:3.9 AS compile-image
 RUN apt-get update
 
 RUN python -m venv /opt/venv
@@ -35,7 +35,7 @@ RUN pip3 install -r requirements.txt
 ###############
 # BUILD IMAGE #
 ###############
-FROM python:3.7 as iriswebapp
+FROM python:3.9 as iriswebapp
 
 ENV PYTHONUNBUFFERED=1
 
@@ -48,11 +48,15 @@ ENV PATH="/opt/venv/bin:$PATH"
 #ENV IRIS_ADM_PASSWORD="MySuperFirstPasswordIWant"
 
 RUN apt update
-RUN apt install -y p7zip-full
-
+RUN apt install -y p7zip-full pgp rsync postgresql-client
 
 RUN mkdir /iriswebapp/
 RUN mkdir -p /home/iris/user_templates
+RUN mkdir -p /home/iris/server_data
+RUN mkdir -p /home/iris/server_data/backup
+RUN mkdir -p /home/iris/server_data/updates
+RUN mkdir -p /home/iris/server_data/custom_assets
+RUN mkdir -p /home/iris/server_data/datastore
 
 WORKDIR /iriswebapp
 

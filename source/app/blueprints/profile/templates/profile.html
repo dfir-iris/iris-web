@@ -14,7 +14,7 @@
     <div class="row ">
         <div class="col-md-12">
             <div class="card card-profile">
-                <div class="card-header" style="background-image: url('/assets/img/blogpost.jpg')">
+                <div class="card-header">
                     <div class="profile-picture">
                         <div class="avatar avatar-xl">
                             <img src="/static/assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle">
@@ -90,6 +90,19 @@
                                     <button class="btn btn-sm btn-dark" type="button" onclick="renew_api()">Renew</button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label d-block">Iris Theme</label>
+                        <div class="selectgroup selectgroup-primary selectgroup-pills">
+                            <label class="selectgroup-item" title="Light mode">
+                                <input type="radio" name="iris-theme" value="false" class="selectgroup-input" {% if not current_user.in_dark_mode %}checked{% endif %}>
+                                <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-sun"></i></span>
+                            </label>
+                            <label class="selectgroup-item" title="Dark mode">
+                                <input type="radio" name="iris-theme" value="true" class="selectgroup-input" {% if current_user.in_dark_mode %}checked{% endif %}>
+                                <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-moon"></i></span>
+                            </label>
                         </div>
                     </div>
                     <div class="float-right mt-4">

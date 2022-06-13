@@ -23,7 +23,7 @@
                                 </div>
                                 <div class="col">
                                     <button class="btn btn-sm btn-icon btn-round btn-primary-success float-right ml-3" onclick="add_customer();"><i class="fas fa-plus-circle"></i></button>
-                                    <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_customer_table();">
+                                    <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_customer_table(true);">
                                         <i class="fas fa-sync rotate"></i>
                                     </button>
                                 </div>
@@ -54,7 +54,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal fade " tabindex="-1" role="dialog" id="modal_add_customer" data-backdrop="true">
+            <div class="modal" tabindex="-1" role="dialog" id="modal_add_customer" data-backdrop="true">
                 <div class="modal-lg modal-dialog" role="document">
                     <div class="modal-content" id="modal_add_customer_content">
 

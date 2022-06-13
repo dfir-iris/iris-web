@@ -43,6 +43,8 @@ services:
       - DB_PASS
     networks:
       - iris_backend
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
   app:
     build:
@@ -50,12 +52,13 @@ services:
       dockerfile: docker/webApp/Dockerfile
     image: iriswebapp_app:latest
     container_name: iriswebapp_app
-    command: ['./iris-entrypoint.sh', 'iriswebapp']
+    command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
       # RootCA necessary when dealing with an auth server without a trusted CA signed certificate
       - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
+      - server_data:/home/iris/server_data
     restart: always
     depends_on:
       - "rabbitmq"
@@ -90,6 +93,7 @@ services:
       - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
+      - server_data:/home/iris/server_data
     depends_on:
       - "rabbitmq"
       - "db"
@@ -135,6 +139,8 @@ services:
 volumes:
   iris-downloads:
   user_templates:
+  server_data:
+  db_data:
 
 networks:
   iris_backend:

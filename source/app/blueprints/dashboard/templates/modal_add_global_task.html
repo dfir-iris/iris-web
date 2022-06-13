@@ -18,13 +18,13 @@
                 {{ form.hidden_tag() }}
                 <div class="form-group mt-3">
                     <label for="task_assignee" class="placeholder">Assigned to</label>
-                    {{ form.task_assignee(class="selectpicker pl--6  col-5") }}
+                    {{ form.task_assignee_id(class="selectpicker pl--6  col-5") }}
 
                     <label for="task_status" class="placeholder">Status</label>
-                    {{ form.task_status(class="selectpicker pl--6  col-5") }}
+                    {{ form.task_status_id(class="selectpicker pl--6  col-5") }}
                 </div>
                 <div class="form-group">
-                    <label for="task_title" class="placeholder">{{ form.task_title.label.text }}</label>
+                    <label for="task_title" class="placeholder">{{ form.task_title.label.text }} *</label>
                     {{ form.task_title(class='form-control col-md-12 col-sm-12',  autocomplete="off") }}
                 </div>
                 <div class="form-group mt-3">
@@ -37,7 +37,7 @@
                     <input type="text" id="task_tags"
                         class="form-control col-md-12" {% if task.task_tags %} value="{{ task.task_tags }}" {% endif %}/>
                 </div>
-
+            </div>
             {% if task.id %}
                 <button type="button" class="btn btn-outline-danger mt-5"
                 onclick="delete_gtask({{ task.id }});">Delete</button>
@@ -61,24 +61,24 @@
         printValues: false,
         suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
     });
-    $('#task_assignee').selectpicker({
+    $('#task_assignee_id').selectpicker({
         liveSearch: true,
         title: "None",
         style: "Bootstrap 4: 'btn-outline-primary'",
     });
-    $('#task_status').selectpicker({
+    $('#task_status_id').selectpicker({
         liveSearch: true,
         title: "None",
         style: "Bootstrap 4: 'btn-outline-primary'",
     });
     {% if uid %}
-        $('#task_assignee').selectpicker('val', '{{uid}}');
+        $('#task_assignee_id').selectpicker('val', '{{uid}}');
     {% endif %}
 
-    {% if task.task_status %}
-        $('#task_status').selectpicker('val', '{{task.task_status}}');
+    {% if task.task_status_id %}
+        $('#task_status_id').selectpicker('val', '{{task.task_status_id}}');
      {% else %}
-        $('#task_status').selectpicker('val', 'To do');
+        $('#task_status_id').selectpicker('val', '1');
     {% endif %}
     $('[data-toggle="popover"]').popover();
 </script>

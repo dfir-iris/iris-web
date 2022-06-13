@@ -18,35 +18,42 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import logging
+import traceback
+
+import logging as log
+import marshmallow
 # IMPORTS ------------------------------------------------
 import os
 import urllib.parse
-import logging as log
-
-import marshmallow
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.iris_engine.modules_db import iris_module_exists, \
-    get_pipelines_args_from_name
-from app.datamgmt.manage.manage_cases_db import list_cases_dict, close_case, reopen_case, delete_case, \
-    get_case_details_rt
+from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
+from app.datamgmt.iris_engine.modules_db import iris_module_exists
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_cases_db import close_case
+from app.datamgmt.manage.manage_cases_db import delete_case
+from app.datamgmt.manage.manage_cases_db import get_case_details_rt
+from app.datamgmt.manage.manage_cases_db import list_cases_dict
+from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.forms import AddCaseForm
-from app.iris_engine.module_handler.module_handler import list_available_pipelines, instantiate_module_from_name, \
-    configure_module_on_init
-
+from app.iris_engine.module_handler.module_handler import call_modules_hook
+from app.iris_engine.module_handler.module_handler import configure_module_on_init
+from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
+from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
-
 from app.models.models import Client
 from app.schema.marshables import CaseSchema
-
-from app.util import response_success, response_error, login_required, api_login_required
-
-import traceback
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_cases_blueprint = Blueprint('manage_case',
                                    __name__,
@@ -69,6 +76,21 @@ def details_case(cur_id, caseid, url_redir):
         return response_error("Unknown case")
 
 
+@manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
+@login_required
+def details_case_from_case(cur_id, caseid, url_redir):
+    if url_redir:
+        return response_error("Invalid request")
+
+    res = get_case_details_rt(cur_id)
+
+    if res:
+        return render_template("modal_case_info_from_case.html", data=res)
+
+    else:
+        return response_error("Unknown case")
+
+
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
 @api_login_required
 def get_case_api(cur_id, caseid):
@@ -77,7 +99,7 @@ def get_case_api(cur_id, caseid):
     if res:
         return response_success(data=res._asdict())
 
-    return response_error(f'Case ID {res} not found')
+    return response_error(f'Case ID {cur_id} not found')
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['GET'])
@@ -97,8 +119,11 @@ def api_delete_case(cur_id, caseid):
 
     else:
         try:
-
+            call_modules_hook('on_preload_case_delete', data=cur_id, caseid=caseid)
             if delete_case(case_id=cur_id):
+
+                call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
+
                 track_activity("case {} deleted successfully".format(cur_id), caseid=caseid, ctx_less=True)
                 return response_success("Case successfully deleted")
 
@@ -154,12 +179,19 @@ def api_add_case(caseid):
 
     try:
 
-        case = case_schema.load(request.json)
+        request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
+        case = case_schema.load(request_data)
+
         case.save()
+
+        case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
+
         track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+    except Exception as e:
+        return response_error(msg="Data error", data=e.__str__(), status=400)
 
     return response_success(msg='Case created', data=case_schema.dump(case))
 
@@ -193,7 +225,9 @@ def manage_index_cases(caseid, url_redir):
     pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
                       ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
 
-    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args)
+    attributes = get_default_custom_attributes('case')
+
+    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args, attributes=attributes)
 
 
 @manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
@@ -272,7 +306,6 @@ def manage_cases_uploadfiles(caseid):
 
     try:
         pipeline_mod = pipeline.split("-")[0]
-        pipeline_name = pipeline.split("-")[1]
     except Exception as e:
         log.error(e.__str__())
         return response_error('Malformed request', status=400)
@@ -280,7 +313,7 @@ def manage_cases_uploadfiles(caseid):
     if not iris_module_exists(pipeline_mod):
         return response_error('Missing pipeline', status=400)
 
-    mod = instantiate_module_from_name(pipeline_mod)
+    mod, _ = instantiate_module_from_name(pipeline_mod)
     status = configure_module_on_init(mod)
     if status.is_failure():
         return response_error("Path for upload {} is not built ! Unreachable pipeline".format(

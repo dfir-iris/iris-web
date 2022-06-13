@@ -22,16 +22,24 @@
 import secrets
 
 import marshmallow
-from flask import Blueprint, request
-from flask import render_template, url_for, redirect
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app import db
-from app.datamgmt.manage.manage_users_db import get_user, update_user
+from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
+from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import update_user
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
-from app.util import login_required, api_login_required, response_success, response_error
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 profile_blueprint = Blueprint('profile',
                               __name__,
@@ -79,7 +87,9 @@ def update_pwd_modal(caseid, url_redir):
 
     form = FlaskForm()
 
-    return render_template("modal_pwd_user.html", form=form)
+    server_settings = get_srv_settings()
+
+    return render_template("modal_pwd_user.html", form=form, server_settings=server_settings)
 
 
 @profile_blueprint.route('/user/update', methods=['POST'])
@@ -108,3 +118,20 @@ def update_user_view(caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@profile_blueprint.route('/user/theme/set/<theme>', methods=['GET'])
+@api_login_required
+def profile_set_theme(theme, caseid):
+    if theme not in ['dark', 'light']:
+        return response_error('Invalid data')
+
+    user = get_user(current_user.id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    user.in_dark_mode = (theme == 'dark')
+    db.session.commit()
+
+    return response_success('Theme changed')
+

@@ -1,0 +1,87 @@
+{% if attributes and attributes|length > 0 %}
+    {% for ca in attributes %}
+     {% set outer_loop = loop %}
+      <div class="tab-pane {%if is_case_page %}{% if outer_loop.index == 1 %}{{"active show"}}{% endif %}{% endif %}"
+            id="{{page_uid}}{{ outer_loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
+            aria-labelledby="{{page_uid}}{{ outer_loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}-tab">
+          {% for cle in attributes[ca] %}
+                {% set tag_id = cle.lower() | replace(' ', '_' ) %}
+                <div class="form-group row">
+                    <div class="col-12">
+
+                        {% if attributes[ca][cle]["type"] == "input_string" %}
+                         <div class="form-input">
+                            <label for="{{ cle }}">{{ cle }} {% if attributes[ca][cle]['mandatory'] %} * {% endif %}
+                            </label>
+                            <input type="text" id="inpstd_{{page_uid}}{{ loop.index }}_{{ tag_id }}"
+                                   data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"
+                                    {% if  attributes[ca][cle]['value'] %} value="{{ attributes[ca][cle]['value'] }}" {% endif %}
+                                    {% if attributes[ca][cle]['mandatory'] %} required {% endif %}
+                             />
+                         </div>
+                        {% elif attributes[ca][cle]["type"] == "input_checkbox" %}
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="checkbox" id="inpchk_{{page_uid}}{{ loop.index }}_{{ tag_id }}"
+                                           data-attr-for="{{cle}}" data-ref-tab="{{ca}}" class="form-control col-md-12"
+                                           {% if attributes[ca][cle]['value'] == True %} checked {% endif %}
+                                            {% if attributes[ca][cle]['mandatory'] %} required {% endif %}
+                                    />
+                                    <span class="form-check-sign"> {{ cle }}{% if attributes[ca][cle]['mandatory'] %} * {% endif %}
+                                    </span>
+                                </label>
+                            </div>
+
+                        {% elif attributes[ca][cle]["type"] == "input_textfield" %}
+                            <div class="form-input">
+                                <label for="{{ cle }}">{{ cle }} {% if attributes[ca][cle]['mandatory'] %} * {% endif %}
+                                </label>
+                                <textarea class="form-control" id="inpstd_{{page_uid}}{{ loop.index }}_{{ tag_id }}"
+                                                data-attr-for="{{cle}}" data-ref-tab="{{ca}}"
+                                                rows="12" style="height:100%;"
+                                          {% if attributes[ca][cle]['mandatory'] %} required {% endif %}
+                                >{{ attributes[ca][cle]['value'] }}</textarea>
+                            </div>
+
+                        {% elif attributes[ca][cle]["type"] == "input_select" %}
+                            <div class="form-inline">
+
+                                  <label class="my-1 mr-2" for="inpselect_{{page_uid}}{{ loop.index }}_{{ tag_id }}">{{ cle }}</label>
+                                  <select class="custom-select my-1 mr-sm-2" id="inpselect_{{page_uid}}{{ loop.index }}_{{ tag_id }}"
+                                  data-attr-for="{{cle}}" data-ref-tab="{{ca}}">
+                                  {% for opt in attributes[ca][cle]['options'] %}
+                                    <option {% if opt == attributes[ca][cle]['value'] %} selected {% endif %}>{{ opt }}</option>
+                                  {% endfor %}
+                                </select>
+                            </div>
+
+                        {% elif attributes[ca][cle]["type"] == "input_date" %}
+                            <div class="form-input">
+                                  <label class="my-1 mr-2" for="inpstd_{{page_uid}}{{ loop.index }}_{{ tag_id }}">{{ cle }} {% if attributes[ca][cle]['mandatory'] %} * {% endif %}</label>
+                                  <input type="date" data-attr-for="{{cle}}" data-ref-tab="{{ca}}"
+                                    id="inpstd_{{page_uid}}{{ loop.index }}_{{ tag_id }}" value="{{ attributes[ca][cle]['value'] }}"
+                                  {% if attributes[ca][cle]['mandatory'] %} required {% endif %} >
+                            </div>
+
+                        {% elif attributes[ca][cle]["type"] == "input_datetime" %}
+                            <div class="form-input">
+                                  <label class="my-1 mr-2" for="inpstd_{{page_uid}}{{ loop.index }}_{{ tag_id }}">{{ cle }} {% if attributes[ca][cle]['mandatory'] %} * {% endif %}</label>
+                                  <input type="datetime-local" data-attr-for="{{cle}}" data-ref-tab="{{ca}}"
+                                    id="inpstd_{{page_uid}}{{ loop.index }}_{{ tag_id }}" value="{{ attributes[ca][cle]['value'] }}"
+                                    {% if attributes[ca][cle]['mandatory'] %} required {% endif %}
+                                  >
+                            </div>
+
+                        {% elif attributes[ca][cle]["type"] == "raw" %}
+                            <p>{{ cle }}</p>
+
+                        {% elif attributes[ca][cle]["type"] == "html" %}
+                            {{ attributes[ca][cle]['value']| safe }}
+
+                        {% endif %}
+                    </div>
+                </div>
+           {% endfor %}
+      </div>
+      {% endfor %}
+{% endif %}

@@ -1,11 +1,7 @@
 
 function get_case_graph() {
-
-    $.ajax({
-        url: 'graph/getdata' + case_param(),
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
+    get_request_api('graph/getdata')
+    .done((data) => {
             if (data.status == 'success') {
                 redrawAll(data.data);
                 hide_loader();
@@ -13,18 +9,18 @@ function get_case_graph() {
                 $('#submit_new_asset').text('Save again');
                 swal("Oh no !", data.message, "error")
             }
-        },
-        error: function (error) {
-            $('#submit_new_asset').text('Save');
-            swal("Oh no !", error.statusText, "error")
-        }
-    });
-
+        })
 }
 
 var network;
 
 function redrawAll(data) {
+  if (data.nodes.length == 0) {
+        $('#card_main_load').show();
+        $('#graph-container').text('No events in graph');
+        hide_loader();
+        return true;
+  }
   var container = document.getElementById("graph-container");
   var options = {
     edges: {
@@ -54,24 +50,6 @@ function redrawAll(data) {
     "minVelocity": 0.41,
     "solver": "forceAtlas2Based",
     "timestep": 0.45
-    },
-    groups: {
-        computer: {
-            shape: 'icon',
-            icon: {
-              face: "'Font Awesome 5 Solid'",
-              weight: "bold", // Font Awesome 5 doesn't work properly unless bold.
-              code: '\uf109'
-            }
-        },
-        account: {
-            shape: 'icon',
-            icon: {
-              face: "'Font Awesome 5 Solid'",
-              weight: "bold", // Font Awesome 5 doesn't work properly unless bold.
-              code: '\uf007'
-            }
-        }
     }
   };
 

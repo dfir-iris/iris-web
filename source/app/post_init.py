@@ -17,27 +17,53 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-import logging as log
-import random
+import glob
 import secrets
-import string
+
 import os
+import random
+import string
+from alembic import command
 from alembic.config import Config
-from alembic import command, context
+from sqlalchemy import create_engine
+from sqlalchemy_utils import create_database
+from sqlalchemy_utils import database_exists
 
-from sqlalchemy import create_engine, and_
-from sqlalchemy_utils import database_exists, create_database
-
-from app import db, bc, app, celery
-from app.configuration import SQLALCHEMY_BASE_URI
+from app import app
+from app import bc
+from app import celery
+from app import db
+from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
-from app.models.cases import Cases, Client
-from app.models.models import Role, Languages, User, get_or_create, create_safe, UserRoles, OsType, Tlp, AssetsType, \
-    IrisModule, EventCategory, AnalysisStatus, ReportType, IocType
+from app.iris_engine.module_handler.module_handler import register_module
+from app.models.cases import Cases
+from app.models.cases import Client
+from app.models.models import AnalysisStatus
+from app.models.models import AssetsType
+from app.models.models import EventCategory
+from app.models.models import IocType
+from app.models.models import IrisHook
+from app.models.models import IrisModule
+from app.models.models import Languages
+from app.models.models import OsType
+from app.models.models import ReportType
+from app.models.models import Role
+from app.models.models import ServerSettings
+from app.models.models import TaskStatus
+from app.models.models import Tlp
+from app.models.models import User
+from app.models.models import UserRoles
+from app.models.models import create_safe
+from app.models.models import create_safe_attr
+from app.models.models import get_by_value_or_create
+from app.models.models import get_or_create
+
+log = app.logger
 
 
 def run_post_init(development=False):
+    log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
 
     if os.getenv("IRIS_WORKER") is None:
@@ -51,6 +77,12 @@ def run_post_init(development=False):
         db.create_all(bind="iris_tasks")
         db.session.commit()
 
+        log.info("Running DB migration")
+
+        alembic_cfg = Config(file_='app/alembic.ini')
+        alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
+        command.upgrade(alembic_cfg, 'head')
+
         log.info("Creating base languages")
         create_safe_languages()
 
@@ -62,6 +94,9 @@ def run_post_init(development=False):
 
         log.info("Creating base IOC types")
         create_safe_ioctypes()
+
+        log.info("Creating base attributes")
+        create_safe_attributes()
 
         log.info("Creating base report types")
         create_safe_report_types()
@@ -78,18 +113,20 @@ def run_post_init(development=False):
         log.info("Creating base analysis status")
         create_safe_analysis_status()
 
-        log.info("Running DB migration")
+        log.info("Creating base tasks status")
+        create_safe_task_status()
 
-        alembic_cfg = Config(file_='app/alembic.ini')
-        alembic_cfg.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_URI + 'iris_db')
-        command.upgrade(alembic_cfg, 'head')
+        log.info("Creating base hooks")
+        create_safe_hooks()
 
-    log.info("Registering modules pipeline tasks")
-    register_modules_pipelines()
+        log.info("Creating base server settings")
+        create_safe_server_settings()
 
-    if os.getenv("IRIS_WORKER") is None:
         log.info("Creating first administrative user")
         admin = create_safe_admin()
+
+        log.info("Registering default modules")
+        register_default_modules()
 
         log.info("Creating demo client")
         client = create_safe_client()
@@ -99,6 +136,10 @@ def run_post_init(development=False):
             user=admin,
             client=client
         )
+
+        # setup symlinks for custom_assets
+        log.info("Creating symlinks for custom asset icons")
+        custom_assets_symlinks()
 
     if development:
         if os.getenv("IRIS_WORKER") is None:
@@ -119,11 +160,166 @@ def create_safe_db(db_name):
     engine.dispose()
 
 
-def check_db_compatibility():
-    db_version = get_db_version()
+def create_safe_hooks():
+    # --- Case
+    create_safe(db.session, IrisHook, hook_name='on_preload_case_create',
+                hook_description='Triggered on case creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_case_create',
+                hook_description='Triggered on case creation, after commit in DB')
 
-    if db_version == app.config.get('DB_VERSION'):
-        return True
+    create_safe(db.session, IrisHook, hook_name='on_preload_case_delete',
+                hook_description='Triggered on case deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_case_delete',
+                hook_description='Triggered on case deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_case',
+                hook_description='Triggered upon user action')
+
+    # --- Assets
+    create_safe(db.session, IrisHook, hook_name='on_preload_asset_create',
+                hook_description='Triggered on asset creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_create',
+                hook_description='Triggered on asset creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_asset_update',
+                hook_description='Triggered on asset update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_update',
+                hook_description='Triggered on asset update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_asset_delete',
+                hook_description='Triggered on asset deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_delete',
+                hook_description='Triggered on asset deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_asset',
+                hook_description='Triggered upon user action')
+
+    # --- Notes
+    create_safe(db.session, IrisHook, hook_name='on_preload_note_create',
+                hook_description='Triggered on note creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_create',
+                hook_description='Triggered on note creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_note_update',
+                hook_description='Triggered on note update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_update',
+                hook_description='Triggered on note update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_note_delete',
+                hook_description='Triggered on note deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_delete',
+                hook_description='Triggered on note deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_note',
+                hook_description='Triggered upon user action')
+
+    # --- iocs
+    create_safe(db.session, IrisHook, hook_name='on_preload_ioc_create',
+                hook_description='Triggered on ioc creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_create',
+                hook_description='Triggered on ioc creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_ioc_update',
+                hook_description='Triggered on ioc update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_update',
+                hook_description='Triggered on ioc update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_ioc_delete',
+                hook_description='Triggered on ioc deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_delete',
+                hook_description='Triggered on ioc deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_ioc',
+                hook_description='Triggered upon user action')
+
+    # --- events
+    create_safe(db.session, IrisHook, hook_name='on_preload_event_create',
+                hook_description='Triggered on event creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_create',
+                hook_description='Triggered on event creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_preload_event_duplicate',
+                hook_description='Triggered on event duplication, before commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_event_update',
+                hook_description='Triggered on event update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_update',
+                hook_description='Triggered on event update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_event_delete',
+                hook_description='Triggered on event deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_delete',
+                hook_description='Triggered on event deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_event',
+                hook_description='Triggered upon user action')
+
+    # --- evidence
+    create_safe(db.session, IrisHook, hook_name='on_preload_evidence_create',
+                hook_description='Triggered on evidence creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_create',
+                hook_description='Triggered on evidence creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_evidence_update',
+                hook_description='Triggered on evidence update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_update',
+                hook_description='Triggered on evidence update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_evidence_delete',
+                hook_description='Triggered on evidence deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_delete',
+                hook_description='Triggered on evidence deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_evidence',
+                hook_description='Triggered upon user action')
+
+    # --- tasks
+    create_safe(db.session, IrisHook, hook_name='on_preload_task_create',
+                hook_description='Triggered on task creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_create',
+                hook_description='Triggered on task creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_task_update',
+                hook_description='Triggered on task update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_update',
+                hook_description='Triggered on task update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_task_delete',
+                hook_description='Triggered on task deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_delete',
+                hook_description='Triggered on task deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_task',
+                hook_description='Triggered upon user action')
+
+    # --- global tasks
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_create',
+                hook_description='Triggered on global task creation, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_create',
+                hook_description='Triggered on global task creation, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_update',
+                hook_description='Triggered on task update, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_update',
+                hook_description='Triggered on global task update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_global_task_delete',
+                hook_description='Triggered on task deletion, before commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_global_task_delete',
+                hook_description='Triggered on global task deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_global_task',
+                hook_description='Triggered upon user action')
+
+    # --- reports
+    create_safe(db.session, IrisHook, hook_name='on_preload_report_create',
+                hook_description='Triggered on report creation, before generation in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_report_create',
+                hook_description='Triggered on report creation, before download of the document')
+
+    create_safe(db.session, IrisHook, hook_name='on_preload_activities_report_create',
+                hook_description='Triggered on activities report creation, before generation in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_activities_report_create',
+                hook_description='Triggered on activities report creation, before download of the document')
 
 
 def create_safe_languages():
@@ -165,34 +361,75 @@ def create_safe_analysis_status():
     create_safe(db.session, AnalysisStatus, name='Done')
 
 
+def create_safe_task_status():
+    create_safe(db.session, TaskStatus, status_name='To do', status_description="", status_bscolor="danger")
+    create_safe(db.session, TaskStatus, status_name='In progress', status_description="", status_bscolor="warning")
+    create_safe(db.session, TaskStatus, status_name='On hold', status_description="", status_bscolor="muted")
+    create_safe(db.session, TaskStatus, status_name='Done', status_description="", status_bscolor="success")
+    create_safe(db.session, TaskStatus, status_name='Canceled', status_description="", status_bscolor="muted")
+
+
 def create_safe_assets():
-    get_or_create(db.session, AssetsType, asset_name="Account", asset_description="Generic Account")
-    get_or_create(db.session, AssetsType, asset_name="Firewall", asset_description="Firewall")
-    get_or_create(db.session, AssetsType, asset_name="Linux - Server", asset_description="Linux server")
-    get_or_create(db.session, AssetsType, asset_name="Linux - Computer", asset_description="Linux computer")
-    get_or_create(db.session, AssetsType, asset_name="Linux Account", asset_description="Linux Account")
-    get_or_create(db.session, AssetsType, asset_name="Mac - Computer", asset_description="Mac computer")
-    get_or_create(db.session, AssetsType, asset_name="Phone - Android", asset_description="Android Phone")
-    get_or_create(db.session, AssetsType, asset_name="Phone - IOS", asset_description="Apple Phone")
-    get_or_create(db.session, AssetsType, asset_name="Windows - Computer", asset_description="Standard Windows Computer")
-    get_or_create(db.session, AssetsType, asset_name="Windows - Server", asset_description="Standard Windows Server")
-    get_or_create(db.session, AssetsType, asset_name="Windows - DC", asset_description="Domain Controller")
-    get_or_create(db.session, AssetsType, asset_name="Router", asset_description="Router")
-    get_or_create(db.session, AssetsType, asset_name="Switch", asset_description="Switch")
-    get_or_create(db.session, AssetsType, asset_name="VPN", asset_description="VPN")
-    get_or_create(db.session, AssetsType, asset_name="WAF", asset_description="WAF")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - Local",
-                  asset_description="Windows Account - Local")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - Local - Admin",
-                  asset_description="Windows Account - Local - Admin")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - AD",
-                  asset_description="Windows Account - AD")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - Admin",
-                  asset_description="Windows Account - AD - Admin")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - krbtgt",
-                  asset_description="Windows Account - AD - krbtgt")
-    get_or_create(db.session, AssetsType, asset_name="Windows Account - AD - Service",
-                  asset_description="Windows Account - AD - krbtgt")
+
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Account",
+                           asset_description="Generic Account", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Firewall", asset_description="Firewall",
+                           asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux - Server",
+                           asset_description="Linux server", asset_icon_not_compromised="server.png",
+                           asset_icon_compromised="ioc_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux - Computer",
+                           asset_description="Linux computer", asset_icon_not_compromised="desktop.png",
+                           asset_icon_compromised="ioc_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Linux Account",
+                           asset_description="Linux Account", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Mac - Computer",
+                           asset_description="Mac computer", asset_icon_not_compromised="desktop.png",
+                           asset_icon_compromised="ioc_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Phone - Android",
+                           asset_description="Android Phone", asset_icon_not_compromised="phone.png",
+                           asset_icon_compromised="ioc_phone.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Phone - IOS",
+                           asset_description="Apple Phone", asset_icon_not_compromised="phone.png",
+                           asset_icon_compromised="ioc_phone.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - Computer",
+                           asset_description="Standard Windows Computer",
+                           asset_icon_not_compromised="windows_desktop.png",
+                           asset_icon_compromised="ioc_windows_desktop.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - Server",
+                           asset_description="Standard Windows Server", asset_icon_not_compromised="windows_server.png",
+                           asset_icon_compromised="ioc_windows_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows - DC",
+                           asset_description="Domain Controller", asset_icon_not_compromised="windows_server.png",
+                           asset_icon_compromised="ioc_windows_server.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Router", asset_description="Router",
+                           asset_icon_not_compromised="router.png", asset_icon_compromised="ioc_router.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Switch", asset_description="Switch",
+                           asset_icon_not_compromised="switch.png", asset_icon_compromised="ioc_switch.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="VPN", asset_description="VPN",
+                           asset_icon_not_compromised="vpn.png", asset_icon_compromised="ioc_vpn.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="WAF", asset_description="WAF",
+                           asset_icon_not_compromised="firewall.png", asset_icon_compromised="ioc_firewall.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - Local",
+                           asset_description="Windows Account - Local", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - Local - Admin",
+                           asset_description="Windows Account - Local - Admin", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD",
+                           asset_description="Windows Account - AD", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - Admin",
+                           asset_description="Windows Account - AD - Admin", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - krbtgt",
+                           asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
+    get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Windows Account - AD - Service",
+                           asset_description="Windows Account - AD - krbtgt", asset_icon_not_compromised="user.png",
+                           asset_icon_compromised="ioc_user.png")
 
 
 def create_safe_client():
@@ -226,8 +463,10 @@ def create_safe_admin():
 
         ur = UserRoles()
         ur.user_id = user.id
-        ur.role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-        db.session.add(ur)
+        row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
+        if row_role_id and len(row_role_id) > 0:
+            ur.role_id = row_role_id[0]
+            db.session.add(ur)
 
         db.session.commit()
     else:
@@ -262,6 +501,33 @@ def create_safe_case(user, client):
 def create_safe_report_types():
     create_safe(db.session, ReportType, name="Investigation")
     create_safe(db.session, ReportType, name="Activities")
+
+
+def create_safe_attributes():
+    create_safe_attr(db.session, attribute_display_name='IOC',
+                     attribute_description='Defines default attributes for IOCs', attribute_for='ioc',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Events',
+                     attribute_description='Defines default attributes for Events', attribute_for='event',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Assets',
+                     attribute_description='Defines default attributes for Assets', attribute_for='asset',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Tasks',
+                     attribute_description='Defines default attributes for Tasks', attribute_for='task',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Notes',
+                     attribute_description='Defines default attributes for Notes', attribute_for='note',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Evidences',
+                     attribute_description='Defines default attributes for Evidences', attribute_for='evidence',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Cases',
+                     attribute_description='Defines default attributes for Cases', attribute_for='case',
+                     attribute_content={})
+    create_safe_attr(db.session, attribute_display_name='Customers',
+                     attribute_description='Defines default attributes for Customers', attribute_for='client',
+                     attribute_content={})
 
 
 def create_safe_ioctypes():
@@ -595,6 +861,15 @@ def create_safe_tlp():
     create_safe(db.session, Tlp, tlp_name="green", tlp_bscolor="success")
 
 
+def create_safe_server_settings():
+    if not ServerSettings.query.count():
+        create_safe(db.session, ServerSettings,
+                    http_proxy="", https_proxy="", prevent_post_mod_repush=False,
+                    password_policy_min_length="12", password_policy_upper_case=True,
+                    password_policy_lower_case=True, password_policy_digit=True,
+                    password_policy_special_chars="")
+
+
 def register_modules_pipelines():
     modules = IrisModule.query.with_entities(
         IrisModule.module_name,
@@ -605,7 +880,7 @@ def register_modules_pipelines():
 
     for module in modules:
         module = module[0]
-        inst = instantiate_module_from_name(module)
+        inst, _ = instantiate_module_from_name(module)
         if not inst:
             continue
 
@@ -620,3 +895,45 @@ def register_modules_pipelines():
         tasks = status.get_data()
         for task in tasks:
             celery.register_task(task)
+
+def register_default_modules():
+    srv_settings = ServerSettings.query.first()
+
+    if srv_settings.prevent_post_mod_repush is True:
+        log.info('Post init modules repush disabled')
+        return
+
+    modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module']
+    for module in modules:
+        class_, _ = instantiate_module_from_name(module)
+        is_ready, logs = check_module_health(class_)
+
+        if not is_ready:
+            log.info("Attempted to initiate {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+            return False
+
+        mod_id, logs = register_module(module)
+        if mod_id is None:
+            log.info("Attempted to add {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+
+        else:
+            iris_module_disable_by_id(mod_id)
+            log.info('Successfully registered {mod}'.format(mod=module))
+
+
+def custom_assets_symlinks():
+    try:
+
+        source_paths = glob.glob(os.path.join(app.config['ASSET_STORE_PATH'], "*"))
+
+        for store_fullpath in source_paths:
+
+            filename = store_fullpath.split(os.path.sep)[-1]
+            show_fullpath = os.path.join(app.config['APP_PATH'], 'app',
+                                         app.config['ASSET_SHOW_PATH'].strip(os.path.sep), filename)
+            if not os.path.islink(show_fullpath):
+                os.symlink(store_fullpath, show_fullpath)
+                log.info(f"Created assets img symlink {store_fullpath} -> {show_fullpath}")
+
+    except Exception as e:
+        log.error(f"Error: {e}")

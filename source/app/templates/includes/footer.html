@@ -2,7 +2,7 @@
  
 {% if current_user.is_authenticated %}
 
-  <div class="modal fade " tabindex="-1" role="dialog" id="modal_switch_context" data-backdrop="true">
+  <div class="modal " tabindex="-1" role="dialog" id="modal_switch_context" data-backdrop="true">
       <div class="modal-lg modal-dialog" role="document">
           <div class="modal-content">
             <form method="post" action="" id="form_set_context">
@@ -12,22 +12,18 @@
                         aria-hidden="true">&times;</span></button>
                   </div>
                   <div class="modal-body">
-                  <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="user_context">
-                      <optgroup label="Opened">
-                        {% for case in cases_context_selector %}
-                              <option value="{{ case[2] }}">{{ case[0]|unquote }} ({{ case[1] }})</option>
-                        {% endfor %}
-                      </optgroup>
-                      <optgroup label="Closed">
-                        {% for case in cases_close_context_selector %}
-                              <option value="{{ case[2] }}">{{ case[0]|unquote }} ({{ case[1] }})</option>
-                        {% endfor %}
-                      </optgroup>
-                  </select>
-                  </div>
-                  <div class="modal-footer">
-                        <button type="button" class="btn btn-border-success" id="submit_set_context">Save</button>
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                      <div class="row mb-2">
+                          <div class="col-12">
+                            <select class="selectpicker form-control btn-outline-white dropdown-submenu" data-show-subtext="true" data-live-search="true" id="user_context">
+                            </select>
+                          </div>
+                      </div>
+                     <div class="row mt-4">
+                         <div class="col-12 d-flex">
+                             <button type="button" class="btn btn-default mr-auto" data-dismiss="modal">Close</button>
+                             <button type="button" class="btn btn-outline-success ml-auto" id="submit_set_context">Save</button>
+                         </div>
+                     </div>
                   </div>
             </form>
           </div><!-- /.modal-content -->
@@ -46,62 +42,79 @@
             </div>
 
             <div class="modal-body">
-                <input class="form-control" placeholder="Task log description" id="log_content" name="log_content"/>
-            </div>
-
-            <div class="modal-footer">
-              <button type="submit" class="btn btn-success" id="submit_new_tasklog">Submit</button>
+              <div class="row mb-2">
+                  <div class="col-12">
+                    <p class="ml-2">Add a task log that will be registered under activities </p>
+                      <textarea class="form-control" placeholder="Log content" id="log_content" name="log_content" rows="3" ></textarea>
+                  </div>
+              </div>
+              <div class="row mt-4">
+                 <div class="col-12 d-flex">
+                    <button type="submit" class="btn btn-outline-success ml-auto" id="submit_new_tasklog">Submit</button>
+                 </div>
+             </div>
             </div>
           </div><!-- /.modal-content -->
         </form>
       </div><!-- /.modal-dialog -->
     </div>
 
-
-    <div class="modal fade " tabindex="-1" role="dialog" id="modal_add_receivedfile" data-backdrop="true">
+    <div class="modal" tabindex="-1" role="dialog" id="modal_ds_folder" data-backdrop="true">
       <div class="modal-lg modal-dialog" role="document">
-        <form method="post" action="" id="form_add_receivedfile">
+        <form method="post" action="" id="form_ds_directory">
 
           <div class="modal-content">
             <div class="modal-header">
-              <h5>Register received file</h5>
+              <h5>Datastore folder</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                   aria-hidden="true">&times;</span></button>
             </div>
 
             <div class="modal-body">
-                <div class="form-group">
-                    <label for="rfile_filename" class="placeholder">Filename *</label>
-                    <input class="form-control" placeholder="Filename" id="filename" required name="filename" autocomplete="off"/>
-                </div>
-                <div class="form-group">
-                    <label for="rfile_size" class="placeholder">File size (bytes) *</label>
-                    <input class="form-control" placeholder="Size in bytes" id="file_size" name="file_size" autocomplete="off"/>
-                </div>
-                <div class="form-group">
-                    <label for="rfile_hash" class="placeholder">File Hash</label>
-                    <input class="form-control" placeholder="hash" id="file_hash" name="file_hash" autocomplete="off"/>
-                </div>
-                <div class="form-group">
-                    <label for="rfile_desc" class="placeholder">File description</label>
-                    <input class="form-control" placeholder="Description" id="file_description" name="file_description" autocomplete="off"/>
-                </div>
-                <div class="form-group">
-                    <p>Automatically compute file information by selecting it below. The file will not be uploaded nor saved.</p>
-                    <input id="input_autofill" type="file">
-                    <button class="btn btn-sm" type="button" onclick="get_hash()" id="btn_rfile_proc">Process</button>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-              <button type="button" class="btn btn-success" onclick="add_rfile();">Register</button>
+              <div class="row mb-2">
+                  <div class="col-12">
+                    <p class="ml-2">Input the folder name below</p>
+                      <input class="form-control" placeholder="Folder name" id="ds_mod_folder_name" name="ds_folder_name">
+                  </div>
+              </div>
+              <div class="row mt-4">
+                 <div class="col-12 d-flex">
+                    <button class="btn btn-outline-success ml-auto" onclick="save_ds_mod_folder();return false;">Submit</button>
+                 </div>
+             </div>
             </div>
           </div><!-- /.modal-content -->
         </form>
       </div><!-- /.modal-dialog -->
     </div>
 
+    <div class="modal" tabindex="-1" role="dialog" id="modal_ds_file" data-backdrop="true">
+      <div class="modal-lg modal-dialog" role="document">
+          <div class="modal-content" id="modal_ds_file_content">
 
+          </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
 
+<div class="modal " tabindex="-1" role="dialog" id="modal_dim_task_detail" data-backdrop="true">
+  <div class="modal-xl modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Task info</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+              aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body" id="info_dim_task_modal_body">
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+<div class="modal" tabindex="-1" role="dialog" id="modal_help" data-backdrop="true">
+</div>
 
 {% endif %}

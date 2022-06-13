@@ -27,21 +27,19 @@ import sys
 from enum import Enum
 
 import requests
+import configparser
+import os
 
+# --------- Configuration ---------
+# read the private configuration file
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
-    config.read('app/config.docker.ini')
+    config.read(f'app{os.path.sep}config.docker.ini')
 else:
-    config.read('app/config.priv.ini')
+    config.read(f'app{os.path.sep}config.priv.ini')
 
 # Fetch the values
-misp_url = config.get('MISP', 'MISP_URL')
-misp_key = config.get('MISP', 'MISP_KEY')
-misp_verifycert = config.get('MISP', 'MISP_VERIFYCERT') != "False"
-misp_http_proxy = config.get('MISP', 'MISP_PROXY_HTTP')
-misp_https_proxy = config.get('MISP', 'MISP_PROXY_HTTPS')
-
 PG_ACCOUNT_ = os.environ.get('DB_USER', config.get('POSTGRES', 'PG_ACCOUNT'))
 PG_PASSWD_ = os.environ.get('DB_PASS', config.get('POSTGRES', 'PG_PASSWD'))
 PGA_ACCOUNT_ = os.environ.get('POSTGRES_USER', config.get('POSTGRES', 'PGA_ACCOUNT'))
@@ -56,11 +54,6 @@ if os.environ.get('IRIS_WORKER') is None:
 
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
-
-# --------- LOGGING ---------
-LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
-LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-log.basicConfig(level=log.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 # Build of SQLAlchemy connectors. One is admin and the other is only for iris. Admin is needed to create new DB
 SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
@@ -131,21 +124,19 @@ class CeleryConfig():
     broker_url = "amqp://localhost" if not os.getenv('DOCKERIZED') else "amqp://rabbitmq"
     result_extended = True
     result_serializer = "json"
-    task_routes = (
-        [
-            ('app.iris_engine.tasker.tasks.task_kbh_import', {'route': 'case_import'}),
-            ('app.iris_engine.tasker.tasks.task_feed_iris', {'route': 'case_import'})
-        ],
-    )
+    worker_pool_restarts = True
 
 
 # --------- APP ---------
 class Config():
     # Handled by bumpversion
-    IRIS_VERSION = "v1.2.1"
+    IRIS_VERSION = "v1.4.5"
 
-    API_MIN_VERSION = "1.0.0"
-    API_MAX_VERSION = "1.0.0"
+    API_MIN_VERSION = "1.0.1"
+    API_MAX_VERSION = "1.0.4"
+
+    MODULES_INTERFACE_MIN_VERSION = '1.1'
+    MODULES_INTERFACE_MAX_VERSION = '1.1'
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True
@@ -178,16 +169,34 @@ class Config():
     Set download path, max file upload size and timeout
     """
     APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    UPLOADED_PATH = config.get('IRIS', 'UPLOADED_PATH') if config.get('IRIS', 'UPLOADED_PATH', fallback=False) else "/home/iris/downloads"
-    TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH', fallback=False) else "/home/iris/user_templates"
+
+    UPLOADED_PATH = config.get('IRIS', 'UPLOADED_PATH') if config.get('IRIS', 'UPLOADED_PATH',
+                                                                      fallback=False) else "/home/iris/downloads"
+    TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH',
+                                                                        fallback=False) else "/home/iris/user_templates"
+    BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
+                                                                        fallback=False) else "/home/iris/server_data/backup"
+    UPDATES_PATH = os.path.join(BACKUP_PATH, 'updates')
+
+    RELEASE_URL = config.get('IRIS', 'RELEASE_URL') if config.get('IRIS', 'RELEASE_URL',
+                                                                   fallback=False) else "https://api.github.com/repos/dfir-iris/iris-web/releases"
+
+    RELEASE_SIGNATURE_KEY = config.get('IRIS', 'RELEASE_SIGNATURE_KEY') if config.get('IRIS', 'RELEASE_SIGNATURE_KEY',
+                                                                  fallback=False) else "dependencies/DFIR-IRIS_pkey.asc"
+
+    PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
+                                                                        fallback=False) else "/usr/bin"
+    ASSET_STORE_PATH = config.get('IRIS', 'ASSET_STORE_PATH') if config.get('IRIS', 'ASSET_STORE_PATH',
+                                                                            fallback=False) else "/home/iris/server_data/custom_assets"
+    DATASTORE_PATH = config.get('IRIS', 'DATASTORE_PATH') if config.get('IRIS', 'DATASTORE_PATH',
+                                                                        fallback=False) else "/home/iris/server_data/datastore"
+    ASSET_SHOW_PATH = "/static/assets/img/graph"
 
     UPDATE_DIR_NAME = '_updates_'
 
-    DROPZONE_MAX_FILE_SIZE = 1024
+    DROPZONE_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 10  # 10 GB
 
-    MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
-
-    DROPZONE_TIMEOUT = 5 * 60 * 10000  # 5 Minutes of uploads per file
+    DROPZONE_TIMEOUT = 15 * 60 * 10000  # 15 Minutes of uploads per file
 
     """ Celery configuration
     Configure URL and backend
@@ -215,3 +224,9 @@ class Config():
     AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
 
     AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
+
+    """ Caching 
+    """
+    CACHE_TYPE = "SimpleCache"
+    CACHE_DEFAULT_TIMEOUT = 300
+

@@ -19,15 +19,22 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
-from flask import request, redirect
-from flask_login import current_user
-
 # IMPORTS ------------------------------------------------
+from flask import redirect
+from flask import request
+from flask_login import current_user
+from sqlalchemy import desc
+
 from app import app
+from app import cache
 from app import db
 from app.models.cases import Cases
 from app.models.models import Client
-from app.util import response_success, get_urlcasename, not_authenticated_redirection_url
+from app.models.models import ServerSettings
+from app.util import api_login_required
+from app.util import get_urlcasename
+from app.util import not_authenticated_redirection_url
+from app.util import response_success
 
 # CONTENT ------------------------------------------------
 ctx_blueprint = Blueprint(
@@ -65,38 +72,50 @@ def iris_version():
 
 
 @app.context_processor
+@cache.cached(timeout=3600, key_prefix='iris_has_updates')
+def has_updates():
+    if not current_user.is_authenticated or not current_user.is_admin():
+        return dict(has_updates=False)
+
+    server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
+
+    return dict(has_updates=server_settings[0])
+
+
+@app.context_processor
 def case_name():
     return dict(case_name=get_urlcasename())
 
 
-@app.context_processor
-def cases_context():
+@ctx_blueprint.route('/context/get-cases', methods=['GET'])
+@api_login_required
+def cases_context(caseid):
     # Get all investigations not closed
     res = Cases.query.with_entities(
         Cases.name,
-        Client.name,
+        Client.name.label('customer_name'),
         Cases.case_id,
-        Cases.close_date) \
-        .join(Cases.client) \
-        .filter(Cases.close_date == None) \
-        .order_by(Cases.name) \
+        Cases.close_date)\
+        .join(Cases.client)\
+        .filter(Cases.close_date == None)\
+        .order_by(desc(Cases.case_id))\
         .all()
 
-    datao = [row for row in res]
+    datao = [row._asdict() for row in res]
 
     res = Cases.query.with_entities(
         Cases.name,
-        Client.name,
+        Client.name.label('customer_name'),
         Cases.case_id,
-        Cases.close_date) \
-        .join(Cases.client) \
-        .filter(Cases.close_date != None) \
-        .order_by(Cases.name) \
+        Cases.close_date)\
+        .join(Cases.client)\
+        .filter(Cases.close_date != None)\
+        .order_by(desc(Cases.case_id))\
         .all()
 
-    datac = [row for row in res]
+    datac = [row._asdict() for row in res]
 
-    return dict(cases_context_selector=datao, cases_close_context_selector=datac)
+    return response_success(data=dict(cases_context_selector=datao, cases_close_context_selector=datac))
 
 
 def update_user_case_ctx():

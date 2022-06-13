@@ -18,8 +18,12 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import traceback
+import weakref
+
 import datetime
 import decimal
+import logging as log
 import pickle
 import random
 import shutil
@@ -30,19 +34,24 @@ import logging as log
 from pathlib import Path
 
 import requests
+import hashlib
+
 from flask_wtf import FlaskForm
+from functools import wraps
+from pathlib import Path
 from pyunpack import Archive
 
 from flask import json, url_for, request, render_template, Request
 from flask_login import current_user, logout_user, login_user
 from requests.auth import HTTPBasicAuth
+
 from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
-from functools import wraps
-
-from app import app, db, TEMPLATE_PATH
-
+from app import TEMPLATE_PATH
+from app import app
+from app import db
 # build a Json response
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_users_db import get_user, create_user, update_user
@@ -202,6 +211,7 @@ def get_urlcase(request):
                 request.json.pop('cid')
             else:
                 caseid = current_user.ctx_case
+                redir = True
 
         except Exception as e:
             cookie_session = request.cookies.get('session')
@@ -213,12 +223,11 @@ def get_urlcase(request):
                 log.error(traceback.print_exc())
                 return True, None
 
-        redir = True
-
     case = get_case(caseid)
 
     if not case:
-        return True, None
+        log.warning('No case found. Using default case')
+        return True, 1
 
     if caseid != current_user.ctx_case:
         current_user.ctx_case = case.case_id
@@ -401,8 +410,8 @@ def api_login_required(f):
 
         else:
             redir, caseid = get_urlcase(request=request)
-            if not caseid:
-                return response_error("Invalid case ID", status=400)
+            if not caseid or redir:
+                return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
 
             return f(*args, **kwargs)
@@ -413,7 +422,6 @@ def api_login_required(f):
 def api_admin_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
-
         if request.method == 'POST':
             cookie_session = request.cookies.get('session')
             if cookie_session:
@@ -428,8 +436,8 @@ def api_admin_required(f):
 
         else:
             redir, caseid = get_urlcase(request=request)
-            if not caseid:
-                return response_error("Invalid case ID", status=400)
+            if not caseid or redir:
+                return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
 
             roles = [role.name for role in current_user.roles]
@@ -466,6 +474,32 @@ def get_random_suffix(length):
     return result_str
 
 
+def add_obj_history_entry(obj, action):
+    if hasattr(obj, 'modification_history'):
+
+        if isinstance(obj.modification_history, dict):
+
+            obj.modification_history.update({
+                datetime.datetime.now().timestamp(): {
+                    'user': current_user.user,
+                    'user_id': current_user.id,
+                    'action': action
+                }
+            })
+
+        else:
+
+            obj.modification_history = {
+                datetime.datetime.now().timestamp(): {
+                    'user': current_user.user,
+                    'user_id': current_user.id,
+                    'action': action
+                }
+            }
+    flag_modified(obj, "modification_history")
+    return obj
+
+
 # Set basic 404
 @app.errorhandler(404)
 def page_not_found(e):
@@ -473,5 +507,28 @@ def page_not_found(e):
     if request.content_type and 'application/json' in request.content_type:
         return response_error("Resource not found", status=404)
 
-    return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH)
+    return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH), 404
 
+
+def file_sha256sum(file_path):
+
+    if not Path(file_path).is_file():
+        return None
+
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        # Read and update hash string value in blocks of 4K
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+
+        return sha256_hash.hexdigest().upper()
+
+
+def stream_sha256sum(stream):
+
+    return hashlib.sha256(stream).hexdigest().upper()
+
+
+@app.template_filter()
+def format_datetime(value, frmt):
+    return datetime.datetime.fromtimestamp(float(value)).strftime(frmt)

@@ -2,9 +2,7 @@
 {% block title %} Case IOC {% endblock title %} 
 
 {% block stylesheets %}
-<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
-<link rel="stylesheet" href="/static/assets/css/suggestags.css">
-<link href="/static/assets/css/dataTables.buttons.min.css" rel="stylesheet">
+{% include 'includes/header_case.html' %}
 {% endblock stylesheets %}
 
 {% block content %}
@@ -15,7 +13,6 @@
 <div class="main-panel">
 
     <div class="content">
-
 
         {% if current_user.is_authenticated %}
         {{ form.hidden_tag() }}
@@ -95,7 +92,7 @@
     {% include 'includes/footer.html' %}
 </div>
 <div class="modal" tabindex="-1" role="dialog" id="modal_add_ioc" data-backdrop="true">
-    <div class="modal-lg modal-dialog" role="document">
+    <div class="modal-xl modal-dialog" role="document">
         <div class="modal-content" id="modal_add_ioc_content">
 
         </div>
@@ -135,7 +132,7 @@ wannacry.exe,File,Wannacry sample found,Wannacry|Malware|PE,amber</textarea>
         <div class='invalid-feedback' id='ioc-invalid-msg'></div>
         <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark mr-auto" onclick="generate_sample_csv();">Download sample CSV</button>
-                <button type="button" class="btn btn-success" onclick="upload_ioc();">Upload</button>
+                <button type="button" class="btn btn-outline-success" onclick="upload_ioc();">Upload</button>
         </div>
       </div><!-- /.modal-content -->
     </form>
@@ -146,16 +143,9 @@ wannacry.exe,File,Wannacry sample found,Wannacry|Malware|PE,amber</textarea>
 
 {% block javascripts %}
 
-<script src="/static/assets/js/core/jquery.validate.js"></script>
-<script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
-<script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
-<script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
-<script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
+{% include 'includes/footer_case.html' %}
 
-<script src="/static/assets/js/iris/datatablesUtils.js"></script>
 <script src="/static/assets/js/iris/case.js"></script>
 <script src="/static/assets/js/iris/case.ioc.js"></script>
-<script>
-</script>
 
 {% endblock javascripts %}

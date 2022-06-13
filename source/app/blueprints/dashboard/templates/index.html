@@ -5,6 +5,8 @@
 
 {% block stylesheets %}
 <link rel="stylesheet" href="/static/assets/css/suggestags.css">
+<link href="/static/assets/css/dataTables.contextualActions.min.css" rel="stylesheet">
+<link href="/static/assets/css/dataTables.select.min.css" rel="stylesheet">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -14,16 +16,14 @@
         <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row ">
           <div>
             <h2 class="text-white pb-2 fw-bold">Dashboard</h2>
-            <h5 class="text-white op-7 mb-2">{{ data.date }}</h5>
           </div>
           <div class="ml-md-auto py-2 py-md-0">
-            <a href="/manage/cases" class="btn btn-light btn-border btn-round mr-2">
+            <a href="/manage/cases" class="btn btn-white btn-border btn-round mr-2">
               <span class="btn-label">
                 <i class="fa fa-plus"></i>
               </span>
               Add case
             </a>
-            <a href="#" data-toggle="modal" data-target="#modal_add_customer" class="btn btn-secondary btn-round">Add Customer</a>
           </div>
         </div>
           <div class="chart-container mt--2 mb--2">
@@ -33,7 +33,7 @@
     </div>
     <div class="page-inner mt--5">
       <div class="row row-card-no-pd">
-          <div class="col-sm-6 col-md-3">
+          <div class="col-sm-6 col-md-4">
             <div class="card card-stats card-round">
                 <div class="card-body ">
                     <div class="row">
@@ -44,7 +44,7 @@
                         </div>
                         <div class="col-7 col-stats">
                             <div class="numbers">
-                                <p class="card-category">Cases count (open/all)</p>
+                                <p class="card-category">Cases (open / all)</p>
                                 <h4 class="card-title">{{ data.cases_open_count }} / {{ data.cases_count }}</h4>
                             </div>
                         </div>
@@ -52,18 +52,18 @@
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-md-3">
+        <div class="col-sm-6 col-md-4">
             <div class="card card-stats card-round">
                 <div class="card-body ">
                     <div class="row">
                         <div class="col-5">
                             <div class="icon-big text-center">
-                                <i class="flaticon-database text-warning"></i>
+                                <i class="flaticon-suitcase text-warning"></i>
                             </div>
                         </div>
                         <div class="col-7 col-stats">
                             <div class="numbers">
-                                <p class="card-category">User active cases count</p>
+                                <p class="card-category">Attributed open cases</p>
                                 <h4 class="card-title">{{ data.user_open_count }}</h4>
                             </div>
                         </div>
@@ -71,57 +71,19 @@
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-md-2">
+        <div class="col-sm-6 col-md-4">
             <div class="card card-stats card-round">
                 <div class="card-body ">
                     <div class="row">
                         <div class="col-5">
                             <div class="icon-big text-center">
-                                <i class="flaticon-idea text-warning"></i>
+                                <i id='icon_user_task' class=""></i>
                             </div>
                         </div>
                         <div class="col-7 col-stats">
                             <div class="numbers">
-                                <p class="card-category">IOC count</p>
-                                <h4 class="card-title">{{ data.ioc_count }}</h4>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-md-2">
-            <div class="card card-stats card-round">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-5">
-                            <div class="icon-big text-center">
-                                <i class="flaticon-users text-danger"></i>
-                            </div>
-                        </div>
-                        <div class="col-7 col-stats">
-                            <div class="numbers">
-                                <p class="card-category">Clients count</p>
-                                <h4 class="card-title">{{ data.client_count }}</h4>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-          <div class="col-sm-6 col-md-2">
-            <div class="card card-stats card-round">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-5">
-                            <div class="icon-big text-center">
-                                <i class="flaticon-users text-danger"></i>
-                            </div>
-                        </div>
-                        <div class="col-7 col-stats">
-                            <div class="numbers">
-                                <p class="card-category">Tasks count</p>
-                                <h4 class="card-title">{{ data.tasks_count }}</h4>
+                                <p class="card-category">Attributed open tasks</p>
+                                <h4 class="card-title" id="user_attr_count"></h4>
                             </div>
                         </div>
                     </div>
@@ -131,10 +93,10 @@
       </div>
     <div class="row">
       <div class="col-md-12">
-
+            {{ form.hidden_tag() }}
             <section class="card">
                 <div class="card-header">
-                  <div class="card-title">Opened tasks for {{ current_user.name }}
+                  <div class="card-title">Open tasks attributed to you
                     <div class="text-faded float-right">
                       <small id="utasks_last_updated"></small>
                       <button type="button" class="btn btn-xs btn-icon btn-round btn-outline-default ml-2"
@@ -221,70 +183,7 @@
                     </div>
 				</section>
 			</div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="card full-height">
-            <div class="card-header">
-              <div class="card-title">Last automated tasks
-                <div class="text-faded float-right">
-                  <small id="feed_last_updated"></small>
-                  <button type="button" class="btn btn-xs btn-icon btn-round btn-outline-default ml-2"
-                  onclick="update_tasks_list();">
-                  <i class="fas fa-sync rotate"></i>
-                </button>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <ol class="activity-feed" id="task_feed">
-              </ol>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-
-    <div class="modal fade " tabindex="-1" role="dialog" id="modal_add_customer" data-backdrop="true">
-      <div class="modal-lg modal-dialog" role="document">
-        <form method="post" action="" id="form_new_customer">
-          {{ form.hidden_tag() }}
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5>Add customer</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                  aria-hidden="true">&times;</span></button>
-            </div>
-            
-            <div class="modal-body">
-              {{ form.customer_name(placeholder="Customer name", class="form-control") }}
-                <div class="text-danger ml-2 mt-2" id="modal_customer_message"></div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-success" type="submit" id="submit_new_customer">Submit</button>
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-          </div><!-- /.modal-content -->
-        </form>
-      </div><!-- /.modal-dialog -->
-    </div>
-
-    <div class="modal fade " tabindex="-1" role="dialog" id="modal_task_detail" data-backdrop="true">
-      <div class="modal-xl modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5>Task info</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                  aria-hidden="true">&times;</span></button>
-            </div>
-            <div class="modal-body" id="info_task_modal_body">
-
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-          </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
     </div>
 
     <div class="modal " tabindex="-1" role="dialog" id="modal_add_gtask" data-backdrop="true">
@@ -305,6 +204,8 @@
 
     <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
     <script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.contextualActions.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
     <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
     <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
     <script src="/static/assets/js/iris/dashboard.js"></script>
@@ -314,7 +215,7 @@
 		htmlLegendsChart = document.getElementById('htmlLegendsChart').getContext('2d');
 
         $.ajax({
-            url: '/dashboard/case_charts',
+            url: '/dashboard/case_charts' + case_param(),
             type: "GET",
             dataType: "JSON",
             success: function (data) {

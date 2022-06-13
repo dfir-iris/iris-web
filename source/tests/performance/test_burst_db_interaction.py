@@ -19,17 +19,23 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+from unittest import TestCase
+
 import logging
 import random
-from datetime import datetime, timedelta
-from unittest import TestCase
+from datetime import datetime
+from datetime import timedelta
 
 from app import db
 from app.datamgmt.case.case_assets_db import create_asset
-from app.datamgmt.case.case_notes_db import add_note, add_note_group
+from app.datamgmt.case.case_notes_db import add_note
+from app.datamgmt.case.case_notes_db import add_note_group
 from app.datamgmt.manage.manage_users_db import create_user
-from app.models.cases import Cases, Client, CasesEvent
-from app.models.models import User, CaseEventsAssets
+from app.models.cases import Cases
+from app.models.cases import CasesEvent
+from app.models.cases import Client
+from app.models.models import CaseEventsAssets
+from app.models.models import User
 from app.post_init import run_post_init
 from tests.clean_database import clean_db
 

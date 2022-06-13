@@ -1,48 +1,64 @@
 <div class="modal-header">
-    <h4>{% if ioc.ioc_id %}Edit {% else %} Add {% endif %} IOC</h4>
+    <h4 class="modal-title mt-2 mr-4">{% if ioc.ioc_id %}Edit {{ ioc.ioc_value }} {% else %} Add IOC {% endif %}</h4>
+    {% include 'modals/modal_attributes_nav.html' %}
+
+    <div class="row text-right">
     {% if ioc.ioc_id %}
-        <button type="button" class="mt--1 btn btn-sm float-right ml-3 btn-light btn-outline" onclick="copy_object_link({{ioc.ioc_id }});return false;" title="Copy shared link">
-            <span class="btn-label text-dark">
-                <i class="fa fa-share"></i>
-            </span>
-        </button>
+     <div class="dropdown">
+          <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+              <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+          </button>
+          <div class="dropdown-menu pull-right" id="ioc_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item" href="#" onclick='copy_object_link({{ioc.ioc_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+          </div>
+     </div>
     {% endif %}
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-            aria-hidden="true">&times;</span></button>
+        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_ioc', '{% if ioc.ioc_id %}Edit {{ ioc.ioc_value }} {% else %} Add IOC {% endif %}');"> <i class='fa fa-minus'></i> </button>
+        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    </div>
 </div>
 <div class="modal-body">
-
-    <div class="container col-md-12">
-        <form method="post" action="" id="form_new_ioc">
-            <div class="col-md-12 col-lg-12 col-sm-12">
-                {{ form.hidden_tag() }}
-                <div class="form-group row">
-                    <div class="col">
-                        <label for="ioc_type" class="mr-4">Type *
-                        </label>
-                        {{ form.ioc_type_id(class="selectpicker pl--6") }}
-                    </div>
-                    <div class="col">
-                        <label for="ioc_type" class="mr-4">TLP *
-                        </label>
-                        {{ form.ioc_tlp_id(class="selectpicker pl--6") }}
-                    </div>
+    <div role="tabpanel">
+          <div class="tab-content">
+                <div class="tab-pane active" id="details">
+                <div class="container col-md-12">
+                    <form method="post" action="" id="form_new_ioc">
+                        <div class="col-md-12 col-lg-12 col-sm-12">
+                            {{ form.hidden_tag() }}
+                            <div class="form-group row">
+                                <div class="col-6">
+                                    <label for="ioc_type" class="mr-4">Type *
+                                    </label>
+                                    {{ form.ioc_type_id(class="selectpicker pl--6 col-10") }}
+                                </div>
+                                <div class="col-6">
+                                    <label for="ioc_type" class="mr-4">TLP *
+                                    </label>
+                                    {{ form.ioc_tlp_id(class="selectpicker pl--6 col-10") }}
+                                </div>
+                            </div>
+                            <div class="form-group mt-3">
+                                <label for="ioc_value" class="placeholder">{{ form.ioc_value.label.text }} *</label>
+                                {{ form.ioc_value(class='form-control col-md-12 col-sm-12 sizable-textarea',  autocomplete="off") }}
+                            </div>
+                            <div class="form-group mt-3">
+                                <label for="ioc_description" class="placeholder">{{ form.ioc_description.label.text }}</label>
+                                {{ form.ioc_description(class='form-control sizable-textarea',  autocomplete="off") }}
+                            </div>
+                            <div class="form-group mt-3">
+                                <label for="ioc_tags">IOC tags
+                                </label>
+                                <input type="text" id="ioc_tags"
+                                    class="form-control col-md-12" {% if ioc.ioc_tags %} value="{{ ioc.ioc_tags }}" {% endif %}/>
+                            </div>
+                        <div class='invalid-feedback' id='ioc-invalid-msg'></div>
+                        </div>
+                    </form>
                 </div>
-                <div class="form-group mt-3">
-                    <label for="ioc_value" class="placeholder">{{ form.ioc_value.label.text }} *</label>
-                    {{ form.ioc_value(class='form-control col-md-12 col-sm-12 sizable-textarea',  autocomplete="off") }}
-                </div>
-                <div class="form-group mt-3">
-                    <label for="ioc_description" class="placeholder">{{ form.ioc_description.label.text }}</label>
-                    {{ form.ioc_description(class='form-control sizable-textarea',  autocomplete="off") }}
-                </div>
-                <div class="form-group mt-3">
-                    <label for="ioc_tags">IOC tags
-                    </label>
-                    <input type="text" id="ioc_tags"
-                        class="form-control col-md-12" {% if ioc.ioc_tags %} value="{{ ioc.ioc_tags }}" {% endif %}/>
-                </div>
-            <div class='invalid-feedback' id='ioc-invalid-msg'></div>
+            </div>
+            {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
             {% if ioc.ioc_id %}
                 <button type="button" class="btn btn-outline-danger mt-5"
                 onclick="delete_ioc('{{ ioc.ioc_id }}');">Delete</button>
@@ -55,10 +71,7 @@
                 id="submit_new_ioc">Save</button>
 
             {% endif %}
-            </div>
-        </form>
     </div>
-</div>
 <script>
     $('form#form_new_ioc').validate();
     $('#ioc_tags').amsifySuggestags({
@@ -69,14 +82,14 @@
     $('#ioc_type_id').selectpicker({
         liveSearch: true,
         title: "None",
-        style: "Bootstrap 4: 'btn-outline-primary'",
+        style: "btn-outline-white",
         size: 10
     });
 
     $('#ioc_tlp_id').selectpicker({
         liveSearch: true,
         title: "None",
-        style: "Bootstrap 4: 'btn-outline-primary'",
+        style: "btn-outline-white",
     });
 
     {% if ioc.ioc_id %}

@@ -1,0 +1,22 @@
+<div class="modal-header">
+        <h4 class="modal-title mt-1">Attribute preview
+        </h4>
+            {% include 'modals/modal_attributes_nav.html' %}
+        <div class="row text-right">
+            <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true"><i class="fa fa-times"></i></span></button>
+        </div>
+</div>
+<div class="modal-body">
+    <div role="tabpanel">
+          <div class="tab-content">
+              <div class="tab-pane active text-center" id="details">
+                  <h2>Base object information</h2>
+                  <b>This is for preview purpose only. Standard object information will be rendered here.</b><br/>
+                  Don't mind the background, it's for preview also
+              </div>
+
+              {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
+    </div>
+</div>

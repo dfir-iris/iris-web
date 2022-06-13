@@ -17,15 +17,31 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from pathlib import Path
 
 from datetime import datetime
-
 from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.states import delete_case_states
-from app.models import Cases, Client, User, UserActivity, CaseReceivedFile, CaseAssets, IocLink, Notes, NotesGroupLink, \
-    NotesGroup, CaseTasks, CaseEventsAssets, IocAssetLink, CasesEvent, CaseEventCategory
+from app.models import CaseAssets
+from app.models import CaseEventCategory
+from app.models import CaseEventsAssets
+from app.models import CaseEventsIoc
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import Client
+from app.models import DataStoreFile
+from app.models import DataStorePath
+from app.models import IocAssetLink
+from app.models import IocLink
+from app.models import Notes
+from app.models import NotesGroup
+from app.models import NotesGroupLink
+from app.models import User
+from app.models import UserActivity
 
 
 def list_cases_dict():
@@ -86,10 +102,14 @@ def reopen_case(case_id):
 def get_case_details_rt(case_id):
     if Cases.query.filter(Cases.case_id == case_id).first():
         res = db.session.query(Cases, Client, User).with_entities(
-            Cases.name.label('case_name'), Cases.description, Cases.open_date, Cases.close_date,
-            Cases.soc_id, Cases.case_id,
+            Cases.name.label('case_name'),
+            Cases.description.label('case_description'),
+            Cases.open_date, Cases.close_date,
+            Cases.soc_id.label('case_soc_id'),
+            Cases.case_id,
             Client.name.label('customer_name'),
-            User.name.label('user_name'), User.user
+            User.user.label('open_by_user'),
+            Cases.custom_attributes
         ).filter(and_(
             Cases.case_id == case_id,
             Cases.user_id == User.id,
@@ -110,12 +130,25 @@ def delete_case(case_id):
     UserActivity.query.filter(UserActivity.case_id == case_id).delete()
     CaseReceivedFile.query.filter(CaseReceivedFile.case_id == case_id).delete()
     IocLink.query.filter(IocLink.case_id == case_id).delete()
+    dsf_list = DataStoreFile.query.filter(DataStoreFile.file_case_id == case_id).all()
+
+    for dsf_list_item in dsf_list:
+
+        fln = Path(dsf_list_item.file_local_name)
+        if fln.is_file():
+            fln.unlink(missing_ok=True)
+
+        db.session.delete(dsf_list_item)
+    db.session.commit()
+
+    DataStorePath.query.filter(DataStorePath.path_case_id == case_id).delete()
 
     da = CaseAssets.query.with_entities(CaseAssets.asset_id).filter(CaseAssets.case_id == case_id).all()
     for asset in da:
         IocAssetLink.query.filter(asset.asset_id == asset.asset_id).delete()
 
     CaseEventsAssets.query.filter(CaseEventsAssets.case_id == case_id).delete()
+    CaseEventsIoc.query.filter(CaseEventsIoc.case_id == case_id).delete()
     CaseAssets.query.filter(CaseAssets.case_id == case_id).delete()
     NotesGroupLink.query.filter(NotesGroupLink.case_id == case_id).delete()
     NotesGroup.query.filter(NotesGroup.group_case_id == case_id).delete()

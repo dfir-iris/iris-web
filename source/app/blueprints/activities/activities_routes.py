@@ -21,15 +21,17 @@
 
 # IMPORTS ------------------------------------------------
 import os
-
 from flask import Blueprint
-from flask import render_template, url_for, redirect
+from flask import redirect
+from flask import render_template
+from flask import url_for
 from flask_wtf import FlaskForm
-
 
 import app
 from app.datamgmt.activities.activities_db import get_all_user_activities
-from app.util import response_success, login_required, api_login_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_success
 
 activities_blueprint = Blueprint(
     'activities',
@@ -45,7 +47,7 @@ basedir = os.path.abspath(os.path.dirname(app.__file__))
 @login_required
 def activities_index(caseid: int, url_redir):
     if url_redir:
-        return redirect(url_for('activities.activities_index', cid=caseid))
+        return redirect(url_for('activities.activities_index', cid=caseid, redirect=True))
 
     form = FlaskForm()
 

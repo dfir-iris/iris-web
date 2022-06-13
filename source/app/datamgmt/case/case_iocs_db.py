@@ -20,9 +20,16 @@
 
 from sqlalchemy import and_
 
-from app.datamgmt.states import update_ioc_state
-from app.models import IocAssetLink, Ioc, IocLink, Tlp, Cases, Client, IocType
 from app import db
+from app.datamgmt.states import update_ioc_state
+from app.models import CaseEventsIoc
+from app.models import Cases
+from app.models import Client
+from app.models import Ioc
+from app.models import IocAssetLink
+from app.models import IocLink
+from app.models import IocType
+from app.models import Tlp
 
 
 def get_iocs(caseid):
@@ -89,6 +96,10 @@ def delete_ioc(ioc, caseid):
         IocAssetLink.ioc_id == ioc.ioc_id
     ).delete()
 
+    CaseEventsIoc.query.filter(
+        CaseEventsIoc.ioc_id == ioc.ioc_id
+    ).delete()
+
     db.session.delete(ioc)
 
     update_ioc_state(caseid=caseid)
@@ -103,6 +114,7 @@ def get_detailed_iocs(caseid):
         Ioc.ioc_value,
         Ioc.ioc_type_id,
         IocType.type_name.label('ioc_type'),
+        Ioc.ioc_type_id,
         Ioc.ioc_description,
         Ioc.ioc_tags,
         Ioc.ioc_misp,
@@ -215,7 +227,7 @@ def check_ioc_type_id(type_id: int):
         IocType.type_id == type_id
     ).first()
 
-    return type_id is not None
+    return type_id
 
 
 def get_ioc_type_id(type_name: str):
@@ -235,3 +247,4 @@ def get_tlps_dict():
     for tlp in Tlp.query.all():
         tlpDict[tlp.tlp_name]=tlp.tlp_id 
     return tlpDict
+

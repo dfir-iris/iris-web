@@ -18,23 +18,41 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import marshmallow
 # IMPORTS ------------------------------------------------
 from datetime import datetime
-
-import marshmallow
 from flask import Blueprint
-from flask import render_template, url_for, redirect, request
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
-from app.datamgmt.case.case_db import get_case, case_get_desc_crc
-from app.datamgmt.case.case_notes_db import get_note, delete_note, add_note, update_note, get_groups_detail, \
-    get_groups_short, find_pattern_in_notes, add_note_group, delete_note_group, update_note_group, get_notes_from_group
+from app.datamgmt.case.case_db import case_get_desc_crc
+from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_notes_db import add_note
+from app.datamgmt.case.case_notes_db import add_note_group
+from app.datamgmt.case.case_notes_db import delete_note
+from app.datamgmt.case.case_notes_db import delete_note_group
+from app.datamgmt.case.case_notes_db import find_pattern_in_notes
+from app.datamgmt.case.case_notes_db import get_group_details
+from app.datamgmt.case.case_notes_db import get_groups_short
+from app.datamgmt.case.case_notes_db import get_note
+from app.datamgmt.case.case_notes_db import get_notes_from_group
+from app.datamgmt.case.case_notes_db import update_note
+from app.datamgmt.case.case_notes_db import update_note_group
 from app.datamgmt.states import get_notes_state
 from app.forms import CaseNoteForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.schema.marshables import CaseNoteSchema, CaseAddNoteSchema, CaseGroupNoteSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.schema.marshables import CaseAddNoteSchema
+from app.schema.marshables import CaseGroupNoteSchema
+from app.schema.marshables import CaseNoteSchema
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 case_notes_blueprint = Blueprint('case_notes',
                                  __name__,
@@ -46,7 +64,7 @@ case_notes_blueprint = Blueprint('case_notes',
 @login_required
 def case_notes(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_notes.case_notes', cid=caseid))
+        return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
 
     form = FlaskForm()
     case = get_case(caseid)
@@ -64,7 +82,7 @@ def case_notes(caseid, url_redir):
 @api_login_required
 def case_note_detail(cur_id, caseid):
     try:
-        note = get_note(cur_id)
+        note = get_note(cur_id, caseid=caseid)
         if not note:
             return response_error(msg="Invalid note ID")
         note_schema = CaseNoteSchema()
@@ -79,25 +97,31 @@ def case_note_detail(cur_id, caseid):
 @login_required
 def case_note_detail_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_notes.case_notes', cid=caseid))
+        return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
 
     form = CaseNoteForm()
 
-    note = get_note(cur_id)
+    note = get_note(cur_id, caseid)
+    ca = None
 
     if note:
         form.content = note.note_content
         form.title = note.note_title
         form.note_title.render_kw = {"value": note.note_title}
+        ca = note.custom_attributes
 
-    return render_template("modal_note_edit.html", note=form, id=cur_id)
+        return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca, ncid=note.note_case_id)
+
+    return response_error(f'Unable to find note ID {cur_id} for case {caseid}')
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_note_delete(cur_id, caseid):
 
-    note = get_note(cur_id)
+    call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
+
+    note = get_note(cur_id, caseid)
     if not note:
         return response_error("Invalid note ID for this case")
 
@@ -108,35 +132,43 @@ def case_note_delete(cur_id, caseid):
     except Exception as e:
         return response_error("Unable to remove note", data=e.__traceback__)
 
+    call_modules_hook('on_postload_note_delete', data=cur_id, caseid=caseid)
+
     track_activity("deleted note ID {}".format(cur_id), caseid=caseid)
-    return response_success("Deleted")
+    return response_success("Note deleted {}".format(cur_id))
 
 
-@case_notes_blueprint.route('/case/notes/save/<int:cur_id>', methods=['POST'])
+@case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
 @api_login_required
 def case_note_save(cur_id, caseid):
 
     try:
         # validate before saving
         addnote_schema = CaseAddNoteSchema()
-        jsdata = request.get_json()
-        addnote_schema.load(jsdata, partial=['group_id'])
 
-        if not update_note(note_content=jsdata.get('note_content'),
-                           note_title=jsdata.get('note_title'),
+        request_data = call_modules_hook('on_preload_note_update', data=request.get_json(), caseid=caseid)
+
+        request_data['note_id'] = cur_id
+        addnote_schema.load(request_data, partial=['group_id'])
+
+        note = update_note(note_content=request_data.get('note_content'),
+                           note_title=request_data.get('note_title'),
                            update_date=datetime.utcnow(),
                            user_id=current_user.id,
                            note_id=cur_id,
                            caseid=caseid
-                           ):
+                           )
+        if not note:
 
             return response_error("Invalid note ID for this case")
+
+        note = call_modules_hook('on_postload_note_update', data=note, caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    track_activity("updated note {}".format(jsdata.get('note_title')), caseid=caseid)
-    return response_success("Note ID {} saved".format(cur_id))
+    track_activity("updated note {}".format(request_data.get('note_title')), caseid=caseid)
+    return response_success("Note ID {} saved".format(cur_id), data=addnote_schema.dump(note))
 
 
 @case_notes_blueprint.route('/case/notes/add', methods=['POST'])
@@ -145,21 +177,24 @@ def case_note_add(caseid):
     try:
         # validate before saving
         addnote_schema = CaseAddNoteSchema()
-        jsdata = request.get_json()
-        addnote_schema.verify_group_id(jsdata, caseid=caseid)
-        addnote_schema.load(jsdata)
+        request_data = call_modules_hook('on_preload_note_create', data=request.get_json(), caseid=caseid)
 
-        note = add_note(jsdata.get('note_title'),
+        addnote_schema.verify_group_id(request_data, caseid=caseid)
+        addnote_schema.load(request_data)
+
+        note = add_note(request_data.get('note_title'),
                         datetime.utcnow(),
                         current_user.id,
                         caseid,
-                        jsdata.get('group_id'),
-                        note_content=jsdata.get('note_content'))
+                        request_data.get('group_id'),
+                        note_content=request_data.get('note_content'))
+
+        note = call_modules_hook('on_postload_note_create', data=note, caseid=caseid)
 
         if note:
             casenote_schema = CaseNoteSchema()
             track_activity("added note ID {}".format(note.note_id), caseid=caseid)
-            return response_success(data=casenote_schema.dump(note))
+            return response_success('Note added', data=casenote_schema.dump(note))
 
         return response_error("Unable to create note for internal reasons")
 
@@ -167,7 +202,7 @@ def case_note_add(caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@case_notes_blueprint.route('/case/notes/groups', methods=['GET'])
+@case_notes_blueprint.route('/case/notes/groups/list', methods=['GET'])
 @api_login_required
 def case_load_notes_groups(caseid):
 
@@ -239,7 +274,7 @@ def case_add_notes_groups(caseid):
             group_schema = CaseGroupNoteSchema()
             track_activity("added group note ID {}".format(ng.group_id), caseid=caseid)
 
-            return response_success("", data=group_schema.dump(ng))
+            return response_success("Notes group added", data=group_schema.dump(ng))
 
         else:
             return response_error("Unable to add a new group")
@@ -259,25 +294,36 @@ def case_delete_notes_groups(cur_id, caseid):
     return response_success("Group ID {} deleted".format(cur_id))
 
 
-@case_notes_blueprint.route('/case/notes/groups/edit', methods=['POST'])
+@case_notes_blueprint.route('/case/notes/groups/<int:cur_id>', methods=['GET'])
 @api_login_required
-def case_edit_notes_groups(caseid):
-    form = FlaskForm()
+def case_get_notes_group(cur_id, caseid):
 
-    if form.is_submitted():
+    group = get_group_details(cur_id, caseid)
+    if not group:
+        return response_error(f"Group ID {cur_id} not found")
 
-        group_id = request.form.get('group_id', 0, type=int)
-        group_title = request.form.get('group_title', '', type=str)
+    return response_success("", data=group)
 
-        if group_id != 0:
-            update_ret = update_note_group(group_title, group_id, caseid)
 
-            if update_ret:
-                # Note group has been properly found and updated in db
-                track_activity("updated group note {}".format(group_title), caseid=caseid)
-                return response_success("Updated title of group ID {}".format(group_id))
+@case_notes_blueprint.route('/case/notes/groups/update/<int:cur_id>', methods=['POST'])
+@api_login_required
+def case_edit_notes_groups(cur_id, caseid):
 
-            else:
-                response_error("Group ID {} not found".format(group_id))
+    js_data = request.get_json()
+    if not js_data:
+        return response_error("Invalid data")
 
-    return response_error("Invalid request")
+    group_title = js_data.get('group_title')
+    if not group_title:
+        return response_error("Missing field group_title")
+
+    ng = update_note_group(group_title, cur_id, caseid)
+
+    if ng:
+        # Note group has been properly found and updated in db
+        track_activity("updated group note {}".format(group_title), caseid=caseid)
+        group_schema = CaseGroupNoteSchema()
+        return response_success("Updated title of group ID {}".format(cur_id), data=group_schema.dump(ng))
+
+    return response_error("Group ID {} not found".format(cur_id))
+

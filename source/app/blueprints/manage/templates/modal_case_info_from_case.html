@@ -1,0 +1,65 @@
+{% set attributes = data.custom_attributes %}
+<div class="modal-header">
+    <h4 class="modal-title mt-2 mr-4">{{ data.case_name|unquote }}</h4>
+    {% include 'modals/modal_attributes_nav.html' %}
+    <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
+        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+</div>
+<div class="modal-body">
+
+    <div class="container col-md-12">
+        <div role="tabpanel">
+          <div class="tab-content">
+              <div class="tab-pane active" id="details">
+                <div class="form-group">
+                    <label>Case name :</label>
+                    <span type="text" class="">{{ data.case_name|unquote }}</span>
+                </div>
+                <div class="form-group mt--3">
+                    <label>Case description :</label>
+                    <span type="text" class="">{{ data.case_description[0:50] }}</span>
+                </div>
+                <div class="form-group mt--3">
+                    <label>Customer :</label>
+                    <span type="text" class="text-faded">{{ data.customer_name }}</span>
+                </div>
+                <div class="form-group mt--3">
+                    <label>Status :</label>
+                    {% if data.close_date %}
+                        <span type="text" class="text-faded text-danger">Closed</span>
+                        {% else %}
+                        <span type="text" class="text-faded text-success">Open</span>
+                    {% endif %}
+                </div>
+                <div class="form-group mt--3">
+                    <label>Open date :</label>
+                    <span type="text" class="">{{ data.open_date }}</span>
+                </div>
+                {% if data.close_date %}
+                    <div class="form-group mt--3">
+                        <label>Close date :</label>
+                        <span type="text" class="">{{ data.close_date }}</span>
+                    </div>
+                {% endif %}
+                <div class="form-group mt--3">
+                    <label>Opening user :</label>
+                    <span type="text" class="">{{ data.open_by_user }}</span>
+                </div>
+                <div class="form-group mt--3">
+                    <label>SOC ID :</label>
+                    <span type="text" class="text-faded">{{ data.case_soc_id }}</span>
+                </div>
+                <div class="form-group mt--3">
+                    <label>Case ID :</label>
+                    <span type="text" class="text-faded">{{ data.case_id }}</span>
+                </div>
+              </div>
+              {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-default mr-auto" onclick="manage_case();">Manage case</button>
+    <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+</div>

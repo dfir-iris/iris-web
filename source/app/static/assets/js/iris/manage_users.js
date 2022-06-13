@@ -1,39 +1,22 @@
 
 function add_user() {
     url = 'users/add/modal' + case_param();
-    $('#modal_add_user_content').load(url, function () {
+    $('#modal_add_user_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#submit_new_user').on("click", function () {
 
             var data_sent = $('#form_new_user').serializeObject()
             clear_api_error();
 
-            $.ajax({
-                url: 'users/add' + case_param(),
-                type: "POST",
-                data: JSON.stringify(data_sent),
-                contentType: "application/json;charset=UTF-8",
-                dataType: "json",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("Done !",
-                        "User has been created successfully",
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            refresh_users();
-                            $('#modal_add_user').modal('hide');
-
-                        });
-                    } else {
-                        $('#submit_new_user').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    propagate_form_api_errors(error.responseJSON.data);
+            post_request_api('users/add', JSON.stringify(data_sent), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_users();
+                    $('#modal_add_user').modal('hide');
                 }
             });
 
@@ -107,47 +90,32 @@ $('#users_table').dataTable( {
     }
 );
 
-function refresh_users() {
+function refresh_users(do_notify) {
   $('#users_table').DataTable().ajax.reload();
-  notify_success("Refreshed");
+  if (do_notify !== undefined) {
+    notify_success("Refreshed");
+  }
 }
 
 
 /* Fetch the details of an user and allow modification */
 function user_detail(user_id) {
     url = 'users/' + user_id + '/modal' + case_param();
-    $('#modal_add_user_content').load(url, function () {
+    $('#modal_add_user_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#submit_new_user').on("click", function () {
             clear_api_error();
 
             var data_sent = $('#form_new_user').serializeObject();
-            $.ajax({
-                url: '/manage/users/update/' + user_id + case_param(),
-                type: "POST",
-                data: JSON.stringify(data_sent),
-                contentType: "application/json;charset=UTF-8",
-                dataType: "json",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("You're set !",
-                            "The user has been updated successfully",
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            refresh_users();
-                            $('#modal_add_user').modal('hide');
-                        });
-
-                    } else {
-                        $('#modal_add_user').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    propagate_form_api_errors(error.responseJSON.data);
+            post_request_api('/manage/users/update/' + user_id, JSON.stringify(data_sent), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_users();
+                    $('#modal_add_user').modal('hide');
                 }
             });
 
@@ -173,74 +141,35 @@ function delete_user(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-          $.ajax({
-              url: '/manage/users/delete/' + id + case_param(),
-              type: "GET",
-              success: function (data) {
-                  if (data.status == 'success') {
-                      swal("User deleted !", {
-                          icon: "success",
-                          timer: 500
-                      }).then((value) => {
-                          refresh_users();
-                          $('#modal_add_user').modal('hide');
-                      });
-                  } else {
-                      swal ( "Oh no !" ,  data.message ,  "error" );
-                  }
-              },
-              error: function (error) {
-                  swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
-              }
-          });
+        get_request_api('/manage/users/delete/' + id)
+        .done((data) => {
+            if(notify_auto_api(data)) {
+                refresh_users();
+                $('#modal_add_user').modal('hide');
+            }
+        });
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
 }
 
 function activate_user(id) {
-  $.ajax({
-      url: '/manage/users/activate/' + id + case_param(),
-      type: "GET",
-      success: function (data) {
-          if (data.status == 'success') {
-              swal("User activated !", {
-                  icon: "success",
-                  timer: 500
-              }).then((value) => {
-                  refresh_users();
-                  $('#modal_add_user').modal('hide');
-              });
-          } else {
-              swal ( "Oh no !" ,  data.message ,  "error" );
-          }
-      },
-      error: function (error) {
-          swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
-      }
+  get_request_api('/manage/users/activate/' + id)
+  .done((data) => {
+    if(notify_auto_api(data)) {
+        refresh_users();
+        $('#modal_add_user').modal('hide');
+    }
   });
 }
 
 function deactivate_user(id) {
-  $.ajax({
-      url: '/manage/users/deactivate/' + id + case_param(),
-      type: "GET",
-      success: function (data) {
-          if (data.status == 'success') {
-              swal("User deactivated !", {
-                  icon: "success",
-                  timer: 500
-              }).then((value) => {
-                  refresh_users();
-                  $('#modal_add_user').modal('hide');
-              });
-          } else {
-              swal ( "Oh no !" ,  data.message ,  "error" );
-          }
-      },
-      error: function (error) {
-          swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
-      }
+  get_request_api('/manage/users/deactivate/' + id)
+  .done((data) => {
+    if(notify_auto_api(data)) {
+        refresh_users();
+        $('#modal_add_user').modal('hide');
+    }
   });
 }

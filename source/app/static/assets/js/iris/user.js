@@ -11,22 +11,14 @@ function renew_api() {
     })
         .then((willDelete) => {
             if (willDelete) {
-                $.ajax({
-                    url: '/user/token/renew' + case_param(),
-                    type: "GET",
-                    success: function (data) {
-                        if (data.status == 'success') {
-                            location.reload(true);
-                        } else {
-                            swal("Oh no !", data.message, "error");
-                        }
-                    },
-                    error: function (error) {
-                        swal("Oh no !", error.responseJSON.message, "error");
+                get_request_api('/user/token/renew')
+                .done((data) => {
+                    if(notify_auto_api(data)) {
+                        location.reload(true);
                     }
-                });
+                })
             } else {
-                swal("Pfew, that's was close");
+                swal("Pfew, that was close");
             }
         });
 }
@@ -44,31 +36,10 @@ function save_user_password() {
     var data_sent = $('#form_update_pwd').serializeObject();
     data_sent['user_password'] =  $('#user_password').val();
 
-    $.ajax({
-        url: 'update' + case_param(),
-        type: "POST",
-        data: JSON.stringify(data_sent),
-        contentType: "application/json;charset=UTF-8",
-        dataType: "json",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("You're set !",
-                    "The password has been updated successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    $('#modal_pwd_user').modal('hide');
-                });
-
-            } else {
-                $('#modal_add_user').text('Save again');
-                swal("Oh no !", data.message, "error")
-            }
-        },
-        error: function (error) {
-            propagate_form_api_errors(error.responseJSON.data);
+    post_request_api('update', JSON.stringify(data_sent), true)
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            $('#modal_pwd_user').modal('hide');
         }
     });
 }
@@ -76,6 +47,29 @@ function save_user_password() {
 /* Fetch the details of an user and allow modification */
 function update_password(user_id) {
     url = 'update/modal' + case_param();
-    $('#modal_pwd_user_content').load(url, function () {});
+    $('#modal_pwd_user_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+    });
     $('#modal_pwd_user').modal({ show: true });
 }
+
+
+$('input[type=radio][name=iris-theme]').change(function() {
+    if (this.value == 'false') {
+        theme = 'light'
+    }
+    else if (this.value == 'true') {
+        theme = 'dark';
+    } else {
+        return;
+    }
+    get_request_api('theme/set/'+ theme)
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            location.reload(true);
+        }
+    });
+});

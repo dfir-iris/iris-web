@@ -11,10 +11,10 @@
 						<div class="info">
 							<a data-toggle="collapse" href="#collapseExample" aria-expanded="true">
 								<span>
-									Welcome
 									<span class="user-level">
 									{{ current_user.name }}
-                  				</span>
+									</span>
+									<small class="text-muted justify-content-center" style="font-size: 10px;" id="current_date"></small>
 									<span class="caret"></span>
 								</span>
 							</a>
@@ -38,10 +38,11 @@
 						</div>
 					</div>
 					<ul class="nav nav-primary" id="l_nav_tab">
+
 						<li class="nav-item">
 							<a href="/dashboard?cid={{case_name[2]}}">
 								<i class="flaticon-home"></i>
-								<p>Dashboard</p>
+								<span>Dashboard</span>
 							</a>
 						</li>
 						<li class="nav-section">
@@ -53,19 +54,25 @@
 						<li class="nav-item">
 							<a href="/case?cid={{case_name[2]}}">
 								<i class="flaticon-network"></i>
-								<span class="sub-item">Case</span>
+								<span>Case</span>
 							</a>
 						</li>
 						<li class="nav-item">
-							<a href="/search">
+							<a href="/search?cid={{case_name[2]}}">
 								<i class="flaticon-search-2"></i>
-								<span class="sub-item">Search</span>
+								<span>Search</span>
 							</a>
 						</li>
 						<li class="nav-item">
 							<a href="/activities?cid={{case_name[2]}}">
 								<i class="flaticon-list"></i>
-								<span class="sub-item">Activities</span>
+								<span>Activities</span>
+							</a>
+						</li>
+						<li class="nav-item">
+							<a href="/dim/tasks?cid={{case_name[2]}}">
+								<i class="flaticon-web-1"></i>
+								<span>DIM Tasks</span>
 							</a>
 						</li>
 						<li class="nav-section">
@@ -77,46 +84,58 @@
 						<li class="nav-item">
 							<a href="/manage/cases?cid={{case_name[2]}}">
 								<i class="flaticon-folder"></i>
-								<p>Manage cases</p>
+								<span>Manage cases</span>
 							</a>
 						</li>
 						{% if current_user.is_admin() %}
 						<li class="nav-item submenu">
-							<a data-toggle="collapse" href="#email-nav" class="" aria-expanded="false">
+							<a data-toggle="collapse" href="#advanced-nav" class="" aria-expanded="false">
 								<i class="flaticon-interface-3"></i>
-								<p>Advanced</p>
+								<span class="sub-item">Advanced</span>
 								<span class="caret"></span>
 							</a>
-							<div class="collapse" id="email-nav" style="">
+							<div class="collapse" id="advanced-nav" style="">
 								<ul class="nav nav-collapse">
-									<li>
+									<li class="nav-subitem">
 										<a href="/manage/modules?cid={{case_name[2]}}">
-											<i class="fas fa-cubes"></i>
-											<p>Modules</p>
+											<i class="flaticon-technology-1"></i>
+											<span class="subsub-item">Modules</span>
 										</a>
 									</li>
-									<li>
+									<li class="nav-subitem">
 										<a href="/manage/customers?cid={{case_name[2]}}">
-											<i class="flaticon-desk"></i>
-											<p>Customers</p>
+											<i class="flaticon-profile"></i>
+											<span class="subsub-item">Customers</span>
 										</a>
 									</li>
-									<li>
+									<li class="nav-subitem">
 										<a href="/manage/objects?cid={{case_name[2]}}">
 											<i class="flaticon-box-2"></i>
-											<p>Case Objects</p>
+											<span>Case Objects</span>
 										</a>
 									</li>
-									<li>
+									<li class="nav-subitem">
+										<a href="/manage/attributes?cid={{case_name[2]}}">
+											<i class="flaticon-layers-1"></i>
+											<span>Custom Attributes</span>
+										</a>
+									</li>
+									<li class="nav-subitem">
 										<a href="/manage/templates?cid={{case_name[2]}}">
-											<i class="fas fa-file-code"></i>
-											<p>Templates</p>
+											<i class="flaticon-interface-6"></i>
+											<span>Report Templates</span>
 										</a>
 									</li>
-									<li>
+									<li class="nav-subitem">
 										<a href="/manage/users?cid={{case_name[2]}}">
 											<i class="flaticon-user"></i>
-											<p>Users</p>
+											<span>Users</span>
+										</a>
+									</li>
+									<li class="nav-subitem">
+										<a href="/manage/settings?cid={{case_name[2]}}">
+											<i class="flaticon-settings"></i>
+											<span>Server settings</span>
 										</a>
 									</li>
 								</ul>
@@ -124,16 +143,17 @@
 						</li>
 						{% endif %}
 						<li class="nav-item">
-							<a href="https://github.com/dfir-iris/iris-doc-src">
+							<a href="https://dfir-iris.github.io">
 								<i class="flaticon-round"></i>
-								<p>Help</p>
+								<span>Help</span>
 							</a>
 						</li>
 					</ul>
 					{% endif %}
 				</div>
-				<div class="d-flex justify-content-center text-faded">
-					<a href="https://github.com/dfir-iris/iris-web" >Iris build {{ iris_version }}</a>
+
+				<div class="d-flex justify-content-center text-faded iris-version-menu">
+					<a href="https://github.com/dfir-iris/iris-web" >IRIS {{ iris_version }}</a> {% if has_updates %}<a href="/manage/settings?cid={{case_name[2]}}"> <i class="ml-1 text-warning fas fa-exclamation-circle" title="Updates are available for the server"></i></a>{% endif %}
 				</div>
 			</div>
 		</div>

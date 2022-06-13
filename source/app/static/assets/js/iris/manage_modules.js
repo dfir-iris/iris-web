@@ -1,131 +1,44 @@
 $('#form_new_module').submit(function () {
 
-    $.ajax({
-        url: '/manage/modules/add' + case_param(),
-        type: "POST",
-        data:  $('form#form_new_module').serializeArray(),
-        dataType: "json",
-        beforeSend: function() {
-            $('#submit_new_module').text('Saving..')
-                .attr("disabled", true)
-                .removeClass('bt-outline-success')
-                .addClass('btn-success', 'text-dark');
-        },
-        complete : function() {
-             $('#submit_new_module')
-                .attr("disabled", false)
-                .addClass('bt-outline-success')
-                .removeClass('btn-success', 'text-dark');
-        },
-        success: function (data) {
-            if (data.status == 'success') {
-                $('#submit_new_module').text('Saved');
-
-
-                swal ( "That's done !" ,
-                "Your new module is now available" ,
-                "success",
-                {
-                     buttons: {
-                         again: {
-                             text: "Create an module again",
-                             value: "again"
-                         },
-                         case: {
-                           text: "Go to case",
-                           value: "case",
-                         }
-                     }
-                 }
-                ).then((value) => {
-                   switch (value) {
-
-                     case "case":
-                       window.location.replace("/case/summary" + case_param());
-                       break;
-
-                     case "again":
-                       window.location.replace("/manage/modules" + case_param());
-                       break;
-
-                     default:
-                      window.location.replace("/manage/modules" + case_param());
-                   }
-             });
-            } else {
-                $('#submit_new_module').text('Save');
-                mdata = ""
-                for (element in data.data) {
-                    mdata += data.data[element]
-                }
-                $.notify({
-                    icon: 'flaticon-error',
-                    title: data.message,
-                    message: mdata
-                }, {
-                    type: 'danger',
-                    placement: {
-                        from: 'top',
-                        align: 'right'
-                    },
-                    time: 5000,
-                });
-                }
-            },
-        error: function (error) {
-            $('#submit_new_module').text('Save');
-            notify_error(error);
-        }
+    post_request_api('/manage/modules/add', $('form#form_new_module').serializeArray(), function() {
+        $('#submit_new_module').text('Saving..')
+            .attr("disabled", true)
+            .removeClass('bt-outline-success')
+            .addClass('btn-success', 'text-dark');
+    })
+    .done((data) => {
+        notify_auto_api(data);
+    })
+    .always(() => {
+         $('#submit_new_module')
+        .attr("disabled", false)
+        .addClass('bt-outline-success')
+        .removeClass('btn-success', 'text-dark');
     });
+
     return false;
 });
 
 
 function add_module() {
     url = 'modules/add' + case_param();
-    $('#modal_add_module_content').load(url, function () {
+    $('#modal_add_module_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#submit_new_module').on("click", function () {
-            $.ajax({
-                url: url,
-                type: "POST",
-                data: $('#form_new_module').serializeArray(),
-                dataType: "json",
-                send: function () {$('#submit_new_module').text("Testing module");},
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("Done !",
-                        "Module has been imported successfully",
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            refresh_modules();
-                            $('#modal_add_module').modal('hide');
 
-                        });
-                    } else {
-                        $('#alert_mod_add').text(data.message);
-                        if (data.data) {
-                            $('#details_list').empty();
-                            for(var i in data.data)
-                            {
-                               var output='<li>'+data.data[i]+'</li>';
-                               $('#details_list').append(output);
-                            }
-
-                            $('#alert_mod_details').show();
-                        }
-                        $('#alert_mod_add').show();
-                        $('#submit_new_module').text("Retry");
-                    }
-                },
-                error: function (error) {
-                    data = error.responseJSON;
-                    $('#submit_new_module').text('Save');
+            post_request_api('modules/add', JSON.stringify($('#form_new_module').serializeObject()), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_modules();
+                    refresh_modules_hooks();
+                    $('#modal_add_module').modal('hide');
+                } else {
                     $('#alert_mod_add').text(data.message);
-                    if (data.data && data.data.length > 0) {
+                    if (data.data) {
                         $('#details_list').empty();
                         for(var i in data.data)
                         {
@@ -138,6 +51,24 @@ function add_module() {
                     $('#alert_mod_add').show();
                     $('#submit_new_module').text("Retry");
                 }
+            })
+            .fail((error) => {
+                data = error.responseJSON;
+                $('#submit_new_module').text('Save');
+                $('#alert_mod_add').text(data.message);
+                if (data.data && data.data.length > 0) {
+                    $('#details_list').empty();
+                    for(var i in data.data)
+                    {
+                       var output='<li>'+data.data[i]+'</li>';
+                       $('#details_list').append(output);
+                    }
+
+                    $('#alert_mod_details').show();
+                }
+                $('#alert_mod_add').show();
+                $('#submit_new_module').text("Retry");
+
             });
 
             return false;
@@ -222,40 +153,135 @@ function refresh_modules() {
   $(function () {
   $('[data-toggle="tooltip"]').tooltip()
 })
-  notify_success("Refreshed");
+  notify_success("Modules refreshed");
+}
+
+$('#hooks_table').dataTable( {
+    "ajax": {
+      "url": "modules/hooks/list" + case_param(),
+      "contentType": "application/json",
+      "type": "GET",
+      "data": function ( d ) {
+        if (d.status == 'success') {
+          return JSON.stringify( d.data );
+        } else {
+          return [];
+        }
+      }
+    },
+    "order": [[ 1, "asc" ]],
+    "autoWidth": false,
+    "columns": [
+      { 'data': 'id'},
+      { 'data': 'module_name',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'hook_name',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+      { 'data': 'hook_description',
+        "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          } },
+        { 'data': 'is_manual_hook',
+        "render": function (data, type, row, meta) {
+            if (data == false) {
+                    data = "<i class='fas fa-check text-success'></i>";
+                } else {
+                   data = "<i class='fas fa-times text-muted'></i>";
+              }
+            return data;
+          }
+        },
+      { 'data': 'is_active',
+        "render": function (data, type, row, meta) {
+            if (data == true) {
+                    data = "<i class='fas fa-check text-success'></i>";
+                } else {
+                   data = "<i class='fas fa-times text-muted'></i>";
+              }
+            return data;
+          }
+     }
+    ]
+    }
+);
+
+function refresh_modules_hooks() {
+  $('#hooks_table').DataTable().ajax.reload();
+  notify_success("Hooks refreshed");
+}
+
+
+function export_mod_config(module_id) {
+    get_request_api('/manage/modules/export-config/' + module_id)
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            download_file(data.data.module_name + "_configuration_export.json", "text/json",
+            JSON.stringify(data.data.module_configuration, null, 4));
+        }
+    });
+}
+
+function import_mod_config(module_id){
+
+    var file = $("#input_configuration_file").get(0).files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        fileData = e.target.result
+        var data = new Object();
+        data['csrf_token'] = $('#csrf_token').val();
+        data['module_configuration'] = fileData;
+
+        post_request_api('/manage/modules/import-config/'+ module_id, JSON.stringify(data), true)
+        .done((data) => {
+            if(notify_auto_api(data, true)) {
+                module_detail(module_id);
+                $('#modal_input_config').modal('hide');
+                swal("Got news for you", data.message, "success");
+            } else {
+                swal("Got bad news for you", data.data, "error");
+            }
+        });
+    };
+    reader.readAsText(file)
+
+    return false;
 }
 
 /* Update the param of a module */
 function update_param(module_id, param_name) {
     url = 'modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();
-    $('#modal_update_param_content').load(url, function () {
+    $('#modal_update_param_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
         $('#submit_save_parameter').on("click", function () {
-            $.ajax({
-                url: url,
-                type: "POST",
-                data: $('#form_update_param').serializeArray(),
-                dataType: "json",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("You're set !",
-                            "Parameter updated successfully",
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            module_detail(module_id);
-                            $('#modal_update_param').modal('hide');
-                        });
-
-                    } else {
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    swal("Oh no !", error.statusText, "error")
+            var data = Object();
+            if ($('#editor_detail').length != 0) {
+                editor = ace.edit("editor_detail");
+                data['param_value'] = editor.getSession().getValue();
+                data['csrf_token'] = $('#csrf_token').val();
+            } else {
+                data = $('#form_update_param').serializeObject();
+                if ($('#param_value').attr('type') == "checkbox") {
+                    data['param_value'] = $('#param_value').prop('checked');
                 }
-            });
+            }
+
+            post_request_api('modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))), JSON.stringify(data))
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    module_detail(module_id);
+                    $('#modal_update_param').modal('hide');
+                }
+            })
 
             return false;
         })
@@ -266,40 +292,23 @@ function update_param(module_id, param_name) {
 /* Fetch the details of an module and allow modification */
 function module_detail(module_id) {
     url = 'modules/update/' + module_id + case_param();
-    $('#modal_add_module_content').load(url, function () {
+    $('#modal_add_module_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#submit_new_module').on("click", function () {
-            $.ajax({
-                url: url,
-                type: "POST",
-                data: $('#form_new_module').serializeArray(),
-                dataType: "json",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("You're set !",
-                            "The module has been updated successfully",
-                            {
-                                icon: "success",
-                                timer: 1500
-                            }
-                        ).then((value) => {
-                            refresh_modules();
-                            $('#modal_add_module').modal('hide');
-                        });
-
-                    } else {
-                        $('#modal_add_module').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    swal("Oh no !", error.statusText, "error")
+            post_request_api('modules/update/' + module_id, $('#form_new_module').serializeArray())
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    module_detail(module_id);
+                    $('#modal_update_param').modal('hide');
                 }
             });
 
             return false;
         })
-
 
     });
     $('#modal_add_module').modal({ show: true });
@@ -319,85 +328,39 @@ function remove_module(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-          $.ajax({
-              url: '/manage/modules/remove/' + id + case_param(),
-              type: "GET",
-              dataType: 'JSON',
-              success: function (data) {
-                  if (data.status == 'success') {
-                      swal("Module deleted !", {
-                          icon: "success",
-                          timer: 1000
-                      }).then((value) => {
-                          refresh_modules();
-                          $('#modal_add_module').modal('hide');
-                      });
-                  } else {
-                      swal ( "Oh no !" ,  data.message ,  "error" );
-                  }
-              },
-              error: function (error) {
-                  swal ( "Oh no !" ,  error ,  "error" );                
-              }
-          });
+        get_request_api('/manage/modules/remove/' + id)
+        .done((data) => {
+            if(notify_auto_api(data)) {
+              refresh_modules();
+              refresh_modules_hooks();
+              $('#modal_add_module').modal('hide');
+            }
+        });
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
 }
 
 function enable_module(module_id) {
-    url = 'modules/enable/' + module_id + case_param();
-    $.ajax({
-        url: url,
-        type: "GET",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                "Module has been activated successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    refresh_modules();
-                    module_detail(module_id);
-                });
-            } else {
-                swal("Oh no !", 'unexpected error', "error")
-            }
-        },
-        error: function (error) {
-            $('#submit_new_module').text('Save');
-            swal("Oh no !", error.statusText, "error")
+    get_request_api('modules/enable/' + module_id)
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            refresh_modules();
+            refresh_modules_hooks();
+            module_detail(module_id);
         }
     });
 }
 
 function disable_module(module_id) {
-    url = 'modules/disable/' + module_id + case_param();
-    $.ajax({
-        url: url,
-        type: "GET",
-        success: function (data) {
-            if (data.status == 'success') {
-                swal("Done !",
-                "Module has been disabled successfully",
-                    {
-                        icon: "success",
-                        timer: 500
-                    }
-                ).then((value) => {
-                    refresh_modules();
-                    module_detail(module_id);
-                });
-            } else {
-                swal("Oh no !", 'unexpected error', "error")
-            }
-        },
-        error: function (error) {
-            $('#submit_new_module').text('Save');
-            swal("Oh no !", error.statusText, "error")
+    get_request_api('modules/disable/' + module_id)
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            refresh_modules();
+            refresh_modules_hooks();
+            module_detail(module_id);
         }
     });
 }
+

@@ -18,8 +18,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from app import bc, db
-from app.models import User, UserRoles, Role
+from app import bc
+from app import db
+from app.models import Role
+from app.models import User
+from app.models import UserRoles
 
 
 def get_user(user_id, id_key: str = 'id'):
@@ -76,6 +79,25 @@ def get_users_list():
     return output
 
 
+def get_users_list_restricted():
+    users = User.query.all()
+
+    output = []
+    for user in users:
+        row = {}
+        row['user_id'] = user.id
+        row['user_name'] = user.name
+        row['user_login'] = user.user
+        roles = []
+        for role in user.roles:
+            roles.append(role.name)
+
+        row['user_active'] = user.active
+        output.append(row)
+
+    return output
+
+
 def create_user(user_name, user_login, user_password, user_email, user_isadmin, user_external_id: str = None):
     pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
 
@@ -85,8 +107,11 @@ def create_user(user_name, user_login, user_password, user_email, user_isadmin, 
     if user_isadmin:
         ur = UserRoles()
         ur.user_id = user.id
-        ur.role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-        db.session.add(ur)
+
+        row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
+        if row_role_id and len(row_role_id) > 0:
+            ur.role_id = row_role_id[0]
+            db.session.add(ur)
 
     db.session.commit()
     return user
@@ -106,12 +131,17 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
         if user_isadmin:
             ur = UserRoles()
             ur.user_id = user.id
-            ur.role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-            db.session.add(ur)
+
+            row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
+            if row_role_id and len(row_role_id) > 0:
+                ur.role_id = row_role_id[0]
+                db.session.add(ur)
 
         else:
-            role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-            UserRoles.query.filter(UserRoles.user_id == user.id, UserRoles.role_id == role_id).delete()
+            row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
+            if row_role_id and len(row_role_id) > 0:
+                role_id = row_role_id[0]
+                UserRoles.query.filter(UserRoles.user_id == user.id, UserRoles.role_id == role_id).delete()
 
     db.session.commit()
 
@@ -119,6 +149,7 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
 
 
 def delete_user(user_id):
+    UserRoles.query.filter(UserRoles.user_id == user_id).delete()
     User.query.filter(User.id == user_id).delete()
     db.session.commit()
 

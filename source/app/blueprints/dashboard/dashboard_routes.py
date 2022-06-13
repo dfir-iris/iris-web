@@ -18,25 +18,42 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
-from datetime import datetime, timedelta
-
 import marshmallow
+# IMPORTS ------------------------------------------------
+from datetime import datetime
+from datetime import timedelta
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
-from flask_login import logout_user, current_user
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
+from flask_login import current_user
+from flask_login import logout_user
 from sqlalchemy import distinct
 
 from app import db
-from app.datamgmt.dashboard.dashboard_db import list_global_tasks, update_gtask_status, list_user_tasks, \
-    update_utask_status
-from app.forms import CustomerForm, CaseGlobalTaskForm
+from app.datamgmt.dashboard.dashboard_db import get_global_task
+from app.datamgmt.dashboard.dashboard_db import get_tasks_status
+from app.datamgmt.dashboard.dashboard_db import list_global_tasks
+from app.datamgmt.dashboard.dashboard_db import list_user_tasks
+from app.forms import CaseGlobalTaskForm
+from app.forms import CustomerForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.models.models import Client, UserActivity
-from app.models.models import FileContentHash, GlobalTasks, User, Ioc, CaseTasks
+from app.models.models import CaseTasks
+from app.models.models import GlobalTasks
+from app.models.models import TaskStatus
+from app.models.models import User
+from app.models.models import UserActivity
+from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import GlobalTasksSchema
-from app.util import response_success, response_error, login_required, api_login_required, not_authenticated_redirection_url
+
+from app.util import api_login_required
+from app.util import login_required
+from app.util import not_authenticated_redirection_url
+from app.util import response_error
+from app.util import response_success
 
 # CONTENT ------------------------------------------------
 dashboard_blueprint = Blueprint(
@@ -44,8 +61,6 @@ dashboard_blueprint = Blueprint(
     __name__,
     template_folder='templates'
 )
-
-task_status = ['To do', 'In progress', 'On hold', 'Done', 'Canceled']
 
 
 # Logout user
@@ -104,7 +119,7 @@ def index(caseid, url_redir):
     :return: Page
     """
     if url_redir:
-        return redirect(url_for('index.index', cid=caseid))
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
 
     msg = None
     now = datetime.utcnow()
@@ -121,12 +136,8 @@ def index(caseid, url_redir):
 
     data = {
         "user_open_count": user_open_case,
-        "ioc_count": db.session.query(Ioc).count(),
         "cases_open_count": db.session.query(Cases).filter(Cases.close_date == None).count(),
         "cases_count": db.session.query(Cases).count(),
-        "client_count": db.session.query(Client).count(),
-        "tasks_count": db.session.query(CaseTasks).filter(CaseTasks.task_status != "Done").count(),
-        "date": now.strftime("%d %b, %Y")
     }
 
     # Create the customer form to be able to quickly add a customer
@@ -141,60 +152,81 @@ def get_gtasks(caseid):
 
     tasks_list = list_global_tasks()
 
-    return response_success("", data=tasks_list)
+    if tasks_list:
+        output = [c._asdict() for c in tasks_list]
+    else:
+        output = []
+
+    ret = {
+        "tasks_status": get_tasks_status(),
+        "tasks": output
+    }
+
+    return response_success("", data=ret)
+
+
+@dashboard_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
+@api_login_required
+def view_gtask(cur_id, caseid):
+
+    task = get_global_task(task_id=cur_id)
+    if not task:
+        return response_error(f'Global task ID {cur_id} not found')
+
+    return response_success("", data=task._asdict())
 
 
 @dashboard_blueprint.route('/user/tasks/list', methods=['GET'])
 @api_login_required
 def get_utasks(caseid):
 
-    tasks_list = list_user_tasks()
+    ct = list_user_tasks()
 
-    return response_success("", data=tasks_list)
+    if ct:
+        output = [c._asdict() for c in ct]
+    else:
+        output = []
+
+    ret = {
+        "tasks_status": get_tasks_status(),
+        "tasks": output
+    }
+
+    return response_success("", data=ret)
 
 
-@dashboard_blueprint.route('/user/tasks/update-status', methods=['POST'])
+@dashboard_blueprint.route('/user/tasks/status/update', methods=['POST'])
 @api_login_required
 def utask_statusupdate(caseid):
     jsdata = request.get_json()
     if not jsdata:
         return response_error("Invalid request")
 
-    task_id = jsdata.get('task_id')
-    status = jsdata.get('task_status')
-    case_id = jsdata.get('case_id')
-
-    if not status or not task_id:
-        return response_error("Missing parameter")
-
-    task = update_utask_status(task_id, status, case_id)
-
-    if task:
-        return response_success("Updated", data=task)
-
-    return response_error("Invalid data")
-
-
-@dashboard_blueprint.route('/global/tasks/update-status', methods=['POST'])
-@api_login_required
-def gtask_statusupdate(caseid):
-
     jsdata = request.get_json()
     if not jsdata:
         return response_error("Invalid request")
 
+    case_id = jsdata.get('case_id') if jsdata.get('case_id') else caseid
     task_id = jsdata.get('task_id')
-    status = jsdata.get('task_status')
+    task = CaseTasks.query.filter(CaseTasks.id == task_id, CaseTasks.task_case_id == case_id).first()
+    if not task:
+        return response_error(f"Invalid case task ID {task_id} for case {case_id}")
 
-    if not status or not task_id:
-        return response_error("Missing parameter")
+    status_id = jsdata.get('task_status_id')
+    status = TaskStatus.query.filter(TaskStatus.id == status_id).first()
+    if not status:
+        return response_error(f"Invalid task status ID {status_id}")
 
-    success = update_gtask_status(task_id, status)
+    task.task_status_id = status_id
+    try:
 
-    if success:
-        return response_success("Updated")
+        db.session.commit()
 
-    return response_error("Invalid data")
+    except Exception as e:
+        return response_error(f"Unable to update task. Error {e}")
+
+    task_schema = CaseTaskSchema()
+    return response_success("Updated", data=task_schema.dump(task))
 
 
 @dashboard_blueprint.route('/global/tasks/add', methods=['GET', 'POST'])
@@ -209,7 +241,10 @@ def add_gtask(caseid):
         try:
 
             gtask_schema = GlobalTasksSchema()
-            gtask = gtask_schema.load(request.json)
+
+            request_data = call_modules_hook('on_preload_global_task_create', data=request.get_json(), caseid=caseid)
+
+            gtask = gtask_schema.load(request_data)
 
         except marshmallow.exceptions.ValidationError as e:
             return response_error(msg="Data error", data=e.messages, status=400)
@@ -227,26 +262,27 @@ def add_gtask(caseid):
         except Exception as e:
             return response_error(msg="Data error", data=e.__str__(), status=400)
 
+        gtask = call_modules_hook('on_postload_global_task_create', data=gtask, caseid=caseid)
         track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
 
-        return response_success('Saved !')
+        return response_success('Saved !', data=gtask_schema.dump(gtask))
 
     else:
-        form.task_assignee.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
-        form.task_status.choices = [(a, a) for a in task_status]
+        form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
+        form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
         return render_template("modal_add_global_task.html", form=form, task=task, uid=current_user.id, user_name=None)
 
 
-@dashboard_blueprint.route('/global/tasks/edit/<int:cur_id>', methods=['GET', 'POST'])
+@dashboard_blueprint.route('/global/tasks/update/<int:cur_id>', methods=['GET', 'POST'])
 @api_login_required
 def edit_gtask(cur_id, caseid):
 
     if cur_id:
         form = CaseGlobalTaskForm()
         task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
-        form.task_assignee.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
-        form.task_status.choices = [(a, a) for a in task_status]
+        form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
+        form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
         if task:
 
@@ -254,18 +290,24 @@ def edit_gtask(cur_id, caseid):
 
                 try:
                     gtask_schema = GlobalTasksSchema()
-                    gtask = gtask_schema.load(request.json, instance=task)
+
+                    request_data = call_modules_hook('on_preload_global_task_update', data=request.get_json(),
+                                                     caseid=caseid)
+
+                    gtask = gtask_schema.load(request_data, instance=task)
                     gtask.task_userid_update = current_user.id
                     gtask.task_last_update = datetime.utcnow()
 
                     db.session.commit()
 
+                    gtask = call_modules_hook('on_postload_global_task_update', data=gtask, caseid=caseid)
+
                 except marshmallow.exceptions.ValidationError as e:
                     return response_error(msg="Data error", data=e.messages, status=400)
 
-                track_activity("updated global task {} (status {})".format(task.task_title, task.task_status), caseid=caseid)
+                track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
 
-                return response_success('Updated !')
+                return response_success('Updated !', data=gtask_schema.dump(gtask))
 
             else:
                 # Render the IOC
@@ -283,6 +325,8 @@ def edit_gtask(cur_id, caseid):
 @api_login_required
 def gtask_delete(cur_id, caseid):
 
+    call_modules_hook('on_preload_global_task_delete', data=cur_id, caseid=caseid)
+
     if not cur_id:
         return response_error("Missing parameter")
 
@@ -293,6 +337,7 @@ def gtask_delete(cur_id, caseid):
     GlobalTasks.query.filter(GlobalTasks.id == cur_id).delete()
     db.session.commit()
 
+    call_modules_hook('on_postload_global_task_delete', data=request.get_json(), caseid=caseid)
     track_activity("deleted global task ID {}".format(cur_id), caseid=caseid)
 
     return response_success("Task deleted")

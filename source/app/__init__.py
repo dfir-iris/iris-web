@@ -17,24 +17,24 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import collections
+import json
+import logging as logger
+import os
+import urllib.parse
 from flask import Flask
+from flask_bcrypt import Bcrypt
+from flask_caching import Cache
+from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_bcrypt import Bcrypt
-import urllib.parse
-
+from functools import partial
+from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery
-from flask_logging import Filter
-
-from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
-
-import os
 
 
 class ReverseProxied(object):
@@ -53,12 +53,25 @@ TEMPLATE_PATH = os.path.join(APP_PATH, 'templates/')
 
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
+LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
+LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 app = Flask(__name__)
+
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
+app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
+app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
 app.config.from_object('app.configuration.Config')
 
-db = SQLAlchemy(app)  # flask-sqlalchemy
+cache = Cache(app)
+
+SQLALCHEMY_ENGINE_OPTIONS = {
+    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict)
+}
+
+db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
 
 bc = Bcrypt(app)  # flask-bcrypt
 
@@ -70,8 +83,6 @@ ma = Marshmallow(app) # Init marshmallow
 dropzone = Dropzone(app)
 
 celery = make_celery(app)
-
-filter = Filter('static')
 
 store = HttpExposedFileSystemStore(
     path='images',

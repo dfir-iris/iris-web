@@ -21,21 +21,41 @@
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
-from app.models import Notes, NotesGroupLink, NotesGroup, User
+from app.models import Notes
+from app.models import NotesGroup
+from app.models import NotesGroupLink
+from app.models import User
 
 
 def get_note(note_id, caseid=None):
-    if caseid:
-        note = Notes.query.filter(and_(
-            Notes.note_id == note_id,
-            Notes.note_case_id == caseid
-        )).first()
-    else:
-        note = Notes.query.filter(
-            Notes.note_id == note_id
-        ).first()
+    note = Notes.query.with_entities(
+        Notes.note_id,
+        Notes.note_title,
+        Notes.note_content,
+        Notes.note_creationdate,
+        Notes.note_lastupdate,
+        NotesGroupLink.group_id,
+        NotesGroup.group_title,
+        Notes.custom_attributes,
+        Notes.note_case_id
+    ).filter(and_(
+        Notes.note_id == note_id,
+        Notes.note_case_id == caseid
+    )).join(
+        NotesGroupLink.note,
+        NotesGroupLink.note_group
+    ).first()
 
+    return note
+
+
+def get_note_raw(note_id, caseid):
+    note = Notes.query.filter(
+        Notes.note_case_id == caseid,
+        Notes.note_id == note_id
+    ).first()
     return note
 
 
@@ -53,7 +73,7 @@ def delete_note(note_id, caseid):
 
 
 def update_note(note_content, note_title, update_date, user_id, note_id, caseid):
-    note = get_note(note_id, caseid=caseid)
+    note = get_note_raw(note_id, caseid=caseid)
 
     if note:
         note.note_content = note_content
@@ -62,10 +82,10 @@ def update_note(note_content, note_title, update_date, user_id, note_id, caseid)
         note.note_user = user_id
 
         db.session.commit()
-        return True
+        return note
 
     else:
-        return False
+        return None
 
 
 def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=""):
@@ -76,6 +96,7 @@ def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=
     note.note_case_id = caseid
     note.note_user = user_id
 
+    note.custom_attributes = get_default_custom_attributes('note')
     db.session.add(note)
 
     update_notes_state(caseid=caseid, userid=user_id)
@@ -102,6 +123,8 @@ def get_groups_short(caseid):
         NotesGroup.group_title
     ).filter(
         NotesGroup.group_case_id == caseid
+    ).order_by(
+        NotesGroup.group_id
     ).all()
 
     return groups_short
@@ -119,6 +142,8 @@ def get_notes_from_group(caseid, group_id):
     ).join(
         NotesGroupLink.note,
         Notes.user
+    ).order_by(
+        Notes.note_id
     ).all()
 
     return notes
@@ -145,6 +170,26 @@ def get_groups_detail(caseid):
     ).all()
 
     return groups
+
+
+def get_group_details(group_id, caseid):
+    group_l = NotesGroup.query.with_entities(
+        NotesGroup.group_id,
+        NotesGroup.group_title,
+        NotesGroup.group_creationdate,
+        NotesGroup.group_lastupdate
+    ).filter(
+        NotesGroup.group_case_id == caseid
+    ).filter(
+        NotesGroup.group_id == group_id
+    ).first()
+
+    group = None
+    if group_l:
+        group = group_l._asdict()
+        group['notes'] = [note._asdict() for note in get_notes_from_group(caseid=caseid, group_id=group_id)]
+
+    return group
 
 
 def add_note_group(group_title, caseid, userid, creationdate):
@@ -222,9 +267,10 @@ def update_note_group(group_title, group_id, caseid):
 
         update_notes_state(caseid=caseid)
         db.session.commit()
-        return True
+        return ng
+
     else:
-        return False
+        return None
 
 
 def find_pattern_in_notes(pattern, caseid):

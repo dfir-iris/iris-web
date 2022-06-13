@@ -18,9 +18,9 @@
                     <div class="card-title">Cases management</div>
                 </div>
                 <div class="card-body">
-                    <div class=" bg-white col-md-12">
+                    <div class="col-md-12">
                         <!-- Bordered tabs-->
-                        <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tab-without-border"
+                        <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tabs-manage-case"
                             role="tablist">
                             <li class="nav-item submenu">
                                 <a class="nav-link active show" id="add-tab" data-toggle="pill" href="#add" role="tab"
@@ -40,10 +40,11 @@
                                 class="tab-pane fade px-4 py-5 show active">
                                 <div class="row">
                                     <div class="col-md-6 col-lg-6 col-sm-12">
+                                        <h4 class="border-bottom pb-3">General info</h4>
                                         <form method="post" action='' id="form_new_case" autocomplete="off">
                                             {{ form.hidden_tag() }}
                                             <div class="form-group ml-1 mb-2">
-                                                    {{ form.case_customer(class="selectpicker pl--6") }}
+                                                    {{ form.case_customer(class="selectpicker pl--6 btn-outline-white") }}
                                             </div>
                                             <div class="col-md-12 col-lg-12 col-sm-12">
 
@@ -68,6 +69,25 @@
                                             </div>
                                         </form>
                                     </div>
+                                    <div class="col-md-6 col-lg-6 col-sm-12">
+                                        {% if attributes and attributes|length > 0 %}
+                                            <h4><ul class="nav nav-tabs nav-lines mr-4" role="tablist">
+                                                    {% for ca in attributes %}
+                                                        <li class="nav-item submenu">
+                                                            <a class="nav-link {% if loop.index == 1 %}{{"active show"}}{% endif %}"  data-toggle="tab" href="#{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
+                                                            role="tab" aria-selected="false">{{ca}}</a>
+                                                        </li>
+                                                    {% endfor %}
+
+                                            </ul></h4>
+                                            <div role="tabpanel">
+                                                <div class="tab-content">
+                                                    {% set is_case_page = True %}
+                                                    {% include 'modals/modal_attributes_tabs.html' %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 <button class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_case_btn" onclick="submit_new_case();">Create</button>
                             </div>
@@ -85,7 +105,7 @@
                                                             title="Pipelines"
                                                             data-content="Pipelines are the way files dropped below are processed. Each pipelines handles a different type of file."></i>
 
-                                                {{ form.pipeline(class="selectpicker pl--6", id="update_pipeline_selector") }}
+                                                {{ form.pipeline(class="selectpicker pl--6 btn-outline-white", id="update_pipeline_selector") }}
                                                 </div>
                                                 <div class="form-group col-md-6 mb-2">
                                                 {% for itm in pipeline_args %}
@@ -158,7 +178,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade " tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
+<div class="modal " tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
     <div class="modal-xl modal-dialog" role="document">
         <div class="modal-content" id="info_case_modal_content">
 

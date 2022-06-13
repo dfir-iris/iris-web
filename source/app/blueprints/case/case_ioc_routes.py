@@ -19,25 +19,44 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+
 import csv
-import marshmallow
 import logging as log
-from flask import Blueprint, request
-from flask import render_template, url_for, redirect
+import marshmallow
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 
 from app import db
-from app.configuration import misp_url
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_iocs_db import get_detailed_iocs, get_ioc_links, add_ioc, add_ioc_link, \
-    get_tlps, get_ioc, delete_ioc, get_ioc_types_list, check_ioc_type_id, get_tlps_dict, get_ioc_type_id
-from app.datamgmt.states import get_ioc_state, update_ioc_state
-from app.forms import ModalAddCaseAssetForm, ModalAddCaseIOCForm
+from app.datamgmt.case.case_iocs_db import add_ioc
+from app.datamgmt.case.case_iocs_db import add_ioc_link
+from app.datamgmt.case.case_iocs_db import check_ioc_type_id
+from app.datamgmt.case.case_iocs_db import delete_ioc
+from app.datamgmt.case.case_iocs_db import get_detailed_iocs
+from app.datamgmt.case.case_iocs_db import get_ioc
+from app.datamgmt.case.case_iocs_db import get_ioc_links
+from app.datamgmt.case.case_iocs_db import get_ioc_type_id
+from app.datamgmt.case.case_iocs_db import get_ioc_types_list
+from app.datamgmt.case.case_iocs_db import get_tlps
+from app.datamgmt.case.case_iocs_db import get_tlps_dict
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.states import get_ioc_state
+from app.datamgmt.states import update_ioc_state
+from app.forms import ModalAddCaseAssetForm
+from app.forms import ModalAddCaseIOCForm
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import Ioc
 from app.schema.marshables import IocSchema
-from app.util import response_success, response_error, login_required, api_login_required
+from app.util import api_login_required
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 case_ioc_blueprint = Blueprint('case_ioc',
                                __name__,
@@ -49,7 +68,7 @@ case_ioc_blueprint = Blueprint('case_ioc',
 @login_required
 def case_ioc(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_ioc.case_ioc', cid=caseid))
+        return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
 
     form = ModalAddCaseAssetForm()
     form.asset_id.choices = get_assets_types()
@@ -75,7 +94,8 @@ def case_list_ioc(caseid):
         ial = get_ioc_links(ioc.ioc_id, caseid)
 
         out['link'] = [row._asdict() for row in ial]
-        out['misp_link'] = misp_url
+        # Legacy, must be changed next version
+        out['misp_link'] = None
 
         ret['ioc'].append(out)
 
@@ -101,8 +121,10 @@ def case_add_ioc(caseid):
     try:
         # validate before saving
         add_ioc_schema = IocSchema()
-        jsdata = request.get_json()
-        ioc = add_ioc_schema.load(jsdata)
+
+        request_data = call_modules_hook('on_preload_ioc_create', data=request.get_json(), caseid=caseid)
+
+        ioc = add_ioc_schema.load(request_data)
 
         if not check_ioc_type_id(type_id=ioc.ioc_type_id):
             return response_error("Not a valid IOC type")
@@ -114,7 +136,10 @@ def case_add_ioc(caseid):
         link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
         if link_existed:
-            return response_error("IOC already exists and linked to this case")
+            return response_success("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
+
+        if not link_existed:
+            ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
 
         if ioc:
             track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
@@ -187,8 +212,10 @@ def case_upload_ioc(caseid):
             row['ioc_type_id'] = type_id.type_id
             row.pop('ioc_type', None)
 
-            ioc = add_ioc_schema.load(row)
+            request_data = call_modules_hook('on_preload_ioc_create', data=row, caseid=caseid)
 
+            ioc = add_ioc_schema.load(request_data)
+            ioc.custom_attributes = get_default_custom_attributes('ioc')
             ioc, existed = add_ioc(ioc=ioc,
                                    user_id=current_user.id,
                                    caseid=caseid
@@ -202,7 +229,8 @@ def case_upload_ioc(caseid):
                 continue
 
             if ioc:
-                ret.append(row)
+                ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
+                ret.append(request_data)
                 track_activity(f"added ioc {ioc.ioc_value}", caseid=caseid)
 
             else:
@@ -226,18 +254,22 @@ def case_upload_ioc(caseid):
 @login_required
 def case_add_ioc_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_ioc.case_ioc', cid=caseid))
+        return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
 
     form = ModalAddCaseIOCForm()
     form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
     form.ioc_tlp_id.choices = get_tlps()
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc())
+    attributes = get_default_custom_attributes('ioc')
+
+    return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc(), attributes=attributes)
 
 
 @case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['GET'])
 @api_login_required
 def case_delete_ioc(cur_id, caseid):
+
+    call_modules_hook('on_preload_ioc_delete', data=cur_id, caseid=caseid)
 
     ioc = get_ioc(cur_id, caseid)
 
@@ -246,17 +278,19 @@ def case_delete_ioc(cur_id, caseid):
 
     if not delete_ioc(ioc, caseid):
         track_activity("unlinked IOC ID {}".format(cur_id))
-        return response_success("IOC unlinked")
+        return response_success("IOC {} unlinked".format(cur_id))
+
+    call_modules_hook('on_postload_ioc_delete', data=cur_id, caseid=caseid)
 
     track_activity("deleted IOC ID {}".format(cur_id))
-    return response_success("IOC deleted")
+    return response_success("IOC {} deleted".format(cur_id))
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
 @login_required
 def case_view_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid))
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     form = ModalAddCaseIOCForm()
     ioc = get_ioc(cur_id, caseid)
@@ -271,7 +305,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     form.ioc_description.data = ioc.ioc_description
     form.ioc_value.data = ioc.ioc_value
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc)
+    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=ioc.custom_attributes)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
@@ -281,7 +315,7 @@ def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
-        return response_error("Invalid IOC ID for this case")
+        return response_error("Invalid IOC ID for this case".format(cur_id))
 
     return response_success(data=ioc_schema.dump(ioc))
 
@@ -293,11 +327,14 @@ def case_update_ioc(cur_id, caseid):
     try:
         ioc = get_ioc(cur_id, caseid)
         if not ioc:
-            return response_error("Invalid note ID for this case")
+            return response_error("Invalid IOC ID for this case")
+
+        request_data = call_modules_hook('on_preload_ioc_update', data=request.get_json(), caseid=caseid)
 
         # validate before saving
         ioc_schema = IocSchema()
-        ioc_sc = ioc_schema.load(request.get_json(), instance=ioc)
+        request_data['ioc_id'] = cur_id
+        ioc_sc = ioc_schema.load(request_data, instance=ioc)
         ioc_sc.user_id = current_user.id
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
@@ -306,9 +343,11 @@ def case_update_ioc(cur_id, caseid):
         update_ioc_state(caseid=caseid)
         db.session.commit()
 
+        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=caseid)
+
         if ioc_sc:
             track_activity("updated ioc {}".format(ioc_sc.ioc_value), caseid=caseid)
-            return response_success("Updated ioc {}".format(ioc_sc.ioc_value))
+            return response_success("Updated ioc {}".format(ioc_sc.ioc_value), data=ioc_schema.dump(ioc))
 
         return response_error("Unable to update ioc for internal reasons")
 

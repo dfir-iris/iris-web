@@ -23,16 +23,26 @@ import os
 import random
 import string
 from datetime import datetime
-
-from flask import Blueprint, flash, send_file
-from flask import render_template, request, url_for, redirect
+from flask import Blueprint
+from flask import flash
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import send_file
+from flask import url_for
 from flask_login import current_user
-from flask_wtf import FlaskForm
 
-from app import db, app
+from app import app
+from app import db
 from app.forms import AddReportTemplateForm
-from app.models.models import CaseTemplateReport, User, Languages, ReportType
-from app.util import response_success, response_error, admin_required, api_admin_required
+from app.models.models import CaseTemplateReport
+from app.models.models import Languages
+from app.models.models import ReportType
+from app.models.models import User
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import response_error
+from app.util import response_success
 
 manage_templates_blueprint = Blueprint(
     'manage_templates',
@@ -71,15 +81,15 @@ def manage_report_templates(caseid, url_redir):
 @manage_templates_blueprint.route('/manage/templates/list')
 @api_admin_required
 def report_templates_list(caseid):
-    # Get all assets
+    # Get all templates
     templates = CaseTemplateReport.query.with_entities(
         CaseTemplateReport.name,
         CaseTemplateReport.description,
         CaseTemplateReport.naming_format,
         CaseTemplateReport.date_created,
-        User.name,
+        User.name.label('created_by'),
         Languages.code,
-        ReportType.name,
+        ReportType.name.label('type_name'),
         CaseTemplateReport.id
     ).join(
         CaseTemplateReport.created_by_user,
@@ -87,8 +97,10 @@ def report_templates_list(caseid):
         CaseTemplateReport.report_type
     ).all()
 
+    data = [row._asdict() for row in templates]
+
     # Return the assets
-    return response_success("", data=templates)
+    return response_success("", data=data)
 
 
 @manage_templates_blueprint.route('/manage/templates/add', methods=['GET', 'POST'])

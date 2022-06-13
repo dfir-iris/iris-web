@@ -19,11 +19,30 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
-
 from sqlalchemy import desc
 
-from app.models import User, Cases, Client, CaseReceivedFile, CasesEvent, CaseEventsAssets, CaseAssets, \
-    AssetsType, IocLink, Ioc, IocAssetLink, AnalysisStatus, CaseTasks, Notes, EventCategory, IocType
+from app.datamgmt.case.case_notes_db import get_notes_from_group
+from app.models import AnalysisStatus
+from app.models import AssetsType
+from app.models import CaseAssets
+from app.models import CaseEventsAssets
+from app.models import CaseEventsIoc
+from app.models import CaseReceivedFile
+from app.models import CaseTasks
+from app.models import Cases
+from app.models import CasesEvent
+from app.models import Client
+from app.models import EventCategory
+from app.models import Ioc
+from app.models import IocAssetLink
+from app.models import IocLink
+from app.models import IocType
+from app.models import Notes
+from app.models import NotesGroup
+from app.models import NotesGroupLink
+from app.models import TaskStatus
+from app.models import Tlp
+from app.models import User
 
 
 def export_case_json(case_id):
@@ -49,6 +68,91 @@ def export_case_json(case_id):
     return export
 
 
+def export_case_json_extended(case_id):
+    """
+    Export a case a JSON
+    """
+    export = {}
+    case = export_caseinfo_json_extended(case_id)
+
+    if not case:
+        export['errors'] = ["Invalid case number"]
+        return export
+
+    export['case'] = case
+    export['evidences'] = export_case_evidences_json_extended(case_id)
+    export['timeline'] = export_case_tm_json_extended(case_id)
+    export['iocs'] = export_case_iocs_json_extended(case_id)
+    export['assets'] = export_case_assets_json_extended(case_id)
+    export['tasks'] = export_case_tasks_json_extended(case_id)
+    export['notes'] = export_case_notes_json_extended(case_id)
+    export['export_date'] = datetime.datetime.utcnow()
+
+    return export
+
+
+def export_caseinfo_json_extended(case_id):
+    case = Cases.query.filter(
+        Cases.case_id == case_id
+    ).first()
+
+    return case
+
+
+def export_case_evidences_json_extended(case_id):
+    evidences = CaseReceivedFile.query.filter(
+        CaseReceivedFile.case_id == case_id
+    ).join(CaseReceivedFile.case,
+           CaseReceivedFile.user).all()
+
+    return evidences
+
+
+def export_case_tm_json_extended(case_id):
+    events = CasesEvent.query.filter(
+        CasesEvent.case_id == case_id
+    ).all()
+
+    return events
+
+
+def export_case_iocs_json_extended(case_id):
+    iocs = Ioc.query.filter(
+        IocLink.case_id == case_id
+    ).all()
+
+    return iocs
+
+
+def export_case_assets_json_extended(case_id):
+    assets = CaseAssets.query.filter(
+        CaseAssets.case_id == case_id
+    ).all()
+
+    return assets
+
+
+def export_case_tasks_json_extended(case_id):
+    tasks = CaseTasks.query.filter(
+        CaseTasks.task_case_id == case_id
+    ).all()
+
+    return tasks
+
+
+def export_case_notes_json_extended(case_id):
+    notes_groups = NotesGroup.query.filter(
+        NotesGroup.group_case_id == case_id
+    ).all()
+
+    for notes_group in notes_groups:
+        notes_group = notes_group.__dict__
+        print(notes_group)
+        notes_group['notes'] = get_notes_from_group(notes_group['group_id'], case_id)
+
+    return notes_groups
+
+
 def export_caseinfo_json(case_id):
 
     case = Cases.query.filter(
@@ -60,7 +164,8 @@ def export_caseinfo_json(case_id):
         Cases.soc_id,
         User.name.label('opened_by'),
         Client.name.label('for_customer'),
-        Cases.close_date
+        Cases.close_date,
+        Cases.custom_attributes
     ).join(
         Cases.user, Cases.client
     ).all()
@@ -78,7 +183,8 @@ def export_case_evidences_json(case_id):
         CaseReceivedFile.filename,
         CaseReceivedFile.date_added,
         CaseReceivedFile.file_hash,
-        User.name.label('added_by')
+        User.name.label('added_by'),
+        CaseReceivedFile.custom_attributes
     ).order_by(
         CaseReceivedFile.date_added
     ).join(
@@ -86,6 +192,7 @@ def export_case_evidences_json(case_id):
     ).all()
 
     if evidences:
+
         return [row._asdict() for row in evidences]
 
     else:
@@ -97,7 +204,8 @@ def export_case_notes_json(case_id):
         Notes.note_title,
         Notes.note_content,
         Notes.note_creationdate,
-        Notes.note_lastupdate
+        Notes.note_lastupdate,
+        Notes.custom_attributes
     ).filter(
         Notes.note_case_id == case_id
     ).all()
@@ -119,6 +227,7 @@ def export_case_tm_json(case_id):
         CasesEvent.event_tags,
         CasesEvent.event_source,
         CasesEvent.event_raw,
+        CasesEvent.custom_attributes,
         EventCategory.name.label('category'),
         User.name.label('last_edited_by')
     ).filter(
@@ -150,17 +259,32 @@ def export_case_tm_json(case_id):
 
         ras['assets'] = alki
 
+        iocs_list = CaseEventsIoc.query.with_entities(
+            CaseEventsIoc.ioc_id,
+            Ioc.ioc_value,
+            Ioc.ioc_description,
+            Tlp.tlp_name,
+            IocType.type_name.label('type')
+        ).filter(
+            CaseEventsIoc.event_id == row.event_id
+        ).join(
+            CaseEventsIoc.ioc, Ioc.ioc_type, Ioc.tlp
+        ).all()
+
+        ras['iocs'] = [ioc._asdict() for ioc in iocs_list]
+
         tim.append(ras)
 
     return tim
 
 
 def export_case_iocs_json(case_id):
-    res = IocLink.query.distinct().with_entities(
+    res = IocLink.query.with_entities(
         Ioc.ioc_value,
         IocType.type_name,
         Ioc.ioc_tags,
-        Ioc.ioc_description
+        Ioc.ioc_description,
+        Ioc.custom_attributes
     ).filter(
         IocLink.case_id == case_id
     ).join(
@@ -179,17 +303,18 @@ def export_case_iocs_json(case_id):
 def export_case_tasks_json(case_id):
     res = CaseTasks.query.with_entities(
         CaseTasks.task_title,
-        CaseTasks.task_status,
+        TaskStatus.status_name.label('task_status'),
         CaseTasks.task_tags,
         CaseTasks.task_open_date,
         CaseTasks.task_close_date,
         CaseTasks.task_last_update,
         CaseTasks.task_description,
+        CaseTasks.custom_attributes,
         User.name.label('assigned_to')
     ).filter(
         CaseTasks.task_case_id == case_id
     ).join(
-        CaseTasks.user_assigned
+        CaseTasks.user_assigned, CaseTasks.status
     ).all()
 
     if res:
@@ -201,7 +326,7 @@ def export_case_tasks_json(case_id):
 def export_case_assets_json(case_id):
     ret = []
 
-    res = CaseAssets.query.distinct().with_entities(
+    res = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
         CaseAssets.asset_name,
         CaseAssets.asset_description,
@@ -212,7 +337,8 @@ def export_case_assets_json(case_id):
         CaseAssets.asset_domain,
         CaseAssets.asset_ip,
         CaseAssets.asset_info,
-        CaseAssets.asset_tags
+        CaseAssets.asset_tags,
+        CaseAssets.custom_attributes
     ).filter(
         CaseAssets.case_id == case_id
     ).join(

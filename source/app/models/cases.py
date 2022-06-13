@@ -18,15 +18,28 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
-from sqlalchemy import Column, Date, Integer, String, Boolean, Text, ForeignKey, DateTime
-from sqlalchemy.orm import relationship, backref
-from flask_login import current_user
 from datetime import datetime
+from flask_login import current_user
+# IMPORTS ------------------------------------------------
+from sqlalchemy import Boolean
+from sqlalchemy import Column
+from sqlalchemy import Date
+from sqlalchemy import DateTime
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import Text
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
 
 from app import db
-from app.datamgmt.states import update_timeline_state, update_tasks_state, update_evidences_state, update_ioc_state, \
-    update_assets_state, update_notes_state
+from app.datamgmt.states import update_assets_state
+from app.datamgmt.states import update_evidences_state
+from app.datamgmt.states import update_ioc_state
+from app.datamgmt.states import update_notes_state
+from app.datamgmt.states import update_tasks_state
+from app.datamgmt.states import update_timeline_state
 from app.models.models import Client
 
 
@@ -41,6 +54,7 @@ class Cases(db.Model):
     open_date = Column(Date)
     close_date = Column(Date)
     user_id = Column(ForeignKey('user.id'))
+    custom_attributes = Column(JSON)
 
     client = relationship('Client')
     user = relationship('User')
@@ -51,7 +65,8 @@ class Cases(db.Model):
                  client_id=None,
                  description=None,
                  gen_report=False,
-                 user=None
+                 user=None,
+                 custom_attributes=None
                  ):
         self.name = name,
         self.soc_id = soc_id,
@@ -62,6 +77,7 @@ class Cases(db.Model):
         self.description = description
         self.open_date = datetime.utcnow()
         self.gen_report = gen_report
+        self.custom_attributes = custom_attributes
 
     def save(self):
         """
@@ -120,10 +136,12 @@ class CasesEvent(db.Model):
     event_in_graph = Column(Boolean)
     event_in_summary = Column(Boolean)
     user_id = Column(ForeignKey('user.id'))
+    modification_history = Column(JSONB)
     event_color = Column(Text)
     event_tags = Column(Text)
     event_tz = Column(Text)
     event_date_wtz = Column(DateTime)
+    custom_attributes = Column(JSONB)
 
     case = relationship('Cases')
     user = relationship('User')

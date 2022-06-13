@@ -19,7 +19,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from datetime import datetime
-
 from flask_login import current_user
 from sqlalchemy import and_
 

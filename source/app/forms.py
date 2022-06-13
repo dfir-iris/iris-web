@@ -19,9 +19,16 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, PasswordField, IntegerField, BooleanField, \
-    widgets, SelectMultipleField, SelectField, DateTimeField
-from wtforms.validators import InputRequired, Email, DataRequired, Regexp
+from wtforms import BooleanField
+from wtforms import PasswordField
+from wtforms import SelectField
+from wtforms import SelectMultipleField
+from wtforms import StringField
+from wtforms import TextAreaField
+from wtforms import widgets
+from wtforms.validators import DataRequired
+from wtforms.validators import Email
+from wtforms.validators import InputRequired
 
 
 class LoginForm(FlaskForm):
@@ -53,6 +60,12 @@ class MultiCheckboxField(SelectMultipleField):
 class AddAssetForm(FlaskForm):
     asset_name = StringField(u'Asset name', validators=[DataRequired()])
     asset_description = StringField(u'Asset description', validators=[DataRequired()])
+    asset_icon_compromised = StringField(u'Asset icon compromised name', default="ioc_question-mark.png")
+    asset_icon_not_compromised = StringField(u'Asset icon not compromised name', default="question-mark.png")
+
+
+class AttributeForm(FlaskForm):
+    attribute_content = TextAreaField(u'Attribute content', validators=[DataRequired()])
 
 
 class AddIocTypeForm(FlaskForm):
@@ -128,9 +141,10 @@ class CaseEventForm(FlaskForm):
     event_content = TextAreaField(u'Event Description')
     event_raw = TextAreaField(u'Event Raw data')
     event_assets = SelectField(u'Event Asset')
-    event_category = SelectField(u'Event Category')
+    event_category_id = SelectField(u'Event Category')
     event_tz = StringField(u'Event Timezone', validators=[DataRequired()])
     event_in_summary = BooleanField(u'Add to summary')
+    event_tags = StringField(u'Event Tags')
     event_in_graph = BooleanField(u'Display in graph')
 
 
@@ -138,15 +152,15 @@ class CaseTaskForm(FlaskForm):
     task_title = StringField(u'Task Title', validators=[DataRequired()])
     task_description = TextAreaField(u'Task description')
     task_assignee_id = SelectField(u'Task assignee', validators=[DataRequired()])
-    task_status = SelectField(u'Task status')
+    task_status_id = SelectField(u'Task status', validators=[DataRequired()])
     task_tags = StringField(u'Task Tags')
 
 
 class CaseGlobalTaskForm(FlaskForm):
     task_title = StringField(u'Task Title')
     task_description = TextAreaField(u'Task description')
-    task_assignee = SelectField(u'Task assignee')
-    task_status = SelectField(u'Task status')
+    task_assignee_id = SelectField(u'Task assignee')
+    task_status_id = SelectField(u'Task status')
     task_tags = StringField(u'Task Tags')
 
 
@@ -156,6 +170,14 @@ class ModalAddCaseIOCForm(FlaskForm):
     ioc_description = TextAreaField(u'IOC Description')
     ioc_type_id = SelectField(u'IOC Type', validators=[DataRequired()])
     ioc_tlp_id = SelectField(u'IOC TLP', validators=[DataRequired()])
+
+
+class ModalDSFileForm(FlaskForm):
+    file_original_name = StringField(u'Filename', validators=[DataRequired()])
+    file_description = TextAreaField(u'file_description')
+    file_password = StringField(u'File password')
+    file_is_ioc = BooleanField(u'File is IOC')
+    file_is_evidence = BooleanField(u'File is Evidence')
 
 
 class CaseNoteForm(FlaskForm):

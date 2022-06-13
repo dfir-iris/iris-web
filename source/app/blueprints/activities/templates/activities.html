@@ -15,8 +15,8 @@
             <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
             <div class="card" id="card_main_load" style="display:none;">
                 <div class="card-header">
-                    <div class="card-title">User activities ( last 2k entries )
-                    <button type="button" class="btn btn-icon btn-round btn-outline-dark float-right ml-2" onclick="get_activities();">
+                    <div class="card-title">User activities ( max 10k entries + unbound )
+                    <button type="button" class="btn btn-icon btn-round btn-outline-dark float-right ml-2" onclick="refresh_activities();">
                             <i class="fas fa-sync rotate"></i></button></div>
                 </div>
                 <div class="card-body">
@@ -30,7 +30,8 @@
                             <th>Date</th>
                             <th>User</th>
                             <th>Case</th>
-                            <th>User input</th>
+                            <th>Manual input</th>
+                            <th>From API</th>
                             <th>Activity</th>
                           </tr>
                         </thead>
@@ -39,7 +40,8 @@
                             <th>Date</th>
                             <th>User</th>
                             <th>Case</th>
-                            <th>User input</th>
+                            <th>Manual input</th>
+                            <th>From API</th>
                             <th>Activity</th>
                           </tr>
                         </tfoot>
@@ -61,5 +63,6 @@
     <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
     <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
 
+    <script src="/static/assets/js/iris/datatablesUtils.js"></script>
     <script src="/static/assets/js/iris/activities.js"></script>
 {% endblock javascripts %}

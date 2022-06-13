@@ -23,14 +23,18 @@
 			<nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient">
 				{{ form.hidden_tag() }}
 				<ul class="container-fluid mt-3 mb--2">
-                    <ul class="navbar-nav">
-                        <li class="nav-item hidden-caret">
-                            <select class="selectpicker" data-show-subtext="true" data-live-search="true" data-size="10" id="time_timeline_select">
-                            </select>
-                        </li>
-                        <li class="nav-item hidden-caret">
-                            <select class="selectpicker" data-show-subtext="true" data-live-search="true" data-size="10" id="assets_timeline_select">
-                            </select>
+                    <ul class="navbar-nav col-8">
+                        <li class="nav-item hidden-caret col-12">
+                            <div class="row">
+                                <div id='timeline_filtering' class="col-9 pt-2 pl-2" style="border-radius:3px;" ></div>
+                                <button class="btn btn-sm btn-light ml-2 pt-2" onclick="filter_timeline();">
+                                   Apply filter
+                                </button>
+                                <button class="btn btn-sm btn-light ml-1 pt-2" onclick="reset_filters();">
+                                   Reset
+                                </button>
+                                <i class="ml-1 mt-1 fa-regular text-white fa-circle-question" title="Filter help" style="cursor:pointer;" onclick="show_timeline_filter_help();"></i>
+                            </div>
                         </li>
                      </ul>
                     <ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
@@ -38,7 +42,7 @@
                             <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
                         </li>
                         <li class="nav-item hidden-caret">
-                            <button class="btn btn-primary btn-sm" onclick="draw_timeline();">
+                            <button class="btn btn-primary btn-sm" onclick="get_or_filter_tm();">
                                 <span class="menu-title">Refresh</span>
                             </button>
                         </li>
@@ -59,17 +63,13 @@
                                   <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}&group-by=category">Visualize by category</a>
                                   <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
+                                  <a class="dropdown-item" href="#" onclick="timelineToCsvWithUI();"><small class="fa fa-download mr-2"></small> Download as CSV with user info</a>
                               </div>
                             </div>
                         </li>
                     </ul>
                 </ul>
 			</nav>
-
-
-
-		
-
 
         {% if current_user.is_authenticated %}
 
@@ -84,15 +84,31 @@
                 </div>
             </div>
             <div id="side_timeline">
-                <button class="btn btn-round btn-primary-success btn_over_page_d" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
-                <button class="btn btn-round btn-primary-success btn_over_page_a" onclick="draw_timeline();"><i class="fas fa-redo-alt"></i></button>
-                <button class="btn btn-round btn-primary-success btn_over_page_c" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
-                <button class="btn btn-round btn-primary-success btn_over_page_b" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
+
+            <div class="btn_over_page_a">
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-white" title="color1" onclick="events_set_attribute('event_color', '#fff')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-primary" title="color2" onclick="events_set_attribute('event_color', '#1572E899')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-secondary" title="color3" onclick="events_set_attribute('event_color', '#6861CE99')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-info" title="color4" onclick="events_set_attribute('event_color', '#48ABF799')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-success" title="color5" onclick="events_set_attribute('event_color', '#31CE3699')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-danger" title="color5" onclick="events_set_attribute('event_color', '#F2596199')"></button>
+                <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-warning" title="color5" onclick="events_set_attribute('event_color', '#FFAD4699')"></button>
+                <button class="btn btn-round btn-light btn-conditional" title="Change color" onclick="toggle_colors()"><i class="fas fa-tint"></i></button>
+            </div>
+                <button class="btn btn-round btn-light btn_over_page_delete btn-conditional" title="Delete selected events" onclick="events_bulk_delete();"><i class="fas fa-trash text-danger"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_b btn-conditional" title="Toggle Summary" onclick="events_set_attribute('event_in_summary')"><i class="fas fa-newspaper"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_c btn-conditional" title="Toggle Graph" onclick="events_set_attribute('event_in_graph')"><i class="fas fa-share-alt"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_d" title="Select rows" onclick="toggle_selector();" id="selector-btn"><i class="fas fa-check"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_e" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_f" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_g" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_h" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
+                <button class="btn btn-round btn-light btn_over_page_i" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>
             </div>
         
         </div>
         
-        <div class="modal" tabindex="-1" role="dialog" id="modal_add_event" data-backdrop="true">
+        <div class="modal shadow-xl" tabindex="-1" id="modal_add_event" data-backdrop="true">
             <div class="modal-xl modal-dialog" role="document">
                 <div class="modal-content" id="modal_add_event_content">
         
@@ -102,14 +118,16 @@
             <!-- /.modal-dialog -->
         </div>
         {% endif %}
-    
     </div>
-
     {% include 'includes/footer.html' %}
 </div>
 
 {% endblock content %}
 {% block javascripts %}
+
+<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
+    charset="utf-8"></script>
 
 <script src="/static/assets/js/core/moments.min.js"></script>
 <script src="/static/assets/js/core/bootstrap-datetimepicker.min.js"></script>

@@ -19,13 +19,15 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import binascii
-
 from sqlalchemy import and_
 
 from app import db
 from app.models.cases import Cases
+from app.models.models import CaseTemplateReport
+from app.models.models import Client
+from app.models.models import Languages
 from app.models.models import ReportType
-from app.models.models import User, Client, CaseTemplateReport, Languages
+from app.models.models import User
 
 
 def get_case_summary(caseid):
@@ -47,6 +49,10 @@ def get_case(caseid):
     return Cases.query.filter(Cases.case_id == caseid).first()
 
 
+def case_exists(caseid):
+    return Cases.query.filter(Cases.case_id == caseid).count()
+
+
 def get_case_client_id(caseid):
     client_id = Cases.query.with_entities(
         Client.client_id
@@ -54,7 +60,7 @@ def get_case_client_id(caseid):
         Cases.case_id == caseid
     ).join(Cases.client).first()
 
-    return client_id
+    return client_id.client_id
 
 
 def case_get_desc(caseid):
@@ -72,6 +78,8 @@ def case_get_desc_crc(caseid):
 
     if partial_case:
         desc = partial_case.description
+        if not desc:
+            desc = ""
         desc_crc32 = binascii.crc32(desc.encode('utf-8'))
     else:
         desc = None
@@ -84,6 +92,8 @@ def case_set_desc_crc(desc, caseid):
     lcase = get_case(caseid)
 
     if lcase:
+        if not desc:
+            desc = ""
         lcase.description = desc
         db.session.commit()
         return True

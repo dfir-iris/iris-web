@@ -23,18 +23,22 @@
 # VARS ---------------------------------------------------
 
 # CONTENT ------------------------------------------------
-import json
 import tempfile
-
 from flask import Blueprint
-from flask import url_for, redirect, send_file
+from flask import redirect
+from flask import send_file
+from flask import url_for
 from flask_login import current_user
 
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.reporter.reporter import IrisMakeDocReport
-from app.iris_engine.tasker.tasks import task_make_report, task_pull_misp_all, task_update_ioc_misp, task_update_ioc
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseTemplateReport
-from app.util import response_success, PgEncoder, FileRemover, response_error, api_login_required, not_authenticated_redirection_url
+
+from app.util import FileRemover
+from app.util import api_login_required
+from app.util import not_authenticated_redirection_url
+from app.util import response_error
 
 reports_blueprint = Blueprint('reports',
                               __name__,
@@ -47,6 +51,7 @@ file_remover = FileRemover()
 @api_login_required
 def download_case_activity(report_id, caseid):
 
+    call_modules_hook('on_preload_activities_report_create', data=report_id, caseid=caseid)
     if report_id:
         report = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
         if report:
@@ -59,6 +64,7 @@ def download_case_activity(report_id, caseid):
                 track_activity("failed to generate a report")
                 return response_error("Report error", "Failed to generate a report.")
 
+            call_modules_hook('on_postload_activities_report_create', data=report_id, caseid=caseid)
             resp = send_file(fpath, as_attachment=True)
             file_remover.cleanup_once_done(resp, tmp_dir)
 
@@ -75,6 +81,7 @@ def _gen_report(report_id, caseid):
     if not current_user.is_authenticated:
         return redirect(not_authenticated_redirection_url())
 
+    call_modules_hook('on_preload_report_create', data=report_id, caseid=caseid)
     if report_id:
         report = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
         if report:
@@ -87,6 +94,8 @@ def _gen_report(report_id, caseid):
                 track_activity("failed to generate a report")
                 return response_error("Report error", "Failed to generate a report.")
 
+            call_modules_hook('on_postload_report_create', data=fpath, caseid=caseid)
+
             resp = send_file(fpath, as_attachment=True)
             file_remover.cleanup_once_done(resp, tmp_dir)
 
@@ -96,35 +105,3 @@ def _gen_report(report_id, caseid):
 
     return redirect(url_for('index.index'))
 
-
-@reports_blueprint.route("/reports_dev", methods=['GET'])
-@api_login_required
-def reports(caseid):
-
-    # Check if we already have a report for this case
-    """reportt = IrisReport.query\
-        .with_entities(
-            IrisReport.report_title,
-            IrisReport.report_content,
-            IrisReport.report_date
-        ).filter(
-            IrisReport.case_id == current_user.ctx_case
-        ).first()
-
-    if reportt:
-        return response_success("", data=json.loads(reportt.report_content))
-    """
-    data = task_make_report(caseid)
-    dte = json.dumps(data, cls=PgEncoder)
-
-    """report = IrisReport(
-        case_id=current_user.ctx_case,
-        report_content=dte,
-        report_date=datetime.now(),
-        user_id=current_user.id,
-        report_title= "Iris auto report"
-        )
-    """
-    # report.save()
-
-    return response_success("", data=data)

@@ -1,0 +1,154 @@
+<div class="modal-header">
+    <h4>Edit attribute {{ attribute.attribute_display_name }}</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+
+        <div class="container col-md-12">
+        <form method="post" action="" id="form_new_attribute" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-6">
+                    <div class="accordion accordion-primary">
+                        <h2>{{ attribute.attribute_display_name }} attributes</h2>
+                        <p>Attributes allow to extend the fields available for analysts when they add or edit {{ attribute.attribute_display_name }}.</p>
+                        <div class="alert-std alert-warning" role="alert">
+                             Attributes can be added by administrator in this UI, or they can be pushed by modules.<br/>
+                             This means each {{ attribute.attribute_display_name }} object may have a different set of attributes.
+                             Updating the default objects here will result in an update of every existing object, which might take a huge amount of time.
+                            <p>Typing wrong attributes here might result in UI breaks. IRIS will attempt to validate the attributes' taxonomy before committing.</p>
+                            <b>To avoid this, use the Preview button before saving. It displays a 1-to-1 UI representation of the attributes</b>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header collapsed" id="drop_attr_description" data-toggle="collapse" data-target="#drop_attr_desc" aria-expanded="false" aria-controls="drop_attr_desc" role="button">
+                                <div class="span-icon">
+                                    <div class="flaticon-tea-cup"></div>
+                                </div>
+                                <div class="span-title">
+                                    More details
+                                </div>
+                                <div class="span-mode"></div>
+                            </div>
+
+                            <div id="drop_attr_desc" class="collapse" aria-labelledby="drop_tax_attr" style="">
+                                <div class="card-body">
+                                    <p>These attributes are stored in each {{ attribute.attribute_display_name }} object in the form of a JSON structure.</p>
+                                    <p>Attributes in this page represent the default attributes of each new {{ attribute.attribute_display_name }} objects. Existing object are updated if they
+                                        don't hold the specified attributes. <b>Other existing attributes are not deleted.</b></p>
+                                    Attributes can have the following purposes:
+                                    <ul>
+                                        <li><b>Inputs</b>: Offer analysts the possibility to fill additional details. Multiple types of inputs are supported. See taxonomy for more details</li>
+                                        <li><b>Raw</b>: A static content rendered in raw text. HTML is not interpreted.</li>
+                                        <li><b>HTML</b>: A static content rendered as HTML for infinite possibilities. <b>Careful, this is by nature prone to vulnerabilities.</b></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header collapsed" id="drop_attr_taxonomy" data-toggle="collapse" data-target="#drop_tax_attr" aria-expanded="false" aria-controls="drop_tax_attr" role="button">
+                                <div class="span-icon">
+                                    <div class="flaticon-pencil"></div>
+                                </div>
+                                <div class="span-title">
+                                    Attributes taxonomy
+                                </div>
+                                <div class="span-mode"></div>
+                            </div>
+
+                            <div id="drop_tax_attr" class="collapse" aria-labelledby="drop_tax_attr" style="">
+                                <div class="card-body">
+                                    Attributes are defined as below.
+                                    <pre>
+{
+    "Tab Name 1": {                     // Defines a new tab in the {{ attribute.attribute_display_name }} modal
+        "Field 1": {                    // Defines a new field within the Tab Name 1
+            "type": "input_string",     // Defines the type of field, here a standard string input
+            "mandatory": true,          // Indicates whether the field is mandatory upon saving
+            "value": ""                 // Default value if any, else empty
+        },
+        "Field 2": {                    // Defines a second field within the tab Tab Name 1
+            "type": "input_checkbox",   // Defines an input checkbox
+            "mandatory": false,         // Indicates whether the field is mandatory upon saving
+            "value": true               // Default value
+        }
+    },
+    "VT report": {                      // Defines a second tab named VT report
+        "Content": {                    // Defines a new field Content within the VT Report
+            "type": "html",             // Defines an HTML interpreted content
+            "value": ""                 // Default value if any, else empty
+        }
+    }
+}
+                                    </pre>
+
+                                    <h4>Field types</h4>
+                                    The supported fields types are:
+                                    <ul>
+                                        <li>input_string: Standard input text</li>
+                                        <li>input_textfield: Standard input textfield</li>
+                                        <li>input_checkbox: Standard checkbox</li>
+                                        <li>input_date: Standard date input</li>
+                                        <li>input_datetime: Standard date and time input</li>
+                                        <li>input_select: Standard select input. Need "options" tag to describe the available options</li>
+                                        <li>raw: A static content rendered in raw text. HTML is not interpreted.</li>
+                                        <li>html: A static content rendered as HTML. <b>Careful, this is by nature prone to vulnerabilities.</b></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header collapsed" id="drop_attr_over" data-toggle="collapse" data-target="#drop_attr_overwrite" aria-expanded="false" aria-controls="drop_attr_overwrite" role="button">
+                                <div class="span-icon">
+                                    <div class="flaticon-exclamation"></div>
+                                </div>
+                                <div class="span-title">
+                                    Overwrite features
+                                </div>
+                                <div class="span-mode"></div>
+                            </div>
+
+                            <div id="drop_attr_overwrite" class="collapse" aria-labelledby="drop_tax_attr" style="">
+                                <div class="card-body">
+                                    <p>Changing types of fields in attributes might result in incompatibles types and existing objects being unable to be migrated.</p>
+                                    <p>When this happens, IRIS will not update the fields of these objects and let them as is to prevent any data loss.</p>
+                                    <p>This behavior can however be changed by using the <kbd>Complete overwrite</kbd> and <kbd>Partial overwrite</kbd> buttons.</p>
+
+                                    <p><kbd>Partial overwrite</kbd> basically resets the attributes values of every {{ attribute.attribute_display_name }} objects that matches the current ones, and then applies the current attributes.
+                                        All associated values are lost. This does not impact attributes pushed by modules.</p>
+                                    <p><kbd>Complete overwrite</kbd> resets all attributes of every {{ attribute.attribute_display_name }} objects, including the ones created by modules, and then applies the current attributes.
+                                        All associated values are lost.</p>
+
+                                    <b>In any case, none of the native values of the {{ attribute.attribute_display_name }} objects are modified. This only concerns custom attributes.</b>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="col-6">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        <label for="Attribute content" class="mr-4">Attribute definition
+                        </label>
+                        <div id="editor_detail">{{ attribute.attribute_content|tojsonsafe }}</div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="alert alert-warning" style="display:none;" role="alert" id="alert_attributes_details">
+        <span id="alert_attributes_edit"></span><br/>
+        <b>Logs:</b>
+        <ul id="attributes_err_details_list">
+        </ul>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-danger float-right" id="submit_complete_overwrite">Complete overwrite</button>
+    <button type="button" class="btn btn-outline-danger mr-auto" id="submit_partial_overwrite">Partial overwrite</button>
+    <button type="button" class="btn btn-outline-black float-right" id="preview_attribute">Preview</button>
+    <button type="button" class="btn btn-outline-success float-right" id="submit_new_attribute">Update</button>
+</div>

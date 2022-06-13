@@ -1,45 +1,41 @@
 function add_asset_type() {
     url = '/manage/asset-type/add/modal' + case_param();
-    $('#modal_add_type_content').load(url, function () {
+    $('#modal_add_type_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#form_new_asset_type').submit("click", function (event) {
 
-        $('#submit_new_assettype').on("click", function () {
-            var form = $('#form_new_asset_type').serializeObject();
+
+            event.preventDefault();
+            var formData = new FormData(this);
+
+            url = '/manage/asset-type/add' + case_param();
 
             $.ajax({
-                url: '/manage/asset-type/add' + case_param(),
+                url: url,
                 type: "POST",
-                data: JSON.stringify(form),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
                 success: function (data) {
-                    console.log(data);
-                    if (data.status == 'success') {
-                        swal("Done !",
-                            data.message,
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
+                    if(notify_auto_api(data, true)) {
                             refresh_asset_table();
                             $('#modal_add_type').modal('hide');
-
-                        });
-                    } else {
-                        $('#modal_add_type').text('Save again');
-                        swal("Oh no !", data.message, "error")
                     }
                 },
                 error: function (error) {
+                    $('#modal_add_type').text('Save');
                     propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
             return false;
-        })
     });
     $('#modal_add_type').modal({ show: true });
-}
+})};
 
 $('#assets_table').dataTable( {
     "ajax": {
@@ -69,6 +65,21 @@ $('#assets_table').dataTable( {
                     if (type === 'display') { data = sanitizeHTML(data);}
                     return data;
                 }
+            },
+            {
+                "data": "asset_icon_not_compromised_path",
+                "render": function ( data, type, row ) {
+                    if (type === 'display') { data = sanitizeHTML(data);}
+                    return '<img style="width:2em;height:2em" src=\'' + data + '\'>';
+
+                }
+            },
+            {
+                "data": "asset_icon_compromised_path",
+                "render": function ( data, type, row ) {
+                    if (type === 'display') { data = sanitizeHTML(data);}
+                    return '<img style="width:2em;height:2em" src=\'' + data + '\'>';
+                }
             }
         ]
     }
@@ -83,47 +94,41 @@ function refresh_asset_table() {
 /* Fetch the details of an asset and allow modification */
 function assettype_detail(asset_id) {
     url = '/manage/asset-type/update/' + asset_id + '/modal' + case_param();
-    $('#modal_add_type_content').load(url, function () {
+    $('#modal_add_type_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
-        $('#submit_new_assettype').on("click", function () {
+        $('#form_new_asset_type').submit("click", function (event) {
             event.preventDefault();
-            var form = $('#form_new_asset_type').serializeObject();
+            var formData = new FormData(this);
+
+            url = '/manage/asset-type/update/' + asset_id + case_param();
 
             $.ajax({
-                url:  '/manage/asset-type/update/' + asset_id + case_param(),
+                url: url,
                 type: "POST",
-                data: JSON.stringify(form),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
                 success: function (data) {
-                    if (data.status == 'success') {
-                        swal("You're set !",
-                            data.message,
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
+                  if(notify_auto_api(data, true)) {
                             refresh_asset_table();
                             $('#modal_add_type').modal('hide');
-                        });
-
-                    } else {
-                        $('#modal_add_type').text('Save again');
-                        swal("Oh no !", data.message, "error")
                     }
                 },
                 error: function (error) {
+                    $('#modal_add_type').text('Save');
                     propagate_form_api_errors(error.responseJSON.data);
                 }
             });
 
             return false;
-        })
-
-
     });
     $('#modal_add_type').modal({ show: true });
+    });
 }
 
 function delete_asset_type(id) {
@@ -139,31 +144,17 @@ function delete_asset_type(id) {
       confirmButtonText: 'Yes, delete it!'
     })
     .then((willDelete) => {
-      if (willDelete) {
-          $.ajax({
-              url: '/manage/asset-type/delete/' + id + case_param(),
-              type: "GET",
-              dataType: 'JSON',
-              success: function (data) {
-                  if (data.status == 'success') {
-                      swal(data.message, {
-                          icon: "success",
-                          timer: 500
-                      }).then((value) => {
-                          refresh_asset_table();
-                          $('#modal_add_type').modal('hide');
-                      });
-                  } else {
-                      swal ( "Oh no !" ,  data.message ,  "error" );
-                  }
-              },
-              error: function (error) {
-                  swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
-              }
-          });
-      } else {
-        swal("Pfew, that's was close");
-      }
+        if (willDelete) {
+            get_request_api('/manage/asset-type/delete/' + id)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_asset_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+        } else {
+            swal("Pfew, that was close");
+        }
     });
 }
 
@@ -176,33 +167,11 @@ function add_ioc_type() {
         $('#submit_new_ioc_type').on("click", function () {
             var form = $('form#form_new_ioc_type').serializeObject();
 
-            $.ajax({
-                url: '/manage/ioc-types/add' + case_param(),
-                type: "POST",
-                data: JSON.stringify(form),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
-                success: function (data) {
-                    console.log(data);
-                    if (data.status == 'success') {
-                        swal("Done !",
-                            data.message,
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            refresh_ioc_table();
-                            $('#modal_add_type').modal('hide');
-
-                        });
-                    } else {
-                        $('#modal_add_type').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    propagate_form_api_errors(error.responseJSON.data);
+            post_request_api('/manage/ioc-types/add', JSON.stringify(form), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_ioc_table();
+                    $('#modal_add_type').modal('hide');
                 }
             });
 
@@ -260,37 +229,20 @@ function refresh_ioc_table() {
 /* Fetch the details of an asset and allow modification */
 function ioc_type_detail(ioc_id) {
     url = '/manage/ioc-types/update/' + ioc_id + '/modal' + case_param();
-    $('#modal_add_type_content').load(url, function () {
+    $('#modal_add_type_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#submit_new_ioc_type').on("click", function () {
             var form = $('form#form_new_ioc_type').serializeObject();
 
-            $.ajax({
-                url:  '/manage/ioc-types/update/' + ioc_id + case_param(),
-                type: "POST",
-                data: JSON.stringify(form),
-                dataType: "json",
-                contentType: "application/json;charset=UTF-8",
-                success: function (data) {
-                    if (data.status == 'success') {
-                        swal("You're set !",
-                            data.message,
-                            {
-                                icon: "success",
-                                timer: 500
-                            }
-                        ).then((value) => {
-                            refresh_ioc_table();
-                            $('#modal_add_type').modal('hide');
-                        });
-
-                    } else {
-                        $('#modal_add_type').text('Save again');
-                        swal("Oh no !", data.message, "error")
-                    }
-                },
-                error: function (error) {
-                    propagate_form_api_errors(error.responseJSON.data);
+            post_request_api('/manage/ioc-types/update/' + ioc_id, JSON.stringify(form), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_ioc_table();
+                    $('#modal_add_type').modal('hide');
                 }
             });
 
@@ -301,7 +253,6 @@ function ioc_type_detail(ioc_id) {
     });
     $('#modal_add_type').modal({ show: true });
 }
-
 function delete_ioc_type(id) {
 
     swal({
@@ -316,29 +267,15 @@ function delete_ioc_type(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-          $.ajax({
-              url: '/manage/ioc-types/delete/' + id + case_param(),
-              type: "GET",
-              dataType: 'JSON',
-              success: function (data) {
-                  if (data.status == 'success') {
-                      swal(data.message, {
-                          icon: "success",
-                          timer: 500
-                      }).then((value) => {
-                          refresh_ioc_table();
-                          $('#modal_add_type').modal('hide');
-                      });
-                  } else {
-                      swal ( "Oh no !" ,  data.message ,  "error" );
-                  }
-              },
-              error: function (error) {
-                  swal ( "Oh no !" ,  error.responseJSON.message ,  "error" );
-              }
-          });
+            get_request_api('/manage/ioc-types/delete/' + id)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_ioc_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
       } else {
-        swal("Pfew, that's was close");
+        swal("Pfew, that was close");
       }
     });
 }

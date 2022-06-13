@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>IRIS - Server updates</title>
+	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
+	<link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
+
+	<!-- Fonts and icons -->
+	<script src="/static/assets/js/plugin/webfont/webfont.min.js"></script>
+	<script>
+		WebFont.load({
+			custom: {"families":["Lato:300,400,700,900", "Flaticon", "Font Awesome 5 Solid", "Font Awesome 5 Regular", "Font Awesome 5 Brands", "simple-line-icons"],
+			urls: ['/static/assets/css/fonts.css']},
+			active: function() {
+				sessionStorage.fonts = true;
+			}
+		});
+	</script>
+
+	<!-- CSS Files -->
+	<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/static/assets/css/atlantis.css">
+	<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+
+</head>
+<body class="bg-dark-gradient p-4" style="height: 100vh;">
+    <div class="container bg-white shadow-lg p-3 rounded mb-4">
+			<div class="mt-2 row">
+				<div class="col d-flex justify-content-center">
+					<a href="/" class="logo ml-2 text-center">
+						<img src="/static/assets/img/logo-alone-2-black.png" alt="navbar brand" class='image-update navbar-brand' width="50">
+					</a>
+				</div>
+			</div>
+			<div class="mt-2 row">
+				<div class="col d-flex justify-content-center">
+					<h1 class="text-dark text-center">Server Updates</h1>
+				</div>
+			</div>
+			<div class="row ">
+				<div class="col d-flex justify-content-center">
+					<i class="text-dark">Some great improvements are hopefully on their way, hang tight</i>
+				</div>
+			</div>
+			<div class="row mt-4">
+				<div class="col d-flex justify-content-center">
+					<h4 class="text-danger text-center">Please do not leave or refresh the page once updates have started</h4>
+				</div>
+			</div>
+			<div class="row mt-4 update_start_txt">
+				<div class="col pl-4 justify-content-center">
+					<p class="text-center">Ensure users are disconnected. Any unsaved work might be lost.</p>
+				</div>
+			</div>
+			<div class="row mt-4 justify-content-center update_start_txt">
+				<div class="col-6">
+					<p class="text-center">The following steps might occur during updates, depending on the updates scope : </p>
+					<ul>
+						<li>Fetch of updates information from github.com</li>
+						<li>Download of updates assets from github</li>
+						<li>Signatures verification</li>
+						<li>Compatibility verifications</li>
+						<li>Back up of the current server code to backup storage defined in <code>BACKUP_PATH</code></li>
+						<li>Server stop and update of application</li>
+						<li>Server restarts</li>
+						<li>Version check</li>
+					</ul>
+				</div>
+			</div>
+			<div class="row mt-4">
+				<div class="col d-flex justify-content-center ">
+					<a href='#' onclick="start_updates();" class="btn btn-outline-success text-center" id="update_start_btn">Start updates</a>
+				</div>
+			</div>
+			<div id="container-updates" class="row shadow-lg ml-4 mr-4 rounded"  style="display:none;">
+				<div class="col justify-content-left text-dark pl-4 pb-4 pt-4 pr-4 mh-100">
+					<div class="col">
+						<div id="updates_log">
+						</div>
+						<div id="updates_log_end"></div>
+					</div>
+				</div>
+			</div>
+			<div class="row text-dark">
+				<div class="col d-flex justify-content-center">
+					<div id="offline_time" style="display:none;"></div>
+				</div>
+			</div>
+			<div class="row mt-4">
+				<div class="col d-flex justify-content-center">
+					<div id="tag_bottom" style="display:none;" class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+					<a href='/manage/settings' class="btn btn-dark ml-mr-auto" style="display:none;" id="update_return_button">Go back to server</a>
+				</div>
+			</div>
+	</div>
+
+	<!--   Core JS Files   -->
+
+	<script src="/static/assets/js/core/jquery.3.2.1.min.js"></script>
+	<script src="/static/assets/js/core/popper.min.js"></script>
+	<script src="/static/assets/js/core/bootstrap.min.js"></script>
+
+	<!-- jQuery UI -->
+	<script src="/static/assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+	<script src="/static/assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
+
+	<!-- jQuery Scrollbar -->
+	<script src="/static/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+
+	<!-- Atlantis JS -->
+	<script src="/static/assets/js/atlantis.min.js"></script>
+	{% if current_user.in_dark_mode %}<script src="/static/assets/js/dark-mode.js"></script>{% endif %}
+
+    <script src="/static/assets/js/core/socket.io.js"></script>
+    <script src="/static/assets/js/iris/update_handler.js"></script>
+
+</body>
+</html>

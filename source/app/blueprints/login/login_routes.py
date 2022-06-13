@@ -21,10 +21,17 @@
 # IMPORTS ------------------------------------------------
 
 from flask import Blueprint
-from flask import render_template, request, url_for, redirect
-from flask_login import login_user, current_user
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
+from flask_login import current_user
+from flask_login import login_user
 
-from app import bc, db, app
+from app import app
+from app import bc
+from app import db
+from app.datamgmt.case.case_db import case_exists
 from app.forms import LoginForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
@@ -51,6 +58,7 @@ if app.config.get("AUTHENTICATION_TYPE") == "local":
 
         # Flask message injected into the page, in case of any errors
         msg = None
+        c_exists = False
 
         # check if both http method is POST and form is valid on submit
         if form.validate_on_submit():
@@ -82,6 +90,22 @@ if app.config.get("AUTHENTICATION_TYPE") == "local":
                 else:
                     track_activity("wrong login password for user '{}'".format(username), ctx_less=True)
                     msg = "Wrong password. Please try again."
+
+                caseid = user.ctx_case
+
+                if caseid is not None:
+                    c_exists = case_exists(caseid=caseid)
+
+                if caseid is None or not c_exists:
+                    case = Cases.query.order_by(Cases.case_id).first()
+                    user.ctx_case = case.case_id
+                    user.ctx_human_case = case.name
+
+                    db.session.commit()
+
+                track_activity("user '{}' successfully logged-in".format(username), ctx_less=True)
+                return redirect(url_for('index.index', cid=user.ctx_case))
+
             else:
                 track_activity("someone tried to log with user '{}', which does not exist".format(username), ctx_less=True)
                 msg = "Unknown user"

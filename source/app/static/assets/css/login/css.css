@@ -3,7 +3,7 @@
   font-family: 'Lato';
   font-style: normal;
   font-weight: 300;
-  src: url('../fonts/lato/Lato-Light.ttf') format('truetype') ;
+  src: url('../../fonts/lato/Lato-Light.ttf') format('truetype') ;
 }
 
 /* latin-ext */
@@ -11,7 +11,7 @@
   font-family: 'Lato';
   font-style: normal;
   font-weight: 400;
-  src: url('../fonts/lato/Lato-Regular.ttf') format('truetype') ;
+  src: url('../../fonts/lato/Lato-Regular.ttf') format('truetype') ;
 }
 
 /* latin-ext */
@@ -19,7 +19,7 @@
   font-family: 'Lato';
   font-style: normal;
   font-weight: 700;
-  src: url('../fonts/lato/Lato-Bold.ttf') format('truetype') ;
+  src: url('../../fonts/lato/Lato-Bold.ttf') format('truetype') ;
 }
 
 /* latin-ext */
@@ -27,5 +27,5 @@
   font-family: 'Lato';
   font-style: normal;
   font-weight: 900;
-  src: url('../fonts/lato/Lato-Black.ttf') format('truetype') ;
+  src: url('../../fonts/lato/Lato-Black.ttf') format('truetype') ;
 }

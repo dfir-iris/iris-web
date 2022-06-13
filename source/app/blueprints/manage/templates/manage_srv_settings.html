@@ -1,0 +1,213 @@
+{% extends "layouts/default.html" %}
+
+{% block title %} Server Settings {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/assets/css/suggestags.css">
+{% endblock stylesheets %}
+
+{% block content %}
+
+{{ form.hidden_tag() }}
+<div class="page-inner">
+    <div class="row ">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Server versions</div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="col-12 mb-4">
+                                <dl class="row">
+                                    <dt class="col-sm-3">IRIS server version:</dt>
+                                    <dd class="col-sm-8">{{ versions.iris_current }}</dd>
+
+                                    <dt class="col-sm-3">Database revision:</dt>
+                                    <dd class="col-sm-8">{{ versions.db_revision }}</dd>
+
+                                    <dt class="col-sm-3">Min. API version supported:</dt>
+                                    <dd class="col-sm-8">{{ versions.api_min }}</dd>
+
+                                    <dt class="col-sm-3">Max. API version supported:</dt>
+                                    <dd class="col-sm-8">{{ versions.api_current }}</dd>
+
+                                    <dt class="col-sm-3">Min. module interface version supported:</dt>
+                                    <dd class="col-sm-8">{{ versions.interface_min }}</dd>
+
+                                    <dt class="col-sm-3">Max. module interface version supported:</dt>
+                                    <dd class="col-sm-8">{{ versions.interface_current }}</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="float-right mt-4">
+                                <button class="btn btn-outline-primary" id="check_updates" type="button" onclick="check_updates()">Check for updates</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Global settings</div>
+                </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <form id="form_srv_settings">
+                                {{ form.hidden_tag() }}
+                                    <h2>Proxy</h2>
+                                    <div class="mb-4">
+                                        <p>Proxy settings can be used by modules to access external resources.</p>
+                                        <div class="row mb-4">
+                                            <div class="col-6">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            HTTP Proxy
+                                                        </span>
+                                                    </div>
+                                                    <input class="form-control" name="http_proxy" placeholder="HTTP Proxy" value="{{ settings.http_proxy }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            HTTP Proxy
+                                                        </span>
+                                                    </div>
+                                                    <input class="form-control" name="https_proxy" placeholder="HTTPS Proxy" value="{{ settings.http_proxy }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h2 class="mt-4">Behavior</h2>
+                                    <div class="col-12 mb-4">
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <input class="form-check-input" type="checkbox" id="enable_updates_check" name="enable_updates_check" {% if settings.enable_updates_check %}checked{% endif %}>
+                                                <span class="form-check-sign">Enable automatic daily check for updates</span>
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <input class="form-check-input" type="checkbox" id="prevent_post_mod_repush" name="prevent_post_mod_repush" {% if settings.prevent_post_mod_repush %}checked{% endif %}>
+                                                <span class="form-check-sign">Prevent post-init step to register default modules again during boot</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <h2 class="mt-4">Password Policy</h2>
+                                    <p>A password policy change applies to new or updated passwords.</p>
+                                    <div class="row mb-2">
+                                        <div class="col-4">
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        Minimum Password Length
+                                                    </span>
+                                                </div>
+                                                <input class="form-control" name="password_policy_min_length" placeholder="12" type="number" value="{{ settings.password_policy_min_length }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-8">
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        Include Special chars
+                                                    </span>
+                                                </div>
+                                                <input class="form-control" name="password_policy_special_chars" placeholder="Set empty to disable" type="text" value="{{ settings.password_policy_special_chars }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <label class="form-check-label">
+                                                    <input class="form-check-input" type="checkbox" id="password_policy_upper_case" name="password_policy_upper_case" {% if settings.password_policy_upper_case %}checked{% endif %}>
+                                                    <span class="form-check-sign">Must include uppercase char</span>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <label class="form-check-label">
+                                                    <input class="form-check-input" type="checkbox" id="password_policy_lower_case" name="password_policy_lower_case" {% if settings.password_policy_lower_case %}checked{% endif %}>
+                                                    <span class="form-check-sign">Must include lowercase char</span>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <label class="form-check-label">
+                                                    <input class="form-check-input" type="checkbox" id="password_policy_digit" name="password_policy_digit" {% if settings.password_policy_digit %}checked{% endif %}>
+                                                    <span class="form-check-sign">Must include digits</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                            </form>
+                            <div class="float-right mt-4">
+                                <button class="btn btn-outline-primary float-right" id="save_srv_settings" type="button" onclick="update_settings()">Save changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Backups</div>
+                </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <h2>Database</h2>
+                                <p>Initiate a database backup. The backup file is stored on the configured path <code>BACKUP_PATH</code></p>
+                                <div class="float-right mt-4">
+                                    <button class="btn btn-outline-primary" id="init_db_backup" type="button" onclick="init_db_backup()">Backup database</button>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal " tabindex="-1" role="dialog" id="modal_updates" data-backdrop="true">
+    <div class="modal-xl modal-dialog" role="document">
+        <div class="modal-content" id="modal_updates_content">
+            <div class="modal-header">
+                <h4 class="modal-title mt-2 mr-4">Server Updates</h4>
+                <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+            <div class="modal-body">
+                <div class="container col-md-12">
+                      <div class="row">
+                          <h3>Please wait while we look for updates</h3>
+                      </div>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
+
+<script src="/static/assets/js/iris/common.js"></script>
+<script src="/static/assets/js/iris/manage_srv_settings.js"></script>
+<script>
+
+</script>
+{% endblock javascripts %}

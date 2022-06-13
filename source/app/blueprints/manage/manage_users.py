@@ -20,18 +20,35 @@
 
 # IMPORTS ------------------------------------------------
 import marshmallow
-from flask import Blueprint, request, redirect, url_for
+from flask import Blueprint
+from flask import redirect
 from flask import render_template
+from flask import request
+from flask import url_for
 from flask_wtf import FlaskForm
 
 from app import db
-from app.datamgmt.manage.manage_users_db import get_users_list, create_user, update_user, get_user, \
-    get_user_by_username, get_user_details
+from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
+from app.datamgmt.manage.manage_users_db import create_user
+from app.datamgmt.manage.manage_users_db import delete_user
+from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import get_user_by_username
+from app.datamgmt.manage.manage_users_db import get_user_details
+from app.datamgmt.manage.manage_users_db import get_users_list
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted
+from app.datamgmt.manage.manage_users_db import update_user
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
+from app.models import ServerSettings
 from app.schema.marshables import UserSchema
-from app.util import admin_required, login_required, response_error, response_success, api_admin_required, \
-    api_login_required, is_authentication_local
+
+from app.util import admin_required
+from app.util import api_admin_required
+from app.util import api_login_required
+from app.util import is_authentication_local
+from app.util import login_required
+from app.util import response_error
+from app.util import response_success
 
 manage_users_blueprint = Blueprint(
     'manage_users',
@@ -69,8 +86,10 @@ if is_authentication_local():
 
         user = None
         form = AddUserForm()
+        server_settings = get_srv_settings()
+        print(server_settings.password_policy_upper_case)
+        return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
 
-        return render_template("modal_add_user.html", form=form, user=user)
 
 if is_authentication_local():
     @manage_users_blueprint.route('/manage/users/add', methods=['POST'])
@@ -131,7 +150,9 @@ def view_user_modal(cur_id, caseid, url_redir):
     roles = [role.name for role in user.roles]
     form.user_isadmin.data = 'administrator' in roles
 
-    return render_template("modal_add_user.html", form=form, user=user)
+    server_settings = get_srv_settings()
+
+    return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
 
 
 if is_authentication_local():
@@ -204,8 +225,12 @@ if is_authentication_local():
             if not user:
                 return response_error("Invalid user ID")
 
-            db.session.delete(user)
-            db.session.commit()
+            if user.active is True:
+                response_error("Cannot delete active user")
+                track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid)
+                return response_error("Cannot delete active user")
+
+            delete_user(user.id)
 
             track_activity(message="deleted user ID {}".format(cur_id), caseid=caseid)
             return response_success("Deleted user ID {}".format(cur_id))
@@ -216,9 +241,10 @@ if is_authentication_local():
             return response_error("Cannot delete active user")
 
 
+# Unrestricted section - non admin available
 @manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])
 @api_login_required
-def exists_user(cur_id, caseid):
+def exists_user_restricted(cur_id, caseid):
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID")
@@ -234,7 +260,7 @@ def exists_user(cur_id, caseid):
 
 @manage_users_blueprint.route('/manage/users/lookup/login/<string:login>', methods=['GET'])
 @api_login_required
-def lookup_name(login, caseid):
+def lookup_name_restricted(login, caseid):
     user = get_user_by_username(login)
     if not user:
         return response_error("Invalid login")
@@ -246,3 +272,11 @@ def lookup_name(login, caseid):
     }
 
     return response_success(data=output)
+
+
+@manage_users_blueprint.route('/manage/users/restricted/list', methods=['GET'])
+@api_login_required
+def manage_users_list_restricted(caseid):
+    users = get_users_list_restricted()
+
+    return response_success('', data=users)

@@ -17,28 +17,22 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-from typing import List, Dict, Union
+from typing import List
 
 from app import db
-from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
+from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.models import Client
 from app.schema.marshables import CustomerSchema
 
-client_schema = CustomerSchema()
 
-
-def get_client_list(is_api: bool = False) -> Union[List[Dict], List[Client]]:
+def get_client_list() -> List[Client]:
     client_list = Client.query.with_entities(
-        Client.name,
-        Client.client_id
+        Client.name.label('customer_name'),
+        Client.client_id.label('customer_id')
     ).all()
 
-    if is_api is False:
-        output = [c._asdict() for c in client_list]
-    else:
-        output = client_list
+    output = [c._asdict() for c in client_list]
 
     return output
 
@@ -48,12 +42,21 @@ def get_client(client_id: int) -> Client:
     return client
 
 
-def create_client(client_name: str) -> Client:
-    client_data = {
-        "customer_name": client_name
-    }
+def get_client_api(client_id: str) -> Client:
+    client = Client.query.with_entities(
+        Client.name.label('customer_name'),
+        Client.client_id.label('customer_id')
+    ).filter(Client.client_id == client_id).first()
 
-    client = client_schema.load(client_data)
+    output = client._asdict()
+
+    return output
+
+
+def create_client(data) -> Client:
+
+    client_schema = CustomerSchema()
+    client = client_schema.load(data)
 
     db.session.add(client)
     db.session.commit()
@@ -61,25 +64,15 @@ def create_client(client_name: str) -> Client:
     return client
 
 
-def update_client(client_id: int, client_name: str) -> Client:
+def update_client(client_id: int, data) -> Client:
     # TODO: Possible reuse somewhere else ...
     client = get_client(client_id)
 
     if not client:
         raise ElementNotFoundException('No Customer found with this uuid.')
 
-    invariant_properties = ['client_id']
-    properties = list(filter(lambda x: x not in invariant_properties, Client.__table__.columns.keys()))
-
-    updated_client_data = {
-        "customer_name": client_name
-    }
-
-    updated_client = client_schema.load(updated_client_data)
-
-    for key in properties:
-        if getattr(client, key) != getattr(updated_client, key):
-            setattr(client, key, getattr(updated_client, key))
+    client_schema = CustomerSchema()
+    client_schema.load(data, instance=client)
 
     db.session.commit()
 

@@ -20,19 +20,30 @@
 
 # IMPORTS ------------------------------------------------
 import secrets
+import uuid
 
-from app import db, app
 from flask_login import UserMixin
-
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, text, \
-    LargeBinary, DateTime, Sequence, or_, BigInteger, TIMESTAMP
-from sqlalchemy.dialects.postgresql import UUID, JSONB, JSON
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-
+from sqlalchemy import BigInteger
+from sqlalchemy import Boolean
+from sqlalchemy import Column
+from sqlalchemy import DateTime
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+from sqlalchemy import LargeBinary
+from sqlalchemy import Sequence
+from sqlalchemy import String
+from sqlalchemy import TIMESTAMP
+from sqlalchemy import Text
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, backref
+from sqlalchemy import or_
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
 
+from app import app
+from app import db
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -47,6 +58,18 @@ def create_safe(session, model, **kwargs):
         session.add(instance)
         session.commit()
         return True
+
+
+def get_by_value_or_create(session, model, fieldname, **kwargs):
+    select_value = {fieldname: kwargs.get(fieldname)}
+    instance = session.query(model).filter_by(**select_value).first()
+    if instance:
+        return instance
+    else:
+        instance = model(**kwargs)
+        session.add(instance)
+        session.commit()
+        return instance
 
 
 def get_or_create(session, model, **kwargs):
@@ -66,9 +89,7 @@ class Client(db.Model):
 
     client_id = Column(Integer, primary_key=True)
     name = Column(String(2048), unique=True)
-
-    def __init__(self, name):
-        self.name = name
+    custom_attributes = Column(JSON)
 
 
 class AssetsType(db.Model):
@@ -77,6 +98,8 @@ class AssetsType(db.Model):
     asset_id = Column(Integer, primary_key=True)
     asset_name = Column(String(155))
     asset_description = Column(String(255))
+    asset_icon_not_compromised = Column(String(255))
+    asset_icon_compromised = Column(String(255))
 
 
 class CaseAssets(db.Model):
@@ -96,6 +119,7 @@ class CaseAssets(db.Model):
     date_update = Column(DateTime)
     user_id = Column(ForeignKey('user.id'))
     analysis_status_id = Column(ForeignKey('analysis_status.id'))
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user = relationship('User')
@@ -120,6 +144,19 @@ class CaseEventsAssets(db.Model):
 
     event = relationship('CasesEvent')
     asset = relationship('CaseAssets')
+    case = relationship('Cases')
+
+
+class CaseEventsIoc(db.Model):
+    __tablename__ = 'case_events_ioc'
+
+    id = Column(Integer, primary_key=True)
+    event_id = Column(ForeignKey('cases_events.event_id'))
+    ioc_id = Column(ForeignKey('ioc.ioc_id'))
+    case_id = Column(ForeignKey('cases.case_id'))
+
+    event = relationship('CasesEvent')
+    ioc = relationship('Ioc')
     case = relationship('Cases')
 
 
@@ -175,87 +212,6 @@ class CaseGraphLinks(db.Model):
 
     case = relationship('Cases')
 
-
-class FileBehavior(db.Model):
-    __tablename__ = 'file_behaviors'
-
-    id = Column(UUID, primary_key=True)
-    behaviors = Column(String(256), unique=True)
-
-
-class FileContentHash(db.Model):
-    __tablename__ = 'file_content_hash'
-
-    content_hash = Column(UUID, primary_key=True)
-    vt_url = Column(String(512))
-    vt_score = Column(Numeric)
-    comment = Column(String(2048))
-    flag = Column(String(256))
-    seen_count = Column(Integer)
-    last_update = Column(Date)
-    sha256 = Column(String(128))
-    misp = Column(Text)
-
-
-class FileEdna(db.Model):
-    __tablename__ = 'file_edna'
-
-    id = Column(UUID, primary_key=True)
-    edna = Column(Text, unique=True)
-
-
-class FileImphash(db.Model):
-    __tablename__ = 'file_imphash'
-
-    id = Column(UUID, primary_key=True)
-    imphash = Column(String(256), unique=True)
-
-
-class FileImport(db.Model):
-    __tablename__ = 'file_imports'
-
-    id = Column(UUID, primary_key=True)
-    imports = Column(Integer, unique=True)
-
-
-class FileName(db.Model):
-    __tablename__ = 'file_name'
-
-    fn_hash = Column(UUID, primary_key=True)
-    filename = Column(String(256))
-
-
-class FileSection(db.Model):
-    __tablename__ = 'file_sections'
-
-    id = Column(UUID, primary_key=True)
-    sections = Column(String(512), unique=True)
-
-
-class PathName(db.Model):
-    __tablename__ = 'path_name'
-
-    path_hash = Column(UUID, primary_key=True)
-    path = Column(String(1024))
-
-"""
-class TemplateGroup(db.Model):
-    __tablename__ = 'template_group'
-
-    group_id = Column(Integer, primary_key=True, server_default=text("nextval('template_group_group_id_seq'::regclass)"))
-    name = Column(String(256), unique=True)
-    description = Column(String(2048))
-    author = Column(String(256))
-
-
-class TemplateSne(db.Model):
-    __tablename__ = 'template_sne'
-
-    template_id = Column(Integer, primary_key=True, server_default=text("nextval('template_template_id_seq'::regclass)"))
-    template_name = Column(String(256), unique=True)
-    template_desc = Column(String(2048))
-    registration_date = Column(Date)
-"""
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -317,6 +273,7 @@ class User(UserMixin, db.Model):
     active = db.Column(db.Boolean())
     api_key = db.Column(db.Text(), unique=True)
     external_id = db.Column(db.Text, unique=True)
+    in_dark_mode = db.Column(db.Boolean())
 
     roles = db.relationship('Role', secondary='user_roles')
 
@@ -362,18 +319,6 @@ class User(UserMixin, db.Model):
         return False
 
 
-class Fullpath(db.Model):
-    __tablename__ = 'fullpath'
-
-    full_path_hash = Column(UUID, primary_key=True)
-    full_path = Column(String(2048))
-    path_hash = Column(ForeignKey('path_name.path_hash'))
-    fn_hash = Column(ForeignKey('file_name.fn_hash'))
-
-    file_name = relationship('FileName')
-    path_name = relationship('PathName')
-
-
 class Tlp(db.Model):
     __tablename__ = 'tlp'
 
@@ -393,10 +338,59 @@ class Ioc(db.Model):
     user_id = Column(ForeignKey('user.id'))
     ioc_misp = Column(Text)
     ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
+    custom_attributes = Column(JSON)
 
     user = relationship('User')
     tlp = relationship('Tlp')
     ioc_type = relationship('IocType')
+
+
+class CustomAttribute(db.Model):
+    __tablename__ = 'custom_attribute'
+
+    attribute_id = Column(Integer, primary_key=True)
+    attribute_display_name = Column(Text)
+    attribute_description = Column(Text)
+    attribute_for = Column(Text)
+    attribute_content = Column(JSON)
+
+
+class DataStorePath(db.Model):
+    __tablename__ = 'data_store_path'
+
+    path_id = Column(BigInteger, primary_key=True)
+    path_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    path_name = Column(Text, nullable=False)
+    path_parent_id = Column(BigInteger)
+    path_is_root = Column(Boolean)
+    path_case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    case = relationship('Cases')
+
+
+class DataStoreFile(db.Model):
+    __tablename__ = 'data_store_file'
+
+    file_id = Column(BigInteger, primary_key=True)
+    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    file_original_name = Column(Text, nullable=False)
+    file_local_name = Column(Text, nullable=False)
+    file_description = Column(Text)
+    file_date_added = Column(DateTime)
+    file_tags = Column(Text)
+    file_size = Column(BigInteger)
+    file_is_ioc = Column(Boolean)
+    file_is_evidence = Column(Boolean)
+    file_password = Column(Text)
+    file_parent_id = Column(ForeignKey('data_store_path.path_id'), nullable=False)
+    file_sha256 = Column(Text)
+    added_by_user_id = Column(ForeignKey('user.id'), nullable=False)
+    modification_history = Column(JSON)
+    file_case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    case = relationship('Cases')
+    user = relationship('User')
+    data_parent = relationship('DataStorePath')
 
 
 class IocType(db.Model):
@@ -430,45 +424,6 @@ class IocAssetLink(db.Model):
     asset = relationship('CaseAssets')
 
 
-class HashLink(db.Model):
-    __tablename__ = 'hash_link'
-
-    link_key = Column(UUID, primary_key=True)
-    content_hash = Column(ForeignKey('file_content_hash.content_hash'))
-    fn_hash = Column(ForeignKey('file_name.fn_hash'))
-    path_hash = Column(ForeignKey('path_name.path_hash'))
-    seen_count = Column(Integer)
-    edna_id = Column(ForeignKey('file_edna.id'))
-    imphash_id = Column(ForeignKey('file_imphash.id'))
-    behaviors_id = Column(ForeignKey('file_behaviors.id'))
-    sections_id = Column(ForeignKey('file_sections.id'))
-    imports_id = Column(ForeignKey('file_imports.id'))
-
-    behaviors = relationship('FileBehavior')
-    file_content_hash = relationship('FileContentHash')
-    edna = relationship('FileEdna')
-    file_name = relationship('FileName')
-    imphash = relationship('FileImphash')
-    imports = relationship('FileImport')
-    path_name = relationship('PathName')
-    sections = relationship('FileSection')
-
-
-class CasesDatum(db.Model):
-    __tablename__ = 'cases_data'
-    __table_args__ = (
-        UniqueConstraint('case_id', 'link_key'),
-        Index('idx_invest_data', 'id', 'case_id', 'link_key', unique=True)
-    )
-
-    id = Column(Integer, primary_key=True)
-    case_id = Column(ForeignKey('cases.case_id'), nullable=False, )
-    link_key = Column(ForeignKey('hash_link.link_key'))
-
-    case = relationship('Cases', backref=backref("CasesDatum", cascade="all,delete,delete-orphan"))
-    hash_link = relationship('HashLink')
-
-
 class OsType(db.Model):
     __tablename__ = 'os_type'
 
@@ -498,6 +453,7 @@ class Notes(db.Model):
     note_creationdate = Column(DateTime)
     note_lastupdate = Column(DateTime)
     note_case_id = Column(ForeignKey('cases.case_id'))
+    custom_attributes = Column(JSON)
 
     user = relationship('User')
     case = relationship('Cases')
@@ -547,12 +503,22 @@ class CaseReceivedFile(db.Model):
     date_added = Column(DateTime)
     file_hash = Column(String(65))
     file_description = Column(Text)
-    file_size = Column(Integer)
+    file_size = Column(BigInteger)
     case_id = Column(ForeignKey('cases.case_id'))
     user_id = Column(ForeignKey('user.id'))
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user = relationship('User')
+
+
+class TaskStatus(db.Model):
+    __tablename__ = 'task_status'
+
+    id = Column(Integer, primary_key=True)
+    status_name = Column(Text)
+    status_description = Column(Text)
+    status_bscolor = Column(Text)
 
 
 class CaseTasks(db.Model):
@@ -569,14 +535,16 @@ class CaseTasks(db.Model):
     task_userid_close = Column(ForeignKey('user.id'))
     task_userid_update = Column(ForeignKey('user.id'))
     task_assignee_id = Column(ForeignKey('user.id'))
-    task_status = Column(Text)
+    task_status_id = Column(ForeignKey('task_status.id'))
     task_case_id = Column(ForeignKey('cases.case_id'))
+    custom_attributes = Column(JSON)
 
     case = relationship('Cases')
     user_open = relationship('User', foreign_keys=[task_userid_open])
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
     user_assigned = relationship('User', foreign_keys=[task_assignee_id])
+    status = relationship('TaskStatus', foreign_keys=[task_status_id])
 
 
 class GlobalTasks(db.Model):
@@ -593,12 +561,13 @@ class GlobalTasks(db.Model):
     task_userid_close = Column(ForeignKey('user.id'))
     task_userid_update = Column(ForeignKey('user.id'))
     task_assignee_id = Column(ForeignKey('user.id'), nullable=True)
-    task_status = Column(Text)
+    task_status_id = Column(ForeignKey('task_status.id'))
 
     user_open = relationship('User', foreign_keys=[task_userid_open])
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
     user_assigned = relationship('User', foreign_keys=[task_assignee_id])
+    status = relationship('TaskStatus', foreign_keys=[task_status_id])
 
 
 class UserActivity(db.Model):
@@ -610,16 +579,33 @@ class UserActivity(db.Model):
     activity_date = Column(DateTime)
     activity_desc = Column(Text)
     user_input = Column(Boolean)
+    is_from_api = Column(Boolean)
 
     user = relationship('User')
     case = relationship('Cases')
+
+
+class ServerSettings(db.Model):
+    __table_name__ = "server_settings"
+
+    id = Column(Integer, primary_key=True)
+    https_proxy = Column(Text)
+    http_proxy = Column(Text)
+    prevent_post_mod_repush = Column(Boolean)
+    has_updates_available = Column(Boolean)
+    enable_updates_check = Column(Boolean)
+    password_policy_min_length = Column(Integer)
+    password_policy_upper_case = Column(Boolean)
+    password_policy_lower_case = Column(Boolean)
+    password_policy_digit = Column(Boolean)
+    password_policy_special_chars = Column(Text)
 
 
 class IrisModule(db.Model):
     __tablename__ = "iris_module"
 
     id = Column(Integer, primary_key=True)
-    added_by_id = Column(ForeignKey('user.id'), nullable=True)
+    added_by_id = Column(ForeignKey('user.id'), nullable=False)
     module_human_name = Column(Text)
     module_name = Column(Text)
     module_description = Column(Text)
@@ -630,8 +616,34 @@ class IrisModule(db.Model):
     has_pipeline = Column(Boolean)
     pipeline_args = Column(JSON)
     module_config = Column(JSON)
+    module_type = Column(Text)
 
     user = relationship('User')
+
+
+class IrisHook(db.Model):
+    __tablename__ = "iris_hooks"
+
+    id = Column(Integer, primary_key=True)
+    hook_name = Column(Text)
+    hook_description = Column(Text)
+
+
+class IrisModuleHook(db.Model):
+    __tablename__ = "iris_module_hooks"
+
+    id = Column(Integer, primary_key=True)
+    module_id = Column(ForeignKey('iris_module.id'), nullable=False)
+    hook_id = Column(ForeignKey('iris_hooks.id'), nullable=False)
+    is_manual_hook = Column(Boolean)
+    manual_hook_ui_name = Column(Text)
+    retry_on_fail = Column(Boolean)
+    max_retry = Column(Integer)
+    run_asynchronously = Column(Boolean)
+    wait_till_return = Column(Boolean)
+
+    module = relationship('IrisModule')
+    hook = relationship('IrisHook')
 
 
 class IrisReport(db.Model):
@@ -697,3 +709,22 @@ class CeleryTaskMeta(db.Model):
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
 
+
+def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):
+    cat = CustomAttribute.query.filter(
+        CustomAttribute.attribute_display_name == attribute_display_name,
+        CustomAttribute.attribute_description == attribute_description,
+        CustomAttribute.attribute_for == attribute_for
+    ).first()
+
+    if cat:
+        return False
+    else:
+        instance = CustomAttribute()
+        instance.attribute_display_name = attribute_display_name
+        instance.attribute_description = attribute_description
+        instance.attribute_for = attribute_for
+        instance.attribute_content = attribute_content
+        session.add(instance)
+        session.commit()
+        return True
