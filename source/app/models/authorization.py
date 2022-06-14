@@ -80,7 +80,7 @@ class UserCaseAccess(db.Model):
 
 class Role(db.Model):
     __tablename__ = 'roles'
-    id = Column(Integer(), primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True)
 
 
@@ -88,14 +88,14 @@ class Role(db.Model):
 class UserRoles(db.Model):
     __tablename__ = 'user_roles'
     id = Column(Integer(), primary_key=True)
-    user_id = Column(Integer(), ForeignKey('user.id', ondelete='CASCADE'))
-    role_id = Column(Integer(), ForeignKey('roles.id', ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey('user.id', ondelete='CASCADE'))
+    role_id = Column(Integer, ForeignKey('roles.id', ondelete='CASCADE'))
 
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
 
-    id = Column(db.Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     user = Column(String(64), unique=True)
     name = Column(String(64), unique=False)
     email = Column(String(120), unique=True)
@@ -154,6 +154,6 @@ class User(UserMixin, db.Model):
 # mapping tables
 UserOrganisation = db.Table(
     'user_organisation', db.Model.metadata,
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('org_id', db.Integer, db.ForeignKey('organisations.org_id'))
+    Column('user_id', BigInteger, db.ForeignKey('user.id')),
+    Column('org_id', BigInteger, db.ForeignKey('organisations.org_id'))
 )
