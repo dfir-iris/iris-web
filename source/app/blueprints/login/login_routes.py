@@ -36,7 +36,7 @@ from app.datamgmt.case.case_db import case_exists
 from app.forms import LoginForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.models.models import User
+from app.models.authorization import User
 
 login_blueprint = Blueprint(
     'login',

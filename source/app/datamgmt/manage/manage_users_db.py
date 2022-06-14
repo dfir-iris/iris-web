@@ -20,9 +20,9 @@
 
 from app import bc
 from app import db
-from app.models import Role
-from app.models import User
-from app.models import UserRoles
+from app.models.authorization import Role
+from app.models.authorization import User
+from app.models.authorization import UserRoles
 
 
 def get_user(user_id, id_key: str = 'id'):

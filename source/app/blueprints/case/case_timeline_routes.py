@@ -63,7 +63,7 @@ from app.models.models import CaseEventsIoc
 from app.models.models import EventCategory
 from app.models.models import Ioc
 from app.models.models import IocLink
-from app.models.models import User
+from app.models.authorization import User
 from app.schema.marshables import EventSchema
 from app.util import add_obj_history_entry
 from app.util import api_login_required

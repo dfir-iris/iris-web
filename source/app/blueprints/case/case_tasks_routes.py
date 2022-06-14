@@ -43,7 +43,7 @@ from app.forms import CaseTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import CaseTasks
-from app.models.models import User
+from app.models.authorization import User
 from app.schema.marshables import CaseTaskSchema
 from app.util import api_login_required
 from app.util import login_required

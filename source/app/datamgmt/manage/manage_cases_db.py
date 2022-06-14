@@ -40,7 +40,7 @@ from app.models import IocLink
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
-from app.models import User
+from app.models.authorization import User
 from app.models import UserActivity
 
 

@@ -60,7 +60,7 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models import User
+from app.models.authorization import User
 from app.util import file_sha256sum
 from app.util import stream_sha256sum
 

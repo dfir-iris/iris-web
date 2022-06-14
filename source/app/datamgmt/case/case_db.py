@@ -27,7 +27,7 @@ from app.models.models import CaseTemplateReport
 from app.models.models import Client
 from app.models.models import Languages
 from app.models.models import ReportType
-from app.models.models import User
+from app.models.authorization import User
 
 
 def get_case_summary(caseid):

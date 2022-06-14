@@ -26,7 +26,7 @@ from app.datamgmt.states import update_notes_state
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
-from app.models import User
+from app.models.authorization import User
 
 
 def get_note(note_id, caseid=None):

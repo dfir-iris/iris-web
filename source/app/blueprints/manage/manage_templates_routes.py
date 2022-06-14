@@ -38,7 +38,7 @@ from app.forms import AddReportTemplateForm
 from app.models.models import CaseTemplateReport
 from app.models.models import Languages
 from app.models.models import ReportType
-from app.models.models import User
+from app.models.authorization import User
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import response_error

@@ -42,7 +42,7 @@ from app.models import NotesGroup
 from app.models import NotesGroupLink
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models import User
+from app.models.authorization import User
 
 
 def export_case_json(case_id):

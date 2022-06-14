@@ -52,7 +52,7 @@ from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
 from app.blueprints.reports.reports_route import reports_blueprint
 from app.blueprints.search.search_routes import search_blueprint
-from app.models.models import User
+from app.models.authorization import User
 from app.post_init import run_post_init
 
 app.register_blueprint(dashboard_blueprint)

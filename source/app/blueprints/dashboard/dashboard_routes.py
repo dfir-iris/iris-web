@@ -44,7 +44,7 @@ from app.models.cases import Cases
 from app.models.models import CaseTasks
 from app.models.models import GlobalTasks
 from app.models.models import TaskStatus
-from app.models.models import User
+from app.models.authorization import User
 from app.models.models import UserActivity
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import GlobalTasksSchema
