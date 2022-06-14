@@ -66,6 +66,18 @@ class GroupCaseAccess(db.Model):
     case = relationship('Case')
 
 
+class UserCaseAccess(db.Model):
+    __tablename__ = "user_case_access"
+
+    id = Column(BigInteger, primary_key=True)
+    user_id = Column(BigInteger, ForeignKey('users.user_id'), nullable=False)
+    case_id = Column(BigInteger, ForeignKey('cases.case_id'), nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    user = relationship('User')
+    case = relationship('Case')
+
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = Column(Integer(), primary_key=True)
