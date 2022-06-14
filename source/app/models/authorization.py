@@ -125,6 +125,17 @@ class UserOrganisation(db.Model):
     org = relationship('Organisation')
 
 
+class UserGroup(db.Model):
+    __tablename__ = "user_group"
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
+    group_id = Column(BigInteger, ForeignKey('groups.group_id'), nullable=False)
+
+    user = relationship('User')
+    group = relationship('Group')
+
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = Column(Integer, primary_key=True)

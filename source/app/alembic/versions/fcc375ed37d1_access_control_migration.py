@@ -13,6 +13,9 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.alembic.alembic_utils import _has_table
 
 # revision identifiers, used by Alembic.
+from app.iris_engine.access_control.utils import ac_get_mask_analyst
+from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
+
 revision = 'fcc375ed37d1'
 down_revision = '7cc588444b79'
 branch_labels = None
@@ -81,20 +84,34 @@ def upgrade():
                         keep_existing=True
                         )
 
+    if not _has_table('user_group'):
+        op.create_table('user_group',
+                        sa.Column('id', sa.BigInteger(), primary_key=True, nullable=False),
+                        sa.Column('user_id', sa.BigInteger(), sa.ForeignKey('user.id'), nullable=False),
+                        sa.Column('group_id', sa.BigInteger(), sa.ForeignKey('groups.group_id'), nullable=False),
+                        keep_existing=True
+                        )
+
+    # Create the groups if they don't exist
+    conn = op.get_bind()
+    res = conn.execute(f"select id from groups where group_name == 'Administrators';")
+    if res.rowcount() != 0:
+        conn.execute(f"insert into groups (group_name, group_description, group_permissions) "
+                     f"values ('Administrators', 'Administrators', '{ac_get_mask_full_permissions()}');")
+
+    res = conn.execute(f"select id from groups where group_name == 'Analysts';")
+    if res.rowcount() != 0:
+        conn.execute(f"insert into groups (group_name, group_description, group_permissions) "
+                     f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}');")
+
     # Migrate the users to the new access control system
     conn = op.get_bind()
-    res = conn.execute(f"select id from user where task_status = '{update}';")
-    results = res.fetchall()
-    res = conn.execute(f"select id from task_status where status_name = '{update}';")
-    e_info = res.fetchall()
+    res = conn.execute(f"select id from user;")
+    results_users = res.fetchall()
 
-    if e_info:
-        status_id = e_info[0][0]
-
-        for res in results:
-            conn.execute(t_tasks.update().where(t_tasks.c.id == res[0]).values(
-                task_status_id=status_id
-            ))
+    for user_id in results_users:
+        user_id = user_id[0]
+        conn.execute(f"insert into user_group")
 
     pass
 
