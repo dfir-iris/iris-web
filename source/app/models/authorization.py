@@ -44,6 +44,28 @@ class OrganisationCaseAccess(db.Model):
     case = relationship('Case')
 
 
+class Group(db.Model):
+    __tablename__ = 'groups'
+
+    group_id = Column(BigInteger, primary_key=True)
+    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    group_name = Column(Text, nullable=False, unique=True)
+    group_description = Column(Text)
+    group_permissions = Column(Text)
+
+
+class GroupCaseAccess(db.Model):
+    __tablename__ = "group_case_access"
+
+    id = Column(BigInteger, primary_key=True)
+    group_id = Column(BigInteger, ForeignKey('groups.group_id'), nullable=False)
+    case_id = Column(BigInteger, ForeignKey('cases.case_id'), nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    group = relationship('Group')
+    case = relationship('Case')
+
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = Column(Integer(), primary_key=True)
