@@ -104,3 +104,10 @@ class User(UserMixin, db.Model):
             return True
         return False
 
+
+# mapping tables
+UserOrganisation = db.Table(
+    'user_organisation', db.Model.metadata,
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('org_id', db.Integer, db.ForeignKey('organisations.org_id'))
+)
