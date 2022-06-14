@@ -34,6 +34,8 @@ from app import bc
 from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.iris_engine.access_control.utils import ac_get_mask_analyst
+from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
@@ -451,7 +453,10 @@ def create_safe_auth_model():
                 org_sector="", org_type="")
 
     create_safe(db.session, Group, group_name="Administrators", group_description="Administrators",
-                group_permissions="0x1ffff")
+                group_permissions=ac_get_mask_full_permissions())
+
+    create_safe(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
+                group_permissions=ac_get_mask_analyst())
 
 
 def create_safe_admin():

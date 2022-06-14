@@ -105,13 +105,24 @@ class GroupCaseAccess(db.Model):
 class UserCaseAccess(db.Model):
     __tablename__ = "user_case_access"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, nullable=False)
     user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
     case_id = Column(BigInteger, ForeignKey('cases.case_id'), nullable=False)
     access_level = Column(BigInteger, nullable=False)
 
     user = relationship('User')
     case = relationship('Cases')
+
+
+class UserOrganisation(db.Model):
+    __tablename__ = "user_organisation"
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
+    org_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False)
+
+    user = relationship('User')
+    org = relationship('Organisation')
 
 
 class Role(db.Model):
@@ -185,11 +196,3 @@ class User(UserMixin, db.Model):
         if "administrator" in roles:
             return True
         return False
-
-
-# mapping tables
-UserOrganisation = db.Table(
-    'user_organisation', db.Model.metadata,
-    Column('user_id', BigInteger, db.ForeignKey('user.id')),
-    Column('org_id', BigInteger, db.ForeignKey('organisations.org_id'))
-)
