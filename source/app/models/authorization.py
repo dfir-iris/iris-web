@@ -1,3 +1,5 @@
+import enum
+
 import uuid
 
 import secrets
@@ -15,6 +17,40 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app import db
+
+
+class AccessLevels(enum.Enum):
+    read_data = 0x2
+    write_data = 0x4
+    delete_data = 0x8
+
+
+class Permissions(enum.Enum):
+    manage_case = 0x1
+
+    delete_case_data = 0x2
+    write_case_data = 0x4
+    read_case_data = 0x8
+
+    manage_users = 0x10
+    read_users = 0x20
+
+    manage_customers = 0x40
+    read_customers = 0x80
+
+    manage_case_objects = 0x100
+    read_case_objects = 0x200
+
+    manage_modules = 0x400
+    read_modules = 0x800
+
+    manage_custom_attributes = 0x1000
+    read_custom_attributes = 0x2000
+
+    manage_templates = 0x4000
+
+    manage_server_settings = 0x8000
+    read_server_settings = 0x10000
 
 
 class Organisation(db.Model):
