@@ -37,6 +37,8 @@ from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
+from app.models.authorization import Group
+from app.models.authorization import Organisation
 from app.models.cases import Cases
 from app.models.cases import Client
 from app.models.models import AnalysisStatus
@@ -121,6 +123,9 @@ def run_post_init(development=False):
 
         log.info("Creating base server settings")
         create_safe_server_settings()
+
+        log.info("Creating initial authorisation model")
+        create_safe_auth_model()
 
         log.info("Creating first administrative user")
         admin = create_safe_admin()
@@ -437,6 +442,16 @@ def create_safe_client():
                            name="IrisInitialClient")
 
     return client
+
+
+def create_safe_auth_model():
+    create_safe(db.session, Organisation, org_name="Default Organisation",
+                org_description="Default Organisation", org_url="", org_logo="",
+                org_email="", org_nationality="",
+                org_sector="", org_type="")
+
+    create_safe(db.session, Group, group_name="Administrators", group_description="Administrators",
+                group_permissions="0x1ffff")
 
 
 def create_safe_admin():
