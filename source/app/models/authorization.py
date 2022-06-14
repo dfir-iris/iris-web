@@ -32,6 +32,18 @@ class Organisation(db.Model):
     org_type = Column(Text)
 
 
+class OrganisationCaseAccess(db.Model):
+    __tablename__ = "organisation_case_access"
+
+    id = Column(BigInteger, primary_key=True)
+    org_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False)
+    case_id = Column(BigInteger, ForeignKey('cases.case_id'), nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    org = relationship('Organisation')
+    case = relationship('Case')
+
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = Column(Integer(), primary_key=True)
