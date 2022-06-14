@@ -41,7 +41,7 @@ class OrganisationCaseAccess(db.Model):
     access_level = Column(BigInteger, nullable=False)
 
     org = relationship('Organisation')
-    case = relationship('Case')
+    case = relationship('Cases')
 
 
 class Group(db.Model):
@@ -63,19 +63,19 @@ class GroupCaseAccess(db.Model):
     access_level = Column(BigInteger, nullable=False)
 
     group = relationship('Group')
-    case = relationship('Case')
+    case = relationship('Cases')
 
 
 class UserCaseAccess(db.Model):
     __tablename__ = "user_case_access"
 
     id = Column(BigInteger, primary_key=True)
-    user_id = Column(BigInteger, ForeignKey('users.user_id'), nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
     case_id = Column(BigInteger, ForeignKey('cases.case_id'), nullable=False)
     access_level = Column(BigInteger, nullable=False)
 
     user = relationship('User')
-    case = relationship('Case')
+    case = relationship('Cases')
 
 
 class Role(db.Model):
