@@ -1,7 +1,7 @@
 
 function add_user() {
     url = 'users/add/modal' + case_param();
-    $('#modal_access_control_content').load(url, function (response, status, xhr) {
+    $('#modal_access_control').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
@@ -101,7 +101,7 @@ function refresh_users(do_notify) {
 /* Fetch the details of an user and allow modification */
 function user_detail(user_id) {
     url = 'users/' + user_id + '/modal' + case_param();
-    $('#modal_access_control_content').load(url, function (response, status, xhr) {
+    $('#modal_access_control').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
