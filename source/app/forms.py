@@ -94,6 +94,11 @@ class AddUserForm(FlaskForm):
     user_isadmin = BooleanField(u'Is admin', default=False)
 
 
+class AddGroupForm(FlaskForm):
+    group_name = StringField(u'Group name', validators=[DataRequired()])
+    group_description = StringField(u'Group description', validators=[DataRequired()])
+
+
 class ModalAddCaseAssetForm(FlaskForm):
     asset_id = SelectField(u'Asset type', validators=[DataRequired()])
 

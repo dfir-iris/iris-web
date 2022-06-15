@@ -40,3 +40,4 @@ def manage_ac_index(caseid, url_redir):
     form = FlaskForm()
 
     return render_template("manage_access-control.html", form=form)
+

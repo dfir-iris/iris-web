@@ -24,8 +24,10 @@ from werkzeug.utils import redirect
 
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
+from app.forms import AddGroupForm
 from app.util import admin_required
 from app.util import api_admin_required
+from app.util import response_error
 from app.util import response_success
 
 manage_groups_blueprint = Blueprint(
@@ -41,3 +43,25 @@ def manage_ac_index(caseid):
     groups = get_groups_list_hr_perms()
 
     return response_success('', data=groups)
+
+
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/modal', methods=['GET'])
+@admin_required
+def view_user_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_users.add_user', cid=caseid))
+
+    form = AddGroupForm()
+    group = get_group(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    form.group_name.render_kw = {'value': group.name}
+    form.user_email.render_kw = {'value': user.email}
+
+    roles = [role.name for role in user.roles]
+    form.user_isadmin.data = 'administrator' in roles
+
+    server_settings = get_srv_settings()
+
+    return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)

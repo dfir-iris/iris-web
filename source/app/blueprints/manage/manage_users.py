@@ -121,7 +121,7 @@ def view_user(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@admin_required
 def view_user_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
