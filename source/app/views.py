@@ -35,6 +35,7 @@ from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 from app.blueprints.login.login_routes import login_blueprint
+from app.blueprints.manage.manage_access_control import manage_ac_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
@@ -73,6 +74,7 @@ app.register_blueprint(manage_objects_blueprint)
 app.register_blueprint(manage_tlp_type_blueprint)
 app.register_blueprint(manage_task_status_blueprint)
 app.register_blueprint(manage_attributes_blueprint)
+app.register_blueprint(manage_ac_blueprint)
 
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
