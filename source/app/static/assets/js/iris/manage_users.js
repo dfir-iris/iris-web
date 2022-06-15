@@ -1,7 +1,7 @@
 
 function add_user() {
     url = 'users/add/modal' + case_param();
-    $('#modal_add_user_content').load(url, function (response, status, xhr) {
+    $('#modal_access_control_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
@@ -16,14 +16,14 @@ function add_user() {
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_users();
-                    $('#modal_add_user').modal('hide');
+                    $('#modal_access_control').modal('hide');
                 }
             });
 
             return false;
         })
     });
-    $('#modal_add_user').modal({ show: true });
+    $('#modal_access_control').modal({ show: true });
 }
 
 $('#users_table').dataTable( {
@@ -101,7 +101,7 @@ function refresh_users(do_notify) {
 /* Fetch the details of an user and allow modification */
 function user_detail(user_id) {
     url = 'users/' + user_id + '/modal' + case_param();
-    $('#modal_add_user_content').load(url, function (response, status, xhr) {
+    $('#modal_access_control_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
@@ -115,7 +115,7 @@ function user_detail(user_id) {
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_users();
-                    $('#modal_add_user').modal('hide');
+                    $('#modal_access_control').modal('hide');
                 }
             });
 
@@ -124,7 +124,7 @@ function user_detail(user_id) {
 
 
     });
-    $('#modal_add_user').modal({ show: true });
+    $('#modal_access_control').modal({ show: true });
 }
 
 function delete_user(id) {
@@ -145,7 +145,7 @@ function delete_user(id) {
         .done((data) => {
             if(notify_auto_api(data)) {
                 refresh_users();
-                $('#modal_add_user').modal('hide');
+                $('#modal_access_control').modal('hide');
             }
         });
       } else {
@@ -159,7 +159,7 @@ function activate_user(id) {
   .done((data) => {
     if(notify_auto_api(data)) {
         refresh_users();
-        $('#modal_add_user').modal('hide');
+        $('#modal_access_control').modal('hide');
     }
   });
 }
@@ -169,7 +169,7 @@ function deactivate_user(id) {
   .done((data) => {
     if(notify_auto_api(data)) {
         refresh_users();
-        $('#modal_add_user').modal('hide');
+        $('#modal_access_control').modal('hide');
     }
   });
 }
