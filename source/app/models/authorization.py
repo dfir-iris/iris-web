@@ -12,6 +12,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
+from sqlalchemy import UniqueConstraint
 from sqlalchemy import or_
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -67,6 +68,8 @@ class Organisation(db.Model):
     org_sector = Column(Text)
     org_type = Column(Text)
 
+    UniqueConstraint('org_name')
+
 
 class OrganisationCaseAccess(db.Model):
     __tablename__ = "organisation_case_access"
@@ -79,6 +82,8 @@ class OrganisationCaseAccess(db.Model):
     org = relationship('Organisation')
     case = relationship('Cases')
 
+    UniqueConstraint('case_id', 'org_id')
+
 
 class Group(db.Model):
     __tablename__ = 'groups'
@@ -88,6 +93,8 @@ class Group(db.Model):
     group_name = Column(Text, nullable=False, unique=True)
     group_description = Column(Text)
     group_permissions = Column(BigInteger, nullable=False)
+
+    UniqueConstraint('group_name')
 
 
 class GroupCaseAccess(db.Model):
@@ -101,6 +108,8 @@ class GroupCaseAccess(db.Model):
     group = relationship('Group')
     case = relationship('Cases')
 
+    UniqueConstraint('case_id', 'group_id')
+
 
 class UserCaseAccess(db.Model):
     __tablename__ = "user_case_access"
@@ -113,6 +122,8 @@ class UserCaseAccess(db.Model):
     user = relationship('User')
     case = relationship('Cases')
 
+    UniqueConstraint('case_id', 'user_id')
+
 
 class UserOrganisation(db.Model):
     __tablename__ = "user_organisation"
@@ -124,6 +135,8 @@ class UserOrganisation(db.Model):
     user = relationship('User')
     org = relationship('Organisation')
 
+    UniqueConstraint('user_id', 'org_id')
+
 
 class UserGroup(db.Model):
     __tablename__ = "user_group"
@@ -134,6 +147,8 @@ class UserGroup(db.Model):
 
     user = relationship('User')
     group = relationship('Group')
+
+    UniqueConstraint('user_id', 'group_id')
 
 
 class Role(db.Model):
