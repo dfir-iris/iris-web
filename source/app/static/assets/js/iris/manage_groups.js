@@ -28,7 +28,7 @@ $('#groups_table').dataTable( {
           "render": function ( data, type, row ) {
                 if (type === 'display') {
                     data = sanitizeHTML(data)
-                    return '<a href="#" onclick="user_detail(\'' + row["user_id"] + '\');">' + data +'</a>';
+                    return '<a href="#" onclick="group_detail(\'' + row["group_id"] + '\');">' + data +'</a>';
                 }
                 return data;
             }
@@ -74,8 +74,8 @@ function refresh_groups(do_notify) {
 
 /* Fetch the details of an user and allow modification */
 function group_detail(group_id) {
-    url = 'group/' + group_id + '/modal' + case_param();
-    $('#modal_add_group_content').load(url, function (response, status, xhr) {
+    url = 'groups/' + group_id + '/modal' + case_param();
+    $('#modal_access_control').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
@@ -89,7 +89,7 @@ function group_detail(group_id) {
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_users();
-                    $('#modal_add_group').modal('hide');
+                    $('#modal_access_control').modal('hide');
                 }
             });
 
@@ -98,7 +98,7 @@ function group_detail(group_id) {
 
 
     });
-    $('#modal_add_group').modal({ show: true });
+    $('#modal_access_control').modal({ show: true });
 }
 
 function delete_group(id) {
@@ -119,7 +119,7 @@ function delete_group(id) {
         .done((data) => {
             if(notify_auto_api(data)) {
                 refresh_users();
-                $('#modal_add_group').modal('hide');
+                $('#modal_access_control').modal('hide');
             }
         });
       } else {
