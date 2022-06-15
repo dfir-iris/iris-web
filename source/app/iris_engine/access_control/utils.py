@@ -22,3 +22,15 @@ def ac_get_mask_analyst():
     am |= Permissions.delete_case_data.value
 
     return am
+
+
+def ac_permission_to_list(permission):
+    """
+    Return a list of permissions from a permission mask
+    """
+    perms = []
+    for perm in Permissions._member_names_:
+        if permission & Permissions[perm].value:
+            perms.append(perm)
+
+    return perms

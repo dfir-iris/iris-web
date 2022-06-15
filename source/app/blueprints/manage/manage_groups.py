@@ -23,6 +23,7 @@ from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
 from app.datamgmt.manage.manage_groups_db import get_groups_list
+from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import response_success
@@ -37,6 +38,6 @@ manage_groups_blueprint = Blueprint(
 @manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
 @api_admin_required
 def manage_ac_index(caseid):
-    groups = get_groups_list()
+    groups = get_groups_list_hr_perms()
 
     return response_success('', data=groups)

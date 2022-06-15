@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from app.iris_engine.access_control.utils import ac_permission_to_list
 from app.models.authorization import Group
 
 
@@ -24,3 +25,13 @@ def get_groups_list():
 
     return groups
 
+
+def get_groups_list_hr_perms():
+    groups = get_groups_list()
+
+    ret = []
+    for group in groups:
+        perms = ac_permission_to_list(group.group_permissions)
+        setattr(group, 'group_permissions_list', perms)
+
+    return groups

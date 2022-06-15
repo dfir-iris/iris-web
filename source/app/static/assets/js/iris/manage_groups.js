@@ -39,9 +39,16 @@ $('#groups_table').dataTable( {
             return data;
           }
         },
-        { "data": "group_permissions",
+        { "data": "group_permissions_list",
           "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') {
+                    tags = "";
+                    for (perm in data) {
+                        perm = sanitizeHTML(data[perm]);
+                        tags += '<span class="badge badge-pill badge-light">' + perm + '</span> ';
+                    }
+                    return tags;
+                }
                 return data;
               }
         }
