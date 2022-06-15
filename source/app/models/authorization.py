@@ -58,7 +58,7 @@ class Organisation(db.Model):
     __tablename__ = 'organisations'
 
     org_id = Column(BigInteger, primary_key=True)
-    org_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    org_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4(), nullable=False)
     org_name = Column(Text, nullable=False, unique=True)
     org_description = Column(Text)
     org_url = Column(Text)
@@ -89,7 +89,7 @@ class Group(db.Model):
     __tablename__ = 'groups'
 
     group_id = Column(BigInteger, primary_key=True)
-    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4(), nullable=False)
     group_name = Column(Text, nullable=False, unique=True)
     group_description = Column(Text)
     group_permissions = Column(BigInteger, nullable=False)
