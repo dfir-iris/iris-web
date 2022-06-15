@@ -51,6 +51,14 @@ $('#groups_table').dataTable( {
                 }
                 return data;
               }
+        },
+        { "data": "group_members",
+            "render": function ( data, type, row ) {
+                if (type === 'display') {
+                    return data.length;
+                }
+                return data;
+            }
         }
       ]
     }

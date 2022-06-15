@@ -18,6 +18,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from app.iris_engine.access_control.utils import ac_permission_to_list
 from app.models.authorization import Group
+from app.models.authorization import User
+from app.models.authorization import UserGroup
 
 
 def get_groups_list():
@@ -29,9 +31,22 @@ def get_groups_list():
 def get_groups_list_hr_perms():
     groups = get_groups_list()
 
+    get_membership_list = UserGroup.query.with_entities(
+        UserGroup.group_id,
+        User.user
+    ).join(UserGroup.user).all()
+
+    membership_list = {}
+    for member in get_membership_list:
+        if member.group_id not in membership_list:
+            membership_list[member.group_id] = [member.user]
+        else:
+            membership_list[member.group_id].append(member.user)
+
     ret = []
     for group in groups:
         perms = ac_permission_to_list(group.group_permissions)
         setattr(group, 'group_permissions_list', perms)
+        setattr(group, 'group_members', membership_list.get(group.group_id, []))
 
     return groups
