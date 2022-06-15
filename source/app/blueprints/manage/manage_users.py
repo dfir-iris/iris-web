@@ -57,18 +57,6 @@ manage_users_blueprint = Blueprint(
 )
 
 
-# CONTENT ------------------------------------------------
-@manage_users_blueprint.route('/manage/users', methods=['GET'])
-@admin_required
-def manage_users_index(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('manage_users.manage_users', cid=caseid))
-
-    form = FlaskForm()
-
-    return render_template("manage_users.html", form=form)
-
-
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])
 @api_admin_required
 def manage_users_list(caseid):
