@@ -42,6 +42,7 @@ from app.blueprints.manage.manage_attributes_routes import manage_attributes_blu
 from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.manage.manage_customers_routes import manage_customers_blueprint
 from app.blueprints.manage.manage_event_categories_routes import manage_event_cat_blueprint
+from app.blueprints.manage.manage_groups import manage_groups_blueprint
 from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
 from app.blueprints.manage.manage_modules_routes import manage_modules_blueprint
 from app.blueprints.manage.manage_objects_routes import manage_objects_blueprint
@@ -75,6 +76,7 @@ app.register_blueprint(manage_tlp_type_blueprint)
 app.register_blueprint(manage_task_status_blueprint)
 app.register_blueprint(manage_attributes_blueprint)
 app.register_blueprint(manage_ac_blueprint)
+app.register_blueprint(manage_groups_blueprint)
 
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)

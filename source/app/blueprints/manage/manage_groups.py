@@ -22,7 +22,9 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
+from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.util import admin_required
+from app.util import api_admin_required
 from app.util import response_success
 
 manage_groups_blueprint = Blueprint(
@@ -33,7 +35,7 @@ manage_groups_blueprint = Blueprint(
 
 
 @manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
-@admin_required
+@api_admin_required
 def manage_ac_index(caseid):
     groups = get_groups_list()
 
