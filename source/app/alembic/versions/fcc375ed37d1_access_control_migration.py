@@ -98,20 +98,46 @@ def upgrade():
     if res.rowcount() != 0:
         conn.execute(f"insert into groups (group_name, group_description, group_permissions) "
                      f"values ('Administrators', 'Administrators', '{ac_get_mask_full_permissions()}');")
+        res = conn.execute(f"select id from groups where group_name == 'Administrators';")
+    admin_group_id = res.fetchone()[0]
 
     res = conn.execute(f"select id from groups where group_name == 'Analysts';")
     if res.rowcount() != 0:
         conn.execute(f"insert into groups (group_name, group_description, group_permissions) "
                      f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}');")
+        res = conn.execute(f"select id from groups where group_name == 'Analysts';")
+
+    analyst_group_id = res.fetchone()[0]
+
+    # Create the organizations if they don't exist
+    res = conn.execute(f"select org_id from organisations where org_name == 'Default Org';")
+    if res.rowcount() != 0:
+        conn.execute(f"insert into organizations (org_name, org_description, org_url, org_email, org_logo, "
+                     f"org_type, org_sector, org_nationality) values ('Default Org', 'Default Organisation', '', '', ''"
+                     f"'', '', '');")
+        res = conn.execute(f"select org_id from organisations where org_name == 'Default Org';")
+    default_org_id = res.fetchone()[0]
 
     # Migrate the users to the new access control system
     conn = op.get_bind()
-    res = conn.execute(f"select id from user;")
+
+    # Get all users with their roles
+    res = conn.execute(f"select distinct roles.name, \"user\".id from user_roles INNER JOIN \"roles\" ON "
+                       f"\"roles\".id = user_roles.role_id INNER JOIN \"user\" ON \"user\".id = user_roles.user_id;")
     results_users = res.fetchall()
 
     for user_id in results_users:
-        user_id = user_id[0]
-        conn.execute(f"insert into user_group")
+        role_name = user_id[0]
+        user_id = user_id[1]
+        # Migrate user to groups
+        if role_name == 'administrator':
+            conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {admin_group_id});")
+
+        elif role_name == 'investigator':
+            conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {analyst_group_id});")
+
+        # Add user to default organisation
+        conn.execute(f"insert into user_organisation (user_id, org_id) values ({user_id}, {default_org_id});")
 
     pass
 

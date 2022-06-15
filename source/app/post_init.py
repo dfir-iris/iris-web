@@ -447,7 +447,7 @@ def create_safe_client():
 
 
 def create_safe_auth_model():
-    create_safe(db.session, Organisation, org_name="Default Organisation",
+    create_safe(db.session, Organisation, org_name="Default Org",
                 org_description="Default Organisation", org_url="", org_logo="",
                 org_email="", org_nationality="",
                 org_sector="", org_type="")
