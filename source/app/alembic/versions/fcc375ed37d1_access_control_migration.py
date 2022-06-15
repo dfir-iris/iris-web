@@ -52,17 +52,8 @@ def upgrade():
                         keep_existing=True
                         )
 
-    if not _has_table('organization_case_access'):
-        op.create_table('organization_case_access',
-                        sa.Column('id', sa.BigInteger(), primary_key=True, nullable=False),
-                        sa.Column('org_id', sa.BigInteger(), sa.ForeignKey('organizations.org_id'), nullable=False),
-                        sa.Column('case_id', sa.BigInteger(), sa.ForeignKey('cases.case_id'), nullable=False),
-                        sa.Column('access_level', sa.BigInteger(), nullable=False),
-                        keep_existing=True
-                        )
-
-    if not _has_table('organizations'):
-        op.create_table('organizations',
+    if not _has_table('organisations'):
+        op.create_table('organisations',
                         sa.Column('org_id', sa.BigInteger(), primary_key=True, nullable=False),
                         sa.Column('org_uuid', UUID(as_uuid=True), default=uuid.uuid4, nullable=False),
                         sa.Column('org_name', sa.Text(), nullable=False),
@@ -76,11 +67,20 @@ def upgrade():
                         keep_existing=True
                         )
 
+    if not _has_table('organisation_case_access'):
+        op.create_table('organisation_case_access',
+                        sa.Column('id', sa.BigInteger(), primary_key=True, nullable=False),
+                        sa.Column('org_id', sa.BigInteger(), sa.ForeignKey('organisations.org_id'), nullable=False),
+                        sa.Column('case_id', sa.BigInteger(), sa.ForeignKey('cases.case_id'), nullable=False),
+                        sa.Column('access_level', sa.BigInteger(), nullable=False),
+                        keep_existing=True
+                        )
+
     if not _has_table('user_organisation'):
         op.create_table('user_organisation',
                         sa.Column('id', sa.BigInteger(), primary_key=True, nullable=False),
                         sa.Column('user_id', sa.BigInteger(), sa.ForeignKey('user.id'), nullable=False),
-                        sa.Column('org_id', sa.BigInteger(), sa.ForeignKey('organizations.org_id'), nullable=False),
+                        sa.Column('org_id', sa.BigInteger(), sa.ForeignKey('organisations.org_id'), nullable=False),
                         keep_existing=True
                         )
 
@@ -94,28 +94,28 @@ def upgrade():
 
     # Create the groups if they don't exist
     conn = op.get_bind()
-    res = conn.execute(f"select id from groups where group_name == 'Administrators';")
-    if res.rowcount() != 0:
+    res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
+    if res.rowcount != 0:
         conn.execute(f"insert into groups (group_name, group_description, group_permissions) "
                      f"values ('Administrators', 'Administrators', '{ac_get_mask_full_permissions()}');")
-        res = conn.execute(f"select id from groups where group_name == 'Administrators';")
+        res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
     admin_group_id = res.fetchone()[0]
 
-    res = conn.execute(f"select id from groups where group_name == 'Analysts';")
-    if res.rowcount() != 0:
+    res = conn.execute(f"select group_id from groups where group_name = 'Analysts';")
+    if res.rowcount != 0:
         conn.execute(f"insert into groups (group_name, group_description, group_permissions) "
                      f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}');")
-        res = conn.execute(f"select id from groups where group_name == 'Analysts';")
+        res = conn.execute(f"select group_id from groups where group_name = 'Analysts';")
 
     analyst_group_id = res.fetchone()[0]
 
-    # Create the organizations if they don't exist
+    # Create the organisations if they don't exist
     res = conn.execute(f"select org_id from organisations where org_name == 'Default Org';")
-    if res.rowcount() != 0:
-        conn.execute(f"insert into organizations (org_name, org_description, org_url, org_email, org_logo, "
+    if res.rowcount != 0:
+        conn.execute(f"insert into organisations (org_name, org_description, org_url, org_email, org_logo, "
                      f"org_type, org_sector, org_nationality) values ('Default Org', 'Default Organisation', '', '', ''"
                      f"'', '', '');")
-        res = conn.execute(f"select org_id from organisations where org_name == 'Default Org';")
+        res = conn.execute(f"select org_id from organisations where org_name = 'Default Org';")
     default_org_id = res.fetchone()[0]
 
     # Migrate the users to the new access control system
