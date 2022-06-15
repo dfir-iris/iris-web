@@ -87,7 +87,7 @@ class Group(db.Model):
     group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
     group_name = Column(Text, nullable=False, unique=True)
     group_description = Column(Text)
-    group_permissions = Column(Text)
+    group_permissions = Column(BigInteger, nullable=False)
 
 
 class GroupCaseAccess(db.Model):

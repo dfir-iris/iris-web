@@ -32,6 +32,9 @@ def upgrade():
                         sa.Column('case_id', sa.BigInteger(), sa.ForeignKey('cases.case_id'), nullable=False),
                         keep_existing=True
                         )
+        op.create_foreign_key('fk_user_case_access_user_id', 'user_case_access', 'user', ['user_id'], ['id'])
+        op.create_foreign_key('fk_user_case_access_case_id', 'user_case_access', 'cases', ['case_id'], ['case_id'])
+        op.create_unique_constraint('uq_user_case_access_user_id_case_id', 'user_case_access', ['user_id', 'case_id'])
 
     if not _has_table('group_case_access'):
         op.create_table('group_case_access',
@@ -41,6 +44,11 @@ def upgrade():
                         sa.Column('access_level', sa.BigInteger(), nullable=False),
                         keep_existing=True
                         )
+        op.create_foreign_key('group_case_access_group_id_fkey', 'group_case_access', 'groups',
+                              ['group_id'], ['group_id'])
+        op.create_foreign_key('group_case_access_case_id_fkey', 'group_case_access', 'cases',
+                              ['case_id'], ['case_id'])
+        op.create_unique_constraint('group_case_access_unique', 'group_case_access', ['group_id', 'case_id'])
 
     if not _has_table('groups'):
         op.create_table('groups',
@@ -48,9 +56,10 @@ def upgrade():
                         sa.Column('group_uuid', UUID(as_uuid=True), default=uuid.uuid4, nullable=False),
                         sa.Column('group_name', sa.Text(), nullable=False),
                         sa.Column('group_description', sa.Text(), nullable=False),
-                        sa.Column('group_permissions', sa.Text(), nullable=False),
+                        sa.Column('group_permissions', sa.BigInteger(), nullable=False),
                         keep_existing=True
                         )
+        op.create_unique_constraint('groups_group_name_unique', 'groups', ['group_name'])
 
     if not _has_table('organisations'):
         op.create_table('organisations',
@@ -66,6 +75,7 @@ def upgrade():
                         sa.Column('org_nationality', sa.Text(), nullable=False),
                         keep_existing=True
                         )
+        op.create_unique_constraint('organisation_name_unique', 'organisations', ['org_name'])
 
     if not _has_table('organisation_case_access'):
         op.create_table('organisation_case_access',
@@ -75,6 +85,12 @@ def upgrade():
                         sa.Column('access_level', sa.BigInteger(), nullable=False),
                         keep_existing=True
                         )
+        op.create_foreign_key('organisation_case_access_org_id_fkey', 'organisation_case_access',
+                              'organisations', ['org_id'], ['org_id'])
+        op.create_foreign_key('organisation_case_access_case_id_fkey', 'organisation_case_access', 'cases',
+                              ['case_id'], ['case_id'])
+        op.create_unique_constraint('organisation_case_access_unique', 'organisation_case_access',
+                                    ['org_id', 'case_id'])
 
     if not _has_table('user_organisation'):
         op.create_table('user_organisation',
@@ -83,6 +99,10 @@ def upgrade():
                         sa.Column('org_id', sa.BigInteger(), sa.ForeignKey('organisations.org_id'), nullable=False),
                         keep_existing=True
                         )
+        op.create_foreign_key('user_organisation_user_id_fkey', 'user_organisation', 'user', ['user_id'], ['id'])
+        op.create_foreign_key('user_organisation_org_id_fkey', 'user_organisation', 'organisations',
+                              ['org_id'], ['org_id'])
+        op.create_unique_constraint('user_organisation_unique', 'user_organisation', ['user_id', 'org_id'])
 
     if not _has_table('user_group'):
         op.create_table('user_group',
@@ -91,18 +111,21 @@ def upgrade():
                         sa.Column('group_id', sa.BigInteger(), sa.ForeignKey('groups.group_id'), nullable=False),
                         keep_existing=True
                         )
+        op.create_foreign_key('user_group_user_id_fkey', 'user_group', 'user', ['user_id'], ['id'])
+        op.create_foreign_key('user_group_group_id_fkey', 'user_group', 'groups', ['group_id'], ['group_id'])
+        op.create_unique_constraint('user_group_unique', 'user_group', ['user_id', 'group_id'])
 
     # Create the groups if they don't exist
     conn = op.get_bind()
     res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
-    if res.rowcount != 0:
+    if res.rowcount == 0:
         conn.execute(f"insert into groups (group_name, group_description, group_permissions) "
                      f"values ('Administrators', 'Administrators', '{ac_get_mask_full_permissions()}');")
         res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
     admin_group_id = res.fetchone()[0]
 
     res = conn.execute(f"select group_id from groups where group_name = 'Analysts';")
-    if res.rowcount != 0:
+    if res.rowcount == 0:
         conn.execute(f"insert into groups (group_name, group_description, group_permissions) "
                      f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}');")
         res = conn.execute(f"select group_id from groups where group_name = 'Analysts';")
@@ -110,11 +133,11 @@ def upgrade():
     analyst_group_id = res.fetchone()[0]
 
     # Create the organisations if they don't exist
-    res = conn.execute(f"select org_id from organisations where org_name == 'Default Org';")
-    if res.rowcount != 0:
+    res = conn.execute(f"select org_id from organisations where org_name = 'Default Org';")
+    if res.rowcount == 0:
         conn.execute(f"insert into organisations (org_name, org_description, org_url, org_email, org_logo, "
-                     f"org_type, org_sector, org_nationality) values ('Default Org', 'Default Organisation', '', '', ''"
-                     f"'', '', '');")
+                     f"org_type, org_sector, org_nationality) values ('Default Org', 'Default Organisation', '', '', "
+                     f"'','', '', '');")
         res = conn.execute(f"select org_id from organisations where org_name = 'Default Org';")
     default_org_id = res.fetchone()[0]
 
