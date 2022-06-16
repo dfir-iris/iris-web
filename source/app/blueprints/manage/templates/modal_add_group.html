@@ -65,21 +65,21 @@
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 <script>
-{% if group.group_permissions_list %}
-    $('#group_permissions').val([
-        {% for perm in group.group_permissions_list %} {{ perm[0] }}, {% endfor %}
-    ]);
-    $('#ioc_links').trigger('change');
-
-{% endif %}
-
 var data = [
-    {% for e in group.group_permissions_list %}
+    {% for e in all_perms %}
         {
-            id: {{ e.perm_name }},
-            text: {{ e.perm_value }}
+            id: {{ e.value }},
+            text: "{{ e.name }}"
         },
     {% endfor %}
 ];
 $('#group_permissions').select2({ data: data });
+
+<!--{% if group.group_permissions_list %}-->
+<!--    $('#group_permissions').val([-->
+<!--        {% for perm in group.group_permissions_list %} {{ perm[0] }}, {% endfor %}-->
+<!--    ]);-->
+<!--    $('#ioc_links').trigger('change');-->
+
+<!--{% endif %}-->
 </script>

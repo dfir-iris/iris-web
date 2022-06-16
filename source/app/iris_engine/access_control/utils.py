@@ -37,3 +37,17 @@ def ac_permission_to_list(permission):
             })
 
     return perms
+
+
+def ac_get_all_permissions():
+    """
+    Return a list of all permissions
+    """
+    perms = []
+    for perm in Permissions._member_names_:
+        perms.append({
+            'name': perm,
+            'value': Permissions[perm].value
+        })
+
+    return perms

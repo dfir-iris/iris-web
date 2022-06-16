@@ -27,6 +27,7 @@ from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.forms import AddGroupForm
+from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import response_error
@@ -58,7 +59,9 @@ def view_user_modal(cur_id, caseid, url_redir):
     if not group:
         return response_error("Invalid group ID")
 
+    all_perms = ac_get_all_permissions()
+
     form.group_name.render_kw = {'value': group.group_name}
     form.group_description.render_kw = {'value': group.group_description}
 
-    return render_template("modal_add_group.html", form=form, group=group)
+    return render_template("modal_add_group.html", form=form, group=group, all_perms=all_perms)
