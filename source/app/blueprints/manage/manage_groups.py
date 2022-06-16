@@ -34,6 +34,7 @@ from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
+from app.models.authorization import Group
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import response_error
@@ -71,6 +72,19 @@ def manage_groups_view_modal(cur_id, caseid, url_redir):
     form.group_description.render_kw = {'value': group.group_description}
 
     return render_template("modal_add_group.html", form=form, group=group, all_perms=all_perms)
+
+
+@manage_groups_blueprint.route('/manage/groups/add/modal', methods=['GET'])
+@admin_required
+def manage_groups_add_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
+
+    form = AddGroupForm()
+
+    all_perms = ac_get_all_permissions()
+
+    return render_template("modal_add_group.html", form=form, group=None, all_perms=all_perms)
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])

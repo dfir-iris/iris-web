@@ -7,9 +7,11 @@
                     <li class="nav-item">
                         <a class="nav-link active show" data-toggle="pill" href="#group_details_tab" role="tab" aria-controls="group_details_tab" aria-selected="false">Info</a>
                     </li>
+                    {% if group.group_id %}
                     <li class="nav-item submenu">
                         <a class="nav-link"  data-toggle="pill" href="#group_members_tab" role="tab" aria-controls="group_members_tab" aria-selected="false">Members</a>
                     </li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="row text-right">
@@ -25,6 +27,9 @@
                             <form method="post" action="" id="form_new_group">
                                 <div class="col-md-12 col-lg-12 col-sm-12">
                                     {{ form.hidden_tag() }}
+                                    {% if not group.group_id %}
+                                    <p>Members can be added once the group is created.</p>
+                                    {% endif %}
                                     <div class="form-group">
                                         <label for="group_name" class="mr-4">Group name *
                                         </label>
@@ -64,8 +69,8 @@
                                     <button class="btn btn-dark btn-sm pull-right" onclick="refresh_group_members({{ group.group_id }});">
                                         <span class="menu-title">Refresh</span>
                                     </button>
-                                    <button class="btn btn-dark btn-sm pull-right" onclick="add_members_to_group({{ group.group_id }});">
-                                        <span class="menu-title">Add member</span>
+                                    <button class="btn btn-dark btn-sm pull-right mr-2" onclick="add_members_to_group({{ group.group_id }});">
+                                        <span class="menu-title">Manage</span>
                                     </button>
                                 </div>
                               </div>
@@ -141,6 +146,8 @@ var modal_group_table = $("#group_members_table").DataTable({
         processing: true
 });
 
-modal_group_table.rows.add({{ group.group_members|tojson }});
-modal_group_table.columns.adjust().draw();
+{% if group.group_id %}
+    modal_group_table.rows.add({{ group.group_members|tojson }});
+    modal_group_table.columns.adjust().draw();
+{% endif %}
 </script>
