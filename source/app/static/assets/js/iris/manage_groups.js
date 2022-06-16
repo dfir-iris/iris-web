@@ -81,7 +81,7 @@ function group_detail(group_id) {
              return false;
         }
 
-        $('#submit_new_user').on("click", function () {
+        $('#submit_new_group').on("click", function () {
             clear_api_error();
 
             var data_sent = $('#form_new_group').serializeObject();

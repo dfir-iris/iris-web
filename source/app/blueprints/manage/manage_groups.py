@@ -42,7 +42,7 @@ manage_groups_blueprint = Blueprint(
 
 @manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
 @api_admin_required
-def manage_ac_index(caseid):
+def manage_groups_index(caseid):
     groups = get_groups_list_hr_perms()
 
     return response_success('', data=groups)
@@ -50,9 +50,9 @@ def manage_ac_index(caseid):
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/modal', methods=['GET'])
 @admin_required
-def view_user_modal(cur_id, caseid, url_redir):
+def manage_groups_view_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_users.add_user', cid=caseid))
+        return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
 
     form = AddGroupForm()
     group = get_group_with_members(cur_id)
@@ -65,3 +65,16 @@ def view_user_modal(cur_id, caseid, url_redir):
     form.group_description.render_kw = {'value': group.group_description}
 
     return render_template("modal_add_group.html", form=form, group=group, all_perms=all_perms)
+
+
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])
+@api_admin_required
+def manage_groups_view(cur_id, caseid):
+
+    group = get_group_with_members(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    return response_success('', data=group)
+
+

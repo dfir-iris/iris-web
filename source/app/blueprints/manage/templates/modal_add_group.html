@@ -22,20 +22,20 @@
                 <div class="tab-content">
                     <div class="tab-pane active" id="group_details_tab">
                         <div class="container col-md-12" >
-                            <form method="post" action="" id="form_new_user">
+                            <form method="post" action="" id="form_new_group">
                                 <div class="col-md-12 col-lg-12 col-sm-12">
                                     {{ form.hidden_tag() }}
                                     <div class="form-group">
-                                        <label for="group_name" class="mr-4">Group name
+                                        <label for="group_name" class="mr-4">Group name *
                                         </label>
                                         {{ form.group_name(class='form-control',  autocomplete="off") }}
                                     </div>
                                     <div class="form-group mt-3">
-                                        <label for="group_description" class="placeholder">Description</label>
+                                        <label for="group_description" class="placeholder">Description *</label>
                                         {{ form.group_description(class='form-control',  autocomplete="off") }}
                                     </div>
                                     <div class="form-group" data-select2-id="7">
-                                        <label>Permissions</label>
+                                        <label>Permissions *</label>
                                         <div class="select2-input ml-12" data-select2-id="6">
                                             <select id="group_permissions" name="group_permissions" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="group_permissions" tabindex="-1" aria-hidden="true" style="width: 100%">
                                             </select>
@@ -57,7 +57,26 @@
                         </div>
                     </div>
                     <div class="tab-pane" id="group_members_tab">
-                            Hello
+                        <div class="container col-md-12" >
+                            <div class="col" id="group_member_list">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="assets_table" >
+                                <thead>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User login</th>
+                                      <th>User name</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User login</th>
+                                      <th>User name</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
