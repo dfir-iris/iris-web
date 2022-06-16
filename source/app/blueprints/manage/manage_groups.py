@@ -105,16 +105,16 @@ def manage_groups_members_update(cur_id, caseid):
         return response_error("Invalid group ID")
 
     if not request.is_json:
-        return response_error("Invalid request")
+        return response_error("Invalid request, expecting JSON")
 
     data = request.get_json()
     if not data:
-        return response_error("Invalid request")
+        return response_error("Invalid request, expecting JSON")
 
-    if not isinstance(data, list):
-        return response_error("Invalid request")
+    if not isinstance(data.get('group_members'), list):
+        return response_error("Expecting a list of IDs")
 
-    update_group_members(group, data)
+    update_group_members(group, data.get('group_members'))
 
     return response_success('', data=group)
 

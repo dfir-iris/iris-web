@@ -139,11 +139,14 @@ function add_members_to_group(group_id) {
         $('#save_group_members').on("click", function () {
             clear_api_error();
 
-            var data_sent = $('#form_new_members').serializeObject();
+            var data_sent = Object();
+            data_sent['group_members'] = $('#group_members').val();
+            data_sent['csrf_token'] = $('#csrf_token').val();
+
             post_request_api('groups/' + group_id + '/members/update', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_users();
+                    refresh_group_members();
                     $('#modal_ac_additional').modal('hide');
                 }
             });
