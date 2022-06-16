@@ -111,7 +111,7 @@ def update_group_members(group, members):
     if not group:
         return None
 
-    UserGroup.query.filter(UserGroup.group_id == group.group_id).all()
+    UserGroup.query.filter(UserGroup.group_id == group.group_id).delete()
 
     for uid in set(members):
         user = User.query.filter(User.id == uid).first()
