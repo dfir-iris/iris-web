@@ -27,6 +27,7 @@ from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
+from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
@@ -113,7 +114,7 @@ def manage_groups_members_update(cur_id, caseid):
     if not isinstance(data, list):
         return response_error("Invalid request")
 
-    ac_update_group_members(group, data)
+    update_group_members(group, data)
 
     return response_success('', data=group)
 

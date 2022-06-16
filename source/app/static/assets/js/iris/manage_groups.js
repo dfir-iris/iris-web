@@ -136,7 +136,7 @@ function add_members_to_group(group_id) {
              return false;
         }
 
-        $('#submit_new_group').on("click", function () {
+        $('#save_group_members').on("click", function () {
             clear_api_error();
 
             var data_sent = $('#form_new_members').serializeObject();

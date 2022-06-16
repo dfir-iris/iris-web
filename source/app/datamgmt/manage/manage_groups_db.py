@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from app import db
 from app.iris_engine.access_control.utils import ac_permission_to_list
 from app.models.authorization import Group
 from app.models.authorization import User
@@ -102,5 +103,24 @@ def get_group_with_members(group_id):
     perms = ac_permission_to_list(group.group_permissions)
     setattr(group, 'group_permissions_list', perms)
     setattr(group, 'group_members', membership_list.get(group.group_id, []))
+
+    return group
+
+
+def update_group_members(group, members):
+    if not group:
+        return None
+
+    UserGroup.query.filter(UserGroup.group_id == group.group_id).all()
+
+    for uid in set(members):
+        user = User.query.filter(User.id == uid).first()
+        if user:
+            ug = UserGroup()
+            ug.group_id = group.group_id
+            ug.user_id = user.id
+            db.session.add(ug)
+
+    db.session.commit()
 
     return group
