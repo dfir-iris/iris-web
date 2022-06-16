@@ -3,9 +3,9 @@
         <div class="modal-header">
             <h4 class="modal-title mt-2 mr-4">{% if not group.group_id %}Add Group {% else %} Edit {{ group.group_name }} {% endif %}</h4>
             <div class="row text-center mr-4">
-                    <ul class="nav nav-pills nav-default mr-4" id="pills-tab-custom-attr" role="tablist">
+                <ul class="nav nav-pills nav-default mr-4" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active show" id="pills-home-tab-nobd" data-toggle="pill" href="#group_details_tab" role="tab" aria-controls="pills-home-nobd" aria-selected="false">Info</a>
+                        <a class="nav-link active show" data-toggle="pill" href="#group_details_tab" role="tab" aria-controls="group_details_tab" aria-selected="false">Info</a>
                     </li>
                     <li class="nav-item submenu">
                         <a class="nav-link"  data-toggle="pill" href="#group_members_tab" role="tab" aria-controls="group_members_tab" aria-selected="false">Members</a>
@@ -19,8 +19,8 @@
         </div>
         <div class="modal-body">
             <div role="tabpanel">
-                <div role="tab-content">
-                    <div class="tab-pane" id="group_details_tab">
+                <div class="tab-content">
+                    <div class="tab-pane active" id="group_details_tab">
                         <div class="container col-md-12" >
                             <form method="post" action="" id="form_new_user">
                                 <div class="col-md-12 col-lg-12 col-sm-12">
