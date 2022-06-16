@@ -75,11 +75,12 @@ var data = [
 ];
 $('#group_permissions').select2({ data: data });
 
-<!--{% if group.group_permissions_list %}-->
-<!--    $('#group_permissions').val([-->
-<!--        {% for perm in group.group_permissions_list %} {{ perm[0] }}, {% endfor %}-->
-<!--    ]);-->
-<!--    $('#ioc_links').trigger('change');-->
+{% if group.group_permissions_list %}
 
-<!--{% endif %}-->
+$('#group_permissions').val([
+    {% for perm in group.group_permissions_list %} {{ perm.value }}, {% endfor %}
+]);
+$('#group_permissions').trigger('change');
+
+{% endif %}
 </script>
