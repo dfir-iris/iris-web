@@ -18,6 +18,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from flask import Blueprint
 from flask import render_template
+from flask import request
 from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
@@ -92,3 +93,27 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
     users = get_users_list()
 
     return render_template("modal_add_group_members.html", group=group, users=users)
+
+
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/update', methods=['POST'])
+@api_admin_required
+def manage_groups_members_update(cur_id, caseid):
+
+    group = get_group_with_members(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request")
+
+    if not isinstance(data, list):
+        return response_error("Invalid request")
+
+    ac_update_group_members(group, data)
+
+    return response_success('', data=group)
+

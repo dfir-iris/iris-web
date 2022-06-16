@@ -140,7 +140,7 @@ function add_members_to_group(group_id) {
             clear_api_error();
 
             var data_sent = $('#form_new_members').serializeObject();
-            post_request_api('groups/' + group_id + '/members/add', JSON.stringify(data_sent), true)
+            post_request_api('groups/' + group_id + '/members/update', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_users();
