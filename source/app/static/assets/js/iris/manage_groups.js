@@ -146,7 +146,7 @@ function add_members_to_group(group_id) {
             post_request_api('groups/' + group_id + '/members/update', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_group_members();
+                    refresh_group_members(group_id);
                     $('#modal_ac_additional').modal('hide');
                 }
             });
@@ -155,4 +155,16 @@ function add_members_to_group(group_id) {
         });
         $('#modal_ac_additional').modal({ show: true });
     });
+}
+
+function refresh_group_members(group_id) {
+    if (modal_group_table !== undefined) {
+        get_request_api('/manage/groups/' + group_id)
+        .done((data) => {
+            if(notify_auto_api(data)) {
+                modal_group_table.clear();
+                modal_group_table.rows.add(data.data.group_members).draw();
+            }
+        });
+    }
 }

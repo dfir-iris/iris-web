@@ -61,6 +61,9 @@
                             <div class="col" >
                               <div class="row d-flex">
                                 <div class="col pull-right">
+                                    <button class="btn btn-dark btn-sm pull-right" onclick="refresh_group_members({{ group.group_id }});">
+                                        <span class="menu-title">Refresh</span>
+                                    </button>
                                     <button class="btn btn-dark btn-sm pull-right" onclick="add_members_to_group({{ group.group_id }});">
                                         <span class="menu-title">Add member</span>
                                     </button>
