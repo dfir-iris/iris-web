@@ -1,0 +1,54 @@
+<div class="modal-lg modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title mt-2 mr-4">Add members to group</h4>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="container col-md-12" >
+                <div class="col" >
+                  <div class="row d-flex">
+                    <div class="col pull-right">
+                        <button class="btn btn-dark btn-sm pull-right" onclick="add_members_to_group({{ group.group_id }});">
+                            <span class="menu-title">Add member</span>
+                        </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                    <div class="form-group" data-select2-id="7">
+                        <label>Members *</label>
+                        <div class="select2-input ml-12" data-select2-id="6">
+                            <select id="group_members" name="group_members" class="form-control select2-hidden-accessible ml-12" multiple=""
+                                    data-select2-id="group_members" tabindex="-1" aria-hidden="true" style="width: 100%">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+<script>
+var data = [
+    {% for e in users %}
+        {
+            id: {{ e.user_id }},
+            text: "{{ e.user_login }} ({{ e.user_name }})"
+        },
+    {% endfor %}
+];
+$('#group_members').select2({ data: data });
+
+{% if group.group_members %}
+
+$('#group_members').val([
+    {% for member in group.group_members %} {{ member.id }}, {% endfor %}
+]);
+$('#group_members').trigger('change');
+
+{% endif %}
+</script>

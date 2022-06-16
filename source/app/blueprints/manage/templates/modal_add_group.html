@@ -59,19 +59,28 @@
                     <div class="tab-pane" id="group_members_tab">
                         <div class="container col-md-12" >
                             <div class="col" >
+                              <div class="row d-flex">
+                                <div class="col pull-right">
+                                    <button class="btn btn-dark btn-sm pull-right" onclick="add_members_to_group({{ group.group_id }});">
+                                        <span class="menu-title">Add member</span>
+                                    </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
                               <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="group_members_table" >
                                 <thead>
                                   <tr>
                                       <th>User ID</th>
                                       <th>User login</th>
-                                      <th>User name</th>
+                                      <th>User display name</th>
                                   </tr>
                                 </thead>
                                 <tfoot>
                                   <tr>
                                       <th>User ID</th>
                                       <th>User login</th>
-                                      <th>User name</th>
+                                      <th>User display name</th>
                                   </tr>
                                 </tfoot>
                               </table>
@@ -110,7 +119,7 @@ var modal_group_table = $("#group_members_table").DataTable({
           {
             "data": "id",
             "render": function ( data, type, row ) {
-                return '<a href="javascript:void(0)" onclick="remove_group_member('+data+')">'+data+'</a>';
+                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_group_member('${data}')"></i>${data}`;
             },
             "className": "dt-center"
         },

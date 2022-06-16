@@ -53,6 +53,11 @@ class Permissions(enum.Enum):
     manage_server_settings = 0x8000
     read_server_settings = 0x10000
 
+    manage_own_organisation = 0x20000
+    manage_organisations = 0x40000
+
+    manage_groups = 0x80000
+
 
 class Organisation(db.Model):
     __tablename__ = 'organisations'

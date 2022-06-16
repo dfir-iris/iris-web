@@ -452,11 +452,15 @@ def create_safe_auth_model():
                 org_email="", org_nationality="",
                 org_sector="", org_type="")
 
-    create_safe(db.session, Group, group_name="Administrators", group_description="Administrators",
-                group_permissions=ac_get_mask_full_permissions())
+    gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators")
+    if gadm.group_permissions != ac_get_mask_full_permissions():
+        gadm.group_permissions = ac_get_mask_full_permissions()
+        db.session.commit()
 
-    create_safe(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
-                group_permissions=ac_get_mask_analyst())
+    ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts")
+    if ganalysts.group_permissions != ac_get_mask_analyst():
+        ganalysts.group_permissions = ac_get_mask_analyst()
+        db.session.commit()
 
 
 def create_safe_admin():

@@ -28,7 +28,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="card-body collapse" id="collapse_user_mgmt">
+                    <div class="card-body collapse collapsed" id="collapse_user_mgmt">
                         <div class="table-responsive" id="users_table_wrapper">
                             <div class="selectgroup">
                                 <span id="table_buttons"></span>
@@ -73,7 +73,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="card-body collapse" id="collapse_groups_mgmt">
+                    <div class="card-body collapse collapsed" id="collapse_groups_mgmt">
                         <div class="table-responsive" id="groups_table_wrapper">
                             <div class="selectgroup">
                                 <span id="groups_table_buttons"></span>
@@ -114,10 +114,10 @@
                            <button class="btn btn-sm btn-icon btn-round btn-primary-success float-right ml-3" onclick="add_user();"><i class="fas fa-plus-circle"></i></button>
                             <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_users(true);">
                                 <i class="fas fa-sync rotate"></i>
-                            </button>
+                            </button>Y
                         </div>
                     </div>
-                    <div class="card-body collapse">
+                    <div class="card-body collapse collapsed">
 
                         <div class="table-responsive" id="collapse_org_mgmt">
                             <div class="selectgroup">
@@ -152,8 +152,10 @@
         </div>
     {% endif %}
 </div>
-    <div class="modal" tabindex="-1" role="dialog" id="modal_access_control" data-backdrop="true">
-    </div>
+<div class="modal" tabindex="-1" role="dialog" id="modal_access_control" data-backdrop="true">
+</div>
+<div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional" data-backdrop="true">
+</div>
 {% endblock content %}
 
 {% block javascripts %}

@@ -127,3 +127,29 @@ function delete_group(id) {
       }
     });
 }
+
+function add_members_to_group(group_id) {
+    url = 'groups/' + group_id + '/members/modal' + case_param();
+    $('#modal_ac_additional').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
+        $('#submit_new_group').on("click", function () {
+            clear_api_error();
+
+            var data_sent = $('#form_new_members').serializeObject();
+            post_request_api('groups/' + group_id + '/members/add', JSON.stringify(data_sent), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_users();
+                    $('#modal_ac_additional').modal('hide');
+                }
+            });
+
+            return false;
+        });
+        $('#modal_ac_additional').modal({ show: true });
+    });
+}

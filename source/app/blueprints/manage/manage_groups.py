@@ -26,6 +26,7 @@ from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
+from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.util import admin_required
@@ -78,3 +79,16 @@ def manage_groups_view(cur_id, caseid):
     return response_success('', data=group)
 
 
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/modal', methods=['GET'])
+@admin_required
+def manage_groups_members_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
+
+    group = get_group_with_members(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    users = get_users_list()
+
+    return render_template("modal_add_group_members.html", group=group, users=users)
