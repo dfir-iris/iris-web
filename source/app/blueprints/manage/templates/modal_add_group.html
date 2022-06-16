@@ -1,40 +1,59 @@
-<div class="modal-lg modal-dialog" role="document">
+<div class="modal-xl modal-dialog" role="document">
     <div class="modal-content" id="modal_access_control_content">
         <div class="modal-header">
-            <h4>Add Group</h4>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                    aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title mt-2 mr-4">{% if not group.group_id %}Add Group {% else %} Edit {{ group.group_name }} {% endif %}</h4>
+            <div class="row text-center mr-4">
+                    <ul class="nav nav-pills nav-default mr-4" id="pills-tab-custom-attr" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active show" id="pills-home-tab-nobd" data-toggle="pill" href="#group_details_tab" role="tab" aria-controls="pills-home-nobd" aria-selected="false">Info</a>
+                    </li>
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#group_members_tab" role="tab" aria-controls="group_members_tab" aria-selected="false">Members</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
         </div>
         <div class="modal-body">
+            <div role="tabpanel">
+                <div role="tab-content">
+                    <div class="tab-pane" id="group_details_tab">
+                        <div class="container col-md-12" >
+                            <form method="post" action="" id="form_new_user">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    {{ form.hidden_tag() }}
+                                    <div class="form-group">
+                                        <label for="asset_type" class="mr-4">Group name
+                                        </label>
+                                        {{ form.group_name(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="asset_description" class="placeholder">Description</label>
+                                        {{ form.group_description(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                </div>
+                                {% if group.group_id %}
+                                    <button type="button" class="btn btn-danger mt-5"
+                                    onclick="delete_group('{{ group.group_id }}');">Delete</button>
+                                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                                    id="submit_new_group">Update</button>
+                                {% else %}
 
-                <div class="container col-md-12">
-                <form method="post" action="" id="form_new_user">
-                    <div class="col-md-12 col-lg-12 col-sm-12">
-                        {{ form.hidden_tag() }}
-                        <div class="form-group">
-                            <label for="asset_type" class="mr-4">Group name
-                            </label>
-                            {{ form.group_name(class='form-control',  autocomplete="off") }}
-                        </div>
-                        <div class="form-group mt-3">
-                            <label for="asset_description" class="placeholder">Description</label>
-                            {{ form.group_description(class='form-control',  autocomplete="off") }}
+                                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                                    id="submit_new_group">Save</button>
+
+                                {% endif %}
+                            </form>
                         </div>
                     </div>
-                    {% if group.group_id %}
-                        <button type="button" class="btn btn-danger mt-5"
-                        onclick="delete_group('{{ group.group_id }}');">Delete</button>
-                        <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
-                        id="submit_new_group">Update</button>
-                    {% else %}
-
-                        <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
-                        id="submit_new_group">Save</button>
-
-                    {% endif %}
-                </form>
+                    <div class="tab-pane" id="group_members_tab">
+                            Hello
+                    </div>
+                </div>
             </div>
-
         </div>
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
