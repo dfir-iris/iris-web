@@ -23,6 +23,7 @@ from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
 from app.datamgmt.manage.manage_groups_db import get_group
+from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.forms import AddGroupForm
@@ -53,7 +54,7 @@ def view_user_modal(cur_id, caseid, url_redir):
         return redirect(url_for('manage_users.add_user', cid=caseid))
 
     form = AddGroupForm()
-    group = get_group(cur_id)
+    group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
 

@@ -26,13 +26,20 @@
                                 <div class="col-md-12 col-lg-12 col-sm-12">
                                     {{ form.hidden_tag() }}
                                     <div class="form-group">
-                                        <label for="asset_type" class="mr-4">Group name
+                                        <label for="group_name" class="mr-4">Group name
                                         </label>
                                         {{ form.group_name(class='form-control',  autocomplete="off") }}
                                     </div>
                                     <div class="form-group mt-3">
-                                        <label for="asset_description" class="placeholder">Description</label>
+                                        <label for="group_description" class="placeholder">Description</label>
                                         {{ form.group_description(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group" data-select2-id="7">
+                                        <label>Permissions</label>
+                                        <div class="select2-input ml-12" data-select2-id="6">
+                                            <select id="group_permissions" name="group_permissions" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="group_permissions" tabindex="-1" aria-hidden="true" style="width: 100%">
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                                 {% if group.group_id %}
@@ -57,3 +64,22 @@
         </div>
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
+<script>
+{% if group.group_permissions_list %}
+    $('#group_permissions').val([
+        {% for perm in group.group_permissions_list %} {{ perm[0] }}, {% endfor %}
+    ]);
+    $('#ioc_links').trigger('change');
+
+{% endif %}
+
+var data = [
+    {% for e in group.group_permissions_list %}
+        {
+            id: {{ e.perm_name }},
+            text: {{ e.perm_value }}
+        },
+    {% endfor %}
+];
+$('#group_permissions').select2({ data: data });
+</script>

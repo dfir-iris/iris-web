@@ -99,6 +99,8 @@ def get_group_with_members(group_id):
                 'id': member.id
             })
 
+    perms = ac_permission_to_list(group.group_permissions)
+    setattr(group, 'group_permissions_list', perms)
     setattr(group, 'group_members', membership_list.get(group.group_id, []))
 
     return group
