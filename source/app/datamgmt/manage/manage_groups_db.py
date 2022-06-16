@@ -86,7 +86,7 @@ def get_group_with_members(group_id):
     membership_list = {}
     for member in get_membership_list:
         if member.group_id not in membership_list:
-            print(dir(member))
+
             membership_list[member.group_id] = [{
                 'user': member.user,
                 'name': member.name,

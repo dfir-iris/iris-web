@@ -58,8 +58,8 @@
                     </div>
                     <div class="tab-pane" id="group_members_tab">
                         <div class="container col-md-12" >
-                            <div class="col" id="group_member_list">
-                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="assets_table" >
+                            <div class="col" >
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="group_members_table" >
                                 <thead>
                                   <tr>
                                       <th>User ID</th>
@@ -102,4 +102,33 @@ $('#group_permissions').val([
 $('#group_permissions').trigger('change');
 
 {% endif %}
+
+var modal_group_table = $("#group_members_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "id",
+            "render": function ( data, type, row ) {
+                return '<a href="javascript:void(0)" onclick="remove_group_member('+data+')">'+data+'</a>';
+            },
+            "className": "dt-center"
+        },
+        {
+            "data": "user",
+            "className": "dt-center"
+        },
+        {
+            "data": "name",
+            "className": "dt-center"
+        }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true
+});
+
+modal_group_table.rows.add({{ group.group_members|tojson }});
+modal_group_table.columns.adjust().draw();
 </script>
