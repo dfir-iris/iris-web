@@ -44,8 +44,8 @@ $('#groups_table').dataTable( {
                 if (type === 'display') {
                     tags = "";
                     for (perm in data) {
-                        perm = sanitizeHTML(data[perm]);
-                        tags += '<span class="badge badge-pill badge-light">' + perm + '</span> ';
+                        permstr = sanitizeHTML(data[perm].name);
+                        tags += '<span class="badge badge-pill badge-light" title="Value 0x'+ data[perm].value.toString(16) +'">'+ permstr + '</span> ';
                     }
                     return tags;
                 }

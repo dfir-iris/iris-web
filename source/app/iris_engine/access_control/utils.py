@@ -31,6 +31,9 @@ def ac_permission_to_list(permission):
     perms = []
     for perm in Permissions._member_names_:
         if permission & Permissions[perm].value:
-            perms.append(perm)
+            perms.append({
+                'name': perm,
+                'value': Permissions[perm].value
+            })
 
     return perms
