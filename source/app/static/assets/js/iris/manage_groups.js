@@ -128,6 +128,33 @@ function delete_group(id) {
     });
 }
 
+function remove_members_from_group(group_id, user_id) {
+
+    swal({
+      title: "Are you sure?",
+      text: "This will remove the user from the group",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, remove it!'
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            url = '/manage/groups/' + group_id + '/members/delete/' + user_id;
+
+            get_request_api(url)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_group_members(group_id);
+                }
+            });
+        }
+    });
+
+}
+
 function add_members_to_group(group_id) {
     url = 'groups/' + group_id + '/members/modal' + case_param();
     $('#modal_ac_additional').load(url, function (response, status, xhr) {

@@ -23,11 +23,14 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
+from app import db
 from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
+from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
+from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
@@ -117,4 +120,21 @@ def manage_groups_members_update(cur_id, caseid):
     update_group_members(group, data.get('group_members'))
 
     return response_success('', data=group)
+
+
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['GET'])
+@api_admin_required
+def manage_groups_members_delete(cur_id, cur_id_2, caseid):
+
+    group = get_group_with_members(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    user = get_user(cur_id_2)
+    if not user:
+        return response_error("Invalid user ID")
+
+    group = remove_user_from_group(group, user)
+
+    return response_success('Member deleted from group', data=group)
 

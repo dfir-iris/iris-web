@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from sqlalchemy import and_
+
 from app import db
 from app.iris_engine.access_control.utils import ac_permission_to_list
 from app.models.authorization import Group
@@ -120,6 +122,20 @@ def update_group_members(group, members):
             ug.group_id = group.group_id
             ug.user_id = user.id
             db.session.add(ug)
+
+    db.session.commit()
+
+    return group
+
+
+def remove_user_from_group(group, member):
+    if not group:
+        return None
+
+    UserGroup.query.filter(
+        and_(UserGroup.group_id == group.group_id,
+                UserGroup.user_id == member.id)
+    ).delete()
 
     db.session.commit()
 
