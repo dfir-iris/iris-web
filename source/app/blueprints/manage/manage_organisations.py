@@ -40,26 +40,26 @@ from app.util import api_admin_required
 from app.util import response_error
 from app.util import response_success
 
-manage_groups_blueprint = Blueprint(
-        'manage_groups',
+manage_orgs_blueprint = Blueprint(
+        'manage_orgs',
         __name__,
         template_folder='templates'
     )
 
 
-@manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
+@manage_orgs_blueprint.route('/manage/organisations/list', methods=['GET'])
 @api_admin_required
-def manage_groups_index(caseid):
+def manage_orgs_index(caseid):
     groups = get_groups_list_hr_perms()
 
     return response_success('', data=groups)
 
 
-@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/modal', methods=['GET'])
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/modal', methods=['GET'])
 @admin_required
-def manage_groups_view_modal(cur_id, caseid, url_redir):
+def manage_orgs_view_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
+        return redirect(url_for('manage_orgs_blueprint.manage_orgs_index', cid=caseid))
 
     form = AddGroupForm()
     group = get_group_with_members(cur_id)
@@ -74,11 +74,11 @@ def manage_groups_view_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_group.html", form=form, group=group, all_perms=all_perms)
 
 
-@manage_groups_blueprint.route('/manage/groups/add/modal', methods=['GET'])
+@manage_orgs_blueprint.route('/manage/organisations/add/modal', methods=['GET'])
 @admin_required
-def manage_groups_add_modal(caseid, url_redir):
+def manage_orgs_add_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
+        return redirect(url_for('manage_orgs_blueprint.manage_orgs_index', cid=caseid))
 
     form = AddGroupForm()
 
@@ -87,9 +87,9 @@ def manage_groups_add_modal(caseid, url_redir):
     return render_template("modal_add_group.html", form=form, group=None, all_perms=all_perms)
 
 
-@manage_groups_blueprint.route('/manage/groups/add', methods=['POST'])
+@manage_orgs_blueprint.route('/manage/organisations/add', methods=['POST'])
 @api_admin_required
-def manage_groups_add(caseid):
+def manage_orgs_add(caseid):
 
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
@@ -114,7 +114,7 @@ def manage_groups_add(caseid):
     return response_success('', data=ags.dump(ags_c))
 
 
-@manage_groups_blueprint.route('/manage/groups/update/<int:cur_id>', methods=['POST'])
+@manage_orgs_blueprint.route('/manage/organisations/update/<int:cur_id>', methods=['POST'])
 @api_admin_required
 def manage_groups_update(cur_id, caseid):
 
@@ -144,7 +144,7 @@ def manage_groups_update(cur_id, caseid):
     return response_success('', data=ags.dump(ags_c))
 
 
-@manage_groups_blueprint.route('/manage/groups/delete/<int:cur_id>', methods=['GET'])
+@manage_orgs_blueprint.route('/manage/organisations/delete/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def manage_groups_delete(cur_id, caseid):
 
@@ -157,7 +157,7 @@ def manage_groups_delete(cur_id, caseid):
     return response_success('Group deleted')
 
 
-@manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>', methods=['GET'])
 @api_admin_required
 def manage_groups_view(cur_id, caseid):
 
@@ -168,7 +168,7 @@ def manage_groups_view(cur_id, caseid):
     return response_success('', data=group)
 
 
-@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/modal', methods=['GET'])
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/modal', methods=['GET'])
 @admin_required
 def manage_groups_members_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -183,7 +183,7 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_group_members.html", group=group, users=users)
 
 
-@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/update', methods=['POST'])
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/update', methods=['POST'])
 @api_admin_required
 def manage_groups_members_update(cur_id, caseid):
 
@@ -206,7 +206,7 @@ def manage_groups_members_update(cur_id, caseid):
     return response_success('', data=group)
 
 
-@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['GET'])
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['GET'])
 @api_admin_required
 def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
