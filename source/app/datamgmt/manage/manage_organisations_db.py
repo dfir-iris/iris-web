@@ -25,6 +25,7 @@ from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.authorization import UserGroup
+from app.models.authorization import UserOrganisation
 
 
 def get_organisations_list():
@@ -33,82 +34,47 @@ def get_organisations_list():
     return orgs
 
 
-def get_groups_list_hr_perms():
-    groups = get_groups_list()
-
-    get_membership_list = UserGroup.query.with_entities(
-        UserGroup.group_id,
-        User.user,
-        User.id,
-        User.name
-    ).join(UserGroup.user).all()
-
-    membership_list = {}
-    for member in get_membership_list:
-        if member.group_id not in membership_list:
-            membership_list[member.group_id] = [{
-                'user': member.user,
-                'name': member.name,
-                'id': member.id
-            }]
-        else:
-            membership_list[member.group_id].append({
-                'user': member.user,
-                'name': member.name,
-                'id': member.id
-            })
-
-    for group in groups:
-        perms = ac_permission_to_list(group.group_permissions)
-        setattr(group, 'group_permissions_list', perms)
-        setattr(group, 'group_members', membership_list.get(group.group_id, []))
-
-    return groups
-
-
-def get_group(group_id):
-    group = Group.query.filter(Group.group_id == group_id).first()
+def get_org(org_id):
+    group = Organisation.query.filter(Organisation.org_id == org_id).first()
 
     return group
 
 
-def get_group_with_members(group_id):
-    group = get_group(group_id)
-    if not group:
+def get_org_with_members(org_id):
+    org = get_org(org_id)
+    if not org:
         return None
 
-    get_membership_list = UserGroup.query.with_entities(
-        UserGroup.group_id,
+    get_membership_list = UserOrganisation.query.with_entities(
+        Organisation.org_id,
         User.user,
         User.id,
         User.name
     ).join(
-        UserGroup.user
+        UserOrganisation.user
     ).filter(
-        UserGroup.group_id == group_id
+        UserOrganisation.org_id == org_id
     ).all()
 
     membership_list = {}
     for member in get_membership_list:
-        if member.group_id not in membership_list:
+        if member.org_id not in membership_list:
 
-            membership_list[member.group_id] = [{
+            membership_list[member.org_id] = [{
                 'user': member.user,
                 'name': member.name,
                 'id': member.id
             }]
         else:
-            membership_list[member.group_id].append({
+            membership_list[member.org_id].append({
                 'user': member.user,
                 'name': member.name,
                 'id': member.id
             })
 
-    perms = ac_permission_to_list(group.group_permissions)
-    setattr(group, 'group_permissions_list', perms)
-    setattr(group, 'group_members', membership_list.get(group.group_id, []))
+    setattr(org, 'org_members', membership_list.get(org.org_id, []))
 
-    return group
+    return org
 
 
 def update_group_members(group, members):

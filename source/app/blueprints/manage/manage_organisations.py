@@ -30,6 +30,7 @@ from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
+from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
@@ -63,7 +64,7 @@ def manage_orgs_view_modal(cur_id, caseid, url_redir):
         return redirect(url_for('manage_orgs_blueprint.manage_orgs_index', cid=caseid))
 
     form = AddGroupForm()
-    group = get_group_with_members(cur_id)
+    group = get_org_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
