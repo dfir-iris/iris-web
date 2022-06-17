@@ -653,8 +653,8 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
 
 
 class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
-    organisation_name = auto_field('organisation_name', required=True, validate=Length(min=2), allow_none=False)
-    organisation_description = auto_field('organisation_description', required=True, validate=Length(min=2))
+    organisation_name = auto_field('org_name', required=True, validate=Length(min=2), allow_none=False)
+    organisation_description = auto_field('org_description', required=True, validate=Length(min=2))
 
     class Meta:
         model = Organisation
