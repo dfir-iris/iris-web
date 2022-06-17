@@ -653,8 +653,8 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
 
 
 class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
-    organisation_name = auto_field('org_name', required=True, validate=Length(min=2), allow_none=False)
-    organisation_description = auto_field('org_description', required=True, validate=Length(min=2))
+    org_name = auto_field('org_name', required=True, validate=Length(min=2), allow_none=False)
+    org_description = auto_field('org_description', required=True, validate=Length(min=2))
 
     class Meta:
         model = Organisation
@@ -663,11 +663,11 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
     @pre_load
     def verify_unique(self, data, **kwargs):
         organisations = Organisation.query.filter(
-            func.upper(Organisation.organisation_name) == data.get('org_name').upper()
+            func.upper(Organisation.org_name) == data.get('org_name').upper()
         ).all()
 
         for organisation in organisations:
-            if data.get('org_id') is None or organisation.organisation_id != data.get('org_id'):
+            if data.get('org_id') is None or organisation.org_id != data.get('org_id'):
                 raise marshmallow.exceptions.ValidationError(
                     "Organisation already exists",
                     field_name="org_name"
