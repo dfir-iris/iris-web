@@ -94,21 +94,21 @@ function org_detail(org_id) {
     $('#modal_access_control').modal({ show: true });
 }
 
-function add_group() {
-    url = '/manage/groups/add/modal' + case_param();
+function add_organisation() {
+    url = '/manage/organisation/add/modal' + case_param();
     $('#modal_access_control').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
         }
 
-        $('#submit_new_group').on("click", function () {
+        $('#submit_new_org').on("click", function () {
              clear_api_error();
-            var data_sent = $('#form_new_group').serializeObject();
-            post_request_api('/manage/groups/add', JSON.stringify(data_sent), true)
+            var data_sent = $('#form_new_org').serializeObject();
+            post_request_api('/manage/organisations/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_groups();
+                    refresh_orgs();
                     $('#modal_access_control').modal('hide');
                 }
             });
@@ -117,7 +117,7 @@ function add_group() {
     });
 }
 
-function delete_group(id) {
+function delete_org(org_id) {
 
     swal({
       title: "Are you sure?",
@@ -131,10 +131,10 @@ function delete_group(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-        get_request_api('/manage/groups/delete/' + id)
+        get_request_api('/manage/organisations/delete/' + org_id)
         .done((data) => {
             if(notify_auto_api(data)) {
-                refresh_groups();
+                refresh_orgs();
                 $('#modal_access_control').modal('hide');
             }
         });
