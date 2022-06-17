@@ -202,6 +202,7 @@ def manage_groups_members_update(cur_id, caseid):
         return response_error("Expecting a list of IDs")
 
     update_group_members(group, data.get('group_members'))
+    group = get_group_with_members(cur_id)
 
     return response_success('', data=group)
 
@@ -218,7 +219,8 @@ def manage_groups_members_delete(cur_id, cur_id_2, caseid):
     if not user:
         return response_error("Invalid user ID")
 
-    group = remove_user_from_group(group, user)
+    remove_user_from_group(group, user)
+    group = get_group_with_members(cur_id)
 
     return response_success('Member deleted from group', data=group)
 
