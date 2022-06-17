@@ -102,6 +102,12 @@ class AddGroupForm(FlaskForm):
 class AddOrganisationForm(FlaskForm):
     org_name = StringField(u'Organisation name', validators=[DataRequired()])
     org_description = StringField(u'Organisation description', validators=[DataRequired()])
+    org_url = StringField(u'Organisation url', validators=[DataRequired()])
+    org_logo = StringField(u'Organisation logo', validators=[DataRequired()])
+    org_email = StringField(u'Organisation email', validators=[DataRequired()])
+    org_nationality = StringField(u'Organisation nationality', validators=[DataRequired()])
+    org_sector = StringField(u'Organisation nationality', validators=[DataRequired()])
+    org_type = StringField(u'Organisation type', validators=[DataRequired()])
 
 
 class ModalAddCaseAssetForm(FlaskForm):

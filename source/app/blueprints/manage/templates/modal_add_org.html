@@ -25,11 +25,11 @@
                 <div class="tab-content">
                     <div class="tab-pane active" id="org_details_tab">
                         <div class="container col-md-12" >
-                            <form method="post" action="" id="form_new_group">
+                            <form method="post" action="" id="form_new_org">
                                 <div class="col-md-12 col-lg-12 col-sm-12">
                                     {{ form.hidden_tag() }}
                                     {% if not org.org_id %}
-                                    <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Members can be added once the group is created.</p>
+                                    <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Members can be added once the organisation is created.</p>
                                     {% endif %}
                                     <div class="form-group">
                                         <label for="org_name" class="mr-4">Organisation name *
@@ -39,6 +39,26 @@
                                     <div class="form-group mt-3">
                                         <label for="org_description" class="placeholder">Description *</label>
                                         {{ form.org_description(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="org_url" class="placeholder">URL</label>
+                                        {{ form.org_url(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="org_email" class="placeholder">Email</label>
+                                        {{ form.org_email(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="org_nationality" class="placeholder">Nationality</label>
+                                        {{ form.org_nationality(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="org_sector" class="placeholder">Sector</label>
+                                        {{ form.org_sector(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="org_type" class="placeholder">Type</label>
+                                        {{ form.org_type(class='form-control',  autocomplete="off") }}
                                     </div>
                                 </div>
                                 {% if org.org_id %}
