@@ -21,6 +21,7 @@ from sqlalchemy import and_
 from app import db
 from app.iris_engine.access_control.utils import ac_permission_to_list
 from app.models.authorization import Group
+from app.models.authorization import GroupCaseAccess
 from app.models.authorization import User
 from app.models.authorization import UserGroup
 
@@ -140,3 +141,14 @@ def remove_user_from_group(group, member):
     db.session.commit()
 
     return group
+
+
+def delete_group(group):
+    if not group:
+        return None
+
+    UserGroup.query.filter(UserGroup.group_id == group.group_id).delete()
+    GroupCaseAccess.query.filter(GroupCaseAccess.group_id == group.group_id).delete()
+
+    db.session.delete(group)
+    db.session.commit()

@@ -25,6 +25,7 @@ from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
 from app import db
+from app.datamgmt.manage.manage_groups_db import delete_group
 from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list
@@ -127,7 +128,7 @@ def manage_groups_update(cur_id, caseid):
     if not data:
         return response_error("Invalid request, expecting JSON")
 
-    group = get_group_with_members(cur_id)
+    group = get_group(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
@@ -144,6 +145,19 @@ def manage_groups_update(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
     return response_success('', data=ags.dump(ags_c))
+
+
+@manage_groups_blueprint.route('/manage/groups/delete/<int:cur_id>', methods=['GET'])
+@api_admin_required
+def manage_groups_delete(cur_id, caseid):
+
+    group = get_group(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    delete_group(group)
+
+    return response_success('Group deleted')
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])
