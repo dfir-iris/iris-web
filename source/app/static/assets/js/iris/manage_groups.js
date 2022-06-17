@@ -85,7 +85,7 @@ function group_detail(group_id) {
             clear_api_error();
 
             var data_sent = $('#form_new_group').serializeObject();
-            post_request_api('/manage/groups/update/' + user_id, JSON.stringify(data_sent), true)
+            post_request_api('/manage/groups/update/' + group_id, JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_users();

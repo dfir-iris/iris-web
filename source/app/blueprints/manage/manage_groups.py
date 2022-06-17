@@ -105,7 +105,43 @@ def manage_groups_add(caseid):
     try:
 
         ags_c = ags.load(data)
+        ags_c.verify_unique()
+
         db.session.add(ags_c)
+        db.session.commit()
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    return response_success('', data=ags.dump(ags_c))
+
+
+@manage_groups_blueprint.route('/manage/groups/update/<int:cur_id>', methods=['POST'])
+@api_admin_required
+def manage_groups_update(cur_id, caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request, expecting JSON")
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request, expecting JSON")
+
+    group = get_group_with_members(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    init_group_name = group.group_name
+
+    ags = AuthorizationGroupSchema()
+
+    try:
+
+        ags_c = ags.load(data, instance=group, partial=True)
+
+        if init_group_name != ags_c.group_name:
+            ags_c.verify_unique()
+
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:

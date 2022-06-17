@@ -622,7 +622,6 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
         model = Group
         load_instance = True
 
-    @post_load
     def verify_unique(self, data, **kwargs):
         group = Group.query.filter(
             func.upper(Group.group_name) == data.group_name.upper()
