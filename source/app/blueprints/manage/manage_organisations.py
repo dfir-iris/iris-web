@@ -30,6 +30,7 @@ from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
+from app.datamgmt.manage.manage_organisations_db import delete_organisation
 from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
@@ -164,13 +165,13 @@ def manage_groups_update(cur_id, caseid):
 @api_admin_required
 def manage_groups_delete(cur_id, caseid):
 
-    group = get_group(cur_id)
-    if not group:
-        return response_error("Invalid group ID")
+    org = get_org(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
 
-    delete_group(group)
+    delete_organisation(org)
 
-    return response_success('Group deleted')
+    return response_success('Organisation deleted')
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>', methods=['GET'])

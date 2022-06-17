@@ -23,6 +23,7 @@ from app.iris_engine.access_control.utils import ac_permission_to_list
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
+from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import User
 from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
@@ -110,12 +111,12 @@ def remove_user_from_group(group, member):
     return group
 
 
-def delete_group(group):
-    if not group:
+def delete_organisation(org):
+    if not org:
         return None
 
-    UserGroup.query.filter(UserGroup.group_id == group.group_id).delete()
-    GroupCaseAccess.query.filter(GroupCaseAccess.group_id == group.group_id).delete()
+    UserOrganisation.query.filter(UserOrganisation.org_id == org.org_id).delete()
+    OrganisationCaseAccess.query.filter(OrganisationCaseAccess.org_id == org.org_id).delete()
 
-    db.session.delete(group)
+    db.session.delete(org)
     db.session.commit()
