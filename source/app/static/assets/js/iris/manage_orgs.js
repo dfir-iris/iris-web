@@ -171,7 +171,7 @@ function remove_members_from_group(group_id, user_id) {
     });
 }
 
-function add_members_to_organisation(org_id) {
+function manage_organisation_members(org_id) {
     url = 'organisations/' + org_id + '/members/modal' + case_param();
     $('#modal_ac_additional').load(url, function (response, status, xhr) {
         if (status !== "success") {
@@ -183,7 +183,7 @@ function add_members_to_organisation(org_id) {
             clear_api_error();
 
             var data_sent = Object();
-            data_sent['org_members'] = $('#organisation_members').val();
+            data_sent['org_members'] = $('#org_members').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
             post_request_api('organisations/' + org_id + '/members/update', JSON.stringify(data_sent), true)

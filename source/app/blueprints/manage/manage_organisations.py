@@ -34,6 +34,7 @@ from app.datamgmt.manage.manage_organisations_db import delete_organisation
 from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
+from app.datamgmt.manage.manage_organisations_db import update_org_members
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
@@ -179,7 +180,7 @@ def manage_org_delete(cur_id, caseid):
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/modal', methods=['GET'])
 @admin_required
-def manage_groups_members_modal(cur_id, caseid, url_redir):
+def manage_org_members_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_orgs.manage_groups_index', cid=caseid))
 
@@ -194,11 +195,11 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/update', methods=['POST'])
 @api_admin_required
-def manage_groups_members_update(cur_id, caseid):
+def manage_org_members_update(cur_id, caseid):
 
-    group = get_group_with_members(cur_id)
-    if not group:
-        return response_error("Invalid group ID")
+    org = get_org_with_members(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
 
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
@@ -207,12 +208,13 @@ def manage_groups_members_update(cur_id, caseid):
     if not data:
         return response_error("Invalid request, expecting JSON")
 
-    if not isinstance(data.get('group_members'), list):
+    if not isinstance(data.get('org_members'), list):
         return response_error("Expecting a list of IDs")
 
-    update_group_members(group, data.get('group_members'))
+    update_org_members(org, data.get('org_members'))
+    org = get_org_with_members(cur_id)
 
-    return response_success('', data=group)
+    return response_success('', data=org)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['GET'])

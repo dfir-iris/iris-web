@@ -78,23 +78,23 @@ def get_org_with_members(org_id):
     return org
 
 
-def update_group_members(group, members):
-    if not group:
+def update_org_members(org, members):
+    if not org:
         return None
 
-    UserGroup.query.filter(UserGroup.group_id == group.group_id).delete()
+    UserOrganisation.query.filter(UserOrganisation.org_id == org.org_id).delete()
 
     for uid in set(members):
         user = User.query.filter(User.id == uid).first()
         if user:
-            ug = UserGroup()
-            ug.group_id = group.group_id
+            ug = UserOrganisation()
+            ug.org_id = org.org_id
             ug.user_id = user.id
             db.session.add(ug)
 
     db.session.commit()
 
-    return group
+    return org
 
 
 def remove_user_from_group(group, member):
