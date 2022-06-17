@@ -617,6 +617,8 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
 
 
 class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
+    group_name = auto_field('group_name', required=True, validate=Length(min=2), allow_none=False)
+    group_description = auto_field('group_description', required=True, validate=Length(min=2))
 
     class Meta:
         model = Group
