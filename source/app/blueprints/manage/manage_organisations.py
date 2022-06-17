@@ -30,6 +30,7 @@ from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
+from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_users_db import get_user
@@ -38,6 +39,7 @@ from app.forms import AddGroupForm
 from app.forms import AddOrganisationForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.schema.marshables import AuthorizationGroupSchema
+from app.schema.marshables import AuthorizationOrganisationSchema
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import response_error
@@ -126,23 +128,23 @@ def manage_groups_update(cur_id, caseid):
     if not data:
         return response_error("Invalid request, expecting JSON")
 
-    group = get_group(cur_id)
-    if not group:
-        return response_error("Invalid group ID")
+    org = get_org(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
 
-    ags = AuthorizationGroupSchema()
+    aos = AuthorizationOrganisationSchema()
 
     try:
 
-        data['group_id'] = cur_id
-        ags_c = ags.load(data, instance=group, partial=True)
+        data['org_id'] = cur_id
+        aos_c = aos.load(data, instance=org, partial=True)
 
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    return response_success('', data=ags.dump(ags_c))
+    return response_success('', data=aos.dump(aos_c))
 
 
 @manage_orgs_blueprint.route('/manage/organisations/delete/<int:cur_id>', methods=['GET'])

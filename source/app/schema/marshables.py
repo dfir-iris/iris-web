@@ -62,6 +62,7 @@ from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models.authorization import Group
+from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.util import file_sha256sum
 from app.util import stream_sha256sum
@@ -647,6 +648,30 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
 
         else:
             data['group_permissions'] = 0
+
+        return data
+
+
+class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
+    organisation_name = auto_field('organisation_name', required=True, validate=Length(min=2), allow_none=False)
+    organisation_description = auto_field('organisation_description', required=True, validate=Length(min=2))
+
+    class Meta:
+        model = Organisation
+        load_instance = True
+
+    @pre_load
+    def verify_unique(self, data, **kwargs):
+        organisations = Organisation.query.filter(
+            func.upper(Organisation.organisation_name) == data.get('org_name').upper()
+        ).all()
+
+        for organisation in organisations:
+            if data.get('org_id') is None or organisation.organisation_id != data.get('org_id'):
+                raise marshmallow.exceptions.ValidationError(
+                    "Organisation already exists",
+                    field_name="org_name"
+                )
 
         return data
 
