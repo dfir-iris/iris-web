@@ -27,7 +27,7 @@ from app.util import admin_required
 manage_ac_blueprint = Blueprint(
         'access_control',
         __name__,
-        template_folder='templates'
+        template_folder='templates/access_control'
     )
 
 

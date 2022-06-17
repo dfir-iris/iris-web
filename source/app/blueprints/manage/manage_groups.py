@@ -43,7 +43,7 @@ from app.util import response_success
 manage_groups_blueprint = Blueprint(
         'manage_groups',
         __name__,
-        template_folder='templates'
+        template_folder='templates/access_control'
     )
 
 

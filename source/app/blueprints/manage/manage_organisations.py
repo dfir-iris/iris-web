@@ -49,7 +49,7 @@ from app.util import response_success
 manage_orgs_blueprint = Blueprint(
         'manage_orgs',
         __name__,
-        template_folder='templates'
+        template_folder='templates/access_control'
     )
 
 
@@ -181,11 +181,11 @@ def manage_groups_delete(cur_id, caseid):
 @api_admin_required
 def manage_groups_view(cur_id, caseid):
 
-    group = get_group_with_members(cur_id)
-    if not group:
-        return response_error("Invalid group ID")
+    org = get_org_with_members(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
 
-    return response_success('', data=group)
+    return response_success('', data=org)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/modal', methods=['GET'])
@@ -200,7 +200,7 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
 
     users = get_users_list()
 
-    return render_template("modal_add_group_members.html", group=group, users=users)
+    return render_template("modal_add_org_members.html", group=group, users=users)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/update', methods=['POST'])
