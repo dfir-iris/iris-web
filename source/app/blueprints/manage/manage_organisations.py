@@ -30,6 +30,7 @@ from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
+from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
@@ -50,7 +51,7 @@ manage_orgs_blueprint = Blueprint(
 @manage_orgs_blueprint.route('/manage/organisations/list', methods=['GET'])
 @api_admin_required
 def manage_orgs_index(caseid):
-    groups = get_groups_list_hr_perms()
+    groups = get_organisations_list()
 
     return response_success('', data=groups)
 
