@@ -60,6 +60,7 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
+from app.models.authorization import Group
 from app.models.authorization import User
 from app.util import file_sha256sum
 from app.util import stream_sha256sum
@@ -612,6 +613,31 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'evidence')
 
         return data
+
+
+class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Group
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        group = Group.query.filter(
+            func.upper(Group.name) == data.name.upper()
+        ).first()
+        if group:
+            raise marshmallow.exceptions.ValidationError(
+                "Group already exists",
+                field_name="name"
+            )
+
+        return data
+
+    @post_load
+    def parse_permissions(self, data, **kwargs):
+        permissions = data.get('group_permissions')
+        if permissions is not None:
+            data['permissions'] = [Permission.query.filter(Permission.id == p).first() for p in permissions]
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):

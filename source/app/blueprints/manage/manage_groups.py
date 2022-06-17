@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import marshmallow
 from flask import Blueprint
 from flask import render_template
 from flask import request
@@ -35,6 +36,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.models.authorization import Group
+from app.schema.marshables import AuthorizationGroupSchema
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import response_error
@@ -85,6 +87,32 @@ def manage_groups_add_modal(caseid, url_redir):
     all_perms = ac_get_all_permissions()
 
     return render_template("modal_add_group.html", form=form, group=None, all_perms=all_perms)
+
+
+@manage_groups_blueprint.route('/manage/groups/add', methods=['POST'])
+@api_admin_required
+def manage_groups_add(caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request, expecting JSON")
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request, expecting JSON")
+
+    if not isinstance(data.get('group_members'), list):
+        return response_error("Expecting a list of IDs")
+
+    ags = AuthorizationGroupSchema()
+
+    try:
+
+        ags_c = ags.load(data)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    return response_success('', data=ags.dump(ags_c))
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])
