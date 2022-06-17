@@ -115,20 +115,20 @@ def manage_orgs_add(caseid):
     if not data:
         return response_error("Invalid request, expecting JSON")
 
-    ags = AuthorizationGroupSchema()
+    aos = AuthorizationOrganisationSchema()
 
     try:
 
-        ags_c = ags.load(data)
-        ags.verify_unique(data)
+        aos_c = aos.load(data)
+        aos.verify_unique(data)
 
-        db.session.add(ags_c)
+        db.session.add(aos_c)
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    return response_success('', data=ags.dump(ags_c))
+    return response_success('', data=aos.dump(aos_c))
 
 
 @manage_orgs_blueprint.route('/manage/organisations/update/<int:cur_id>', methods=['POST'])
