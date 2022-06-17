@@ -141,7 +141,7 @@ function delete_group(id) {
         get_request_api('/manage/groups/delete/' + id)
         .done((data) => {
             if(notify_auto_api(data)) {
-                refresh_users();
+                refresh_groups();
                 $('#modal_access_control').modal('hide');
             }
         });
@@ -170,6 +170,7 @@ function remove_members_from_group(group_id, user_id) {
             get_request_api(url)
             .done((data) => {
                 if(notify_auto_api(data)) {
+                    refresh_groups();
                     refresh_group_members(group_id);
                 }
             });
@@ -196,6 +197,7 @@ function add_members_to_group(group_id) {
             post_request_api('groups/' + group_id + '/members/update', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
+                    refresh_groups();
                     refresh_group_members(group_id);
                     $('#modal_ac_additional').modal('hide');
                 }
