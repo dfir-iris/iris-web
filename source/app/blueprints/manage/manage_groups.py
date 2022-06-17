@@ -71,7 +71,7 @@ def manage_groups_view_modal(cur_id, caseid, url_redir):
     form.group_name.render_kw = {'value': group.group_name}
     form.group_description.render_kw = {'value': group.group_description}
 
-    return render_template("modal_add_org.html", form=form, group=group, all_perms=all_perms)
+    return render_template("modal_add_group.html", form=form, group=group, all_perms=all_perms)
 
 
 @manage_groups_blueprint.route('/manage/groups/add/modal', methods=['GET'])

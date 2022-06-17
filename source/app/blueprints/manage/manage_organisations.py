@@ -35,6 +35,7 @@ from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
+from app.forms import AddOrganisationForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.util import admin_required
@@ -63,17 +64,15 @@ def manage_orgs_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_orgs_blueprint.manage_orgs_index', cid=caseid))
 
-    form = AddGroupForm()
-    group = get_org_with_members(cur_id)
-    if not group:
+    form = AddOrganisationForm()
+    org = get_org_with_members(cur_id)
+    if not org:
         return response_error("Invalid group ID")
 
-    all_perms = ac_get_all_permissions()
+    form.org_name.render_kw = {'value': org.org_name}
+    form.org_description.render_kw = {'value': org.org_description}
 
-    form.group_name.render_kw = {'value': group.group_name}
-    form.group_description.render_kw = {'value': group.group_description}
-
-    return render_template("modal_add_group.html", form=form, group=group, all_perms=all_perms)
+    return render_template("modal_add_org.html", form=form, org=org)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/add/modal', methods=['GET'])
@@ -86,7 +85,7 @@ def manage_orgs_add_modal(caseid, url_redir):
 
     all_perms = ac_get_all_permissions()
 
-    return render_template("modal_add_group.html", form=form, group=None, all_perms=all_perms)
+    return render_template("modal_add_org.html", form=form, group=None, all_perms=all_perms)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/add', methods=['POST'])

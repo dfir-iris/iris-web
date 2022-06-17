@@ -6,11 +6,11 @@
                 {% if org.org_id %}
                 <ul class="nav nav-pills nav-default mr-4" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active show" data-toggle="pill" href="#group_details_tab" role="tab" aria-controls="org_details_tab" aria-selected="false">Info</a>
+                        <a class="nav-link active show" data-toggle="pill" href="#org_details_tab" role="tab" aria-controls="org_details_tab" aria-selected="false">Info</a>
                     </li>
 
                     <li class="nav-item submenu">
-                        <a class="nav-link"  data-toggle="pill" href="#group_members_tab" role="tab" aria-controls="org_members_tab" aria-selected="false">Members</a>
+                        <a class="nav-link"  data-toggle="pill" href="#org_members_tab" role="tab" aria-controls="org_members_tab" aria-selected="false">Members</a>
                     </li>
                 </ul>
                 {% endif %}
@@ -32,7 +32,7 @@
                                     <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Members can be added once the group is created.</p>
                                     {% endif %}
                                     <div class="form-group">
-                                        <label for="org_name" class="mr-4">Group name *
+                                        <label for="org_name" class="mr-4">Organisation name *
                                         </label>
                                         {{ form.org_name(class='form-control',  autocomplete="off") }}
                                     </div>

@@ -99,6 +99,11 @@ class AddGroupForm(FlaskForm):
     group_description = StringField(u'Group description', validators=[DataRequired()])
 
 
+class AddOrganisationForm(FlaskForm):
+    org_name = StringField(u'Organisation name', validators=[DataRequired()])
+    org_description = StringField(u'Organisation description', validators=[DataRequired()])
+
+
 class ModalAddCaseAssetForm(FlaskForm):
     asset_id = SelectField(u'Asset type', validators=[DataRequired()])
 
