@@ -34,6 +34,7 @@ from app.datamgmt.manage.manage_organisations_db import delete_organisation
 from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
+from app.datamgmt.manage.manage_organisations_db import remove_user_from_organisation
 from app.datamgmt.manage.manage_organisations_db import update_org_members
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
@@ -221,15 +222,16 @@ def manage_org_members_update(cur_id, caseid):
 @api_admin_required
 def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
-    group = get_group_with_members(cur_id)
-    if not group:
-        return response_error("Invalid group ID")
+    org = get_org_with_members(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
 
     user = get_user(cur_id_2)
     if not user:
         return response_error("Invalid user ID")
 
-    group = remove_user_from_group(group, user)
+    remove_user_from_organisation(org, user)
+    org = get_org_with_members(cur_id)
 
-    return response_success('Member deleted from group', data=group)
+    return response_success('Member deleted from group', data=org)
 

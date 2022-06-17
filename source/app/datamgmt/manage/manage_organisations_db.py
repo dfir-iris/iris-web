@@ -97,18 +97,18 @@ def update_org_members(org, members):
     return org
 
 
-def remove_user_from_group(group, member):
-    if not group:
+def remove_user_from_organisation(org, member):
+    if not org:
         return None
 
-    UserGroup.query.filter(
-        and_(UserGroup.group_id == group.group_id,
-                UserGroup.user_id == member.id)
+    UserOrganisation.query.filter(
+        and_(UserOrganisation.org_id == org.org_id,
+             UserOrganisation.user_id == member.id)
     ).delete()
 
     db.session.commit()
 
-    return group
+    return org
 
 
 def delete_organisation(org):

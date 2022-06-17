@@ -144,11 +144,11 @@ function delete_org(org_id) {
     });
 }
 
-function remove_members_from_group(group_id, user_id) {
+function remove_members_from_org(org_id, user_id) {
 
     swal({
       title: "Are you sure?",
-      text: "This will remove the user from the group",
+      text: "This will remove the user from the organisation",
       icon: "warning",
       buttons: true,
       dangerMode: true,
@@ -158,17 +158,18 @@ function remove_members_from_group(group_id, user_id) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            url = '/manage/groups/' + group_id + '/members/delete/' + user_id;
+            url = '/manage/organisations/' + org_id + '/members/delete/' + user_id;
 
             get_request_api(url)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_groups();
-                    refresh_group_members(group_id);
+                    refresh_organisations();
+                    refresh_organisation_members(org_id);
                 }
             });
         }
     });
+
 }
 
 function manage_organisation_members(org_id) {
