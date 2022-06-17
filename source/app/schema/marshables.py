@@ -622,15 +622,18 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
         model = Group
         load_instance = True
 
+    @pre_load
     def verify_unique(self, data, **kwargs):
-        group = Group.query.filter(
-            func.upper(Group.group_name) == data.group_name.upper()
-        ).first()
-        if group:
-            raise marshmallow.exceptions.ValidationError(
-                "Group already exists",
-                field_name="name"
-            )
+        groups = Group.query.filter(
+            func.upper(Group.group_name) == data.get('group_name').upper()
+        ).all()
+
+        for group in groups:
+            if data.get('group_id') is None or group.group_id != data.get('group_id'):
+                raise marshmallow.exceptions.ValidationError(
+                    "Group already exists",
+                    field_name="group_name"
+                )
 
         return data
 

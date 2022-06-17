@@ -105,7 +105,7 @@ def manage_groups_add(caseid):
     try:
 
         ags_c = ags.load(data)
-        ags_c.verify_unique()
+        ags.verify_unique(data)
 
         db.session.add(ags_c)
         db.session.commit()
@@ -131,16 +131,12 @@ def manage_groups_update(cur_id, caseid):
     if not group:
         return response_error("Invalid group ID")
 
-    init_group_name = group.group_name
-
     ags = AuthorizationGroupSchema()
 
     try:
 
+        data['group_id'] = cur_id
         ags_c = ags.load(data, instance=group, partial=True)
-
-        if init_group_name != ags_c.group_name:
-            ags_c.verify_unique()
 
         db.session.commit()
 
