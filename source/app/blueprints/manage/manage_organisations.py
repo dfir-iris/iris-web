@@ -194,13 +194,13 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_orgs.manage_groups_index', cid=caseid))
 
-    group = get_group_with_members(cur_id)
-    if not group:
-        return response_error("Invalid group ID")
+    org = get_org_with_members(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
 
     users = get_users_list()
 
-    return render_template("modal_add_org_members.html", group=group, users=users)
+    return render_template("modal_add_org_members.html", org=org, users=users)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/update', methods=['POST'])

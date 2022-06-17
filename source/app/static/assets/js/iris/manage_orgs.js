@@ -179,7 +179,7 @@ function add_members_to_organisation(org_id) {
              return false;
         }
 
-        $('#save_group_members').on("click", function () {
+        $('#save_org_members').on("click", function () {
             clear_api_error();
 
             var data_sent = Object();
