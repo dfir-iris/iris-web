@@ -1,0 +1,128 @@
+<div class="modal-xl modal-dialog" role="document">
+    <div class="modal-content" id="modal_access_control_content">
+        <div class="modal-header">
+            <h4 class="modal-title mt-2 mr-4">{% if not org.org_id %}Add Organisation {% else %} Edit {{ org.org_name }} {% endif %}</h4>
+            <div class="row text-center mr-4">
+                {% if org.org_id %}
+                <ul class="nav nav-pills nav-default mr-4" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active show" data-toggle="pill" href="#group_details_tab" role="tab" aria-controls="org_details_tab" aria-selected="false">Info</a>
+                    </li>
+
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#group_members_tab" role="tab" aria-controls="org_members_tab" aria-selected="false">Members</a>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div role="tabpanel">
+                <div class="tab-content">
+                    <div class="tab-pane active" id="org_details_tab">
+                        <div class="container col-md-12" >
+                            <form method="post" action="" id="form_new_group">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    {{ form.hidden_tag() }}
+                                    {% if not org.org_id %}
+                                    <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Members can be added once the group is created.</p>
+                                    {% endif %}
+                                    <div class="form-group">
+                                        <label for="org_name" class="mr-4">Group name *
+                                        </label>
+                                        {{ form.org_name(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="org_description" class="placeholder">Description *</label>
+                                        {{ form.org_description(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                </div>
+                                {% if org.org_id %}
+                                    <button type="button" class="btn btn-danger mt-5"
+                                    onclick="delete_org('{{ org.org_id }}');">Delete</button>
+                                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                                    id="submit_new_org">Update</button>
+                                {% else %}
+
+                                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                                    id="submit_new_org">Save</button>
+
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="org_members_tab">
+                        <div class="container col-md-12" >
+                            <div class="col" >
+                              <div class="row d-flex">
+                                <div class="col pull-right">
+                                    <button class="btn btn-dark btn-sm pull-right" onclick="refresh_org_members({{ org.org_id }});">
+                                        <span class="menu-title">Refresh</span>
+                                    </button>
+                                    <button class="btn btn-dark btn-sm pull-right mr-2" onclick="add_members_to_org({{ org.org_id }});">
+                                        <span class="menu-title">Manage</span>
+                                    </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="org_members_table" >
+                                <thead>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User login</th>
+                                      <th>User display name</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User login</th>
+                                      <th>User display name</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+<script>
+var modal_org_table = $("#org_members_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "id",
+            "render": function ( data, type, row ) {
+                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove from org" href="javascript:void(0)" onclick="remove_members_from_org('{{ org.org_id }}','${data}')"></i>${data}`;
+            },
+            "className": "dt-center"
+        },
+        {
+            "data": "user",
+            "className": "dt-center"
+        },
+        {
+            "data": "name",
+            "className": "dt-center"
+        }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true
+});
+
+{% if org.org_id %}
+    modal_org_table.rows.add({{ org.org_members|tojson }});
+    modal_org_table.columns.adjust().draw();
+{% endif %}
+</script>

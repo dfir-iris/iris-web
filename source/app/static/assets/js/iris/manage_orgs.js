@@ -28,7 +28,7 @@ $('#org_table').dataTable( {
           "render": function ( data, type, row ) {
                 if (type === 'display') {
                     data = sanitizeHTML(data)
-                    return '<a href="#" onclick="group_detail(\'' + row["org_id"] + '\');">' + data +'</a>';
+                    return '<a href="#" onclick="org_detail(\'' + row["org_id"] + '\');">' + data +'</a>';
                 }
                 return data;
             }
@@ -59,31 +59,29 @@ $('#org_table').dataTable( {
     }
 );
 
-function refresh_groups(do_notify) {
-  $('#groups_table').DataTable().ajax.reload();
+function refresh_orgs(do_notify) {
+  $('#org_table').DataTable().ajax.reload();
   if (do_notify !== undefined) {
     notify_success("Refreshed");
   }
 }
 
-
-/* Fetch the details of an user and allow modification */
-function group_detail(group_id) {
-    url = 'groups/' + group_id + '/modal' + case_param();
+function org_detail(org_id) {
+    url = 'organisations/' + org_id + '/modal' + case_param();
     $('#modal_access_control').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
         }
 
-        $('#submit_new_group').on("click", function () {
+        $('#submit_new_org').on("click", function () {
             clear_api_error();
 
-            var data_sent = $('#form_new_group').serializeObject();
-            post_request_api('/manage/groups/update/' + group_id, JSON.stringify(data_sent), true)
+            var data_sent = $('#form_new_org').serializeObject();
+            post_request_api('/manage/organisations/update/' + org_id, JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_users();
+                    refresh_orgs();
                     $('#modal_access_control').modal('hide');
                 }
             });
