@@ -3,16 +3,17 @@
         <div class="modal-header">
             <h4 class="modal-title mt-2 mr-4">{% if not group.group_id %}Add Group {% else %} Edit {{ group.group_name }} {% endif %}</h4>
             <div class="row text-center mr-4">
+                {% if group.group_id %}
                 <ul class="nav nav-pills nav-default mr-4" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link active show" data-toggle="pill" href="#group_details_tab" role="tab" aria-controls="group_details_tab" aria-selected="false">Info</a>
                     </li>
-                    {% if group.group_id %}
+
                     <li class="nav-item submenu">
                         <a class="nav-link"  data-toggle="pill" href="#group_members_tab" role="tab" aria-controls="group_members_tab" aria-selected="false">Members</a>
                     </li>
-                    {% endif %}
                 </ul>
+                {% endif %}
             </div>
             <div class="row text-right">
                 <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
@@ -28,7 +29,7 @@
                                 <div class="col-md-12 col-lg-12 col-sm-12">
                                     {{ form.hidden_tag() }}
                                     {% if not group.group_id %}
-                                    <p>Members can be added once the group is created.</p>
+                                    <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Members can be added once the group is created.</p>
                                     {% endif %}
                                     <div class="form-group">
                                         <label for="group_name" class="mr-4">Group name *
