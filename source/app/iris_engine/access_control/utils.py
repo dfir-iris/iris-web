@@ -39,6 +39,17 @@ def ac_permission_to_list(permission):
     return perms
 
 
+def ac_mask_from_val_list(permissions):
+    """
+    Return a permission mask from a list of permissions
+    """
+    am = 0
+    for perm in permissions:
+        am |= int(perm)
+
+    return am
+
+
 def ac_get_all_permissions():
     """
     Return a list of all permissions

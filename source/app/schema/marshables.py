@@ -42,6 +42,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_interactive_path_node
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
+from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus
 from app.models import AssetsType
 from app.models import CaseAssets
@@ -616,6 +617,7 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
 
 
 class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
+
     class Meta:
         model = Group
         load_instance = True
@@ -623,7 +625,7 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def verify_unique(self, data, **kwargs):
         group = Group.query.filter(
-            func.upper(Group.name) == data.name.upper()
+            func.upper(Group.group_name) == data.group_name.upper()
         ).first()
         if group:
             raise marshmallow.exceptions.ValidationError(
@@ -633,11 +635,16 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
-    @post_load
+    @pre_load
     def parse_permissions(self, data, **kwargs):
         permissions = data.get('group_permissions')
         if permissions is not None:
-            data['permissions'] = [Permission.query.filter(Permission.id == p).first() for p in permissions]
+            data['group_permissions'] = ac_mask_from_val_list(permissions)
+
+        else:
+            data['group_permissions'] = 0
+
+        return data
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):

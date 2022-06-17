@@ -100,9 +100,6 @@ def manage_groups_add(caseid):
     if not data:
         return response_error("Invalid request, expecting JSON")
 
-    if not isinstance(data.get('group_members'), list):
-        return response_error("Expecting a list of IDs")
-
     ags = AuthorizationGroupSchema()
 
     try:

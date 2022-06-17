@@ -112,7 +112,7 @@ function add_group() {
         $('#submit_new_group').on("click", function () {
              clear_api_error();
             var data_sent = $('#form_new_group').serializeObject();
-            post_request_api('/manage/groups/add' + case_param(), JSON.stringify(data_sent), true)
+            post_request_api('/manage/groups/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();
