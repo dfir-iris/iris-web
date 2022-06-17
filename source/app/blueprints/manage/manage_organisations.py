@@ -74,6 +74,11 @@ def manage_orgs_view_modal(cur_id, caseid, url_redir):
 
     form.org_name.render_kw = {'value': org.org_name}
     form.org_description.render_kw = {'value': org.org_description}
+    form.org_url.render_kw = {'value': org.org_url}
+    form.org_email.render_kw = {'value': org.org_email}
+    form.org_nationality.render_kw = {'value': org.org_nationality}
+    form.org_sector.render_kw = {'value': org.org_sector}
+    form.org_type.render_kw = {'org_type': org.org_type}
 
     return render_template("modal_add_org.html", form=form, org=org)
 
@@ -97,11 +102,9 @@ def manage_orgs_add_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_orgs.manage_orgs_index', cid=caseid))
 
-    form = AddGroupForm()
+    form = AddOrganisationForm()
 
-    all_perms = ac_get_all_permissions()
-
-    return render_template("modal_add_org.html", form=form, group=None, all_perms=all_perms)
+    return render_template("modal_add_org.html", form=form, org=None)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/add', methods=['POST'])

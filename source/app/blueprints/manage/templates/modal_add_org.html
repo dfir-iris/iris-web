@@ -60,6 +60,16 @@
                                         <label for="org_type" class="placeholder">Type</label>
                                         {{ form.org_type(class='form-control',  autocomplete="off") }}
                                     </div>
+                                    {% if org.org_id %}
+                                        <div class="form-group mt-3">
+                                            <label for="org_id" class="placeholder">Organisation ID</label>
+                                            <input autocomplete="off" class="form-control" type="text" value="{{ org.org_id }}" disabled>
+                                        </div>
+                                        <div class="form-group mt-3">
+                                            <label for="org_uuid" class="placeholder">Organisation UUID</label>
+                                            <input autocomplete="off" class="form-control" type="text" value="{{ org.org_uuid }}" disabled>
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 {% if org.org_id %}
                                     <button type="button" class="btn btn-danger mt-5"

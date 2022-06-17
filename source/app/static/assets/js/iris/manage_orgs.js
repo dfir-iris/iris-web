@@ -59,7 +59,7 @@ $('#org_table').dataTable( {
     }
 );
 
-function refresh_orgs(do_notify) {
+function refresh_organisations(do_notify) {
   $('#org_table').DataTable().ajax.reload();
   if (do_notify !== undefined) {
     notify_success("Refreshed");
@@ -81,7 +81,7 @@ function org_detail(org_id) {
             post_request_api('/manage/organisations/update/' + org_id, JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_orgs();
+                    refresh_organisations();
                     $('#modal_access_control').modal('hide');
                 }
             });
@@ -95,7 +95,7 @@ function org_detail(org_id) {
 }
 
 function add_organisation() {
-    url = '/manage/organisation/add/modal' + case_param();
+    url = '/manage/organisations/add/modal' + case_param();
     $('#modal_access_control').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -108,7 +108,7 @@ function add_organisation() {
             post_request_api('/manage/organisations/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_orgs();
+                    refresh_organisations();
                     $('#modal_access_control').modal('hide');
                 }
             });
@@ -134,7 +134,7 @@ function delete_org(org_id) {
         get_request_api('/manage/organisations/delete/' + org_id)
         .done((data) => {
             if(notify_auto_api(data)) {
-                refresh_orgs();
+                refresh_organisations();
                 $('#modal_access_control').modal('hide');
             }
         });
@@ -169,7 +169,6 @@ function remove_members_from_group(group_id, user_id) {
             });
         }
     });
-
 }
 
 function add_members_to_group(group_id) {

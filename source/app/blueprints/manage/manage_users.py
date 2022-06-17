@@ -261,6 +261,7 @@ def lookup_name_restricted(login, caseid):
 
     return response_success(data=output)
 
+
 @manage_users_blueprint.route('/manage/users/restricted/list', methods=['GET'])
 @api_login_required
 def manage_users_list_restricted(caseid):
