@@ -105,6 +105,8 @@ def manage_groups_add(caseid):
     try:
 
         ags_c = ags.load(data)
+        db.session.add(ags_c)
+        db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
