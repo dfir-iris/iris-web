@@ -51,7 +51,7 @@ def get_org_with_members(org_id):
         User.id,
         User.name
     ).join(
-        UserOrganisation.user
+        UserOrganisation.user, UserOrganisation.org
     ).filter(
         UserOrganisation.org_id == org_id
     ).all()

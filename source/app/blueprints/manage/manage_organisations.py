@@ -64,12 +64,12 @@ def manage_orgs_index(caseid):
 @admin_required
 def manage_orgs_view_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_orgs_blueprint.manage_orgs_index', cid=caseid))
+        return redirect(url_for('manage_orgs.manage_orgs_index', cid=caseid))
 
     form = AddOrganisationForm()
     org = get_org_with_members(cur_id)
     if not org:
-        return response_error("Invalid group ID")
+        return response_error("Invalid organisation ID")
 
     form.org_name.render_kw = {'value': org.org_name}
     form.org_description.render_kw = {'value': org.org_description}
@@ -77,11 +77,24 @@ def manage_orgs_view_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_org.html", form=form, org=org)
 
 
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>', methods=['GET'])
+@admin_required
+def manage_orgs_view(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_orgs.manage_orgs_index', cid=caseid))
+
+    org = get_org_with_members(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
+
+    return response_success("", data=org)
+
+
 @manage_orgs_blueprint.route('/manage/organisations/add/modal', methods=['GET'])
 @admin_required
 def manage_orgs_add_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_orgs_blueprint.manage_orgs_index', cid=caseid))
+        return redirect(url_for('manage_orgs.manage_orgs_index', cid=caseid))
 
     form = AddGroupForm()
 
@@ -175,7 +188,7 @@ def manage_groups_view(cur_id, caseid):
 @admin_required
 def manage_groups_members_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
+        return redirect(url_for('manage_orgs.manage_groups_index', cid=caseid))
 
     group = get_group_with_members(cur_id)
     if not group:

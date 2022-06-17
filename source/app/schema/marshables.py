@@ -669,7 +669,7 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
         for organisation in organisations:
             if data.get('org_id') is None or organisation.org_id != data.get('org_id'):
                 raise marshmallow.exceptions.ValidationError(
-                    "Organisation already exists",
+                    "Organisation name already exists",
                     field_name="org_name"
                 )
 

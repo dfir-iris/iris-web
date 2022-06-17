@@ -59,7 +59,7 @@ def manage_groups_index(caseid):
 @admin_required
 def manage_groups_view_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
+        return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
 
     form = AddGroupForm()
     group = get_group_with_members(cur_id)
@@ -78,7 +78,7 @@ def manage_groups_view_modal(cur_id, caseid, url_redir):
 @admin_required
 def manage_groups_add_modal(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
+        return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
 
     form = AddGroupForm()
 
