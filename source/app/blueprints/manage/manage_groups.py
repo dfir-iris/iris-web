@@ -32,6 +32,7 @@ from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.schema.marshables import AuthorizationGroupSchema
@@ -178,7 +179,7 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
     if not group:
         return response_error("Invalid group ID")
 
-    users = get_users_list()
+    users = get_users_list_restricted()
 
     return render_template("modal_add_group_members.html", group=group, users=users)
 

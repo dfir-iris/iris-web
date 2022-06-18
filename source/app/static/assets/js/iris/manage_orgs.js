@@ -174,12 +174,17 @@ function remove_members_from_org(org_id, user_id) {
 
 function manage_organisation_members(org_id) {
     url = 'organisations/' + org_id + '/members/modal' + case_param();
+
+    $('#manage_org_members_button').text('Loading manager...');
+
     $('#modal_ac_additional').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
+             $('#manage_org_members_button').text('Manage');
              return false;
         }
 
+        $('#manage_org_members_button').text('Manage');
         $('#save_org_members').on("click", function () {
             clear_api_error();
 
