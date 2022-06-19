@@ -25,6 +25,8 @@ from flask import render_template
 from flask import url_for
 
 from app.forms import AddAssetForm
+from app.models.authorization import Permissions
+from app.util import ac_requires
 from app.util import admin_required
 
 manage_objects_blueprint = Blueprint('manage_objects',
@@ -34,7 +36,7 @@ manage_objects_blueprint = Blueprint('manage_objects',
 
 # CONTENT ------------------------------------------------
 @manage_objects_blueprint.route('/manage/objects')
-@admin_required
+@ac_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
 def manage_objects(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_objects.manage_objects', cid=caseid))

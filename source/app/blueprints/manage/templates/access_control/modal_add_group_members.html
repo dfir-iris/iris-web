@@ -26,22 +26,37 @@
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 <script>
-var data = [
-    {% for e in users %}
-        {
-            id: {{ e.user_id }},
-            text: "{{ e.user_login }} ({{ e.user_name }})"
-        },
-    {% endfor %}
-];
-$('#group_members').select2({ data: data });
+var data = [];
+if (current_users_list.length === 0) {
+    refresh_users();
+}
+
+for (user in current_users_list) {
+    data.push({
+        label: `${current_users_list[user].user_login} (${current_users_list[user].user_name} - ${current_users_list[user].user_email})`,
+        value: current_users_list[user].user_id
+    });
+}
+
+$('#group_members').multiselect({
+    buttonWidth: 400,
+    nonSelectedText: 'Select members',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#group_members').multiselect('dataprovider', data );
 
 {% if group.group_members %}
 
-$('#group_members').val([
+$('#group_members').multiselect('select', [
     {% for member in group.group_members %} {{ member.id }}, {% endfor %}
 ]);
-$('#group_members').trigger('change');
+$('#group_members').multiselect('refresh')
 
 {% endif %}
 </script>

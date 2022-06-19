@@ -22,12 +22,14 @@ from flask import Blueprint
 # IMPORTS ------------------------------------------------
 from flask import redirect
 from flask import request
+from flask import session
 from flask_login import current_user
 from sqlalchemy import desc
 
 from app import app
 from app import cache
 from app import db
+from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import ServerSettings
@@ -84,6 +86,8 @@ def has_updates():
 
 @app.context_processor
 def case_name():
+
+    session['permissions'] = ac_get_effective_permissions_of_user(current_user)
     return dict(case_name=get_urlcasename())
 
 

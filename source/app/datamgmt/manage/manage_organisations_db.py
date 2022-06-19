@@ -120,3 +120,14 @@ def delete_organisation(org):
 
     db.session.delete(org)
     db.session.commit()
+
+
+def get_user_organisations(user_id):
+    orgs = Organisation.query.join(
+        UserOrganisation,
+        Organisation.org_id == UserOrganisation.org_id
+    ).filter(
+        UserOrganisation.user_id == user_id
+    ).all()
+
+    return orgs

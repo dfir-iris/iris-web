@@ -20,7 +20,9 @@ import marshmallow
 from flask import Blueprint
 from flask import render_template
 from flask import request
+from flask import session
 from flask import url_for
+from flask_login import current_user
 from werkzeug.utils import redirect
 
 from app import db
@@ -34,6 +36,7 @@ from app.datamgmt.manage.manage_organisations_db import delete_organisation
 from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
+from app.datamgmt.manage.manage_organisations_db import get_user_organisations
 from app.datamgmt.manage.manage_organisations_db import remove_user_from_organisation
 from app.datamgmt.manage.manage_organisations_db import update_org_members
 from app.datamgmt.manage.manage_users_db import get_user
@@ -58,11 +61,15 @@ manage_orgs_blueprint = Blueprint(
 
 
 @manage_orgs_blueprint.route('/manage/organisations/list', methods=['GET'])
-@ac_api_requires(Permissions.manage_organisations)
+@ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
 def manage_orgs_index(caseid):
-    groups = get_organisations_list()
 
-    return response_success('', data=groups)
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        organisations = get_user_organisations(current_user.id)
+    else:
+        organisations = get_organisations_list()
+
+    return response_success('', data=organisations)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/modal', methods=['GET'])
