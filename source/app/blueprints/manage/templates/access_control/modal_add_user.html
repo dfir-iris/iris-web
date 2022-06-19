@@ -1,7 +1,31 @@
 <div class="modal-lg modal-dialog" role="document">
     <div class="modal-content" id="modal_access_control_content">
         <div class="modal-header">
-            <h4>Add User</h4>
+            <h4 class="mt-3">{% if not user.id %}Add User{% else %} Edit user {% endif %}</h4>
+
+            <div class="row text-center">
+                {% if user.id %}
+                <ul class="nav nav-pills nav-default" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active show" data-toggle="pill" href="#user_details_tab" role="tab" aria-controls="user_details_tab" aria-selected="false">Info</a>
+                    </li>
+
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#user_permissions_tab" role="tab" aria-controls="user_permissions_tab" aria-selected="false">Permissions</a>
+                    </li>
+
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#user_groups_tab" role="tab" aria-controls="user_groups_tab" aria-selected="false">Groups</a>
+                    </li>
+
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#user_orgs_tab" role="tab" aria-controls="user_orgs_tab" aria-selected="false">Organisations</a>
+                    </li>
+
+                </ul>
+                {% endif %}
+            </div>
+
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                     aria-hidden="true">&times;</span></button>
         </div>
@@ -11,6 +35,9 @@
                 <form method="post" action="" id="form_new_user">
                     <div class="col-md-12 col-lg-12 col-sm-12">
                         {{ form.hidden_tag() }}
+                        {% if not user.id %}
+                            <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Permissions, groups and organisations memberships can be set once the user is created.</p>
+                        {% endif %}
                         <div class="form-group">
                             <label for="asset_type" class="mr-4">Full name
                             </label>
