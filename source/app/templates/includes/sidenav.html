@@ -89,7 +89,7 @@
 							</a>
 						</li>
 						{% endif %}
-						{% if current_user.is_admin() %}
+
 						<li class="nav-item submenu">
 							<a data-toggle="collapse" href="#advanced-nav" class="" aria-expanded="false">
 								<i class="flaticon-interface-3"></i>
@@ -98,52 +98,75 @@
 							</a>
 							<div class="collapse" id="advanced-nav" style="">
 								<ul class="nav nav-collapse">
+									{% if user_has_perm(std_permissions.read_modules, std_permissions.manage_modules) %}
 									<li class="nav-subitem">
 										<a href="/manage/modules?cid={{case_name[2]}}">
 											<i class="flaticon-technology-1"></i>
 											<span class="subsub-item">Modules</span>
 										</a>
 									</li>
+									{% endif %}
+
+									{% if user_has_perm(std_permissions.read_customers, std_permissions.manage_customers) %}
 									<li class="nav-subitem">
 										<a href="/manage/customers?cid={{case_name[2]}}">
 											<i class="flaticon-profile"></i>
 											<span class="subsub-item">Customers</span>
 										</a>
 									</li>
+									{% endif %}
+
+									{% if user_has_perm(std_permissions.read_case_objects, std_permissions.manage_case_objects) %}
 									<li class="nav-subitem">
 										<a href="/manage/objects?cid={{case_name[2]}}">
 											<i class="flaticon-box-2"></i>
 											<span>Case Objects</span>
 										</a>
 									</li>
+									{% endif %}
+
+									{% if user_has_perm(std_permissions.read_custom_attributes, std_permissions.manage_custom_attributes) %}
 									<li class="nav-subitem">
 										<a href="/manage/attributes?cid={{case_name[2]}}">
 											<i class="flaticon-layers-1"></i>
 											<span>Custom Attributes</span>
 										</a>
 									</li>
+									{% endif %}
+
+									{% if user_has_perm(std_permissions.manage_templates) %}
 									<li class="nav-subitem">
 										<a href="/manage/templates?cid={{case_name[2]}}">
 											<i class="flaticon-interface-6"></i>
 											<span>Report Templates</span>
 										</a>
 									</li>
+									{% endif %}
+
+									{% if user_has_perm(std_permissions.read_users, std_permissions.manage_users,
+										std_permissions.manage_groups,
+										std_permissions.manage_organisations, std_permissions.manage_own_organisation) %}
 									<li class="nav-subitem">
 										<a href="/manage/access-control?cid={{case_name[2]}}">
 											<i class="flaticon-lock-1"></i>
 											<span>Access control</span>
 										</a>
 									</li>
+									{% endif %}
+
+									{% if user_has_perm(std_permissions.manage_server_settings, std_permissions.read_server_settings) %}
 									<li class="nav-subitem">
 										<a href="/manage/settings?cid={{case_name[2]}}">
 											<i class="flaticon-settings"></i>
 											<span>Server settings</span>
 										</a>
 									</li>
+									{% endif %}
+
 								</ul>
 							</div>
 						</li>
-						{% endif %}
+
 						<li class="nav-item">
 							<a href="https://dfir-iris.github.io">
 								<i class="flaticon-round"></i>

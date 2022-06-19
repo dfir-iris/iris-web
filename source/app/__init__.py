@@ -62,11 +62,15 @@ logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT
 app = Flask(__name__)
 
 
-def ac_current_user_has_permission(permission):
+def ac_current_user_has_permission(*permissions):
     """
     Return True if current user has permission
     """
-    return session['permissions'] & permission.value == permission
+    for permission in permissions:
+        if session['permissions'] & permission.value == permission.value:
+            return True
+
+    return False
 
 
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
