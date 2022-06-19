@@ -64,7 +64,7 @@ def ac_get_all_permissions():
     return perms
 
 
-def ac_get_effective_permissions_from_groups(groups):
+def ac_get_detailed_effective_permissions_from_groups(groups):
     """
     Return a list of permissions from a list of groups
     """
@@ -87,3 +87,14 @@ def ac_get_effective_permissions_from_groups(groups):
                         perms[Permissions[std_perm].value]['inherited_from'].append(group.group_name)
 
     return perms
+
+
+def ac_get_effective_permissions_from_groups(groups):
+    """
+    Return a permission mask from a list of groups
+    """
+    final_perm = 0
+    for group in groups:
+        final_perm &= group.group_permissions
+
+    return final_perm

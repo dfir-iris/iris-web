@@ -20,7 +20,7 @@
 
 from app import bc
 from app import db
-from app.iris_engine.access_control.utils import ac_get_effective_permissions_from_groups
+from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.models.authorization import Group
 from app.models.authorization import Role
 from app.models.authorization import User
@@ -43,7 +43,7 @@ def get_user_effective_permissions(user_id):
         UserGroup.group
     ).all()
 
-    effective_permissions = ac_get_effective_permissions_from_groups(groups_perms)
+    effective_permissions = ac_get_detailed_effective_permissions_from_groups(groups_perms)
 
     return effective_permissions
 
