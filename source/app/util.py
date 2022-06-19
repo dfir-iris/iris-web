@@ -437,7 +437,7 @@ def ac_requires(*permissions):
                     if session['permissions'] & permission.value:
                         return f(*args, **kwargs)
 
-                return redirect(url_for('index.index'))
+                return response_error("Permission denied", status=403)
         return wrap
     return inner_wrap
 
