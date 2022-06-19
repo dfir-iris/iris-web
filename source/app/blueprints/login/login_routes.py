@@ -24,6 +24,7 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
@@ -34,6 +35,7 @@ from app import db
 from app.datamgmt.case.case_db import case_exists
 
 from app.forms import LoginForm
+from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.models.authorization import User
@@ -80,6 +82,8 @@ if app.config.get("AUTHENTICATION_TYPE") == "local":
 
                     track_activity("user '{}' successfully logged-in".format(username), ctx_less=True)
                     caseid = user.ctx_case
+                    session['permissions'] = ac_get_effective_permissions_of_user(user)
+
                     if caseid is None:
                         case = Cases.query.order_by(Cases.case_id).first()
                         user.ctx_case = case.case_id

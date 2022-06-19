@@ -43,6 +43,7 @@ from app.forms import AddOrganisationForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.schema.marshables import AuthorizationOrganisationSchema
+from app.util import ac_api_requires
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import response_error
@@ -56,7 +57,7 @@ manage_orgs_blueprint = Blueprint(
 
 
 @manage_orgs_blueprint.route('/manage/organisations/list', methods=['GET'])
-@api_admin_required
+@ac_api_requires('manage_organisations')
 def manage_orgs_index(caseid):
     groups = get_organisations_list()
 

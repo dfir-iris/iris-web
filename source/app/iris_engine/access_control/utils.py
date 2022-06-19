@@ -1,4 +1,6 @@
+from app.models.authorization import Group
 from app.models.authorization import Permissions
+from app.models.authorization import UserGroup
 
 
 def ac_get_mask_full_permissions():
@@ -98,3 +100,23 @@ def ac_get_effective_permissions_from_groups(groups):
         final_perm &= group.group_permissions
 
     return final_perm
+
+
+def ac_get_effective_permissions_of_user(user):
+    """
+    Return a permission mask from a user
+    """
+    groups_perms = UserGroup.query.with_entities(
+        Group.group_permissions,
+    ).filter(
+        UserGroup.user_id == user.id
+    ).join(
+        UserGroup.group
+    ).all()
+
+    final_perm = 0
+    for group in groups_perms:
+        final_perm |= group.group_permissions
+
+    return final_perm
+

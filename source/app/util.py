@@ -31,6 +31,7 @@ import string
 import traceback
 import weakref
 import logging as log
+from flask import session
 from pathlib import Path
 
 import requests
@@ -57,6 +58,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_users_db import get_user, create_user, update_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
+from app.models.authorization import Permissions
 
 
 def response(msg, data):
@@ -417,6 +419,59 @@ def api_login_required(f):
             return f(*args, **kwargs)
 
     return wrap
+
+
+def ac_requires(permission):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            if not is_user_authenticated(request):
+                return redirect(not_authenticated_redirection_url())
+
+            else:
+                redir, caseid = get_urlcase(request=request)
+
+                kwargs.update({"caseid": caseid, "url_redir": redir})
+
+                print(session['permissions'])
+
+                if session['permissions'] & Permissions[permission].value:
+                    return f(*args, **kwargs)
+
+                return redirect(url_for('index.index'))
+        return wrap
+    return inner_wrap
+
+
+def ac_api_requires(permission):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            if request.method == 'POST':
+                cookie_session = request.cookies.get('session')
+                if cookie_session:
+                    form = FlaskForm()
+                    if not form.validate():
+                        return response_error('Invalid CSRF token')
+                    elif request.is_json:
+                        request.json.pop('csrf_token')
+
+            if not is_user_authenticated(request):
+                return response_error("Authentication required", status=401)
+
+            else:
+                redir, caseid = get_urlcase(request=request)
+                if not caseid or redir:
+                    return response_error("Invalid case ID", status=404)
+                kwargs.update({"caseid": caseid})
+
+                if session['permissions'] & Permissions[permission].value:
+                    return f(*args, **kwargs)
+
+                return response_error("Permission denied", status=403)
+
+        return wrap
+    return inner_wrap
 
 
 def api_admin_required(f):

@@ -40,6 +40,7 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.forms import AddCustomerForm
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CustomerSchema
+from app.util import ac_requires
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import api_login_required
@@ -56,7 +57,7 @@ manage_customers_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @manage_customers_blueprint.route('/manage/customers')
-@admin_required
+@ac_requires('manage_customers')
 def manage_customers(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
