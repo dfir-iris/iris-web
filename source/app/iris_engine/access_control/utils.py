@@ -1,3 +1,5 @@
+from flask import session
+
 from app.models.authorization import Group
 from app.models.authorization import Permissions
 from app.models.authorization import UserGroup
@@ -120,3 +122,16 @@ def ac_get_effective_permissions_of_user(user):
 
     return final_perm
 
+
+def ac_user_has_permission(user, permission):
+    """
+    Return True if user has permission
+    """
+    return ac_get_effective_permissions_of_user(user) & permission.value == permission
+
+
+def ac_current_user_has_permission(permission):
+    """
+    Return True if current user has permission
+    """
+    return session['permissions'] & permission.value == permission

@@ -30,6 +30,7 @@ from app import app
 from app import cache
 from app import db
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
+from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import ServerSettings
@@ -89,6 +90,11 @@ def has_updates():
 @app.context_processor
 def case_name():
     return dict(case_name=get_urlcasename())
+
+
+@app.context_processor
+def std_permissions():
+    return dict(std_permissions=Permissions)
 
 
 @ctx_blueprint.route('/context/get-cases', methods=['GET'])

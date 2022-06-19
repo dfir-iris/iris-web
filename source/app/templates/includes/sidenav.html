@@ -81,12 +81,14 @@
 							</span>
 							<h4 class="text-section">Manage</h4>
 						</li>
+						{% if user_has_perm(std_permissions.manage_case) %}
 						<li class="nav-item">
 							<a href="/manage/cases?cid={{case_name[2]}}">
 								<i class="flaticon-folder"></i>
 								<span>Manage cases</span>
 							</a>
 						</li>
+						{% endif %}
 						{% if current_user.is_admin() %}
 						<li class="nav-item submenu">
 							<a data-toggle="collapse" href="#advanced-nav" class="" aria-expanded="false">
