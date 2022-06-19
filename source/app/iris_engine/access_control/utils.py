@@ -83,7 +83,7 @@ def ac_get_effective_permissions_from_groups(groups):
                     }
 
                 else:
-
-                    perms[Permissions[std_perm].value]['inherited_from'].append(group.group_name)
+                    if group.group_name not in perms[Permissions[std_perm].value]['inherited_from']:
+                        perms[Permissions[std_perm].value]['inherited_from'].append(group.group_name)
 
     return perms

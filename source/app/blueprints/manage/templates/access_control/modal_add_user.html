@@ -1,4 +1,4 @@
-<div class="modal-lg modal-dialog" role="document">
+<div class="modal-xl modal-dialog" role="document">
     <div class="modal-content" id="modal_access_control_content">
         <div class="modal-header">
             <h4 class="mt-3">{% if not user.id %}Add User{% else %} Edit user {% endif %}</h4>
@@ -110,8 +110,8 @@
                     </div>
                     <div class="tab-pane" id="user_permissions_tab">
                         <div class="container col-md-12">
-                            <p class=""><i class="fa-solid fa-circle-info mr-2"></i>Permissions are inherited from the groups the user belongs to. The table below shows the effective permissions the user have ont the platform.</p>
-                            <table class="table table-striped">
+                            <p class="mb-4"><i class="fa-solid fa-circle-info mr-2"></i>Permissions are inherited from the groups the user belongs to. The table shows the effective permissions the user has on the platform.</p>
+                            <table class="table table-striped" id="user_permissions_table">
                                 <thead>
                                     <tr>
                                         <th>Permission</th>
@@ -123,7 +123,7 @@
                                 {% for perm in permissions %}
                                     <tr>
                                         <td>{{ permissions[perm].name }}</td>
-                                        <td>{{ perm }}</td>
+                                        <td>0x{{ perm | int(perm,16) }}</td>
                                         <td>{% for group in permissions[perm].inherited_from %}<span class="badge ml-2 badge-light">{{ group }}</span>{% endfor %}</td>
                                     </tr>
                                 {% endfor %}
@@ -145,6 +145,9 @@
                 $('#user_password').attr('type', type);
                 $('#toggle_user_password > i').attr('class', type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash');
             });
+
+            $('#user_permissions_table').dataTable({
+                "order": [[ 1, "asc" ]]});
         </script>
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
