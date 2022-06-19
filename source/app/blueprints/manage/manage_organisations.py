@@ -80,7 +80,7 @@ def manage_orgs_view_modal(cur_id, caseid, url_redir):
     form.org_email.render_kw = {'value': org.org_email}
     form.org_nationality.render_kw = {'value': org.org_nationality}
     form.org_sector.render_kw = {'value': org.org_sector}
-    form.org_type.render_kw = {'org_type': org.org_type}
+    form.org_type.render_kw = {'value': org.org_type}
 
     return render_template("modal_add_org.html", form=form, org=org)
 
