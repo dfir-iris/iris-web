@@ -1,16 +1,4 @@
-$('#groups_table').dataTable( {
-    "ajax": {
-      "url": "groups/list" + case_param(),
-      "contentType": "application/json",
-      "type": "GET",
-      "data": function ( d ) {
-        if (d.status == 'success') {
-          return JSON.stringify( d.data );
-        } else {
-          return [];
-        }
-      }
-    },
+manage_groups_table = $('#groups_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
     "columns": [
@@ -65,10 +53,19 @@ $('#groups_table').dataTable( {
 );
 
 function refresh_groups(do_notify) {
-  $('#groups_table').DataTable().ajax.reload();
-  if (do_notify !== undefined) {
-    notify_success("Refreshed");
-  }
+
+    get_request_api('groups/list')
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            manage_groups_table.api().clear().rows.add(data.data).draw();
+
+            if (do_notify !== undefined) {
+                notify_success("Refreshed");
+            }
+
+        }
+    });
+
 }
 
 
@@ -220,3 +217,7 @@ function refresh_group_members(group_id) {
         });
     }
 }
+
+$(document).ready(function () {
+    refresh_groups();
+});
