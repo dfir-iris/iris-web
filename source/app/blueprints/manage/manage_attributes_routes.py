@@ -31,7 +31,10 @@ from app.datamgmt.manage.manage_attribute_db import update_all_attributes
 from app.datamgmt.manage.manage_attribute_db import validate_attribute
 from app.forms import AddAssetForm
 from app.forms import AttributeForm
+from app.models.authorization import Permissions
 from app.models.models import CustomAttribute
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import api_login_required
@@ -45,7 +48,7 @@ manage_attributes_blueprint = Blueprint('manage_attributes',
 
 # CONTENT ------------------------------------------------
 @manage_attributes_blueprint.route('/manage/attributes')
-@admin_required
+@ac_requires(Permissions.read_custom_attributes)
 def manage_attributes(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -56,7 +59,7 @@ def manage_attributes(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/list')
-@api_login_required
+@ac_api_requires(Permissions.read_custom_attributes)
 def list_attributes(caseid):
     # Get all attributes
     attributes = CustomAttribute.query.with_entities(
@@ -74,7 +77,7 @@ def list_attributes(caseid):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/<int:cur_id>/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.read_custom_attributes)
 def attributes_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -91,7 +94,7 @@ def attributes_modal(cur_id, caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/preview', methods=['POST'])
-@admin_required
+@ac_requires(Permissions.manage_custom_attributes)
 def attributes_preview(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -115,7 +118,7 @@ def attributes_preview(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_custom_attributes)
 def update_attribute(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -137,7 +140,6 @@ def update_attribute(cur_id, caseid):
 
     attribute.attribute_content = attr_contents
     db.session.commit()
-    print(attribute.attribute_content)
 
     # Now try to update every attributes by merging the updated ones
     complete_overwrite = data.get('complete_overwrite')
