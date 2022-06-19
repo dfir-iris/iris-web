@@ -39,7 +39,7 @@ for (user in current_users_list) {
 }
 
 $('#org_members').multiselect({
-    maxHeight: 400,
+    maxHeight: 600,
     buttonWidth: 400,
     nonSelectedText: 'Select members',
     includeSelectAllOption: true,
@@ -47,9 +47,7 @@ $('#org_members').multiselect({
     enableCaseInsensitiveFiltering: true,
     filterPlaceholder: 'Search',
     filterBehavior: 'both',
-    checkboxName: function(option) {
-        return 'multiselect[]';
-    }
+    widthSynchronizationMode: 'ifPopupIsSmaller'
 });
 
 $('#org_members').multiselect('dataprovider', data);
