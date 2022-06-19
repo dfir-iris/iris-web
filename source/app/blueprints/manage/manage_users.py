@@ -41,7 +41,10 @@ from app.datamgmt.manage.manage_users_db import update_user
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models import ServerSettings
+from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
+from app.util import ac_api_requires
+from app.util import ac_requires
 
 from app.util import admin_required
 from app.util import api_admin_required
@@ -59,7 +62,7 @@ manage_users_blueprint = Blueprint(
 
 
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.read_users)
 def manage_users_list(caseid):
     users = get_users_list()
 
@@ -68,7 +71,7 @@ def manage_users_list(caseid):
 
 if is_authentication_local():
     @manage_users_blueprint.route('/manage/users/add/modal', methods=['GET'])
-    @admin_required
+    @ac_requires(Permissions.manage_users)
     def add_user_modal(caseid, url_redir):
         if url_redir:
             return redirect(url_for('manage_users.add_user', cid=caseid))
@@ -76,13 +79,13 @@ if is_authentication_local():
         user = None
         form = AddUserForm()
         server_settings = get_srv_settings()
-        print(server_settings.password_policy_upper_case)
+
         return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
 
 
 if is_authentication_local():
     @manage_users_blueprint.route('/manage/users/add', methods=['POST'])
-    @api_admin_required
+    @ac_api_requires(Permissions.manage_users)
     def add_user(caseid):
         try:
 
@@ -111,7 +114,7 @@ if is_authentication_local():
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.read_users)
 def view_user(cur_id, caseid):
     user = get_user_details(user_id=cur_id)
 
@@ -122,7 +125,7 @@ def view_user(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.read_users)
 def view_user_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
@@ -150,7 +153,7 @@ def view_user_modal(cur_id, caseid, url_redir):
 
 if is_authentication_local():
     @manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])
-    @api_admin_required
+    @ac_api_requires(Permissions.manage_users)
     def update_user_api(cur_id, caseid):
         try:
             user = get_user(cur_id)
@@ -180,7 +183,7 @@ if is_authentication_local():
 
 # TODO: might also need to be conditional to local authentication
 @manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_users)
 def deactivate_user_api(cur_id, caseid):
     user = get_user(cur_id)
     if not user:
@@ -195,7 +198,7 @@ def deactivate_user_api(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/activate/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_users)
 def activate_user_api(cur_id, caseid):
     user = get_user(cur_id)
     if not user:
@@ -211,7 +214,7 @@ def activate_user_api(cur_id, caseid):
 
 if is_authentication_local():
     @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['GET'])
-    @api_admin_required
+    @ac_api_requires(Permissions.manage_users)
     def view_delete_user(cur_id, caseid):
         try:
             user = get_user(cur_id)
