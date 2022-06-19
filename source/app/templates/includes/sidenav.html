@@ -57,24 +57,33 @@
 								<span>Case</span>
 							</a>
 						</li>
+						{% if user_has_perm(std_permissions.search_all_data) %}
 						<li class="nav-item">
 							<a href="/search?cid={{case_name[2]}}">
 								<i class="flaticon-search-2"></i>
 								<span>Search</span>
 							</a>
 						</li>
+						{% endif %}
+
+						{% if user_has_perm(std_permissions.read_all_activities) %}
 						<li class="nav-item">
 							<a href="/activities?cid={{case_name[2]}}">
 								<i class="flaticon-list"></i>
 								<span>Activities</span>
 							</a>
 						</li>
+						{% endif %}
+
+						{% if user_has_perm(std_permissions.read_all_dim_tasks) %}
 						<li class="nav-item">
 							<a href="/dim/tasks?cid={{case_name[2]}}">
 								<i class="flaticon-web-1"></i>
 								<span>DIM Tasks</span>
 							</a>
 						</li>
+						{% endif %}
+
 						<li class="nav-section">
 							<span class="sidebar-mini-icon">
 								<i class="fa fa-ellipsis-h"></i>
