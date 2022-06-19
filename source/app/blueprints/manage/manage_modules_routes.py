@@ -48,6 +48,9 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.iris_engine.module_handler.module_handler import iris_update_hooks
 from app.iris_engine.module_handler.module_handler import register_module
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import Permissions
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import login_required
@@ -83,7 +86,7 @@ def site_map(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.read_modules, Permissions.manage_modules)
 def manage_modules_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_module.manage_modules_index', cid=caseid))
@@ -94,7 +97,7 @@ def manage_modules_index(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/list', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.read_modules, Permissions.manage_modules)
 def manage_modules_list(caseid):
     output = iris_modules_list()
 
@@ -102,7 +105,7 @@ def manage_modules_list(caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/add', methods=['GET', 'POST'])
-@admin_required
+@ac_requires(Permissions.manage_modules)
 def add_module(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_modules.add_module', cid=caseid))
@@ -146,7 +149,7 @@ def add_module(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/update_param/<param_name>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_modules)
 def update_module_param(param_name, caseid):
     try:
 
@@ -190,7 +193,7 @@ def update_module_param(param_name, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/update/<int:id>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_modules)
 def view_module(id, caseid):
     form = AddModuleForm()
 
@@ -206,7 +209,7 @@ def view_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/enable/<int:id>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_modules)
 def enable_module(id, caseid):
     if id:
         if iris_module_enable_by_id(id):
@@ -220,7 +223,7 @@ def enable_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/disable/<int:id>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_modules)
 def disable_module(id, caseid):
     if id:
         if iris_module_disable_by_id(id):
@@ -234,7 +237,7 @@ def disable_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/remove/<int:id>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_modules)
 def view_delete_module(id, caseid):
     try:
 
@@ -249,7 +252,7 @@ def view_delete_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/export-config/<int:id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_modules)
 def export_mod_config(id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(id)
@@ -264,7 +267,7 @@ def export_mod_config(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/import-config/<int:id>', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_modules)
 def import_mod_config(id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(id)
@@ -294,7 +297,7 @@ def import_mod_config(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.read_modules)
 def view_modules_hook(caseid):
     output = module_list_hooks_view()
     data = [item._asdict() for item in output]
