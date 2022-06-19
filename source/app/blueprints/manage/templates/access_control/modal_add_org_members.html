@@ -26,23 +26,32 @@
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 <script>
-var data = [
-    {% for e in users %}
-        {
-            value: {{ e.user_id }},
-            label: "{{ e.user_login }} ({{ e.user_name }})"
-        },
-    {% endfor %}
-];
+var data = [];
+if (current_users_list.length === 0) {
+    refresh_users();
+}
+
+for (user in current_users_list) {
+    data.push({
+        label: `${current_users_list[user].user_login} (${current_users_list[user].user_name} - ${current_users_list[user].user_email})`,
+        value: current_users_list[user].user_id
+    });
+}
+
 $('#org_members').multiselect({
     maxHeight: 400,
+    buttonWidth: 400,
     nonSelectedText: 'Select members',
-    includeSelectAllOption: false,
+    includeSelectAllOption: true,
     enableFiltering: true,
     enableCaseInsensitiveFiltering: true,
     filterPlaceholder: 'Search',
-    filterBehavior: 'both'
+    filterBehavior: 'both',
+    checkboxName: function(option) {
+        return 'multiselect[]';
+    }
 });
+
 $('#org_members').multiselect('dataprovider', data);
 
 {% if org.org_members %}

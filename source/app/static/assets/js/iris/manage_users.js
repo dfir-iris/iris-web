@@ -1,4 +1,4 @@
-
+var current_users_list = [];
 function add_user() {
     url = 'users/add/modal' + case_param();
     $('#modal_access_control').load(url, function (response, status, xhr) {
@@ -87,7 +87,7 @@ function refresh_users(do_notify) {
     .done((data) => {
 
         if(notify_auto_api(data, true)) {
-
+            current_users_list = data.data;
             manage_users_table.api().clear().rows.add(data.data).draw();
 
             if (do_notify !== undefined) {
