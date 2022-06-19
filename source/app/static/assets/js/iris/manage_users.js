@@ -26,19 +26,7 @@ function add_user() {
     $('#modal_access_control').modal({ show: true });
 }
 
-$('#users_table').dataTable( {
-    "ajax": {
-      "url": "users/list" + case_param(),
-      "contentType": "application/json",
-      "type": "GET",
-      "data": function ( d ) {
-        if (d.status == 'success') {
-          return JSON.stringify( d.data );
-        } else {
-          return [];
-        }
-      }
-    },
+manage_users_table = $('#users_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
     "columns": [
@@ -91,10 +79,18 @@ $('#users_table').dataTable( {
 );
 
 function refresh_users(do_notify) {
-  $('#users_table').DataTable().ajax.reload();
-  if (do_notify !== undefined) {
-    notify_success("Refreshed");
-  }
+
+
+    get_request_api('users/list')
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            manage_users_table.api().clear().rows.add(data.data).draw();
+            if (do_notify !== undefined) {
+                notify_success("Refreshed");
+            }
+        }
+    });
+
 }
 
 
@@ -173,3 +169,7 @@ function deactivate_user(id) {
     }
   });
 }
+
+$(document).ready(function () {
+    refresh_users(true);
+});
