@@ -131,3 +131,10 @@ def get_user_organisations(user_id):
     ).all()
 
     return orgs
+
+
+def is_user_in_org(user_id, org_id):
+    return UserOrganisation.query.filter(
+        and_(UserOrganisation.user_id == user_id,
+             UserOrganisation.org_id == org_id)
+    ).first() is not None

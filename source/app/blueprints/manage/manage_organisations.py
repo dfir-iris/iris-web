@@ -37,6 +37,7 @@ from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_organisations_db import get_user_organisations
+from app.datamgmt.manage.manage_organisations_db import is_user_in_org
 from app.datamgmt.manage.manage_organisations_db import remove_user_from_organisation
 from app.datamgmt.manage.manage_organisations_db import update_org_members
 from app.datamgmt.manage.manage_users_db import get_user
@@ -48,6 +49,7 @@ from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.schema.marshables import AuthorizationOrganisationSchema
 from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import admin_required
 from app.util import api_admin_required
 from app.util import response_error
@@ -73,10 +75,14 @@ def manage_orgs_index(caseid):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
 def manage_orgs_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_orgs.manage_orgs_index', cid=caseid))
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
 
     form = AddOrganisationForm()
     org = get_org_with_members(cur_id)
@@ -95,10 +101,12 @@ def manage_orgs_view_modal(cur_id, caseid, url_redir):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>', methods=['GET'])
-@admin_required
-def manage_orgs_view(cur_id, caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('manage_orgs.manage_orgs_index', cid=caseid))
+@ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
+def manage_orgs_view(cur_id, caseid):
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
 
     org = get_org_with_members(cur_id)
     if not org:
@@ -108,7 +116,7 @@ def manage_orgs_view(cur_id, caseid, url_redir):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/add/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.manage_organisations)
 def manage_orgs_add_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_orgs.manage_orgs_index', cid=caseid))
@@ -119,7 +127,7 @@ def manage_orgs_add_modal(caseid, url_redir):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/add', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_organisations)
 def manage_orgs_add(caseid):
 
     if not request.is_json:
@@ -146,7 +154,7 @@ def manage_orgs_add(caseid):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/update/<int:cur_id>', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
 def manage_org_update(cur_id, caseid):
 
     if not request.is_json:
@@ -155,6 +163,10 @@ def manage_org_update(cur_id, caseid):
     data = request.get_json()
     if not data:
         return response_error("Invalid request, expecting JSON")
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
 
     org = get_org(cur_id)
     if not org:
@@ -176,7 +188,7 @@ def manage_org_update(cur_id, caseid):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/delete/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_organisations)
 def manage_org_delete(cur_id, caseid):
 
     org = get_org(cur_id)
@@ -189,10 +201,14 @@ def manage_org_delete(cur_id, caseid):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
 def manage_org_members_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_orgs.manage_groups_index', cid=caseid))
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
 
     org = get_org_with_members(cur_id)
     if not org:
@@ -204,19 +220,22 @@ def manage_org_members_modal(cur_id, caseid, url_redir):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/update', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
 def manage_org_members_update(cur_id, caseid):
-
-    org = get_org_with_members(cur_id)
-    if not org:
-        return response_error("Invalid organisation ID")
-
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
 
     data = request.get_json()
     if not data:
         return response_error("Invalid request, expecting JSON")
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
+
+    org = get_org_with_members(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
 
     if not isinstance(data.get('org_members'), list):
         return response_error("Expecting a list of IDs")
@@ -228,8 +247,12 @@ def manage_org_members_update(cur_id, caseid):
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
 def manage_groups_members_delete(cur_id, cur_id_2, caseid):
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
 
     org = get_org_with_members(cur_id)
     if not org:
