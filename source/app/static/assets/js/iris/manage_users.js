@@ -29,6 +29,9 @@ function add_user() {
 manage_users_table = $('#users_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
+    "language": {
+        "emptyTable": "Loading users..."
+    },
     "columns": [
         {
             "data": "user_id",
@@ -55,40 +58,44 @@ manage_users_table = $('#users_table').dataTable( {
             return data;
           }
         },
-        { "data": "user_roles",
+        { "data": "user_email",
           "render": function (data, type, row, meta) {
                 if (type === 'display') { data = sanitizeHTML(data);}
                 return data;
               }
-          },
-            { "data": "user_active",
-            "render": function (data, type, row, meta) {
-                if (type === 'display') {
-                    data = sanitizeHTML(data);
-                    if (data == true) {
-                        data = '<span class="badge ml-2 badge-success">Active</span>';
-                    } else {
-                        data = '<span class="badge ml-2 badge-warning">Disabled</span>';
-                    }
+        },
+        { "data": "user_active",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') {
+                data = sanitizeHTML(data);
+                if (data == true) {
+                    data = '<span class="badge ml-2 badge-success">Active</span>';
+                } else {
+                    data = '<span class="badge ml-2 badge-warning">Disabled</span>';
                 }
-                return data;
-              }
             }
+            return data;
+          }
+        }
       ]
     }
 );
 
 function refresh_users(do_notify) {
 
-
     get_request_api('users/list')
     .done((data) => {
+
         if(notify_auto_api(data)) {
+
             manage_users_table.api().clear().rows.add(data.data).draw();
+
             if (do_notify !== undefined) {
                 notify_success("Refreshed");
             }
+
         }
+
     });
 
 }
@@ -171,5 +178,5 @@ function deactivate_user(id) {
 }
 
 $(document).ready(function () {
-    refresh_users(true);
+    refresh_users();
 });

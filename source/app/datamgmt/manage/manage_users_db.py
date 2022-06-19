@@ -68,11 +68,7 @@ def get_users_list():
         row['user_id'] = user.id
         row['user_name'] = user.name
         row['user_login'] = user.user
-        roles = []
-        for role in user.roles:
-            roles.append(role.name)
-
-        row['user_roles'] = roles
+        row['user_email'] = user.email
         row['user_active'] = user.active
         output.append(row)
 
