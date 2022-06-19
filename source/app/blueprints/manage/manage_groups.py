@@ -31,13 +31,13 @@ from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
-from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
+from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
-from app.util import admin_required
-from app.util import api_admin_required
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -49,7 +49,7 @@ manage_groups_blueprint = Blueprint(
 
 
 @manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_groups)
 def manage_groups_index(caseid):
     groups = get_groups_list_hr_perms()
 
@@ -57,7 +57,7 @@ def manage_groups_index(caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.manage_groups)
 def manage_groups_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
@@ -76,7 +76,7 @@ def manage_groups_view_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/add/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.manage_groups)
 def manage_groups_add_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
@@ -89,7 +89,7 @@ def manage_groups_add_modal(caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/add', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_groups)
 def manage_groups_add(caseid):
 
     if not request.is_json:
@@ -116,7 +116,7 @@ def manage_groups_add(caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/update/<int:cur_id>', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_groups)
 def manage_groups_update(cur_id, caseid):
 
     if not request.is_json:
@@ -146,7 +146,7 @@ def manage_groups_update(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/delete/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_groups)
 def manage_groups_delete(cur_id, caseid):
 
     group = get_group(cur_id)
@@ -159,7 +159,7 @@ def manage_groups_delete(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_groups)
 def manage_groups_view(cur_id, caseid):
 
     group = get_group_with_members(cur_id)
@@ -170,7 +170,7 @@ def manage_groups_view(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.manage_groups)
 def manage_groups_members_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
@@ -185,7 +185,7 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/update', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_groups)
 def manage_groups_members_update(cur_id, caseid):
 
     group = get_group_with_members(cur_id)
@@ -209,7 +209,7 @@ def manage_groups_members_update(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_groups)
 def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
     group = get_group_with_members(cur_id)
