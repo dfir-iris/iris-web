@@ -421,7 +421,7 @@ def api_login_required(f):
     return wrap
 
 
-def ac_requires(permission):
+def ac_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -433,17 +433,16 @@ def ac_requires(permission):
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                print(session['permissions'])
-
-                if session['permissions'] & Permissions[permission].value:
-                    return f(*args, **kwargs)
+                for permission in permissions:
+                    if session['permissions'] & permission.value:
+                        return f(*args, **kwargs)
 
                 return redirect(url_for('index.index'))
         return wrap
     return inner_wrap
 
 
-def ac_api_requires(permission):
+def ac_api_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -465,8 +464,9 @@ def ac_api_requires(permission):
                     return response_error("Invalid case ID", status=404)
                 kwargs.update({"caseid": caseid})
 
-                if session['permissions'] & Permissions[permission].value:
-                    return f(*args, **kwargs)
+                for permission in permissions:
+                    if session['permissions'] & permission.value:
+                        return f(*args, **kwargs)
 
                 return response_error("Permission denied", status=403)
 

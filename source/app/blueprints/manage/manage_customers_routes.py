@@ -39,7 +39,9 @@ from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.forms import AddCustomerForm
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import Permissions
 from app.schema.marshables import CustomerSchema
+from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import admin_required
 from app.util import api_admin_required
@@ -57,7 +59,7 @@ manage_customers_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @manage_customers_blueprint.route('/manage/customers')
-@ac_requires('manage_customers')
+@ac_requires(Permissions.manage_customers)
 def manage_customers(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -105,7 +107,7 @@ def view_customer_modal(cur_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_customers)
 def view_customers(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -128,7 +130,7 @@ def view_customers(cur_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/add/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.manage_customers)
 def add_customers_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -138,7 +140,7 @@ def add_customers_modal(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/add', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_customers)
 def add_customers(caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -159,7 +161,7 @@ def add_customers(caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/delete/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.manage_customers)
 def delete_customers(cur_id, caseid):
     try:
 

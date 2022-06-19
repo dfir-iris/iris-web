@@ -41,6 +41,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
 from app.forms import AddOrganisationForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
+from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.schema.marshables import AuthorizationOrganisationSchema
 from app.util import ac_api_requires
@@ -57,7 +58,7 @@ manage_orgs_blueprint = Blueprint(
 
 
 @manage_orgs_blueprint.route('/manage/organisations/list', methods=['GET'])
-@ac_api_requires('manage_organisations')
+@ac_api_requires(Permissions.manage_organisations)
 def manage_orgs_index(caseid):
     groups = get_organisations_list()
 
