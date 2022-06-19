@@ -1,16 +1,4 @@
-$('#org_table').dataTable( {
-    "ajax": {
-      "url": "organisations/list" + case_param(),
-      "contentType": "application/json",
-      "type": "GET",
-      "data": function ( d ) {
-        if (d.status == 'success') {
-          return JSON.stringify( d.data );
-        } else {
-          return [];
-        }
-      }
-    },
+manage_orgs_table = $('#org_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
     "columns": [
@@ -60,10 +48,21 @@ $('#org_table').dataTable( {
 );
 
 function refresh_organisations(do_notify) {
-  $('#org_table').DataTable().ajax.reload();
-  if (do_notify !== undefined) {
-    notify_success("Refreshed");
-  }
+
+    get_request_api('organisations/list')
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+
+            manage_orgs_table.api().clear().rows.add(data.data).draw();
+
+            if (do_notify !== undefined) {
+                notify_success("Refreshed");
+            }
+
+        }
+
+    });
+
 }
 
 function org_detail(org_id) {
@@ -218,3 +217,7 @@ function refresh_organisation_members(org_id) {
         });
     }
 }
+
+$(document).ready(function () {
+    refresh_organisations();
+});

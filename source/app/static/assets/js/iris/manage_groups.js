@@ -56,7 +56,7 @@ function refresh_groups(do_notify) {
 
     get_request_api('groups/list')
     .done((data) => {
-        if(notify_auto_api(data)) {
+        if(notify_auto_api(data, true)) {
             manage_groups_table.api().clear().rows.add(data.data).draw();
 
             if (do_notify !== undefined) {
