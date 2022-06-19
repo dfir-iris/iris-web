@@ -34,6 +34,7 @@ from app.datamgmt.manage.manage_users_db import delete_user
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_user_by_username
 from app.datamgmt.manage.manage_users_db import get_user_details
+from app.datamgmt.manage.manage_users_db import get_user_effective_permissions
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.datamgmt.manage.manage_users_db import update_user
@@ -128,8 +129,11 @@ def view_user_modal(cur_id, caseid, url_redir):
 
     form = AddUserForm()
     user = get_user(cur_id)
+
     if not user:
         return response_error("Invalid user ID")
+
+    permissions = get_user_effective_permissions(cur_id)
 
     form.user_login.render_kw = {'value': user.user}
     form.user_name.render_kw = {'value': user.name}
@@ -140,7 +144,8 @@ def view_user_modal(cur_id, caseid, url_redir):
 
     server_settings = get_srv_settings()
 
-    return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
+    return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings,
+                           permissions=permissions)
 
 
 if is_authentication_local():

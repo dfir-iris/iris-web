@@ -62,3 +62,28 @@ def ac_get_all_permissions():
         })
 
     return perms
+
+
+def ac_get_effective_permissions_from_groups(groups):
+    """
+    Return a list of permissions from a list of groups
+    """
+    perms = {}
+    for group in groups:
+        perm = group.group_permissions
+
+        for std_perm in Permissions._member_names_:
+
+            if perm & Permissions[std_perm].value:
+                if Permissions[std_perm].value not in perms:
+                    perms[Permissions[std_perm].value] = {
+                        'name': std_perm,
+                        'value': Permissions[std_perm].value,
+                        'inherited_from': [group.group_name]
+                    }
+
+                else:
+
+                    perms[Permissions[std_perm].value]['inherited_from'].append(group.group_name)
+
+    return perms

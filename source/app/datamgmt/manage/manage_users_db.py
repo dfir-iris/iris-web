@@ -20,14 +20,32 @@
 
 from app import bc
 from app import db
+from app.iris_engine.access_control.utils import ac_get_effective_permissions_from_groups
+from app.models.authorization import Group
 from app.models.authorization import Role
 from app.models.authorization import User
+from app.models.authorization import UserGroup
 from app.models.authorization import UserRoles
 
 
 def get_user(user_id, id_key: str = 'id'):
     user = User.query.filter(getattr(User, id_key) == user_id).first()
     return user
+
+
+def get_user_effective_permissions(user_id):
+    groups_perms = UserGroup.query.with_entities(
+        Group.group_permissions,
+        Group.group_name
+    ).filter(
+        UserGroup.user_id == user_id
+    ).join(
+        UserGroup.group
+    ).all()
+
+    effective_permissions = ac_get_effective_permissions_from_groups(groups_perms)
+
+    return effective_permissions
 
 
 def get_user_details(user_id):
