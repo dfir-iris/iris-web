@@ -58,6 +58,12 @@ class Permissions(enum.Enum):
 
     manage_groups = 0x80000
 
+    read_all_activities = 0x100000
+    read_all_dim_tasks = 0x200000
+
+    search_all_data = 0x400000
+    search_all_data_organisation = 0x800000
+
 
 class Organisation(db.Model):
     __tablename__ = 'organisations'
