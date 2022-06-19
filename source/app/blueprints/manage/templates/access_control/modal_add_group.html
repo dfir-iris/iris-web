@@ -105,19 +105,33 @@
 var data = [
     {% for e in all_perms %}
         {
-            id: {{ e.value }},
-            text: "{{ e.name }}"
+            value: {{ e.value }},
+            label: "{{ e.name }}"
         },
     {% endfor %}
 ];
-$('#group_permissions').select2({ data: data });
+
+$('#group_permissions').multiselect({
+    buttonWidth: 400,
+    nonSelectedText: 'Select permissions',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#group_permissions').multiselect('dataprovider', data );
 
 {% if group.group_permissions_list %}
 
-$('#group_permissions').val([
+
+$('#group_permissions').multiselect('select', [
     {% for perm in group.group_permissions_list %} {{ perm.value }}, {% endfor %}
 ]);
-$('#group_permissions').trigger('change');
+
+$('#org_members').multiselect('refresh')
 
 {% endif %}
 
