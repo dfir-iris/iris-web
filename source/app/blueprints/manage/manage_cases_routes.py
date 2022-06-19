@@ -48,8 +48,11 @@ from app.iris_engine.module_handler.module_handler import list_available_pipelin
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import Permissions
 from app.models.models import Client
 from app.schema.marshables import CaseSchema
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import api_login_required
 from app.util import login_required
 from app.util import response_error
@@ -103,7 +106,7 @@ def get_case_api(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(Permissions.manage_case)
 def api_delete_case(cur_id, caseid):
 
     if cur_id == caseid:
@@ -138,7 +141,7 @@ def api_delete_case(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(Permissions.manage_case)
 def api_reopen_case(cur_id, caseid):
 
     if not cur_id:
@@ -155,7 +158,7 @@ def api_reopen_case(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(Permissions.manage_case)
 def api_delete_close(cur_id, caseid):
 
     if not cur_id:
@@ -172,7 +175,7 @@ def api_delete_close(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])
-@api_login_required
+@ac_api_requires(Permissions.manage_case)
 def api_add_case(caseid):
 
     case_schema = CaseSchema()
@@ -206,7 +209,7 @@ def api_list_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
-@login_required
+@ac_requires(Permissions.write_case_data)
 def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
@@ -231,7 +234,7 @@ def manage_index_cases(caseid, url_redir):
 
 
 @manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
-@api_login_required
+@ac_api_requires(Permissions.write_case_data)
 def update_case_files(caseid):
     # case update request. The files should have already arrived with the request upload_files
     try:
@@ -289,7 +292,7 @@ def update_case_files(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/upload_files', methods=['POST'])
-@api_login_required
+@ac_api_requires(Permissions.write_case_data)
 def manage_cases_uploadfiles(caseid):
     """
     Handles the entire the case management, i.e creation, update, list and files imports
