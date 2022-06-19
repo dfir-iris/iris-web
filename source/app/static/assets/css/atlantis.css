@@ -15623,3 +15623,8 @@ td.dt-nowrap { white-space: nowrap }
   position: absolute;
   left: 17px;
 }
+
+.multiselect-container {
+  max-height: 35rem;
+  min-height: 100px;
+}
