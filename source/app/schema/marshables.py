@@ -643,6 +643,9 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
     @pre_load
     def parse_permissions(self, data, **kwargs):
         permissions = data.get('group_permissions')
+        if type(permissions) != list:
+            permissions = [permissions]
+
         if permissions is not None:
             data['group_permissions'] = ac_mask_from_val_list(permissions)
 
