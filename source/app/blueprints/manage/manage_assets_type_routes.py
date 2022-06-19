@@ -51,7 +51,7 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 @manage_assets_blueprint.route('/manage/asset-type/list')
-@ac_api_requires(Permissions.read_case_objects)
+@ac_api_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
 def list_assets(caseid):
     # Get all assets
     assets = AssetsType.query.with_entities(
@@ -75,7 +75,7 @@ def list_assets(caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.read_case_objects)
+@ac_api_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
 def view_asset_api(cur_id, caseid):
     # Get all assets
     asset_type = AssetsType.query.with_entities(
@@ -94,7 +94,7 @@ def view_asset_api(cur_id, caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.manage_case_objects)
+@ac_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
 def view_assets_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_assets.manage_assets', cid=caseid))
