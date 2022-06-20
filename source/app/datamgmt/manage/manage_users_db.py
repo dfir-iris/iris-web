@@ -104,7 +104,6 @@ def get_user_details(user_id):
     row['user_organisations'] = get_user_organisations(user_id)
     row['user_permissions'] = get_user_effective_permissions(user_id)
 
-
     return row
 
 

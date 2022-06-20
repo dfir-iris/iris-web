@@ -2,10 +2,10 @@
     <div class="modal-content" id="modal_access_control_content">
         <div class="modal-header">
             <div class="row w-100 d-flex justify-content-center">
-                <h4 class="modal-title ml-4 mt-3">{% if not user.id %}Add User{% else %} Edit user {% endif %}</h4>
+                <h4 class="modal-title ml-4 mt-3">{% if not user.user_id %}Add User{% else %} Edit user {% endif %}</h4>
 
                 <div class="col">
-                    {% if user.id %}
+                    {% if user.user_id %}
                     <ul class="nav nav-pills nav-default justify-content-center" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active show" data-toggle="pill" href="#user_details_tab" role="tab" aria-controls="user_details_tab" aria-selected="false">Info</a>
@@ -39,7 +39,7 @@
                             <form method="post" action="" id="form_new_user">
                                 <div class="col-md-12 col-lg-12 col-sm-12">
                                     {{ form.hidden_tag() }}
-                                    {% if not user.id %}
+                                    {% if not user.user_id %}
                                         <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Permissions, groups and organisations memberships can be set once the user is created.</p>
                                     {% endif %}
                                     <div class="form-group">
@@ -90,13 +90,13 @@
                                 </div>
                                 {% if user.id %}
                                     <button type="button" class="btn btn-danger mt-5"
-                                    onclick="delete_user('{{ user.id }}');">Delete</button>
+                                    onclick="delete_user('{{ user.user_id }}');">Delete</button>
                                     {% if user.active %}
                                     <button type="button" class="btn btn-outline-danger mt-5"
-                                    onclick="deactivate_user('{{ user.id }}');">Deactivate</button>
+                                    onclick="deactivate_user('{{ user.user_id }}');">Deactivate</button>
                                     {% else %}
                                     <button type="button" class="btn btn-outline-success mt-5"
-                                    onclick="activate_user('{{ user.id }}');">Activate</button>
+                                    onclick="activate_user('{{ user.user_id }}');">Activate</button>
                                     {% endif %}
                                     <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
                                     id="submit_new_user">Update</button>
@@ -122,11 +122,11 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                {% for perm in permissions %}
+                                {% for perm in user.user_permissions %}
                                     <tr>
-                                        <td>{{ permissions[perm].name }}</td>
+                                        <td>{{ user.user_permissions[perm].name }}</td>
                                         <td>0x{{ perm | int(perm,16) }}</td>
-                                        <td>{% for group in permissions[perm].inherited_from %}<span class="badge ml-2 badge-light">{{ group }}</span>{% endfor %}</td>
+                                        <td>{% for group in user.user_permissions[perm].inherited_from %}<span class="badge ml-2 badge-light">{{ group }}</span>{% endfor %}</td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>
@@ -134,6 +134,26 @@
                         </div>
                     </div>
                     <div class="tab-pane" id="user_groups_tab">
+                        <div class="container col-md-12">
+                            <table class="table table-striped" id="user_groups_table">
+                                <thead>
+                                    <tr>
+                                        <th>Group name</th>
+                                        <th>Group ID</th>
+                                        <th>Group UUID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for perm in user.user_groups %}
+                                    <tr>
+                                        <td>{{ user.user_permissions[perm].name }}</td>
+                                        <td>0x{{ perm | int(perm,16) }}</td>
+                                        <td>{% for group in user.user_permissions[perm].inherited_from %}<span class="badge ml-2 badge-light">{{ group }}</span>{% endfor %}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="tab-pane" id="user_orgs_tab">
                     </div>

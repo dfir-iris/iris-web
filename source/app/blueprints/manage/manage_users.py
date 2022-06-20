@@ -125,19 +125,16 @@ def view_user_modal(cur_id, caseid, url_redir):
         return redirect(url_for('manage_users.add_user', cid=caseid))
 
     form = AddUserForm()
-    user = get_user(cur_id)
+    user = get_user_details(cur_id)
 
     if not user:
         return response_error("Invalid user ID")
 
     permissions = get_user_effective_permissions(cur_id)
 
-    form.user_login.render_kw = {'value': user.user}
-    form.user_name.render_kw = {'value': user.name}
-    form.user_email.render_kw = {'value': user.email}
-
-    roles = [role.name for role in user.roles]
-    form.user_isadmin.data = 'administrator' in roles
+    form.user_login.render_kw = {'value': user.get('user_login')}
+    form.user_name.render_kw = {'value': user.get('user_name')}
+    form.user_email.render_kw = {'value': user.get('user_email')}
 
     server_settings = get_srv_settings()
 
