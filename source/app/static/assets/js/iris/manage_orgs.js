@@ -1,3 +1,4 @@
+var modal_org_table;
 manage_orgs_table = $('#org_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
@@ -143,7 +144,7 @@ function delete_org(org_id) {
     });
 }
 
-function remove_members_from_org(org_id, user_id) {
+function remove_members_from_org(org_id, user_id, on_finish) {
 
     swal({
       title: "Are you sure?",
@@ -164,6 +165,11 @@ function remove_members_from_org(org_id, user_id) {
                 if(notify_auto_api(data)) {
                     refresh_organisations();
                     refresh_organisation_members(org_id);
+
+                    if (on_finish !== undefined) {
+                        on_finish();
+                    }
+
                 }
             });
         }

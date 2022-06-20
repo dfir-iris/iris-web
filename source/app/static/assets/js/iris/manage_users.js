@@ -177,6 +177,13 @@ function deactivate_user(id) {
   });
 }
 
+function remove_member_from_org_wrap(org_id, user_id) {
+    remove_members_from_org(org_id, user_id, function() {
+        user_detail(user_id);
+        $('.nav-pills a[href="#user_orgs_tab"]').tab('show');
+    });
+}
+
 $(document).ready(function () {
     refresh_users();
 });
