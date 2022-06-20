@@ -22,9 +22,11 @@ from app import bc
 from app import db
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.models.authorization import Group
+from app.models.authorization import Organisation
 from app.models.authorization import Role
 from app.models.authorization import User
 from app.models.authorization import UserGroup
+from app.models.authorization import UserOrganisation
 from app.models.authorization import UserRoles
 
 
@@ -48,6 +50,42 @@ def get_user_effective_permissions(user_id):
     return effective_permissions
 
 
+def get_user_groups(user_id):
+    groups = UserGroup.query.with_entities(
+        Group.group_name,
+        Group.group_id,
+        Group.group_uuid
+    ).filter(
+        UserGroup.user_id == user_id
+    ).join(
+        UserGroup.group
+    ).all()
+
+    output = []
+    for group in groups:
+        output.append(group._asdict())
+
+    return output
+
+
+def get_user_organisations(user_id):
+    user_org = UserOrganisation.query.with_entities(
+        Organisation.org_name,
+        Organisation.org_id,
+        Organisation.org_uuid
+    ).filter(
+        UserOrganisation.user_id == user_id
+    ).join(
+        UserOrganisation.org
+    ).all()
+
+    output = []
+    for org in user_org:
+        output.append(org._asdict())
+
+    return output
+
+
 def get_user_details(user_id):
 
     user = User.query.filter(User.id == user_id).first()
@@ -59,15 +97,13 @@ def get_user_details(user_id):
     row['user_id'] = user.id
     row['user_name'] = user.name
     row['user_login'] = user.user
-    roles = []
-    for role in user.roles:
-        roles.append({
-            'role_name': role.name,
-            'role_id': role.id
-        })
-
-    row['user_roles'] = roles
+    row['user_email'] = user.email
     row['user_active'] = user.active
+
+    row['user_groups'] = get_user_groups(user_id)
+    row['user_organisations'] = get_user_organisations(user_id)
+    row['user_permissions'] = get_user_effective_permissions(user_id)
+
 
     return row
 
