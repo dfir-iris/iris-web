@@ -1,33 +1,35 @@
 <div class="modal-xl modal-dialog" role="document">
     <div class="modal-content" id="modal_access_control_content">
         <div class="modal-header">
-            <h4 class="mt-3">{% if not user.id %}Add User{% else %} Edit user {% endif %}</h4>
+            <div class="row w-100 d-flex justify-content-center">
+                <h4 class="modal-title ml-4 mt-3">{% if not user.id %}Add User{% else %} Edit user {% endif %}</h4>
 
-            <div class="row text-center">
-                {% if user.id %}
-                <ul class="nav nav-pills nav-default" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active show" data-toggle="pill" href="#user_details_tab" role="tab" aria-controls="user_details_tab" aria-selected="false">Info</a>
-                    </li>
+                <div class="col">
+                    {% if user.id %}
+                    <ul class="nav nav-pills nav-default justify-content-center" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active show" data-toggle="pill" href="#user_details_tab" role="tab" aria-controls="user_details_tab" aria-selected="false">Info</a>
+                        </li>
 
-                    <li class="nav-item submenu">
-                        <a class="nav-link"  data-toggle="pill" href="#user_permissions_tab" role="tab" aria-controls="user_permissions_tab" aria-selected="false">Permissions</a>
-                    </li>
+                        <li class="nav-item submenu">
+                            <a class="nav-link"  data-toggle="pill" href="#user_permissions_tab" role="tab" aria-controls="user_permissions_tab" aria-selected="false">Permissions</a>
+                        </li>
 
-                    <li class="nav-item submenu">
-                        <a class="nav-link"  data-toggle="pill" href="#user_groups_tab" role="tab" aria-controls="user_groups_tab" aria-selected="false">Groups</a>
-                    </li>
+                        <li class="nav-item submenu">
+                            <a class="nav-link"  data-toggle="pill" href="#user_groups_tab" role="tab" aria-controls="user_groups_tab" aria-selected="false">Groups</a>
+                        </li>
 
-                    <li class="nav-item submenu">
-                        <a class="nav-link"  data-toggle="pill" href="#user_orgs_tab" role="tab" aria-controls="user_orgs_tab" aria-selected="false">Organisations</a>
-                    </li>
+                        <li class="nav-item submenu">
+                            <a class="nav-link"  data-toggle="pill" href="#user_orgs_tab" role="tab" aria-controls="user_orgs_tab" aria-selected="false">Organisations</a>
+                        </li>
 
-                </ul>
-                {% endif %}
+                    </ul>
+                    {% endif %}
+                </div>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
             </div>
-
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                    aria-hidden="true">&times;</span></button>
         </div>
         <div class="modal-body">
             <div role="tabpanel">
