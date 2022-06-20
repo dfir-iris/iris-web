@@ -193,19 +193,31 @@
             $('#user_permissions_table').dataTable({
                 "order": [[ 1, "asc" ]]});
             $('#user_groups_table').dataTable({
-                "order": [[ 1, "asc" ]]});
+                "order": [[ 1, "asc" ]],
+                "columns": [{
+                    "title": "Group name",
+                    "render": function ( data, type, row, meta ) {
+                        if (type === 'display' ) {
+                            return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_member_from_group_wrap('${row[1]}','{{ user.user_id }}')"></i>${data}`;
+                        }
+                        return data;
+                    }},
+                    {"title": "Group ID"},
+                    {"title": "Group UUID"}
+                    ]
+                });
             $('#user_orgs_table').dataTable({
                 "order": [[ 1, "asc" ]],
                 "columns": [{
-                    "title": "org_name",
+                    "title": "Organisation name",
                     "render": function ( data, type, row, meta ) {
                         if (type === 'display' ) {
                             return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove from org" href="javascript:void(0)" onclick="remove_member_from_org_wrap('${row[1]}','{{ user.user_id }}')"></i>${data}`;
                         }
                         return data;
                     }},
-                    {"title": "org_id"},
-                    {"title": "org_uuid"}
+                    {"title": "Organisation ID"},
+                    {"title": "Organisation UUID"}
                     ]
             });
         </script>

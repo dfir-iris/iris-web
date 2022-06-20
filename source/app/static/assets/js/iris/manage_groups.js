@@ -1,3 +1,4 @@
+var modal_group_table;
 manage_groups_table = $('#groups_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
@@ -148,7 +149,7 @@ function delete_group(id) {
     });
 }
 
-function remove_members_from_group(group_id, user_id) {
+function remove_members_from_group(group_id, user_id, on_finish) {
 
     swal({
       title: "Are you sure?",
@@ -169,6 +170,11 @@ function remove_members_from_group(group_id, user_id) {
                 if(notify_auto_api(data)) {
                     refresh_groups();
                     refresh_group_members(group_id);
+
+                    if (on_finish !== undefined) {
+                        on_finish();
+                    }
+
                 }
             });
         }
