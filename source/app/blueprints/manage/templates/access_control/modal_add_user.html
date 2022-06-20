@@ -156,6 +156,26 @@
                         </div>
                     </div>
                     <div class="tab-pane" id="user_orgs_tab">
+                        <div class="container col-md-12">
+                            <table class="table table-striped" id="user_orgs_table">
+                                <thead>
+                                    <tr>
+                                        <th>Organisation name</th>
+                                        <th>Organisation ID</th>
+                                        <th>Organisation UUID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for org in user.user_organisations %}
+                                    <tr>
+                                        <td>{{ org.org_name }}</td>
+                                        <td>{{ org.org_id }}</td>
+                                        <td>{{ org.org_uuid }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -170,8 +190,9 @@
 
             $('#user_permissions_table').dataTable({
                 "order": [[ 1, "asc" ]]});
-
             $('#user_groups_table').dataTable({
+                "order": [[ 1, "asc" ]]});
+            $('#user_orgs_table').dataTable({
                 "order": [[ 1, "asc" ]]});
         </script>
     </div><!-- /.modal-content -->
