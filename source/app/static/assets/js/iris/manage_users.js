@@ -102,7 +102,7 @@ function refresh_users(do_notify) {
 
 
 /* Fetch the details of an user and allow modification */
-function user_detail(user_id) {
+function user_detail(user_id, goto_tab) {
     url = 'users/' + user_id + '/modal' + case_param();
     $('#modal_access_control').load(url, function (response, status, xhr) {
         if (status !== "success") {
@@ -124,10 +124,12 @@ function user_detail(user_id) {
 
             return false;
         })
-
-
+        if (goto_tab !== undefined) {
+            $('.nav-pills a[href="#'+ goto_tab +'"]').tab('show');
+        }
+        $('#modal_access_control').modal({ show: true });
     });
-    $('#modal_access_control').modal({ show: true });
+
 }
 
 function delete_user(id) {
@@ -179,8 +181,7 @@ function deactivate_user(id) {
 
 function remove_member_from_org_wrap(org_id, user_id) {
     remove_members_from_org(org_id, user_id, function() {
-        user_detail(user_id);
-        $('.nav-pills a[href="#user_orgs_tab"]').tab('show');
+        user_detail(user_id, 'user_orgs_tab');
     });
 }
 
