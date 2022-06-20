@@ -144,11 +144,11 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                {% for perm in user.user_groups %}
+                                {% for group in user.user_groups %}
                                     <tr>
-                                        <td>{{ user.user_permissions[perm].name }}</td>
-                                        <td>0x{{ perm | int(perm,16) }}</td>
-                                        <td>{% for group in user.user_permissions[perm].inherited_from %}<span class="badge ml-2 badge-light">{{ group }}</span>{% endfor %}</td>
+                                        <td>{{ group.group_name }}</td>
+                                        <td>{{ group.group_id }}</td>
+                                        <td>{{ group.group_uuid }}</td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>
@@ -169,6 +169,9 @@
             });
 
             $('#user_permissions_table').dataTable({
+                "order": [[ 1, "asc" ]]});
+
+            $('#user_groups_table').dataTable({
                 "order": [[ 1, "asc" ]]});
         </script>
     </div><!-- /.modal-content -->
