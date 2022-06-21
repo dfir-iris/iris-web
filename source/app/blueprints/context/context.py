@@ -71,7 +71,7 @@ def set_ctx():
 
 @app.context_processor
 def iris_version():
-    session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+    # session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
     return dict(iris_version=app.config.get('IRIS_VERSION'))
 

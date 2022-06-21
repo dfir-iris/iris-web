@@ -134,26 +134,35 @@
                         </div>
                     </div>
                     <div class="tab-pane" id="user_groups_tab">
-                        <div class="container col-md-12">
-                            <p>Groups the user is member of.</p>
-                            <table class="table table-striped" id="user_groups_table">
-                                <thead>
-                                    <tr>
-                                        <th>Group name</th>
-                                        <th>Group ID</th>
-                                        <th>Group UUID</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {% for group in user.user_groups %}
-                                    <tr>
-                                        <td>{{ group.group_name }}</td>
-                                        <td>{{ group.group_id }}</td>
-                                        <td>{{ group.group_uuid }}</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
+                        <div class="row">
+                            <div class="container col-md-12">
+                                <span class="ml-2 mt-3">Groups the user is member of.</span>
+                                <button class="btn btn-dark btn-sm pull-right mr-2" onclick="manage_user_groups({{ user.user_id }});">
+                                    <span class="menu-title" id="manage_org_members_button">Manage</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="container col-md-12">
+                                <table class="table table-striped" id="user_groups_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Group name</th>
+                                            <th>Group ID</th>
+                                            <th>Group UUID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for group in user.user_groups %}
+                                        <tr>
+                                            <td>{{ group.group_name }}</td>
+                                            <td>{{ group.group_id }}</td>
+                                            <td>{{ group.group_uuid }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                     <div class="tab-pane" id="user_orgs_tab">
