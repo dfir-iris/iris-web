@@ -114,15 +114,29 @@ def update_group_members(group, members):
     if not group:
         return None
 
-    UserGroup.query.filter(UserGroup.group_id == group.group_id).delete()
+    cur_groups = UserGroup.query.with_entities(
+        UserGroup.user_id
+    ).filter(UserGroup.group_id == group.group_id).all()
 
-    for uid in set(members):
+    set_cur_groups = set([grp[0] for grp in cur_groups])
+    set_members = set(int(mbm) for mbm in members)
+
+    users_to_add = set_members - set_cur_groups
+    users_to_remove = set_cur_groups - set_members
+
+    for uid in users_to_add:
         user = User.query.filter(User.id == uid).first()
         if user:
             ug = UserGroup()
             ug.group_id = group.group_id
             ug.user_id = user.id
             db.session.add(ug)
+
+    for uid in users_to_remove:
+        UserGroup.query.filter(
+            and_(UserGroup.group_id == group.group_id,
+                 UserGroup.user_id == uid)
+        ).delete()
 
     db.session.commit()
 
