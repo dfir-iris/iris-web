@@ -68,6 +68,32 @@ def get_user_groups(user_id):
     return output
 
 
+def update_user_groups(user_id, groups):
+    cur_groups = UserGroup.query.with_entities(
+        UserGroup.group_id
+    ).filter(UserGroup.user_id == user_id).all()
+
+    set_cur_groups = set([grp[0] for grp in cur_groups])
+    set_new_groups = set(int(grp) for grp in groups)
+
+    groups_to_add = set_new_groups - set_cur_groups
+    groups_to_remove = set_cur_groups - set_new_groups
+
+    for group_id in groups_to_add:
+        user_group = UserGroup()
+        user_group.user_id = user_id
+        user_group.group_id = group_id
+        db.session.add(user_group)
+
+    for group in groups_to_remove:
+        UserGroup.query.filter(
+            UserGroup.user_id == user_id,
+            UserGroup.group_id == group
+        ).delete()
+
+    db.session.commit()
+
+
 def get_user_organisations(user_id):
     user_org = UserOrganisation.query.with_entities(
         Organisation.org_name,

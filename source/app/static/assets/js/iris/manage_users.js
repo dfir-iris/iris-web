@@ -207,7 +207,7 @@ function manage_user_groups(user_id) {
             data_sent['groups_membership'] = $('#user_groups_membership').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('manage/users/' + user_id + '/groups/update', JSON.stringify(data_sent), true)
+            post_request_api('/manage/users/' + user_id + '/groups/update', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();

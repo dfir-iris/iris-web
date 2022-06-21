@@ -38,6 +38,7 @@ from app.datamgmt.manage.manage_users_db import get_user_effective_permissions
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.datamgmt.manage.manage_users_db import update_user
+from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.forms import AddUserForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
@@ -150,13 +151,35 @@ def manage_user_group_modal(cur_id, caseid, url_redir):
         return redirect(url_for('manage_users.add_user', cid=caseid))
 
     user = get_user_details(cur_id)
-
-    if url_redir:
-        return redirect(url_for('manage_users_blueprint.add_user', cid=caseid))
+    if not user:
+        return response_error("Invalid user ID")
 
     groups = get_groups_list()
 
     return render_template("modal_manage_user_groups.html", groups=groups, user=user)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/groups/update', methods=['POST'])
+@ac_api_requires(Permissions.manage_users)
+def manage_user_group_(cur_id, caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request", status=400)
+
+    if not request.json.get('groups_membership'):
+        return response_error("Invalid request", status=400)
+
+    if type(request.json.get('groups_membership')) is not list:
+        return response_error("Expected list of groups ID", status=400)
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    update_user_groups(user_id=cur_id,
+                       groups=request.json.get('groups_membership'))
+
+    return response_success("User groups updated", data=user)
 
 
 if is_authentication_local():
