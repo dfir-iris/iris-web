@@ -27,6 +27,7 @@ from flask import request
 from flask import url_for
 
 from app import db
+from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import delete_user
@@ -140,6 +141,22 @@ def view_user_modal(cur_id, caseid, url_redir):
 
     return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings,
                            permissions=permissions)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/groups/modal', methods=['GET'])
+@ac_requires(Permissions.manage_users)
+def manage_user_group_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_users.add_user', cid=caseid))
+
+    user = get_user_details(cur_id)
+
+    if url_redir:
+        return redirect(url_for('manage_users_blueprint.add_user', cid=caseid))
+
+    groups = get_groups_list()
+
+    return render_template("modal_manage_user_groups.html", groups=groups, user=user)
 
 
 if is_authentication_local():

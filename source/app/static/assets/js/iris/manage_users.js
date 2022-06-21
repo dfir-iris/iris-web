@@ -191,6 +191,17 @@ function remove_member_from_group_wrap(group_id, user_id) {
     });
 }
 
+function manage_user_groups(user_id) {
+    url = 'users/' + user_id + '/groups/modal' + case_param();
+    $('#modal_access_control').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_access_control').modal({ show: true });
+    });
+}
+
 $(document).ready(function () {
     refresh_users();
 });
