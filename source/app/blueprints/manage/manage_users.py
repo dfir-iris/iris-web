@@ -28,6 +28,7 @@ from flask import url_for
 
 from app import db
 from app.datamgmt.manage.manage_groups_db import get_groups_list
+from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import delete_user
@@ -157,6 +158,44 @@ def manage_user_group_modal(cur_id, caseid, url_redir):
     groups = get_groups_list()
 
     return render_template("modal_manage_user_groups.html", groups=groups, user=user)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/groups/update', methods=['POST'])
+@ac_api_requires(Permissions.manage_users)
+def manage_user_group_(cur_id, caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request", status=400)
+
+    if not request.json.get('groups_membership'):
+        return response_error("Invalid request", status=400)
+
+    if type(request.json.get('groups_membership')) is not list:
+        return response_error("Expected list of groups ID", status=400)
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    update_user_groups(user_id=cur_id,
+                       groups=request.json.get('groups_membership'))
+
+    return response_success("User groups updated", data=user)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/organisations/modal', methods=['GET'])
+@ac_requires(Permissions.manage_users)
+def manage_user_orgs_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_users.add_user', cid=caseid))
+
+    user = get_user_details(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    orgs = get_organisations_list()
+
+    return render_template("modal_manage_user_orgs.html", orgs=orgs, user=user)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/groups/update', methods=['POST'])
