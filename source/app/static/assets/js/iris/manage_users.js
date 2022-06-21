@@ -199,6 +199,22 @@ function manage_user_groups(user_id) {
              return false;
         }
         $('#modal_access_control').modal({ show: true });
+
+        $('#save_user_groups_membership').on("click", function () {
+            clear_api_error();
+
+            var data_sent = Object();
+            data_sent['groups_membership'] = $('#user_groups_membership').val();
+            data_sent['csrf_token'] = $('#csrf_token').val();
+
+            post_request_api('manage/users/' + user_id + '/groups/update', JSON.stringify(data_sent), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_groups();
+                    user_detail(user_id, 'user_groups_tab');
+                }
+            });
+        });
     });
 }
 
