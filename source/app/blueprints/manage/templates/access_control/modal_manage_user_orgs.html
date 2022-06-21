@@ -27,14 +27,14 @@
 </div><!-- /.modal-dialog -->
 <script>
 var data = [];
-if (current_groups_list.length === 0) {
-    refresh_groups();
+if (current_orgs_list.length === 0) {
+    refresh_organisations();
 }
 
-for (group in current_groups_list) {
+for (org in current_orgs_list) {
     data.push({
-        label: `${current_groups_list[group].group_name}`,
-        value: current_groups_list[group].group_id
+        label: `${current_orgs_list[org].org_name}`,
+        value: current_orgs_list[org].org_id
     });
 }
 
@@ -51,10 +51,10 @@ $('#user_orgs_membership').multiselect({
 
 $('#user_orgs_membership').multiselect('dataprovider', data );
 
-{% if user.user_groups %}
+{% if user.user_organisations %}
 
 $('#user_orgs_membership').multiselect('select', [
-    {% for group in  user.user_groups %} {{ group.group_id }}, {% endfor %}
+    {% for org in  user.user_organisations %} {{ org.org_id }}, {% endfor %}
 ]);
 $('#user_orgs_membership').multiselect('refresh')
 

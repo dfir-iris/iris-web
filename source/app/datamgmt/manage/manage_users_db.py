@@ -94,6 +94,32 @@ def update_user_groups(user_id, groups):
     db.session.commit()
 
 
+def update_user_orgs(user_id, orgs):
+    cur_orgs = UserOrganisation.query.with_entities(
+        UserOrganisation.org_id
+    ).filter(UserOrganisation.user_id == user_id).all()
+
+    set_cur_orgs = set([org[0] for org in cur_orgs])
+    set_new_orgs = set(int(org) for org in orgs)
+
+    orgs_to_add = set_new_orgs - set_cur_orgs
+    orgs_to_remove = set_cur_orgs - set_new_orgs
+
+    for org in orgs_to_add:
+        user_org = UserOrganisation()
+        user_org.user_id = user_id
+        user_org.org_id = org
+        db.session.add(user_org)
+
+    for org in orgs_to_remove:
+        UserOrganisation.query.filter(
+            UserOrganisation.user_id == user_id,
+            UserOrganisation.org_id == org
+        ).delete()
+
+    db.session.commit()
+
+
 def get_user_organisations(user_id):
     user_org = UserOrganisation.query.with_entities(
         Organisation.org_name,

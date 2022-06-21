@@ -1,4 +1,5 @@
 var modal_org_table;
+var current_orgs_list;
 manage_orgs_table = $('#org_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
@@ -53,7 +54,7 @@ function refresh_organisations(do_notify) {
     get_request_api('organisations/list')
     .done((data) => {
         if(notify_auto_api(data, true)) {
-
+            current_orgs_list = data.data;
             manage_orgs_table.api().clear().rows.add(data.data).draw();
 
             if (do_notify !== undefined) {
