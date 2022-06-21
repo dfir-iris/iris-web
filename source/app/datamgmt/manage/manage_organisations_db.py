@@ -82,15 +82,29 @@ def update_org_members(org, members):
     if not org:
         return None
 
-    UserOrganisation.query.filter(UserOrganisation.org_id == org.org_id).delete()
+    cur_org_members = UserOrganisation.query.with_entities(
+        UserOrganisation.user_id
+    ).filter(UserOrganisation.org_id == org.org_id).all()
 
-    for uid in set(members):
+    cur_org_members = set([member.user_id for member in cur_org_members])
+    set_members = set([int(mber) for mber in members])
+
+    users_to_add = set_members - cur_org_members
+    users_to_remove = cur_org_members - set_members
+
+    for uid in users_to_add:
         user = User.query.filter(User.id == uid).first()
         if user:
             ug = UserOrganisation()
             ug.org_id = org.org_id
             ug.user_id = user.id
             db.session.add(ug)
+
+    for uid in users_to_remove:
+        UserOrganisation.query.filter(
+            and_(UserOrganisation.user_id == uid,
+                 UserOrganisation.org_id == org.org_id)
+        ).delete()
 
     db.session.commit()
 

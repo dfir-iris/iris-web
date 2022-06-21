@@ -119,7 +119,7 @@ def update_group_members(group, members):
     ).filter(UserGroup.group_id == group.group_id).all()
 
     set_cur_groups = set([grp[0] for grp in cur_groups])
-    set_members = set(int(mbm) for mbm in members)
+    set_members = set(int(mber) for mber in members)
 
     users_to_add = set_members - set_cur_groups
     users_to_remove = set_cur_groups - set_members
