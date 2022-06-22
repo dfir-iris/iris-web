@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -46,11 +46,12 @@ from app.datamgmt.states import get_notes_state
 from app.forms import CaseNoteForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAddNoteSchema
 from app.schema.marshables import CaseGroupNoteSchema
 from app.schema.marshables import CaseNoteSchema
-from app.util import api_login_required
-from app.util import login_required
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -61,7 +62,7 @@ case_notes_blueprint = Blueprint('case_notes',
 
 # CONTENT ------------------------------------------------
 @case_notes_blueprint.route('/case/notes', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_notes(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
@@ -79,7 +80,7 @@ def case_notes(caseid, url_redir):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_note_detail(cur_id, caseid):
     try:
         note = get_note(cur_id, caseid=caseid)
@@ -94,7 +95,7 @@ def case_note_detail(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.write_data)
 def case_note_detail_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
@@ -116,7 +117,7 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_note_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
@@ -139,7 +140,7 @@ def case_note_delete(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_note_save(cur_id, caseid):
 
     try:
@@ -172,7 +173,7 @@ def case_note_save(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_note_add(caseid):
     try:
         # validate before saving
@@ -203,7 +204,7 @@ def case_note_add(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/list', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def case_load_notes_groups(caseid):
 
     if not get_case(caseid=caseid):
@@ -231,7 +232,7 @@ def case_load_notes_groups(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/state', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_notes_state(caseid):
     os = get_notes_state(caseid=caseid)
     if os:
@@ -241,7 +242,7 @@ def case_notes_state(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/search', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_search_notes(caseid):
 
     if request.is_json:
@@ -259,7 +260,7 @@ def case_search_notes(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_add_notes_groups(caseid):
     title = ''
     if request.is_json:
@@ -283,7 +284,7 @@ def case_add_notes_groups(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_delete_notes_groups(cur_id, caseid):
 
     if not delete_note_group(cur_id, caseid):
@@ -295,7 +296,7 @@ def case_delete_notes_groups(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_get_notes_group(cur_id, caseid):
 
     group = get_group_details(cur_id, caseid)
@@ -306,7 +307,7 @@ def case_get_notes_group(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_edit_notes_groups(cur_id, caseid):
 
     js_data = request.get_json()

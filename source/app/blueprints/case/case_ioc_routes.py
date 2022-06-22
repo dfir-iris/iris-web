@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,6 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
-
 from flask_login import current_user
 
 from app import db
@@ -57,8 +56,6 @@ from app.models.models import Ioc
 from app.schema.marshables import IocSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
-from app.util import api_login_required
-from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 
@@ -71,7 +68,7 @@ case_ioc_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @case_ioc_blueprint.route('/case/ioc', methods=['GET', 'POST'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_ioc(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
@@ -86,7 +83,7 @@ def case_ioc(caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
 
@@ -111,7 +108,7 @@ def case_list_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_ioc_state(caseid):
     os = get_ioc_state(caseid=caseid)
     if os:
@@ -289,7 +286,7 @@ def case_delete_ioc(cur_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_view_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
@@ -311,7 +308,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)

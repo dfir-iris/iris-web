@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -67,7 +67,7 @@ case_assets_blueprint = Blueprint('case_assets',
 
 
 @case_assets_blueprint.route('/case/assets', methods=['GET', 'POST'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_assets(caseid, url_redir):
     """
     Returns the page of case assets, with the list of available assets types.
@@ -87,7 +87,7 @@ def case_assets(caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_list_assets(caseid):
     """
     Returns the list of assets from the case.
@@ -140,7 +140,7 @@ def case_list_assets(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_assets_state(caseid):
     os = get_assets_state(caseid=caseid)
     if os:
@@ -296,7 +296,7 @@ def case_upload_ioc(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def asset_view(cur_id, caseid):
 
     # Get IoCs already linked to the asset
@@ -316,7 +316,7 @@ def asset_view(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def asset_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))

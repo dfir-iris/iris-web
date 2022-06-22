@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -42,7 +42,7 @@ case_graph_blueprint = Blueprint('case_graph',
 
 # CONTENT ------------------------------------------------
 @case_graph_blueprint.route('/case/graph', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_graph(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_graph.case_graph', cid=caseid, redirect=True))
@@ -54,7 +54,7 @@ def case_graph(caseid, url_redir):
 
 
 @case_graph_blueprint.route('/case/graph/getdata', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def case_graph_get_data(caseid):
     events = get_case_events_assets_graph(caseid)
     events.extend(get_case_events_ioc_graph(caseid))
