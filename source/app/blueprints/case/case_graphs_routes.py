@@ -33,8 +33,6 @@ from app.datamgmt.case.case_events_db import get_case_events_ioc_graph
 from app.models.authorization import CaseAccessLevel
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
-from app.util import api_login_required
-from app.util import login_required
 from app.util import response_success
 
 case_graph_blueprint = Blueprint('case_graph',

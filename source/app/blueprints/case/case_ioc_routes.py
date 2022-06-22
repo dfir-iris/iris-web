@@ -52,8 +52,11 @@ from app.forms import ModalAddCaseAssetForm
 from app.forms import ModalAddCaseIOCForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import CaseAccessLevel
 from app.models.models import Ioc
 from app.schema.marshables import IocSchema
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import api_login_required
 from app.util import login_required
 from app.util import response_error
@@ -68,7 +71,7 @@ case_ioc_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @case_ioc_blueprint.route('/case/ioc', methods=['GET', 'POST'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_data)
 def case_ioc(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
@@ -83,7 +86,7 @@ def case_ioc(caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/list', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def case_list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
 
@@ -108,7 +111,7 @@ def case_list_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/state', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def case_ioc_state(caseid):
     os = get_ioc_state(caseid=caseid)
     if os:
@@ -118,7 +121,7 @@ def case_ioc_state(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_add_ioc(caseid):
     try:
         # validate before saving
@@ -157,7 +160,7 @@ def case_add_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_upload_ioc(caseid):
     try:
         # validate before saving
@@ -252,7 +255,7 @@ def case_upload_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/add/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.write_data)
 def case_add_ioc_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
@@ -267,7 +270,7 @@ def case_add_ioc_modal(caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_delete_ioc(cur_id, caseid):
     call_modules_hook('on_preload_ioc_delete', data=cur_id, caseid=caseid)
     ioc = get_ioc(cur_id, caseid)
@@ -286,7 +289,7 @@ def case_delete_ioc(cur_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_data)
 def case_view_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
@@ -308,7 +311,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
@@ -319,7 +322,7 @@ def case_view_ioc(cur_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_update_ioc(cur_id, caseid):
     try:
         ioc = get_ioc(cur_id, caseid)
