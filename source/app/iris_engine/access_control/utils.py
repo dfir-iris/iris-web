@@ -1,8 +1,13 @@
 from flask import session
+from sqlalchemy import and_
 
 from app.models.authorization import Group
+from app.models.authorization import GroupCaseAccess
+from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import Permissions
+from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserGroup
+from app.models.authorization import UserOrganisation
 
 
 def ac_get_mask_full_permissions():
@@ -121,6 +126,38 @@ def ac_get_effective_permissions_of_user(user):
         final_perm |= group.group_permissions
 
     return final_perm
+
+
+def ac_user_case_access(user_id, cid):
+    """
+    Returns the user access level to a case
+    """
+    oca = OrganisationCaseAccess.query.filter(
+        and_(OrganisationCaseAccess.case_id == cid,
+             UserOrganisation.user_id == user_id,
+             OrganisationCaseAccess.org_id == UserOrganisation.org_id)
+    ).first()
+
+    if oca:
+        return oca.access_level
+
+    gca = GroupCaseAccess.query.filter(
+        and_(GroupCaseAccess.case_id == cid,
+             GroupCaseAccess.user_id == user_id)
+    ).first()
+
+    if gca:
+        return gca.access_level
+
+    uca = UserCaseAccess.query.filter(
+        and_(UserCaseAccess.case_id == cid,
+             UserCaseAccess.user_id == user_id)
+    ).first()
+
+    if uca:
+        return uca.access_level
+
+    return None
 
 
 def ac_user_has_permission(user, permission):

@@ -56,6 +56,7 @@ from app import db
 # build a Json response
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_users_db import get_user, create_user, update_user
+from app.iris_engine.access_control.utils import ac_user_case_access
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 from app.models.authorization import Permissions
@@ -419,6 +420,29 @@ def api_login_required(f):
             return f(*args, **kwargs)
 
     return wrap
+
+
+def ac_case_requires(*access_level):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            if not is_user_authenticated(request):
+                return redirect(not_authenticated_redirection_url())
+
+            else:
+                redir, caseid = get_urlcase(request=request)
+
+                kwargs.update({"caseid": caseid, "url_redir": redir})
+
+                session["ac_case"] = ac_user_case_access(current_user.id, caseid)
+
+                for ac_l in access_level:
+                    if session['ac_case'] & ac_l.value == ac_l.value:
+                        return f(*args, **kwargs)
+
+                return response_error("Permission denied", status=403)
+        return wrap
+    return inner_wrap
 
 
 def ac_requires(*permissions):
