@@ -1,5 +1,6 @@
 var modal_org_table;
 var current_orgs_list;
+var current_org_cases_access_list;
 manage_orgs_table = $('#org_table').dataTable( {
     "order": [[ 1, "asc" ]],
     "autoWidth": false,
@@ -230,8 +231,9 @@ function refresh_organisation_cac(org_id) {
         get_request_api('/manage/organisations/' + org_id)
         .done((data) => {
             if(notify_auto_api(data)) {
+                current_org_cases_access_list = data.data.org_cases_access;
                 modal_org_cac.clear();
-                modal_org_cac.rows.add(data.data.org_cases_access).draw();
+                modal_org_cac.rows.add(current_org_cases_access_list).draw();
             }
         });
     }

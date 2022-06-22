@@ -285,6 +285,6 @@ def manage_org_cac_modal(cur_id, caseid, url_redir):
     if not org:
         return response_error("Invalid organisation ID")
 
-    users = list_cases_dict()
+    cases_list = list_cases_dict()
 
-    return render_template("modal_add_org_cac.html", org=org, cases=cases)
+    return render_template("modal_add_org_cac.html", org=org, cases=cases_list)

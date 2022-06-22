@@ -132,7 +132,7 @@
                                         <span class="menu-title">Refresh</span>
                                     </button>
                                     <button class="btn btn-dark btn-sm pull-right mr-2" onclick="manage_organisation_cac({{ org.org_id }});">
-                                        <span class="menu-title" id="manage_org_cac_button">Manage</span>
+                                        <span class="menu-title" id="manage_org_cac_button">Add case</span>
                                     </button>
                                 </div>
                               </div>
@@ -228,7 +228,8 @@ var modal_org_cac = $("#org_cac_table").DataTable({
 });
 
 {% if org.org_id %}
-    modal_org_cac.rows.add({{ org.org_cases_access|tojson }});
+    current_org_cases_access_list = {{ org.org_cases_access|tojson }};
+    modal_org_cac.rows.add(current_org_cases_access_list);
     modal_org_cac.columns.adjust().draw();
 {% endif %}
 

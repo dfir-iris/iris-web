@@ -13,7 +13,7 @@
                     <div class="form-group" data-select2-id="7">
                         <label>Cases *</label>
                         <div class="col-12">
-                            <select id="org_members" name="org_members" class="form-control select2-hidden-accessible ml-12" multiple="multiple"
+                            <select id="orgs_cases_access" name="orgs_cases_access" class="form-control select2-hidden-accessible ml-12"
                                      tabindex="-1" aria-hidden="true" style="width: 100%">
                             </select>
                         </div>
@@ -27,18 +27,19 @@
 </div><!-- /.modal-dialog -->
 <script>
 var data = [];
-if (current_users_list.length === 0) {
-    refresh_users();
+if (current_org_cases_access_list === undefined) {
+    refresh_organisation_cac('{{ org.org_id }}');
 }
 
-for (user in current_users_list) {
+for (cse in current_org_cases_access_list) {
+    console.log(cse);
     data.push({
-        label: `${current_users_list[user].user_login} (${current_users_list[user].user_name} - ${current_users_list[user].user_email})`,
-        value: current_users_list[user].user_id
+        label: `${current_org_cases_access_list[cse].case_name}`,
+        value: current_org_cases_access_list[cse].case_id
     });
 }
 
-$('#org_members').multiselect({
+$('#orgs_cases_access').multiselect({
     buttonWidth: 400,
     nonSelectedText: 'Select members',
     includeSelectAllOption: true,
@@ -49,14 +50,8 @@ $('#org_members').multiselect({
     widthSynchronizationMode: 'ifPopupIsSmaller'
 });
 
-$('#org_members').multiselect('dataprovider', data);
+$('#orgs_cases_access').multiselect('dataprovider', data);
 
-{% if org.org_members %}
+$('#orgs_cases_access').multiselect('refresh')
 
-$('#org_members').multiselect('select', [
-    {% for member in org.org_members %} {{ member.id }}, {% endfor %}
-]);
-$('#org_members').multiselect('refresh')
-
-{% endif %}
 </script>
