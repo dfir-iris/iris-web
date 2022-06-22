@@ -440,7 +440,7 @@ def ac_case_requires(*access_level):
                     if session['ac_case'] & ac_l.value == ac_l.value:
                         return f(*args, **kwargs)
 
-                return response_error("Permission denied", status=403)
+                return response_error("Access denied", status=403)
         return wrap
     return inner_wrap
 

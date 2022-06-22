@@ -143,7 +143,8 @@ def ac_user_case_access(user_id, cid):
 
     gca = GroupCaseAccess.query.filter(
         and_(GroupCaseAccess.case_id == cid,
-             GroupCaseAccess.user_id == user_id)
+             UserGroup.user_id == user_id,
+             UserGroup.group_id == GroupCaseAccess.group_id)
     ).first()
 
     if gca:
@@ -157,7 +158,7 @@ def ac_user_case_access(user_id, cid):
     if uca:
         return uca.access_level
 
-    return None
+    return 0
 
 
 def ac_user_has_permission(user, permission):

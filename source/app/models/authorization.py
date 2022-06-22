@@ -20,7 +20,7 @@ from sqlalchemy.orm import relationship
 from app import db
 
 
-class AccessLevels(enum.Enum):
+class CaseAccessLevel(enum.Enum):
     read_data = 0x2
     write_data = 0x4
     delete_data = 0x8
