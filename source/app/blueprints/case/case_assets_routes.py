@@ -54,7 +54,10 @@ from app.models import AnalysisStatus
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
+from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import api_login_required
 from app.util import login_required
 from app.util import response_error
@@ -66,7 +69,7 @@ case_assets_blueprint = Blueprint('case_assets',
 
 
 @case_assets_blueprint.route('/case/assets', methods=['GET', 'POST'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_data)
 def case_assets(caseid, url_redir):
     """
     Returns the page of case assets, with the list of available assets types.
@@ -86,7 +89,7 @@ def case_assets(caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/list', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def case_list_assets(caseid):
     """
     Returns the list of assets from the case.
@@ -139,7 +142,7 @@ def case_list_assets(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/state', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def case_assets_state(caseid):
     os = get_assets_state(caseid=caseid)
     if os:
@@ -148,20 +151,8 @@ def case_assets_state(caseid):
         return response_error('No assets state for this case.')
 
 
-@case_assets_blueprint.route('/case/assets/autoload', methods=['POST'])
-@api_login_required
-def autoload_asset(caseid):
-    """
-    Read the investigations database of the current user's case and extract the
-    available assets. For each assets, 
-    :return:
-    """
-
-    return response_error("Will only be available in the future")
-
-
 @case_assets_blueprint.route('/case/assets/add/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.write_data)
 def add_asset_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
@@ -179,7 +170,7 @@ def add_asset_modal(caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def add_asset(caseid):
 
     try:
@@ -210,7 +201,7 @@ def add_asset(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/upload', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def case_upload_ioc(caseid):
 
     try:
@@ -307,7 +298,7 @@ def case_upload_ioc(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def asset_view(cur_id, caseid):
 
     # Get IoCs already linked to the asset
@@ -327,7 +318,7 @@ def asset_view(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_data)
 def asset_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
@@ -359,7 +350,7 @@ def asset_view_modal(cur_id, caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def asset_update(cur_id, caseid):
 
     try:
@@ -394,7 +385,7 @@ def asset_update(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def asset_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
