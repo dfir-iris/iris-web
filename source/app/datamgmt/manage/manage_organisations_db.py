@@ -19,7 +19,9 @@
 from sqlalchemy import and_
 
 from app import db
+from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_permission_to_list
+from app.models import Cases
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
@@ -74,6 +76,36 @@ def get_org_with_members(org_id):
             })
 
     setattr(org, 'org_members', membership_list.get(org.org_id, []))
+
+    return org
+
+
+def get_orgs_details(org_id):
+    org = get_org_with_members(org_id)
+
+    if not org:
+        return org
+
+    organisation_accesses = OrganisationCaseAccess.query.with_entities(
+        OrganisationCaseAccess.access_level,
+        OrganisationCaseAccess.case_id,
+        Cases.name.label('case_name')
+    ).join(
+        OrganisationCaseAccess.case
+    ).filter(
+        OrganisationCaseAccess.org_id == org_id
+    ).all()
+
+    orgs_case_access = []
+    for korg in organisation_accesses:
+        orgs_case_access.append({
+            "access_level": korg.access_level,
+            "access_level_list": ac_access_level_to_list(korg.access_level),
+            "case_id": korg.case_id,
+            "case_name": korg.case_name
+        })
+
+    setattr(org, 'org_cases_access', orgs_case_access)
 
     return org
 

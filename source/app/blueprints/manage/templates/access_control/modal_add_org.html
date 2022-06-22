@@ -12,6 +12,10 @@
                     <li class="nav-item submenu">
                         <a class="nav-link"  data-toggle="pill" href="#org_members_tab" role="tab" aria-controls="org_members_tab" aria-selected="false">Members</a>
                     </li>
+
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#org_cac_tab" role="tab" aria-controls="org_cac_tab" aria-selected="false">Cases access</a>
+                    </li>
                 </ul>
                 {% endif %}
             </div>
@@ -119,6 +123,40 @@
                             </div>
                         </div>
                     </div>
+                    <div class="tab-pane" id="org_cac_tab">
+                        <div class="container col-md-12" >
+                            <div class="col" >
+                              <div class="row d-flex">
+                                <div class="col pull-right">
+                                    <button class="btn btn-dark btn-sm pull-right" onclick="refresh_organisation_cac({{ org.org_id }});">
+                                        <span class="menu-title">Refresh</span>
+                                    </button>
+                                    <button class="btn btn-dark btn-sm pull-right mr-2" onclick="manage_organisation_cac({{ org.org_id }});">
+                                        <span class="menu-title" id="manage_org_cac_button">Manage</span>
+                                    </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="org_cac_table" >
+                                <thead>
+                                  <tr>
+                                      <th>Case ID</th>
+                                      <th>Case Name</th>
+                                      <th>Access</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                        <th>Case ID</th>
+                                        <th>Case Name</th>
+                                        <th>Access</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -155,4 +193,43 @@ var modal_org_table = $("#org_members_table").DataTable({
     modal_org_table.rows.add({{ org.org_members|tojson }});
     modal_org_table.columns.adjust().draw();
 {% endif %}
+
+var modal_org_cac = $("#org_cac_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "case_id",
+            "render": function ( data, type, row ) {
+                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_ac_to_case('{{ org.org_id }}','${data}')"></i>${data}`;
+            },
+            "className": "dt-center"
+        },
+        {
+            "data": "case_name",
+            "className": "dt-center"
+        },
+        {
+            "data": "access_level_list",
+            "render": function ( data, type, row ) {
+                ret_data = "";
+                for (acc in data) {
+                    ret_data += `<span class="badge ml-2 badge-light">${data[acc].name}</span>`
+                }
+                return ret_data;
+            },
+            "className": "dt-center"
+        }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true
+});
+
+{% if org.org_id %}
+    modal_org_cac.rows.add({{ org.org_cases_access|tojson }});
+    modal_org_cac.columns.adjust().draw();
+{% endif %}
+
 </script>

@@ -149,7 +149,7 @@ def upgrade():
     access_level = ac_get_mask_case_access_level_full()
     for case_id in result_cases:
         conn.execute(f"insert into organisation_case_access (org_id, case_id, access_level) values "
-                     f"('{default_org_id},{case_id}, {access_level}")
+                     f"('{default_org_id}', '{case_id[0]}', '{access_level}');")
 
     # Migrate the users to the new access control system
     conn = op.get_bind()

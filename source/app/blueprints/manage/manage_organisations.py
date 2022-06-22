@@ -26,6 +26,7 @@ from flask_login import current_user
 from werkzeug.utils import redirect
 
 from app import db
+from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import delete_group
 from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
@@ -36,6 +37,7 @@ from app.datamgmt.manage.manage_organisations_db import delete_organisation
 from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
+from app.datamgmt.manage.manage_organisations_db import get_orgs_details
 from app.datamgmt.manage.manage_organisations_db import get_user_organisations
 from app.datamgmt.manage.manage_organisations_db import is_user_in_org
 from app.datamgmt.manage.manage_organisations_db import remove_user_from_organisation
@@ -45,6 +47,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
 from app.forms import AddOrganisationForm
 from app.iris_engine.access_control.utils import ac_get_all_permissions
+from app.models import cases
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.schema.marshables import AuthorizationOrganisationSchema
@@ -85,7 +88,7 @@ def manage_orgs_view_modal(cur_id, caseid, url_redir):
             return response_error('Access denied', status=403)
 
     form = AddOrganisationForm()
-    org = get_org_with_members(cur_id)
+    org = get_orgs_details(cur_id)
     if not org:
         return response_error("Invalid organisation ID")
 
@@ -108,7 +111,7 @@ def manage_orgs_view(cur_id, caseid):
         if not is_user_in_org(current_user.id, cur_id):
             return response_error('Access denied', status=403)
 
-    org = get_org_with_members(cur_id)
+    org = get_orgs_details(cur_id)
     if not org:
         return response_error("Invalid organisation ID")
 
@@ -267,3 +270,21 @@ def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
     return response_success('Member deleted from group', data=org)
 
+
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/cases-access/modal', methods=['GET'])
+@ac_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
+def manage_org_cac_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_orgs.manage_orgs_index', cid=caseid))
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
+
+    org = get_orgs_details(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
+
+    users = list_cases_dict()
+
+    return render_template("modal_add_org_cac.html", org=org, cases=cases)

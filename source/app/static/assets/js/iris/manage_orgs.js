@@ -225,6 +225,53 @@ function refresh_organisation_members(org_id) {
     }
 }
 
+function refresh_organisation_cac(org_id) {
+    if (modal_org_cac !== undefined) {
+        get_request_api('/manage/organisations/' + org_id)
+        .done((data) => {
+            if(notify_auto_api(data)) {
+                modal_org_cac.clear();
+                modal_org_cac.rows.add(data.data.org_cases_access).draw();
+            }
+        });
+    }
+}
+
+function manage_organisation_cac(org_id) {
+    url = 'organisations/' + org_id + '/cases-access/modal' + case_param();
+
+    $('#manage_org_cac_button').text('Loading manager...');
+
+    $('#modal_ac_additional').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             $('#manage_org_cac_button').text('Manage');
+             return false;
+        }
+
+        $('#manage_org_cac_button').text('Manage');
+        $('#save_org_cac').on("click", function () {
+            clear_api_error();
+
+            var data_sent = Object();
+            data_sent['org_cases_access'] = $('#org_cases_access').val();
+            data_sent['csrf_token'] = $('#csrf_token').val();
+
+            post_request_api('organisations/' + org_id + '/cases-access/update', JSON.stringify(data_sent), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_organisations();
+                    refresh_organisation_cac(org_id);
+                    $('#modal_ac_additional').modal('hide');
+                }
+            });
+
+            return false;
+        });
+        $('#modal_ac_additional').modal({ show: true });
+    });
+}
+
 $(document).ready(function () {
     refresh_organisations();
 });

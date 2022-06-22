@@ -29,7 +29,6 @@ def ac_get_mask_analyst():
     am = 0
     am |= Permissions.read_case_data.value
     am |= Permissions.write_case_data.value
-    am |= Permissions.delete_case_data.value
 
     return am
 
@@ -168,6 +167,21 @@ def ac_get_mask_case_access_level_full():
         am |= CaseAccessLevel[ac].value
 
     return am
+
+
+def ac_access_level_to_list(access_level):
+    """
+    Return a list of access level from  an access level mask
+    """
+    access_levels = []
+    for ac in CaseAccessLevel._member_names_:
+        if access_level & CaseAccessLevel[ac].value:
+            access_levels.append({
+                'name': ac,
+                'value': CaseAccessLevel[ac].value
+            })
+
+    return access_levels
 
 
 def ac_user_has_permission(user, permission):
