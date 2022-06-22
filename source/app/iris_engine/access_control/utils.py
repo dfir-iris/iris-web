@@ -1,6 +1,7 @@
 from flask import session
 from sqlalchemy import and_
 
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import OrganisationCaseAccess
@@ -159,6 +160,14 @@ def ac_user_case_access(user_id, cid):
         return uca.access_level
 
     return 0
+
+
+def ac_get_mask_case_access_level_full():
+    am = 0
+    for ac in CaseAccessLevel._member_names_:
+        am |= CaseAccessLevel[ac].value
+
+    return am
 
 
 def ac_user_has_permission(user, permission):

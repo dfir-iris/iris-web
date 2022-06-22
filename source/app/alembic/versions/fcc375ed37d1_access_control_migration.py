@@ -14,6 +14,7 @@ from app.alembic.alembic_utils import _has_table
 
 # revision identifiers, used by Alembic.
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
+from app.iris_engine.access_control.utils import ac_get_mask_case_access_level_full
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 
 revision = 'fcc375ed37d1'
@@ -141,6 +142,14 @@ def upgrade():
                      f"'','', '', '', '{uuid.uuid4()}');")
         res = conn.execute(f"select org_id from organisations where org_name = 'Default Org';")
     default_org_id = res.fetchone()[0]
+
+    # Give the organisation access to all the cases
+    res = conn.execute(f"select case_id from cases;")
+    result_cases = res.fetchall()
+    access_level = ac_get_mask_case_access_level_full()
+    for case_id in result_cases:
+        conn.execute(f"insert into organisation_case_access (org_id, case_id, access_level) values "
+                     f"('{default_org_id},{case_id}, {access_level}")
 
     # Migrate the users to the new access control system
     conn = op.get_bind()
