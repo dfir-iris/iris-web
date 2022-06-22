@@ -23,13 +23,11 @@ from app import db
 class CaseAccessLevel(enum.Enum):
     read_data = 0x2
     write_data = 0x4
-    delete_data = 0x8
 
 
 class Permissions(enum.Enum):
     manage_case = 0x1
 
-    delete_case_data = 0x2
     write_case_data = 0x4
     read_case_data = 0x8
 
