@@ -434,10 +434,10 @@ def ac_case_requires(*access_level):
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                session["ac_case"] = ac_user_case_access(current_user.id, caseid)
+                case_access_level = ac_user_case_access(current_user.id, caseid)
 
                 for ac_l in access_level:
-                    if session['ac_case'] & ac_l.value == ac_l.value:
+                    if case_access_level & ac_l.value == ac_l.value:
                         return f(*args, **kwargs)
 
                 return response_error("Access denied", status=403)
@@ -462,6 +462,40 @@ def ac_requires(*permissions):
                         return f(*args, **kwargs)
 
                 return response_error("Permission denied", status=403)
+        return wrap
+    return inner_wrap
+
+
+def ac_api_case_requires(*access_level):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            if request.method == 'POST':
+                cookie_session = request.cookies.get('session')
+                if cookie_session:
+                    form = FlaskForm()
+                    if not form.validate():
+                        return response_error('Invalid CSRF token')
+                    elif request.is_json:
+                        request.json.pop('csrf_token')
+
+            if not is_user_authenticated(request):
+                return response_error("Authentication required", status=401)
+
+            else:
+                redir, caseid = get_urlcase(request=request)
+                if not caseid or redir:
+                    return response_error("Invalid case ID", status=404)
+                kwargs.update({"caseid": caseid})
+
+                case_access_level = ac_user_case_access(current_user.id, caseid)
+
+                for ac_l in access_level:
+                    if case_access_level & ac_l.value == ac_l.value:
+                        return f(*args, **kwargs)
+
+                return response_error("Permission denied", status=403)
+
         return wrap
     return inner_wrap
 
