@@ -201,7 +201,7 @@ var modal_org_cac = $("#org_cac_table").DataTable({
           {
             "data": "case_id",
             "render": function ( data, type, row ) {
-                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_ac_to_case('{{ org.org_id }}','${data}')"></i>${data}`;
+                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_org('{{ org.org_id }}','${data}')"></i>${data}`;
             },
             "className": "dt-center"
         },

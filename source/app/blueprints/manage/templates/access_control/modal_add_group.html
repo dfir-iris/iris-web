@@ -12,6 +12,10 @@
                     <li class="nav-item submenu">
                         <a class="nav-link"  data-toggle="pill" href="#group_members_tab" role="tab" aria-controls="group_members_tab" aria-selected="false">Members</a>
                     </li>
+
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#group_cac_tab" role="tab" aria-controls="group_cac_tab" aria-selected="false">Cases access</a>
+                    </li>
                 </ul>
                 {% endif %}
             </div>
@@ -96,6 +100,40 @@
                             </div>
                         </div>
                     </div>
+                    <div class="tab-pane" id="group_cac_tab">
+                        <div class="container col-md-12" >
+                            <div class="col" >
+                              <div class="row d-flex">
+                                <div class="col pull-right">
+                                    <button class="btn btn-dark btn-sm pull-right" onclick="refresh_group_cac({{ group.group_id }});">
+                                        <span class="menu-title">Refresh</span>
+                                    </button>
+                                    <button class="btn btn-dark btn-sm pull-right mr-2" onclick="manage_group_cac({{ group.group_id }});">
+                                        <span class="menu-title" id="manage_group_cac_button">Grant case access</span>
+                                    </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="group_cac_table" >
+                                <thead>
+                                  <tr>
+                                      <th>Case ID</th>
+                                      <th>Case Name</th>
+                                      <th>Access</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                    <th>Case ID</th>
+                                    <th>Case Name</th>
+                                    <th>Access</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -164,5 +202,45 @@ var modal_group_table = $("#group_members_table").DataTable({
 {% if group.group_id %}
     modal_group_table.rows.add({{ group.group_members|tojson }});
     modal_group_table.columns.adjust().draw();
+{% endif %}
+
+
+var modal_group_cac = $("#group_cac_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "case_id",
+            "render": function ( data, type, row ) {
+                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_group('{{ org.org_id }}','${data}')"></i>${data}`;
+            },
+            "className": "dt-center"
+        },
+        {
+            "data": "case_name",
+            "className": "dt-center"
+        },
+        {
+            "data": "access_level_list",
+            "render": function ( data, type, row ) {
+                ret_data = "";
+                for (acc in data) {
+                    ret_data += `<span class="badge ml-2 badge-light">${data[acc].name}</span>`
+                }
+                return ret_data;
+            },
+            "className": "dt-center"
+        }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true
+});
+
+{% if group.group_id %}
+    current_group_cases_access_list = {{ group.group_cases_access|tojson }};
+    modal_group_cac.rows.add(current_group_cases_access_list);
+    modal_group_cac.columns.adjust().draw();
 {% endif %}
 </script>

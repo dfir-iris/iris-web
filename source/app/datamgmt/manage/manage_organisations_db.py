@@ -231,4 +231,5 @@ def remove_case_access_from_organisation(org_id, case_id):
             OrganisationCaseAccess.org_id == org_id
         )).delete()
 
+    db.session.commit()
     return

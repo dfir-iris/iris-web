@@ -274,6 +274,40 @@ function manage_organisation_cac(org_id) {
     });
 }
 
+function remove_case_access_from_org(org_id, case_id, on_finish) {
+
+    swal({
+      title: "Are you sure?",
+      text: "This will remove access to this case from members of the organisation",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, remove it!'
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            url = '/manage/organisations/' + org_id + '/cases-access/delete/' + case_id;
+
+            get_request_api(url)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_organisations();
+                    refresh_organisation_cac(org_id);
+
+                    if (on_finish !== undefined) {
+                        on_finish();
+                    }
+
+                }
+            });
+        }
+    });
+
+}
+
+
 $(document).ready(function () {
     refresh_organisations();
 });
