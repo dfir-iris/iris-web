@@ -46,6 +46,7 @@ from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddGroupForm
 from app.forms import AddOrganisationForm
+from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.models import cases
 from app.models.authorization import Permissions
@@ -286,5 +287,6 @@ def manage_org_cac_modal(cur_id, caseid, url_redir):
         return response_error("Invalid organisation ID")
 
     cases_list = list_cases_dict()
+    access_levels = ac_get_all_access_level()
 
-    return render_template("modal_add_org_cac.html", org=org, cases=cases_list)
+    return render_template("modal_add_org_cac.html", org=org, cases=cases_list, access_levels=access_levels)

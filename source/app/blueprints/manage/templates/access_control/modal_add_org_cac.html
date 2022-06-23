@@ -11,16 +11,19 @@
             <div class="container col-md-12" >
                 <div class="row">
                     <div class="form-group" data-select2-id="7">
-                        <label>Cases *</label>
+                        <label>Add a new case to this organisation *</label>
                         <div class="col-12">
-                            <select id="orgs_cases_access" name="orgs_cases_access" class="form-control select2-hidden-accessible ml-12"
+                            <select id="org_case_access_select" name="org_case_access_select" class="form-control select2-hidden-accessible ml-12"
+                                     tabindex="-1" aria-hidden="true" style="width: 100%">
+                            </select>
+                            <select id="org_case_ac_select" name="org_case_ac_select" class="form-control select2-hidden-accessible ml-12" multiple="multiple"
                                      tabindex="-1" aria-hidden="true" style="width: 100%">
                             </select>
                         </div>
                     </div>
                 </div>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
-                    id="save_org_members">Save</button>
+                    id="save_case_access">Save</button>
             </div>
         </div>
     </div><!-- /.modal-content -->
@@ -32,14 +35,13 @@ if (current_org_cases_access_list === undefined) {
 }
 
 for (cse in current_org_cases_access_list) {
-    console.log(cse);
     data.push({
         label: `${current_org_cases_access_list[cse].case_name}`,
         value: current_org_cases_access_list[cse].case_id
     });
 }
 
-$('#orgs_cases_access').multiselect({
+$('#org_case_access_select').multiselect({
     buttonWidth: 400,
     nonSelectedText: 'Select members',
     includeSelectAllOption: true,
@@ -50,8 +52,22 @@ $('#orgs_cases_access').multiselect({
     widthSynchronizationMode: 'ifPopupIsSmaller'
 });
 
-$('#orgs_cases_access').multiselect('dataprovider', data);
+$('#org_case_access_select').multiselect('dataprovider', data);
 
-$('#orgs_cases_access').multiselect('refresh')
+$('#org_case_access_select').multiselect('refresh')
 
+$('#org_case_access_select').multiselect({
+    nonSelectedText: 'Select access level',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#org_case_ac_select').multiselect('dataprovider', [{% for acc in access_levels %}
+ { label: "{{ acc.name }}", value: {{ acc.value  }} }, {% endfor %}]);
+
+$('#org_case_ac_select').multiselect('refresh');
 </script>

@@ -162,11 +162,28 @@ def ac_user_case_access(user_id, cid):
 
 
 def ac_get_mask_case_access_level_full():
+    """
+    Return a mask for full access level
+    """
     am = 0
     for ac in CaseAccessLevel._member_names_:
         am |= CaseAccessLevel[ac].value
 
     return am
+
+
+def ac_get_all_access_level():
+    """
+    Return a list of all access levels
+    """
+    ac_list = []
+    for ac in CaseAccessLevel._member_names_:
+        ac_list.append({
+            'name': ac,
+            'value': CaseAccessLevel[ac].value
+        })
+
+    return ac_list
 
 
 def ac_access_level_to_list(access_level):
