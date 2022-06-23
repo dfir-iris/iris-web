@@ -205,7 +205,7 @@ var modal_group_table = $("#group_members_table").DataTable({
 {% endif %}
 
 
-var modal_group_cac = $("#group_cac_table").DataTable({
+var modal_group_cac_table = $("#group_cac_table").DataTable({
         dom: 'Blfrtip',
         aaData: [],
         aoColumns: [
@@ -240,7 +240,7 @@ var modal_group_cac = $("#group_cac_table").DataTable({
 
 {% if group.group_id %}
     current_group_cases_access_list = {{ group.group_cases_access|tojson }};
-    modal_group_cac.rows.add(current_group_cases_access_list);
-    modal_group_cac.columns.adjust().draw();
+    modal_group_cac_table.rows.add(current_group_cases_access_list);
+    modal_group_cac_table.columns.adjust().draw();
 {% endif %}
 </script>
