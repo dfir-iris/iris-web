@@ -26,6 +26,7 @@ from flask_login import current_user
 from werkzeug.utils import redirect
 
 from app import db
+from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import delete_group
 from app.datamgmt.manage.manage_groups_db import get_group
@@ -41,6 +42,7 @@ from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_organisations_db import get_orgs_details
 from app.datamgmt.manage.manage_organisations_db import get_user_organisations
 from app.datamgmt.manage.manage_organisations_db import is_user_in_org
+from app.datamgmt.manage.manage_organisations_db import remove_case_access_from_organisation
 from app.datamgmt.manage.manage_organisations_db import remove_user_from_organisation
 from app.datamgmt.manage.manage_organisations_db import update_org_members
 from app.datamgmt.manage.manage_users_db import get_user
@@ -336,3 +338,25 @@ def manage_org_cac_add_case(cur_id, caseid):
     org = get_orgs_details(cur_id)
 
     return response_success(data=org)
+
+
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/cases-access/delete/<int:cur_id_2>', methods=['GET'])
+@ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
+def manage_groups_ac_delete_case(cur_id, cur_id_2, caseid):
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
+
+    org = get_org(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
+
+    case = get_case(cur_id_2)
+    if not case:
+        return response_error("Invalid user ID")
+
+    remove_case_access_from_organisation(org.org_id, case.case_id)
+    org = get_orgs_details(cur_id)
+
+    return response_success('Case access removed from organisation', data=org)

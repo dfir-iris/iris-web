@@ -199,9 +199,10 @@ def add_case_access_to_org(org, case_id, access_level):
     access_level_mask = ac_access_level_mask_from_val_list(access_level)
 
     ocas = OrganisationCaseAccess.query.filter(
-        OrganisationCaseAccess.case_id == case_id,
-        OrganisationCaseAccess.org_id == org.org_id
-    ).all()
+        and_(
+            OrganisationCaseAccess.case_id == case_id,
+            OrganisationCaseAccess.org_id == org.org_id
+        )).all()
     if ocas:
         for oca in ocas:
             db.session.delete(oca)
@@ -215,3 +216,19 @@ def add_case_access_to_org(org, case_id, access_level):
     db.session.commit()
 
     return org, "Updated"
+
+
+def remove_case_access_from_organisation(org_id, case_id):
+    if not org_id or type(org_id) is not int:
+        return
+
+    if not case_id or type(case_id) is not int:
+        return
+
+    OrganisationCaseAccess.query.filter(
+        and_(
+            OrganisationCaseAccess.case_id == case_id,
+            OrganisationCaseAccess.org_id == org_id
+        )).delete()
+
+    return
