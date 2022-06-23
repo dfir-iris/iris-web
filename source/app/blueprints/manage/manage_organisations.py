@@ -321,7 +321,10 @@ def manage_org_cac_add_case(cur_id, caseid):
         return response_error("Invalid organisation ID")
 
     if not isinstance(data.get('case_id'), int):
-        return response_error("Expecting case_id as int")
+        try:
+            data['case_id'] = int(data.get('case_id'))
+        except:
+            return response_error("Expecting case_id as int")
 
     if not isinstance(data.get('access_level'), list):
         return response_error("Expecting access_level as list")

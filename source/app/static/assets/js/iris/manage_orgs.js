@@ -255,7 +255,7 @@ function manage_organisation_cac(org_id) {
             clear_api_error();
 
             var data_sent = Object();
-            data_sent['case_id'] = $('#org_case_access_select').val();
+            data_sent['case_id'] = parseInt($('#org_case_access_select').val());
             data_sent['access_level'] = $('#org_case_ac_select').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
