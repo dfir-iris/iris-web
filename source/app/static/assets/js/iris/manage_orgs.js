@@ -245,13 +245,12 @@ function manage_organisation_cac(org_id) {
     $('#manage_org_cac_button').text('Loading manager...');
 
     $('#modal_ac_additional').load(url, function (response, status, xhr) {
+        $('#manage_org_cac_button').text('Grant case access');
         if (status !== "success") {
              ajax_notify_error(xhr, url);
-             $('#manage_org_cac_button').text('Manage');
              return false;
         }
 
-        $('#manage_org_cac_button').text('Manage');
         $('#save_org_cac').on("click", function () {
             clear_api_error();
 

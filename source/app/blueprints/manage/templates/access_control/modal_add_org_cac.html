@@ -1,7 +1,7 @@
 <div class="modal-lg modal-dialog" role="document">
     <div class="modal-content">
         <div class="modal-header">
-            <h4 class="modal-title mt-2 mr-4">Manage cases access</h4>
+            <h4 class="modal-title mt-2 mr-4">Grant case access</h4>
             <div class="row text-right">
                 <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
                     aria-hidden="true"><i class="fa fa-times"></i></span></button>
@@ -11,7 +11,7 @@
             <div class="container col-md-12" >
                 <div class="row">
                     <div class="form-group" data-select2-id="7">
-                        <label>Add a new case to this organisation *</label>
+                        <label>Grant a case access to the organisation {{ org.org_name }} *</label>
                         <div class="col-12">
                             <select id="org_case_access_select" name="org_case_access_select" class="form-control select2-hidden-accessible ml-12"
                                      tabindex="-1" aria-hidden="true" style="width: 100%">
@@ -56,7 +56,7 @@ $('#org_case_access_select').multiselect('dataprovider', data);
 
 $('#org_case_access_select').multiselect('refresh')
 
-$('#org_case_access_select').multiselect({
+$('#org_case_ac_select').multiselect({
     nonSelectedText: 'Select access level',
     includeSelectAllOption: true,
     enableFiltering: true,
