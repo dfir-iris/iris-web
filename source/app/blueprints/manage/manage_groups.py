@@ -26,6 +26,7 @@ from werkzeug.utils import redirect
 from app import db
 from app.datamgmt.manage.manage_groups_db import delete_group
 from app.datamgmt.manage.manage_groups_db import get_group
+from app.datamgmt.manage.manage_groups_db import get_group_details
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
@@ -63,7 +64,7 @@ def manage_groups_view_modal(cur_id, caseid, url_redir):
         return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
 
     form = AddGroupForm()
-    group = get_group_with_members(cur_id)
+    group = get_group_details(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
@@ -162,7 +163,7 @@ def manage_groups_delete(cur_id, caseid):
 @ac_api_requires(Permissions.manage_groups)
 def manage_groups_view(cur_id, caseid):
 
-    group = get_group_with_members(cur_id)
+    group = get_group_details(cur_id)
     if not group:
         return response_error("Invalid group ID")
 

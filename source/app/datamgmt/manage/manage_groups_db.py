@@ -19,7 +19,9 @@
 from sqlalchemy import and_
 
 from app import db
+from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_permission_to_list
+from app.models import Cases
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import User
@@ -106,6 +108,35 @@ def get_group_with_members(group_id):
     perms = ac_permission_to_list(group.group_permissions)
     setattr(group, 'group_permissions_list', perms)
     setattr(group, 'group_members', membership_list.get(group.group_id, []))
+
+    return group
+
+
+def get_group_details(group_id):
+    group = get_group_with_members(group_id)
+    if not group:
+        return group
+
+    group_accesses = GroupCaseAccess.query.with_entities(
+        GroupCaseAccess.access_level,
+        GroupCaseAccess.case_id,
+        Cases.name.label('case_name')
+    ).join(
+        GroupCaseAccess.case
+    ).filter(
+        GroupCaseAccess.group_id == group_id
+    ).all()
+
+    group_cases_access = []
+    for kgroup in group_accesses:
+        group_cases_access.append({
+            "access_level": kgroup.access_level,
+            "access_level_list": ac_access_level_to_list(kgroup.access_level),
+            "case_id": kgroup.case_id,
+            "case_name": kgroup.case_name
+        })
+
+    setattr(group, 'group_cases_access', group_cases_access)
 
     return group
 

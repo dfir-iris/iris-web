@@ -212,7 +212,7 @@ var modal_group_cac = $("#group_cac_table").DataTable({
           {
             "data": "case_id",
             "render": function ( data, type, row ) {
-                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_group('{{ org.org_id }}','${data}')"></i>${data}`;
+                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_group('{{ group.group_id }}','${data}')"></i>${data}`;
             },
             "className": "dt-center"
         },
