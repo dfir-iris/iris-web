@@ -201,6 +201,17 @@ def ac_access_level_to_list(access_level):
     return access_levels
 
 
+def ac_access_level_mask_from_val_list(access_levels):
+    """
+    Return an access level mask from a list of access levels
+    """
+    am = 0
+    for acc in access_levels:
+        am |= int(acc)
+
+    return am
+
+
 def ac_user_has_permission(user, permission):
     """
     Return True if user has permission

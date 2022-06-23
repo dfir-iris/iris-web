@@ -23,27 +23,18 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
-                    id="save_case_access">Save</button>
+                    id="grant_case_access_to_org">Grant access</button>
             </div>
         </div>
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 <script>
 var data = [];
-if (current_org_cases_access_list === undefined) {
-    refresh_organisation_cac('{{ org.org_id }}');
-}
-
-for (cse in current_org_cases_access_list) {
-    data.push({
-        label: `${current_org_cases_access_list[cse].case_name}`,
-        value: current_org_cases_access_list[cse].case_id
-    });
-}
 
 $('#org_case_access_select').multiselect({
     buttonWidth: 400,
-    nonSelectedText: 'Select members',
+    nonSelectedText: 'Select case',
+    emptyText: 'No case available to add',
     includeSelectAllOption: true,
     enableFiltering: true,
     enableCaseInsensitiveFiltering: true,
@@ -52,7 +43,9 @@ $('#org_case_access_select').multiselect({
     widthSynchronizationMode: 'ifPopupIsSmaller'
 });
 
-$('#org_case_access_select').multiselect('dataprovider', data);
+$('#org_case_access_select').multiselect('dataprovider', [{% for ocs in outer_cases %}
+ { label: "{{ ocs.case_name }}", value: {{ ocs.case_id  }} }, {% endfor %}]);
+
 
 $('#org_case_access_select').multiselect('refresh')
 

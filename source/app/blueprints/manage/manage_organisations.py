@@ -33,6 +33,7 @@ from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
+from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
 from app.datamgmt.manage.manage_organisations_db import delete_organisation
 from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_organisations_db import get_org_with_members
@@ -287,6 +288,48 @@ def manage_org_cac_modal(cur_id, caseid, url_redir):
         return response_error("Invalid organisation ID")
 
     cases_list = list_cases_dict()
+    org_cases_access = [case.get('case_id') for case in org.org_cases_access]
+    outer_cases_list = []
+    for case in cases_list:
+        if case.get('case_id') not in org_cases_access:
+            outer_cases_list.append({
+                "case_id": case.get('case_id'),
+                "case_name": case.get('case_name')
+            })
+
     access_levels = ac_get_all_access_level()
 
-    return render_template("modal_add_org_cac.html", org=org, cases=cases_list, access_levels=access_levels)
+    return render_template("modal_add_org_cac.html", org=org, outer_cases=outer_cases_list, access_levels=access_levels)
+
+
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/cases-access/add', methods=['POST'])
+@ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
+def manage_org_cac_add_case(cur_id, caseid):
+    if not request.is_json:
+        return response_error("Invalid request, expecting JSON")
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request, expecting JSON")
+
+    if not session['permissions'] & Permissions.manage_organisations.value:
+        if not is_user_in_org(current_user.id, cur_id):
+            return response_error('Access denied', status=403)
+
+    org = get_org(cur_id)
+    if not org:
+        return response_error("Invalid organisation ID")
+
+    if not isinstance(data.get('case_id'), int):
+        return response_error("Expecting case_id as int")
+
+    if not isinstance(data.get('access_level'), list):
+        return response_error("Expecting access_level as list")
+
+    org, logs = add_case_access_to_org(org, data.get('case_id'), data.get('access_level'))
+    if not org:
+        return response_error(msg=logs)
+
+    org = get_orgs_details(cur_id)
+
+    return response_success(data=org)

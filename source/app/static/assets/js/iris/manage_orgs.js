@@ -251,14 +251,15 @@ function manage_organisation_cac(org_id) {
              return false;
         }
 
-        $('#save_org_cac').on("click", function () {
+        $('#grant_case_access_to_org').on("click", function () {
             clear_api_error();
 
             var data_sent = Object();
-            data_sent['org_cases_access'] = $('#org_cases_access').val();
+            data_sent['case_id'] = $('#org_case_access_select').val();
+            data_sent['access_level'] = $('#org_case_ac_select').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('organisations/' + org_id + '/cases-access/update', JSON.stringify(data_sent), true)
+            post_request_api('organisations/' + org_id + '/cases-access/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_organisations();
