@@ -11,19 +11,19 @@
             <div class="container col-md-12" >
                 <div class="row">
                     <div class="form-group" data-select2-id="7">
-                        <label>Grant a case access to group {{ group.group_name }} *</label>
+                        <label>Grant a case access to user {{ user.user_name }} *</label>
                         <div class="col-12">
-                            <select id="group_case_access_select" name="org_case_access_select" class="form-control select2-hidden-accessible ml-12"
+                            <select id="user_case_access_select" name="org_case_access_select" class="form-control select2-hidden-accessible ml-12"
                                      tabindex="-1" aria-hidden="true" style="width: 100%">
                             </select>
-                            <select id="group_case_ac_select" name="org_case_ac_select" class="form-control select2-hidden-accessible ml-12" multiple="multiple"
+                            <select id="user_case_ac_select" name="org_case_ac_select" class="form-control select2-hidden-accessible ml-12" multiple="multiple"
                                      tabindex="-1" aria-hidden="true" style="width: 100%">
                             </select>
                         </div>
                     </div>
                 </div>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
-                    id="grant_case_access_to_group">Grant access</button>
+                    id="grant_case_access_to_user">Grant access</button>
             </div>
         </div>
     </div><!-- /.modal-content -->
@@ -43,13 +43,13 @@ $('#group_case_access_select').multiselect({
     widthSynchronizationMode: 'ifPopupIsSmaller'
 });
 
-$('#group_case_access_select').multiselect('dataprovider', [{% for ocs in outer_cases %}
+$('#user_case_access_select').multiselect('dataprovider', [{% for ocs in outer_cases %}
  { label: "{{ ocs.case_name }}", value: {{ ocs.case_id  }} }, {% endfor %}]);
 
 
-$('#group_case_access_select').multiselect('refresh')
+$('#user_case_access_select').multiselect('refresh')
 
-$('#group_case_ac_select').multiselect({
+$('#user_case_ac_select').multiselect({
     nonSelectedText: 'Select access level',
     includeSelectAllOption: true,
     enableFiltering: true,
@@ -59,8 +59,8 @@ $('#group_case_ac_select').multiselect({
     widthSynchronizationMode: 'ifPopupIsSmaller'
 });
 
-$('#group_case_ac_select').multiselect('dataprovider', [{% for acc in access_levels %}
+$('#user_case_ac_select').multiselect('dataprovider', [{% for acc in access_levels %}
  { label: "{{ acc.name }}", value: {{ acc.value  }} }, {% endfor %}]);
 
-$('#group_case_ac_select').multiselect('refresh');
+$('#user_case_ac_select').multiselect('refresh');
 </script>

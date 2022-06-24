@@ -225,7 +225,7 @@ def manage_user_orgs(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/modal', methods=['GET'])
-@ac_api_requires(Permissions.manage_users)
+@ac_requires(Permissions.manage_users)
 def manage_user_cac_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
@@ -235,7 +235,7 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
         return response_error("Invalid user ID")
 
     cases_list = list_cases_dict()
-    user_cases_access = [case.get('case_id') for case in user.user_cases_access]
+    user_cases_access = [case.get('case_id') for case in user.get('user_cases_access')]
     outer_cases_list = []
     for case in cases_list:
         if case.get('case_id') not in user_cases_access:
