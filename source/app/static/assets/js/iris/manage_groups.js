@@ -259,10 +259,10 @@ function manage_group_cac(group_id) {
             data_sent['access_level'] = $('#group_case_ac_select').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('groups/' + org_id + '/cases-access/add', JSON.stringify(data_sent), true)
+            post_request_api('groups/' + group_id + '/cases-access/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_groups_cac(org_id);
+                    refresh_group_cac(group_id);
                     $('#modal_ac_additional').modal('hide');
                 }
             });
