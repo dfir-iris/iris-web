@@ -23,6 +23,10 @@
                             <a class="nav-link"  data-toggle="pill" href="#user_orgs_tab" role="tab" aria-controls="user_orgs_tab" aria-selected="false">Organisations</a>
                         </li>
 
+                        <li class="nav-item submenu">
+                            <a class="nav-link"  data-toggle="pill" href="#user_cac_tab" role="tab" aria-controls="user_cac_tab" aria-selected="false">Cases access</a>
+                        </li>
+
                     </ul>
                     {% endif %}
                 </div>
@@ -108,7 +112,7 @@
 
                                 {% endif %}
                             </form>
-            </div>
+                        </div>
                     </div>
                     <div class="tab-pane" id="user_permissions_tab">
                         <div class="container col-md-12">
@@ -197,6 +201,40 @@
                             </div>
                         </div>
                     </div>
+                    <div class="tab-pane" id="user_cac_tab">
+                        <div class="container col-md-12" >
+                            <div class="col" >
+                              <div class="row d-flex">
+                                <div class="col pull-right">
+                                    <button class="btn btn-dark btn-sm pull-right" onclick="refresh_user_cac({{ user.user_id }});">
+                                        <span class="menu-title">Refresh</span>
+                                    </button>
+                                    <button class="btn btn-dark btn-sm pull-right mr-2" onclick="manage_user_cac({{ user.user_id  }});">
+                                        <span class="menu-title" id="manage_user_cac_button">Grant case access</span>
+                                    </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="user_cac_table" >
+                                <thead>
+                                  <tr>
+                                      <th>Case ID</th>
+                                      <th>Case Name</th>
+                                      <th>Access</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                    <th>Case ID</th>
+                                    <th>Case Name</th>
+                                    <th>Access</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -238,6 +276,46 @@
                     {"title": "Organisation UUID"}
                     ]
             });
+
+            var modal_user_cac_table = $("#user_cac_table").DataTable({
+                dom: 'Blfrtip',
+                aaData: [],
+                aoColumns: [
+                  {
+                    "data": "case_id",
+                    "render": function ( data, type, row ) {
+                        return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_user('{{ user.user_id }}','${data}')"></i>${data}`;
+                    },
+                    "className": "dt-center"
+                },
+                {
+                    "data": "case_name",
+                    "className": "dt-center"
+                },
+                {
+                    "data": "access_level_list",
+                    "render": function ( data, type, row ) {
+                        ret_data = "";
+                        for (acc in data) {
+                            ret_data += `<span class="badge ml-2 badge-light">${data[acc].name}</span>`
+                        }
+                        return ret_data;
+                    },
+                    "className": "dt-center"
+                }
+                ],
+                filter: true,
+                info: true,
+                ordering: true,
+                processing: true
+        });
+
+        {% if user.user_id %}
+            current_user_cases_access_list = {{ user.user_cases_access|tojson }};
+            modal_user_cac_table.rows.add(current_user_cases_access_list);
+            modal_user_cac_table.columns.adjust().draw();
+        {% endif %}
+
         </script>
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->

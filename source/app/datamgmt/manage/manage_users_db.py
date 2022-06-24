@@ -20,11 +20,14 @@
 
 from app import bc
 from app import db
+from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
+from app.models import Cases
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import Role
 from app.models.authorization import User
+from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 from app.models.authorization import UserRoles
@@ -137,6 +140,29 @@ def get_user_organisations(user_id):
 
     return output
 
+def get_user_cases_access(user_id):
+
+    user_accesses = UserCaseAccess.query.with_entities(
+        UserCaseAccess.access_level,
+        UserCaseAccess.case_id,
+        Cases.name.label('case_name')
+    ).join(
+        UserCaseAccess.case
+    ).filter(
+        UserCaseAccess.user_id == user_id
+    ).all()
+
+    user_cases_access = []
+    for kuser in user_accesses:
+        user_cases_access.append({
+            "access_level": kuser.access_level,
+            "access_level_list": ac_access_level_to_list(kuser.access_level),
+            "case_id": kuser.case_id,
+            "case_name": kuser.case_name
+        })
+
+    return user_cases_access
+
 
 def get_user_details(user_id):
 
@@ -155,6 +181,7 @@ def get_user_details(user_id):
     row['user_groups'] = get_user_groups(user_id)
     row['user_organisations'] = get_user_organisations(user_id)
     row['user_permissions'] = get_user_effective_permissions(user_id)
+    row['user_cases_access'] = get_user_cases_access(user_id)
 
     return row
 
