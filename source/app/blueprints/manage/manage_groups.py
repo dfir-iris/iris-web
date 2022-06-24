@@ -24,6 +24,7 @@ from flask import url_for
 from werkzeug.utils import redirect
 
 from app import db
+from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_groups_db import delete_group
@@ -31,6 +32,7 @@ from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_details
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
+from app.datamgmt.manage.manage_groups_db import remove_case_access_from_group
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
@@ -286,3 +288,22 @@ def manage_groups_cac_add_case(cur_id, caseid):
     group = get_group_details(cur_id)
 
     return response_success(data=group)
+
+
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/delete/<int:cur_id_2>', methods=['GET'])
+@ac_api_requires(Permissions.manage_groups)
+def manage_groups_cac_delete_case(cur_id, cur_id_2, caseid):
+
+    group = get_group(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    case = get_case(cur_id_2)
+    if not case:
+        return response_error("Invalid case ID")
+
+    remove_case_access_from_group(group.group_id, case.case_id)
+    org = get_group_details(cur_id)
+
+    return response_success('Case access removed from group', data=org)
+

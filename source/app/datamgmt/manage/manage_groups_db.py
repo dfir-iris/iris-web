@@ -229,3 +229,21 @@ def add_case_access_to_group(group, case_id, access_level):
     db.session.commit()
 
     return group, "Updated"
+
+
+def remove_case_access_from_group(group_id, case_id):
+    if not group_id or type(group_id) is not int:
+        return
+
+    if not case_id or type(case_id) is not int:
+        return
+
+    GroupCaseAccess.query.filter(
+        and_(
+            GroupCaseAccess.case_id == case_id,
+            GroupCaseAccess.group_id == group_id
+        )).delete()
+
+    db.session.commit()
+    return
+

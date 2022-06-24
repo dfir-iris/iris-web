@@ -354,7 +354,7 @@ def manage_groups_ac_delete_case(cur_id, cur_id_2, caseid):
 
     case = get_case(cur_id_2)
     if not case:
-        return response_error("Invalid user ID")
+        return response_error("Invalid case ID")
 
     remove_case_access_from_organisation(org.org_id, case.case_id)
     org = get_orgs_details(cur_id)
