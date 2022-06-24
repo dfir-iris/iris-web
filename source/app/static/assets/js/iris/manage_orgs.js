@@ -278,7 +278,7 @@ function remove_case_access_from_org(org_id, case_id, on_finish) {
 
     swal({
       title: "Are you sure?",
-      text: "This will remove access to this case from members of the organisation",
+      text: "Members of this organisation won't be able to access this case anymore",
       icon: "warning",
       buttons: true,
       dangerMode: true,

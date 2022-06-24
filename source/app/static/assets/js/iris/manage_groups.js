@@ -273,6 +273,40 @@ function manage_group_cac(group_id) {
     });
 }
 
+function remove_case_access_from_group(group_id, case_id, on_finish) {
+
+    swal({
+      title: "Are you sure?",
+      text: "Members of this group won't be able to access this case anymore",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, remove it!'
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            url = '/manage/groups/' + group_id + '/cases-access/delete/' + case_id;
+
+            get_request_api(url)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_group_cac(group_id);
+
+                    if (on_finish !== undefined) {
+                        on_finish();
+                    }
+
+                }
+            });
+        }
+    });
+
+}
+
+
+
 $(document).ready(function () {
     refresh_groups();
 });
