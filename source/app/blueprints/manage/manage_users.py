@@ -31,6 +31,7 @@ from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
+from app.datamgmt.manage.manage_users_db import add_case_access_to_user
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import delete_user
 from app.datamgmt.manage.manage_users_db import get_user
@@ -248,6 +249,38 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
 
     return render_template("modal_add_user_cac.html", user=user, outer_cases=outer_cases_list,
                            access_levels=access_levels)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/add', methods=['POST'])
+@ac_api_requires(Permissions.manage_users)
+def manage_user_cac_add_case(cur_id, caseid):
+    if not request.is_json:
+        return response_error("Invalid request, expecting JSON")
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request, expecting JSON")
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    if not isinstance(data.get('case_id'), int):
+        try:
+            data['case_id'] = int(data.get('case_id'))
+        except:
+            return response_error("Expecting case_id as int")
+
+    if not isinstance(data.get('access_level'), list):
+        return response_error("Expecting access_level as list")
+
+    user, logs = add_case_access_to_user(user, data.get('case_id'), data.get('access_level'))
+    if not user:
+        return response_error(msg=logs)
+
+    group = get_user_details(cur_id)
+
+    return response_success(data=group)
 
 
 if is_authentication_local():

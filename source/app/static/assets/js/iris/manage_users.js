@@ -246,13 +246,13 @@ function manage_user_organisations(user_id) {
 }
 
 function refresh_user_cac(user_id) {
-    if (modal_user_cac !== undefined) {
-        get_request_api('/manage/users/' + org_id)
+    if (modal_user_cac_table !== undefined) {
+        get_request_api('/manage/users/' + user_id)
         .done((data) => {
             if(notify_auto_api(data)) {
                 current_user_cases_access_list = data.data.user_cases_access;
-                modal_user_cac.clear();
-                modal_user_cac.rows.add(current_user_cases_access_list).draw();
+                modal_user_cac_table.clear();
+                modal_user_cac_table.rows.add(current_user_cases_access_list).draw();
             }
         });
     }
@@ -274,14 +274,14 @@ function manage_user_cac(user_id) {
             clear_api_error();
 
             var data_sent = Object();
-            data_sent['case_id'] = parseInt($('#org_case_access_select').val());
-            data_sent['access_level'] = $('#org_case_ac_select').val();
+            data_sent['case_id'] = parseInt($('#user_case_access_select').val());
+            data_sent['access_level'] = $('#user_case_ac_select').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('users/' + org_id + '/cases-access/add', JSON.stringify(data_sent), true)
+            post_request_api('users/' + user_id + '/cases-access/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_user_cac(org_id);
+                    refresh_user_cac(user_id);
                     $('#modal_ac_additional').modal('hide');
                 }
             });

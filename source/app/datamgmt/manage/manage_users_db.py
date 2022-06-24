@@ -17,9 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from sqlalchemy import and_
 
 from app import bc
 from app import db
+from app.datamgmt.case.case_db import get_case
+from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.models import Cases
@@ -140,6 +143,7 @@ def get_user_organisations(user_id):
 
     return output
 
+
 def get_user_cases_access(user_id):
 
     user_accesses = UserCaseAccess.query.with_entities(
@@ -184,6 +188,36 @@ def get_user_details(user_id):
     row['user_cases_access'] = get_user_cases_access(user_id)
 
     return row
+
+
+def add_case_access_to_user(user, case_id, access_level):
+    if not user:
+        return None, "Invalid user"
+
+    case = get_case(case_id)
+    if not case:
+        return None, "Invalid case ID"
+
+    access_level_mask = ac_access_level_mask_from_val_list(access_level)
+
+    ocas = UserCaseAccess.query.filter(
+        and_(
+            UserCaseAccess.case_id == case_id,
+            UserCaseAccess.user_id == user.id
+        )).all()
+    if ocas:
+        for oca in ocas:
+            db.session.delete(oca)
+        db.session.commit()
+
+    oca = UserCaseAccess()
+    oca.user_id = user.id
+    oca.access_level = access_level_mask
+    oca.case_id = case_id
+    db.session.add(oca)
+    db.session.commit()
+
+    return user, "Updated"
 
 
 def get_user_by_username(username):
