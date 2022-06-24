@@ -203,19 +203,20 @@
                     </div>
                     <div class="tab-pane" id="user_cac_tab">
                         <div class="container col-md-12" >
-                            <div class="col" >
-                              <div class="row d-flex">
-                                <div class="col pull-right">
+                              <div class="row d-flex mb-4">
+                                <div class="col-8">
+                                    <span>Cases accesses are usually inherited from organisations and groups memberships. These are not displayed here. This tab allows to add granular case access if necessary.</span>
+                                </div>
+                                <div class="col-4 pull-right">
                                     <button class="btn btn-dark btn-sm pull-right" onclick="refresh_user_cac({{ user.user_id }});">
                                         <span class="menu-title">Refresh</span>
                                     </button>
                                     <button class="btn btn-dark btn-sm pull-right mr-2" onclick="manage_user_cac({{ user.user_id  }});">
-                                        <span class="menu-title" id="manage_user_cac_button">Grant case access</span>
+                                        <span class="menu-title" id="manage_user_cac_button">Grant additional case access</span>
                                     </button>
                                 </div>
                               </div>
-                            </div>
-                            <div class="row">
+                            <div class="row mt-4">
                               <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="user_cac_table" >
                                 <thead>
                                   <tr>
