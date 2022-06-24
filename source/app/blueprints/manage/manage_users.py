@@ -27,6 +27,7 @@ from flask import request
 from flask import url_for
 
 from app import db
+from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
@@ -42,6 +43,7 @@ from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_users_db import update_user_orgs
 from app.forms import AddUserForm
+from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
@@ -220,6 +222,32 @@ def manage_user_orgs(cur_id, caseid):
                      orgs=request.json.get('orgs_membership'))
 
     return response_success("User organisations updated", data=user)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/modal', methods=['GET'])
+@ac_api_requires(Permissions.manage_users)
+def manage_user_cac_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_users.add_user', cid=caseid))
+
+    user = get_user_details(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    cases_list = list_cases_dict()
+    user_cases_access = [case.get('case_id') for case in user.user_cases_access]
+    outer_cases_list = []
+    for case in cases_list:
+        if case.get('case_id') not in user_cases_access:
+            outer_cases_list.append({
+                "case_id": case.get('case_id'),
+                "case_name": case.get('case_name')
+            })
+
+    access_levels = ac_get_all_access_level()
+
+    return render_template("modal_add_user_cac.html", user=user, outer_cases=outer_cases_list,
+                           access_levels=access_levels)
 
 
 if is_authentication_local():
