@@ -24,6 +24,7 @@ from flask import url_for
 from werkzeug.utils import redirect
 
 from app import db
+from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import delete_group
 from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_details
@@ -34,6 +35,7 @@ from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.forms import AddGroupForm
+from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
@@ -226,3 +228,28 @@ def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
     return response_success('Member deleted from group', data=group)
 
+
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/modal', methods=['GET'])
+@ac_requires(Permissions.manage_groups)
+def manage_groups_cac_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
+
+    group = get_group_details(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    cases_list = list_cases_dict()
+    group_cases_access = [case.get('case_id') for case in group.group_cases_access]
+    outer_cases_list = []
+    for case in cases_list:
+        if case.get('case_id') not in group_cases_access:
+            outer_cases_list.append({
+                "case_id": case.get('case_id'),
+                "case_name": case.get('case_name')
+            })
+
+    access_levels = ac_get_all_access_level()
+
+    return render_template("modal_add_group_cac.html", group=group, outer_cases=outer_cases_list,
+                           access_levels=access_levels)
