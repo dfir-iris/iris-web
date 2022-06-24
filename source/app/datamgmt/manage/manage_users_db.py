@@ -168,6 +168,23 @@ def get_user_cases_access(user_id):
     return user_cases_access
 
 
+def remove_case_access_from_user(user_id, case_id):
+    if not user_id or type(user_id) is not int:
+        return
+
+    if not case_id or type(case_id) is not int:
+        return
+
+    UserCaseAccess.query.filter(
+        and_(
+            UserCaseAccess.case_id == case_id,
+            UserCaseAccess.user_id == user_id
+        )).delete()
+
+    db.session.commit()
+    return
+
+
 def get_user_details(user_id):
 
     user = User.query.filter(User.id == user_id).first()

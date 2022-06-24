@@ -27,6 +27,7 @@ from flask import request
 from flask import url_for
 
 from app import db
+from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
@@ -40,6 +41,7 @@ from app.datamgmt.manage.manage_users_db import get_user_details
 from app.datamgmt.manage.manage_users_db import get_user_effective_permissions
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
+from app.datamgmt.manage.manage_users_db import remove_case_access_from_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_users_db import update_user_orgs
@@ -281,6 +283,24 @@ def manage_user_cac_add_case(cur_id, caseid):
     group = get_user_details(cur_id)
 
     return response_success(data=group)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete/<int:cur_id_2>', methods=['GET'])
+@ac_api_requires(Permissions.manage_groups)
+def manage_user_cac_delete_case(cur_id, cur_id_2, caseid):
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    case = get_case(cur_id_2)
+    if not case:
+        return response_error("Invalid user ID")
+
+    remove_case_access_from_user(user.id, case.case_id)
+    user = get_user_details(cur_id)
+
+    return response_success('Case access removed from user', data=user)
 
 
 if is_authentication_local():
