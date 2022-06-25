@@ -87,9 +87,9 @@ def has_updates():
     return dict(has_updates=server_settings[0])
 
 
-@app.context_processor
-def case_name():
-    return dict(case_name=get_urlcasename())
+# @app.context_processor
+# def case_name():
+#     return dict(case_name=get_urlcasename())
 
 
 @app.context_processor

@@ -28,10 +28,10 @@
 				<div class="container-fluid">
 					<div class="collapse" id="search-nav">
 							<div class="input-group">
-								{% if current_user.ctx_human_case %}
-								<div class="text-light"><a class="text-light" title="Switch case" onclick="load_context_switcher();return false;" href="#"> {{ current_user.ctx_human_case }}</a></div>
+								{% if session['current_case'] %}
+								<div class="text-light"><a class="text-light" title="Switch case" onclick="load_context_switcher();return false;" href="#">{{ session['current_case'].case_name }}</a></div>
 								{% else %}
-								<div class="text-warning">No context</div>
+								<div class="text-warning" style="cursor:pointer;" title="Switch case" onclick="load_context_switcher();return false;">No context</div>
 								{% endif %}
 							</div>
 					</div>

@@ -4,42 +4,42 @@
                                 <div class="col col-md-ml-12 col-sm-12">
                                     <ul class="nav navbar-nav page-navigation page-navigation-style-2 page-navigation-secondary" id="h_nav_tab">
                                         <li class="nav-item {{ active if page == 'case' }}">
-                                            <a class="nav-link" href="/case?cid={{case_name[2]}}">
+                                            <a class="nav-link" href="/case?cid={{session['current_case'].case_id}}">
                                                 <span class="menu-title">Summary</span>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/notes?cid={{case_name[2]}}">
+                                            <a class="nav-link" href="/case/notes?cid={{session['current_case'].case_id}}">
                                                 <span class="menu-title">Notes</span>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/assets?cid={{case_name[2]}}">
+                                            <a class="nav-link" href="/case/assets?cid={{session['current_case'].case_id}}">
                                                 <span class="menu-title">Assets</span>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/ioc?cid={{case_name[2]}}">
+                                            <a class="nav-link" href="/case/ioc?cid={{session['current_case'].case_id}}">
                                                 <span class="menu-title">IOC</span>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/timeline?cid={{case_name[2]}}">
+                                            <a class="nav-link" href="/case/timeline?cid={{session['current_case'].case_id}}">
                                                 <span class="menu-title">Timeline</span>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/graph?cid={{case_name[2]}}">
+                                            <a class="nav-link" href="/case/graph?cid={{session['current_case'].case_id}}">
                                                 <span class="menu-title">Graph</span>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/tasks?cid={{case_name[2]}}">
+                                            <a class="nav-link" href="/case/tasks?cid={{session['current_case'].case_id}}">
                                                 <span class="menu-title">Tasks</span>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/evidences?cid={{case_name[2]}}">
+                                            <a class="nav-link" href="/case/evidences?cid={{session['current_case'].case_id}}">
                                                 <span class="menu-title">Evidences</span>
                                             </a>
                                         </li>

@@ -166,7 +166,6 @@ def ac_user_has_case_access(user_id, cid, access_level):
 
     for acl in access_level:
         if acl.value & fca == acl.value:
-            print(acl)
             return True
 
     return False

@@ -227,13 +227,21 @@ def get_case_access(request, access_level):
 
     case = None
     if not ac_user_has_case_access(current_user.id, caseid, access_level):
+        session['current_case'] = {
+            'case_name': "{}".format("Access denied"),
+            'case_info': "",
+            'case_id': caseid
+        }
+
         return redir, caseid, False
 
     if caseid != current_user.ctx_case:
         case = get_case(caseid)
-        current_user.ctx_case = caseid
-        current_user.ctx_human_case = case.name
-        db.session.commit()
+        session['current_case'] = {
+            'case_name': "{}".format(case.name),
+            'case_info': "(#{} - {})".format(caseid, case.client.name),
+            'case_id': caseid
+        }
 
     if not case and not case_exists(caseid):
         log.warning('No case found. Using default case')
