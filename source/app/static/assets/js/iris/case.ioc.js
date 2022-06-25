@@ -57,8 +57,11 @@ function add_ioc() {
 
             return false;
         });
+
+        $('#modal_add_ioc').modal({ show: true });
+
     });
-    $('#modal_add_ioc').modal({ show: true });
+
     return false;
 }
 
