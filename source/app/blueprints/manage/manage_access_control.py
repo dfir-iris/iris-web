@@ -22,8 +22,11 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
+from app.datamgmt.manage.manage_access_control_db import manage_ac_audit_all_db
 from app.models.authorization import Permissions
+from app.util import ac_api_requires
 from app.util import ac_requires
+from app.util import response_success
 
 manage_ac_blueprint = Blueprint(
         'access_control',
@@ -42,3 +45,12 @@ def manage_ac_index(caseid, url_redir):
     form = FlaskForm()
 
     return render_template("manage_access-control.html", form=form)
+
+
+@manage_ac_blueprint.route('/manage/access-control/audit', methods=['GET'])
+@ac_api_requires(Permissions.manage_organisations)
+def manage_ac_audit_all(caseid):
+    audit = manage_ac_audit_all_db()
+
+    return response_success(data=audit)
+
