@@ -213,31 +213,22 @@ function sync_editor(no_check) {
                         data['case_description'] = st;
                         data['csrf_token'] = $('#csrf_token').val();
                         // Local change detected. Update to remote
-                        $.ajax({
-                            url: '/case/summary/update' + case_param(),
-                            type: "POST",
-                            dataType: "json",
-                            contentType: "application/json;charset=UTF-8",
-                            data: JSON.stringify(data),
-                            success: function (data) {
-                                if (data.status == 'success') {
-                                    collaborator.save();
-                                    $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
-                                    $('#fetched_crc').val(data.data);
-                                    $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
-                                } else {
-                                    notify_error("Unable to save content to remote server");
-                                    $('#last_saved').text('Error saving !').addClass('badge-danger').removeClass('badge-success');
-                                }
-                            },
-                            error: function(error) {
-                                notify_error(error.responseJSON.message);
-                                ('#last_saved').text('Error saving !').addClass('badge-danger').removeClass('badge-success');
+                        post_request_api('/case/summary/update', JSON.stringify(data))
+                        .done((data) => {
+                            if(notify_auto_api(data)) {
+                                collaborator.save();
+                                $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
+                                $('#fetched_crc').val(data.data);
+                                $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
+                                return false;
                             }
+                        })
+                        .fail((error) => {
+                            $('#last_saved').text('Error saving !').addClass('badge-danger').removeClass('badge-success');
+                            return false;
                         });
                     }
                     $('#content_last_sync').text("Last synced: " + new Date().toLocaleTimeString());
-                    $('#last_saved').text('Changes saved').removeClass('badge-danger').addClass('badge-success');
                 }
             }
         }

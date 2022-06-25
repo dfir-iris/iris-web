@@ -205,7 +205,7 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
     });
 }
 
-function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid) {
+function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, onError_fn) {
    if (cid === undefined ) {
      cid = case_param();
    } else {
