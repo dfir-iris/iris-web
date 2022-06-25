@@ -66,7 +66,11 @@ function propagate_form_api_errors(data_error) {
 }
 
 function ajax_notify_error(jqXHR, url) {
-    message = `We got error ${jqXHR.status} - ${jqXHR.statusText} requesting ${url}`;
+    if (jqXHR.status == 403) {
+        message = 'Permission denied';
+    } else {
+        message = `We got error ${jqXHR.status} - ${jqXHR.statusText} requesting ${url}`;
+    }
     notify_error(message);
 }
 
