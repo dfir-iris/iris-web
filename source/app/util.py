@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import uuid
 
 import datetime
 import decimal
@@ -226,7 +227,6 @@ def get_case_access(request, access_level):
 
     case = None
     if not ac_user_has_case_access(current_user.id, caseid, access_level):
-        log.warning(f"Permission denied to case #{caseid} for user ID {current_user.id}")
         return redir, caseid, False
 
     if caseid != current_user.ctx_case:
@@ -424,13 +424,22 @@ def api_login_required(f):
     return wrap
 
 
-def ac_return_permission_denied():
-    return render_template('pages/error-403.html', user=current_user,
+def ac_return_access_denied(caseid: int = None):
+    error_uuid = uuid.uuid4()
+    log.warning(f"Access denied to case #{caseid} for user ID {current_user.id}. Error {error_uuid}")
+    return render_template('pages/error-403.html', user=current_user, caseid=caseid, error_uuid=error_uuid,
                            template_folder=TEMPLATE_PATH), 403
 
 
-def ac_api_return_permission_denied():
-    return response_error('Permission denied', status=403)
+def ac_api_return_access_denied(caseid: int = None):
+    error_uuid = uuid.uuid4()
+    log.warning(f"Access denied to case #{caseid} for user ID {current_user.id}. Error {error_uuid}")
+    data = {
+        'user_id': current_user.id,
+        'case_id': caseid,
+        'error_uuid': error_uuid
+    }
+    return response_error('Permission denied', data=data, status=403)
 
 
 def ac_case_requires(*access_level):
@@ -444,7 +453,7 @@ def ac_case_requires(*access_level):
                 redir, caseid, has_access = get_case_access(request, access_level)
 
                 if not has_access:
-                    return ac_return_permission_denied()
+                    return ac_return_access_denied(caseid=caseid)
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
@@ -501,7 +510,7 @@ def ac_api_case_requires(*access_level):
                     return response_error("Invalid case ID", status=404)
 
                 if not has_access:
-                    return ac_return_permission_denied()
+                    return ac_return_access_denied(caseid=caseid)
 
                 kwargs.update({"caseid": caseid})
 

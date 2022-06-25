@@ -18,12 +18,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import traceback
-
 import logging as log
 import marshmallow
 # IMPORTS ------------------------------------------------
 import os
+import traceback
 import urllib.parse
 from flask import Blueprint
 from flask import redirect
@@ -56,12 +55,9 @@ from app.models.models import Client
 from app.schema.marshables import CaseSchema
 from app.util import ac_api_case_requires
 from app.util import ac_api_requires
-from app.util import ac_api_return_permission_denied
+from app.util import ac_api_return_access_denied
 from app.util import ac_case_requires
 from app.util import ac_requires
-from app.util import ac_return_permission_denied
-from app.util import api_login_required
-from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 
@@ -72,13 +68,13 @@ manage_cases_blueprint = Blueprint('manage_case',
 
 # CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires()
 def details_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
     if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
-        return ac_api_return_permission_denied()
+        return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
 
@@ -90,13 +86,13 @@ def details_case(cur_id, caseid, url_redir):
 
 
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires()
 def details_case_from_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
     if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
-        return ac_api_return_permission_denied()
+        return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
 
@@ -108,11 +104,11 @@ def details_case_from_case(cur_id, caseid, url_redir):
 
 
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires()
 def get_case_api(cur_id, caseid):
 
     if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
-        return ac_api_return_permission_denied()
+        return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
     if res:
