@@ -30,6 +30,7 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask_login import current_user
 
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
@@ -41,6 +42,7 @@ from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.forms import AddCaseForm
+from app.iris_engine.access_control.utils import ac_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
@@ -48,11 +50,16 @@ from app.iris_engine.module_handler.module_handler import list_available_pipelin
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.models.models import Client
 from app.schema.marshables import CaseSchema
+from app.util import ac_api_case_requires
 from app.util import ac_api_requires
+from app.util import ac_api_return_permission_denied
+from app.util import ac_case_requires
 from app.util import ac_requires
+from app.util import ac_return_permission_denied
 from app.util import api_login_required
 from app.util import login_required
 from app.util import response_error
@@ -65,10 +72,13 @@ manage_cases_blueprint = Blueprint('manage_case',
 
 # CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_data)
 def details_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
+
+    if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+        return ac_api_return_permission_denied()
 
     res = get_case_details_rt(cur_id)
 
@@ -80,10 +90,13 @@ def details_case(cur_id, caseid, url_redir):
 
 
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_data)
 def details_case_from_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
+
+    if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+        return ac_api_return_permission_denied()
 
     res = get_case_details_rt(cur_id)
 
@@ -95,8 +108,11 @@ def details_case_from_case(cur_id, caseid, url_redir):
 
 
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def get_case_api(cur_id, caseid):
+
+    if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+        return ac_api_return_permission_denied()
 
     res = get_case_details_rt(cur_id)
     if res:
@@ -200,7 +216,7 @@ def api_add_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def api_list_case(caseid):
 
     data = list_cases_dict()

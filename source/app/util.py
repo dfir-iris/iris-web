@@ -424,6 +424,15 @@ def api_login_required(f):
     return wrap
 
 
+def ac_return_permission_denied():
+    return render_template('pages/error-403.html', user=current_user,
+                           template_folder=TEMPLATE_PATH), 403
+
+
+def ac_api_return_permission_denied():
+    return response_error('Permission denied', status=403)
+
+
 def ac_case_requires(*access_level):
     def inner_wrap(f):
         @wraps(f)
@@ -435,8 +444,7 @@ def ac_case_requires(*access_level):
                 redir, caseid, has_access = get_case_access(request, access_level)
 
                 if not has_access:
-                    return render_template('pages/error-403.html', user=current_user,
-                                           template_folder=TEMPLATE_PATH), 404
+                    return ac_return_permission_denied()
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
@@ -493,7 +501,7 @@ def ac_api_case_requires(*access_level):
                     return response_error("Invalid case ID", status=404)
 
                 if not has_access:
-                    return response_error("Permission denied", status=403)
+                    return ac_return_permission_denied()
 
                 kwargs.update({"caseid": caseid})
 
