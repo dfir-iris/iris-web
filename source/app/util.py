@@ -518,7 +518,7 @@ def ac_api_case_requires(*access_level):
                     return response_error("Invalid case ID", status=404)
 
                 if not has_access:
-                    return ac_return_access_denied(caseid=caseid)
+                    return ac_api_return_access_denied(caseid=caseid)
 
                 kwargs.update({"caseid": caseid})
 
