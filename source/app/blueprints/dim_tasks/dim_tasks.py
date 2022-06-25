@@ -45,8 +45,11 @@ from app.models import IrisHook
 from app.models import IrisModule
 from app.models import IrisModuleHook
 from app.models import Notes
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
+from app.util import ac_api_case_requires
 from app.util import ac_api_requires
+from app.util import ac_case_requires
 from app.util import ac_requires
 from app.util import api_login_required
 from app.util import login_required
@@ -96,7 +99,7 @@ def list_dim_hook_options_ioc(type, caseid):
 
 
 @dim_tasks_blueprint.route('/dim/hooks/call', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.write_data)
 def dim_hooks_call(caseid):
     logs = []
     js_data = request.json
@@ -187,7 +190,7 @@ def dim_hooks_call(caseid):
 
 
 @dim_tasks_blueprint.route('/dim/tasks/list/<int:count>', methods=['GET'])
-@api_login_required
+@ac_api_requires(Permissions.read_all_dim_tasks)
 def list_dim_tasks(count, caseid):
     tasks = CeleryTaskMeta.query.filter(
         ~ CeleryTaskMeta.name.like('app.iris_engine.updater.updater.%')
@@ -250,7 +253,7 @@ def list_dim_tasks(count, caseid):
 
 
 @dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
-@login_required
+@ac_api_case_requires(CaseAccessLevel.read_data)
 def task_status(task_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
