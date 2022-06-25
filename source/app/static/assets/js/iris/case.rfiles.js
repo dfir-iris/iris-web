@@ -35,8 +35,8 @@ function add_modal_rfile() {
              ajax_notify_error(xhr, url);
              return false;
         }
+        $('#modal_add_rfiles').modal({ show: true });
     });
-    $('#modal_add_rfiles').modal({ show: true });
 }
 
 function add_rfile() {
