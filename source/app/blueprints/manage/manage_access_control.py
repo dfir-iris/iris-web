@@ -22,6 +22,8 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
+from app.models.authorization import Permissions
+from app.util import ac_requires
 from app.util import admin_required
 
 manage_ac_blueprint = Blueprint(
@@ -32,7 +34,8 @@ manage_ac_blueprint = Blueprint(
 
 
 @manage_ac_blueprint.route('/manage/access-control', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.manage_users, Permissions.manage_own_organisation,
+             Permissions.manage_groups, Permissions.manage_organisations, Permissions.read_users)
 def manage_ac_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_ac_blueprint.manage_ac_index', cid=caseid))
