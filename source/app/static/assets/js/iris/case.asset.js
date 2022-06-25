@@ -63,8 +63,9 @@ function add_asset() {
 
             return false;
         })
+        $('#modal_add_asset').modal({ show: true });
     });
-    $('#modal_add_asset').modal({ show: true });
+
     $('.dtr-modal').hide();
 }
 
