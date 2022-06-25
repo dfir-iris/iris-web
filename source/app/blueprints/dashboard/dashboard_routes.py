@@ -48,6 +48,8 @@ from app.models.authorization import User
 from app.models.models import UserActivity
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import GlobalTasksSchema
+from app.util import ac_api_requires
+from app.util import ac_requires
 
 from app.util import api_login_required
 from app.util import login_required
@@ -78,7 +80,7 @@ def logout():
 
 
 @dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def get_cases_charts(caseid):
     """
     Get case charts
@@ -113,7 +115,7 @@ def root():
 
 
 @dashboard_blueprint.route('/dashboard')
-@login_required
+@ac_requires()
 def index(caseid, url_redir):
     """
     Index page. Load the dashboard data, create the add customer form
@@ -148,7 +150,7 @@ def index(caseid, url_redir):
 
 
 @dashboard_blueprint.route('/global/tasks/list', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def get_gtasks(caseid):
 
     tasks_list = list_global_tasks()
@@ -167,7 +169,7 @@ def get_gtasks(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def view_gtask(cur_id, caseid):
 
     task = get_global_task(task_id=cur_id)
@@ -178,7 +180,7 @@ def view_gtask(cur_id, caseid):
 
 
 @dashboard_blueprint.route('/user/tasks/list', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def get_utasks(caseid):
 
     ct = list_user_tasks()
@@ -197,7 +199,7 @@ def get_utasks(caseid):
 
 
 @dashboard_blueprint.route('/user/tasks/status/update', methods=['POST'])
-@api_login_required
+@ac_api_requires()
 def utask_statusupdate(caseid):
     jsdata = request.get_json()
     if not jsdata:
@@ -231,7 +233,7 @@ def utask_statusupdate(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/add', methods=['GET', 'POST'])
-@api_login_required
+@ac_api_requires()
 def add_gtask(caseid):
     task = GlobalTasks()
 
@@ -276,7 +278,7 @@ def add_gtask(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/update/<int:cur_id>', methods=['GET', 'POST'])
-@api_login_required
+@ac_api_requires()
 def edit_gtask(cur_id, caseid):
 
     if cur_id:
@@ -323,7 +325,7 @@ def edit_gtask(cur_id, caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def gtask_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_global_task_delete', data=cur_id, caseid=caseid)
