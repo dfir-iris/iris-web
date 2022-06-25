@@ -45,6 +45,9 @@ from app.models import IrisHook
 from app.models import IrisModule
 from app.models import IrisModuleHook
 from app.models import Notes
+from app.models.authorization import Permissions
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import api_login_required
 from app.util import login_required
 from app.util import response_error
@@ -62,7 +65,7 @@ basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 # CONTENT ------------------------------------------------
 @dim_tasks_blueprint.route('/dim/tasks', methods=['GET'])
-@login_required
+@ac_requires(Permissions.read_all_dim_tasks)
 def dim_index(caseid: int, url_redir):
     if url_redir:
         return redirect(url_for('dim.dim_index', cid=caseid))
@@ -73,7 +76,7 @@ def dim_index(caseid: int, url_redir):
 
 
 @dim_tasks_blueprint.route('/dim/hooks/options/<type>/list', methods=['GET'])
-@api_login_required
+@ac_api_requires(Permissions.read_all_dim_tasks)
 def list_dim_hook_options_ioc(type, caseid):
     mods_options = IrisModuleHook.query.with_entities(
         IrisModuleHook.manual_hook_ui_name,

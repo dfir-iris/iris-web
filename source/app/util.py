@@ -55,7 +55,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import update_user
-from app.iris_engine.access_control.utils import ac_user_hash_case_access
+from app.iris_engine.access_control.utils import ac_user_has_case_access
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 
@@ -200,7 +200,7 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_urlcase(request):
+def get_case_access(request, access_level):
     caseid = request.args.get('cid', default=None, type=int)
     redir = False
     if not caseid:
@@ -228,14 +228,14 @@ def get_urlcase(request):
     if caseid != current_user.ctx_case:
         case = get_case(caseid)
         current_user.ctx_case = caseid
-        current_user.ctx_case_human = case.case_name
+        current_user.ctx_case_human = case.name
         db.session.commit()
 
     if not case and not case_exists(caseid):
         log.warning('No case found. Using default case')
         return True, 1, True
 
-    if not ac_user_hash_case_access(current_user.id, caseid):
+    if not ac_user_has_case_access(current_user.id, caseid, access_level):
         log.warning(f"Permission denied to case #{caseid} for user ID {current_user.id}")
         return redir, caseid, False
 
@@ -414,7 +414,7 @@ def api_login_required(f):
             return response_error("Authentication required", status=401)
 
         else:
-            redir, caseid = get_urlcase(request=request)
+            redir, caseid, access = get_case_access(request, access_level)
             if not caseid or redir:
                 return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
@@ -432,13 +432,13 @@ def ac_case_requires(*access_level):
                 return redirect(not_authenticated_redirection_url())
 
             else:
-                redir, caseid, access = get_urlcase(request=request)
+                redir, caseid, access = get_case_access(request, access_level)
 
                 if not access:
                     return render_template('pages/error-403.html', user=current_user,
                                            template_folder=TEMPLATE_PATH), 404
 
-                kwargs.update({"caseid": caseid, "url_redir": redir, "access": access})
+                kwargs.update({"caseid": caseid, "url_redir": redir})
 
                 return f(*args, **kwargs)
 
@@ -454,7 +454,7 @@ def ac_requires(*permissions):
                 return redirect(not_authenticated_redirection_url())
 
             else:
-                redir, caseid = get_urlcase(request=request)
+                redir, caseid, _ = get_case_access(request, [])
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
@@ -484,19 +484,17 @@ def ac_api_case_requires(*access_level):
                 return response_error("Authentication required", status=401)
 
             else:
-                redir, caseid = get_urlcase(request=request)
+                redir, caseid, access = get_case_access(request, access_level)
+
                 if not caseid or redir:
                     return response_error("Invalid case ID", status=404)
+
+                if not access:
+                    return response_error("Permission denied", status=403)
+
                 kwargs.update({"caseid": caseid})
 
-                if ac_user_hash_case_access(current_user.id, caseid):
-                    return f(*args, **kwargs)
-
-                # for ac_l in access_level:
-                #     if case_access_level & ac_l.value == ac_l.value:
-                #         return f(*args, **kwargs)
-
-                return response_error("Permission denied", status=403)
+                return f(*args, **kwargs)
 
         return wrap
     return inner_wrap
@@ -519,7 +517,7 @@ def ac_api_requires(*permissions):
                 return response_error("Authentication required", status=401)
 
             else:
-                redir, caseid = get_urlcase(request=request)
+                redir, caseid, _ = get_case_access(request, [])
                 if not caseid or redir:
                     return response_error("Invalid case ID", status=404)
                 kwargs.update({"caseid": caseid})

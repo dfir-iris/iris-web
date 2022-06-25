@@ -128,7 +128,7 @@ def ac_get_effective_permissions_of_user(user):
     return final_perm
 
 
-def ac_user_hash_case_access(user_id, cid):
+def ac_user_has_case_access(user_id, cid, access_level):
     """
     Returns the user access level to a case
     """
@@ -164,7 +164,12 @@ def ac_user_hash_case_access(user_id, cid):
     if not fca or fca & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
         return False
 
-    return True
+    for acl in access_level:
+        print(acl)
+        if acl.value & fca == acl.value:
+            return True
+
+    return False
 
 
 def ac_get_mask_case_access_level_full():
