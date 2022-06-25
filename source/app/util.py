@@ -225,19 +225,19 @@ def get_case_access(request, access_level):
                 return True, None, False
 
     case = None
+    if not ac_user_has_case_access(current_user.id, caseid, access_level):
+        log.warning(f"Permission denied to case #{caseid} for user ID {current_user.id}")
+        return redir, caseid, False
+
     if caseid != current_user.ctx_case:
         case = get_case(caseid)
         current_user.ctx_case = caseid
-        current_user.ctx_case_human = case.name
+        current_user.ctx_human_case = case.name
         db.session.commit()
 
     if not case and not case_exists(caseid):
         log.warning('No case found. Using default case')
         return True, 1, True
-
-    if not ac_user_has_case_access(current_user.id, caseid, access_level):
-        log.warning(f"Permission denied to case #{caseid} for user ID {current_user.id}")
-        return redir, caseid, False
 
     return redir, caseid, True
 
@@ -414,7 +414,7 @@ def api_login_required(f):
             return response_error("Authentication required", status=401)
 
         else:
-            redir, caseid, access = get_case_access(request, access_level)
+            redir, caseid, access = get_case_access(request, [])
             if not caseid or redir:
                 return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
@@ -432,9 +432,9 @@ def ac_case_requires(*access_level):
                 return redirect(not_authenticated_redirection_url())
 
             else:
-                redir, caseid, access = get_case_access(request, access_level)
+                redir, caseid, has_access = get_case_access(request, access_level)
 
-                if not access:
+                if not has_access:
                     return render_template('pages/error-403.html', user=current_user,
                                            template_folder=TEMPLATE_PATH), 404
 
@@ -484,12 +484,12 @@ def ac_api_case_requires(*access_level):
                 return response_error("Authentication required", status=401)
 
             else:
-                redir, caseid, access = get_case_access(request, access_level)
+                redir, caseid, has_access = get_case_access(request, access_level)
 
                 if not caseid or redir:
                     return response_error("Invalid case ID", status=404)
 
-                if not access:
+                if not has_access:
                     return response_error("Permission denied", status=403)
 
                 kwargs.update({"caseid": caseid})
