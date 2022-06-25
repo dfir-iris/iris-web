@@ -37,10 +37,9 @@ function add_task() {
 
             return false;
         })
-
+        $('#modal_add_task').modal({ show: true });
     });
-   
-    $('#modal_add_task').modal({ show: true });
+
 }
 
 function update_task(id) {
