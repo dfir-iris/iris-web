@@ -23,13 +23,13 @@
             <ul class="container-fluid mt-3 mb--2">
                 <ul class="navbar-nav">
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{case_name[2]}}">No group</a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}">No group</a>
                     </li>
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{case_name[2]}}&group-by=asset"><span class="text-decoration-none">Group by asset</span></a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=asset"><span class="text-decoration-none">Group by asset</span></a>
                     </li>
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{case_name[2]}}&group-by=category">Group by category</a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=category">Group by category</a>
                     </li>
                  </ul>
                 <ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">

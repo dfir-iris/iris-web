@@ -58,9 +58,9 @@
                                   <span class="menu-title"><i class="fas fa-ellipsis-v"></i></span>
                               </button>
                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}"> Visualize</a>
-                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}&group-by=asset"> Visualize by asset</a>
-                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}&group-by=category">Visualize by category</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}"> Visualize</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=asset"> Visualize by asset</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=category">Visualize by category</a>
                                   <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsvWithUI();"><small class="fa fa-download mr-2"></small> Download as CSV with user info</a>

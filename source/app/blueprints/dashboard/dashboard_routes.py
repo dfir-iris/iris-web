@@ -26,6 +26,7 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_login import logout_user
@@ -73,6 +74,11 @@ def logout():
     Logout function. Erase its session and redirect to index i.e login
     :return: Page
     """
+    if session['current_case']:
+        current_user.ctx_case = session['current_case'].case_id
+        current_user.ctx_human_case = session['current_case'].case_name
+        db.session.commit()
+
     track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True)
     logout_user()
 

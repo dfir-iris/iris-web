@@ -394,7 +394,9 @@ function check_update(url) {
                                 location.reload();
                         }
                     });
-                } else {
+                } else if (data.status == 403) {
+                    window.location.replace("/case" + case_param());
+                }else {
                     notify_error('Connection with server lost');
                 }
             }
