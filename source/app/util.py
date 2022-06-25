@@ -458,11 +458,14 @@ def ac_requires(*permissions):
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                for permission in permissions:
-                    if session['permissions'] & permission.value:
-                        return f(*args, **kwargs)
+                if permissions:
+                    for permission in permissions:
+                        if session['permissions'] & permission.value:
+                            return f(*args, **kwargs)
 
-                return response_error("Permission denied", status=403)
+                    return response_error("Permission denied", status=403)
+
+                return f(*args, **kwargs)
         return wrap
     return inner_wrap
 
@@ -522,12 +525,14 @@ def ac_api_requires(*permissions):
                     return response_error("Invalid case ID", status=404)
                 kwargs.update({"caseid": caseid})
 
-                for permission in permissions:
-                    if session['permissions'] & permission.value:
-                        return f(*args, **kwargs)
+                if permissions:
+                    for permission in permissions:
+                        if session['permissions'] & permission.value:
+                            return f(*args, **kwargs)
 
-                return response_error("Permission denied", status=403)
+                    return response_error("Permission denied", status=403)
 
+                return f(*args, **kwargs)
         return wrap
     return inner_wrap
 

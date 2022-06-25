@@ -36,6 +36,8 @@ from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import api_login_required
 from app.util import login_required
 from app.util import response_error
@@ -48,7 +50,7 @@ profile_blueprint = Blueprint('profile',
 
 # CONTENT ------------------------------------------------
 @profile_blueprint.route('/user/settings', methods=['GET'])
-@login_required
+@ac_requires()
 def user_settings(caseid, url_redir):
     if url_redir:
         return redirect(url_for('profile.user_settings', cid=caseid))
@@ -57,7 +59,7 @@ def user_settings(caseid, url_redir):
 
 
 @profile_blueprint.route('/user/token/renew', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def user_renew_api(caseid):
 
     user = get_user(current_user.id)
@@ -69,7 +71,7 @@ def user_renew_api(caseid):
 
 
 @profile_blueprint.route('/user/is-admin', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def user_is_admin(caseid):
 
     roles = [role.name for role in current_user.roles]
@@ -80,7 +82,7 @@ def user_is_admin(caseid):
 
 
 @profile_blueprint.route('/user/update/modal', methods=['GET'])
-@login_required
+@ac_requires()
 def update_pwd_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('profile.user_settings', cid=caseid))
@@ -93,7 +95,7 @@ def update_pwd_modal(caseid, url_redir):
 
 
 @profile_blueprint.route('/user/update', methods=['POST'])
-@api_login_required
+@ac_api_requires()
 def update_user_view(caseid):
     try:
         user = get_user(current_user.id)
@@ -121,7 +123,7 @@ def update_user_view(caseid):
 
 
 @profile_blueprint.route('/user/theme/set/<theme>', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def profile_set_theme(theme, caseid):
     if theme not in ['dark', 'light']:
         return response_error('Invalid data')
