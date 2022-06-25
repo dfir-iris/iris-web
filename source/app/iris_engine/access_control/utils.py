@@ -152,14 +152,20 @@ def ac_user_has_case_access(user_id, cid, access_level):
     fca = 0
 
     for ac_l in CaseAccessLevel:
-        if uca and uca.access_level & ac_l.value == ac_l.value:
-            fca |= uca.access_level
+        if uca:
+            if uca.access_level & ac_l.value == ac_l.value:
+                fca |= uca.access_level
+            continue
 
-        elif gca and gca.access_level & ac_l.value == ac_l.value:
-            fca |= gca.access_level
+        elif gca:
+            if gca.access_level & ac_l.value == ac_l.value:
+                fca |= gca.access_level
+            continue
 
-        elif oca and oca.access_level & ac_l.value == ac_l.value:
-            fca |= oca.access_level
+        elif oca:
+            if oca.access_level & ac_l.value == ac_l.value:
+                fca |= oca.access_level
+                continue
 
     if not fca or fca & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
         return False
