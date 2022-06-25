@@ -4,7 +4,6 @@
 #  IRIS Source Code
 #  Copyright (C) 2022 - DFIR IRIS Team
 #  contact@dfir-iris.org
-#  Created by whitekernel - 2022-05-17
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -51,7 +50,10 @@ from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.forms import ModalDSFileForm
 from app.models import DataStoreFile
+from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import DSFileSchema
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import add_obj_history_entry
 from app.util import api_login_required
 from app.util import login_required
@@ -68,7 +70,7 @@ logger = app.logger
 
 
 @datastore_blueprint.route('/datastore/list/tree', methods=['GET'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def datastore_list_tree(caseid):
 
     data = ds_list_tree(caseid)
@@ -77,7 +79,7 @@ def datastore_list_tree(caseid):
 
 
 @datastore_blueprint.route('/datastore/list/filter', methods=['GET'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def datastore_list_filter(caseid):
 
     args = request.args.to_dict()
@@ -101,7 +103,7 @@ def datastore_list_filter(caseid):
 
 
 @datastore_blueprint.route('/datastore/file/add/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_requires(CaseAccessLevel.write_data)
 def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -117,7 +119,7 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/filter-help/modal', methods=['GET'])
-@login_required
+@ac_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def datastore_filter_help_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('index.index', cid=caseid, redirect=True))
@@ -126,7 +128,7 @@ def datastore_filter_help_modal(caseid, url_redir):
 
 
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -150,7 +152,7 @@ def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/info/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_requires(CaseAccessLevel.read_data)
 def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -166,7 +168,7 @@ def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_update_file(cur_id: int, caseid: int):
 
     dsf = datastore_get_file(cur_id, caseid)
@@ -213,7 +215,7 @@ def datastore_update_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/move/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_move_file(cur_id: int, caseid: int):
 
     if not request.json:
@@ -234,7 +236,7 @@ def datastore_move_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/move/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_move_folder(cur_id: int, caseid: int):
 
     if not request.json:
@@ -258,7 +260,7 @@ def datastore_move_folder(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
 def datastore_view_file(cur_id: int, caseid: int):
     has_error, dsf = datastore_get_local_file_path(cur_id, caseid)
     if has_error:
@@ -277,7 +279,7 @@ def datastore_view_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/add/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_add_file(cur_id: int, caseid: int):
 
     dsp = datastore_get_path_node(cur_id, caseid)
@@ -327,7 +329,7 @@ def datastore_add_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/add-interactive', methods=['POST'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_add_interactive_file(caseid: int):
 
     dsp = datastore_get_interactive_path_node(caseid)
@@ -359,7 +361,7 @@ def datastore_add_interactive_file(caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/add', methods=['POST'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_add_folder(caseid: int):
     data = request.json
     if not data:
@@ -377,7 +379,7 @@ def datastore_add_folder(caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/rename/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_rename_folder(cur_id: int, caseid: int):
     data = request.json
     if not data:
@@ -398,7 +400,7 @@ def datastore_rename_folder(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_delete_folder_route(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_node(cur_id, caseid)
@@ -407,7 +409,7 @@ def datastore_delete_folder_route(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(CaseAccessLevel.write_data)
 def datastore_delete_file_route(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_file(cur_id, caseid)
