@@ -128,7 +128,7 @@ def ac_get_effective_permissions_of_user(user):
     return final_perm
 
 
-def ac_user_case_access(user_id, cid):
+def ac_user_hash_case_access(user_id, cid):
     """
     Returns the user access level to a case
     """
@@ -138,27 +138,33 @@ def ac_user_case_access(user_id, cid):
              OrganisationCaseAccess.org_id == UserOrganisation.org_id)
     ).first()
 
-    if oca:
-        return oca.access_level
-
     gca = GroupCaseAccess.query.filter(
         and_(GroupCaseAccess.case_id == cid,
              UserGroup.user_id == user_id,
              UserGroup.group_id == GroupCaseAccess.group_id)
     ).first()
 
-    if gca:
-        return gca.access_level
-
     uca = UserCaseAccess.query.filter(
         and_(UserCaseAccess.case_id == cid,
              UserCaseAccess.user_id == user_id)
     ).first()
 
-    if uca:
-        return uca.access_level
+    fca = 0
 
-    return 0
+    for ac_l in CaseAccessLevel:
+        if uca and uca.access_level & ac_l.value == ac_l.value:
+            fca |= uca.access_level
+
+        elif gca and gca.access_level & ac_l.value == ac_l.value:
+            fca |= gca.access_level
+
+        elif oca and oca.access_level & ac_l.value == ac_l.value:
+            fca |= oca.access_level
+
+    if not fca or fca & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+        return False
+
+    return True
 
 
 def ac_get_mask_case_access_level_full():

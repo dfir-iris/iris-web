@@ -18,34 +18,31 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import traceback
-import weakref
-
 import datetime
 import decimal
+import hashlib
 import logging as log
 import pickle
 import random
+import requests
 import shutil
 import string
 import traceback
 import weakref
-import logging as log
+from flask import Request
+from flask import json
+from flask import render_template
+from flask import request
 from flask import session
-from pathlib import Path
-
-import requests
-import hashlib
-
+from flask import url_for
+from flask_login import current_user
+from flask_login import login_user
+from flask_login import logout_user
 from flask_wtf import FlaskForm
 from functools import wraps
 from pathlib import Path
 from pyunpack import Archive
-
-from flask import json, url_for, request, render_template, Request
-from flask_login import current_user, logout_user, login_user
 from requests.auth import HTTPBasicAuth
-
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
@@ -53,13 +50,13 @@ from werkzeug.utils import redirect
 from app import TEMPLATE_PATH
 from app import app
 from app import db
-# build a Json response
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_users_db import get_user, create_user, update_user
-from app.iris_engine.access_control.utils import ac_user_case_access
+from app.datamgmt.manage.manage_users_db import create_user
+from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import update_user
+from app.iris_engine.access_control.utils import ac_user_hash_case_access
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
-from app.models.authorization import Permissions
 
 
 def response(msg, data):
@@ -434,11 +431,13 @@ def ac_case_requires(*access_level):
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                case_access_level = ac_user_case_access(current_user.id, caseid)
-
-                for ac_l in access_level:
-                    if case_access_level & ac_l.value == ac_l.value:
-                        return f(*args, **kwargs)
+                if ac_user_hash_case_access(current_user.id, caseid):
+                    return f(*args, **kwargs)
+                # case_access_level = ac_user_case_access(current_user.id, caseid)
+                #
+                # for ac_l in access_level:
+                #     if case_access_level & ac_l.value == ac_l.value:
+                #         return f(*args, **kwargs)
 
                 return response_error("Access denied", status=403)
         return wrap
@@ -488,11 +487,12 @@ def ac_api_case_requires(*access_level):
                     return response_error("Invalid case ID", status=404)
                 kwargs.update({"caseid": caseid})
 
-                case_access_level = ac_user_case_access(current_user.id, caseid)
+                if ac_user_hash_case_access(current_user.id, caseid):
+                    return f(*args, **kwargs)
 
-                for ac_l in access_level:
-                    if case_access_level & ac_l.value == ac_l.value:
-                        return f(*args, **kwargs)
+                # for ac_l in access_level:
+                #     if case_access_level & ac_l.value == ac_l.value:
+                #         return f(*args, **kwargs)
 
                 return response_error("Permission denied", status=403)
 
