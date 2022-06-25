@@ -50,6 +50,7 @@ from werkzeug.utils import redirect
 from app import TEMPLATE_PATH
 from app import app
 from app import db
+from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
@@ -221,20 +222,24 @@ def get_urlcase(request):
 
             else:
                 log.error(traceback.print_exc())
-                return True, None
+                return True, None, False
 
-    case = get_case(caseid)
-
-    if not case:
-        log.warning('No case found. Using default case')
-        return True, 1
-
+    case = None
     if caseid != current_user.ctx_case:
-        current_user.ctx_case = case.case_id
-        current_user.ctx_human_case = case.name
+        case = get_case(caseid)
+        current_user.ctx_case = caseid
+        current_user.ctx_case_human = case.case_name
         db.session.commit()
 
-    return redir, caseid
+    if not case and not case_exists(caseid):
+        log.warning('No case found. Using default case')
+        return True, 1, True
+
+    if not ac_user_hash_case_access(current_user.id, caseid):
+        log.warning(f"Permission denied to case #{caseid} for user ID {current_user.id}")
+        return redir, caseid, False
+
+    return redir, caseid, True
 
 
 def get_urlcasename():
@@ -427,19 +432,16 @@ def ac_case_requires(*access_level):
                 return redirect(not_authenticated_redirection_url())
 
             else:
-                redir, caseid = get_urlcase(request=request)
+                redir, caseid, access = get_urlcase(request=request)
 
-                kwargs.update({"caseid": caseid, "url_redir": redir})
+                if not access:
+                    return render_template('pages/error-403.html', user=current_user,
+                                           template_folder=TEMPLATE_PATH), 404
 
-                if ac_user_hash_case_access(current_user.id, caseid):
-                    return f(*args, **kwargs)
-                # case_access_level = ac_user_case_access(current_user.id, caseid)
-                #
-                # for ac_l in access_level:
-                #     if case_access_level & ac_l.value == ac_l.value:
-                #         return f(*args, **kwargs)
+                kwargs.update({"caseid": caseid, "url_redir": redir, "access": access})
 
-                return response_error("Access denied", status=403)
+                return f(*args, **kwargs)
+
         return wrap
     return inner_wrap
 
