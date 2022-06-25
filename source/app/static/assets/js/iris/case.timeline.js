@@ -41,9 +41,10 @@ function add_event() {
 
             return false;
         })
+
+        $('#modal_add_event').modal({ show: true });
+
     });
-   
-    $('#modal_add_event').modal({ show: true });
 }
 
 function duplicate_event(id) {
