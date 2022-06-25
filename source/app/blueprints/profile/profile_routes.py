@@ -18,10 +18,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import marshmallow
 # IMPORTS ------------------------------------------------
 import secrets
-
-import marshmallow
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -38,8 +37,6 @@ from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
-from app.util import api_login_required
-from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 

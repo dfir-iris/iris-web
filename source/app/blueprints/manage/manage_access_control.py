@@ -24,7 +24,6 @@ from werkzeug.utils import redirect
 
 from app.models.authorization import Permissions
 from app.util import ac_requires
-from app.util import admin_required
 
 manage_ac_blueprint = Blueprint(
         'access_control',

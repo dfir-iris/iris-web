@@ -29,8 +29,9 @@ from flask_wtf import FlaskForm
 
 import app
 from app.datamgmt.activities.activities_db import get_all_user_activities
-from app.util import api_login_required
-from app.util import login_required
+from app.models.authorization import Permissions
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import response_success
 
 activities_blueprint = Blueprint(
@@ -44,7 +45,7 @@ basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 # CONTENT ------------------------------------------------
 @activities_blueprint.route('/activities', methods=['GET'])
-@login_required
+@ac_requires(Permissions.read_all_activities)
 def activities_index(caseid: int, url_redir):
     if url_redir:
         return redirect(url_for('activities.activities_index', cid=caseid, redirect=True))
@@ -55,7 +56,7 @@ def activities_index(caseid: int, url_redir):
 
 
 @activities_blueprint.route('/activities/list', methods=['GET'])
-@api_login_required
+@ac_api_requires(Permissions.read_all_activities)
 def list_activities(caseid):
     # Get User activites from database
     user_activities = get_all_user_activities()

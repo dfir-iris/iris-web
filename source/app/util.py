@@ -371,40 +371,6 @@ def is_authentication_local():
     return app.config.get("AUTHENTICATION_TYPE") == "local"
 
 
-def login_required(f):
-    @wraps(f)
-    def wrap(*args, **kwargs):
-        if not is_user_authenticated(request):
-            return redirect(not_authenticated_redirection_url())
-        else:
-            redir, caseid = get_urlcase(request=request)
-            kwargs.update({"caseid": caseid, "url_redir": redir})
-
-            return f(*args, **kwargs)
-
-    return wrap
-
-
-def admin_required(f):
-    @wraps(f)
-    def wrap(*args, **kwargs):
-
-        if not is_user_authenticated(request):
-            return redirect(not_authenticated_redirection_url())
-        else:
-            redir, caseid = get_urlcase(request=request)
-            kwargs.update({"caseid": caseid, "url_redir": redir})
-
-            roles = [role.name for role in current_user.roles]
-            if "administrator" not in roles:
-                return redirect(url_for('index.index'))
-
-            else:
-                return f(*args, **kwargs)
-
-    return wrap
-
-
 def api_login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
@@ -560,37 +526,6 @@ def ac_api_requires(*permissions):
                 return f(*args, **kwargs)
         return wrap
     return inner_wrap
-
-
-def api_admin_required(f):
-    @wraps(f)
-    def wrap(*args, **kwargs):
-        if request.method == 'POST':
-            cookie_session = request.cookies.get('session')
-            if cookie_session:
-                form = FlaskForm()
-                if not form.validate():
-                    return response_error('Invalid CSRF token')
-                elif request.is_json:
-                    request.json.pop('csrf_token')
-
-        if not is_user_authenticated(request):
-            return response_error("Authentication required", status=401)
-
-        else:
-            redir, caseid = get_urlcase(request=request)
-            if not caseid or redir:
-                return response_error("Invalid case ID", status=404)
-            kwargs.update({"caseid": caseid})
-
-            roles = [role.name for role in current_user.roles]
-            if "administrator" not in roles:
-                return response_error("Unauthorized", status=403)
-
-            else:
-                return f(*args, **kwargs)
-
-    return wrap
 
 
 def decompress_7z(filename: Path, output_dir):

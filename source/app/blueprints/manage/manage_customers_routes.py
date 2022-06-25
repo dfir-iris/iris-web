@@ -20,7 +20,6 @@
 
 # IMPORTS ------------------------------------------------
 import traceback
-
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -43,10 +42,6 @@ from app.models.authorization import Permissions
 from app.schema.marshables import CustomerSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
-from app.util import admin_required
-from app.util import api_admin_required
-from app.util import api_login_required
-from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 
@@ -71,7 +66,7 @@ def manage_customers(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/list')
-@api_login_required
+@ac_api_requires(Permissions.read_customers, Permissions.manage_customers, Permissions.manage_case)
 def list_customers(caseid):
     client_list = get_client_list()
 
@@ -79,7 +74,7 @@ def list_customers(caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(Permissions.read_customers, Permissions.manage_customers)
 def view_customer(cur_id, caseid):
 
     customer = get_client_api(cur_id)
@@ -90,7 +85,7 @@ def view_customer(cur_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_requires(Permissions.read_customers, Permissions.manage_customers)
 def view_customer_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))

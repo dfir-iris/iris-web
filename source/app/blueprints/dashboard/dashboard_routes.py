@@ -41,23 +41,19 @@ from app.forms import CaseGlobalTaskForm
 from app.forms import CustomerForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.models import CaseTasks
 from app.models.models import GlobalTasks
 from app.models.models import TaskStatus
-from app.models.authorization import User
 from app.models.models import UserActivity
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import GlobalTasksSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
-
-from app.util import api_login_required
-from app.util import login_required
 from app.util import not_authenticated_redirection_url
 from app.util import response_error
 from app.util import response_success
-
 
 # CONTENT ------------------------------------------------
 dashboard_blueprint = Blueprint(

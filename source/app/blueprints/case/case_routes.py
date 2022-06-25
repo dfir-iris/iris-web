@@ -20,7 +20,6 @@
 
 # IMPORTS ------------------------------------------------
 import binascii
-
 import marshmallow
 from flask import Blueprint
 from flask import redirect
@@ -48,16 +47,13 @@ from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_report_template
 from app.datamgmt.reporter.report_db import export_case_json
-from app.datamgmt.reporter.report_db import export_case_json_extended
 from app.iris_engine.utils.tracker import track_activity
+from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
-from app.models import UserActivity
 from app.schema.marshables import TaskLogSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
-from app.util import api_login_required
-from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 

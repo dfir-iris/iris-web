@@ -18,12 +18,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import traceback
-
 # IMPORTS ------------------------------------------------
 import base64
 import json
 import logging as log
+import traceback
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -51,9 +50,6 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.util import ac_api_requires
 from app.util import ac_requires
-from app.util import admin_required
-from app.util import api_admin_required
-from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 
@@ -72,7 +68,7 @@ def has_no_empty_params(rule):
 
 # CONTENT ------------------------------------------------
 @manage_modules_blueprint.route("/sitemap")
-@login_required
+@ac_requires()
 def site_map(caseid, url_redir):
     links = []
     for rule in app.url_map.iter_rules():

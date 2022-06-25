@@ -28,6 +28,7 @@ from sqlalchemy import and_
 
 from app.forms import SearchForm
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import Ioc
@@ -35,8 +36,8 @@ from app.models.models import IocLink
 from app.models.models import IocType
 from app.models.models import Notes
 from app.models.models import Tlp
-from app.util import api_login_required
-from app.util import login_required
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import response_success
 
 search_blueprint = Blueprint('search',
@@ -46,7 +47,7 @@ search_blueprint = Blueprint('search',
 
 # CONTENT ------------------------------------------------
 @search_blueprint.route('/search', methods=['POST'])
-@api_login_required
+@ac_api_requires(Permissions.search_all_data)
 def search_file_post(caseid: int):
 
     jsdata = request.get_json()
@@ -106,7 +107,7 @@ def search_file_post(caseid: int):
 
 
 @search_blueprint.route('/search', methods=['GET'])
-@login_required
+@ac_requires(Permissions.search_all_data)
 def search_file_get(caseid, url_redir):
     if url_redir:
         return redirect(url_for('search.search_file_get', cid=caseid))
