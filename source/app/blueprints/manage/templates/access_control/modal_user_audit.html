@@ -1,7 +1,18 @@
                     <hr/>
                     <h3>User permissions</h3>
                     <ol class="ml-4 activity-feed">
-
+                        {% for perm in permissions_audit['details'] %}
+                        <li class="feed-item feed-item-warning">
+                            <span class="badge badge-pill badge-light" title="Click to unfold" href="#collapse_uperm_{{perm}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_uperm_{{perm}}">{{ permissions_audit['details'][perm].name }}</span>
+                            <ol class="activity-feed collapse" id="#collapse_uperm_{{perm}}">
+                                {% for group_id in permissions_audit['details'][perm].inherited_from %}
+                                <li class="feed-item ">
+                                    <span class="text"><span class="badge badge-pill badge-light">{{ permissions_audit['details'][perm].inherited_from[group_id].group_name }}</span></span><br />
+                                </li>
+                                {% endfor %}
+                            </ol>
+                        </li>
+                        {% endfor %}
                     </ol>
                     <hr/>
                     <h3>User case accesses</h3>
@@ -9,7 +20,7 @@
                     <ol class="ml-4 activity-feed">
                     {% for case_id in access_audit %}
                         <li class="feed-item {% if access_audit[case_id].user_effective_access|length == 0 %} feed-item-danger {% elif access_audit[case_id].user_effective_access|length == 1 %} feed-item-warning {% else %} feed-item-success {% endif %}">
-                            <span class="text" title="Click to unfold"  href="#collapse_cac_{{case_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapse_cac_{{case_id}}">{{ access_audit[case_id].case_info.case_name }}
+                            <span class="text" title="Click to unfold"  href="#collapse_cac_{{case_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_cac_{{case_id}}">{{ access_audit[case_id].case_info.case_name }}
                                 {% if access_audit[case_id].user_effective_access|length == 0 %}
                                     <span class="badge badge-pill badge-light">No access</span>
                                 {% else %}
