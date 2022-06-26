@@ -250,6 +250,7 @@ def get_users_list():
     for user in users:
         row = {}
         row['user_id'] = user.id
+        row['user_uuid'] = user.uuid
         row['user_name'] = user.name
         row['user_login'] = user.user
         row['user_email'] = user.email
@@ -266,6 +267,7 @@ def get_users_list_restricted():
     for user in users:
         row = {}
         row['user_id'] = user.id
+        row['user_uuid'] = user.uuid
         row['user_name'] = user.name
         row['user_login'] = user.user
         row['user_active'] = user.active
