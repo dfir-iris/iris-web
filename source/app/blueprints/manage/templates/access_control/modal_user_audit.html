@@ -1,4 +1,9 @@
-                    <ol class="activity-feed">
+                    <hr/>
+                    <h3>User permissions</h3>
+                    <hr/>
+                    <h3>User case accesses</h3>
+                    <p>Click on a case to unveil access control path</p>
+                    <ol class="ml-4 activity-feed">
                     {% for case_id in user_audit %}
                         <li class="feed-item {% if user_audit[case_id].user_effective_access|length == 0 %} feed-item-danger {% elif user_audit[case_id].user_effective_access|length == 1 %} feed-item-warning {% else %} feed-item-success {% endif %}">
                             <span class="text" title="Click to unfold"  href="#collapse_cac_{{case_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapse_cac_{{case_id}}">{{ user_audit[case_id].case_info.case_name }}
@@ -11,6 +16,9 @@
                                 {% endif %}
                             </span>
                             <ol class="activity-feed collapse" id="collapse_cac_{{case_id}}">
+                                {% if user_audit[case_id].user_effective_access|length == 0 %}
+                                    The user is neither in a group nor an organisation who has access to this case
+                                {% endif %}
                                 {% for uac in user_audit[case_id].user_access %}
                                 <li class="feed-item {% if uac.state == 'Effective' %} feed-item-success {% else %} feed-item-danger {% endif %}" title="{{ uac.state }}">
                                     <span class="text"><span class="badge badge-pill badge-light">{{ uac.name }}</span> ({{ uac.state }})</span><br />
