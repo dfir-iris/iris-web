@@ -194,6 +194,7 @@ def get_user_details(user_id):
 
     row = {}
     row['user_id'] = user.id
+    row['user_uuid'] = user.uuid
     row['user_name'] = user.name
     row['user_login'] = user.user
     row['user_email'] = user.email
