@@ -130,6 +130,57 @@ def ac_get_effective_permissions_of_user(user):
     return final_perm
 
 
+def ac_trace_effective_user_permissions(user_id):
+    """
+    Returns a detailed permission list from a user
+    """
+    groups_perms = UserGroup.query.with_entities(
+        Group.group_permissions,
+        Group.group_name,
+        Group.group_id,
+        Group.group_uuid
+    ).filter(
+        UserGroup.user_id == user_id
+    ).join(
+        UserGroup.group
+    ).all()
+
+    perms = {
+        'details': {},
+        'effective': 0,
+    }
+
+    for group in groups_perms:
+        perm = group.group_permissions
+        perms['effective'] |= group.group_permissions
+
+        for std_perm in Permissions._member_names_:
+
+            if perm & Permissions[std_perm].value:
+                if Permissions[std_perm].value not in perms['details']:
+                    perms['details'][Permissions[std_perm].value] = {
+                        'name': std_perm,
+                        'value': Permissions[std_perm].value,
+                        'inherited_from': {
+                            group.group_id: {
+                                'group_name': group.group_name,
+                                'group_uuid': group.group_uuid
+                            }
+
+                        }
+                    }
+                else:
+                    if group.group_name not in perms['details'][Permissions[std_perm].value]['inherited_from']:
+                        perms['details'][Permissions[std_perm].value]['inherited_from'].update({
+                            group.group_id: {
+                                'group_name': group.group_name,
+                                'group_uuid': group.group_uuid
+                            }
+                        })
+
+    return perms
+
+
 def ac_user_has_case_access(user_id, cid, access_level):
     """
     Returns the user access level to a case
