@@ -49,17 +49,24 @@ def manage_ac_index(caseid, url_redir):
 
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.manage_organisations)
-def manage_ac_audit_users(cur_id, caseid):
+def manage_ac_audit_user(cur_id, caseid):
     user_audit = ac_trace_user_effective_cases_access(cur_id)
 
     return response_success(data=user_audit)
 
 
+@manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>/modal', methods=['GET'])
+@ac_api_requires(Permissions.manage_organisations)
+def manage_ac_audit_user_modal(cur_id, caseid):
+    user_audit = ac_trace_user_effective_cases_access(cur_id)
+
+    return render_template("modal_user_audit.html", user_audit=user_audit)
+
+
 @manage_ac_blueprint.route('/manage/access-control/audit/users', methods=['GET'])
 @ac_requires(Permissions.manage_organisations)
 def manage_ac_audit_users_page(caseid, url_redir):
-    user_audit = ac_trace_user_effective_cases_access(9)
     form = FlaskForm()
 
-    return render_template("modal_user_audit.html", form=form, user_audit=user_audit)
+    return render_template("manage_user_audit.html", form=form)
 
