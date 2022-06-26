@@ -58,7 +58,7 @@ def manage_ac_audit_users(cur_id, caseid):
 @manage_ac_blueprint.route('/manage/access-control/audit/users', methods=['GET'])
 @ac_requires(Permissions.manage_organisations)
 def manage_ac_audit_users_page(caseid, url_redir):
-    user_audit = ac_trace_user_effective_cases_access(1)
+    user_audit = ac_trace_user_effective_cases_access(9)
     form = FlaskForm()
 
     return render_template("modal_user_audit.html", form=form, user_audit=user_audit)

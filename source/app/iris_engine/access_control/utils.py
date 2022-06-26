@@ -184,6 +184,8 @@ def ac_trace_user_effective_cases_access(user_id):
     cases = Cases.query.with_entities(
         Cases.case_id,
         Cases.name
+    ).order_by(
+        Cases.case_id
     ).all()
 
     faccesses = {}
@@ -194,10 +196,12 @@ def ac_trace_user_effective_cases_access(user_id):
                 'case_name': case.name,
                 'case_id': case.case_id
             },
-            'user_access': []
+            'user_access': [],
+            'user_effective_access': []
         }
 
         accesses = faccesses[case.case_id]['user_access']
+        effective = faccesses[case.case_id]['user_effective_access']
 
         oca = OrganisationCaseAccess.query.with_entities(
             Organisation.org_name,
@@ -229,6 +233,8 @@ def ac_trace_user_effective_cases_access(user_id):
         ).first()
 
         fca = 0
+        has_uca_deny_all = False
+        has_gca_deny_all = False
 
         for ac_l in CaseAccessLevel:
             has_gca_overwritten = False
@@ -248,15 +254,19 @@ def ac_trace_user_effective_cases_access(user_id):
                             'object_uuid': 'self'
                         }
                     })
+                    effective.append(ac_l.name)
                     has_uca_overwritten = True
+                    if ac_l.value == CaseAccessLevel.deny_all.value:
+                        has_uca_deny_all = True
 
             if gca:
                 if gca.access_level & ac_l.value == ac_l.value:
                     fca |= gca.access_level
-                    if has_uca_overwritten:
+                    if has_uca_overwritten or has_uca_deny_all:
                         state = 'Overwritten by user access'
                     else:
                         state = 'Effective'
+                        effective.append(ac_l.name)
 
                     accesses.append({
                         'state': state,
@@ -270,15 +280,20 @@ def ac_trace_user_effective_cases_access(user_id):
                         }
                     })
                     has_gca_overwritten = True
+                    if ac_l.value == CaseAccessLevel.deny_all.value:
+                        has_gca_deny_all = True
 
             if oca:
                 if oca.access_level & ac_l.value == ac_l.value:
                     fca |= oca.access_level
 
-                    if len(accesses) > 0:
-                        state = 'Overwritten by {} access'.format('user' if not has_gca_overwritten else 'group')
+                    if has_uca_overwritten or has_uca_deny_all:
+                        state = 'Overwritten by user access'
+                    elif has_gca_overwritten or has_gca_deny_all:
+                        state = 'Overwritten by group access'
                     else:
                         state = 'Effective'
+                        effective.append(ac_l.name)
 
                     accesses.append({
                         'state': state,
