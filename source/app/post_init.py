@@ -333,7 +333,9 @@ def create_safe_hooks():
 
 
 def pg_add_pgcrypto_ext():
-    db.session.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
+    # Open a cursor to perform database operations.
+    with db.engine.connect() as con:
+        con.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
 
 
 def create_safe_languages():
