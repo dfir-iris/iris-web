@@ -1,9 +1,11 @@
 from flask import session
 from sqlalchemy import and_
 
+from app.models import Cases
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
+from app.models.authorization import Organisation
 from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import Permissions
 from app.models.authorization import UserCaseAccess
@@ -175,6 +177,122 @@ def ac_user_has_case_access(user_id, cid, access_level):
             return True
 
     return False
+
+
+def ac_trace_user_effective_cases_access(user_id):
+
+    cases = Cases.query.with_entities(
+        Cases.case_id,
+        Cases.name
+    ).all()
+
+    faccesses = {}
+
+    for case in cases:
+        faccesses[case.case_id] = {
+            'case_info': {
+                'case_name': case.name,
+                'case_id': case.case_id
+            },
+            'user_access': []
+        }
+
+        accesses = faccesses[case.case_id]['user_access']
+
+        oca = OrganisationCaseAccess.query.with_entities(
+            Organisation.org_name,
+            Organisation.org_id,
+            Organisation.org_uuid,
+            OrganisationCaseAccess.access_level
+        ).filter(
+            and_(OrganisationCaseAccess.case_id == case.case_id,
+                 UserOrganisation.user_id == user_id,
+                 OrganisationCaseAccess.org_id == UserOrganisation.org_id)
+        ).first()
+
+        gca = GroupCaseAccess.query.with_entities(
+            Group.group_name,
+            Group.group_id,
+            Group.group_uuid,
+            GroupCaseAccess.access_level
+        ).filter(
+            and_(GroupCaseAccess.case_id == case.case_id,
+                 UserGroup.user_id == user_id,
+                 UserGroup.group_id == GroupCaseAccess.group_id)
+        ).join(
+            GroupCaseAccess.group
+        ).first()
+
+        uca = UserCaseAccess.query.filter(
+            and_(UserCaseAccess.case_id == case.case_id,
+                 UserCaseAccess.user_id == user_id)
+        ).first()
+
+        fca = 0
+
+        for ac_l in CaseAccessLevel:
+            has_gca_overwritten = False
+            has_uca_overwritten = False
+
+            if uca:
+                if uca.access_level & ac_l.value == ac_l.value:
+                    fca |= uca.access_level
+                    accesses.append({
+                        'state': 'Effective',
+                        'name': ac_l.name,
+                        'value': ac_l.value,
+                        'inherited_from': {
+                            'object_type': 'user_access_level',
+                            'object_name': 'self',
+                            'object_id': 'self',
+                            'object_uuid': 'self'
+                        }
+                    })
+                    has_uca_overwritten = True
+
+            if gca:
+                if gca.access_level & ac_l.value == ac_l.value:
+                    fca |= gca.access_level
+                    if has_uca_overwritten:
+                        state = 'Overwritten by user access'
+                    else:
+                        state = 'Effective'
+
+                    accesses.append({
+                        'state': state,
+                        'name': ac_l.name,
+                        'value': ac_l.value,
+                        'inherited_from': {
+                            'object_type': 'group_access_level',
+                            'object_name': gca.group_name,
+                            'object_id': gca.group_id,
+                            'object_uuid': gca.group_uuid
+                        }
+                    })
+                    has_gca_overwritten = True
+
+            if oca:
+                if oca.access_level & ac_l.value == ac_l.value:
+                    fca |= oca.access_level
+
+                    if len(accesses) > 0:
+                        state = 'Overwritten by {} access'.format('user' if not has_gca_overwritten else 'group')
+                    else:
+                        state = 'Effective'
+
+                    accesses.append({
+                        'state': state,
+                        'name': ac_l.name,
+                        'value': ac_l.value,
+                        'inherited_from': {
+                            'object_type': 'organisation_access_level',
+                            'object_name': oca.org_name,
+                            'object_id': oca.org_id,
+                            'object_uuid': oca.org_uuid
+                        }
+                    })
+
+    return faccesses
 
 
 def ac_get_mask_case_access_level_full():

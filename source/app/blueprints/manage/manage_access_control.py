@@ -22,7 +22,7 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app.datamgmt.manage.manage_access_control_db import manage_ac_audit_all_db
+from app.iris_engine.access_control.utils import ac_trace_user_effective_cases_access
 from app.models.authorization import Permissions
 from app.util import ac_api_requires
 from app.util import ac_requires
@@ -47,10 +47,10 @@ def manage_ac_index(caseid, url_redir):
     return render_template("manage_access-control.html", form=form)
 
 
-@manage_ac_blueprint.route('/manage/access-control/audit', methods=['GET'])
+@manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.manage_organisations)
-def manage_ac_audit_all(caseid):
-    audit = manage_ac_audit_all_db()
+def manage_ac_audit_users(cur_id, caseid):
+    user_audit = ac_trace_user_effective_cases_access(cur_id)
 
-    return response_success(data=audit)
+    return response_success(data=user_audit)
 

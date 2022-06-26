@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from app.datamgmt.manage.manage_users_db import get_user_effective_permissions
 from app.models import Cases
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
@@ -23,13 +24,15 @@ from app.models.authorization import Organisation
 from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
+from app.models.authorization import UserGroup
 
 
-def manage_ac_audit_all_db():
+def manage_ac_audit_users_db():
     uca = UserCaseAccess.query.with_entities(
         User.name,
         User.user,
         User.id,
+        User.uuid,
         UserCaseAccess.access_level,
         Cases.name,
         Cases.case_id
@@ -66,3 +69,5 @@ def manage_ac_audit_all_db():
     }
 
     return ret
+
+
