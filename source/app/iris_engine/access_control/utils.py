@@ -235,10 +235,10 @@ def ac_trace_user_effective_cases_access(user_id):
         fca = 0
         has_uca_deny_all = False
         has_gca_deny_all = False
+        has_gca_overwritten = False
+        has_uca_overwritten = False
 
         for ac_l in CaseAccessLevel:
-            has_gca_overwritten = False
-            has_uca_overwritten = False
 
             if uca:
                 if uca.access_level & ac_l.value == ac_l.value:
