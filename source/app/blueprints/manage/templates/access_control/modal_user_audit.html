@@ -1,0 +1,70 @@
+{% extends "layouts/default.html" %}
+
+{% block title %} Access Control {% endblock title %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="/static/assets/css/suggestags.css">
+    <link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
+{% endblock stylesheets %}
+
+{% block content %}
+
+{% if current_user.is_authenticated %}
+{{ form.hidden_tag() }}
+<div class="page-inner">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col col-heading">
+                            <div class="card-title">Users audit</div>
+                        </div>
+                        <div class="col">
+                           <button class="btn btn-sm btn-icon btn-round btn-primary-success float-right ml-3" onclick="add_user();"><i class="fas fa-plus-circle"></i></button>
+                            <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_users(true);">
+                                <i class="fas fa-sync rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body collapse show" id="">
+                    {% for case_id in user_audit %}
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col col-heading" href="#card_case_{{ case_id }}" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="false" aria-controls="card_case_{{ case_id }}">
+                                        <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
+                                        <div class="card-title">{{ user_audit[case_id].case_info.case_name }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body collapse" id="card_case_{{ case_id }}">
+                                <ol class="activity-feed">
+                                    {% for uac in user_audit[case_id].user_access %}
+                                    <li class="feed-item {% if uac.state == 'Effective' %} feed-item-success {% else %} feed-item-danger {% endif %}" title="{{ uac.state }}">
+                                        <span class="text">{{ uac.name }} ({{ uac.state }})</span><br />
+                                        <span class="text">Inherited from {{ uac.inherited_from.object_type }} <i class="fa-solid fa-right-long"></i> {{ uac.inherited_from.object_name }} (ID {{ uac.inherited_from.object_id }} :: UUID {{ uac.inherited_from.object_uuid }})</span>
+                                    </li>
+                                    {% endfor %}
+                                </ol>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+<div class="modal" tabindex="-1" role="dialog" id="modal_access_control" data-backdrop="true">
+</div>
+<div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional" data-backdrop="true">
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+
+    <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
+    <script src="/static/assets/js/iris/common.js"></script>
+
+{% endblock javascripts %}
