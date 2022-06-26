@@ -4,7 +4,8 @@
 
 {% block stylesheets %}
     <link rel="stylesheet" href="/static/assets/css/suggestags.css">
-    <link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
+    <link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="/static/assets/css/select2.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -29,8 +30,24 @@
                     </div>
                 </div>
                 <div class="card-body" id="">
-                    <div class="container" id="user_audit_content">
+                    <div class="row">
+                        <div class="col-12">
+                                <div class="input-group mb-3">
+                                    <select id="users_audit_select" name="users_audit_select" class="form-control ml-12"
+                                            tabindex="-1" style="width: 50%"></select>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-success" id="get_user_audit_btn"
+                                            onclick="get_user_audit_page();">Audit</button>
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="container" id="user_audit_content">
 
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -45,7 +62,7 @@
 
 {% block javascripts %}
 
-    <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
     <script src="/static/assets/js/iris/common.js"></script>
     <script src="/static/assets/js/iris/manage.audit.users.js"></script>
 
