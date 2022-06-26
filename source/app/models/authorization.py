@@ -14,6 +14,7 @@ from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import or_
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -67,7 +68,8 @@ class Organisation(db.Model):
     __tablename__ = 'organisations'
 
     org_id = Column(BigInteger, primary_key=True)
-    org_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4(), nullable=False)
+    org_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False,
+                      server_default=text('gen_random_uuid()'), unique=True)
     org_name = Column(Text, nullable=False, unique=True)
     org_description = Column(Text)
     org_url = Column(Text)
@@ -98,7 +100,8 @@ class Group(db.Model):
     __tablename__ = 'groups'
 
     group_id = Column(BigInteger, primary_key=True)
-    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4(), nullable=False)
+    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False,
+                        server_default=text('gen_random_uuid()'), unique=True)
     group_name = Column(Text, nullable=False, unique=True)
     group_description = Column(Text)
     group_permissions = Column(BigInteger, nullable=False)
@@ -181,7 +184,8 @@ class User(UserMixin, db.Model):
     user = Column(String(64), unique=True)
     name = Column(String(64), unique=False)
     email = Column(String(120), unique=True)
-    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
+    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False,
+                  server_default=text('gen_random_uuid()'), unique=True)
     password = Column(String(500))
     ctx_case = Column(Integer)
     ctx_human_case = Column(String(256))

@@ -77,7 +77,8 @@ def upgrade():
     if not _has_table('groups'):
         op.create_table('groups',
                         sa.Column('group_id', sa.BigInteger(), primary_key=True, nullable=False),
-                        sa.Column('group_uuid', UUID(as_uuid=True), default=uuid.uuid4, nullable=False),
+                        sa.Column('group_uuid', UUID(as_uuid=True), default=uuid.uuid4, nullable=False,
+                                  server_default=sa.text('gen_random_uuid()'), unique=True),
                         sa.Column('group_name', sa.Text(), nullable=False),
                         sa.Column('group_description', sa.Text(), nullable=False),
                         sa.Column('group_permissions', sa.BigInteger(), nullable=False),
@@ -88,7 +89,8 @@ def upgrade():
     if not _has_table('organisations'):
         op.create_table('organisations',
                         sa.Column('org_id', sa.BigInteger(), primary_key=True, nullable=False),
-                        sa.Column('org_uuid', UUID(as_uuid=True), default=uuid.uuid4(), nullable=False),
+                        sa.Column('org_uuid', UUID(as_uuid=True), default=uuid.uuid4(), nullable=False,
+                                  server_default=sa.text('gen_random_uuid()'), unique=True),
                         sa.Column('org_name', sa.Text(), nullable=False),
                         sa.Column('org_description', sa.Text(), nullable=False),
                         sa.Column('org_url', sa.Text(), nullable=False),
