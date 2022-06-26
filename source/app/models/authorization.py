@@ -181,6 +181,7 @@ class User(UserMixin, db.Model):
     user = Column(String(64), unique=True)
     name = Column(String(64), unique=False)
     email = Column(String(120), unique=True)
+    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
     password = Column(String(500))
     ctx_case = Column(Integer)
     ctx_human_case = Column(String(256))

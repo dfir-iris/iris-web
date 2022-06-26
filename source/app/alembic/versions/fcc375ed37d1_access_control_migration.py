@@ -8,11 +8,13 @@ Create Date: 2022-06-14 17:01:29.205520
 import sqlalchemy as sa
 import uuid
 from alembic import op
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.alembic.alembic_utils import _has_table
 
 # revision identifiers, used by Alembic.
+from app.alembic.alembic_utils import _table_has_column
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_case_access_level_full
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
@@ -24,6 +26,27 @@ depends_on = None
 
 
 def upgrade():
+    conn = op.get_bind()
+    # Add UUID to users
+    if not _table_has_column('user', 'uuid'):
+        op.add_column('user',
+                      sa.Column('uuid', UUID(as_uuid=True), default=uuid.uuid4, nullable=False,
+                                server_default=sa.text('gen_random_uuid()'))
+                      )
+
+        # Add UUID to existing users
+        t_users = sa.Table(
+            'user',
+            sa.MetaData(),
+            sa.Column('id', sa.BigInteger(), primary_key=True),
+            sa.Column('uuid',  UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
+        )
+        res = conn.execute(f"select id from \"user\";")
+        results = res.fetchall()
+        for user in results:
+            conn.execute(t_users.update().where(t_users.c.id == user[0]).values(
+                uuid=uuid.uuid4()
+            ))
 
     # Add all the new access control tables if they don't exist
     if not _has_table('user_case_access'):
@@ -117,7 +140,6 @@ def upgrade():
         op.create_unique_constraint('user_group_unique', 'user_group', ['user_id', 'group_id'])
 
     # Create the groups if they don't exist
-    conn = op.get_bind()
     res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
     if res.rowcount == 0:
         conn.execute(f"insert into groups (group_name, group_description, group_permissions, group_uuid) "

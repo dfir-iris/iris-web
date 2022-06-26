@@ -81,6 +81,9 @@ def run_post_init(development=False):
         db.create_all(bind="iris_tasks")
         db.session.commit()
 
+        log.info("Adding pgcrypto extension")
+        pg_add_pgcrypto_ext()
+
         log.info("Running DB migration")
 
         alembic_cfg = Config(file_='app/alembic.ini')
@@ -327,6 +330,10 @@ def create_safe_hooks():
                 hook_description='Triggered on activities report creation, before generation in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_activities_report_create',
                 hook_description='Triggered on activities report creation, before download of the document')
+
+
+def pg_add_pgcrypto_ext():
+    db.session.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
 
 
 def create_safe_languages():
