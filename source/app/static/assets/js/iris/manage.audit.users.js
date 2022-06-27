@@ -27,6 +27,8 @@ function get_user_audit_page() {
             order: [[ 1, "asc" ]],
             info: true,
             filter: true,
+            processing: true,
+            orderCellsTop: true,
             initComplete: function () {
                 tableFiltering(this.api(), 'user_audit_access_table');
             }
