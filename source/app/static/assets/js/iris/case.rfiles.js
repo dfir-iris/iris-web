@@ -247,7 +247,7 @@ $(document).ready(function(){
         ],
         orderCellsTop: true,
         initComplete: function () {
-            tableFiltering(this.api());
+            tableFiltering(this.api(), 'rfiles_table');
         },
         select: true
     });

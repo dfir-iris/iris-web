@@ -10,7 +10,6 @@
 
 {% block content %}
 
-{% if current_user.is_authenticated %}
 {{ form.hidden_tag() }}
 <div class="page-inner">
     <div class="row">
@@ -51,7 +50,7 @@
                 </div>
             </div>
         </div>
-    {% endif %}
+    </div>
 </div>
 <div class="modal" tabindex="-1" role="dialog" id="modal_access_control" data-backdrop="true">
 </div>
@@ -64,5 +63,7 @@
     <script src="/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
     <script src="/static/assets/js/iris/common.js"></script>
     <script src="/static/assets/js/iris/manage.audit.users.js"></script>
+    <script src="/static/assets/js/iris/manage.audit.users.js"></script>
+    <script src="/static/assets/js/iris/datatablesUtils.js"></script>
 
 {% endblock javascripts %}

@@ -411,7 +411,7 @@ $(document).ready(function(){
         buttons: [],
         orderCellsTop: true,
         initComplete: function () {
-            tableFiltering(this.api());
+            tableFiltering(this.api(), 'assets_table');
         },
         select: true
     });

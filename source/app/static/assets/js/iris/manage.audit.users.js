@@ -19,8 +19,30 @@ function get_user_audit_page() {
              return false;
         }
 
-        $('#user_audit_permissions_table').dataTable({"order": [[ 1, "asc" ]]});
-        $('#user_audit_access_table').dataTable({"order": [[ 1, "asc" ]]});
+        $.each($.find("table"), function(index, element){
+            addFilterFields($(element).attr("id"));
+        });
+
+        $('#user_audit_access_table').dataTable({
+            order: [[ 1, "asc" ]],
+            info: true,
+            filter: true,
+            initComplete: function () {
+                tableFiltering(this.api(), 'user_audit_access_table');
+            }
+        });
+
+        $('#user_audit_permissions_table').dataTable({
+            order: [[ 1, "asc" ]],
+            info: true,
+            filter: true,
+            processing: true,
+            orderCellsTop: true,
+            initComplete: function () {
+                tableFiltering(this.api(), 'user_audit_permissions_table');
+            }
+        });
+
     });
 }
 
