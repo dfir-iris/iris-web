@@ -22,29 +22,39 @@
                     <hr/>
                     <h3>User case accesses</h3>
                     <p>Click on a case to unveil access control path</p>
-                    <ol class="ml-4 activity-feed">
-                    {% for case_id in access_audit %}
-                        <li class="feed-item {% if access_audit[case_id].user_effective_access|length == 0 %} feed-item-danger {% elif access_audit[case_id].user_effective_access|length == 1 %} feed-item-warning {% else %} feed-item-success {% endif %}">
-                            <span class="text" title="Click to unfold"  href="#collapse_cac_{{case_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_cac_{{case_id}}">{{ access_audit[case_id].case_info.case_name }}
-                                {% if access_audit[case_id].user_effective_access|length == 0 %}
-                                    <span class="badge badge-pill badge-light">No access</span>
+                    <table class="table table-striped" id="user_audit_access_table">
+                        <thead>
+                            <tr>
+                                <th>Case ID</th>
+                                <th>Case name</th>
+                                <th>Access</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for case_id in access_audit %}
+                            <tr>
+                                <td>{{ case_id }}</td>
+                                <td>{{ access_audit[case_id].case_info.case_name }}</td>
+                                <td>{% if access_audit[case_id].user_effective_access|length == 0 %}
+                                    <span class="badge badge-pill badge-light" title="Click to unfold"  href="#collapse_cac_{{case_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_cac_{{case_id}}">No access</span>
                                 {% else %}
                                     {% for uac in access_audit[case_id].user_effective_access %}
-                                    <span class="badge badge-pill badge-light">{{ uac }}</span>
+                                    <span class="badge badge-pill badge-light" title="Click to unfold"  href="#collapse_cac_{{case_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_cac_{{case_id}}">{{ uac }}</span>
                                     {% endfor %}
                                 {% endif %}
-                            </span>
-                            <ol class="activity-feed collapse" id="collapse_cac_{{case_id}}">
-                                {% if access_audit[case_id].user_effective_access|length == 0 %}
-                                    The user is neither in a group nor an organisation who has access to this case
-                                {% endif %}
-                                {% for uac in access_audit[case_id].user_access %}
-                                <li class="feed-item {% if uac.state == 'Effective' %} feed-item-success {% else %} feed-item-danger {% endif %}" title="{{ uac.state }}">
-                                    <span class="text"><span class="badge badge-pill badge-light">{{ uac.name }}</span> ({{ uac.state }})</span><br />
-                                    <span class="text">Inherited from {{ uac.inherited_from.object_type }} <i class="fa-solid fa-right-long"></i> {{ uac.inherited_from.object_name }} (ID {{ uac.inherited_from.object_id }} :: UUID {{ uac.inherited_from.object_uuid }})</span>
-                                </li>
-                                {% endfor %}
-                            </ol>
-                        </li>
-                    {% endfor %}
-                    </ol>
+                                    <ol class="activity-feed collapse" id="collapse_cac_{{case_id}}">
+                                        {% if access_audit[case_id].user_effective_access|length == 0 %}
+                                            The user is neither in a group nor an organisation who has access to this case
+                                        {% endif %}
+                                        {% for uac in access_audit[case_id].user_access %}
+                                        <li class="feed-item {% if uac.state == 'Effective' %} feed-item-success {% else %} feed-item-danger {% endif %}" title="{{ uac.state }}">
+                                            <span class="text"><span class="badge badge-pill badge-light">{{ uac.name }}</span> ({{ uac.state }})</span><br />
+                                            <span class="text">Inherited from {{ uac.inherited_from.object_type }} <i class="fa-solid fa-right-long"></i> {{ uac.inherited_from.object_name }} (ID {{ uac.inherited_from.object_id }} :: UUID {{ uac.inherited_from.object_uuid }})</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ol>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>

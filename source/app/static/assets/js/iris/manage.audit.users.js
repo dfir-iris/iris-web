@@ -20,7 +20,7 @@ function get_user_audit_page() {
         }
 
         $('#user_audit_permissions_table').dataTable({"order": [[ 1, "asc" ]]});
-
+        $('#user_audit_access_table').dataTable({"order": [[ 1, "asc" ]]});
     });
 }
 
