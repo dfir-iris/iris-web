@@ -1,19 +1,24 @@
                     <hr/>
                     <h3>User permissions</h3>
-                    <ol class="ml-4 activity-feed">
-                        {% for perm in permissions_audit['details'] %}
-                        <li class="feed-item feed-item-warning">
-                            <span class="badge badge-pill badge-light" title="Click to unfold" href="#collapse_uperm_{{perm}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_uperm_{{perm}}">{{ permissions_audit['details'][perm].name }}</span>
-                            <ol class="activity-feed collapse" id="#collapse_uperm_{{perm}}">
-                                {% for group_id in permissions_audit['details'][perm].inherited_from %}
-                                <li class="feed-item ">
-                                    <span class="text"><span class="badge badge-pill badge-light">{{ permissions_audit['details'][perm].inherited_from[group_id].group_name }}</span></span><br />
-                                </li>
-                                {% endfor %}
-                            </ol>
-                        </li>
-                        {% endfor %}
-                    </ol>
+                        <p class="mb-4">Permissions are inherited from the groups the user belongs to. The table shows the effective permissions the user has on the platform.</p>
+                        <table class="table table-striped" id="user_audit_permissions_table">
+                            <thead>
+                                <tr>
+                                    <th>Permission</th>
+                                    <th>Value</th>
+                                    <th>Inherited from groups</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for perm in permissions_audit['details'] %}
+                                <tr>
+                                    <td>{{ permissions_audit['details'][perm].name }}</td>
+                                    <td>0x{{ perm | int(perm,16) }}</td>
+                                    <td>{% for group_id in permissions_audit['details'][perm].inherited_from  %}<span class="badge ml-2 badge-light">{{ permissions_audit['details'][perm].inherited_from[group_id].group_name }}</span>{% endfor %}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
                     <hr/>
                     <h3>User case accesses</h3>
                     <p>Click on a case to unveil access control path</p>

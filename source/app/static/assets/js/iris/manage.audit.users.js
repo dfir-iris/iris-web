@@ -5,7 +5,7 @@ function get_user_audit_page() {
 
     us_val = $('#users_audit_select').val();
     if (!us_val) {
-        notify_error('I really wanna you but I still can\'t read your mind');
+        notify_error('I really wanna help you but I still can\'t read your mind');
         return false;
     }
 
@@ -18,6 +18,9 @@ function get_user_audit_page() {
              ajax_notify_error(xhr, url);
              return false;
         }
+
+        $('#user_audit_permissions_table').dataTable({"order": [[ 1, "asc" ]]});
+
     });
 }
 
