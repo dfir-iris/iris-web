@@ -18,7 +18,7 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col col-heading">
-                            <div class="card-title">Users audit</div>
+                            <div class="card-title">Cases audit</div>
                         </div>
                     </div>
                 </div>
@@ -26,11 +26,11 @@
                     <div class="row">
                         <div class="col-12">
                                 <div class="input-group mb-3">
-                                    <select id="users_audit_select" name="users_audit_select" class="form-control ml-12"
+                                    <select id="cases_audit_select" name="cases_audit_select" class="form-control ml-12"
                                             tabindex="-1" style="width: 50%"></select>
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-success" id="get_user_audit_btn"
-                                            onclick="get_user_audit_page();">Audit</button>
+                                        <button type="button" class="btn btn-outline-success" id="get_cases_audit_btn"
+                                            onclick="get_cases_audit_page();">Audit</button>
                                     </div>
                                 </div>
                         </div>
@@ -41,7 +41,7 @@
                     </div>
                 </div>
             </div>
-            <div id="user_audit_content">
+            <div id="cases_audit_content">
             </div>
         </div>
     </div>
@@ -52,7 +52,7 @@
 
     <script src="/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
     <script src="/static/assets/js/iris/common.js"></script>
-    <script src="/static/assets/js/iris/manage.audit.users.js"></script>
+    <script src="/static/assets/js/iris/manage.audit.cases.js"></script>
     <script src="/static/assets/js/iris/datatablesUtils.js"></script>
 
 {% endblock javascripts %}
