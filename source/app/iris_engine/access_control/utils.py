@@ -407,6 +407,7 @@ def ac_trace_case_access(case_id):
         GroupCaseAccess.access_level,
         User.id.label('user_id'),
         User.name.label('user_name'),
+        User.email.label('user_email'),
         User.uuid.label('user_uuid')
     ).filter(
         and_(GroupCaseAccess.case_id == case.case_id,
@@ -465,6 +466,49 @@ def ac_trace_case_access(case_id):
         if uca.user_id not in case_access:
             case_access.update({
                 uca.user_id: user
+            })
+
+    for gca in gcas:
+        if gca.user_id not in case_access:
+            user = {
+                'user_access': [],
+                'user_effective_access': 0,
+                'user_effective_access_list': [],
+                'user_info': {
+                    'user_name': gca.user_name,
+                    'user_uuid': gca.user_uuid,
+                    'user_email': gca.user_email
+                }
+            }
+        else:
+            user = case_access[gca.user_id]
+
+        for ac_l in CaseAccessLevel:
+
+            if gca:
+                if gca.access_level & ac_l.value == ac_l.value:
+                    if gca.user_id not in case_access:
+                        user['user_effective_access'] |= gca.access_level
+                        user['user_effective_access_list'].append(ac_l.name)
+                        state = 'Effective'
+                    else:
+                        state = 'Overwritten by user access'
+
+                    user['user_access'].append({
+                            'state': state,
+                            'name': ac_l.name,
+                            'value': ac_l.value,
+                            'inherited_from': {
+                                'object_type': 'group_access_level',
+                                'object_name': gca.group_name,
+                                'object_id': gca.group_id,
+                                'object_uuid': gca.group_uuid
+                            }
+                        })
+
+        if gca.user_id not in case_access:
+            case_access.update({
+                gca.user_id: user
             })
 
     fca = 0
