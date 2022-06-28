@@ -23,7 +23,7 @@
                         </div>
                         <div class="col">
                             <button type="button" class="btn btn-sm btn-dark float-right ml-2" onclick="refresh_users(true);">Refresh</button>
-                            <button class="btn btn-sm btn-dark float-right ml-2" onclick="add_user();">Audit users</button>
+                            <a class="btn btn-sm btn-dark float-right ml-2" href="access-control/audit/users?cid={{ session['current_case'].case_id }}">Audit users</a>
                             <button class="btn btn-sm btn-dark float-right ml-2" onclick="add_user();">Add user</button>
                         </div>
                     </div>
