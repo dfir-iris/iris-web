@@ -434,7 +434,7 @@ def ac_trace_case_access(case_id):
 
     for uca in ucas:
         user = {
-            'user_access': [],
+            'access_trace': [],
             'user_effective_access': 0,
             'user_effective_access_list': [],
             'user_info': {
@@ -448,7 +448,7 @@ def ac_trace_case_access(case_id):
             if uca:
                 if uca.access_level & ac_l.value == ac_l.value:
                     user['user_effective_access'] |= uca.access_level
-                    user['user_access'].append({
+                    user['access_trace'].append({
                         'state': 'Effective',
                         'name': ac_l.name,
                         'value': ac_l.value,
@@ -472,7 +472,7 @@ def ac_trace_case_access(case_id):
     for gca in gcas:
         if gca.user_id not in case_access:
             user = {
-                'user_access': [],
+                'access_trace': [],
                 'user_effective_access': 0,
                 'user_effective_access_list': [],
                 'user_info': {
@@ -495,7 +495,7 @@ def ac_trace_case_access(case_id):
                     else:
                         state = 'Overwritten by user access'
 
-                    user['user_access'].append({
+                    user['access_trace'].append({
                             'state': state,
                             'name': ac_l.name,
                             'value': ac_l.value,
@@ -515,7 +515,7 @@ def ac_trace_case_access(case_id):
     for oca in ocas:
         if oca.user_id not in case_access:
             user = {
-                'user_access': [],
+                'access_trace': [],
                 'user_effective_access': 0,
                 'user_effective_access_list': [],
                 'user_info': {
@@ -538,7 +538,7 @@ def ac_trace_case_access(case_id):
                     else:
                         state = 'Overwritten by user or group access'
 
-                    user['user_access'].append({
+                    user['access_trace'].append({
                             'state': state,
                             'name': ac_l.name,
                             'value': ac_l.value,
