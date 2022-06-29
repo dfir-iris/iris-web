@@ -232,7 +232,8 @@ def get_case_access(request, access_level):
                 return True, None, False
 
     case = None
-    if not ac_user_has_case_access(current_user.id, caseid, access_level):
+
+    if access_level != [] and not ac_user_has_case_access(current_user.id, caseid, access_level):
         session['current_case'] = {
             'case_name': "{}".format("Access denied"),
             'case_info': "",

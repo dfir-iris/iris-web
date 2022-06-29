@@ -142,7 +142,7 @@ class UserOrganisation(db.Model):
 
     id = Column(BigInteger, primary_key=True, nullable=False)
     user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
-    org_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False)
+    org_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False);
 
     user = relationship('User')
     org = relationship('Organisation')
