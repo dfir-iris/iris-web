@@ -2,6 +2,7 @@ from flask import session
 from sqlalchemy import and_
 
 from app.models import Cases
+from app.models import Client
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
@@ -229,6 +230,39 @@ def ac_user_has_case_access(user_id, cid, access_level):
             return True
 
     return False
+
+
+def ac_get_user_cases_access(user_id):
+    ocas = OrganisationCaseAccess.query.with_entities(
+        Cases.case_id,
+        Cases.name,
+        Client.name.label('customer_name'),
+        Cases.close_date,
+        OrganisationCaseAccess.access_level
+    ).filter(
+        and_(UserOrganisation.user_id == user_id,
+             OrganisationCaseAccess.org_id == UserOrganisation.org_id)
+    ).join(
+        OrganisationCaseAccess.case,
+        Cases.client
+    ).all()
+
+    gcas = GroupCaseAccess.query.with_entities(
+        Cases.case_id,
+        Cases.name,
+        Client.name.label('customer_name'),
+        Cases.close_date,
+        GroupCaseAccess.access_level
+    ).filter(
+        and_(UserGroup.user_id == user_id,
+             UserGroup.group_id == GroupCaseAccess.group_id)
+    ).join(
+        GroupCaseAccess.group
+    ).first()
+
+    uca = UserCaseAccess.query.filter(
+        and_(UserCaseAccess.user_id == user_id)
+    ).first()
 
 
 def ac_trace_user_effective_cases_access(user_id):

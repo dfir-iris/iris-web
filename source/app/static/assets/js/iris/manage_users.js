@@ -264,7 +264,7 @@ function manage_user_cac(user_id) {
     $('#manage_user_cac_button').text('Loading manager...');
 
     $('#modal_ac_additional').load(url, function (response, status, xhr) {
-        $('#manage_user_cac_button').text('Grant case access');
+        $('#manage_user_cac_button').text('Set case access');
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;

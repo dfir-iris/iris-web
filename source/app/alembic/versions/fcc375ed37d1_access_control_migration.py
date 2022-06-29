@@ -54,11 +54,27 @@ def upgrade():
                         sa.Column('id', sa.BigInteger(), primary_key=True, nullable=False),
                         sa.Column('user_id', sa.BigInteger(), sa.ForeignKey('user.id'), nullable=False),
                         sa.Column('case_id', sa.BigInteger(), sa.ForeignKey('cases.case_id'), nullable=False),
+                        sa.Column('access_level', sa.BigInteger()),
                         keep_existing=True
                         )
         op.create_foreign_key('fk_user_case_access_user_id', 'user_case_access', 'user', ['user_id'], ['id'])
         op.create_foreign_key('fk_user_case_access_case_id', 'user_case_access', 'cases', ['case_id'], ['case_id'])
         op.create_unique_constraint('uq_user_case_access_user_id_case_id', 'user_case_access', ['user_id', 'case_id'])
+
+    if not _has_table('user_case_effective_access'):
+        op.create_table('user_case_effective_access',
+                        sa.Column('id', sa.BigInteger(), primary_key=True, nullable=False),
+                        sa.Column('user_id', sa.BigInteger(), sa.ForeignKey('user.id'), nullable=False),
+                        sa.Column('case_id', sa.BigInteger(), sa.ForeignKey('cases.case_id'), nullable=False),
+                        sa.Column('access_level', sa.BigInteger()),
+                        keep_existing=True
+                        )
+        op.create_foreign_key('fk_user_case_effective_access_user_id', 'user_case_effective_access',
+                              'user', ['user_id'], ['id'])
+        op.create_foreign_key('fk_user_case_effective_access_case_id', 'user_case_effective_access',
+                              'cases', ['case_id'], ['case_id'])
+        op.create_unique_constraint('uq_user_case_effective_access_user_id_case_id',
+                                    'user_case_access', ['user_id', 'case_id'])
 
     if not _has_table('group_case_access'):
         op.create_table('group_case_access',
@@ -171,9 +187,15 @@ def upgrade():
     res = conn.execute(f"select case_id from cases;")
     result_cases = res.fetchall()
     access_level = ac_get_mask_case_access_level_full()
-    for case_id in result_cases:
+
+    # Make a list of the cases that are not already linked to the org
+    res = conn.execute(f"select case_id from organisation_case_access "
+                       f"where org_id = {default_org_id};")
+    result_org_cases = [case[0] for case in res.fetchall()]
+    cases_to_add_to_org = list(set(result_cases) - set(result_org_cases))
+    for case_id in cases_to_add_to_org:
         conn.execute(f"insert into organisation_case_access (org_id, case_id, access_level) values "
-                     f"('{default_org_id}', '{case_id[0]}', '{access_level}');")
+                     f"('{default_org_id}', '{case_id}', '{access_level}');")
 
     # Migrate the users to the new access control system
     conn = op.get_bind()
@@ -188,13 +210,21 @@ def upgrade():
         user_id = user_id[1]
         # Migrate user to groups
         if role_name == 'administrator':
-            conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {admin_group_id});")
+            conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {admin_group_id}) "
+                         f"on conflict do nothing;")
 
         elif role_name == 'investigator':
-            conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {analyst_group_id});")
+            conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {analyst_group_id}) "
+                         f"on conflict do nothing;")
 
         # Add user to default organisation
-        conn.execute(f"insert into user_organisation (user_id, org_id) values ({user_id}, {default_org_id});")
+        conn.execute(f"insert into user_organisation (user_id, org_id) values ({user_id}, {default_org_id})"
+                     f"on conflict do nothing;")
+
+        # Add default cases effective permissions
+        for case_id in result_cases:
+            conn.execute(f"insert into user_case_effective_access (case_id, user_id, access_level) values "
+                         f"({case_id[0]}, {user_id}, {access_level}) on conflict do nothing;")
 
     pass
 

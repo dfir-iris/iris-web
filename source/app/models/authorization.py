@@ -137,6 +137,20 @@ class UserCaseAccess(db.Model):
     UniqueConstraint('case_id', 'user_id')
 
 
+class UserCaseEffectiveAccess(db.Model):
+    __tablename__ = "user_case_effective_access"
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
+    case_id = Column(BigInteger, ForeignKey('cases.case_id'), nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    user = relationship('User')
+    case = relationship('Cases')
+
+    UniqueConstraint('case_id', 'user_id')
+
+
 class UserOrganisation(db.Model):
     __tablename__ = "user_organisation"
 

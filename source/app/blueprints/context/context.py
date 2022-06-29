@@ -29,11 +29,14 @@ from sqlalchemy import desc
 from app import app
 from app import cache
 from app import db
+from app.datamgmt.context.context_db import ctx_get_user_cases
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import ServerSettings
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import api_login_required
 from app.util import get_urlcasename
 from app.util import not_authenticated_redirection_url
@@ -98,32 +101,10 @@ def std_permissions():
 
 
 @ctx_blueprint.route('/context/get-cases', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def cases_context(caseid):
     # Get all investigations not closed
-    res = Cases.query.with_entities(
-        Cases.name,
-        Client.name.label('customer_name'),
-        Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .filter(Cases.close_date == None)\
-        .order_by(desc(Cases.case_id))\
-        .all()
-
-    datao = [row._asdict() for row in res]
-
-    res = Cases.query.with_entities(
-        Cases.name,
-        Client.name.label('customer_name'),
-        Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .filter(Cases.close_date != None)\
-        .order_by(desc(Cases.case_id))\
-        .all()
-
-    datac = [row._asdict() for row in res]
+    datao, datac = ctx_get_user_cases(current_user.id)
 
     return response_success(data=dict(cases_context_selector=datao, cases_close_context_selector=datac))
 
@@ -156,7 +137,7 @@ def update_user_case_ctx():
                 break
 
         if not is_found:
-            # The case do not exists,
+            # The case does not exist,
             # Removes it from the context
             current_user.ctx_case = None
             current_user.ctx_human_case = "Not set"

@@ -245,7 +245,7 @@ function manage_organisation_cac(org_id) {
     $('#manage_org_cac_button').text('Loading manager...');
 
     $('#modal_ac_additional').load(url, function (response, status, xhr) {
-        $('#manage_org_cac_button').text('Grant case access');
+        $('#manage_org_cac_button').text('Set case access');
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
