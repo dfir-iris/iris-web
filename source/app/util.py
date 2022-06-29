@@ -212,6 +212,9 @@ def get_case_access(request, access_level):
                 caseid = js_d.get('cid')
                 request.json.pop('cid')
             else:
+                if current_user.ctx_case is None:
+                    current_user.ctx_case = 1
+
                 caseid = current_user.ctx_case
                 redir = True
 
@@ -219,6 +222,9 @@ def get_case_access(request, access_level):
             cookie_session = request.cookies.get('session')
             if not cookie_session:
                 # API, so just use the current_user context
+                if current_user.ctx_case is None:
+                    current_user.ctx_case = 1
+
                 caseid = current_user.ctx_case
 
             else:

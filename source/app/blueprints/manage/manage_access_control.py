@@ -42,7 +42,7 @@ manage_ac_blueprint = Blueprint(
              Permissions.manage_groups, Permissions.manage_organisations, Permissions.read_users)
 def manage_ac_index(caseid, url_redir):
     if url_redir:
-        return redirect(url_for('manage_ac_blueprint.manage_ac_index', cid=caseid))
+        return redirect(url_for('access_control.manage_ac_index', cid=caseid))
 
     form = FlaskForm()
 
