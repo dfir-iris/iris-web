@@ -33,18 +33,6 @@ function get_case_audit_page() {
                 tableFiltering(this.api(), 'case_audit_access_table');
             }
         });
-
-        $('#case_audit_permissions_table').dataTable({
-            order: [[ 1, "asc" ]],
-            info: true,
-            filter: true,
-            processing: true,
-            orderCellsTop: true,
-            initComplete: function () {
-                tableFiltering(this.api(), 'case_audit_permissions_table');
-            }
-        });
-
     });
 }
 
