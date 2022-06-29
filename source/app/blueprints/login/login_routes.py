@@ -91,6 +91,12 @@ if app.config.get("AUTHENTICATION_TYPE") == "local":
                         caseid = 1
                         db.session.commit()
 
+                    session['current_case'] = {
+                        'case_name': user.ctx_human_case,
+                        'case_info': "",
+                        'case_id': user.ctx_case
+                    }
+
                     return redirect(url_for('index.index', cid=user.ctx_case))
                 else:
                     track_activity("wrong login password for user '{}'".format(username), ctx_less=True)
