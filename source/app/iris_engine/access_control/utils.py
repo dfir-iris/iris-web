@@ -1,6 +1,7 @@
 from flask import session
 from sqlalchemy import and_
 
+from app import db
 from app.models import Cases
 from app.models import Client
 from app.models.authorization import CaseAccessLevel
@@ -11,6 +12,7 @@ from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import Permissions
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
+from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 
@@ -237,6 +239,44 @@ def ac_auto_update_user_effective_access(user_id):
     """
     Updates the effective access of a user given its ID
     """
+    uceas = UserCaseEffectiveAccess.query.filter(
+        UserCaseAccess.user_id == user_id
+    ).all()
+
+    grouped_uca = {}
+    for ucea in uceas:
+        grouped_uca[ucea.case_id] = ucea.access_level
+
+    target_ucas = ac_get_user_cases_access(user_id)
+    ucea_to_add = {}
+    cid_to_remove = []
+
+    for case_id in target_ucas:
+        if case_id not in grouped_uca:
+            ucea_to_add.update({case_id: target_ucas[case_id]})
+        else:
+            if grouped_uca[case_id] & target_ucas[case_id] != target_ucas[case_id]:
+                cid_to_remove.append(case_id)
+                ucea_to_add.update({case_id: target_ucas[case_id]})
+
+    for prev_case_id in grouped_uca:
+        if prev_case_id not in target_ucas:
+            cid_to_remove.append(prev_case_id)
+
+    UserCaseEffectiveAccess.query.where(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.case_id.in_(cid_to_remove)
+    )).delete()
+
+    for case_id in ucea_to_add:
+        ucea = UserCaseEffectiveAccess()
+        ucea.user_id = user_id
+        ucea.case_id = case_id
+        ucea.access_level = ucea_to_add[case_id]
+        db.session.add(ucea)
+
+    db.session.commit()
+
     return
 
 
@@ -249,7 +289,6 @@ def ac_get_user_cases_access(user_id):
              OrganisationCaseAccess.org_id == UserOrganisation.org_id)
     ).join(
         OrganisationCaseAccess.case,
-        Cases.client
     ).all()
 
     gcas = GroupCaseAccess.query.with_entities(
@@ -259,7 +298,7 @@ def ac_get_user_cases_access(user_id):
         and_(UserGroup.user_id == user_id,
              UserGroup.group_id == GroupCaseAccess.group_id)
     ).join(
-        GroupCaseAccess.group
+        GroupCaseAccess.case
     ).all()
 
     ucas = UserCaseAccess.query.with_entities(
@@ -267,6 +306,8 @@ def ac_get_user_cases_access(user_id):
         UserCaseAccess.access_level
     ).filter(
         and_(UserCaseAccess.user_id == user_id)
+    ).join(
+        UserCaseAccess.case
     ).all()
 
     effective_cases_access = {}
@@ -274,19 +315,19 @@ def ac_get_user_cases_access(user_id):
         if oca.case_id in effective_cases_access:
             effective_cases_access[oca.case_id] = oca.access_level
         else:
-            effective_cases_access[oca.case_id] |= oca.access_level
+            effective_cases_access[oca.case_id] = oca.access_level
 
     for gca in gcas:
         if gca.case_id in effective_cases_access:
             effective_cases_access[gca.case_id] = gca.access_level
         else:
-            effective_cases_access[gca.case_id] |= gca.access_level
+            effective_cases_access[gca.case_id] = gca.access_level
 
     for uca in ucas:
         if uca.case_id in effective_cases_access:
-            effective_cases_access[uca.case_id] = uca.access_level
-        else:
             effective_cases_access[uca.case_id] |= uca.access_level
+        else:
+            effective_cases_access[uca.case_id] = uca.access_level
 
     return effective_cases_access
 

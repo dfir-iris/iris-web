@@ -22,6 +22,7 @@ from app import db
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
 from app.iris_engine.access_control.utils import ac_access_level_to_list
+from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_permission_to_list
 from app.models import Cases
 from app.models.authorization import Group
@@ -165,13 +166,14 @@ def update_group_members(group, members):
             ug.user_id = user.id
             db.session.add(ug)
 
-        ac_auto_update_user_access(uid)
+        ac_auto_update_user_effective_access(uid)
 
     for uid in users_to_remove:
         UserGroup.query.filter(
             and_(UserGroup.group_id == group.group_id,
                  UserGroup.user_id == uid)
         ).delete()
+        ac_auto_update_user_effective_access(uid)
 
     db.session.commit()
 
@@ -186,6 +188,8 @@ def remove_user_from_group(group, member):
         and_(UserGroup.group_id == group.group_id,
                 UserGroup.user_id == member.id)
     ).delete()
+
+    ac_auto_update_user_effective_access(member.id)
 
     db.session.commit()
 

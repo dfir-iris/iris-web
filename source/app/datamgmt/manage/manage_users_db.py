@@ -24,6 +24,7 @@ from app import db
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
 from app.iris_engine.access_control.utils import ac_access_level_to_list
+from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.models import Cases
 from app.models.authorization import Group
@@ -98,6 +99,8 @@ def update_user_groups(user_id, groups):
         ).delete()
 
     db.session.commit()
+
+    ac_auto_update_user_effective_access(user_id)
 
 
 def update_user_orgs(user_id, orgs):
