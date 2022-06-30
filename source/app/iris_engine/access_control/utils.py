@@ -710,6 +710,9 @@ def ac_get_mask_case_access_level_full():
     """
     am = 0
     for ac in CaseAccessLevel._member_names_:
+        if CaseAccessLevel.deny_all.name == CaseAccessLevel[ac].name:
+            continue
+
         am |= CaseAccessLevel[ac].value
 
     return am
