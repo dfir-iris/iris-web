@@ -268,6 +268,9 @@ def ac_auto_update_user_effective_access(user_id):
         UserCaseEffectiveAccess.case_id.in_(cid_to_remove)
     )).delete()
 
+    print(ucea_to_add)
+    print(cid_to_remove)
+
     for case_id in ucea_to_add:
         ucea = UserCaseEffectiveAccess()
         ucea.user_id = user_id

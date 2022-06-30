@@ -186,7 +186,7 @@ def remove_user_from_group(group, member):
 
     UserGroup.query.filter(
         and_(UserGroup.group_id == group.group_id,
-                UserGroup.user_id == member.id)
+             UserGroup.user_id == member.id)
     ).delete()
 
     ac_auto_update_user_effective_access(member.id)
