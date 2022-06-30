@@ -782,9 +782,9 @@ function load_context_switcher() {
             ocs = data.data;
             for (index in ocs) {
                 if (ocs[index].close_date != null) {
-                    $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`);
+                    $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`);
                 } else {
-                    $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`)
+                    $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`)
                 }
             }
 
