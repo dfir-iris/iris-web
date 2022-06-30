@@ -185,7 +185,7 @@ def upgrade():
 
     # Give the organisation access to all the cases
     res = conn.execute(f"select case_id from cases;")
-    result_cases = res.fetchall()
+    result_cases = [case[0] for case in res.fetchall()]
     access_level = ac_get_mask_case_access_level_full()
 
     # Make a list of the cases that are not already linked to the org
@@ -224,7 +224,7 @@ def upgrade():
         # Add default cases effective permissions
         for case_id in result_cases:
             conn.execute(f"insert into user_case_effective_access (case_id, user_id, access_level) values "
-                         f"({case_id[0]}, {user_id}, {access_level}) on conflict do nothing;")
+                         f"({case_id}, {user_id}, {access_level}) on conflict do nothing;")
 
     pass
 

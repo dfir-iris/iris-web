@@ -183,6 +183,7 @@ def ac_trace_effective_user_permissions(user_id):
     return perms
 
 
+
 def ac_user_has_case_access(user_id, cid, access_level):
     """
     Returns the user access level to a case
@@ -232,12 +233,16 @@ def ac_user_has_case_access(user_id, cid, access_level):
     return False
 
 
+def ac_auto_update_user_effective_access(user_id):
+    """
+    Updates the effective access of a user given its ID
+    """
+    return
+
+
 def ac_get_user_cases_access(user_id):
     ocas = OrganisationCaseAccess.query.with_entities(
         Cases.case_id,
-        Cases.name,
-        Client.name.label('customer_name'),
-        Cases.close_date,
         OrganisationCaseAccess.access_level
     ).filter(
         and_(UserOrganisation.user_id == user_id,
@@ -249,20 +254,41 @@ def ac_get_user_cases_access(user_id):
 
     gcas = GroupCaseAccess.query.with_entities(
         Cases.case_id,
-        Cases.name,
-        Client.name.label('customer_name'),
-        Cases.close_date,
         GroupCaseAccess.access_level
     ).filter(
         and_(UserGroup.user_id == user_id,
              UserGroup.group_id == GroupCaseAccess.group_id)
     ).join(
         GroupCaseAccess.group
-    ).first()
+    ).all()
 
-    uca = UserCaseAccess.query.filter(
+    ucas = UserCaseAccess.query.with_entities(
+        Cases.case_id,
+        UserCaseAccess.access_level
+    ).filter(
         and_(UserCaseAccess.user_id == user_id)
-    ).first()
+    ).all()
+
+    effective_cases_access = {}
+    for oca in ocas:
+        if oca.case_id in effective_cases_access:
+            effective_cases_access[oca.case_id] = oca.access_level
+        else:
+            effective_cases_access[oca.case_id] |= oca.access_level
+
+    for gca in gcas:
+        if gca.case_id in effective_cases_access:
+            effective_cases_access[gca.case_id] = gca.access_level
+        else:
+            effective_cases_access[gca.case_id] |= gca.access_level
+
+    for uca in ucas:
+        if uca.case_id in effective_cases_access:
+            effective_cases_access[uca.case_id] = uca.access_level
+        else:
+            effective_cases_access[uca.case_id] |= uca.access_level
+
+    return effective_cases_access
 
 
 def ac_trace_user_effective_cases_access(user_id):

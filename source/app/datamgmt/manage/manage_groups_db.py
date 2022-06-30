@@ -165,6 +165,8 @@ def update_group_members(group, members):
             ug.user_id = user.id
             db.session.add(ug)
 
+        ac_auto_update_user_access(uid)
+
     for uid in users_to_remove:
         UserGroup.query.filter(
             and_(UserGroup.group_id == group.group_id,
