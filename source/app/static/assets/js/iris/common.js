@@ -781,10 +781,11 @@ function load_context_switcher() {
             $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
             ocs = data.data;
             for (index in ocs) {
+                console.log(ocs[index]);
                 if (ocs[index].close_date != null) {
-                    $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`);
+                    $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name}) ${ocs[index].access}</option>`);
                 } else {
-                    $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`)
+                    $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name}) ${ocs[index].access}</option>`)
                 }
             }
 

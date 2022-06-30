@@ -45,6 +45,12 @@ def ctx_get_user_cases(user_id):
         if ucea.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
             continue
 
-        results.append(ucea._asdict())
+        row = ucea._asdict()
+        if ucea.access_level == CaseAccessLevel.read_data.value:
+            row['access'] = '[Read-only]'
+        else:
+            row['access'] = ''
+
+        results.append(row)
 
     return results
