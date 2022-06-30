@@ -362,17 +362,26 @@ def ac_get_user_cases_access(user_id):
         else:
             effective_cases_access[oca.case_id] = oca.access_level
 
+        if effective_cases_access[oca.case_id] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            effective_cases_access[oca.case_id] = CaseAccessLevel.deny_all.value
+
     for gca in gcas:
         if gca.case_id in effective_cases_access:
             effective_cases_access[gca.case_id] = gca.access_level
         else:
             effective_cases_access[gca.case_id] = gca.access_level
 
+        if effective_cases_access[gca.case_id] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            effective_cases_access[gca.case_id] = CaseAccessLevel.deny_all.value
+
     for uca in ucas:
         if uca.case_id in effective_cases_access:
             effective_cases_access[uca.case_id] |= uca.access_level
         else:
             effective_cases_access[uca.case_id] = uca.access_level
+
+        if effective_cases_access[uca.case_id] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            effective_cases_access[uca.case_id] = CaseAccessLevel.deny_all.value
 
     return effective_cases_access
 
