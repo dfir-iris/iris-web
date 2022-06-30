@@ -187,6 +187,8 @@ def remove_case_access_from_user(user_id, case_id):
         )).delete()
 
     db.session.commit()
+
+    ac_auto_update_user_effective_access(user_id)
     return
 
 
@@ -239,6 +241,8 @@ def add_case_access_to_user(user, case_id, access_level):
     oca.case_id = case_id
     db.session.add(oca)
     db.session.commit()
+
+    ac_auto_update_user_effective_access(user.id)
 
     return user, "Updated"
 
@@ -333,6 +337,7 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
 
 def delete_user(user_id):
     UserRoles.query.filter(UserRoles.user_id == user_id).delete()
+
     User.query.filter(User.id == user_id).delete()
     db.session.commit()
 

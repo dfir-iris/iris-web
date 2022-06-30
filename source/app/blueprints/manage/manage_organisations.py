@@ -277,7 +277,7 @@ def manage_org_cac_modal(cur_id, caseid, url_redir):
     if not org:
         return response_error("Invalid organisation ID")
 
-    cases_list = list_cases_dict()
+    cases_list = list_cases_dict(current_user.id)
     org_cases_access = [case.get('case_id') for case in org.org_cases_access]
     outer_cases_list = []
     for case in cases_list:

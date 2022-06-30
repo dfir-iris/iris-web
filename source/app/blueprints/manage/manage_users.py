@@ -25,6 +25,7 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask_login import current_user
 
 from app import db
 from app.datamgmt.case.case_db import get_case
@@ -237,7 +238,7 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
     if not user:
         return response_error("Invalid user ID")
 
-    cases_list = list_cases_dict()
+    cases_list = list_cases_dict(current_user.id)
     user_cases_access = [case.get('case_id') for case in user.get('user_cases_access')]
     outer_cases_list = []
     for case in cases_list:

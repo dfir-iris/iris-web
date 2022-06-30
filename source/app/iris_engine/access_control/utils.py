@@ -200,16 +200,16 @@ def ac_fast_check_user_has_case_access(user_id, cid, access_level):
     ).first()
 
     if not ucea:
-        return False
+        return None
 
     if ucea[0] & CaseAccessLevel.deny_all.value:
-        return False
+        return None
 
     for acl in access_level:
         if acl.value & ucea[0] == acl.value:
-            return True
+            return ucea[0]
 
-    return False
+    return None
 
 
 def ac_user_has_case_access(user_id, cid, access_level):

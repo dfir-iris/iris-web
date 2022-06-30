@@ -59,6 +59,7 @@ from app.datamgmt.manage.manage_users_db import update_user
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
+from app.models.authorization import CaseAccessLevel
 
 
 def response(msg, data):
@@ -233,22 +234,30 @@ def get_case_access(request, access_level):
 
     case = None
 
-    if access_level and not ac_fast_check_user_has_case_access(current_user.id, caseid, access_level):
+    restricted_access = ''
+    if access_level:
+        eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
+        if eaccess_level is None:
 
-        session['current_case'] = {
-            'case_name': "{}".format("Access denied"),
-            'case_info': "",
-            'case_id': caseid
-        }
+            session['current_case'] = {
+                'case_name': "{}".format("Access denied"),
+                'case_info': "",
+                'case_id': caseid,
+                'access': 'denied'
+            }
 
-        return redir, caseid, False
+            return redir, caseid, False
+
+        if CaseAccessLevel.read_data.value == eaccess_level:
+            restricted_access = '<i class="ml-2 text-warning fa-solid fa-lock" title="Read only access"></i>'
 
     if caseid != current_user.ctx_case:
         case = get_case(caseid)
         session['current_case'] = {
             'case_name': "{}".format(case.name),
             'case_info': "(#{} - {})".format(caseid, case.client.name),
-            'case_id': caseid
+            'case_id': caseid,
+            'access': restricted_access
         }
 
     if not case and not case_exists(caseid):
