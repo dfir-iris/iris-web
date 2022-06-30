@@ -40,12 +40,14 @@ from app.models import IocLink
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models import UserActivity
+from app.models.authorization import UserCaseEffectiveAccess
 
 
-def list_cases_dict():
-    res = Cases.query.with_entities(
+def list_cases_dict(user_id):
+    res = UserCaseEffectiveAccess.query.with_entities(
         Cases.name.label('case_name'),
         Cases.description.label('case_description'),
         Client.name.label('client_name'),
@@ -53,16 +55,23 @@ def list_cases_dict():
         Cases.close_date.label('case_close_date'),
         Cases.soc_id.label('case_soc_id'),
         User.name.label('opened_by'),
-        Cases.case_id
+        Cases.case_id,
+        UserCaseEffectiveAccess.access_level
     ).join(
+        UserCaseEffectiveAccess.case,
         Cases.client,
         Cases.user
+    ).filter(
+        UserCaseEffectiveAccess.user_id == user_id
     ).order_by(
         Cases.open_date
-    )
+    ).all()
 
     data = []
     for row in res:
+        if row.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            continue
+
         row = row._asdict()
         row['case_open_date'] = row['case_open_date'].strftime("%m/%d/%Y")
         row['case_close_date'] = row['case_close_date'].strftime("%m/%d/%Y") if row["case_close_date"] else ""

@@ -215,7 +215,7 @@ def api_add_case(caseid):
 @ac_api_requires()
 def api_list_case(caseid):
 
-    data = list_cases_dict()
+    data = list_cases_dict(current_user.id)
 
     return response_success("", data=data)
 
