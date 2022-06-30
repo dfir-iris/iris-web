@@ -128,6 +128,8 @@ def update_user_orgs(user_id, orgs):
 
     db.session.commit()
 
+    ac_auto_update_user_effective_access(user_id)
+
 
 def get_user_organisations(user_id):
     user_org = UserOrganisation.query.with_entities(

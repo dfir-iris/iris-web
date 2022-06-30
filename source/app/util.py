@@ -56,7 +56,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import update_user
-from app.iris_engine.access_control.utils import ac_user_has_case_access
+from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 
@@ -233,7 +233,7 @@ def get_case_access(request, access_level):
 
     case = None
 
-    if access_level and not ac_user_has_case_access(current_user.id, caseid, access_level):
+    if access_level and not ac_fast_check_user_has_case_access(current_user.id, caseid, access_level):
 
         session['current_case'] = {
             'case_name': "{}".format("Access denied"),

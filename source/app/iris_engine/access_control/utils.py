@@ -1,6 +1,7 @@
 from flask import session
 from sqlalchemy import and_
 
+import app
 from app import db
 from app.models import Cases
 from app.models import Client
@@ -15,6 +16,8 @@ from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
+
+log = app.logger
 
 
 def ac_get_mask_full_permissions():
@@ -185,6 +188,29 @@ def ac_trace_effective_user_permissions(user_id):
     return perms
 
 
+def ac_fast_check_user_has_case_access(user_id, cid, access_level):
+    """
+    Returns true if the user has access to the case
+    """
+    ucea = UserCaseEffectiveAccess.query.with_entities(
+        UserCaseEffectiveAccess.access_level
+    ).filter(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.case_id == cid
+    ).first()
+
+    if not ucea:
+        return False
+
+    if ucea[0] & CaseAccessLevel.deny_all.value:
+        return False
+
+    for acl in access_level:
+        if acl.value & ucea[0] == acl.value:
+            return True
+
+    return False
+
 
 def ac_user_has_case_access(user_id, cid, access_level):
     """
@@ -235,12 +261,25 @@ def ac_user_has_case_access(user_id, cid, access_level):
     return False
 
 
+def ac_recompute_all_users_effective_ac():
+    """
+    Recompute all users effective access
+    """
+    users = User.query.with_entities(
+        User.id
+    ).all()
+    for user_id in users:
+        ac_auto_update_user_effective_access(user_id[0])
+
+    return
+
+
 def ac_auto_update_user_effective_access(user_id):
     """
     Updates the effective access of a user given its ID
     """
     uceas = UserCaseEffectiveAccess.query.filter(
-        UserCaseAccess.user_id == user_id
+        UserCaseEffectiveAccess.user_id == user_id
     ).all()
 
     grouped_uca = {}
@@ -248,6 +287,9 @@ def ac_auto_update_user_effective_access(user_id):
         grouped_uca[ucea.case_id] = ucea.access_level
 
     target_ucas = ac_get_user_cases_access(user_id)
+    log.info(f'User {user_id} current access : {grouped_uca}')
+    log.info(f'User {user_id} target access : {target_ucas}')
+
     ucea_to_add = {}
     cid_to_remove = []
 
@@ -268,8 +310,8 @@ def ac_auto_update_user_effective_access(user_id):
         UserCaseEffectiveAccess.case_id.in_(cid_to_remove)
     )).delete()
 
-    print(ucea_to_add)
-    print(cid_to_remove)
+    log.info(f'User {user_id} access to add : {ucea_to_add}')
+    log.info(f'User {user_id} access to remove : {cid_to_remove}')
 
     for case_id in ucea_to_add:
         ucea = UserCaseEffectiveAccess()

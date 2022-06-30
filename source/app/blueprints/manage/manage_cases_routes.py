@@ -41,7 +41,7 @@ from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.forms import AddCaseForm
-from app.iris_engine.access_control.utils import ac_user_has_case_access
+from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
@@ -73,7 +73,7 @@ def details_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
-    if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -91,7 +91,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
-    if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -107,7 +107,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
 @ac_api_case_requires()
 def get_case_api(cur_id, caseid):
 
-    if not ac_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
