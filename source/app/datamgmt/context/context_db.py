@@ -20,31 +20,31 @@ from sqlalchemy import desc
 
 from app.models import Cases
 from app.models import Client
+from app.models.authorization import CaseAccessLevel
+from app.models.authorization import UserCaseEffectiveAccess
 
 
 def ctx_get_user_cases(user_id):
-    res = Cases.query.with_entities(
+    uceas = UserCaseEffectiveAccess.query.with_entities(
+        Cases.case_id,
         Cases.name,
         Client.name.label('customer_name'),
-        Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .filter(Cases.close_date == None)\
-        .order_by(desc(Cases.case_id))\
-        .all()
+        Cases.close_date,
+        UserCaseEffectiveAccess.access_level
+    ).join(
+        UserCaseEffectiveAccess.case,
+        Cases.client
+    ).order_by(
+        desc(Cases.case_id)
+    ).filter(
+        UserCaseEffectiveAccess.user_id == user_id
+    ).all()
 
-    datao = [row._asdict() for row in res]
+    results = []
+    for ucea in uceas:
+        if ucea.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            continue
 
-    res = Cases.query.with_entities(
-        Cases.name,
-        Client.name.label('customer_name'),
-        Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .filter(Cases.close_date != None)\
-        .order_by(desc(Cases.case_id))\
-        .all()
+        results.append(ucea._asdict())
 
-    datac = [row._asdict() for row in res]
-
-    return datao, datac
+    return results

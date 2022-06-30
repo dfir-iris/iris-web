@@ -104,9 +104,9 @@ def std_permissions():
 @ac_api_requires()
 def cases_context(caseid):
     # Get all investigations not closed
-    datao, datac = ctx_get_user_cases(current_user.id)
+    datao = ctx_get_user_cases(current_user.id)
 
-    return response_success(data=dict(cases_context_selector=datao, cases_close_context_selector=datac))
+    return response_success(data=datao)
 
 
 def update_user_case_ctx():
