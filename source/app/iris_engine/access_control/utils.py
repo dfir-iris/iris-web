@@ -386,6 +386,77 @@ def ac_get_user_cases_access(user_id):
     return effective_cases_access
 
 
+def ac_trace_user_effective_cases_access_2(user_id):
+    ocas = OrganisationCaseAccess.query.with_entities(
+        Cases.name,
+        Cases.case_id,
+        OrganisationCaseAccess.access_level
+    ).filter(
+        and_(UserOrganisation.user_id == user_id,
+             OrganisationCaseAccess.org_id == UserOrganisation.org_id)
+    ).join(
+        OrganisationCaseAccess.case,
+    ).all()
+
+    gcas = GroupCaseAccess.query.with_entities(
+        Cases.case_id,
+        Cases.name,
+        GroupCaseAccess.access_level
+    ).filter(
+        and_(UserGroup.user_id == user_id,
+             UserGroup.group_id == GroupCaseAccess.group_id)
+    ).join(
+        GroupCaseAccess.case
+    ).all()
+
+    ucas = UserCaseAccess.query.with_entities(
+        Cases.case_id,
+        Cases.name,
+        UserCaseAccess.access_level
+    ).filter(
+        and_(UserCaseAccess.user_id == user_id)
+    ).join(
+        UserCaseAccess.case
+    ).all()
+
+    effective_cases_access = {}
+    for oca in ocas:
+        if oca.case_id in effective_cases_access:
+            effective_cases_access[oca.case_id] |= oca.access_level
+        else:
+            effective_cases_access[oca.case_id] = {
+                'case_info': {
+                    'case_name': oca.name,
+                    'case_id': oca.case_id
+                },
+                'user_access': [],
+                'user_effective_access': oca.access_level
+            }
+
+        if effective_cases_access[oca.case_id] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            effective_cases_access[oca.case_id] = CaseAccessLevel.deny_all.value
+
+    for gca in gcas:
+        if gca.case_id in effective_cases_access:
+            effective_cases_access[gca.case_id] |= gca.access_level
+        else:
+            effective_cases_access[gca.case_id] = gca.access_level
+
+        if effective_cases_access[gca.case_id] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            effective_cases_access[gca.case_id] = CaseAccessLevel.deny_all.value
+
+    for uca in ucas:
+        if uca.case_id in effective_cases_access:
+            effective_cases_access[uca.case_id] |= uca.access_level
+        else:
+            effective_cases_access[uca.case_id] = uca.access_level
+
+        if effective_cases_access[uca.case_id] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            effective_cases_access[uca.case_id] = CaseAccessLevel.deny_all.value
+
+    return effective_cases_access
+
+
 def ac_trace_user_effective_cases_access(user_id):
 
     cases = Cases.query.with_entities(
@@ -410,7 +481,7 @@ def ac_trace_user_effective_cases_access(user_id):
         accesses = faccesses[case.case_id]['user_access']
         effective = faccesses[case.case_id]['user_effective_access']
 
-        oca = OrganisationCaseAccess.query.with_entities(
+        ocas = OrganisationCaseAccess.query.with_entities(
             Organisation.org_name,
             Organisation.org_id,
             Organisation.org_uuid,
@@ -419,9 +490,9 @@ def ac_trace_user_effective_cases_access(user_id):
             and_(OrganisationCaseAccess.case_id == case.case_id,
                  UserOrganisation.user_id == user_id,
                  OrganisationCaseAccess.org_id == UserOrganisation.org_id)
-        ).first()
+        ).all()
 
-        gca = GroupCaseAccess.query.with_entities(
+        gcas = GroupCaseAccess.query.with_entities(
             Group.group_name,
             Group.group_id,
             Group.group_uuid,
@@ -432,12 +503,12 @@ def ac_trace_user_effective_cases_access(user_id):
                  UserGroup.group_id == GroupCaseAccess.group_id)
         ).join(
             GroupCaseAccess.group
-        ).first()
+        ).all()
 
-        uca = UserCaseAccess.query.filter(
+        ucas = UserCaseAccess.query.filter(
             and_(UserCaseAccess.case_id == case.case_id,
                  UserCaseAccess.user_id == user_id)
-        ).first()
+        ).all()
 
         fca = 0
         has_uca_deny_all = False
@@ -446,10 +517,10 @@ def ac_trace_user_effective_cases_access(user_id):
         has_uca_overwritten = False
 
         for ac_l in CaseAccessLevel:
-
-            if uca:
-                if uca.access_level & ac_l.value == ac_l.value:
-                    fca |= uca.access_level
+            uca_level = 0
+            for uca in ucas:
+                if uca.access_level & ac_l.value == ac_l.value and uca_level & uca.access_level != uca.access_level:
+                    uca_level |= uca.access_level
                     accesses.append({
                         'state': 'Effective',
                         'name': ac_l.name,
@@ -466,9 +537,12 @@ def ac_trace_user_effective_cases_access(user_id):
                     if ac_l.value == CaseAccessLevel.deny_all.value:
                         has_uca_deny_all = True
 
-            if gca:
-                if gca.access_level & ac_l.value == ac_l.value:
-                    fca |= gca.access_level
+            fca |= uca_level
+
+            gca_level = 0
+            for gca in gcas:
+                if gca.access_level & ac_l.value == ac_l.value and gca_level & gca.access_level != gca.access_level:
+                    gca_level |= gca.access_level
                     if has_uca_overwritten or has_uca_deny_all:
                         state = 'Overwritten by user access'
                     else:
@@ -490,9 +564,12 @@ def ac_trace_user_effective_cases_access(user_id):
                     if ac_l.value == CaseAccessLevel.deny_all.value:
                         has_gca_deny_all = True
 
-            if oca:
-                if oca.access_level & ac_l.value == ac_l.value:
-                    fca |= oca.access_level
+            fca |= gca_level
+
+            oca_level = 0
+            for oca in ocas:
+                if oca.access_level & ac_l.value == ac_l.value and oca_level & oca.access_level != oca.access_level:
+                    oca_level |= oca.access_level
 
                     if has_uca_overwritten or has_uca_deny_all:
                         state = 'Overwritten by user access'
@@ -513,6 +590,7 @@ def ac_trace_user_effective_cases_access(user_id):
                             'object_uuid': oca.org_uuid
                         }
                     })
+            fca |= oca_level
 
     return faccesses
 
