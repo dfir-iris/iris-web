@@ -26,6 +26,7 @@ from app.iris_engine.access_control.utils import ac_recompute_all_users_effectiv
 from app.iris_engine.access_control.utils import ac_trace_case_access
 from app.iris_engine.access_control.utils import ac_trace_effective_user_permissions
 from app.iris_engine.access_control.utils import ac_trace_user_effective_cases_access
+from app.iris_engine.access_control.utils import ac_trace_user_effective_cases_access_2
 from app.models.authorization import Permissions
 from app.util import ac_api_requires
 from app.util import ac_requires
@@ -63,7 +64,7 @@ def manage_ac_compute_effective_ac(caseid):
 @ac_api_requires(Permissions.manage_organisations)
 def manage_ac_audit_user(cur_id, caseid):
     user_audit = {
-        'access_audit': ac_trace_user_effective_cases_access(cur_id),
+        'access_audit': ac_trace_user_effective_cases_access_2(cur_id),
         'permissions_audit': ac_trace_effective_user_permissions(cur_id)
     }
 
