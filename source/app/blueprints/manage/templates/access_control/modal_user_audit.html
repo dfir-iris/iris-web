@@ -56,9 +56,9 @@
                                     <tr>
                                         <td>
                                         {% if access_audit[case_id].user_effective_access|length == 0 or 'deny_all' in access_audit[case_id].user_effective_access[0].name %}
-                                            <i class="mr-2 fa-solid text-danger fa-circle-xmark" title="No access"></i>
+                                            <i class="mr-2 fa-solid text-danger fa-eye-slash" title="No access"></i>
                                         {% elif 'read_only' in access_audit[case_id].user_effective_access[0].name %}
-                                            <i class="mr-2 fa-solid text-warning fa-circle-minus" title="Read only access"></i>
+                                            <i class="mr-2 fa-solid text-warning fa-lock" title="Read only access"></i>
                                         {% else %}
                                             <i class="mr-2 fa-solid fa-circle-check text-success" title="Full access"></i>
                                         {% endif %}
