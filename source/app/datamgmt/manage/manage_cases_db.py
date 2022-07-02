@@ -46,6 +46,33 @@ from app.models import UserActivity
 from app.models.authorization import UserCaseEffectiveAccess
 
 
+def list_cases_dict_unrestricted():
+    res = Cases.query.with_entities(
+        Cases.name.label('case_name'),
+        Cases.description.label('case_description'),
+        Client.name.label('client_name'),
+        Cases.open_date.label('case_open_date'),
+        Cases.close_date.label('case_close_date'),
+        Cases.soc_id.label('case_soc_id'),
+        User.name.label('opened_by'),
+        Cases.case_id
+    ).join(
+        Cases.client,
+        Cases.user
+    ).order_by(
+        Cases.open_date
+    ).all()
+
+    data = []
+    for row in res:
+        row = row._asdict()
+        row['case_open_date'] = row['case_open_date'].strftime("%m/%d/%Y")
+        row['case_close_date'] = row['case_close_date'].strftime("%m/%d/%Y") if row["case_close_date"] else ""
+        data.append(row)
+
+    return data
+
+
 def list_cases_dict(user_id):
     res = UserCaseEffectiveAccess.query.with_entities(
         Cases.name.label('case_name'),

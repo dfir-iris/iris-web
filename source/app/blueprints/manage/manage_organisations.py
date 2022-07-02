@@ -28,6 +28,7 @@ from werkzeug.utils import redirect
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
+from app.datamgmt.manage.manage_cases_db import list_cases_dict_unrestricted
 from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
 from app.datamgmt.manage.manage_organisations_db import delete_organisation
 from app.datamgmt.manage.manage_organisations_db import get_org
@@ -42,6 +43,7 @@ from app.datamgmt.manage.manage_organisations_db import update_org_members
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddOrganisationForm
+from app.iris_engine.access_control.utils import ac_flag_match_mask
 from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationOrganisationSchema
@@ -277,7 +279,12 @@ def manage_org_cac_modal(cur_id, caseid, url_redir):
     if not org:
         return response_error("Invalid organisation ID")
 
-    cases_list = list_cases_dict(current_user.id)
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        cases_list = list_cases_dict(current_user.id)
+
+    else:
+        cases_list = list_cases_dict_unrestricted()
+
     org_cases_access = [case.get('case_id') for case in org.org_cases_access]
     outer_cases_list = []
     for case in cases_list:
