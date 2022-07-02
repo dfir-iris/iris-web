@@ -215,33 +215,33 @@ def get_user_details(user_id):
     return row
 
 
-def add_case_access_to_user(user, case_id, access_level):
+def add_case_access_to_user(user, cases_list, access_level):
     if not user:
         return None, "Invalid user"
 
-    case = get_case(case_id)
-    if not case:
-        return None, "Invalid case ID"
+    for case_id in cases_list:
+        case = get_case(case_id)
+        if not case:
+            return None, "Invalid case ID"
 
-    access_level_mask = ac_access_level_mask_from_val_list(access_level)
+        access_level_mask = ac_access_level_mask_from_val_list([access_level])
 
-    ocas = UserCaseAccess.query.filter(
-        and_(
-            UserCaseAccess.case_id == case_id,
-            UserCaseAccess.user_id == user.id
-        )).all()
-    if ocas:
-        for oca in ocas:
-            db.session.delete(oca)
-        db.session.commit()
+        ocas = UserCaseAccess.query.filter(
+            and_(
+                UserCaseAccess.case_id == case_id,
+                UserCaseAccess.user_id == user.id
+            )).all()
+        if ocas:
+            for oca in ocas:
+                db.session.delete(oca)
 
-    oca = UserCaseAccess()
-    oca.user_id = user.id
-    oca.access_level = access_level_mask
-    oca.case_id = case_id
-    db.session.add(oca)
+        oca = UserCaseAccess()
+        oca.user_id = user.id
+        oca.access_level = access_level_mask
+        oca.case_id = case_id
+        db.session.add(oca)
+
     db.session.commit()
-
     ac_auto_update_user_effective_access(user.id)
 
     return user, "Updated"
