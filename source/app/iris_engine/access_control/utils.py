@@ -4,7 +4,6 @@ from sqlalchemy import and_
 import app
 from app import db
 from app.models import Cases
-from app.models import Client
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
@@ -18,6 +17,10 @@ from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 
 log = app.logger
+
+
+def ac_flag_match_mask(flag, mask):
+    return (flag & mask) == mask
 
 
 def ac_get_mask_full_permissions():
@@ -163,7 +166,7 @@ def ac_trace_effective_user_permissions(user_id):
 
         for std_perm in Permissions._member_names_:
 
-            if perm & Permissions[std_perm].value:
+            if ac_flag_match_mask(perm, Permissions[std_perm].value):
                 if Permissions[std_perm].value not in perms['details']:
                     perms['details'][Permissions[std_perm].value] = {
                         'name': std_perm,
@@ -202,11 +205,11 @@ def ac_fast_check_user_has_case_access(user_id, cid, access_level):
     if not ucea:
         return None
 
-    if ucea[0] & CaseAccessLevel.deny_all.value:
+    if ac_flag_match_mask(ucea[0], CaseAccessLevel.deny_all.value):
         return None
 
     for acl in access_level:
-        if acl.value & ucea[0] == acl.value:
+        if ac_flag_match_mask(ucea[0], acl.value):
             return ucea[0]
 
     return None
@@ -237,25 +240,25 @@ def ac_user_has_case_access(user_id, cid, access_level):
 
     for ac_l in CaseAccessLevel:
         if uca:
-            if uca.access_level & ac_l.value == ac_l.value:
+            if ac_flag_match_mask(uca.access_level, ac_l.value):
                 fca |= uca.access_level
             continue
 
         elif gca:
-            if gca.access_level & ac_l.value == ac_l.value:
+            if ac_flag_match_mask(gca.access_level, ac_l.value):
                 fca |= gca.access_level
             continue
 
         elif oca:
-            if oca.access_level & ac_l.value == ac_l.value:
+            if ac_flag_match_mask(oca.access_level, ac_l.value):
                 fca |= oca.access_level
                 continue
 
-    if not fca or fca & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+    if not fca or ac_flag_match_mask(fca, CaseAccessLevel.deny_all.value):
         return False
 
     for acl in access_level:
-        if acl.value & fca == acl.value:
+        if ac_flag_match_mask(fca, acl.value):
             return True
 
     return False
@@ -305,7 +308,7 @@ def ac_auto_update_user_effective_access(user_id):
         if case_id not in grouped_uca:
             ucea_to_add.update({case_id: target_ucas[case_id]})
         else:
-            if grouped_uca[case_id] & target_ucas[case_id] != target_ucas[case_id]:
+            if ac_flag_match_mask(grouped_uca[case_id], target_ucas[case_id]):
                 cid_to_remove.append(case_id)
                 ucea_to_add.update({case_id: target_ucas[case_id]})
 
@@ -370,7 +373,7 @@ def ac_get_user_cases_access(user_id):
         else:
             effective_cases_access[oca.case_id] = oca.access_level
 
-        if effective_cases_access[oca.case_id] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+        if ac_flag_match_mask(effective_cases_access[oca.case_id], CaseAccessLevel.deny_all.value):
             effective_cases_access[oca.case_id] = CaseAccessLevel.deny_all.value
 
     for gca in gcas:
@@ -379,18 +382,21 @@ def ac_get_user_cases_access(user_id):
         else:
             effective_cases_access[gca.case_id] = gca.access_level
 
-        if effective_cases_access[gca.case_id] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+        if ac_flag_match_mask(effective_cases_access[gca.case_id], CaseAccessLevel.deny_all.value):
             effective_cases_access[gca.case_id] = CaseAccessLevel.deny_all.value
 
     for uca in ucas:
-        if uca.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
-            effective_cases_access[uca.case_id] = CaseAccessLevel.deny_all.value
-
-        else:
-            effective_cases_access[uca.case_id] -= effective_cases_access[uca.case_id] & CaseAccessLevel.deny_all.value
 
         if uca.case_id in effective_cases_access:
-            effective_cases_access[uca.case_id] |= uca.access_level
+
+            if ac_flag_match_mask(uca.access_level, CaseAccessLevel.deny_all.value):
+                effective_cases_access[uca.case_id] = CaseAccessLevel.deny_all.value
+
+            else:
+                effective_cases_access[uca.case_id] -= effective_cases_access[
+                                                           uca.case_id] & CaseAccessLevel.deny_all.value
+                effective_cases_access[uca.case_id] |= uca.access_level
+
         else:
             effective_cases_access[uca.case_id] = uca.access_level
 
@@ -468,7 +474,7 @@ def ac_trace_user_effective_cases_access_2(user_id):
                 'user_effective_access': oca.access_level
             }
 
-        if effective_cases_access[oca.case_id]['user_effective_access'] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+        if ac_flag_match_mask(effective_cases_access[oca.case_id]['user_effective_access'], CaseAccessLevel.deny_all.value):
             effective_cases_access[oca.case_id]['user_effective_access'] = CaseAccessLevel.deny_all.value
             for kec in effective_cases_access[oca.case_id]['user_access']:
                 kec['state'] = f'Overwritten by organisation {oca.org_name}'
@@ -500,7 +506,7 @@ def ac_trace_user_effective_cases_access_2(user_id):
                 'user_effective_access': gca.access_level
             }
 
-        if effective_cases_access[gca.case_id]['user_effective_access'] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+        if ac_flag_match_mask(effective_cases_access[gca.case_id]['user_effective_access'], CaseAccessLevel.deny_all.value):
             effective_cases_access[gca.case_id]['user_effective_access'] = CaseAccessLevel.deny_all.value
             for kec in effective_cases_access[gca.case_id]['user_access']:
                 kec['state'] = f'Overwritten by group {gca.group_name}'
@@ -520,13 +526,18 @@ def ac_trace_user_effective_cases_access_2(user_id):
             }
         }
 
-        if uca.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
-            effective_cases_access[uca.case_id]['user_effective_access'] = CaseAccessLevel.deny_all.value
-        else:
-            effective_cases_access[uca.case_id]['user_effective_access'] -= effective_cases_access[uca.case_id]['user_effective_access'] & CaseAccessLevel.deny_all.value
-
         if uca.case_id in effective_cases_access:
-            effective_cases_access[uca.case_id]['user_effective_access'] |= uca.access_level
+
+            if ac_flag_match_mask(uca.access_level, CaseAccessLevel.deny_all.value):
+
+                effective_cases_access[uca.case_id]['user_effective_access'] = CaseAccessLevel.deny_all.value
+
+            else:
+                effective_cases_access[uca.case_id]['user_effective_access'] -= effective_cases_access[uca.case_id][
+                                                                                    'user_effective_access'] & CaseAccessLevel.deny_all.value
+
+                effective_cases_access[uca.case_id]['user_effective_access'] |= uca.access_level
+
         else:
             effective_cases_access[uca.case_id] = {
                 'case_info': {
@@ -538,7 +549,7 @@ def ac_trace_user_effective_cases_access_2(user_id):
             }
 
         for kec in effective_cases_access[uca.case_id]['user_access']:
-            if kec['access_value'] & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            if ac_flag_match_mask(kec['access_value'], CaseAccessLevel.deny_all.value):
                 kec['state'] = f'Overwritten by self user access'
 
         effective_cases_access[uca.case_id]['user_access'].append(access)
@@ -707,7 +718,6 @@ def ac_trace_case_access(case_id):
         'users_access': []
     }
 
-    accesses = faccesses['users_access']
 
     ocas = OrganisationCaseAccess.query.with_entities(
         Organisation.org_name,
@@ -771,7 +781,7 @@ def ac_trace_case_access(case_id):
         for ac_l in CaseAccessLevel:
 
             if uca:
-                if uca.access_level & ac_l.value == ac_l.value:
+                if ac_flag_match_mask(uca.access_level, ac_l.value):
                     user['user_effective_access'] |= uca.access_level
                     user['access_trace'].append({
                         'state': 'Effective',
@@ -812,7 +822,7 @@ def ac_trace_case_access(case_id):
         for ac_l in CaseAccessLevel:
 
             if gca:
-                if gca.access_level & ac_l.value == ac_l.value:
+                if ac_flag_match_mask(gca.access_level, ac_l.value):
                     if gca.user_id not in case_access:
                         user['user_effective_access'] |= gca.access_level
                         user['user_effective_access_list'].append(ac_l.name)
@@ -855,7 +865,7 @@ def ac_trace_case_access(case_id):
         for ac_l in CaseAccessLevel:
 
             if oca:
-                if oca.access_level & ac_l.value == ac_l.value:
+                if ac_flag_match_mask(oca.access_level, ac_l.value):
                     if oca.user_id not in case_access:
                         user['user_effective_access'] |= oca.access_level
                         user['user_effective_access_list'].append(ac_l.name)
@@ -917,7 +927,7 @@ def ac_access_level_to_list(access_level):
     """
     access_levels = []
     for ac in CaseAccessLevel._member_names_:
-        if access_level & CaseAccessLevel[ac].value:
+        if ac_flag_match_mask(access_level, CaseAccessLevel[ac].value):
             access_levels.append({
                 'name': ac,
                 'value': CaseAccessLevel[ac].value
@@ -941,11 +951,11 @@ def ac_user_has_permission(user, permission):
     """
     Return True if user has permission
     """
-    return ac_get_effective_permissions_of_user(user) & permission.value == permission
+    return ac_flag_match_mask(ac_get_effective_permissions_of_user(user), permission.value)
 
 
 def ac_current_user_has_permission(permission):
     """
     Return True if current user has permission
     """
-    return session['permissions'] & permission.value == permission
+    return ac_flag_match_mask(session['permissions'], permission.value)
