@@ -90,8 +90,7 @@
 							</span>
 							<h4 class="text-section">Manage</h4>
 						</li>
-						{% if user_has_perm(std_permissions.manage_case,
-											std_permissions.write_case_data) %}
+						{% if user_has_perm(std_permissions.manage_case) %}
 						<li class="nav-item">
 							<a href="/manage/cases?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-folder"></i>

@@ -24,14 +24,11 @@ from app import db
 class CaseAccessLevel(enum.Enum):
     deny_all = 0x1
     read_data = 0x2
-    write_data = 0x4
+    full_access = 0x4
 
 
 class Permissions(enum.Enum):
     manage_case = 0x1
-
-    write_case_data = 0x4
-    read_case_data = 0x8
 
     manage_users = 0x10
     read_users = 0x20

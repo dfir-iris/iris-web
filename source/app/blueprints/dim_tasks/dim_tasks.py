@@ -96,7 +96,7 @@ def list_dim_hook_options_ioc(type, caseid):
 
 
 @dim_tasks_blueprint.route('/dim/hooks/call', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def dim_hooks_call(caseid):
     logs = []
     js_data = request.json

@@ -62,7 +62,7 @@ case_notes_blueprint = Blueprint('case_notes',
 
 # CONTENT ------------------------------------------------
 @case_notes_blueprint.route('/case/notes', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_notes(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
@@ -80,7 +80,7 @@ def case_notes(caseid, url_redir):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_note_detail(cur_id, caseid):
     try:
         note = get_note(cur_id, caseid=caseid)
@@ -117,7 +117,7 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_note_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
@@ -140,7 +140,7 @@ def case_note_delete(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_note_save(cur_id, caseid):
 
     try:
@@ -173,7 +173,7 @@ def case_note_save(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_note_add(caseid):
     try:
         # validate before saving
@@ -232,7 +232,7 @@ def case_load_notes_groups(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_notes_state(caseid):
     os = get_notes_state(caseid=caseid)
     if os:
@@ -242,7 +242,7 @@ def case_notes_state(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/search', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_search_notes(caseid):
 
     if request.is_json:
@@ -260,7 +260,7 @@ def case_search_notes(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_notes_groups(caseid):
     title = ''
     if request.is_json:
@@ -284,7 +284,7 @@ def case_add_notes_groups(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/delete/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_notes_groups(cur_id, caseid):
 
     if not delete_note_group(cur_id, caseid):
@@ -296,7 +296,7 @@ def case_delete_notes_groups(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_get_notes_group(cur_id, caseid):
 
     group = get_group_details(cur_id, caseid)
@@ -307,7 +307,7 @@ def case_get_notes_group(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/update/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_notes_groups(cur_id, caseid):
 
     js_data = request.get_json()

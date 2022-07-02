@@ -74,7 +74,7 @@ event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "Us
 
 # CONTENT ------------------------------------------------
 @case_blueprint.route('/case', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_r(caseid, url_redir):
 
     if url_redir:
@@ -135,7 +135,7 @@ def get_message(data):
 
 
 @case_blueprint.route('/case/summary/update', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def desc_fetch(caseid):
 
     js_data = request.get_json()
@@ -160,7 +160,7 @@ def desc_fetch(caseid):
 
 
 @case_blueprint.route('/case/summary/fetch', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def summary_fetch(caseid):
     desc_crc32, desc = case_get_desc_crc(caseid)
 
@@ -168,7 +168,7 @@ def summary_fetch(caseid):
 
 
 @case_blueprint.route('/case/activities/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def activity_fetch(caseid):
     ua = UserActivity.query.with_entities(
         UserActivity.activity_date,
@@ -189,13 +189,13 @@ def activity_fetch(caseid):
 
 
 @case_blueprint.route("/case/export", methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def export_case(caseid):
     return response_success('', data=export_case_json(caseid))
 
 
 @case_blueprint.route('/case/tasklog/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_tasklog(caseid):
 
     log_schema = TaskLogSchema()

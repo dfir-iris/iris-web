@@ -58,7 +58,7 @@ case_tasks_blueprint = Blueprint('case_tasks',
 
 # CONTENT ------------------------------------------------
 @case_tasks_blueprint.route('/case/tasks', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_tasks(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
@@ -70,7 +70,7 @@ def case_tasks(caseid, url_redir):
 
 
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_get_tasks(caseid):
     ct = get_tasks(caseid)
 
@@ -89,7 +89,7 @@ def case_get_tasks(caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
 def case_get_tasks_state(caseid):
     os = get_tasks_state(caseid=caseid)
     if os:
@@ -99,7 +99,7 @@ def case_get_tasks_state(caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_task_statusupdate(cur_id, caseid):
 
     task = get_task(task_id=cur_id, caseid=caseid)
@@ -120,7 +120,7 @@ def case_task_statusupdate(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.write_data)
+@ac_case_requires(CaseAccessLevel.full_access)
 def case_add_task_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
@@ -137,7 +137,7 @@ def case_add_task_modal(caseid, url_redir):
 
 
 @case_tasks_blueprint.route('/case/tasks/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_task(caseid):
 
     try:
@@ -200,7 +200,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_task(cur_id, caseid):
 
     try:
@@ -236,7 +236,7 @@ def case_edit_task(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.write_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)

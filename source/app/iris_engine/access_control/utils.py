@@ -38,11 +38,8 @@ def ac_get_mask_analyst():
     """
     Return a standard access mask for analysts
     """
-    am = 0
-    am |= Permissions.read_case_data.value
-    am |= Permissions.write_case_data.value
 
-    return am
+    return 0
 
 
 def ac_permission_to_list(permission):

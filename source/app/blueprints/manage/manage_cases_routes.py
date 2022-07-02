@@ -221,7 +221,7 @@ def api_list_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
-@ac_requires(Permissions.write_case_data)
+@ac_case_requires(CaseAccessLevel.full_access)
 def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
@@ -246,7 +246,7 @@ def manage_index_cases(caseid, url_redir):
 
 
 @manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
-@ac_api_requires(Permissions.write_case_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def update_case_files(caseid):
     # case update request. The files should have already arrived with the request upload_files
     try:
@@ -304,7 +304,7 @@ def update_case_files(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/upload_files', methods=['POST'])
-@ac_api_requires(Permissions.write_case_data)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def manage_cases_uploadfiles(caseid):
     """
     Handles the entire the case management, i.e creation, update, list and files imports
