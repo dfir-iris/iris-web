@@ -74,7 +74,7 @@ def manage_ac_audit_user(cur_id, caseid):
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>/modal', methods=['GET'])
 @ac_api_requires(Permissions.manage_organisations)
 def manage_ac_audit_user_modal(cur_id, caseid):
-    access_audit = ac_trace_user_effective_cases_access(cur_id)
+    access_audit = ac_trace_user_effective_cases_access_2(cur_id)
     permissions_audit = ac_trace_effective_user_permissions(cur_id)
 
     return render_template("modal_user_audit.html", access_audit=access_audit, permissions_audit=permissions_audit)
