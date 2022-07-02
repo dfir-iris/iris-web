@@ -248,7 +248,7 @@ def get_case_access(request, access_level):
 
             return redir, caseid, False
 
-        if CaseAccessLevel.read_data.value == eaccess_level:
+        if CaseAccessLevel.read_only.value == eaccess_level:
             restricted_access = '<i class="ml-2 text-warning fa-solid fa-lock" title="Read only access"></i>'
 
     if caseid != current_user.ctx_case:

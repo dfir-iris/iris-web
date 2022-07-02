@@ -73,7 +73,7 @@ def details_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
-    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_only]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -91,7 +91,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
-    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_only]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -107,7 +107,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
 @ac_api_case_requires()
 def get_case_api(cur_id, caseid):
 
-    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_data]):
+    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_only]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)

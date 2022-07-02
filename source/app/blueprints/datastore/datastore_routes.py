@@ -66,7 +66,7 @@ logger = app.logger
 
 
 @datastore_blueprint.route('/datastore/list/tree', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_list_tree(caseid):
 
     data = ds_list_tree(caseid)
@@ -75,7 +75,7 @@ def datastore_list_tree(caseid):
 
 
 @datastore_blueprint.route('/datastore/list/filter', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_list_filter(caseid):
 
     args = request.args.to_dict()
@@ -115,7 +115,7 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/filter-help/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_filter_help_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('index.index', cid=caseid, redirect=True))
@@ -124,7 +124,7 @@ def datastore_filter_help_modal(caseid, url_redir):
 
 
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -148,7 +148,7 @@ def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/info/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires(CaseAccessLevel.read_only)
 def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -256,7 +256,7 @@ def datastore_move_folder(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_view_file(cur_id: int, caseid: int):
     has_error, dsf = datastore_get_local_file_path(cur_id, caseid)
     if has_error:

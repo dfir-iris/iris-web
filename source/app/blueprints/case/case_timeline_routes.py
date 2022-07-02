@@ -78,7 +78,7 @@ case_timeline_blueprint = Blueprint('case_timeline',
 
 
 @case_timeline_blueprint.route('/case/timeline', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_timeline(caseid, url_redir):
 
     if url_redir:
@@ -91,7 +91,7 @@ def case_timeline(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph_page(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid, redirect=True))
@@ -100,7 +100,7 @@ def case_getgraph_page(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_timeline_state(caseid):
     os = get_timeline_state(caseid=caseid)
     if os:
@@ -110,7 +110,7 @@ def case_get_timeline_state(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph_assets(caseid):
 
     assets_cache = CaseAssets.query.with_entities(
@@ -151,7 +151,7 @@ def case_getgraph_assets(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-category', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph(caseid):
 
     timeline = CasesEvent.query.filter(and_(
@@ -186,13 +186,13 @@ def case_getgraph(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_gettimeline_api_nofilter(caseid):
     return case_gettimeline_api(0)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/list/filter/<int:asset_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_gettimeline_api(asset_id, caseid):
     if asset_id:
         condition = and_(
@@ -277,7 +277,7 @@ def case_gettimeline_api(asset_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/advanced-filter', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_filter_timeline(caseid):
     args = request.args.to_dict()
     query_filter = args.get('q')
@@ -559,7 +559,7 @@ def event_view(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def event_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
@@ -667,7 +667,7 @@ def case_add_event_modal(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/filter-help/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_filter_help_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
@@ -788,7 +788,7 @@ def case_duplicate_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_event_date_convert(caseid):
 
     jsdata = request.get_json()

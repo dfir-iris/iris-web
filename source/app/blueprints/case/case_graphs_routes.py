@@ -42,7 +42,7 @@ case_graph_blueprint = Blueprint('case_graph',
 
 # CONTENT ------------------------------------------------
 @case_graph_blueprint.route('/case/graph', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_graph(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_graph.case_graph', cid=caseid, redirect=True))
@@ -54,7 +54,7 @@ def case_graph(caseid, url_redir):
 
 
 @case_graph_blueprint.route('/case/graph/getdata', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_graph_get_data(caseid):
     events = get_case_events_assets_graph(caseid)
     events.extend(get_case_events_ioc_graph(caseid))

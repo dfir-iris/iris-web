@@ -23,7 +23,7 @@ from app import db
 
 class CaseAccessLevel(enum.Enum):
     deny_all = 0x1
-    read_data = 0x2
+    read_only = 0x2
     full_access = 0x4
 
 

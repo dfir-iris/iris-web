@@ -58,7 +58,7 @@ case_tasks_blueprint = Blueprint('case_tasks',
 
 # CONTENT ------------------------------------------------
 @case_tasks_blueprint.route('/case/tasks', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_tasks(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
@@ -70,7 +70,7 @@ def case_tasks(caseid, url_redir):
 
 
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_tasks(caseid):
     ct = get_tasks(caseid)
 
@@ -89,7 +89,7 @@ def case_get_tasks(caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_tasks_state(caseid):
     os = get_tasks_state(caseid=caseid)
     if os:
@@ -165,7 +165,7 @@ def case_add_task(caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data)
+@ac_api_case_requires(CaseAccessLevel.read_only)
 def case_task_view(cur_id, caseid):
     task = get_task(task_id=cur_id, caseid=caseid)
     if not task:
@@ -177,7 +177,7 @@ def case_task_view(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data)
+@ac_case_requires(CaseAccessLevel.read_only)
 def case_task_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))

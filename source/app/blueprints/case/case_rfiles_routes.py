@@ -54,7 +54,7 @@ case_rfiles_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @case_rfiles_blueprint.route('/case/evidences', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_rfile(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
@@ -66,7 +66,7 @@ def case_rfile(caseid, url_redir):
 
 
 @case_rfiles_blueprint.route('/case/evidences/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_rfiles(caseid):
     crf = get_rfiles(caseid)
 
@@ -79,7 +79,7 @@ def case_list_rfiles(caseid):
 
 
 @case_rfiles_blueprint.route('/case/evidences/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_rfiles_state(caseid):
     os = get_evidences_state(caseid=caseid)
     if os:
@@ -118,7 +118,7 @@ def case_add_rfile(caseid):
 
 
 @case_rfiles_blueprint.route('/case/evidences/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_evidence(cur_id, caseid):
     crf = get_rfile(cur_id, caseid)
     if not crf:
@@ -129,7 +129,7 @@ def case_get_evidence(cur_id, caseid):
 
 
 @case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_data, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_edit_rfile_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
