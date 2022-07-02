@@ -268,16 +268,16 @@ def manage_user_cac_add_case(cur_id, caseid):
     if not user:
         return response_error("Invalid user ID")
 
-    if not isinstance(data.get('case_id'), int):
+    if not isinstance(data.get('access_level'), int):
         try:
-            data['case_id'] = int(data.get('case_id'))
+            data['access_level'] = int(data.get('access_level'))
         except:
-            return response_error("Expecting case_id as int")
+            return response_error("Expecting access_level as int")
 
-    if not isinstance(data.get('access_level'), list):
-        return response_error("Expecting access_level as list")
+    if not isinstance(data.get('cases_list'), list):
+        return response_error("Expecting cases_list as list")
 
-    user, logs = add_case_access_to_user(user, data.get('case_id'), data.get('access_level'))
+    user, logs = add_case_access_to_user(user, data.get('cases_list'), data.get('access_level'))
     if not user:
         return response_error(msg=logs)
 

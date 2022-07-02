@@ -273,16 +273,16 @@ def manage_groups_cac_add_case(cur_id, caseid):
     if not group:
         return response_error("Invalid group ID")
 
-    if not isinstance(data.get('case_id'), int):
+    if not isinstance(data.get('access_level'), int):
         try:
-            data['case_id'] = int(data.get('case_id'))
+            data['access_level'] = int(data.get('access_level'))
         except:
-            return response_error("Expecting case_id as int")
+            return response_error("Expecting access_level as int")
 
-    if not isinstance(data.get('access_level'), list):
-        return response_error("Expecting access_level as list")
+    if not isinstance(data.get('cases_list'), list):
+        return response_error("Expecting cases_list as list")
 
-    group, logs = add_case_access_to_group(group, data.get('case_id'), data.get('access_level'))
+    group, logs = add_case_access_to_group(group, data.get('cases_list'), data.get('access_level'))
     if not group:
         return response_error(msg=logs)
 

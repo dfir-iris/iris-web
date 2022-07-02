@@ -195,33 +195,33 @@ def is_user_in_org(user_id, org_id):
     ).first() is not None
 
 
-def add_case_access_to_org(org, case_id, access_level):
+def add_case_access_to_org(org, cases_list, access_level):
     if not org:
         return None, "Invalid organisation"
 
-    case = get_case(case_id)
-    if not case:
-        return None, "Invalid case ID"
+    for case_id in cases_list:
+        case = get_case(case_id)
+        if not case:
+            return None, "Invalid case ID"
 
-    access_level_mask = ac_access_level_mask_from_val_list(access_level)
+        access_level_mask = ac_access_level_mask_from_val_list([access_level])
 
-    ocas = OrganisationCaseAccess.query.filter(
-        and_(
-            OrganisationCaseAccess.case_id == case_id,
-            OrganisationCaseAccess.org_id == org.org_id
-        )).all()
-    if ocas:
-        for oca in ocas:
-            db.session.delete(oca)
-        db.session.commit()
+        ocas = OrganisationCaseAccess.query.filter(
+            and_(
+                OrganisationCaseAccess.case_id == case_id,
+                OrganisationCaseAccess.org_id == org.org_id
+            )).all()
+        if ocas:
+            for oca in ocas:
+                db.session.delete(oca)
 
-    oca = OrganisationCaseAccess()
-    oca.org_id = org.org_id
-    oca.access_level = access_level_mask
-    oca.case_id = case_id
-    db.session.add(oca)
+        oca = OrganisationCaseAccess()
+        oca.org_id = org.org_id
+        oca.access_level = access_level_mask
+        oca.case_id = case_id
+        db.session.add(oca)
+
     db.session.commit()
-
     return org, "Updated"
 
 

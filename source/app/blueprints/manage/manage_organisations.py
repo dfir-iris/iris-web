@@ -309,7 +309,7 @@ def manage_org_cac_add_case(cur_id, caseid):
     if not data:
         return response_error("Invalid request, expecting JSON")
 
-    if not session['permissions'] & Permissions.manage_organisations.value:
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
         if not is_user_in_org(current_user.id, cur_id):
             return response_error('Access denied', status=403)
 
@@ -317,16 +317,16 @@ def manage_org_cac_add_case(cur_id, caseid):
     if not org:
         return response_error("Invalid organisation ID")
 
-    if not isinstance(data.get('case_id'), int):
+    if not isinstance(data.get('access_level'), int):
         try:
-            data['case_id'] = int(data.get('case_id'))
+            data['access_level'] = int(data.get('access_level'))
         except:
-            return response_error("Expecting case_id as int")
+            return response_error("Expecting access_level as int")
 
-    if not isinstance(data.get('access_level'), list):
-        return response_error("Expecting access_level as list")
+    if not isinstance(data.get('cases_list'), list):
+        return response_error("Expecting cases_list as list")
 
-    org, logs = add_case_access_to_org(org, data.get('case_id'), data.get('access_level'))
+    org, logs = add_case_access_to_org(org, data.get('cases_list'), data.get('access_level'))
     if not org:
         return response_error(msg=logs)
 

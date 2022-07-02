@@ -255,8 +255,8 @@ function manage_group_cac(group_id) {
             clear_api_error();
 
             var data_sent = Object();
-            data_sent['case_id'] = parseInt($('#group_case_access_select').val());
-            data_sent['access_level'] = $('#group_case_ac_select').val();
+            data_sent['access_level'] = parseInt($('#group_case_ac_select').val());
+            data_sent['cases_list'] = $('#group_case_access_select').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
             post_request_api('groups/' + group_id + '/cases-access/add', JSON.stringify(data_sent), true)

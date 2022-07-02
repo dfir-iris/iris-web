@@ -274,11 +274,12 @@ function manage_user_cac(user_id) {
             clear_api_error();
 
             var data_sent = Object();
-            data_sent['case_id'] = parseInt($('#user_case_access_select').val());
-            data_sent['access_level'] = $('#user_case_ac_select').val();
+
+            data_sent['cases_list'] = $('#user_case_access_select').val();
+            data_sent['access_level'] = parseInt($('#user_case_ac_select').val());
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('users/' + user_id + '/cases-access/add', JSON.stringify(data_sent), true)
+            post_request_api('users/' + user_id + '/cases-access/add', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_user_cac(user_id);
