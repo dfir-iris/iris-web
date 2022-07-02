@@ -23,6 +23,7 @@ from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
 from app.iris_engine.access_control.utils import ac_recompute_all_users_effective_ac
+from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.access_control.utils import ac_trace_case_access
 from app.iris_engine.access_control.utils import ac_trace_effective_user_permissions
 from app.iris_engine.access_control.utils import ac_trace_user_effective_cases_access
@@ -53,9 +54,18 @@ def manage_ac_index(caseid, url_redir):
 
 @manage_ac_blueprint.route('/manage/access-control/recompute-effective-users-ac', methods=['GET'])
 @ac_api_requires(Permissions.manage_users)
-def manage_ac_compute_effective_ac(caseid):
+def manage_ac_compute_effective_all_ac(caseid):
 
     ac_recompute_all_users_effective_ac()
+
+    return response_success('Updated')
+
+
+@manage_ac_blueprint.route('/manage/access-control/recompute-effective-user-ac/<int:cur_id>', methods=['GET'])
+@ac_api_requires(Permissions.manage_users)
+def manage_ac_compute_effective_ac(cur_id, caseid):
+
+    ac_recompute_effective_ac(cur_id)
 
     return response_success('Updated')
 

@@ -274,6 +274,14 @@ def ac_recompute_all_users_effective_ac():
     return
 
 
+def ac_recompute_effective_ac(user_id):
+    """
+    Recompute a users effective access
+    """
+
+    return ac_auto_update_user_effective_access(user_id)
+
+
 def ac_auto_update_user_effective_access(user_id):
     """
     Updates the effective access of a user given its ID
@@ -375,16 +383,16 @@ def ac_get_user_cases_access(user_id):
             effective_cases_access[gca.case_id] = CaseAccessLevel.deny_all.value
 
     for uca in ucas:
-        if uca.case_id in effective_cases_access:
-            effective_cases_access[uca.case_id] |= uca.access_level
-        else:
-            effective_cases_access[uca.case_id] = uca.access_level
-
         if uca.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
             effective_cases_access[uca.case_id] = CaseAccessLevel.deny_all.value
 
         else:
             effective_cases_access[uca.case_id] -= effective_cases_access[uca.case_id] & CaseAccessLevel.deny_all.value
+
+        if uca.case_id in effective_cases_access:
+            effective_cases_access[uca.case_id] |= uca.access_level
+        else:
+            effective_cases_access[uca.case_id] = uca.access_level
 
     return effective_cases_access
 
