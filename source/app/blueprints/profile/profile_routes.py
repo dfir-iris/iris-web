@@ -25,6 +25,7 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
@@ -33,6 +34,8 @@ from app import db
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import update_user
+from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
+from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
 from app.util import ac_api_requires
@@ -133,4 +136,18 @@ def profile_set_theme(theme, caseid):
     db.session.commit()
 
     return response_success('Theme changed')
+
+
+@profile_blueprint.route('/user/refresh-permissions', methods=['GET'])
+@ac_api_requires()
+def profile_refresh_permissions_and_ac(caseid):
+
+    user = get_user(current_user.id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    ac_recompute_effective_ac(current_user.id)
+    session['permissions'] = ac_get_effective_permissions_of_user(user)
+
+    return response_success('Access control and permissions refreshed')
 

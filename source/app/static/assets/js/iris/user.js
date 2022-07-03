@@ -56,6 +56,16 @@ function update_password(user_id) {
     $('#modal_pwd_user').modal({ show: true });
 }
 
+function refresh_user_permissions() {
+    var ori_txt = $('#user_refresh_perms_btn').text();
+    $('#user_refresh_perms_btn').text('Refreshing..');
+     get_request_api('refresh-permissions')
+    .done((data) => {
+        notify_auto_api(data);
+    }).always(() => {
+        $('#user_refresh_perms_btn').text(ori_txt);
+    });
+}
 
 $('input[type=radio][name=iris-theme]').change(function() {
     if (this.value == 'false') {

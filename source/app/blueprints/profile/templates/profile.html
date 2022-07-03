@@ -105,12 +105,17 @@
                             </label>
                         </div>
                     </div>
-                    <div class="float-right mt-4">
-                        {% if config['AUTHENTICATION_TYPE'] == 'local' %}
-                            <button class="btn btn-primary" type="button" onclick="update_password()">Change password</button>
-                        {% elif config['AUTHENTICATION_TYPE'] == 'oidc_proxy' %}
-                            <button class="btn btn-primary" type="button" onclick="(window.open('{{ config['AUTHENTICATION_ACCOUNT_SERVICE_URL'] }}'))"><span class="btn-label"><i class="flaticon-arrow"></i></span>Access account</button>
-                        {% endif %}
+                    <div class="row">
+                        <div class="col-6 float-left mt-4">
+                            <button class="btn btn-dark" type="button" onclick="refresh_user_permissions();" id="user_refresh_perms_btn">Refresh permissions</button>
+                        </div>
+                        <div class="col-6 float-right mt-4">
+                            {% if config['AUTHENTICATION_TYPE'] == 'local' %}
+                                <button class="btn btn-primary float-right" type="button" onclick="update_password();">Change password</button>
+                            {% elif config['AUTHENTICATION_TYPE'] == 'oidc_proxy' %}
+                                <button class="btn btn-primary" type="button" onclick="(window.open('{{ config['AUTHENTICATION_ACCOUNT_SERVICE_URL'] }}'))"><span class="btn-label"><i class="flaticon-arrow"></i></span>Access account</button>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
