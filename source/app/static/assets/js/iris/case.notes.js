@@ -157,6 +157,7 @@ function add_remote_groupnote() {
     .done((data) => {
         if (data.status == 'success') {
             nextGroupNote(data.data.group_title, data.data.group_id);
+            draw_kanban();
         } else {
             if (data.message != "No data to load for dashboard") {
                 swal("Oh no !", data.message, "error");
