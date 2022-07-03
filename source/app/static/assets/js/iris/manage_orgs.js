@@ -80,7 +80,7 @@ function org_detail(org_id) {
             clear_api_error();
 
             var data_sent = $('#form_new_org').serializeObject();
-            post_request_api('/manage/organisations/update/' + org_id, JSON.stringify(data_sent), true)
+            post_request_api('/manage/organisations/update/' + org_id, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_organisations();
@@ -107,7 +107,7 @@ function add_organisation() {
         $('#submit_new_org').on("click", function () {
              clear_api_error();
             var data_sent = $('#form_new_org').serializeObject();
-            post_request_api('/manage/organisations/add', JSON.stringify(data_sent), true)
+            post_request_api('/manage/organisations/add', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_organisations();
@@ -199,7 +199,7 @@ function manage_organisation_members(org_id) {
             data_sent['org_members'] = $('#org_members').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('organisations/' + org_id + '/members/update', JSON.stringify(data_sent), true)
+            post_request_api('organisations/' + org_id + '/members/update', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_organisations();

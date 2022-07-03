@@ -85,7 +85,7 @@ function group_detail(group_id) {
             clear_api_error();
 
             var data_sent = $('#form_new_group').serializeObject();
-            post_request_api('/manage/groups/update/' + group_id, JSON.stringify(data_sent), true)
+            post_request_api('/manage/groups/update/' + group_id, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_users();
@@ -112,7 +112,7 @@ function add_group() {
         $('#submit_new_group').on("click", function () {
              clear_api_error();
             var data_sent = $('#form_new_group').serializeObject();
-            post_request_api('/manage/groups/add', JSON.stringify(data_sent), true)
+            post_request_api('/manage/groups/add', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();
@@ -199,7 +199,7 @@ function add_members_to_group(group_id) {
             data_sent['group_members'] = $('#group_members').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('groups/' + group_id + '/members/update', JSON.stringify(data_sent), true)
+            post_request_api('groups/' + group_id + '/members/update', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();
@@ -259,7 +259,7 @@ function manage_group_cac(group_id) {
             data_sent['cases_list'] = $('#group_case_access_select').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('groups/' + group_id + '/cases-access/add', JSON.stringify(data_sent), true)
+            post_request_api('groups/' + group_id + '/cases-access/add', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_group_cac(group_id);
