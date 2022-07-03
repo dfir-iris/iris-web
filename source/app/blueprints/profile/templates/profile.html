@@ -75,6 +75,17 @@
                                 <input class="form-control disable" value="{{ current_user.id }}" readonly>
                             </div>
                         </div>
+                        <div class="form-group col">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="icon-token"></i>
+                                        #UUID
+                                    </span>
+                                </div>
+                                <input class="form-control disable" value="{{ current_user.uuid }}" readonly>
+                            </div>
+                        </div>
                     </div>
                     <div class="row mb-4">
                         <div class="form-group col">
@@ -93,7 +104,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label d-block">Iris Theme</label>
+                        <label class="form-label d-block">IRIS Theme</label>
                         <div class="selectgroup selectgroup-primary selectgroup-pills">
                             <label class="selectgroup-item" title="Light mode">
                                 <input type="radio" name="iris-theme" value="false" class="selectgroup-input" {% if not current_user.in_dark_mode %}checked{% endif %}>
