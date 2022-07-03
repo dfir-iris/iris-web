@@ -28,6 +28,7 @@ from flask import url_for
 from flask_login import current_user
 
 from app import db
+from app.blueprints.profile.profile_routes import profile_blueprint
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
@@ -48,6 +49,7 @@ from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_users_db import update_user_orgs
 from app.forms import AddUserForm
 from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema

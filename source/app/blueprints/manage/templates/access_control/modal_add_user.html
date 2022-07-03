@@ -106,8 +106,12 @@
                                     <button type="button" class="btn btn-outline-success mt-5"
                                     onclick="activate_user('{{ user.user_id }}');">Activate</button>
                                     {% endif %}
-                                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+
+                                    <button type="button" class="btn btn-outline-success ml-1 mt-5 float-right"
                                     id="submit_new_user">Update</button>
+
+                                    <button type="button" class="btn btn-dark mt-5 float-right"
+                                    onclick="refresh_user_ac('{{ user.user_id }}');" id="users_refresh_ac_btn">Refresh access</button>
 
                                 {% else %}
 
