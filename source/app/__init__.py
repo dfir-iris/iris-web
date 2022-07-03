@@ -73,10 +73,19 @@ def ac_current_user_has_permission(*permissions):
     return False
 
 
+def ac_current_user_has_manage_perms():
+
+    if session['permissions'] != 1 and session['permissions'] & 0x1FFFFF0 != 0:
+        return True
+    return False
+
+
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
 app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
 app.jinja_env.globals.update(user_has_perm=ac_current_user_has_permission)
+app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_perms)
+
 app.config.from_object('app.configuration.Config')
 
 cache = Cache(app)

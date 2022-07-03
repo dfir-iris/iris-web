@@ -95,7 +95,7 @@ def case_note_detail(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_note_detail_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
@@ -204,7 +204,7 @@ def case_note_add(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_load_notes_groups(caseid):
 
     if not get_case(caseid=caseid):
