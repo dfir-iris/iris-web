@@ -261,6 +261,16 @@ def ac_user_has_case_access(user_id, cid, access_level):
     return False
 
 
+def ac_recompute_effective_permissions_org_deletion(members_list):
+    """
+    Recompute all users effective access of users before deletion
+    """
+    for member in members_list:
+        ac_auto_update_user_effective_access(user_id=member['id'])
+
+    return
+
+
 def ac_recompute_all_users_effective_ac():
     """
     Recompute all users effective access

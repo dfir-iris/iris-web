@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from copy import copy
+
 import marshmallow
 from flask import Blueprint
 from flask import render_template
@@ -45,6 +47,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list
 from app.forms import AddOrganisationForm
 from app.iris_engine.access_control.utils import ac_flag_match_mask
 from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_recompute_effective_permissions_org_deletion
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationOrganisationSchema
 from app.util import ac_api_requires
@@ -161,7 +164,7 @@ def manage_org_update(cur_id, caseid):
     if not data:
         return response_error("Invalid request, expecting JSON")
 
-    if not session['permissions'] & Permissions.manage_organisations.value:
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
         if not is_user_in_org(current_user.id, cur_id):
             return response_error('Access denied', status=403)
 
@@ -188,11 +191,14 @@ def manage_org_update(cur_id, caseid):
 @ac_api_requires(Permissions.manage_organisations)
 def manage_org_delete(cur_id, caseid):
 
-    org = get_org(cur_id)
+    org = get_org_with_members(cur_id)
     if not org:
         return response_error("Invalid organisation ID")
 
+    org_members = copy(org.org_members)
     delete_organisation(org)
+
+    ac_recompute_effective_permissions_org_deletion(org_members)
 
     return response_success('Organisation deleted')
 
