@@ -57,7 +57,7 @@
 								<span>Case</span>
 							</a>
 						</li>
-						{% if user_has_perm(std_permissions.search_all_data) %}
+						{% if user_has_perm(std_permissions.search_across_cases, std_permissions.search_across_all_cases) %}
 						<li class="nav-item">
 							<a href="/search?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-search-2"></i>

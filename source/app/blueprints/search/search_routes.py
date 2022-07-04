@@ -23,12 +23,16 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
 from flask import url_for
+from flask_login import current_user
 from sqlalchemy import and_
 
 from app.forms import SearchForm
+from app.iris_engine.access_control.utils import ac_flag_match_mask
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
+from app.models.authorization import UserCaseAccess
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import Ioc
@@ -47,15 +51,31 @@ search_blueprint = Blueprint('search',
 
 # CONTENT ------------------------------------------------
 @search_blueprint.route('/search', methods=['POST'])
-@ac_api_requires(Permissions.search_all_data)
+@ac_api_requires(Permissions.search_across_cases, Permissions.search_across_all_cases)
 def search_file_post(caseid: int):
 
     jsdata = request.get_json()
     search_value = jsdata.get('search_value')
     search_type = jsdata.get('search_type')
     files = []
+    search_condition = and_(Cases.case_id.in_([]))
 
     track_activity("started a search for {} on {}".format(search_value, search_type))
+
+    if not ac_flag_match_mask(session['permissions'],  Permissions.search_across_all_cases.value):
+        search_limitations_q = UserCaseAccess.query.with_entities(
+            UserCaseAccess.case_id
+        ).filter(
+            UserCaseAccess.user_id == current_user.id
+        ).all()
+
+        if search_limitations_q:
+            search_limitations = [e.case_id for e in search_limitations_q]
+
+            search_condition = and_(Cases.case_id.in_(search_limitations))
+
+        else:
+            return response_success("Results fetched", [])
 
     if search_type == "ioc":
         res = Ioc.query.with_entities(
@@ -73,7 +93,8 @@ def search_file_post(caseid: int):
                             IocLink.ioc_id == Ioc.ioc_id,
                             IocLink.case_id == Cases.case_id,
                             Client.client_id == Cases.client_id,
-                            Ioc.ioc_tlp_id == Tlp.tlp_id
+                            Ioc.ioc_tlp_id == Tlp.tlp_id,
+                            search_condition
                         )
                     ).join(Ioc.ioc_type).all()
 
@@ -86,7 +107,8 @@ def search_file_post(caseid: int):
             search_value = "%{}%".format(search_value)
             ns = Notes.query.filter(
                 Notes.note_content.like(search_value),
-                Cases.client_id == Client.client_id
+                Cases.client_id == Client.client_id,
+                search_condition
             ).with_entities(
                 Notes.note_id,
                 Notes.note_title,
@@ -107,10 +129,11 @@ def search_file_post(caseid: int):
 
 
 @search_blueprint.route('/search', methods=['GET'])
-@ac_requires(Permissions.search_all_data)
+@ac_requires(Permissions.search_across_cases, Permissions.search_across_all_cases)
 def search_file_get(caseid, url_redir):
     if url_redir:
         return redirect(url_for('search.search_file_get', cid=caseid))
 
     form = SearchForm(request.form)
     return render_template('search.html', form=form)
+
