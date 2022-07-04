@@ -30,6 +30,7 @@ from sqlalchemy import and_
 
 from app.forms import SearchForm
 from app.iris_engine.access_control.utils import ac_flag_match_mask
+from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.models.authorization import UserCaseAccess
@@ -63,16 +64,9 @@ def search_file_post(caseid: int):
     track_activity("started a search for {} on {}".format(search_value, search_type))
 
     if not ac_flag_match_mask(session['permissions'],  Permissions.search_across_all_cases.value):
-        search_limitations_q = UserCaseAccess.query.with_entities(
-            UserCaseAccess.case_id
-        ).filter(
-            UserCaseAccess.user_id == current_user.id
-        ).all()
-
-        if search_limitations_q:
-            search_limitations = [e.case_id for e in search_limitations_q]
-
-            search_condition = and_(Cases.case_id.in_(search_limitations))
+        user_search_limitations = ac_get_fast_user_cases_access(current_user.id)
+        if user_search_limitations:
+            search_condition = and_(Cases.case_id.in_(user_search_limitations))
 
         else:
             return response_success("Results fetched", [])

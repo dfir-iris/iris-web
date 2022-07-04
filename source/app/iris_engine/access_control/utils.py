@@ -343,6 +343,16 @@ def ac_auto_update_user_effective_access(user_id):
     return
 
 
+def ac_get_fast_user_cases_access(user_id):
+    ucea = UserCaseEffectiveAccess.query.with_entities(
+        UserCaseEffectiveAccess.case_id
+    ).filter(
+        UserCaseEffectiveAccess.user_id == user_id
+    ).all()
+
+    return [e.case_id for e in ucea]
+
+
 def ac_get_user_cases_access(user_id):
     ocas = OrganisationCaseAccess.query.with_entities(
         Cases.case_id,

@@ -17,11 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.states import update_ioc_state
+from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.models import CaseEventsIoc
 from app.models import Cases
 from app.models import Client
@@ -133,13 +134,20 @@ def get_detailed_iocs(caseid):
 
 
 def get_ioc_links(ioc_id, caseid):
+    search_condition = and_(Cases.case_id.in_([]))
+
+    user_search_limitations = ac_get_fast_user_cases_access(current_user.id)
+    if user_search_limitations:
+        search_condition = and_(Cases.case_id.in_(user_search_limitations))
+
     ioc_link = IocLink.query.with_entities(
         Cases.case_id,
         Cases.name.label('case_name'),
         Client.name.label('client_name')
-    ).filter(
+    ).filter(and_(
         IocLink.ioc_id == ioc_id,
-        IocLink.case_id != caseid
+        IocLink.case_id != caseid,
+        search_condition)
     ).join(IocLink.case, Cases.client).all()
 
     return ioc_link
