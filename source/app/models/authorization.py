@@ -214,16 +214,11 @@ class User(UserMixin, db.Model):
         self.email = email
         self.active = active
         self.external_id = external_id
-        self.roles = []
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
 
     def save(self):
-
-        # Default roles:
-        roles = Role.query.filter(or_(Role.id == 2, Role.id == 3)).all()
-        self.roles = roles
 
         self.api_key = secrets.token_urlsafe(nbytes=64)
 
@@ -231,19 +226,4 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         db.session.commit()
 
-        for role in roles:
-            ur = UserRoles()
-            ur.user_id = self.id
-            ur.role_id = role.id
-            db.session.add(ur)
-
-        # commit change and save the object
-        db.session.commit()
-
         return self
-
-    def is_admin(self):
-        roles = [role.name for role in self.roles]
-        if "administrator" in roles:
-            return True
-        return False

@@ -82,7 +82,7 @@ def iris_version():
 @app.context_processor
 @cache.cached(timeout=3600, key_prefix='iris_has_updates')
 def has_updates():
-    if not current_user.is_authenticated or not current_user.is_admin():
+    if not current_user.is_authenticated:
         return dict(has_updates=False)
 
     server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()

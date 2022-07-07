@@ -74,8 +74,6 @@ def update_log_error(status):
 
 @socket_io.on('join-update', namespace='/server-updates')
 def get_message(data):
-    if not current_user.is_admin():
-        return
 
     room = data['channel']
     join_room(room=room)
@@ -86,8 +84,6 @@ def get_message(data):
 
 @socket_io.on('update_ping', namespace='/server-updates')
 def socket_on_update_ping(msg):
-    if not current_user.is_admin():
-        return
 
     emit('update_ping', {'message': f"Server connected", 'is_error': False},
          namespace='/server-updates')
@@ -95,8 +91,6 @@ def socket_on_update_ping(msg):
 
 @socket_io.on('update_get_current_version', namespace='/server-updates')
 def socket_on_update_do_reboot(msg):
-    if not current_user.is_admin():
-        return
 
     socket_io.emit('update_current_version', {"version": app.config.get('IRIS_VERSION')}, to='iris_update_status',
                    namespace='/server-updates')

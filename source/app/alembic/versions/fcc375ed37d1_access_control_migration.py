@@ -228,6 +228,8 @@ def upgrade():
             conn.execute(f"insert into user_case_effective_access (case_id, user_id, access_level) values "
                          f"({case_id}, {user_id}, {access_level}) on conflict do nothing;")
 
+    op.drop_table('user_roles')
+
     pass
 
 
