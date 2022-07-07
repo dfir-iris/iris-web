@@ -53,6 +53,9 @@ function submit_new_case() {
     if (has_error){return false;}
 
     data_sent['custom_attributes'] = attributes;
+    if(data_sent['case_organisations'] === parseInt(data_sent['case_organisations'], 10)) {
+        data_sent['case_organisations'] = [data_sent['case_organisations']]
+    }
 
     post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {
         $('#submit_new_case_btn').text('Checking data..')

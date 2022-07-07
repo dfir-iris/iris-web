@@ -40,6 +40,9 @@ from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
+from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
+from app.datamgmt.manage.manage_organisations_db import get_org
+from app.datamgmt.manage.manage_users_db import add_case_access_to_user
 from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
@@ -236,6 +239,19 @@ def api_add_case(caseid):
 
         case.save()
 
+        case_orgs = request.json.get('case_organisations')
+        if not case_orgs:
+            # Only add the user in case access
+            add_case_access_to_user(current_user, [case.case_id], CaseAccessLevel.full_access.value)
+
+        else:
+            for org_id in case_orgs:
+                org = get_org(int(org_id))
+                if not org:
+                    raise marshmallow.exceptions.ValidationError("Invalid organisation ID",
+                                                                 field_name="case_organisations")
+                add_case_access_to_org(org.id, [case.case_id], CaseAccessLevel.full_access.value)
+
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
         track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
@@ -243,7 +259,8 @@ def api_add_case(caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
     except Exception as e:
-        return response_error(msg="Data error", data=e.__str__(), status=400)
+        log.error(e.__str__())
+        return response_error(msg='Unable to create case', status=400)
 
     return response_success(msg='Case created', data=case_schema.dump(case))
 
