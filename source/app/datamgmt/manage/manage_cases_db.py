@@ -41,8 +41,11 @@ from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
 from app.models.authorization import CaseAccessLevel
+from app.models.authorization import GroupCaseAccess
+from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import User
 from app.models import UserActivity
+from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 
 
@@ -103,6 +106,8 @@ def list_cases_dict(user_id):
         row['case_open_date'] = row['case_open_date'].strftime("%m/%d/%Y")
         row['case_close_date'] = row['case_close_date'].strftime("%m/%d/%Y") if row["case_close_date"] else ""
         data.append(row)
+
+    print(len(data))
 
     return data
 
@@ -196,6 +201,11 @@ def delete_case(case_id):
         CaseEventCategory.query.filter(CaseEventCategory.event_id == event.event_id).delete()
 
     CasesEvent.query.filter(CasesEvent.case_id == case_id).delete()
+
+    UserCaseAccess.query.filter(UserCaseAccess.case_id == case_id).delete()
+    UserCaseEffectiveAccess.query.filter(UserCaseEffectiveAccess.case_id == case_id).delete()
+    GroupCaseAccess.query.filter(GroupCaseAccess.case_id == case_id).delete()
+    OrganisationCaseAccess.query.filter(OrganisationCaseAccess.case_id == case_id).delete()
 
     Cases.query.filter(Cases.case_id == case_id).delete()
     db.session.commit()
