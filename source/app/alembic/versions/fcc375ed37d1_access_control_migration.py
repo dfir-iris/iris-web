@@ -8,6 +8,7 @@ Create Date: 2022-06-14 17:01:29.205520
 import sqlalchemy as sa
 import uuid
 from alembic import op
+from sqlalchemy import BigInteger
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -139,6 +140,7 @@ def upgrade():
                         sa.Column('id', sa.BigInteger(), primary_key=True, nullable=False),
                         sa.Column('user_id', sa.BigInteger(), sa.ForeignKey('user.id'), nullable=False),
                         sa.Column('org_id', sa.BigInteger(), sa.ForeignKey('organisations.org_id'), nullable=False),
+                        sa.Column('is_primary_org', sa.Boolean(), nullable=False),
                         keep_existing=True
                         )
         op.create_foreign_key('user_organisation_user_id_fkey', 'user_organisation', 'user', ['user_id'], ['id'])
@@ -218,8 +220,8 @@ def upgrade():
                          f"on conflict do nothing;")
 
         # Add user to default organisation
-        conn.execute(f"insert into user_organisation (user_id, org_id) values ({user_id}, {default_org_id})"
-                     f"on conflict do nothing;")
+        conn.execute(f"insert into user_organisation (user_id, org_id, is_primary_org) values ({user_id}, "
+                     f"{default_org_id}, true) on conflict do nothing;")
 
         # Add default cases effective permissions
         for case_id in result_cases:

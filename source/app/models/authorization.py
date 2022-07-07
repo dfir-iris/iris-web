@@ -154,7 +154,8 @@ class UserOrganisation(db.Model):
 
     id = Column(BigInteger, primary_key=True, nullable=False)
     user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
-    org_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False);
+    org_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False)
+    is_primary_org = Column(Boolean, nullable=False)
 
     user = relationship('User')
     org = relationship('Organisation')
@@ -205,8 +206,6 @@ class User(UserMixin, db.Model):
     api_key = Column(Text(), unique=True)
     external_id = Column(Text, unique=True)
     in_dark_mode = Column(Boolean())
-
-    roles = relationship('Role', secondary='user_roles')
 
     def __init__(self, user: str, name: str, email: str, password: str, active: str, external_id: str = None):
         self.user = user
