@@ -152,18 +152,21 @@ def update_org_members(org, members):
 
 def remove_user_from_organisation(org, member):
     if not org:
-        return None
+        return False, 'Invalid organisation'
 
-    UserOrganisation.query.filter(
+    org = UserOrganisation.query.filter(
         and_(UserOrganisation.org_id == org.org_id,
              UserOrganisation.user_id == member.id)
-    ).delete()
+    ).first()
+
+    if org and org.is_primary_org:
+        return False, f'Cannot delete user from primary organisation {org.org_id}. Change it before deleting.'
 
     db.session.commit()
 
     ac_auto_update_user_effective_access(member.id)
 
-    return org
+    return True, f'User removed from organisation {org.org_id}'
 
 
 def delete_organisation(org):

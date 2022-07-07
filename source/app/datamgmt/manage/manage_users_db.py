@@ -105,10 +105,19 @@ def update_user_groups(user_id, groups):
 
 def update_user_orgs(user_id, orgs):
     cur_orgs = UserOrganisation.query.with_entities(
-        UserOrganisation.org_id
+        UserOrganisation.org_id,
+        UserOrganisation.is_primary_org
     ).filter(UserOrganisation.user_id == user_id).all()
 
-    set_cur_orgs = set([org[0] for org in cur_orgs])
+    primary_org = 0
+    for org in cur_orgs:
+        if org.is_primary_org:
+            primary_org = org.org_id
+
+    if primary_org == 0:
+        raise Exception('User does not have primary organisation. Set one before managing its organisations')
+
+    set_cur_orgs = set([org.org_id for org in cur_orgs])
     set_new_orgs = set(int(org) for org in orgs)
 
     orgs_to_add = set_new_orgs - set_cur_orgs
@@ -121,10 +130,13 @@ def update_user_orgs(user_id, orgs):
         db.session.add(user_org)
 
     for org in orgs_to_remove:
-        UserOrganisation.query.filter(
-            UserOrganisation.user_id == user_id,
-            UserOrganisation.org_id == org
-        ).delete()
+        if org != primary_org:
+            UserOrganisation.query.filter(
+                UserOrganisation.user_id == user_id,
+                UserOrganisation.org_id == org
+            ).delete()
+        else:
+            raise Exception(f'Cannot delete user from primary organisation {org}. Change it before deleting.')
 
     db.session.commit()
 
