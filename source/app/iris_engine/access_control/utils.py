@@ -1,4 +1,5 @@
 from flask import session
+from flask_login import current_user
 from sqlalchemy import and_
 
 import app
@@ -210,6 +211,10 @@ def ac_fast_check_user_has_case_access(user_id, cid, access_level):
             return ucea[0]
 
     return None
+
+
+def ac_fast_check_current_user_has_case_access(cid, access_level):
+    return ac_fast_check_user_has_case_access(current_user.id, cid, access_level)
 
 
 def ac_user_has_case_access(user_id, cid, access_level):

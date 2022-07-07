@@ -39,37 +39,47 @@
                             <div id="add" role="tabpanel" aria-labelledby="add-tab"
                                 class="tab-pane fade px-4 py-5 show active">
                                 <div class="row">
-                                    <div class="col-md-6 col-lg-6 col-sm-12">
+                                    <div class="col-md-12 col-lg-6 col-sm-12">
                                         <h4 class="border-bottom pb-3">General info</h4>
                                         <form method="post" action='' id="form_new_case" autocomplete="off">
                                             {{ form.hidden_tag() }}
-                                            <div class="form-group ml-1 mb-2">
-                                                    {{ form.case_customer(class="selectpicker pl--6 btn-outline-white") }}
-                                            </div>
-                                            <div class="col-md-12 col-lg-12 col-sm-12">
 
+                                            <div class="col-md-12 col-lg-12 col-sm-12">
                                                 <div class="input-group mb-4">
                                                     <div class="input-group-prepend">
-														<span class="input-group-text">Case name</span>
+                                                            <span class="input-group-text">Customer *</span>
+                                                    </div>
+                                                    {{ form.case_customer(class="selectpicker pl--6 btn-outline-white") }}
+                                                </div>
+                                                <div class="input-group mb-4">
+                                                    <div class="input-group-prepend">
+                                                            <span class="input-group-text">Create in organisations</span>
+                                                    </div>
+                                                    {{ form.case_organisations(class="selectpicker pl--6 btn-outline-white") }}
+                                                </div>
+                                                <div class="input-group mb-4">
+                                                    <div class="input-group-prepend">
+														<span class="input-group-text">Case name *</span>
 													</div>
                                                     {{ form.case_name(class="form-control", type="text") }}
                                                 </div>
                                                 <div class="input-group mb-4">
                                                     <div class="input-group-prepend">
-														<span class="input-group-text">Short description</span>
+														<span class="input-group-text">Short description *</span>
 													</div>
                                                     {{ form.case_description(class="form-control", type="text") }}
                                                 </div>
                                                 <div class="input-group mb-4">
                                                     <div class="input-group-prepend">
-														<span class="input-group-text">SOC ticket #</span>
+														<span class="input-group-text">SOC ticket ID *</span>
 													</div>
                                                     {{ form.case_soc_id(class="form-control", type="text") }}
                                                 </div>
                                             </div>
+
                                         </form>
                                     </div>
-                                    <div class="col-md-6 col-lg-6 col-sm-12">
+                                    <div class="col-md-12 col-lg-6 col-sm-12">
                                         {% if attributes and attributes|length > 0 %}
                                             <h4><ul class="nav nav-tabs nav-lines mr-4" role="tablist">
                                                     {% for ca in attributes %}

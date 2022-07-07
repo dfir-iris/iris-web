@@ -119,6 +119,7 @@ class AddCaseForm(FlaskForm):
     case_description = StringField(u'Case description', validators=[InputRequired()])
     case_soc_id = StringField(u'SOC Ticket')
     case_customer = SelectField(u'Customer', validators=[InputRequired()])
+    case_organisations = SelectMultipleField(u'Organisations')
 
     pipeline = SelectField(u'Analysis pipeline')
 

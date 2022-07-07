@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - DFIR-IRIS Airbus CyberSecurity (SAS)
+#  contact@dfir-iris.org - ir@cyberactionlab.net
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -40,7 +40,9 @@ from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
+from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
@@ -67,6 +69,33 @@ manage_cases_blueprint = Blueprint('manage_case',
 
 
 # CONTENT ------------------------------------------------
+@manage_cases_blueprint.route('/manage/cases', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.full_access)
+def manage_index_cases(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
+
+    form = AddCaseForm()
+    # Fill select form field customer with the available customers in DB
+    form.case_customer.choices = [(c.client_id , c.name) for c in
+                                  Client.query.order_by(Client.name)]
+
+    form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
+
+    pl = list_available_pipelines()
+
+    form.pipeline.choices = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
+                                         ap[1]['pipeline_human_name'])for ap in pl]
+
+    # Return default page of case management
+    pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
+                      ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
+
+    attributes = get_default_custom_attributes('case')
+
+    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args, attributes=attributes)
+
+
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
 @ac_case_requires()
 def details_case(cur_id, caseid, url_redir):
@@ -91,7 +120,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
-    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_only]):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -107,7 +136,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
 @ac_api_case_requires()
 def get_case_api(cur_id, caseid):
 
-    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_only]):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -120,6 +149,9 @@ def get_case_api(cur_id, caseid):
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.manage_case)
 def api_delete_case(cur_id, caseid):
+
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
+        return ac_api_return_access_denied(caseid=cur_id)
 
     if cur_id == caseid:
         track_activity("tried to delete case {}, but case was the context".format(cur_id),
@@ -156,6 +188,9 @@ def api_delete_case(cur_id, caseid):
 @ac_api_requires(Permissions.manage_case)
 def api_reopen_case(cur_id, caseid):
 
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
+        return ac_api_return_access_denied(caseid=cur_id)
+
     if not cur_id:
         return response_error("No case ID provided")
 
@@ -171,7 +206,9 @@ def api_reopen_case(cur_id, caseid):
 
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.manage_case)
-def api_delete_close(cur_id, caseid):
+def api_case_close(cur_id, caseid):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
+        return ac_api_return_access_denied(caseid=cur_id)
 
     if not cur_id:
         return response_error("No case ID provided")
@@ -220,34 +257,10 @@ def api_list_case(caseid):
     return response_success("", data=data)
 
 
-@manage_cases_blueprint.route('/manage/cases', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def manage_index_cases(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
-
-    form = AddCaseForm()
-    # Fill select form field customer with the available customers in DB
-    form.case_customer.choices = [(c.client_id , c.name) for c in
-                                  Client.query.order_by(Client.name)]
-
-    pl = list_available_pipelines()
-
-    form.pipeline.choices = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
-                                         ap[1]['pipeline_human_name'])for ap in pl]
-
-    # Return default page of case management
-    pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
-                      ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
-
-    attributes = get_default_custom_attributes('case')
-
-    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args, attributes=attributes)
-
-
 @manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def update_case_files(caseid):
+
     # case update request. The files should have already arrived with the request upload_files
     try:
         # Create the update task
