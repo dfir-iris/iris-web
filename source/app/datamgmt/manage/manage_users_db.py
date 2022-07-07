@@ -109,13 +109,14 @@ def update_user_orgs(user_id, orgs):
         UserOrganisation.is_primary_org
     ).filter(UserOrganisation.user_id == user_id).all()
 
+    updated = False
     primary_org = 0
     for org in cur_orgs:
         if org.is_primary_org:
             primary_org = org.org_id
 
     if primary_org == 0:
-        raise Exception('User does not have primary organisation. Set one before managing its organisations')
+        return False, 'User does not have primary organisation. Set one before managing its organisations'
 
     set_cur_orgs = set([org.org_id for org in cur_orgs])
     set_new_orgs = set(int(org) for org in orgs)
@@ -128,6 +129,7 @@ def update_user_orgs(user_id, orgs):
         user_org.user_id = user_id
         user_org.org_id = org
         db.session.add(user_org)
+        updated = True
 
     for org in orgs_to_remove:
         if org != primary_org:
@@ -136,11 +138,14 @@ def update_user_orgs(user_id, orgs):
                 UserOrganisation.org_id == org
             ).delete()
         else:
-            raise Exception(f'Cannot delete user from primary organisation {org}. Change it before deleting.')
+            db.session.rollback()
+            return False, f'Cannot delete user from primary organisation {org}. Change it before deleting.'
+        updated = True
 
     db.session.commit()
 
     ac_auto_update_user_effective_access(user_id)
+    return True, f'Organisations membership updated' if updated else "Nothing changed"
 
 
 def get_user_organisations(user_id):

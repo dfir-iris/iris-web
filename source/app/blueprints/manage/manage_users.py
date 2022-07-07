@@ -224,10 +224,12 @@ def manage_user_orgs(cur_id, caseid):
     if not user:
         return response_error("Invalid user ID")
 
-    update_user_orgs(user_id=cur_id,
-                     orgs=request.json.get('orgs_membership'))
+    success, logs = update_user_orgs(user_id=cur_id,
+                                     orgs=request.json.get('orgs_membership'))
+    if not success:
+        return response_error(logs)
 
-    return response_success("User organisations updated", data=user)
+    return response_success(logs, data=user)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/modal', methods=['GET'])

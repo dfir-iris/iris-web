@@ -265,13 +265,13 @@ def manage_groups_members_delete(cur_id, cur_id_2, caseid):
     if not user:
         return response_error("Invalid user ID")
 
-    success, log = remove_user_from_organisation(org, user)
+    success, logs = remove_user_from_organisation(org, user)
     if not success:
-        return response_error(log)
+        return response_error(logs)
 
     org = get_org_with_members(cur_id)
 
-    return response_success('Member deleted from organisation', data=org)
+    return response_success(logs, data=org)
 
 
 @manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/cases-access/modal', methods=['GET'])
