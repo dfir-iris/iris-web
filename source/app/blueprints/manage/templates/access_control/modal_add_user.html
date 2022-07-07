@@ -194,7 +194,7 @@
                                             <th>Organisation name</th>
                                             <th>Organisation ID</th>
                                             <th>Organisation UUID</th>
-                                            <th>Is primary organisation</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -278,7 +278,7 @@
                 "columns": [{
                     "title": "Organisation name",
                     "render": function ( data, type, row, meta ) {
-                        if (type === 'display' ) {
+                        if (type === 'display' & row[3] === "False" ) {
                             return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove from org" href="javascript:void(0)" onclick="remove_member_from_org_wrap('${row[1]}','{{ user.user_id }}')"></i>${data}`;
                         }
                         return data;
