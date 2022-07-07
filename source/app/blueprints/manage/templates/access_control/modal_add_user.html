@@ -99,7 +99,7 @@
                                 {% if user.user_id %}
                                     <button type="button" class="btn btn-danger mt-5"
                                     onclick="delete_user('{{ user.user_id }}');">Delete</button>
-                                    {% if user.active %}
+                                    {% if user.user_active %}
                                     <button type="button" class="btn btn-outline-danger mt-5"
                                     onclick="deactivate_user('{{ user.user_id }}');">Deactivate</button>
                                     {% else %}

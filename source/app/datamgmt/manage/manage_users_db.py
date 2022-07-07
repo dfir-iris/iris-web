@@ -32,6 +32,7 @@ from app.models.authorization import Organisation
 from app.models.authorization import Role
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
+from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 from app.models.authorization import UserRoles
@@ -354,7 +355,10 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
 
 
 def delete_user(user_id):
-    UserRoles.query.filter(UserRoles.user_id == user_id).delete()
+    UserCaseAccess.query.filter(UserCaseAccess.user_id == user_id).delete()
+    UserOrganisation.query.filter(UserOrganisation.user_id == user_id).delete()
+    UserGroup.query.filter(UserGroup.user_id == user_id).delete()
+    UserCaseEffectiveAccess.query.filter(UserCaseEffectiveAccess.user_id == user_id).delete()
 
     User.query.filter(User.id == user_id).delete()
     db.session.commit()
