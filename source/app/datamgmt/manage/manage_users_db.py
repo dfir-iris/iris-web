@@ -135,7 +135,8 @@ def get_user_organisations(user_id):
     user_org = UserOrganisation.query.with_entities(
         Organisation.org_name,
         Organisation.org_id,
-        Organisation.org_uuid
+        Organisation.org_uuid,
+        UserOrganisation.is_primary_org
     ).filter(
         UserOrganisation.user_id == user_id
     ).join(

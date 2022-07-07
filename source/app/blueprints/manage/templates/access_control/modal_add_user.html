@@ -194,14 +194,16 @@
                                             <th>Organisation name</th>
                                             <th>Organisation ID</th>
                                             <th>Organisation UUID</th>
+                                            <th>Is primary organisation</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                     {% for org in user.user_organisations %}
                                         <tr>
-                                            <td>{{ org.org_name }}</td>
+                                            <td>{% if org.is_primary_org %}<i class="fa-solid fa-house-circle-check text-success" title="Primary organisation of the user"></i> {% endif %}{{ org.org_name }}</td>
                                             <td>{{ org.org_id }}</td>
                                             <td>{{ org.org_uuid }}</td>
+                                            <td>{{ org.is_primary_org }}</td>
                                         </tr>
                                     {% endfor %}
                                     </tbody>
