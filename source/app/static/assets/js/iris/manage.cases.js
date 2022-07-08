@@ -63,6 +63,33 @@ function submit_new_case() {
         data_sent['case_organisations'] = [data_sent['case_organisations']];
     }
 
+    if (data_sent['case_organisations'] === undefined) {
+        swal({
+            title: "Attention",
+            text: "No organisation selected.\n No one other than you will be able to see and run this case.\n Continue?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            buttons: ["Cancel", "Let\'s do that"]
+        })
+        .then((allAlone) => {
+            if (allAlone) {
+                send_add_case(data_sent);
+            } else {
+                notify_success('Case addition canceled');
+            }
+        });
+    }
+    else {
+        send_add_case(data_sent);
+    }
+    return false;
+};
+
+function send_add_case(data_sent) {
+
     post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {
         $('#submit_new_case_btn').text('Checking data..')
             .attr("disabled", true)
@@ -71,6 +98,7 @@ function submit_new_case() {
     })
     .done((data) => {
         if (notify_auto_api(data, true)) {
+            case_id = data.data.case_id;
             swal("That's done !",
                 "Case has been successfully created",
                 "success",
@@ -79,11 +107,17 @@ function submit_new_case() {
                         again: {
                             text: "Create a case again",
                             value: "again",
-                            dangerMode: true
+                            dangerMode: true,
+                            color: '#d33'
                         },
                         dash: {
                             text: "Go to dashboard",
                             value: "dash",
+                            color: '#d33'
+                        },
+                        go_case: {
+                            text: "Switch to newly created case",
+                            value: "go_case"
                         }
                     }
                 }
@@ -98,8 +132,11 @@ function submit_new_case() {
                         window.location.replace("/manage/cases" + case_param());
                         break;
 
+                    case 'go_case':
+                        window.location.replace("/case?cid=" + case_id);
+
                     default:
-                        window.location.replace("/dashboard" + case_param());
+                        window.location.replace("/case?cid=" + case_id);
                 }
             });
         }
@@ -114,8 +151,7 @@ function submit_new_case() {
         $('#submit_new_case_btn').text('Save');
     })
 
-    return false;
-};
+}
 
 /*************************
  *  Case update section 
