@@ -31,6 +31,11 @@ $('#case_customer').selectpicker({
     title: "Customer",
     style: "btn-outline-white"
 });
+$('#case_organisations').selectpicker({
+    liveSearch: true,
+    title: "Customer",
+    style: "btn-outline-white"
+});
 
 $('#update_pipeline_selector').on('change', function(e){
   $(".control-update-pipeline-args ").hide();
@@ -53,8 +58,9 @@ function submit_new_case() {
     if (has_error){return false;}
 
     data_sent['custom_attributes'] = attributes;
-    if(data_sent['case_organisations'] === parseInt(data_sent['case_organisations'], 10)) {
-        data_sent['case_organisations'] = [data_sent['case_organisations']]
+
+    if(typeof data_sent['case_organisations'] === 'string') {
+        data_sent['case_organisations'] = [data_sent['case_organisations']];
     }
 
     post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {

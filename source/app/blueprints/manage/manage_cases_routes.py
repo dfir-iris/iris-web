@@ -250,7 +250,7 @@ def api_add_case(caseid):
                 if not org:
                     raise marshmallow.exceptions.ValidationError("Invalid organisation ID",
                                                                  field_name="case_organisations")
-                add_case_access_to_org(org.id, [case.case_id], CaseAccessLevel.full_access.value)
+                add_case_access_to_org(org, [case.case_id], CaseAccessLevel.full_access.value)
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
