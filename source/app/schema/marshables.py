@@ -693,12 +693,24 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     user_isadmin = fields.Boolean(required=True)
     csrf_token = fields.String(required=False)
     user_id = fields.Integer(required=False)
+    primary_organisation_id = auto_field('primary_organisation_id', required=True)
 
     class Meta:
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email']
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email',
+                   'primary_organisation_id']
+
+    @pre_load()
+    def verify_primary_org(self, data, **kwargs):
+        prim_org = data.get('primary_organisation_id')
+        org = get_org(prim_org)
+        if not org:
+            raise marshmallow.exceptions.ValidationError('Invalid organisation ID',
+                                                          field_name="primary_organisation_id")
+
+        return data
 
     @pre_load()
     def verify_username(self, data, **kwargs):

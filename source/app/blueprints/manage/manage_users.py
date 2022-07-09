@@ -99,15 +99,14 @@ if is_authentication_local():
             user_schema = UserSchema()
             jsdata = request.get_json()
             jsdata['user_id'] = 0
-            jsdata['active'] = True
+            jsdata['active'] = jsdata.get('active', True)
             cuser = user_schema.load(jsdata, partial=True)
             user = create_user(user_name=cuser.name,
                                user_login=cuser.user,
                                user_email=cuser.email,
                                user_password=cuser.password,
-                               user_isadmin=jsdata.get('user_isadmin'))
-
-            db.session.commit()
+                               primary_org=cuser.primary_org_id,
+                               user_active=jsdata.get('active'))
 
             if cuser:
                 track_activity("created user {}".format(user.user), caseid=caseid)

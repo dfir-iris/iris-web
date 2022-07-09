@@ -363,17 +363,20 @@ def get_users_list_restricted():
     return output
 
 
-def create_user(user_name, user_login, user_password, user_email, user_isadmin, user_external_id: str = None):
+def create_user(user_name: str, user_login: str, user_password: str, user_email: str, user_active: bool,
+                primary_org: int, user_external_id: str = None):
+
     pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
 
-    user = User(user_login, user_name, user_email, pw_hash, True, external_id=user_external_id)
+    user = User(user=user_login, name=user_name, email=user_email, password=pw_hash, active=user_active,
+                primary_org=primary_org, external_id=user_external_id)
     user.save()
 
     db.session.commit()
     return user
 
 
-def update_user(user: User, name: str = None, email: str = None, password: str = None, user_isadmin: bool = None):
+def update_user(user: User, name: str = None, email: str = None, password: str = None):
 
     if password is not None:
         pw_hash = bc.generate_password_hash(password.encode('utf8')).decode('utf8')
