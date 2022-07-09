@@ -108,7 +108,6 @@ def update_user_view(caseid):
         jsdata['user_id'] = current_user.id
         cuser = user_schema.load(jsdata, instance=user, partial=True)
         update_user(password=jsdata.get('user_password'),
-                    user_isadmin=None,
                     user=user)
         db.session.commit()
 

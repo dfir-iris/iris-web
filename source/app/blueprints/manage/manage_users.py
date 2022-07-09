@@ -323,9 +323,7 @@ if is_authentication_local():
             jsdata = request.get_json()
             jsdata['user_id'] = cur_id
             cuser = user_schema.load(jsdata, instance=user, partial=True)
-            uadm = jsdata.get('user_isadmin') or False
             update_user(password=jsdata.get('user_password'),
-                        user_isadmin=uadm,
                         user=user)
             db.session.commit()
 
