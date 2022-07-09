@@ -34,6 +34,7 @@ from app import bc
 from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
@@ -41,6 +42,7 @@ from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.cases import Cases
@@ -127,10 +129,10 @@ def run_post_init(development=False):
         create_safe_server_settings()
 
         log.info("Creating initial authorisation model")
-        create_safe_auth_model()
+        def_org, gadm, ganalysts = create_safe_auth_model()
 
         log.info("Creating first administrative user")
-        admin = create_safe_admin()
+        admin = create_safe_admin(def_org=def_org, gadm=gadm)
 
         log.info("Registering default modules")
         register_default_modules()
@@ -141,7 +143,8 @@ def run_post_init(development=False):
         log.info("Creating demo case")
         case = create_safe_case(
             user=admin,
-            client=client
+            client=client,
+            def_org=def_org
         )
 
         # setup symlinks for custom_assets
@@ -498,7 +501,7 @@ def create_safe_admin(def_org, gadm):
     return user
 
 
-def create_safe_case(user, client):
+def create_safe_case(user, client, def_org):
     case = Cases.query.filter(
         Cases.client_id == client.client_id
     ).first()
@@ -517,6 +520,9 @@ def create_safe_case(user, client):
         case.save()
 
         db.session.commit()
+
+        # Add case to default org
+        add_case_access_to_org(def_org.org_id, [case.case_id], [CaseAccessLevel.full_access.value])
 
     return case
 
