@@ -148,6 +148,7 @@ def update_user_orgs(user_id, orgs):
 
 
 def add_user_to_organisation(user_id, org_id):
+
     exists = UserOrganisation.query.filter(
         UserOrganisation.user_id == user_id,
         UserOrganisation.org_id == org_id
@@ -156,12 +157,38 @@ def add_user_to_organisation(user_id, org_id):
     if exists:
         return True
 
+    # Check if user has a primary org already
+    prim_org = get_user_primary_org(user_id=user_id)
+
     uo = UserOrganisation()
     uo.user_id = user_id
     uo.org_id = org_id
+    uo.is_primary_org = prim_org is None
     db.session.add(uo)
     db.session.commit()
     return True
+
+
+def get_user_primary_org(user_id):
+
+    uo = UserOrganisation.query.filter(
+            and_(UserOrganisation.user_id == user_id,
+                 UserOrganisation.is_primary_org == True)
+    ).all()
+
+    if not uo:
+        return None
+
+    index = 0
+    if len(uo) > 1:
+        # Fix potential duplication
+        for u in uo:
+            if index == 0:
+                continue
+            u.is_primary_org = False
+        db.session.commit()
+
+    return uo
 
 
 def add_user_to_group(user_id, group_id):
