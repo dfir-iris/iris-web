@@ -20,6 +20,7 @@ from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.manage.manage_users_db import get_user_primary_org
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
@@ -130,17 +131,21 @@ def update_org_members(org, members):
     for uid in users_to_add:
         user = User.query.filter(User.id == uid).first()
         if user:
-            ug = UserOrganisation()
-            ug.org_id = org.org_id
-            ug.user_id = user.id
-            db.session.add(ug)
+            prim_org = get_user_primary_org(user.id)
+
+            uo = UserOrganisation()
+            uo.org_id = org.org_id
+            uo.user_id = user.id
+            uo.is_primary_org = prim_org is None
+            db.session.add(uo)
 
             ac_auto_update_user_effective_access(uid)
 
     for uid in users_to_remove:
         UserOrganisation.query.filter(
             and_(UserOrganisation.user_id == uid,
-                 UserOrganisation.org_id == org.org_id)
+                 UserOrganisation.org_id == org.org_id,
+                 UserOrganisation.is_primary_org == False)
         ).delete()
 
         ac_auto_update_user_effective_access(uid)
