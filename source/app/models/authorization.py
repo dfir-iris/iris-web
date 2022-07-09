@@ -192,11 +192,8 @@ class User(UserMixin, db.Model):
     api_key = Column(Text(), unique=True)
     external_id = Column(Text, unique=True)
     in_dark_mode = Column(Boolean())
-    primary_organisation_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False)
 
-    primary_organisation = relationship('Organisation')
-
-    def __init__(self, user: str, name: str, email: str, password: str, active: bool, primary_org: int,
+    def __init__(self, user: str, name: str, email: str, password: str, active: bool,
                  external_id: str = None):
         self.user = user
         self.name = name
@@ -204,7 +201,6 @@ class User(UserMixin, db.Model):
         self.email = email
         self.active = active
         self.external_id = external_id
-        self.primary_organisation_id = primary_org
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)

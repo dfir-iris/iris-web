@@ -91,7 +91,7 @@ class AddUserForm(FlaskForm):
     user_name = StringField(u'Username', validators=[DataRequired()])
     user_password = PasswordField(u'Password', validators=[DataRequired()])
     user_email = StringField(u'Email', validators=[DataRequired(), Email()])
-    user_isadmin = BooleanField(u'Is admin', default=False)
+    user_primary_organisation_id = SelectField(u'Primary Organisation', validators=[DataRequired()])
 
 
 class AddGroupForm(FlaskForm):

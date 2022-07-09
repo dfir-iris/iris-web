@@ -24,6 +24,7 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
 from flask import url_for
 from flask_login import current_user
 
@@ -41,6 +42,7 @@ from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_user_by_username
 from app.datamgmt.manage.manage_users_db import get_user_details
 from app.datamgmt.manage.manage_users_db import get_user_effective_permissions
+from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.datamgmt.manage.manage_users_db import remove_case_access_from_user
@@ -48,6 +50,7 @@ from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_users_db import update_user_orgs
 from app.forms import AddUserForm
+from app.iris_engine.access_control.utils import ac_flag_match_mask
 from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.utils.tracker import track_activity
@@ -84,6 +87,12 @@ if is_authentication_local():
 
         user = None
         form = AddUserForm()
+        if ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+            orgs_choices = [(org.org_id, org.org_name) for org in get_organisations_list()]
+        else:
+            orgs_choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
+
+        form.user_primary_organisation_id.choices = orgs_choices
         server_settings = get_srv_settings()
 
         return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
@@ -105,7 +114,7 @@ if is_authentication_local():
                                user_login=cuser.user,
                                user_email=cuser.email,
                                user_password=cuser.password,
-                               primary_org=cuser.primary_org_id,
+                               primary_org=jsdata.get('user_primary_organisation_id'),
                                user_active=jsdata.get('active'))
 
             if cuser:
@@ -146,6 +155,13 @@ def view_user_modal(cur_id, caseid, url_redir):
     form.user_login.render_kw = {'value': user.get('user_login')}
     form.user_name.render_kw = {'value': user.get('user_name')}
     form.user_email.render_kw = {'value': user.get('user_email')}
+
+    if ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        orgs_choices = [(org.org_id, org.org_name) for org in get_organisations_list()]
+    else:
+        orgs_choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
+    form.user_primary_organisation_id.choices = orgs_choices
+    form.user_primary_organisation_id.render_kw = {'value': user.get('user_primary_organisation_id')}
 
     server_settings = get_srv_settings()
 

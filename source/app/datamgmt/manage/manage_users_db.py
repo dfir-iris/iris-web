@@ -290,6 +290,9 @@ def get_user_details(user_id):
     row['user_permissions'] = get_user_effective_permissions(user_id)
     row['user_cases_access'] = get_user_cases_access(user_id)
 
+    upg = get_user_primary_org(user_id)
+    row['user_primary_organisation_id'] = upg[0].org_id if upg else 0
+
     return row
 
 
@@ -369,10 +372,11 @@ def create_user(user_name: str, user_login: str, user_password: str, user_email:
     pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
 
     user = User(user=user_login, name=user_name, email=user_email, password=pw_hash, active=user_active,
-                primary_org=primary_org, external_id=user_external_id)
+                external_id=user_external_id)
     user.save()
 
-    db.session.commit()
+    add_user_to_organisation(user.id, org_id=primary_org)
+
     return user
 
 

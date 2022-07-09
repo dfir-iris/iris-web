@@ -45,6 +45,7 @@ from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
 from app.datamgmt.manage.manage_organisations_db import get_org
 from app.datamgmt.manage.manage_users_db import add_case_access_to_user
+from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus
 from app.models import AssetsType
@@ -693,22 +694,21 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     user_isadmin = fields.Boolean(required=True)
     csrf_token = fields.String(required=False)
     user_id = fields.Integer(required=False)
-    primary_organisation_id = auto_field('primary_organisation_id', required=True)
+    user_primary_organisation_id = fields.Integer(required=False)
 
     class Meta:
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email',
-                   'primary_organisation_id']
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email']
 
     @pre_load()
     def verify_primary_org(self, data, **kwargs):
-        prim_org = data.get('primary_organisation_id')
+        prim_org = data.get('user_primary_organisation_id')
         org = get_org(prim_org)
         if not org:
             raise marshmallow.exceptions.ValidationError('Invalid organisation ID',
-                                                          field_name="primary_organisation_id")
+                                                          field_name="user_primary_organisation_id")
 
         return data
 

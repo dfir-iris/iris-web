@@ -47,21 +47,25 @@
                                         <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Permissions, groups and organisations memberships can be set once the user is created.</p>
                                     {% endif %}
                                     <div class="form-group">
-                                        <label for="asset_type" class="mr-4">Full name
+                                        <label for="user_name" class="mr-4">Full name
                                         </label>
                                         {{ form.user_name(class='form-control',  autocomplete="off") }}
                                     </div>
                                     <div class="form-group mt-3">
-                                        <label for="asset_description" class="placeholder">Login</label>
+                                        <label for="user_login" class="placeholder">Login</label>
                                         {{ form.user_login(class='form-control',  autocomplete="off") }}
                                     </div>
                                     <div class="form-group mt-3">
-                                        <label for="asset_description" class="placeholder">Email</label>
+                                        <label for="user_email" class="placeholder">Email</label>
                                         {{ form.user_email(class='form-control',  autocomplete="off") }}
                                     </div>
                                     <div class="form-group mt-3">
-                                        <label for="asset_description" class="placeholder">Password</label>
-                                        <ul >
+                                        <label for="user_email" class="placeholder">Primary organisation</label>
+                                        {{ form.user_primary_organisation_id(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="user_pwd" class="placeholder">Password</label>
+                                        <ul>
                                             <li><small>Must contain at least {{ server_settings.password_policy_min_length }} chars</small></li>
                                             {% if server_settings.password_policy_upper_case %}
                                                 <li class="text-sm"><small>Must contain at least an upper case</small></li>
