@@ -34,6 +34,8 @@ from app import bc
 from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.datamgmt.manage.manage_users_db import add_user_to_group
+from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
@@ -445,8 +447,8 @@ def create_safe_client():
 
 
 def create_safe_auth_model():
-    create_safe(db.session, Organisation, org_name="Default Org",
-                org_description="Default Organisation")
+    def_org = create_safe(db.session, Organisation, org_name="Default Org",
+                          org_description="Default Organisation")
 
     gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators")
     if gadm.group_permissions != ac_get_mask_full_permissions():
@@ -458,8 +460,10 @@ def create_safe_auth_model():
         ganalysts.group_permissions = ac_get_mask_analyst()
         db.session.commit()
 
+    return def_org, gadm, ganalysts
 
-def create_safe_admin():
+
+def create_safe_admin(def_org, gadm):
     user = User.query.filter(
         User.user == "administrator",
         User.name == "administrator",
@@ -478,6 +482,12 @@ def create_safe_admin():
         db.session.add(user)
 
         db.session.commit()
+
+        # Add user to admin group
+        add_user_to_group(user_id=user.id, group_id=gadm.group_id)
+
+        # Add user to organisation
+        add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
 
         log.warning(">>> Administrator password: {pwd}".format(pwd=password))
 

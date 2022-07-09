@@ -147,6 +147,40 @@ def update_user_orgs(user_id, orgs):
     return True, f'Organisations membership updated' if updated else "Nothing changed"
 
 
+def add_user_to_organisation(user_id, org_id):
+    exists = UserOrganisation.query.filter(
+        UserOrganisation.user_id == user_id,
+        UserOrganisation.org_id == org_id
+    ).scalar()
+
+    if exists:
+        return True
+
+    uo = UserOrganisation()
+    uo.user_id = user_id
+    uo.org_id = org_id
+    db.session.add(uo)
+    db.session.commit()
+    return True
+
+
+def add_user_to_group(user_id, group_id):
+    exists = UserGroup.query.filter(
+        UserGroup.user_id == user_id,
+        UserGroup.group_id == group_id
+    ).scalar()
+
+    if exists:
+        return True
+
+    ug = UserGroup()
+    ug.user_id = user_id
+    ug.group_id = group_id
+    db.session.add(ug)
+    db.session.commit()
+    return True
+
+
 def get_user_organisations(user_id):
     user_org = UserOrganisation.query.with_entities(
         Organisation.org_name,
