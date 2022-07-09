@@ -52,12 +52,10 @@ from app.models.models import IrisModule
 from app.models.models import Languages
 from app.models.models import OsType
 from app.models.models import ReportType
-from app.models.authorization import Role
 from app.models.models import ServerSettings
 from app.models.models import TaskStatus
 from app.models.models import Tlp
 from app.models.authorization import User
-from app.models.authorization import UserRoles
 from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
@@ -92,9 +90,6 @@ def run_post_init(development=False):
 
         log.info("Creating base languages")
         create_safe_languages()
-
-        log.info("Creating base user roles")
-        create_safe_roles()
 
         log.info("Creating base os types")
         create_safe_os_types()
@@ -362,12 +357,6 @@ def create_safe_events_cats():
     create_safe(db.session, EventCategory, name="Impact")
 
 
-def create_safe_roles():
-    get_or_create(db.session, Role, name='administrator')
-    get_or_create(db.session, Role, name='investigator')
-    get_or_create(db.session, Role, name='viewer')
-
-
 def create_safe_analysis_status():
     create_safe(db.session, AnalysisStatus, name='Unspecified')
     create_safe(db.session, AnalysisStatus, name='To be done')
@@ -491,13 +480,6 @@ def create_safe_admin():
         db.session.commit()
 
         log.warning(">>> Administrator password: {pwd}".format(pwd=password))
-
-        ur = UserRoles()
-        ur.user_id = user.id
-        row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-        if row_role_id and len(row_role_id) > 0:
-            ur.role_id = row_role_id[0]
-            db.session.add(ur)
 
         db.session.commit()
     else:

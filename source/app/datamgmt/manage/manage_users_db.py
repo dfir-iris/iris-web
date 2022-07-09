@@ -29,13 +29,11 @@ from app.iris_engine.access_control.utils import ac_get_detailed_effective_permi
 from app.models import Cases
 from app.models.authorization import Group
 from app.models.authorization import Organisation
-from app.models.authorization import Role
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
-from app.models.authorization import UserRoles
 
 
 def get_user(user_id, id_key: str = 'id'):
@@ -310,15 +308,6 @@ def create_user(user_name, user_login, user_password, user_email, user_isadmin, 
     user = User(user_login, user_name, user_email, pw_hash, True, external_id=user_external_id)
     user.save()
 
-    if user_isadmin:
-        ur = UserRoles()
-        ur.user_id = user.id
-
-        row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-        if row_role_id and len(row_role_id) > 0:
-            ur.role_id = row_role_id[0]
-            db.session.add(ur)
-
     db.session.commit()
     return user
 
@@ -332,22 +321,6 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
     for key, value in [('name', name,), ('email', email,)]:
         if value is not None:
             setattr(user, key, value)
-
-    if user_isadmin != None:
-        if user_isadmin:
-            ur = UserRoles()
-            ur.user_id = user.id
-
-            row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-            if row_role_id and len(row_role_id) > 0:
-                ur.role_id = row_role_id[0]
-                db.session.add(ur)
-
-        else:
-            row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-            if row_role_id and len(row_role_id) > 0:
-                role_id = row_role_id[0]
-                UserRoles.query.filter(UserRoles.user_id == user.id, UserRoles.role_id == role_id).delete()
 
     db.session.commit()
 

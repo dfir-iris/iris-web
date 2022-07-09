@@ -176,20 +176,6 @@ class UserGroup(db.Model):
     UniqueConstraint('user_id', 'group_id')
 
 
-class Role(db.Model):
-    __tablename__ = 'roles'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50), unique=True)
-
-
-# Define the UserRoles association table
-class UserRoles(db.Model):
-    __tablename__ = 'user_roles'
-    id = Column(Integer(), primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id', ondelete='CASCADE'))
-    role_id = Column(Integer, ForeignKey('roles.id', ondelete='CASCADE'))
-
-
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
 
