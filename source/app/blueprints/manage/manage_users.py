@@ -161,6 +161,7 @@ def view_user_modal(cur_id, caseid, url_redir):
     else:
         orgs_choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
     form.user_primary_organisation_id.choices = orgs_choices
+    form.user_primary_organisation_id(disabled=True)
     form.user_primary_organisation_id.render_kw = {'value': user.get('user_primary_organisation_id')}
 
     server_settings = get_srv_settings()
@@ -340,6 +341,7 @@ if is_authentication_local():
             jsdata['user_id'] = cur_id
             cuser = user_schema.load(jsdata, instance=user, partial=True)
             update_user(password=jsdata.get('user_password'),
+                        primary_org=jsdata.get('user_primary_organisation_id'),
                         user=user)
             db.session.commit()
 

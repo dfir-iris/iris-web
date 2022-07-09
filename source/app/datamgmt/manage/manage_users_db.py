@@ -147,18 +147,53 @@ def update_user_orgs(user_id, orgs):
     return True, f'Organisations membership updated' if updated else "Nothing changed"
 
 
-def add_user_to_organisation(user_id, org_id):
+def change_user_primary_org(user_id, old_org_id, new_org_id):
+    uo_old = UserOrganisation.query.filter(
+        UserOrganisation.user_id == user_id,
+        UserOrganisation.org_id == old_org_id
+    ).first()
 
-    exists = UserOrganisation.query.filter(
+    uo_new = UserOrganisation.query.filter(
+        UserOrganisation.user_id == user_id,
+        UserOrganisation.org_id == old_org_id
+    ).first()
+
+    if uo_old:
+        uo_old.is_primary_org = False
+
+    if not uo_new:
+        uo = UserOrganisation()
+        uo.user_id = user_id
+        uo.org_id = new_org_id
+        uo.is_primary_org = True
+        db.session.add(uo)
+
+    else:
+        uo_new.is_primary_org = True
+
+    db.session.commit()
+    return
+
+
+def add_user_to_organisation(user_id, org_id, make_primary=False):
+
+    uo_exists = UserOrganisation.query.filter(
         UserOrganisation.user_id == user_id,
         UserOrganisation.org_id == org_id
-    ).scalar()
+    ).first()
 
-    if exists:
+    if uo_exists:
+        uo_exists.is_primary_org = make_primary
+        db.session.commit()
+
         return True
 
     # Check if user has a primary org already
     prim_org = get_user_primary_org(user_id=user_id)
+
+    if make_primary:
+        prim_org.is_primary_org = False
+        db.session.commit()
 
     uo = UserOrganisation()
     uo.user_id = user_id
@@ -380,7 +415,7 @@ def create_user(user_name: str, user_login: str, user_password: str, user_email:
     return user
 
 
-def update_user(user: User, name: str = None, email: str = None, password: str = None):
+def update_user(user: User, name: str = None, email: str = None, password: str = None, primary_org: int = None):
 
     if password is not None:
         pw_hash = bc.generate_password_hash(password.encode('utf8')).decode('utf8')
@@ -391,6 +426,11 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
             setattr(user, key, value)
 
     db.session.commit()
+
+    old_prim_org = get_user_primary_org(user.id)
+    if old_prim_org[0].org_id != primary_org:
+
+        change_user_primary_org(user_id=user.id, old_org_id=old_prim_org[0].org_id, new_org_id=primary_org)
 
     return user
 
