@@ -286,6 +286,18 @@ def get_user_cases_access(user_id):
     return user_cases_access
 
 
+def get_user_cases_fast(user_id):
+
+    user_cases = UserCaseAccess.query.with_entities(
+        UserCaseAccess.case_id
+    ).where(
+        UserCaseAccess.user_id == user_id,
+        UserCaseAccess.access_level != 1
+    ).all()
+
+    return [c.case_id for c  in user_cases]
+
+
 def remove_case_access_from_user(user_id, case_id):
     if not user_id or type(user_id) is not int:
         return

@@ -35,6 +35,7 @@ from app.datamgmt.case.case_assets_db import get_analysis_status_list
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import get_asset_type_id
 from app.datamgmt.case.case_assets_db import get_assets
+from app.datamgmt.case.case_assets_db import get_assets_ioc_links
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_assets_db import get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import get_linked_iocs_id_from_asset
@@ -44,6 +45,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_client_id
 from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.datamgmt.states import get_assets_state
 from app.datamgmt.states import update_assets_state
 from app.forms import AssetBasicForm
@@ -101,15 +103,7 @@ def case_list_assets(caseid):
     ret = {}
     ret['assets'] = []
 
-    ioc_links_req = IocAssetLink.query.with_entities(
-        Ioc.ioc_id,
-        Ioc.ioc_value,
-        IocAssetLink.asset_id
-    ).filter(
-        Ioc.ioc_id == IocAssetLink.ioc_id,
-        IocLink.case_id == caseid,
-        IocLink.ioc_id == Ioc.ioc_id
-    ).all()
+    ioc_links_req = get_assets_ioc_links(caseid)
 
     cache_ioc_link = {}
     for ioc in ioc_links_req:
@@ -119,6 +113,8 @@ def case_list_assets(caseid):
         else:
             cache_ioc_link[ioc.asset_id].append(ioc._asdict())
 
+    cases_limitation = get_user_cases_fast(current_user.id)
+
     for asset in assets:
         asset = asset._asdict()
 
@@ -126,7 +122,7 @@ def case_list_assets(caseid):
         if len(assets) < 300:
             # Find similar assets from other cases with the same customer
             asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
-                            asset['asset_name'], asset['asset_type_id'], caseid, customer_id)]
+                            asset['asset_name'], asset['asset_type_id'], caseid, customer_id, cases_limitation)]
         else:
             asset['link'] = []
 

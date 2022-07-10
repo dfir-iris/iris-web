@@ -71,8 +71,8 @@ def logout():
     :return: Page
     """
     if session['current_case']:
-        current_user.ctx_case = session['current_case'].case_id
-        current_user.ctx_human_case = session['current_case'].case_name
+        current_user.ctx_case = session['current_case']['case_id']
+        current_user.ctx_human_case = session['current_case']['case_name']
         db.session.commit()
 
     track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True)

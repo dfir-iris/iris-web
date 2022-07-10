@@ -31,6 +31,7 @@ from app.models import CaseEventsAssets
 from app.models import Cases
 from app.models import Ioc
 from app.models import IocAssetLink
+from app.models import IocLink
 from app.models import IocType
 
 
@@ -160,17 +161,33 @@ def get_asset_type_id(asset_type_name):
     return assets_type_id
 
 
-def get_similar_assets(asset_name, asset_type_id, caseid, customer_id):
+def get_assets_ioc_links(caseid):
+
+    ioc_links_req = IocAssetLink.query.with_entities(
+        Ioc.ioc_id,
+        Ioc.ioc_value,
+        IocAssetLink.asset_id
+    ).filter(
+        Ioc.ioc_id == IocAssetLink.ioc_id,
+        IocLink.case_id == caseid,
+        IocLink.ioc_id == Ioc.ioc_id
+    ).all()
+
+    return ioc_links_req
+
+
+def get_similar_assets(asset_name, asset_type_id, caseid, customer_id, cases_limitation):
 
     linked_assets = CaseAssets.query.with_entities(
         Cases.name.label('case_name'),
         Cases.open_date.label('case_open_date'),
         CaseAssets.asset_description,
-        CaseAssets.asset_compromised,
+        CaseAssets.asset_compromised
     ).filter(
         and_(
             CaseAssets.asset_name == asset_name,
             CaseAssets.case_id != caseid,
+            CaseAssets.case_id.notin_(cases_limitation),
             CaseAssets.asset_type_id == asset_type_id,
             Cases.client_id == customer_id
         )
