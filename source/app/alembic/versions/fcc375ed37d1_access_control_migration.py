@@ -203,32 +203,33 @@ def upgrade():
     conn = op.get_bind()
 
     # Get all users with their roles
-    res = conn.execute(f"select distinct roles.name, \"user\".id from user_roles INNER JOIN \"roles\" ON "
-                       f"\"roles\".id = user_roles.role_id INNER JOIN \"user\" ON \"user\".id = user_roles.user_id;")
-    results_users = res.fetchall()
+    if _has_table("user_roles"):
+        res = conn.execute(f"select distinct roles.name, \"user\".id from user_roles INNER JOIN \"roles\" ON "
+                           f"\"roles\".id = user_roles.role_id INNER JOIN \"user\" ON \"user\".id = user_roles.user_id;")
+        results_users = res.fetchall()
 
-    for user_id in results_users:
-        role_name = user_id[0]
-        user_id = user_id[1]
-        # Migrate user to groups
-        if role_name == 'administrator':
-            conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {admin_group_id}) "
-                         f"on conflict do nothing;")
+        for user_id in results_users:
+            role_name = user_id[0]
+            user_id = user_id[1]
+            # Migrate user to groups
+            if role_name == 'administrator':
+                conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {admin_group_id}) "
+                             f"on conflict do nothing;")
 
-        elif role_name == 'investigator':
-            conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {analyst_group_id}) "
-                         f"on conflict do nothing;")
+            elif role_name == 'investigator':
+                conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {analyst_group_id}) "
+                             f"on conflict do nothing;")
 
-        # Add user to default organisation
-        conn.execute(f"insert into user_organisation (user_id, org_id, is_primary_org) values ({user_id}, "
-                     f"{default_org_id}, true) on conflict do nothing;")
+            # Add user to default organisation
+            conn.execute(f"insert into user_organisation (user_id, org_id, is_primary_org) values ({user_id}, "
+                         f"{default_org_id}, true) on conflict do nothing;")
 
-        # Add default cases effective permissions
-        for case_id in result_cases:
-            conn.execute(f"insert into user_case_effective_access (case_id, user_id, access_level) values "
-                         f"({case_id}, {user_id}, {access_level}) on conflict do nothing;")
+            # Add default cases effective permissions
+            for case_id in result_cases:
+                conn.execute(f"insert into user_case_effective_access (case_id, user_id, access_level) values "
+                             f"({case_id}, {user_id}, {access_level}) on conflict do nothing;")
 
-    op.drop_table('user_roles')
+        op.drop_table('user_roles')
 
     pass
 
