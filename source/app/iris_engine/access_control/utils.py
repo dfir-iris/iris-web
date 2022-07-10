@@ -310,8 +310,8 @@ def ac_auto_update_user_effective_access(user_id):
         grouped_uca[ucea.case_id] = ucea.access_level
 
     target_ucas = ac_get_user_cases_access(user_id)
-    log.info(f'User {user_id} current access : {grouped_uca}')
-    log.info(f'User {user_id} target access : {target_ucas}')
+    print(f'User {user_id} current access : {grouped_uca}')
+    print(f'User {user_id} target access : {target_ucas}')
 
     ucea_to_add = {}
     cid_to_remove = []
@@ -320,12 +320,12 @@ def ac_auto_update_user_effective_access(user_id):
         if case_id not in grouped_uca:
             ucea_to_add.update({case_id: target_ucas[case_id]})
         else:
-            if ac_flag_match_mask(grouped_uca[case_id], target_ucas[case_id]):
+            if not ac_flag_match_mask(grouped_uca[case_id], target_ucas[case_id]):
                 cid_to_remove.append(case_id)
                 ucea_to_add.update({case_id: target_ucas[case_id]})
 
     for prev_case_id in grouped_uca:
-        if prev_case_id not in target_ucas:
+        if prev_case_id not in target_ucas.keys():
             cid_to_remove.append(prev_case_id)
 
     UserCaseEffectiveAccess.query.where(and_(
@@ -333,8 +333,8 @@ def ac_auto_update_user_effective_access(user_id):
         UserCaseEffectiveAccess.case_id.in_(cid_to_remove)
     )).delete()
 
-    log.info(f'User {user_id} access to add : {ucea_to_add}')
-    log.info(f'User {user_id} access to remove : {cid_to_remove}')
+    print(f'User {user_id} access to add : {ucea_to_add}')
+    print(f'User {user_id} access to remove : {cid_to_remove}')
 
     for case_id in ucea_to_add:
         ucea = UserCaseEffectiveAccess()
@@ -398,7 +398,8 @@ def ac_get_user_cases_access(user_id):
 
     for gca in gcas:
         if gca.case_id in effective_cases_access:
-            if effective_cases_access[gca.case_id] < gca.access_level:
+            if effective_cases_access[gca.case_id] < gca.access_level or \
+                    gca.access_level == CaseAccessLevel.deny_all.value:
                 effective_cases_access[gca.case_id] = gca.access_level
 
         else:
@@ -407,7 +408,8 @@ def ac_get_user_cases_access(user_id):
     for uca in ucas:
 
         if uca.case_id in effective_cases_access:
-            if effective_cases_access[uca.case_id] < uca.access_level:
+            if effective_cases_access[uca.case_id] < uca.access_level or \
+                    uca.access_level == CaseAccessLevel.deny_all.value:
                 effective_cases_access[uca.case_id] = uca.access_level
 
         else:
