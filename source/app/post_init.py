@@ -450,7 +450,7 @@ def create_safe_client():
 
 
 def create_safe_auth_model():
-    def_org = create_safe(db.session, Organisation, org_name="Default Org",
+    def_org = get_or_create(db.session, Organisation, org_name="Default Org",
                           org_description="Default Organisation")
 
     gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators")
@@ -522,7 +522,7 @@ def create_safe_case(user, client, def_org):
         db.session.commit()
 
         # Add case to default org
-        add_case_access_to_org(def_org.org_id, [case.case_id], [CaseAccessLevel.full_access.value])
+        add_case_access_to_org(def_org, [case.case_id], CaseAccessLevel.full_access.value)
 
     return case
 
