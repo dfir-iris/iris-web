@@ -235,21 +235,23 @@ def get_case_access(request, access_level):
     case = None
 
     restricted_access = ''
-    if access_level:
-        eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
-        if eaccess_level is None:
+    if not access_level:
+        access_level = [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
 
-            session['current_case'] = {
-                'case_name': "{}".format("Access denied"),
-                'case_info': "",
-                'case_id': caseid,
-                'access': '<i class="ml-2 text-danger fa-solid fa-ban"></i>'
-            }
+    eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
+    if eaccess_level is None:
 
-            return redir, caseid, False
+        session['current_case'] = {
+            'case_name': "{} to #{}".format("Access denied", caseid),
+            'case_info': "",
+            'case_id': caseid,
+            'access': '<i class="ml-2 text-danger fa-solid fa-ban"></i>'
+        }
 
-        if CaseAccessLevel.read_only.value == eaccess_level:
-            restricted_access = '<i class="ml-2 text-warning fa-solid fa-lock" title="Read only access"></i>'
+        return redir, caseid, False
+
+    if CaseAccessLevel.read_only.value == eaccess_level:
+        restricted_access = '<i class="ml-2 text-warning fa-solid fa-lock" title="Read only access"></i>'
 
     if caseid != current_user.ctx_case:
         case = get_case(caseid)
