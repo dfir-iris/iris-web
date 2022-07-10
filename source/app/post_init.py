@@ -74,6 +74,9 @@ def run_post_init(development=False):
 
     if os.getenv("IRIS_WORKER") is None:
         # Setup database before everything
+        log.info("Adding pgcrypto extension")
+        pg_add_pgcrypto_ext()
+
         log.info("Creating all Iris tables")
         db.create_all(bind=None)
         db.session.commit()
@@ -82,9 +85,6 @@ def run_post_init(development=False):
         create_safe_db(db_name="iris_tasks")
         db.create_all(bind="iris_tasks")
         db.session.commit()
-
-        log.info("Adding pgcrypto extension")
-        pg_add_pgcrypto_ext()
 
         log.info("Running DB migration")
 
