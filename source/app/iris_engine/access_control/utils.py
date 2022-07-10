@@ -310,8 +310,8 @@ def ac_auto_update_user_effective_access(user_id):
         grouped_uca[ucea.case_id] = ucea.access_level
 
     target_ucas = ac_get_user_cases_access(user_id)
-    print(f'User {user_id} current access : {grouped_uca}')
-    print(f'User {user_id} target access : {target_ucas}')
+    log.info(f'User {user_id} current access : {grouped_uca}')
+    log.info(f'User {user_id} target access : {target_ucas}')
 
     ucea_to_add = {}
     cid_to_remove = []
@@ -333,8 +333,8 @@ def ac_auto_update_user_effective_access(user_id):
         UserCaseEffectiveAccess.case_id.in_(cid_to_remove)
     )).delete()
 
-    print(f'User {user_id} access to add : {ucea_to_add}')
-    print(f'User {user_id} access to remove : {cid_to_remove}')
+    log.info(f'User {user_id} access to add : {ucea_to_add}')
+    log.info(f'User {user_id} access to remove : {cid_to_remove}')
 
     for case_id in ucea_to_add:
         ucea = UserCaseEffectiveAccess()

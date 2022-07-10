@@ -243,7 +243,7 @@ def get_case_access(request, access_level):
                 'case_name': "{}".format("Access denied"),
                 'case_info': "",
                 'case_id': caseid,
-                'access': 'denied'
+                'access': '<i class="ml-2 text-danger fa-solid fa-ban"></i>'
             }
 
             return redir, caseid, False
