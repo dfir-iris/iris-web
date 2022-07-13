@@ -28,8 +28,12 @@
                             <div class="col-md-12 col-lg-12 col-sm-12">
                                 {{ form.hidden_tag() }}
                                 <div class="form-group mt-3">
-                                    <label for="task_assignee" class="placeholder">Assigned to *</label>
-                                    {{ form.task_assignee_id(class="selectpicker pl--6  col-5") }}
+                                    <label for="task_assignee_id" class="placeholder">Assigned to *</label>
+                                    <div class="select2-input ml-12" data-select2-id="6">
+                                        <select id="task_assignee_id" name="task_assignee_id" class="form-control select2-hidden-accessible ml-12" multiple=""
+                                                data-select2-id="task_assignee_id" tabindex="-1" aria-hidden="true" style="width: 100%">
+                                        </select>
+                                    </div>
 
                                     <label for="task_status_id" class="placeholder">Status *</label>
                                     {{ form.task_status_id(class="selectpicker pl--6  col-5") }}
@@ -71,25 +75,26 @@
 </div>
 
 <script>
+
+    var data = [];
+    if (current_users_list.length === 0) {
+            refresh_users(do_list_users, [{% for assignee in task.task_assignees %} {{ assignee.id }}, {% endfor %}]);
+    } else {
+        do_list_users(current_users_list, [{% for assignee in task.task_assignees %} {{ assignee.id }}, {% endfor %}]);
+    }
+
     $('form#form_new_task').validate();
 
     $('#task_tags').amsifySuggestags({
         printValues: false,
         suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
     });
-    $('#task_assignee_id').selectpicker({
-        liveSearch: true,
-        title: "None",
-        style: "Bootstrap 4: 'btn-outline-primary'",
-    });
+
     $('#task_status_id').selectpicker({
         liveSearch: true,
         title: "None",
         style: "Bootstrap 4: 'btn-outline-primary'",
     });
-    {% if uid %}
-        $('#task_assignee_id').selectpicker('val', '{{uid}}');
-    {% endif %}
 
     {% if task.task_status_id %}
         $('#task_status_id').selectpicker('val', '{{task.task_status_id}}');
