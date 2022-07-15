@@ -265,8 +265,25 @@ $(document).ready(function(){
             }
           },
           {
-            "data": "assignee_name",
-            "render": function (data, type, row, meta) { return sanitizeHTML(data);}
+            "data": "task_assignees",
+            "render": function (data, type, row, meta) {
+                if (type === 'display' && data != null) {
+                    names = "";
+                    if (data.length > 0) {
+                        data.forEach(function (item, index) {
+                          names += '<span class="badge badge-primary ml-2">' + sanitizeHTML(item['name']) + '</span>';
+                        });
+                    }
+                    else {
+                        names = '<span class="badge badge-light ml-2">' + "Unassigned" + '</span>';
+                    }
+
+                    return names;
+
+                }
+                return data;
+
+            }
           },
           {
             "data": "task_open_date",

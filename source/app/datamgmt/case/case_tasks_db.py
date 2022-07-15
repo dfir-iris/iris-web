@@ -52,6 +52,48 @@ def get_tasks(caseid):
     ).all()
 
 
+def get_tasks_with_assignees(caseid):
+    tasks = get_tasks(caseid)
+    if not tasks:
+        return None
+
+    tasks = [c._asdict() for c in tasks]
+
+    task_with_assignees = []
+    for task in tasks:
+        task_id = task['task_id']
+        get_assignee_list = TaskAssignee.query.with_entities(
+            TaskAssignee.task_id,
+            User.user,
+            User.id,
+            User.name
+        ).join(
+            TaskAssignee.user
+        ).filter(
+            TaskAssignee.task_id == task_id
+        ).all()
+
+        assignee_list = {}
+        for member in get_assignee_list:
+            if member.task_id not in assignee_list:
+
+                assignee_list[member.task_id] = [{
+                    'user': member.user,
+                    'name': member.name,
+                    'id': member.id
+                }]
+            else:
+                assignee_list[member.task_id].append({
+                    'user': member.user,
+                    'name': member.name,
+                    'id': member.id
+                })
+        task['task_assignees'] = assignee_list.get(task['task_id'], [])
+        task_with_assignees.append(task)
+
+    return task_with_assignees
+
+
 def get_task(task_id, caseid):
     return CaseTasks.query.filter(CaseTasks.id == task_id, CaseTasks.task_case_id == caseid).first()
 
@@ -72,23 +114,23 @@ def get_task_with_assignees(task_id, case_id):
         TaskAssignee.task_id == task_id
     ).all()
 
-    membership_list = {}
+    assignee_list = {}
     for member in get_assignee_list:
-        if member.task_id not in membership_list:
+        if member.task_id not in assignee_list:
 
-            membership_list[member.task_id] = [{
+            assignee_list[member.task_id] = [{
                 'user': member.user,
                 'name': member.name,
                 'id': member.id
             }]
         else:
-            membership_list[member.task_id].append({
+            assignee_list[member.task_id].append({
                 'user': member.user,
                 'name': member.name,
                 'id': member.id
             })
 
-    setattr(task, 'task_assignees', membership_list.get(task.id, []))
+    setattr(task, 'task_assignees', assignee_list.get(task.id, []))
 
     return task
 

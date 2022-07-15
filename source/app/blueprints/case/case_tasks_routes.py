@@ -31,9 +31,11 @@ from flask_wtf import FlaskForm
 
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_tasks_db import add_task, get_task_with_assignees, update_task_assignees
+from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.case.case_tasks_db import get_task_with_assignees
+from app.datamgmt.case.case_tasks_db import update_task_assignees
+from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.datamgmt.case.case_tasks_db import get_task
-from app.datamgmt.case.case_tasks_db import get_tasks
 from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.case.case_tasks_db import update_task_status
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -72,12 +74,12 @@ def case_tasks(caseid, url_redir):
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_tasks(caseid):
-    ct = get_tasks(caseid)
+    ct = get_tasks_with_assignees(caseid)
 
-    if ct:
-        output = [c._asdict() for c in ct]
-    else:
+    if not ct:
         output = []
+    else:
+        output = ct
 
     ret = {
         "tasks_status": get_tasks_status(),
