@@ -22,7 +22,7 @@ from sqlalchemy import and_
 from sqlalchemy import desc
 
 from app import db
-from app.models import CaseTasks
+from app.models import CaseTasks, TaskAssignee
 from app.models import Cases
 from app.models import GlobalTasks
 from app.models import TaskStatus
@@ -75,6 +75,7 @@ def get_global_task(task_id):
 
     return ct
 
+
 def get_tasks_status():
     return TaskStatus.query.all()
 
@@ -97,11 +98,13 @@ def list_user_tasks():
         desc(TaskStatus.status_name)
     ).filter(and_(
         TaskStatus.status_name != 'Done',
-        TaskStatus.status_name != 'Canceled',
-        CaseTasks.task_assignee_id == current_user.id
+        TaskStatus.status_name != 'Canceled'
     )).join(
-        CaseTasks.status
-    ).all()
+        CaseTasks.status,
+    ).filter(and_(
+        TaskAssignee.task_id == CaseTasks.id,
+        TaskAssignee.user_id == current_user.id
+    )).all()
 
     return ct
 
