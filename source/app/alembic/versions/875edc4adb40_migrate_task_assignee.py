@@ -27,7 +27,8 @@ def upgrade():
     if not _has_table("task_assignee"):
         if _has_table("case_tasks"):
             if _table_has_column("case_tasks", "task_assignee_id"):
-                res = conn.execute(f"select id, task_assignee_id from case_tasks;")
+                res = conn.execute(f"select case_tasks.id, \"user\".id from case_tasks JOIN \"user\" ON \"user\".id == "
+                                   f"case_tasks.task_assignee_id;")
                 results_tasks = res.fetchall()
 
                 for task in results_tasks:
