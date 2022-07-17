@@ -22,26 +22,23 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-
     # Get all users with their roles
-    if not _has_table("task_assignee"):
-        if _has_table("case_tasks"):
-            if _table_has_column("case_tasks", "task_assignee_id"):
-                res = conn.execute(f"select case_tasks.id, \"user\".id from case_tasks JOIN \"user\" ON \"user\".id == "
-                                   f"case_tasks.task_assignee_id;")
-                results_tasks = res.fetchall()
+    if _has_table("case_tasks"):
+        if _table_has_column("case_tasks", "task_assignee_id"):
+            res = conn.execute(f"select id, task_assignee_id from case_tasks")
+            results_tasks = res.fetchall()
 
-                for task in results_tasks:
-                    task_id = task[0]
-                    user_id = task[1]
-                    # Migrate assignees to task_assignee
-                    conn.execute(f"insert into task_assignee (user_id, task_id) values ({user_id}, {task_id}) "
-                                 f"on conflict do nothing;")
+            for task in results_tasks:
+                task_id = task[0]
+                user_id = task[1]
+                # Migrate assignees to task_assignee
+                conn.execute(f"insert into task_assignee (user_id, task_id) values ({user_id}, {task_id}) "
+                             f"on conflict do nothing;")
 
-                op.drop_column(
-                    table_name='case_tasks',
-                    column_name='task_assignee_id'
-                )
+            op.drop_column(
+                table_name='case_tasks',
+                column_name='task_assignee_id'
+            )
 
 
 def downgrade():
