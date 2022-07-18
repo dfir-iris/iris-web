@@ -422,6 +422,20 @@ function hide_loader() {
     update_last_resfresh();
 }
 
+function list_to_badges(wordlist, style, limit) {
+    badges = "";
+    if (wordlist.length > limit) {
+       badges = `<span class="badge badge-${style} ml-2">${wordlist.length} elements..</span>`;
+    }
+    else {
+        wordlist.forEach(function (item, index) {
+            badges += `<span class="badge badge-${style} ml-2">${sanitizeHTML(item)}</span>`;
+        });
+    }
+
+    return badges;
+}
+
 var sanitizeHTML = function (str) {
     if (typeof str === 'string') {
         return str.replace(/[^\w. ]/gi, function (c) {

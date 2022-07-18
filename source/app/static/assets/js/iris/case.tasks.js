@@ -261,9 +261,9 @@ $(document).ready(function(){
                 if (type === 'display' && data != null) {
                     names = "";
                     if (data.length > 0) {
-                        data.forEach(function (item, index) {
-                          names += '<span class="badge badge-primary ml-2">' + sanitizeHTML(item['name']) + '</span>';
-                        });
+                        lst = [];
+                        data.forEach(function (item, index) { lst.push(item['name']); });
+                        names = list_to_badges(lst, 'primary', 10);
                     }
                     else {
                         names = '<span class="badge badge-light ml-2">' + "Unassigned" + '</span>';
