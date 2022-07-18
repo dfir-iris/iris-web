@@ -148,6 +148,7 @@ def run_post_init(development=False):
             def_org=def_org
         )
 
+        log.info("Recalculating effective users permissions.. might take a while")
         ac_recompute_all_users_effective_ac()
 
         # setup symlinks for custom_assets
