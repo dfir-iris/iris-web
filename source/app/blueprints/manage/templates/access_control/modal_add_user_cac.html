@@ -13,10 +13,10 @@
                     <div class="form-group" data-select2-id="7">
                         <label>Set cases access of user <i>{{ user.user_name }}</i> *</label>
                         <div class="col-12">
-                            <select id="user_case_access_select" name="org_case_access_select" class="form-control select2-hidden-accessible ml-12" multiple="multiple"
+                            <select id="user_case_access_select" name="org_case_access_select" class="form-control ml-12" multiple="multiple"
                                      tabindex="-1" aria-hidden="true" style="width: 100%">
                             </select>
-                            <select id="user_case_ac_select" name="org_case_ac_select" class="form-control select2-hidden-accessible ml-12"
+                            <select id="user_case_ac_select" name="org_case_ac_select" class="form-control ml-12"
                                      tabindex="-1" aria-hidden="true" style="width: 100%">
                             </select>
                         </div>
@@ -31,7 +31,7 @@
 <script>
 var data = [];
 
-$('#group_case_access_select').multiselect({
+$('#user_case_access_select').multiselect({
     buttonWidth: 400,
     nonSelectedText: 'Select case',
     emptyText: 'No case available to add',
