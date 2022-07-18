@@ -422,10 +422,10 @@ function hide_loader() {
     update_last_resfresh();
 }
 
-function list_to_badges(wordlist, style, limit) {
+function list_to_badges(wordlist, style, limit, type) {
     badges = "";
     if (wordlist.length > limit) {
-       badges = `<span class="badge badge-${style} ml-2">${wordlist.length} elements..</span>`;
+       badges = `<span class="badge badge-${style} ml-2">${wordlist.length} ${type}</span>`;
     }
     else {
         wordlist.forEach(function (item, index) {

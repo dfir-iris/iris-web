@@ -263,7 +263,7 @@ $(document).ready(function(){
                     if (data.length > 0) {
                         lst = [];
                         data.forEach(function (item, index) { lst.push(item['name']); });
-                        names = list_to_badges(lst, 'primary', 10);
+                        names = list_to_badges(lst, 'primary', 10, 'users');
                     }
                     else {
                         names = '<span class="badge badge-light ml-2">' + "Unassigned" + '</span>';
