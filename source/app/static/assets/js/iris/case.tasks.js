@@ -1,3 +1,4 @@
+var current_users_list = [];
 /* Fetch a modal that allows to add an event */
 function add_task() {
     url = 'tasks/add/modal' + case_param();
@@ -17,7 +18,7 @@ function add_task() {
 
             var data_sent = $('#form_new_task').serializeObject();
             data_sent['task_tags'] = $('#task_tags').val();
-            data_sent['task_assignee'] = $('#task_assignee').val();
+            data_sent['task_assignees_id'] = $('#task_assignees_id').val();
             data_sent['task_status_id'] = $('#task_status_id').val();
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
@@ -51,7 +52,8 @@ function update_task(id) {
 
     var data_sent = $('#form_new_task').serializeObject();
     data_sent['task_tags'] = $('#task_tags').val();
-    data_sent['task_assignee'] = $('#task_assignee').val();
+
+    data_sent['task_assignees_id'] = $('#task_assignees_id').val();
     data_sent['task_status_id'] = $('#task_status_id').val();
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
@@ -114,7 +116,6 @@ function get_tasks() {
                     option = options_l[index];
                     options.push({ "value": option.id, "display": option.status_name })
                 }
-                console.log(options);
                 Table.clear();
                 Table.rows.add(tasks_list);
                 Table.MakeCellsEditable({
@@ -147,6 +148,44 @@ function get_tasks() {
             }
 
     });
+}
+
+function refresh_users(on_finish, cur_assignees_id_list) {
+
+    get_request_api('../manage/users/restricted/list')
+    .done((data) => {
+
+        if(notify_auto_api(data, true)) {
+            current_users_list = data.data;
+
+            if (on_finish !== undefined) {
+                on_finish(current_users_list, cur_assignees_id_list);
+            }
+
+        }
+
+    });
+
+}
+
+function do_list_users(list_users, cur_assignees_id_list) {
+
+    $('#task_assignees_id').selectpicker({
+        liveSearch: true,
+        title: "Select assignee(s)",
+        style: "Bootstrap 4: 'btn-outline-primary'",
+    });
+
+    for (user in list_users) {
+        $('#task_assignees_id').append(new Option(`${list_users[user].user_login} (${list_users[user].user_name})`,
+                                                    list_users[user].user_id));
+    }
+
+    if (cur_assignees_id_list !== undefined) {
+        $('#task_assignees_id').selectpicker('val', cur_assignees_id_list);
+    }
+
+    $('#task_assignees_id').selectpicker('refresh');
 }
 
 function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {
@@ -217,8 +256,25 @@ $(document).ready(function(){
             }
           },
           {
-            "data": "assignee_name",
-            "render": function (data, type, row, meta) { return sanitizeHTML(data);}
+            "data": "task_assignees",
+            "render": function (data, type, row, meta) {
+                if (type === 'display' && data != null) {
+                    names = "";
+                    if (data.length > 0) {
+                        data.forEach(function (item, index) {
+                          names += '<span class="badge badge-primary ml-2">' + sanitizeHTML(item['name']) + '</span>';
+                        });
+                    }
+                    else {
+                        names = '<span class="badge badge-light ml-2">' + "Unassigned" + '</span>';
+                    }
+
+                    return names;
+
+                }
+                return data;
+
+            }
           },
           {
             "data": "task_open_date",

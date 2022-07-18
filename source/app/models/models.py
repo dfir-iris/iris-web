@@ -23,7 +23,7 @@ import secrets
 import uuid
 
 from flask_login import UserMixin
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger, UniqueConstraint
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -461,7 +461,6 @@ class CaseTasks(db.Model):
     task_userid_open = Column(ForeignKey('user.id'))
     task_userid_close = Column(ForeignKey('user.id'))
     task_userid_update = Column(ForeignKey('user.id'))
-    task_assignee_id = Column(ForeignKey('user.id'))
     task_status_id = Column(ForeignKey('task_status.id'))
     task_case_id = Column(ForeignKey('cases.case_id'))
     custom_attributes = Column(JSON)
@@ -470,8 +469,20 @@ class CaseTasks(db.Model):
     user_open = relationship('User', foreign_keys=[task_userid_open])
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
-    user_assigned = relationship('User', foreign_keys=[task_assignee_id])
     status = relationship('TaskStatus', foreign_keys=[task_status_id])
+
+
+class TaskAssignee(db.Model):
+    __tablename__ = "task_assignee"
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
+    task_id = Column(BigInteger, ForeignKey('case_tasks.id'), nullable=False)
+
+    user = relationship('User')
+    task = relationship('CaseTasks')
+
+    UniqueConstraint('user_id', 'task_id')
 
 
 class GlobalTasks(db.Model):

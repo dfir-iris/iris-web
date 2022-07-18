@@ -168,8 +168,8 @@ class CaseEventForm(FlaskForm):
 class CaseTaskForm(FlaskForm):
     task_title = StringField(u'Task Title', validators=[DataRequired()])
     task_description = TextAreaField(u'Task description')
-    task_assignee_id = SelectField(u'Task assignee', validators=[DataRequired()])
     task_status_id = SelectField(u'Task status', validators=[DataRequired()])
+    task_assignees_id = SelectMultipleField(u'Assignee(s)')
     task_tags = StringField(u'Task Tags')
 
 

@@ -523,10 +523,10 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
-        user = User.query.filter(User.id == data.get('task_assignee_id')).count()
+        user = User.query.filter(User.id == data.get('task_assignees_id')).count()
         if not user:
             raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
-                                                         field_name="task_assignee_id")
+                                                         field_name="task_assignees_id")
 
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
@@ -575,7 +575,6 @@ class TaskLogSchema(ma.Schema):
 
 
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
-    task_assignee_id = fields.Integer(required=True)
     task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     task_status_id = auto_field('task_status_id', required=True)
 
@@ -586,11 +585,6 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
-        user = User.query.filter(User.id == data.get('task_assignee_id')).count()
-        if not user:
-            raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
-                                                         field_name="task_assignee_id")
-
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
             raise marshmallow.exceptions.ValidationError("Invalid task status ID",

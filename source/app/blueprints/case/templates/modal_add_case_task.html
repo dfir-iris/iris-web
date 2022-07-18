@@ -27,12 +27,16 @@
                         <form method="post" action="" id="form_new_task">
                             <div class="col-md-12 col-lg-12 col-sm-12">
                                 {{ form.hidden_tag() }}
-                                <div class="form-group mt-3">
-                                    <label for="task_assignee" class="placeholder">Assigned to *</label>
-                                    {{ form.task_assignee_id(class="selectpicker pl--6  col-5") }}
+                                <div class="form-group mt-3 row">
+                                    <div class="col-6 col-xs-12">
+                                        <label for="task_assignee_id" class="placeholder">Assigned to *</label>
+                                        {{ form.task_assignees_id(class="selectpicker col-12", data_actions_box="true", data_dropup_auto="false") }}
 
-                                    <label for="task_status_id" class="placeholder">Status *</label>
-                                    {{ form.task_status_id(class="selectpicker pl--6  col-5") }}
+                                    </div>
+                                    <div class="col-6 col-xs-12">
+                                        <label for="task_status_id" class="placeholder">Status *</label>
+                                        {{ form.task_status_id(class="selectpicker col-12") }}
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="task_title" class="placeholder">{{ form.task_title.label.text }} *</label>
@@ -71,25 +75,26 @@
 </div>
 
 <script>
+
+    var data = [];
+    if (current_users_list.length === 0) {
+            refresh_users(do_list_users, [{% for assignee in task.task_assignees %} {{ assignee.id }}, {% endfor %}]);
+    } else {
+        do_list_users(current_users_list, [{% for assignee in task.task_assignees %} {{ assignee.id }}, {% endfor %}]);
+    }
+
     $('form#form_new_task').validate();
 
     $('#task_tags').amsifySuggestags({
         printValues: false,
         suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
     });
-    $('#task_assignee_id').selectpicker({
-        liveSearch: true,
-        title: "None",
-        style: "Bootstrap 4: 'btn-outline-primary'",
-    });
+
     $('#task_status_id').selectpicker({
         liveSearch: true,
-        title: "None",
+        title: "Select task status",
         style: "Bootstrap 4: 'btn-outline-primary'",
     });
-    {% if uid %}
-        $('#task_assignee_id').selectpicker('val', '{{uid}}');
-    {% endif %}
 
     {% if task.task_status_id %}
         $('#task_status_id').selectpicker('val', '{{task.task_status_id}}');

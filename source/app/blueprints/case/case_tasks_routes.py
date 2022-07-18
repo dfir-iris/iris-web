@@ -32,8 +32,10 @@ from flask_wtf import FlaskForm
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.case.case_tasks_db import get_task_with_assignees
+from app.datamgmt.case.case_tasks_db import update_task_assignees
+from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.datamgmt.case.case_tasks_db import get_task
-from app.datamgmt.case.case_tasks_db import get_tasks
 from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.case.case_tasks_db import update_task_status
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -44,7 +46,7 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
-from app.models.models import CaseTasks
+from app.models.models import CaseTasks, TaskAssignee
 from app.schema.marshables import CaseTaskSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
@@ -72,12 +74,12 @@ def case_tasks(caseid, url_redir):
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_tasks(caseid):
-    ct = get_tasks(caseid)
+    ct = get_tasks_with_assignees(caseid)
 
-    if ct:
-        output = [c._asdict() for c in ct]
-    else:
+    if not ct:
         output = []
+    else:
+        output = ct
 
     ret = {
         "tasks_status": get_tasks_status(),
@@ -101,7 +103,6 @@ def case_get_tasks_state(caseid):
 @case_tasks_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_task_statusupdate(cur_id, caseid):
-
     task = get_task(task_id=cur_id, caseid=caseid)
     if not task:
         return response_error("Invalid task ID for this case")
@@ -128,9 +129,8 @@ def case_add_task_modal(caseid, url_redir):
     task = CaseTasks()
     task.custom_attributes = get_default_custom_attributes('task')
     form = CaseTaskForm()
-    form.task_assignee_id.choices = [(user.id, user.name) for user in
-                                     User.query.filter(User.active == True).order_by(User.name).all()]
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+    form.task_assignees_id.choices = []
 
     return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None,
                            attributes=task.custom_attributes)
@@ -139,15 +139,16 @@ def case_add_task_modal(caseid, url_redir):
 @case_tasks_blueprint.route('/case/tasks/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_task(caseid):
-
     try:
         # validate before saving
         task_schema = CaseTaskSchema()
         request_data = call_modules_hook('on_preload_task_create', data=request.get_json(), caseid=caseid)
-
+        task_assignee_list = request_data['task_assignees_id']
+        del request_data['task_assignees_id']
         task = task_schema.load(request_data)
 
         ctask = add_task(task=task,
+                         assignee_id_list=task_assignee_list,
                          user_id=current_user.id,
                          caseid=caseid
                          )
@@ -167,13 +168,11 @@ def case_add_task(caseid):
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_task_view(cur_id, caseid):
-    task = get_task(task_id=cur_id, caseid=caseid)
+    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
         return response_error("Invalid task ID for this case")
 
-    task_schema = CaseTaskSchema()
-
-    return response_success(data=task_schema.dump(task))
+    return response_success(data=task)
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/modal', methods=['GET'])
@@ -183,10 +182,10 @@ def case_task_view_modal(cur_id, caseid, url_redir):
         return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
 
     form = CaseTaskForm()
-    task = get_task(task_id=cur_id, caseid=caseid)
-    form.task_assignee_id.choices = [(user.id, user.name) for user in
-                                     User.query.filter(User.active == True).order_by(User.name).all()]
+
+    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+    form.task_assignees_id.choices = []
 
     if not task:
         return response_error("Invalid task ID for this case")
@@ -195,22 +194,22 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     form.task_description.data = task.task_description
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
 
-    return render_template("modal_add_case_task.html", form=form, task=task,
-                           uid=task.task_assignee_id, user_name=user_name, attributes=task.custom_attributes)
+    return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name, attributes=task.custom_attributes)
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_task(cur_id, caseid):
-
     try:
-        task = get_task(task_id=cur_id, caseid=caseid)
+        task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
         if not task:
             return response_error("Invalid task ID for this case")
 
         request_data = call_modules_hook('on_preload_task_update', data=request.get_json(), caseid=caseid)
 
         # validate before saving
+        task_assignee_list = request_data['task_assignees_id']
+        del request_data['task_assignees_id']
         task_schema = CaseTaskSchema()
 
         request_data['id'] = cur_id
@@ -218,6 +217,8 @@ def case_edit_task(cur_id, caseid):
 
         task.task_userid_update = current_user.id
         task.task_last_update = datetime.utcnow()
+
+        update_task_assignees(task, task_assignee_list)
 
         update_tasks_state(caseid=caseid)
 
@@ -237,13 +238,13 @@ def case_edit_task(cur_id, caseid):
 
 @case_tasks_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
-def case_edit_delete(cur_id, caseid):
-
+def case_delete_task(cur_id, caseid):
     call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
-    task = get_task(task_id=cur_id, caseid=caseid)
+    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
         return response_error("Invalid task ID for this case")
 
+    TaskAssignee.query.filter(TaskAssignee.task_id == cur_id).delete()
     CaseTasks.query.filter(CaseTasks.id == cur_id, CaseTasks.task_case_id == caseid).delete()
 
     update_tasks_state(caseid=caseid)
@@ -253,4 +254,3 @@ def case_edit_delete(cur_id, caseid):
     track_activity("deleted task ID {}".format(cur_id))
 
     return response_success("Task deleted")
-

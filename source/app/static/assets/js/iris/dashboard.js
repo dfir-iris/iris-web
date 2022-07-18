@@ -95,7 +95,7 @@ function add_gtask() {
         $('#submit_new_gtask').on("click", function () {
             var data_sent = $('#form_new_gtask').serializeObject();
             data_sent['task_tags'] = $('#task_tags').val();
-            data_sent['task_assignee_id'] = $('#task_assignee_id').val();
+            data_sent['task_assignees_id'] = $('#task_assignees_id').val();
             data_sent['task_status_id'] = $('#task_status_id').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
