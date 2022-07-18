@@ -18,7 +18,7 @@ function add_task() {
 
             var data_sent = $('#form_new_task').serializeObject();
             data_sent['task_tags'] = $('#task_tags').val();
-            data_sent['task_assignee_id'] = $('#task_assignee_id').val();
+            data_sent['task_assignees_id'] = $('#task_assignees_id').val();
             data_sent['task_status_id'] = $('#task_status_id').val();
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
@@ -53,7 +53,7 @@ function update_task(id) {
     var data_sent = $('#form_new_task').serializeObject();
     data_sent['task_tags'] = $('#task_tags').val();
 
-    data_sent['task_assignee_id'] = $('#task_assignee_id').val();
+    data_sent['task_assignees_id'] = $('#task_assignees_id').val();
     data_sent['task_status_id'] = $('#task_status_id').val();
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
@@ -169,32 +169,23 @@ function refresh_users(on_finish, cur_assignees_id_list) {
 }
 
 function do_list_users(list_users, cur_assignees_id_list) {
-    var data = [];
-    for (user in list_users) {
-        data.push({
-            label: `${list_users[user].user_login} (${list_users[user].user_name})`,
-            value: list_users[user].user_id
-        });
-    }
 
-    $('#task_assignee_id').multiselect({
-        buttonWidth: 400,
-        nonSelectedText: 'Select users',
-        includeSelectAllOption: true,
-        enableFiltering: true,
-        enableCaseInsensitiveFiltering: true,
-        filterPlaceholder: 'Search',
-        filterBehavior: 'both',
-        widthSynchronizationMode: 'ifPopupIsSmaller'
+    $('#task_assignees_id').selectpicker({
+        liveSearch: true,
+        title: "Select assignee(s)",
+        style: "Bootstrap 4: 'btn-outline-primary'",
     });
 
-    $('#task_assignee_id').multiselect('dataprovider', data );
-
-    if (cur_assignees_id_list !== undefined) {
-        $('#task_assignee_id').multiselect('select', cur_assignees_id_list);
-        $('#task_assignee_id').multiselect('refresh');
+    for (user in list_users) {
+        $('#task_assignees_id').append(new Option(`${list_users[user].user_login} (${list_users[user].user_name})`,
+                                                    list_users[user].user_id));
     }
 
+    if (cur_assignees_id_list !== undefined) {
+        $('#task_assignees_id').selectpicker('val', cur_assignees_id_list);
+    }
+
+    $('#task_assignees_id').selectpicker('refresh');
 }
 
 function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {

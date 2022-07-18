@@ -130,6 +130,7 @@ def case_add_task_modal(caseid, url_redir):
     task.custom_attributes = get_default_custom_attributes('task')
     form = CaseTaskForm()
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+    form.task_assignees_id.choices = []
 
     return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None,
                            attributes=task.custom_attributes)
@@ -142,8 +143,8 @@ def case_add_task(caseid):
         # validate before saving
         task_schema = CaseTaskSchema()
         request_data = call_modules_hook('on_preload_task_create', data=request.get_json(), caseid=caseid)
-        task_assignee_list = request_data['task_assignee_id']
-        del request_data['task_assignee_id']
+        task_assignee_list = request_data['task_assignees_id']
+        del request_data['task_assignees_id']
         task = task_schema.load(request_data)
 
         ctask = add_task(task=task,
@@ -184,6 +185,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
 
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+    form.task_assignees_id.choices = []
 
     if not task:
         return response_error("Invalid task ID for this case")
@@ -206,8 +208,8 @@ def case_edit_task(cur_id, caseid):
         request_data = call_modules_hook('on_preload_task_update', data=request.get_json(), caseid=caseid)
 
         # validate before saving
-        task_assignee_list = request_data['task_assignee_id']
-        del request_data['task_assignee_id']
+        task_assignee_list = request_data['task_assignees_id']
+        del request_data['task_assignees_id']
         task_schema = CaseTaskSchema()
 
         request_data['id'] = cur_id

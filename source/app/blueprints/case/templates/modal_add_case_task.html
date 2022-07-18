@@ -27,15 +27,16 @@
                         <form method="post" action="" id="form_new_task">
                             <div class="col-md-12 col-lg-12 col-sm-12">
                                 {{ form.hidden_tag() }}
-                                <div class="form-group mt-3">
-                                    <label for="task_assignee_id" class="placeholder">Assigned to *</label>
-                                    <select id="task_assignee_id" name="task_assignee_id" class="form-control select2-hidden-accessible pl--6  col-5" multiple=""
-                                                data-select2-id="task_assignee_id" tabindex="-1" aria-hidden="true" style="width: 100%">
-                                    </select>
+                                <div class="form-group mt-3 row">
+                                    <div class="col-6 col-xs-12">
+                                        <label for="task_assignee_id" class="placeholder">Assigned to *</label>
+                                        {{ form.task_assignees_id(class="selectpicker col-12", data_actions_box="true", data_dropup_auto="false") }}
 
-                                    <label for="task_status_id" class="placeholder">Status *</label>
-                                    {{ form.task_status_id(class="selectpicker pl--6  col-5") }}
-
+                                    </div>
+                                    <div class="col-6 col-xs-12">
+                                        <label for="task_status_id" class="placeholder">Status *</label>
+                                        {{ form.task_status_id(class="selectpicker col-12") }}
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="task_title" class="placeholder">{{ form.task_title.label.text }} *</label>
