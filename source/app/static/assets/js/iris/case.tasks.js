@@ -63,12 +63,17 @@ function update_task(id) {
 
     data_sent['custom_attributes'] = attributes;
 
+    $('#update_task_btn').text('Updating..');
+
     post_request_api('tasks/update/' + id, JSON.stringify(data_sent), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             get_tasks();
             $('#modal_add_task').modal('hide');
         }
+    })
+    .always(() => {
+        $('#update_task_btn').text('Update');
     });
 }
 
