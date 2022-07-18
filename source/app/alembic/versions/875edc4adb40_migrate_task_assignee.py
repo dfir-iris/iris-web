@@ -6,13 +6,11 @@ Create Date: 2022-07-17 14:57:22.809977
 
 """
 from alembic import op
-import sqlalchemy as sa
-
-# revision identifiers, used by Alembic.
-from sqlalchemy import engine_from_config
-from sqlalchemy.engine import reflection
 
 from app.alembic.alembic_utils import _has_table
+from app.alembic.alembic_utils import _table_has_column
+
+# revision identifiers, used by Alembic.
 
 revision = '875edc4adb40'
 down_revision = 'fcc375ed37d1'
@@ -43,17 +41,3 @@ def upgrade():
 
 def downgrade():
     pass
-
-
-def _table_has_column(table, column):
-    config = op.get_context().config
-    engine = engine_from_config(
-        config.get_section(config.config_ini_section), prefix='sqlalchemy.')
-    insp = reflection.Inspector.from_engine(engine)
-    has_column = False
-
-    for col in insp.get_columns(table):
-        if column != col['name']:
-            continue
-        has_column = True
-    return has_column
