@@ -450,4 +450,3 @@ def manage_users_list_restricted(caseid):
     users = get_users_list_restricted()
 
     return response_success('', data=users)
-

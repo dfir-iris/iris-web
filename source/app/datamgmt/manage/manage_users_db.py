@@ -27,6 +27,7 @@ from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.models import Cases
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -411,6 +412,22 @@ def get_users_list_restricted():
         output.append(row)
 
     return output
+
+
+def get_users_list_restricted_from_case(case_id):
+
+    users = UserCaseAccess.query.with_entities(
+        User.id.label('user_id'),
+        User.uuid.label('user_uuid'),
+        User.name.label('user_name'),
+        User.user.label('user_login'),
+        User.active.label('user_active')
+    ).filter(
+        and_(UserCaseAccess.case_id == case_id,
+             UserCaseAccess.access_level != CaseAccessLevel.deny_all.value)
+    ).all()
+
+    return [u._asdict() for u in users]
 
 
 def create_user(user_name: str, user_login: str, user_password: str, user_email: str, user_active: bool,

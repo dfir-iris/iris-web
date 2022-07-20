@@ -46,6 +46,7 @@ from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_report_template
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.reporter.report_db import export_case_json
 from app.iris_engine.utils.tracker import track_activity
 from app.models import UserActivity
@@ -210,3 +211,14 @@ def case_add_tasklog(caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
     return response_success("Log saved", data=ua)
+
+
+@case_blueprint.route('/case/users/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only)
+def case_get_users(caseid):
+
+    users = get_users_list_restricted_from_case(caseid)
+
+    return response_success(data=users)
+
+
