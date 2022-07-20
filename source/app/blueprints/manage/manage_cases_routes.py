@@ -105,7 +105,8 @@ def details_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
-    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_only]):
+    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_only,
+                                                                        CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -123,7 +124,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -139,7 +140,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
 @ac_api_case_requires()
 def get_case_api(cur_id, caseid):
 
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
@@ -153,7 +154,7 @@ def get_case_api(cur_id, caseid):
 @ac_api_requires(Permissions.manage_case)
 def api_delete_case(cur_id, caseid):
 
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     if cur_id == caseid:
@@ -191,7 +192,7 @@ def api_delete_case(cur_id, caseid):
 @ac_api_requires(Permissions.manage_case)
 def api_reopen_case(cur_id, caseid):
 
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     if not cur_id:
@@ -210,7 +211,7 @@ def api_reopen_case(cur_id, caseid):
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.manage_case)
 def api_case_close(cur_id, caseid):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only]):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
     if not cur_id:
