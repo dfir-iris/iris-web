@@ -6,11 +6,11 @@
         aria-hidden="true"><i class="fa fa-times"></i></span></button>
 </div>
 <div class="modal-body">
-
     <div class="container col-md-12">
         <div role="tabpanel">
           <div class="tab-content">
               <div class="tab-pane active" id="details">
+                <h4>General info</h4>
                 <div class="form-group">
                     <label>Case name :</label>
                     <span type="text" class="">{{ data.case_name|unquote }}</span>
@@ -54,8 +54,27 @@
                     <span type="text" class="text-faded">{{ data.case_id }}</span>
                 </div>
               </div>
+              <hr/>
+              <h4>Case access</h4>
+              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
+                <thead>
+                  <tr>
+                      <th>User ID</th>
+                      <th>User login</th>
+                      <th>User display name</th>
+                  </tr>
+                </thead>
+                <tfoot>
+                  <tr>
+                      <th>User ID</th>
+                      <th>User login</th>
+                      <th>User display name</th>
+                  </tr>
+                </tfoot>
+              </table>
               {% include 'modals/modal_attributes_tabs.html' %}
-          </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -63,3 +82,40 @@
     <button type="button" class="btn btn-outline-default mr-auto" onclick="manage_case();">Manage case</button>
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
 </div>
+
+<script>
+var modal_org_table = $("#case_access_users_list_table").DataTable({
+        dom: 'Blfrtip',
+        "ajax": {
+            "url": "case/users/list" + case_param(),
+            "contentType": "application/json",
+            "type": "GET",
+            "data": function (d) {
+                if (d.status == 'success') {
+                    return JSON.stringify(d.data);
+                } else {
+                    return [];
+                }
+            }
+        },
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "user_id",
+            "className": "dt-center"
+        },
+        {
+            "data": "user_name",
+            "className": "dt-center"
+        },
+        {
+            "data": "user_login",
+            "className": "dt-center"
+        }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true
+});
+</script>
