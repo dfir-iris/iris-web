@@ -157,7 +157,7 @@ function get_tasks() {
 
 function refresh_users(on_finish, cur_assignees_id_list) {
 
-    get_request_api('../manage/users/restricted/list')
+    get_request_api('/case/users/list')
     .done((data) => {
 
         if(notify_auto_api(data, true)) {

@@ -214,7 +214,7 @@ def case_add_tasklog(caseid):
 
 
 @case_blueprint.route('/case/users/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_users(caseid):
 
     users = get_users_list_restricted_from_case(caseid)

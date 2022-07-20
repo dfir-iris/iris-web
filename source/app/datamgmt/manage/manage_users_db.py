@@ -416,15 +416,17 @@ def get_users_list_restricted():
 
 def get_users_list_restricted_from_case(case_id):
 
-    users = UserCaseAccess.query.with_entities(
+    users = UserCaseEffectiveAccess.query.with_entities(
         User.id.label('user_id'),
         User.uuid.label('user_uuid'),
         User.name.label('user_name'),
         User.user.label('user_login'),
         User.active.label('user_active')
     ).filter(
-        and_(UserCaseAccess.case_id == case_id,
-             UserCaseAccess.access_level != CaseAccessLevel.deny_all.value)
+        and_(UserCaseEffectiveAccess.case_id == case_id,
+             UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value)
+    ).join(
+        UserCaseEffectiveAccess.user
     ).all()
 
     return [u._asdict() for u in users]
