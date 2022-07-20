@@ -413,7 +413,7 @@ if is_authentication_local():
 
 # Unrestricted section - non admin available
 @manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def exists_user_restricted(cur_id, caseid):
     user = get_user(cur_id)
     if not user:
@@ -429,7 +429,7 @@ def exists_user_restricted(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/lookup/login/<string:login>', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def lookup_name_restricted(login, caseid):
     user = get_user_by_username(login)
     if not user:
@@ -445,8 +445,9 @@ def lookup_name_restricted(login, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/restricted/list', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def manage_users_list_restricted(caseid):
     users = get_users_list_restricted()
 
     return response_success('', data=users)
+

@@ -153,7 +153,7 @@ def run_post_init(development=False):
 
         # setup symlinks for custom_assets
         log.info("Creating symlinks for custom asset icons")
-        custom_assets_symlinks()
+        #custom_assets_symlinks()
 
     if development:
         if os.getenv("IRIS_WORKER") is None:
