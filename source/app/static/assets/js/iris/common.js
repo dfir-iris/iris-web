@@ -840,7 +840,11 @@ $(document).ready(function(){
         if (btt !== 'manage') {
             btt = btt.split('?')[0];
         } else {
-            btt = current.split('?')[0];
+            csp = current.split('?')[0].split('/')
+            if (csp.length >= 3) {
+                csp = csp.splice(0, 3);
+            }
+            btt = csp.join('/');
         }
         $('#l_nav_tab .nav-item').each(function (k, al) {
             href = $(al).children().attr('href');
@@ -848,7 +852,6 @@ $(document).ready(function(){
                 if (href == "#advanced-nav") {
                     $('#advanced-nav .nav-subitem').each(function (i, el) {
                         ktt = $(el).children().attr('href').split('?')[0];
-
                         if (ktt === btt) {
                             $(el).addClass('active');
                             $(al).addClass('active');
