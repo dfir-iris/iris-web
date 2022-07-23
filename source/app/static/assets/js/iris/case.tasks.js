@@ -178,7 +178,7 @@ function do_list_users(list_users, cur_assignees_id_list) {
     $('#task_assignees_id').selectpicker({
         liveSearch: true,
         title: "Select assignee(s)",
-        style: "Bootstrap 4: 'btn-outline-primary'",
+        style: "btn-outline-primary",
     });
 
     for (user in list_users) {
