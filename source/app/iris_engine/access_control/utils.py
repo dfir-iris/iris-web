@@ -390,31 +390,13 @@ def ac_get_user_cases_access(user_id):
 
     effective_cases_access = {}
     for oca in ocas:
-        if oca.case_id in effective_cases_access:
-            if effective_cases_access[oca.case_id] <= oca.access_level or \
-                    oca.access_level == CaseAccessLevel.deny_all.value:
-                effective_cases_access[oca.case_id] = oca.access_level
-        else:
-            effective_cases_access[oca.case_id] = oca.access_level
+        effective_cases_access[oca.case_id] = oca.access_level
 
     for gca in gcas:
-        if gca.case_id in effective_cases_access:
-            if effective_cases_access[gca.case_id] <= gca.access_level or \
-                    gca.access_level == CaseAccessLevel.deny_all.value:
-                effective_cases_access[gca.case_id] = gca.access_level
-
-        else:
-            effective_cases_access[gca.case_id] = gca.access_level
+        effective_cases_access[gca.case_id] = gca.access_level
 
     for uca in ucas:
-
-        if uca.case_id in effective_cases_access:
-            if effective_cases_access[uca.case_id] <= uca.access_level or \
-                    uca.access_level == CaseAccessLevel.deny_all.value:
-                effective_cases_access[uca.case_id] = uca.access_level
-
-        else:
-            effective_cases_access[uca.case_id] = uca.access_level
+        effective_cases_access[uca.case_id] = uca.access_level
 
     return effective_cases_access
 
@@ -559,144 +541,6 @@ def ac_trace_user_effective_cases_access_2(user_id):
     return effective_cases_access
 
 
-def ac_trace_user_effective_cases_access(user_id):
-
-    cases = Cases.query.with_entities(
-        Cases.case_id,
-        Cases.name
-    ).order_by(
-        Cases.case_id
-    ).all()
-
-    faccesses = {}
-
-    for case in cases:
-        faccesses[case.case_id] = {
-            'case_info': {
-                'case_name': case.name,
-                'case_id': case.case_id
-            },
-            'user_access': [],
-            'user_effective_access': []
-        }
-
-        accesses = faccesses[case.case_id]['user_access']
-        effective = faccesses[case.case_id]['user_effective_access']
-
-        ocas = OrganisationCaseAccess.query.with_entities(
-            Organisation.org_name,
-            Organisation.org_id,
-            Organisation.org_uuid,
-            OrganisationCaseAccess.access_level
-        ).filter(
-            and_(OrganisationCaseAccess.case_id == case.case_id,
-                 UserOrganisation.user_id == user_id,
-                 OrganisationCaseAccess.org_id == UserOrganisation.org_id)
-        ).all()
-
-        gcas = GroupCaseAccess.query.with_entities(
-            Group.group_name,
-            Group.group_id,
-            Group.group_uuid,
-            GroupCaseAccess.access_level
-        ).filter(
-            and_(GroupCaseAccess.case_id == case.case_id,
-                 UserGroup.user_id == user_id,
-                 UserGroup.group_id == GroupCaseAccess.group_id)
-        ).join(
-            GroupCaseAccess.group
-        ).all()
-
-        ucas = UserCaseAccess.query.filter(
-            and_(UserCaseAccess.case_id == case.case_id,
-                 UserCaseAccess.user_id == user_id)
-        ).all()
-
-        fca = 0
-        has_uca_deny_all = False
-        has_gca_deny_all = False
-        has_gca_overwritten = False
-        has_uca_overwritten = False
-
-        for ac_l in CaseAccessLevel:
-            uca_level = 0
-            for uca in ucas:
-                if uca.access_level & ac_l.value == ac_l.value and uca_level & uca.access_level != uca.access_level:
-                    uca_level |= uca.access_level
-                    accesses.append({
-                        'state': 'Effective',
-                        'name': ac_l.name,
-                        'value': ac_l.value,
-                        'inherited_from': {
-                            'object_type': 'user_access_level',
-                            'object_name': 'self',
-                            'object_id': 'self',
-                            'object_uuid': 'self'
-                        }
-                    })
-                    effective.append(ac_l.name)
-                    has_uca_overwritten = True
-                    if ac_l.value == CaseAccessLevel.deny_all.value:
-                        has_uca_deny_all = True
-
-            fca |= uca_level
-
-            gca_level = 0
-            for gca in gcas:
-                if gca.access_level & ac_l.value == ac_l.value and gca_level & gca.access_level != gca.access_level:
-                    gca_level |= gca.access_level
-                    if has_uca_overwritten or has_uca_deny_all:
-                        state = 'Overwritten by user access'
-                    else:
-                        state = 'Effective'
-                        effective.append(ac_l.name)
-
-                    accesses.append({
-                        'state': state,
-                        'name': ac_l.name,
-                        'value': ac_l.value,
-                        'inherited_from': {
-                            'object_type': 'group_access_level',
-                            'object_name': gca.group_name,
-                            'object_id': gca.group_id,
-                            'object_uuid': gca.group_uuid
-                        }
-                    })
-                    has_gca_overwritten = True
-                    if ac_l.value == CaseAccessLevel.deny_all.value:
-                        has_gca_deny_all = True
-
-            fca |= gca_level
-
-            oca_level = 0
-            for oca in ocas:
-                if oca.access_level & ac_l.value == ac_l.value and oca_level & oca.access_level != oca.access_level:
-                    oca_level |= oca.access_level
-
-                    if has_uca_overwritten or has_uca_deny_all:
-                        state = 'Overwritten by user access'
-                    elif has_gca_overwritten or has_gca_deny_all:
-                        state = 'Overwritten by group access'
-                    else:
-                        state = 'Effective'
-                        effective.append(ac_l.name)
-
-                    accesses.append({
-                        'state': state,
-                        'name': ac_l.name,
-                        'value': ac_l.value,
-                        'inherited_from': {
-                            'object_type': 'organisation_access_level',
-                            'object_name': oca.org_name,
-                            'object_id': oca.org_id,
-                            'object_uuid': oca.org_uuid
-                        }
-                    })
-            fca |= oca_level
-
-    return faccesses
-
-
 def ac_trace_case_access(case_id):
 
     case = Cases.query.with_entities(
@@ -708,15 +552,6 @@ def ac_trace_case_access(case_id):
 
     if not case:
         return {}
-
-    faccesses = {
-        'case_info': {
-            'case_name': case.name,
-            'case_id': case.case_id
-        },
-        'users_access': []
-    }
-
 
     ocas = OrganisationCaseAccess.query.with_entities(
         Organisation.org_name,
