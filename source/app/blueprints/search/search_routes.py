@@ -61,7 +61,7 @@ def search_file_post(caseid: int):
     files = []
     search_condition = and_(Cases.case_id.in_([]))
 
-    track_activity("started a search for {} on {}".format(search_value, search_type))
+    track_activity("started a global search for {} on {}".format(search_value, search_type))
 
     if not ac_flag_match_mask(session['permissions'],  Permissions.search_across_all_cases.value):
         user_search_limitations = ac_get_fast_user_cases_access(current_user.id)
@@ -70,6 +70,9 @@ def search_file_post(caseid: int):
 
         else:
             return response_success("Results fetched", [])
+
+    else:
+        search_condition = and_()
 
     if search_type == "ioc":
         res = Ioc.query.with_entities(
