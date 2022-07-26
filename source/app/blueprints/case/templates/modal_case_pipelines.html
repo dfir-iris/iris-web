@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="/static/assets/css/dropzone.css">
 <div class="modal-header">
     <h4 class="modal-title mt-2 mr-4">Processing pipelines</h4>
     <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
@@ -7,12 +8,13 @@
     <div class="container col-md-12">
         <div class="row">
             <div class="col-12">
-                <h5>Select processing pipeline and drop analysis files below. Press Process to start the processing.</h5>
+                <p>Select processing pipeline and drop analysis files below. Press Process to start the processing. Do not close the page until the upload is finished.<br/>
+                Supports 40 files and 10GB maximum in total.</p>
 
                     <div class="form-group">
                         <div class="form-group">
                          <label for="import_pipeline" class="placeholder">Processing pipeline</label>
-                            <i class="fas fa-question-circle" data-toggle="popover"
+                            <i class="fas fa-question-circle mr-2" data-toggle="popover"
                                     title="Pipelines"
                                     data-content="Pipelines are the way files dropped below are processed. Each pipelines handles a different type of file."></i>
 
@@ -36,9 +38,6 @@
                             </div>
                         </div>
                     </div>
-
-                <button type="button" class="btn btn-outline-success ml-4 mt-5"
-                    id="submit_update_case" onclick="submit_update_casefn();">Process</button>
                 <span id="msg_submit" class="ml-4"></span>
             </div>
         </div>
@@ -46,5 +45,10 @@
 </div>
 
 <div class="modal-footer">
-    <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+    <button type="button" class="btn btn-default float-left" data-dismiss="modal">Dismiss</button>
+
+    <button type="button" class="btn btn-outline-success float-right"
+        id="submit_update_case" onclick="submit_update_casefn();">Process</button>
 </div>
+<script src="/static/assets/js/plugin/dropzone/dropzone.js"></script>
+<script src="/static/assets/js/iris/case.pipelines.js"></script>
