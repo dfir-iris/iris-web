@@ -250,7 +250,7 @@ def list_dim_tasks(count, caseid):
 
 
 @dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def task_status(task_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
