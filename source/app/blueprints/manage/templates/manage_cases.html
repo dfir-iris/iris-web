@@ -41,21 +41,24 @@
                                 <div class="row">
                                     <div class="col-md-12 col-lg-6 col-sm-12">
                                         <h4 class="border-bottom pb-3">General info</h4>
+                                        Fields with an asterix are mandatory. If no organisation is selected, only the user creating the case will have access to it.
                                         <form method="post" action='' id="form_new_case" autocomplete="off">
                                             {{ form.hidden_tag() }}
 
-                                            <div class="col-md-12 col-lg-12 col-sm-12">
-                                                <div class="input-group mb-4">
-                                                    <div class="input-group-prepend">
-                                                            <span class="input-group-text">Customer *</span>
+                                            <div class="mt-4 col-md-12 col-lg-12 col-sm-12">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="input-group mb-4">
+                                                            {{ form.case_customer(class="selectpicker w-100 pl--6 btn-outline-white") }}
+                                                        </div>
                                                     </div>
-                                                    {{ form.case_customer(class="selectpicker pl--6 btn-outline-white") }}
                                                 </div>
-                                                <div class="input-group mb-4">
-                                                    <div class="input-group-prepend">
-                                                            <span class="input-group-text">Create in organisations</span>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="input-group mb-4">
+                                                            {{ form.case_organisations(class="selectpicker w-100 pl--6 btn-outline-white") }}
+                                                        </div>
                                                     </div>
-                                                    {{ form.case_organisations(class="selectpicker pl--6 btn-outline-white") }}
                                                 </div>
                                                 <div class="input-group mb-4">
                                                     <div class="input-group-prepend">

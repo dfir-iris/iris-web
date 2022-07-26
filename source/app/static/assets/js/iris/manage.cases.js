@@ -28,12 +28,12 @@ $('.control-update-pipeline-'+ $('#update_pipeline_selector').val() ).show();
 /* create the select picker for customer */
 $('#case_customer').selectpicker({
     liveSearch: true,
-    title: "Customer",
+    title: "Select customer *",
     style: "btn-outline-white"
 });
 $('#case_organisations').selectpicker({
     liveSearch: true,
-    title: "Customer",
+    title: "Select organisation(s)",
     style: "btn-outline-white"
 });
 
