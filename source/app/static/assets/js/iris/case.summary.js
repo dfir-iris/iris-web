@@ -254,13 +254,14 @@ function auto_remove_typing() {
     }
 }
 
-function case_pipeline_popup(case_id) {
-    url = '/case/pipelines-modal' + case_id + case_param();
+function case_pipeline_popup() {
+    url = '/case/pipelines-modal' + case_param();
     $('#info_case_modal_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
         }
+        $('#modal_case_detail').modal({ show: true });
     });
 }
 

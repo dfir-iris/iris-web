@@ -85,18 +85,9 @@ def manage_index_cases(caseid, url_redir):
 
     form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
 
-    pl = list_available_pipelines()
-
-    form.pipeline.choices = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
-                                         ap[1]['pipeline_human_name'])for ap in pl]
-
-    # Return default page of case management
-    pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
-                      ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
-
     attributes = get_default_custom_attributes('case')
 
-    return render_template('manage_cases.html', form=form, pipeline_args=pipeline_args, attributes=attributes)
+    return render_template('manage_cases.html', form=form, attributes=attributes)
 
 
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])

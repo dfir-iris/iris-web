@@ -48,6 +48,8 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_report_template
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.reporter.report_db import export_case_json
+from app.forms import PipelinesCaseForm
+from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.utils.tracker import track_activity
 from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
@@ -100,14 +102,25 @@ def case_r(caseid, url_redir):
 
 
 @case_blueprint.route('/case/pipelines-modal', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.full_access)
 def case_pipelines_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case.case_r', cid=caseid, redirect=True))
 
     case = get_case(caseid)
 
-    return render_template('modal_case_pipelines.html', case=case)
+    form = PipelinesCaseForm()
+
+    pl = list_available_pipelines()
+
+    form.pipeline.choices = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
+                                         ap[1]['pipeline_human_name'])for ap in pl]
+
+    # Return default page of case management
+    pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
+                      ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
+
+    return render_template('modal_case_pipelines.html', case=case, form=form, pipeline_args=pipeline_args)
 
 
 @socket_io.on('change')

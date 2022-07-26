@@ -121,7 +121,9 @@ class AddCaseForm(FlaskForm):
     case_customer = SelectField(u'Customer', validators=[InputRequired()])
     case_organisations = SelectMultipleField(u'Organisations')
 
-    pipeline = SelectField(u'Analysis pipeline')
+
+class PipelinesCaseForm(FlaskForm):
+    pipeline = SelectField(u'Processing pipeline')
 
 
 class AssetBasicForm(FlaskForm):
