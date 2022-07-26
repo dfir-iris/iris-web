@@ -7736,7 +7736,7 @@ body .badge-danger {
     border-radius: 0 !important;
     margin-top: 5px;
     margin-bottom: 5px;
-    border: 1px solid #1572E8;
+    border: 1px solid #585c5d;
     color: #585c5d;
 }
 
@@ -7852,6 +7852,12 @@ body .badge-danger {
     background: #1a2035;
     border: 1px solid #1a2035;
 }
+
+.nav-pills.nav-dark .nav-link.active {
+    background: #515964;
+    border: 1px solid #515964;
+}
+
 
 .nav-pills.nav-primary .nav-link.active {
     background: #1572E8;
