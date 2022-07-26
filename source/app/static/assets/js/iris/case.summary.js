@@ -254,6 +254,31 @@ function auto_remove_typing() {
     }
 }
 
+function case_pipeline_popup(case_id) {
+    url = '/case/pipelines-modal' + case_id + case_param();
+    $('#info_case_modal_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+    });
+}
+
+function case_detail(case_id) {
+    url = '/case/details/' + case_id + case_param();
+    $('#info_case_modal_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_case_detail').modal({ show: true });
+    });
+}
+
+function manage_case(case_id) {
+   window.location = 'manage/cases?cid='+ case_id +'#view';
+}
+
 $(document).ready(function() {
 
     if ($("#editor_summary").attr("data-theme") != "dark") {
