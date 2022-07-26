@@ -99,6 +99,17 @@ def case_r(caseid, url_redir):
                            reports=reports, reports_act=reports_act, form=form)
 
 
+@case_blueprint.route('/case/pipelines-modal', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_pipelines_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case.case_r', cid=caseid, redirect=True))
+
+    case = get_case(caseid)
+
+    return render_template('modal_case_pipelines.html', case=case)
+
+
 @socket_io.on('change')
 def socket_summary_onchange(data):
     if not current_user.is_authenticated:

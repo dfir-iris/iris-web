@@ -27,10 +27,6 @@
                                     aria-controls="pills-home-nobd" aria-selected="true">New</a>
                             </li>
                             <li class="nav-item submenu">
-                                <a class="nav-link" id="update-tab" data-toggle="pill" href="#update" role="tab"
-                                    aria-controls="update-tab" aria-selected="false">Update</a>
-                            </li>
-                            <li class="nav-item submenu">
                                 <a class="nav-link" id="view-tab" data-toggle="pill" href="#view" role="tab"
                                     aria-controls="view-tab" aria-selected="false">View</a>
                             </li>
@@ -104,48 +100,6 @@
                                 </div>
                                 <button class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_case_btn" onclick="submit_new_case();">Create</button>
                             </div>
-
-                            <div id="update" role="tabpanel" aria-labelledby="update-tab"
-                                class="tab-pane fade px-4 py-5">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <h5>Select processing pipeline and drop analysis files below. Press Update to start the update</h5>
-
-                                            <div class="form-group">
-                                                <div class="form-group">
-                                                 <label for="import_pipeline" class="placeholder">Processing pipeline</label>
-                                                    <i class="fas fa-question-circle" data-toggle="popover"
-                                                            title="Pipelines"
-                                                            data-content="Pipelines are the way files dropped below are processed. Each pipelines handles a different type of file."></i>
-
-                                                {{ form.pipeline(class="selectpicker pl--6 btn-outline-white", id="update_pipeline_selector") }}
-                                                </div>
-                                                <div class="form-group col-md-6 mb-2">
-                                                {% for itm in pipeline_args %}
-                                                    {% for tm in itm[2] %}
-                                                    <div class="input-group mb-4 control-update-pipeline-args control-update-pipeline-{{itm[0]}}">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">{{tm[0]}} ({{tm[1]}})</span>
-                                                        </div>
-                                                        <input class="form-control update-{{itm[0]}}" id="{{tm[0]}}" name="{{tm[0]}}" type="text" value="" {{tm[1]}}>
-                                                    </div>
-                                                    {% endfor %}
-
-                                                {% endfor %}
-                                                </div>
-                                                <div class="tab-content col-md-12">
-                                                    <div class="dropzone  col-md-12" id="files_drop_1">
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        <button type="button" class="btn btn-outline-success ml-4 mt-5"
-                                            id="submit_update_case" onclick="submit_update_casefn();">Update</button>
-                                        <span id="msg_submit" class="ml-4"></span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div id="view" role="tabpanel" aria-labelledby="view-tab" class="tab-pane fade px-4 py-5">
                                 <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-primary"
                                     onclick="refresh_case_table();">
