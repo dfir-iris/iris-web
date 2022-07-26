@@ -15,7 +15,7 @@
                 {% if case.close_date %}
                 <h5 class="text-warning  mb-2">Closed on {{ case.close_date }}</h5>
                 {% endif %}
-                <small><a href="#" onclick="case_detail({{ case.case_id }});" class="btn btn-sm btn-outline-light btn-rounded float-left">
+                <small><a href="#" onclick="case_detail('{{ case.case_id }}');" class="btn btn-sm btn-outline-light btn-rounded float-left">
                   Case info
                     </a></small>
                 <div class="dropdown">

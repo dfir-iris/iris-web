@@ -1,7 +1,7 @@
 function renew_api() {
     swal({
         title: "Are you sure?",
-        text: "The actual key will be revoked and cannot be used anymore",
+        text: "The current key will be revoked and cannot be used anymore",
         icon: "warning",
         buttons: true,
         dangerMode: true,
