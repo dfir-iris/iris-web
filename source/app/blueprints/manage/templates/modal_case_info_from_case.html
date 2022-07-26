@@ -53,27 +53,27 @@
                     <label>Case ID :</label>
                     <span type="text" class="text-faded">{{ data.case_id }}</span>
                 </div>
+                <hr/>
+                  <h4>Case access</h4>
+                  <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
+                    <thead>
+                      <tr>
+                          <th>User ID</th>
+                          <th>User login</th>
+                          <th>User display name</th>
+                      </tr>
+                    </thead>
+                    <tfoot>
+                      <tr>
+                          <th>User ID</th>
+                          <th>User login</th>
+                          <th>User display name</th>
+                      </tr>
+                    </tfoot>
+                  </table>
               </div>
-              <hr/>
-              <h4>Case access</h4>
-              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
-                <thead>
-                  <tr>
-                      <th>User ID</th>
-                      <th>User login</th>
-                      <th>User display name</th>
-                  </tr>
-                </thead>
-                <tfoot>
-                  <tr>
-                      <th>User ID</th>
-                      <th>User login</th>
-                      <th>User display name</th>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
               {% include 'modals/modal_attributes_tabs.html' %}
+            </div>
         </div>
     </div>
 </div>

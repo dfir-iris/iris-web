@@ -2,7 +2,7 @@ version: "3.9"
 services:
     # AUTHENTICATION PROXY
   proxy:
-    image: quay.io/oauth2-proxy/oauth2-proxy:v7.2.0
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
     container_name: oauth2_proxy
     volumes:
       - ./proxy/oauth2-proxy_iris-web-app.cfg:/etc/oauth2-proxy.cfg:ro
@@ -33,8 +33,8 @@ services:
 #      - test_app_network
 
 networks:
-  test_app_network:
-    driver: bridge
+#  test_app_network:
+#    driver: bridge
   app_network:
     external: true
     name: iris_frontend
