@@ -34,9 +34,11 @@ from app import db
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import update_user
+from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
@@ -80,6 +82,30 @@ def user_is_admin(caseid):
         return response_error('User is not administrator', status=401)
 
     return response_success("User is administrator")
+
+
+@profile_blueprint.route('/user/has-permission', methods=['POST'])
+@ac_requires()
+def user_has_permission(caseid):
+
+    req_js = request.json
+    if not req_js:
+        return response_error('Invalid request')
+
+    if not req_js.get('permission_name') or not \
+            req_js.get('permission_value'):
+        return response_error('Invalid request')
+
+    if req_js.get('permission_value') not in Permissions._value2member_map_:
+        return response_error('Invalid permission')
+
+    if Permissions(req_js.get('permission_value')).name.lower() != req_js.get('permission_name').lower():
+        return response_error('Permission value-name mismatch')
+
+    if ac_current_user_has_permission(Permissions(req_js.get('permission_value'))):
+        return response_success('User has permission')
+    else:
+        return response_error('User does not have permission', status=403)
 
 
 @profile_blueprint.route('/user/update/modal', methods=['GET'])
