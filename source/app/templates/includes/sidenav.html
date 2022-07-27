@@ -85,7 +85,7 @@
 						{% endif %}
 
 						{% if user_has_manage_perms() or user_has_perm(std_permissions.manage_case) %}
-						<li class="nav-section">
+						<li class="nav-section nav-advanced">
 							<span class="sidebar-mini-icon">
 								<i class="fa fa-ellipsis-h"></i>
 							</span>
@@ -101,7 +101,7 @@
 						{% endif %}
 
 						{% if user_has_manage_perms() %}
-						<li class="nav-item submenu">
+						<li class="nav-item submenu nav-advanced">
 							<a data-toggle="collapse" href="#advanced-nav" class="" aria-expanded="false">
 								<i class="flaticon-interface-3"></i>
 								<span class="sub-item">Advanced</span>
@@ -180,7 +180,7 @@
 						{% endif %}
 						{% endif %}
 						<li class="nav-item">
-							<a href="https://dfir-iris.github.io">
+							<a href="https://docs.dfir-iris.org">
 								<i class="flaticon-round"></i>
 								<span>Help</span>
 							</a>

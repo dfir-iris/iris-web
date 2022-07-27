@@ -846,6 +846,7 @@ $(document).ready(function(){
             }
             btt = csp.join('/');
         }
+
         $('#l_nav_tab .nav-item').each(function (k, al) {
             href = $(al).children().attr('href');
             try {
@@ -857,12 +858,12 @@ $(document).ready(function(){
                             $(al).addClass('active');
                             $(al).children().attr('aria-expanded', true);
                             $('#advanced-nav').show();
-                            return;
+                            return false;
                         }
-                    })
+                    });
                 } else if (href.startsWith(btt)){
                     $(this).addClass('active');
-                    return;
+                    return false;
                 }else{
                     att = "";
                     att = href.split('/')[1].split('?')[0];
@@ -870,7 +871,7 @@ $(document).ready(function(){
             } catch {att=""}
             if (att === btt) {
                 $(al).addClass('active');
-                return;
+                return false;
             }
         })
     })
