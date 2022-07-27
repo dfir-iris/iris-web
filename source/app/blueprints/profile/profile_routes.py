@@ -76,12 +76,7 @@ def user_renew_api(caseid):
 @profile_blueprint.route('/user/is-admin', methods=['GET'])
 @endpoint_deprecated('Use /user/has-permission to check permission', 'v1.5.0')
 def user_is_admin(caseid):
-
-    roles = [role.name for role in current_user.roles]
-    if "administrator" not in roles:
-        return response_error('User is not administrator', status=401)
-
-    return response_success("User is administrator")
+    pass
 
 
 @profile_blueprint.route('/user/has-permission', methods=['POST'])
