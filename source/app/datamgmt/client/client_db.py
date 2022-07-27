@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import marshmallow
+from sqlalchemy import func
 from typing import List
 
 from app import db
@@ -70,6 +72,17 @@ def update_client(client_id: int, data) -> Client:
 
     if not client:
         raise ElementNotFoundException('No Customer found with this uuid.')
+
+    exists = Client.query.filter(
+        Client.client_id != client_id,
+        func.lower(Client.name) == data.get('customer_name').lower()
+    ).first()
+
+    if exists:
+        raise marshmallow.exceptions.ValidationError(
+            "Customer already exists",
+            field_name="customer_name"
+        )
 
     client_schema = CustomerSchema()
     client_schema.load(data, instance=client)
