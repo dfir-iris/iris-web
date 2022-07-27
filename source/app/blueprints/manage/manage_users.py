@@ -438,7 +438,10 @@ def lookup_name_restricted(login, caseid):
     output = {
         "user_login": user.user,
         "user_id": user.id,
-        "user_name": user.name
+        "user_uuid": user.uuid,
+        "user_name": user.name,
+        "user_email": user.email,
+        "user_active": user.active
     }
 
     return response_success(data=output)
