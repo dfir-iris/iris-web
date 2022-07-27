@@ -73,7 +73,7 @@ manage_cases_blueprint = Blueprint('manage_case',
 
 # CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
+@ac_requires(Permissions.manage_case)
 def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
