@@ -44,7 +44,7 @@ manage_ioc_type_blueprint = Blueprint('manage_ioc_types',
 
 # CONTENT ------------------------------------------------
 @manage_ioc_type_blueprint.route('/manage/ioc-types/list', methods=['GET'])
-@ac_api_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
+@ac_api_requires()
 def list_ioc_types(caseid):
     lstatus = get_ioc_types_list()
 
@@ -52,7 +52,7 @@ def list_ioc_types(caseid):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
+@ac_api_requires()
 def get_ioc_type(cur_id, caseid):
 
     ioc_type = IocType.query.filter(IocType.type_id == cur_id).first()
