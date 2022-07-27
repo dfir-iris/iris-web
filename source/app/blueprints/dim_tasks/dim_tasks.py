@@ -49,6 +49,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.util import ac_api_case_requires
 from app.util import ac_api_requires
+from app.util import ac_case_requires
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
@@ -250,7 +251,7 @@ def list_dim_tasks(count, caseid):
 
 
 @dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def task_status(task_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
