@@ -246,6 +246,7 @@ def add_gtask(caseid):
         try:
 
             gtask_schema = GlobalTasksSchema()
+            print(request.get_json())
 
             request_data = call_modules_hook('on_preload_global_task_create', data=request.get_json(), caseid=caseid)
 
