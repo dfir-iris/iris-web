@@ -547,7 +547,7 @@ def ac_api_requires(*permissions):
                 kwargs.update({"caseid": caseid})
 
                 if permissions:
-                    if not session['permissions']:
+                    if 'permissions' not in session:
                         session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
                     for permission in permissions:
