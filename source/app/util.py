@@ -514,6 +514,15 @@ def ac_api_case_requires(*access_level):
     return inner_wrap
 
 
+def endpoint_deprecated(message, version):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            return response_error(f"{message}. Deprecated in {version}", status=410)
+        return wrap
+    return inner_wrap
+
+
 def ac_api_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
