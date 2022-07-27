@@ -23,6 +23,7 @@ from sqlalchemy import desc, and_
 
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
 from app.models import CaseTasks, TaskAssignee
 from app.models import TaskStatus
@@ -151,7 +152,7 @@ def update_task_status(task_status, task_id, caseid):
         return False
 
 
-def update_task_assignees(task, task_assignee_list):
+def update_task_assignees(task, task_assignee_list, caseid):
     if not task:
         return None
 
@@ -166,7 +167,12 @@ def update_task_assignees(task, task_assignee_list):
     assignees_to_add = set_assignees - set_cur_assignees
     assignees_to_remove = set_cur_assignees - set_assignees
 
+    allowed_users = [u.get('user_id') for u in get_users_list_restricted_from_case(caseid)]
+
     for uid in assignees_to_add:
+        if uid not in allowed_users:
+            continue
+
         user = User.query.filter(User.id == uid).first()
         if user:
             ta = TaskAssignee()
@@ -201,6 +207,6 @@ def add_task(task, assignee_id_list, user_id, caseid):
     db.session.commit()
 
     update_task_status(task.task_status_id, task.id, caseid)
-    update_task_assignees(task, assignee_id_list)
+    update_task_assignees(task, assignee_id_list, caseid)
 
     return task

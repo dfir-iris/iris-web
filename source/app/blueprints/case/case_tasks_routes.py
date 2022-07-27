@@ -222,7 +222,7 @@ def case_edit_task(cur_id, caseid):
         task.task_userid_update = current_user.id
         task.task_last_update = datetime.utcnow()
 
-        update_task_assignees(task, task_assignee_list)
+        update_task_assignees(task, task_assignee_list, caseid)
 
         update_tasks_state(caseid=caseid)
 
