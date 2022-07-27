@@ -143,6 +143,10 @@ def case_add_task(caseid):
         # validate before saving
         task_schema = CaseTaskSchema()
         request_data = call_modules_hook('on_preload_task_create', data=request.get_json(), caseid=caseid)
+
+        if 'task_assignee_id' in request_data or 'task_assignees_id' not in request_data:
+            return response_error('task_assignee_id is not valid anymore since v1.5.0.')
+
         task_assignee_list = request_data['task_assignees_id']
         del request_data['task_assignees_id']
         task = task_schema.load(request_data)
