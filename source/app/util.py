@@ -57,6 +57,7 @@ from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
+from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
@@ -546,6 +547,9 @@ def ac_api_requires(*permissions):
                 kwargs.update({"caseid": caseid})
 
                 if permissions:
+                    if not session['permissions']:
+                        session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+
                     for permission in permissions:
                         if session['permissions'] & permission.value:
                             return f(*args, **kwargs)
