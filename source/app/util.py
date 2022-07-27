@@ -518,7 +518,7 @@ def endpoint_deprecated(message, version):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
-            return response_error(f"{message}. Deprecated in {version}", status=410)
+            return response_error(f"Deprecated in {version}. {message}.", status=410)
         return wrap
     return inner_wrap
 

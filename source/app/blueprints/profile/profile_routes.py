@@ -40,6 +40,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
+from app.util import endpoint_deprecated
 from app.util import response_error
 from app.util import response_success
 
@@ -71,7 +72,7 @@ def user_renew_api(caseid):
 
 
 @profile_blueprint.route('/user/is-admin', methods=['GET'])
-@ac_api_requires()
+@endpoint_deprecated('Use /user/has-permission to check permission', 'v1.5.0')
 def user_is_admin(caseid):
 
     roles = [role.name for role in current_user.roles]
