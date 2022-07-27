@@ -47,7 +47,7 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 @manage_assets_blueprint.route('/manage/asset-type/list')
-@ac_api_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
+@ac_api_requires()
 def list_assets(caseid):
     # Get all assets
     assets = AssetsType.query.with_entities(
@@ -71,7 +71,7 @@ def list_assets(caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
+@ac_api_requires()
 def view_asset_api(cur_id, caseid):
     # Get all assets
     asset_type = AssetsType.query.with_entities(
