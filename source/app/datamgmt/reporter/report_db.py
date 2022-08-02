@@ -220,6 +220,7 @@ def export_case_tm_json(case_id):
     timeline = CasesEvent.query.with_entities(
         CasesEvent.event_id,
         CasesEvent.event_title,
+        CasesEvent.event_in_summary,
         CasesEvent.event_date,
         CasesEvent.event_tz,
         CasesEvent.event_date_wtz,
