@@ -2,7 +2,8 @@
 #
 #  IRIS Source Code
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  contact@dfir-iris.org
+#  Created by Lukas Zurschmiede @LukyLuke
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
