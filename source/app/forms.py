@@ -72,6 +72,8 @@ class AddIocTypeForm(FlaskForm):
     type_name = StringField(u'Type name', validators=[DataRequired()])
     type_description = StringField(u'Type description', validators=[DataRequired()])
     type_taxonomy = TextAreaField(u'Type taxonomy')
+    type_validation_regex = StringField(u'Type validation regex')
+    type_validation_expect = StringField(u'Type validation expectation')
 
 
 class AddCustomerForm(FlaskForm):
