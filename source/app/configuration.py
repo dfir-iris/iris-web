@@ -37,6 +37,7 @@ PGA_ACCOUNT_ = os.environ.get('POSTGRES_USER', config.get('POSTGRES', 'PGA_ACCOU
 PGA_PASSWD_ = os.environ.get('POSTGRES_PASSWORD', config.get('POSTGRES', 'PGA_PASSWD'))
 PG_SERVER_ = os.environ.get('DB_HOST', config.get('POSTGRES', 'PG_SERVER'))
 PG_PORT_ = os.environ.get('DB_PORT', config.get('POSTGRES', 'PG_PORT'))
+CELERY_HOST_ = os.environ.get('CELERY_HOST', config.get('CELERY', 'HOST'))
 
 if os.environ.get('IRIS_WORKER') is None:
     # Flask needs it for CSRF token and stuff
@@ -62,7 +63,7 @@ SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".
 # --------- CELERY ---------
 class CeleryConfig():
     result_backend = "db+" + SQLALCHEMY_BASE_URI + "iris_tasks"  # use database as storage
-    broker_url = "amqp://localhost" if not os.getenv('DOCKERIZED') else "amqp://rabbitmq"
+    broker_url = f"amqp://{CELERY_HOST_}"
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
