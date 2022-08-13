@@ -76,6 +76,8 @@ def view_ioc_modal(cur_id, caseid, url_redir):
     form.type_name.render_kw = {'value': ioct.type_name}
     form.type_description.render_kw = {'value': ioct.type_description}
     form.type_taxonomy.data = ioct.type_taxonomy
+    form.type_validation_regex.data = ioct.type_validation_regex
+    form.type_validation_expect.data = ioct.type_validation_expect
 
     return render_template("modal_add_ioc_type.html", form=form, ioc_type=ioct)
 

@@ -205,6 +205,8 @@ def get_ioc_types_list():
         IocType.type_name,
         IocType.type_description,
         IocType.type_taxonomy,
+        IocType.type_validation_regex,
+        IocType.type_validation_expect,
     ).all()
 
     l_types = [row._asdict() for row in ioc_types]
