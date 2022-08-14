@@ -60,6 +60,22 @@ def create_safe(session, model, **kwargs):
         return True
 
 
+def create_safe_limited(session, model, keywords_list, **kwargs):
+    kwdup = kwargs.keys()
+    for kw in list(kwdup):
+        if kw not in keywords_list:
+            kwargs.pop(kw)
+
+    instance = session.query(model).filter_by(**kwargs).first()
+    if instance:
+        return False
+    else:
+        instance = model(**kwargs)
+        session.add(instance)
+        session.commit()
+        return True
+
+
 def get_by_value_or_create(session, model, fieldname, **kwargs):
     select_value = {fieldname: kwargs.get(fieldname)}
     instance = session.query(model).filter_by(**select_value).first()
