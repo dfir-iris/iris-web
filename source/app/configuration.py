@@ -96,8 +96,7 @@ SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".
 # --------- CELERY ---------
 class CeleryConfig():
     result_backend = "db+" + SQLALCHEMY_BASE_URI + "iris_tasks"  # use database as storage
-    broker_url = CELERY_BROKER_ if CELERY_BROKER_ \
-        else f"amqp://{os.environ.get('CELERY_HOST', config.get('CELERY', 'HOST'))}"
+    broker_url = CELERY_BROKER_
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
