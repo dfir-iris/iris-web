@@ -20,15 +20,46 @@
 import configparser
 import os
 
+
 # --------- Configuration ---------
 # read the private configuration file
+class IrisConfigException(Exception):
+    pass
+
+
+class IrisConfig(configparser.ConfigParser):
+    def __init__(self, config_file):
+        super(IrisConfig, self).__init__()
+
+        self.read(config_file)
+        self.validate_config()
+
+    def validate_config(self):
+        required_values = {
+            'POSTGRES': {
+            },
+            'IRIS': {
+            },
+            'CELERY': {
+            },
+            'DEVELOPMENT': {
+            }
+        }
+
+        for section, keys in required_values.items():
+            if section not in self:
+                raise IrisConfigException(
+                    'Missing section %s in the configuration file' % section)
+
 
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
-    config.read(f'app{os.path.sep}config.docker.ini')
+    # The example config file has an invalid value so cfg will stay empty first
+    config = IrisConfig(f'app{os.path.sep}config.docker.ini')
 else:
-    config.read(f'app{os.path.sep}config.priv.ini')
+    config = IrisConfig(f'app{os.path.sep}config.priv.ini')
+
 
 # Fetch the values
 PG_ACCOUNT_ = os.environ.get('DB_USER', config.get('POSTGRES', 'PG_ACCOUNT'))
@@ -157,3 +188,5 @@ class Config():
     """
     CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 300
+
+
