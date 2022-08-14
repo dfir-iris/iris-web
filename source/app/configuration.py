@@ -28,6 +28,8 @@ class IrisConfigException(Exception):
 
 
 class IrisConfig(configparser.ConfigParser):
+    """ From https://gist.github.com/jeffersfp/586c2570cd2bdb8385693a744aa13122 - @jeffersfp """
+
     def __init__(self, config_file):
         super(IrisConfig, self).__init__()
 
@@ -60,7 +62,6 @@ if os.getenv("DOCKERIZED"):
 else:
     config = IrisConfig(f'app{os.path.sep}config.priv.ini')
 
-
 # Fetch the values
 PG_ACCOUNT_ = os.environ.get('DB_USER', config.get('POSTGRES', 'PG_ACCOUNT'))
 PG_PASSWD_ = os.environ.get('DB_PASS', config.get('POSTGRES', 'PG_PASSWD'))
@@ -68,13 +69,14 @@ PGA_ACCOUNT_ = os.environ.get('POSTGRES_USER', config.get('POSTGRES', 'PGA_ACCOU
 PGA_PASSWD_ = os.environ.get('POSTGRES_PASSWORD', config.get('POSTGRES', 'PGA_PASSWD'))
 PG_SERVER_ = os.environ.get('DB_HOST', config.get('POSTGRES', 'PG_SERVER'))
 PG_PORT_ = os.environ.get('DB_PORT', config.get('POSTGRES', 'PG_PORT'))
-CELERY_BROKER_ = os.environ.get('CELERY_BROKER', config.get('CELERY', 'BROKER'))
+CELERY_BROKER_ = os.environ.get('CELERY_BROKER',
+                                config.get('CELERY', 'BROKER',
+                                           fallback=f"amqp://{config.get('CELERY', 'HOST', fallback='rabbitmq')}"))
 
 if os.environ.get('IRIS_WORKER') is None:
     # Flask needs it for CSRF token and stuff
     SECRET_KEY_ = os.environ.get('SECRET_KEY', config.get('IRIS', 'SECRET_KEY'))
     SECURITY_PASSWORD_SALT_ = os.environ.get('SECURITY_PASSWORD_SALT', config.get('IRIS', 'SECURITY_PASSWORD_SALT'))
-
 
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -93,10 +95,9 @@ SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".
 
 # --------- CELERY ---------
 class CeleryConfig():
-
-    print(CELERY_BROKER_)
     result_backend = "db+" + SQLALCHEMY_BASE_URI + "iris_tasks"  # use database as storage
-    broker_url = CELERY_BROKER_
+    broker_url = CELERY_BROKER_ if CELERY_BROKER_ \
+        else f"amqp://{os.environ.get('CELERY_HOST', config.get('CELERY', 'HOST'))}"
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
@@ -104,7 +105,6 @@ class CeleryConfig():
 
 # --------- APP ---------
 class Config():
-
     # Handled by bumpversion
     IRIS_VERSION = "v1.4.5"
 
@@ -151,14 +151,14 @@ class Config():
     TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH',
                                                                         fallback=False) else "/home/iris/user_templates"
     BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
-                                                                        fallback=False) else "/home/iris/server_data/backup"
+                                                                  fallback=False) else "/home/iris/server_data/backup"
     UPDATES_PATH = os.path.join(BACKUP_PATH, 'updates')
 
     RELEASE_URL = config.get('IRIS', 'RELEASE_URL') if config.get('IRIS', 'RELEASE_URL',
-                                                                   fallback=False) else "https://api.github.com/repos/dfir-iris/iris-web/releases"
+                                                                  fallback=False) else "https://api.github.com/repos/dfir-iris/iris-web/releases"
 
     RELEASE_SIGNATURE_KEY = config.get('IRIS', 'RELEASE_SIGNATURE_KEY') if config.get('IRIS', 'RELEASE_SIGNATURE_KEY',
-                                                                  fallback=False) else "dependencies/DFIR-IRIS_pkey.asc"
+                                                                                      fallback=False) else "dependencies/DFIR-IRIS_pkey.asc"
 
     PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
                                                                         fallback=False) else "/usr/bin"
@@ -188,5 +188,3 @@ class Config():
     """
     CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 300
-
-
