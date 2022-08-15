@@ -44,6 +44,9 @@ class ImageHandler(PictureGlobals):
         A Datastore Links looks like this: https://localhost:4433/datastore/file/view/2?cid=1
         """
         res = re.search(r'datastore\/file\/view\/(\d+)\?cid=(\d+)', image_path)
+        if not res:
+            return super()._process_remote(image_path)
+
         if image_path[:4] == 'http' and len(res.groups()) == 2:
             file_id = res.groups(0)[0]
             case_id = res.groups(0)[1]
