@@ -13,7 +13,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection
 
 revision = 'ad4e0cd17597'
-down_revision = 'cd519d2d24df'
+down_revision = '875edc4adb40'
 branch_labels = None
 depends_on = None
 
