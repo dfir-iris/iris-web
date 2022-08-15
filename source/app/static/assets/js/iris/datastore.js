@@ -524,12 +524,11 @@ function get_mk_link_ds_file(file_id, filename, file_icon, has_password) {
         mk_link = `[${file_icon} [DS] ${filename}](${link})`;
     }
 
-   console.log(mk_link)
    navigator.clipboard.writeText(mk_link).then(function() {
           notify_success('Markdown file link copied')
     }, function(err) {
         notify_error('Unable to copy link. Error ' + err);
-        console.error('Markdown file link  link', err);
+        console.error(f'Markdown file link {md_link}', err);
     });
 
 }
