@@ -31,6 +31,7 @@ from docx_generator.globals.picture_globals import PictureGlobals
 
 from app.datamgmt.datastore.datastore_db import datastore_get_local_file_path
 
+
 class ImageHandler(PictureGlobals):
     def __init__(self, template: DocxTemplate, base_path: str):
         self._logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class ImageHandler(PictureGlobals):
 
     def _process_remote(self, image_path: str) -> str:
         """
-        Checks if the given Link is a datasotre-link and if so, save the image locally for further processing.
+        Checks if the given Link is a datastore-link and if so, save the image locally for further processing.
         :
         A Datastore Links looks like this: https://localhost:4433/datastore/file/view/2?cid=1
         """
