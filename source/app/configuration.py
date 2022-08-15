@@ -18,13 +18,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import configparser
-import logging as log
-import os
 # --------- Configuration ---------
 # read the private configuration file
 import sys
 from enum import Enum
+import logging as log
 
 import requests
 import configparser
@@ -32,12 +30,46 @@ import os
 
 # --------- Configuration ---------
 # read the private configuration file
+class IrisConfigException(Exception):
+    pass
+
+
+class IrisConfig(configparser.ConfigParser):
+    """ From https://gist.github.com/jeffersfp/586c2570cd2bdb8385693a744aa13122 - @jeffersfp """
+
+    def __init__(self, config_file):
+        super(IrisConfig, self).__init__()
+
+        self.read(config_file)
+        self.validate_config()
+
+    def validate_config(self):
+        required_values = {
+            'POSTGRES': {
+            },
+            'IRIS': {
+            },
+            'CELERY': {
+            },
+            'DEVELOPMENT': {
+            }
+        }
+
+        for section, keys in required_values.items():
+            if section not in self:
+                raise IrisConfigException(
+                    'Missing section %s in the configuration file' % section)
+
+
+# --------- Configuration ---------
+# read the private configuration file
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
-    config.read(f'app{os.path.sep}config.docker.ini')
+    # The example config file has an invalid value so cfg will stay empty first
+    config = IrisConfig(f'app{os.path.sep}config.docker.ini')
 else:
-    config.read(f'app{os.path.sep}config.priv.ini')
+    config = IrisConfig(f'app{os.path.sep}config.priv.ini')
 
 # Fetch the values
 PG_ACCOUNT_ = os.environ.get('DB_USER', config.get('POSTGRES', 'PG_ACCOUNT'))
@@ -46,6 +78,9 @@ PGA_ACCOUNT_ = os.environ.get('POSTGRES_USER', config.get('POSTGRES', 'PGA_ACCOU
 PGA_PASSWD_ = os.environ.get('POSTGRES_PASSWORD', config.get('POSTGRES', 'PGA_PASSWD'))
 PG_SERVER_ = os.environ.get('DB_HOST', config.get('POSTGRES', 'PG_SERVER'))
 PG_PORT_ = os.environ.get('DB_PORT', config.get('POSTGRES', 'PG_PORT'))
+CELERY_BROKER_ = os.environ.get('CELERY_BROKER',
+                                config.get('CELERY', 'BROKER',
+                                           fallback=f"amqp://{config.get('CELERY', 'HOST', fallback='rabbitmq')}"))
 
 if os.environ.get('IRIS_WORKER') is None:
     # Flask needs it for CSRF token and stuff
@@ -121,7 +156,7 @@ if authentication_type == 'oidc_proxy':
 # --------- CELERY ---------
 class CeleryConfig():
     result_backend = "db+" + SQLALCHEMY_BASE_URI + "iris_tasks"  # use database as storage
-    broker_url = "amqp://localhost" if not os.getenv('DOCKERIZED') else "amqp://rabbitmq"
+    broker_url = CELERY_BROKER_
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
@@ -175,14 +210,14 @@ class Config():
     TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH',
                                                                         fallback=False) else "/home/iris/user_templates"
     BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
-                                                                        fallback=False) else "/home/iris/server_data/backup"
+                                                                  fallback=False) else "/home/iris/server_data/backup"
     UPDATES_PATH = os.path.join(BACKUP_PATH, 'updates')
 
     RELEASE_URL = config.get('IRIS', 'RELEASE_URL') if config.get('IRIS', 'RELEASE_URL',
-                                                                   fallback=False) else "https://api.github.com/repos/dfir-iris/iris-web/releases"
+                                                                  fallback=False) else "https://api.github.com/repos/dfir-iris/iris-web/releases"
 
     RELEASE_SIGNATURE_KEY = config.get('IRIS', 'RELEASE_SIGNATURE_KEY') if config.get('IRIS', 'RELEASE_SIGNATURE_KEY',
-                                                                  fallback=False) else "dependencies/DFIR-IRIS_pkey.asc"
+                                                                                      fallback=False) else "dependencies/DFIR-IRIS_pkey.asc"
 
     PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
                                                                         fallback=False) else "/usr/bin"

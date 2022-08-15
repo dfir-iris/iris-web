@@ -22,6 +22,14 @@
                     <label for="type_taxonomy" class="placeholder">Type taxonomy</label>
                     {{ form.type_taxonomy(class='form-control',  autocomplete="off") }}
                 </div>
+                <div class="form-group mt-3">
+                    <label for="type_description" class="placeholder">Type validation regex</label>
+                    {{ form.type_validation_regex(class='form-control', autocomplete="off") }}
+                </div>
+                <div class="form-group mt-3">
+                    <label for="type_description" class="placeholder">Type validation expect explanation</label>
+                    {{ form.type_validation_expect(class='form-control', autocomplete="off") }}
+                </div>
 
             {% if ioc_type.type_id %}
                 <button type="button" class="btn btn-outline-danger mt-5"

@@ -19,17 +19,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-<<<<<<< HEAD
-import re
 from os import environ
-from random import randrange
-=======
->>>>>>> develop
 from unittest import TestCase
 
 import re
 from flask import url_for
 from flask.testing import FlaskClient
+from random import randrange
 
 from app import app
 from app.datamgmt.client.client_db import create_client

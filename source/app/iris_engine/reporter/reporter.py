@@ -26,6 +26,8 @@
 import logging as log
 import os
 from datetime import datetime
+
+from app.datamgmt.reporter.report_db import export_case_json_for_report
 from docx_generator.docx_generator import DocxGenerator
 from docx_generator.exceptions import rendering_error
 from flask_login import current_user
@@ -45,6 +47,7 @@ from app.models import CasesEvent
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
+from app.iris_engine.reporter.ImageHandler import ImageHandler
 
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)
@@ -84,7 +87,8 @@ class IrisMakeDocReport(object):
         output_file_path = os.path.join(self._tmp, name)
 
         try:
-            generator = DocxGenerator()
+            image_handler = ImageHandler(template=None, base_path='/')
+            generator = DocxGenerator(image_handler=image_handler, app_logger=app.logger)
             generator.generate_docx("/",
                                     os.path.join(app.config['TEMPLATES_PATH'], report.internal_reference),
                                     case_info,
@@ -123,7 +127,7 @@ class IrisMakeDocReport(object):
         Retrieve information of the case
         :return:
         """
-        case_info = export_case_json(self._caseid)
+        case_info = export_case_json_for_report(self._caseid)
 
         # Get customer, user and case title
         case_info['doc_id'] = IrisMakeDocReport.get_docid()

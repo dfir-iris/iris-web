@@ -18,6 +18,8 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
+import re
+
 from flask_login import current_user
 
 from pathlib import Path
@@ -197,7 +199,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
-        ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).count()
+        ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
         if not ioc_type:
             raise marshmallow.exceptions.ValidationError("Invalid ioc type ID",
                                                          field_name="ioc_type_id")
@@ -206,6 +208,13 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         if not tlp_id:
             raise marshmallow.exceptions.ValidationError("Invalid TLP ID",
                                                          field_name="ioc_tlp_id")
+
+        if ioc_type.type_validation_regex:
+            if not re.fullmatch(ioc_type.type_validation_regex, data.get('ioc_value'), re.IGNORECASE):
+                error = f"The input doesn\'t match the expected format " \
+                        f"(expected: {ioc_type.type_validation_expect or ioc_type.type_validation_regex})"
+                raise marshmallow.exceptions.ValidationError(error,
+                                                             field_name="ioc_ioc_value")
 
         return data
 
@@ -457,6 +466,8 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
     type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
     type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
     type_taxonomy = auto_field('type_taxonomy')
+    type_validation_regex = auto_field('type_validation_regex')
+    type_validation_expect = auto_field('type_validation_expect')
 
     class Meta:
         model = IocType

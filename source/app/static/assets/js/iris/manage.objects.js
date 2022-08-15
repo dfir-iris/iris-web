@@ -216,6 +216,13 @@ $('#ioc_table').dataTable({
                 if (type === 'display') { data = sanitizeHTML(data);}
                 return data;
             }
+        },
+        {
+            "data": "type_validation_regex",
+            "render": function ( data, type, row ) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+            }
         }
     ]
  });

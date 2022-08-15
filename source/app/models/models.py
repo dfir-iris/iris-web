@@ -60,6 +60,22 @@ def create_safe(session, model, **kwargs):
         return True
 
 
+def create_safe_limited(session, model, keywords_list, **kwargs):
+    kwdup = kwargs.keys()
+    for kw in list(kwdup):
+        if kw not in keywords_list:
+            kwargs.pop(kw)
+
+    instance = session.query(model).filter_by(**kwargs).first()
+    if instance:
+        return False
+    else:
+        instance = model(**kwargs)
+        session.add(instance)
+        session.commit()
+        return True
+
+
 def get_by_value_or_create(session, model, fieldname, **kwargs):
     select_value = {fieldname: kwargs.get(fieldname)}
     instance = session.query(model).filter_by(**select_value).first()
@@ -327,6 +343,8 @@ class IocType(db.Model):
     type_name = Column(Text)
     type_description = Column(Text)
     type_taxonomy = Column(Text)
+    type_validation_regex = Column(Text)
+    type_validation_expect = Column(Text)
 
 
 class IocLink(db.Model):
@@ -587,7 +605,7 @@ class IrisModuleHook(db.Model):
 class IrisReport(db.Model):
     __tablename__ = 'iris_reports'
 
-    report_id = Column(db.Integer,Sequence("iris_reports_id_seq"), primary_key=True)
+    report_id = Column(db.Integer, Sequence("iris_reports_id_seq"), primary_key=True)
     case_id = Column(ForeignKey('cases.case_id'), nullable=False)
     report_title = Column(String(155))
     report_date = Column(DateTime)
