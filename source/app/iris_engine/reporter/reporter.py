@@ -45,6 +45,7 @@ from app.models import CasesEvent
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
+from app.iris_engine.reporter.ImageHandler import ImageHandler
 
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)
@@ -84,7 +85,8 @@ class IrisMakeDocReport(object):
         output_file_path = os.path.join(self._tmp, name)
 
         try:
-            generator = DocxGenerator()
+            image_handler = ImageHandler(template = None, base_path = '/')
+            generator = DocxGenerator(image_handler = image_handler)
             generator.generate_docx("/",
                                     os.path.join(app.config['TEMPLATES_PATH'], report.internal_reference),
                                     case_info,
