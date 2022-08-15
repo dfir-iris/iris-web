@@ -458,6 +458,25 @@ def ac_case_requires(*access_level):
     return inner_wrap
 
 
+def ac_socket_requires(*access_level):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            if not is_user_authenticated(request):
+                return redirect(not_authenticated_redirection_url())
+
+            else:
+                redir, caseid, has_access = get_case_access(request, access_level)
+
+                if not has_access:
+                    return ac_return_access_denied(caseid=caseid)
+
+                return f(*args, **kwargs)
+
+        return wrap
+    return inner_wrap
+
+
 def ac_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)

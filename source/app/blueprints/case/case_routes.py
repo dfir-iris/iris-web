@@ -57,6 +57,7 @@ from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
+from app.util import ac_socket_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -124,6 +125,7 @@ def case_pipelines_modal(caseid, url_redir):
 
 
 @socket_io.on('change')
+@ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onchange(data):
     if not current_user.is_authenticated:
         return
@@ -133,6 +135,7 @@ def socket_summary_onchange(data):
 
 
 @socket_io.on('save')
+@ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onsave(data):
     if not current_user.is_authenticated:
         return
@@ -142,6 +145,7 @@ def socket_summary_onsave(data):
 
 
 @socket_io.on('clear_buffer')
+@ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onchange(message):
     if not current_user.is_authenticated:
         return
@@ -150,6 +154,7 @@ def socket_summary_onchange(message):
 
 
 @socket_io.on('join')
+@ac_socket_requires(CaseAccessLevel.full_access)
 def get_message(data):
     if not current_user.is_authenticated:
         return
