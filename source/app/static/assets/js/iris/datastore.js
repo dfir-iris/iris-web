@@ -528,7 +528,7 @@ function get_mk_link_ds_file(file_id, filename, file_icon, has_password) {
           notify_success('Markdown file link copied')
     }, function(err) {
         notify_error('Unable to copy link. Error ' + err);
-        console.error(f'Markdown file link {md_link}', err);
+        console.error(`Markdown file link ${md_link}`, err);
     });
 
 }
