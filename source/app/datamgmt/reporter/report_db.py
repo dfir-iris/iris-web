@@ -121,7 +121,8 @@ def process_md_images_links_for_report(markdown_text):
     """Process images links in markdown for better processing on the generator side
         Creates proper links with FQDN and removal of scale
     """
-    markdown = re.sub(r'(datastore\/file\/view\/\d+\?cid=\d+)( =[\dA-z%]*)\)', r"\1)", markdown_text)
+    markdown = re.sub(r'(/datastore\/file\/view\/\d+\?cid=\d+)( =[\dA-z%]*)\)',
+                      r"http://127.0.0.1:8000:/\1)", markdown_text)
     return markdown
 
 
