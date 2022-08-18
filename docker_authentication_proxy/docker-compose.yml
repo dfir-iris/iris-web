@@ -2,15 +2,18 @@ version: "3.9"
 services:
     # AUTHENTICATION PROXY
   proxy:
-    image: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
+    image: bitnami/oauth2-proxy:7.3.0
     container_name: oauth2_proxy
-    volumes:
-      - ./proxy/oauth2-proxy_iris-web-app.cfg:/etc/oauth2-proxy.cfg:ro
-      - ${CERTIFICATE_KEY_PATH}:/etc/authProxy.key:ro
-      - ${CERTIFICATE_CRT_PATH}:/etc/authProxy.crt:ro
-      # Following volume is necessary if the provider uses a certificate signed by a non-trusted CA
-      - ${ROOT_CA_CRT_PATH}:/etc/rootCA.pem:ro
-    command: oauth2-proxy --config=/etc/oauth2-proxy.cfg
+#    volumes:
+#      - ./proxy/oauth2-proxy_iris-web-app.cfg:/etc/oauth2-proxy.cfg:ro
+#      - ${CERTIFICATE_KEY_PATH}:/etc/authProxy.key:ro
+#      - ${CERTIFICATE_CRT_PATH}:/etc/authProxy.crt:ro
+#      # Following volume is necessary if the provider uses a certificate signed by a non-trusted CA
+#      - ${ROOT_CA_CRT_PATH}:/etc/rootCA.pem:ro
+#    command: oauth2-proxy --config=/etc/oauth2-proxy.cfg
+    command:
+      - --http-address
+      - 0.0.0.0:4180
     ports:
       - "4180:4180"
       - "4443:4433"
@@ -19,6 +22,18 @@ services:
     networks:
 #      - test_app_network
       - app_network
+    environment:
+      OAUTH2_PROXY_UPSTREAMS: ${IRIS_WEB_APP_URL}
+      OAUTH2_PROXY_PROVIDER_DISPLAY_NAME: IRIS Auth
+      OAUTH2_PROXY_PROVIDER: oidc
+      OAUTH2_PROXY_OIDC_ISSUER_URL: ${OIDC_ISSUER_URL}
+      OAUTH2_PROXY_CLIENT_ID: ${OAUTH2_CLIENT_ID}
+      OAUTH2_PROXY_CLIENT_SECRET: ${OAUTH2_CLIENT_SECRET}
+      OAUTH2_PROXY_PASS_ACCESS_TOKEN: true
+      OAUTH2_PROXY_EMAIL_DOMAINS: '*'
+      OAUTH2_PROXY_REDIRECT_URL: http://localhost:4180/oauth2/callback
+      OAUTH2_PROXY_COOKIE_SECRET: ${OAUTH2_PROXY_COOKIE_SECRET}
+
 
 #  # TEST WEB APPLICATION
 #  test_web_application:
