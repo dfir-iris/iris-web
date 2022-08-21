@@ -370,21 +370,26 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
     elif app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'signature':
         # Use the JWKS urls provided by the OIDC discovery to fetch the signing keys
         # and check the signature of the token
-        jwks_client = PyJWKClient(app.config.get("AUTHENTICATION_JWKS_URL"))
-        signing_key = jwks_client.get_signing_key_from_jwt(authentication_token)
-
         try:
+            jwks_client = PyJWKClient(app.config.get("AUTHENTICATION_JWKS_URL"))
+            signing_key = jwks_client.get_signing_key_from_jwt(authentication_token)
 
-            data = jwt.decode(
-                authentication_token,
-                signing_key.key,
-                algorithms=["RS256"],
-                audience=app.config.get("AUTHENTICATION_AUDIENCE"),
-                options={"verify_exp": app.config.get("AUTHENTICATION_VERIFY_TOKEN_EXP")},
-            )
+            try:
 
-        except jwt.ExpiredSignatureError:
-            log.error("Provided token has expired")
+                data = jwt.decode(
+                    authentication_token,
+                    signing_key.key,
+                    algorithms=["RS256"],
+                    audience=app.config.get("AUTHENTICATION_AUDIENCE"),
+                    options={"verify_exp": app.config.get("AUTHENTICATION_VERIFY_TOKEN_EXP")},
+                )
+
+            except jwt.ExpiredSignatureError:
+                log.error("Provided token has expired")
+                return False
+
+        except Exception as e:
+            log.error(f"Error decoding JWT. {e.__str__()}")
             return False
 
         # Extract the user email
@@ -396,6 +401,22 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
 
         login_user(user)
         track_activity(f"User '{user.id}' successfully logged-in", ctx_less=True)
+
+        caseid = user.ctx_case
+        session['permissions'] = ac_get_effective_permissions_of_user(user)
+
+        if caseid is None:
+            case = Cases.query.order_by(Cases.case_id).first()
+            user.ctx_case = case.case_id
+            user.ctx_human_case = case.name
+            db.session.commit()
+
+        session['current_case'] = {
+            'case_name': user.ctx_human_case,
+            'case_info': "",
+            'case_id': user.ctx_case
+        }
+
         return True
 
     else:

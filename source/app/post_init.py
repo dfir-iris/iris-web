@@ -505,7 +505,7 @@ def create_safe_admin(def_org, gadm):
             log.warning(f'Email of administrator will be updated via config to {adm_email}')
             user.email = adm_email
             db.session.commit()
-            
+
     return user
 
 
