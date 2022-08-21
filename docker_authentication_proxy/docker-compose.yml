@@ -33,7 +33,9 @@ services:
       OAUTH2_PROXY_EMAIL_DOMAINS: '*'
       OAUTH2_PROXY_REDIRECT_URL: http://localhost:4180/oauth2/callback
       OAUTH2_PROXY_COOKIE_SECRET: ${OAUTH2_PROXY_COOKIE_SECRET}
-
+      OAUTH2_PROXY_COOKIE_NAME: oauth2_iris_cookie
+      OAUTH2_PROXY_COOKIE_SAMESITE: lax
+      OAUTH2_PROXY_COOKIE_SECURE: true
 
 #  # TEST WEB APPLICATION
 #  test_web_application:

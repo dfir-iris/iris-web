@@ -139,6 +139,8 @@ if authentication_type == 'oidc_proxy':
             authentication_logout_url = response_json.get('end_session_endpoint')
             authentication_account_service_url = f"{response_json.get('issuer')}/account"
             authentication_token_introspection_url = response_json.get('introspection_endpoint')
+            authentication_jwks_url = response_json.get('jwks_uri')
+
         else:
             raise Exception("Unsuccessful authN server discovery")
 
@@ -255,8 +257,11 @@ class Config():
     AUTHENTICATION_ACCOUNT_SERVICE_URL = authentication_account_service_url
     AUTHENTICATION_PROXY_LOGOUT_URL = f"/oauth2/sign_out?rd={AUTHENTICATION_LOGOUT_URL}?redirect_uri={APP_PUBLIC_URL}"
     AUTHENTICATION_TOKEN_INTROSPECTION_URL = authentication_token_introspection_url
+    AUTHENTICATION_JWKS_URL = authentication_jwks_url
     AUTHENTICATION_CLIENT_ID = authentication_client_id
     AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
+    AUTHENTICATION_AUDIENCE = config.get('AUTHENTICATION', 'OIDC_AUDIENCE')
+    AUTHENTICATION_VERIFY_TOKEN_EXP = config.get('AUTHENTICATION', 'OIDC_VERIFY_TOKEN_EXPIRATION', fallback=True)
 
     AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
 

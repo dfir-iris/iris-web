@@ -47,6 +47,8 @@ from requests.auth import HTTPBasicAuth
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
+import jwt
+from jwt import PyJWKClient
 
 from app import TEMPLATE_PATH
 from app import app
@@ -303,16 +305,36 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
     # The TLS_ROOT_CA is used to validate the authentication server's certificate.
     # The other solution was to skip the certificate verification, BUT as the authentication server might be located on another server, this check is necessary.
     # TODO: Add conditional verification methods. Choose between token introspection and just signature check. In the second case, all the additional information should be passed inside the JWT
-    introspection_body = {"token": authentication_token}
-    introspection = requests.post(
-        app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"),
-        auth=HTTPBasicAuth(app.config.get('AUTHENTICATION_CLIENT_ID'), app.config.get('AUTHENTICATION_CLIENT_SECRET')),
-        data=introspection_body,
-        verify=app.config.get("TLS_ROOT_CA")
+    # introspection_body = {"token": authentication_token}
+    # introspection = requests.post(
+    #     app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"),
+    #     auth=HTTPBasicAuth(app.config.get('AUTHENTICATION_CLIENT_ID'), app.config.get('AUTHENTICATION_CLIENT_SECRET')),
+    #     data=introspection_body,
+    #     verify=app.config.get("TLS_ROOT_CA")
+    # )
+    #
+    # print(introspection.json())
+
+    jwks_client = PyJWKClient(app.config.get("AUTHENTICATION_JWKS_URL"))
+    signing_key = jwks_client.get_signing_key_from_jwt(authentication_token)
+    data = jwt.decode(
+        authentication_token,
+        signing_key.key,
+        algorithms=["RS256"],
+        audience=app.config.get("AUTHENTICATION_AUDIENCE"),
+        options={"verify_exp": app.config.get("AUTHENTICATION_VERIFY_TOKEN_EXP")},
     )
+    print(data)
+    print(authentication_token)
+    print(app.config.get('AUTHENTICATION_CLIENT_SECRET'))
+    print(jwt.decode(authentication_token, key=app.config.get('AUTHENTICATION_CLIENT_SECRET'), algorithms="RS256"))
 
     if introspection.status_code == 200:
         response_json = introspection.json()
+
+        print(response_json)
+        print(app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"))
+        print(introspection_body)
 
         if response_json.get("active", False) is True:
             user_keycloak_id = response_json.get("sub")
