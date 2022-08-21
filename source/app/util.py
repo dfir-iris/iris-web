@@ -305,87 +305,86 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
     # The TLS_ROOT_CA is used to validate the authentication server's certificate.
     # The other solution was to skip the certificate verification, BUT as the authentication server might be located on another server, this check is necessary.
     # TODO: Add conditional verification methods. Choose between token introspection and just signature check. In the second case, all the additional information should be passed inside the JWT
-    # introspection_body = {"token": authentication_token}
-    # introspection = requests.post(
-    #     app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"),
-    #     auth=HTTPBasicAuth(app.config.get('AUTHENTICATION_CLIENT_ID'), app.config.get('AUTHENTICATION_CLIENT_SECRET')),
-    #     data=introspection_body,
-    #     verify=app.config.get("TLS_ROOT_CA")
-    # )
-    #
-    # print(introspection.json())
 
-    jwks_client = PyJWKClient(app.config.get("AUTHENTICATION_JWKS_URL"))
-    signing_key = jwks_client.get_signing_key_from_jwt(authentication_token)
-    data = jwt.decode(
-        authentication_token,
-        signing_key.key,
-        algorithms=["RS256"],
-        audience=app.config.get("AUTHENTICATION_AUDIENCE"),
-        options={"verify_exp": app.config.get("AUTHENTICATION_VERIFY_TOKEN_EXP")},
-    )
-    print(data)
-    print(authentication_token)
-    print(app.config.get('AUTHENTICATION_CLIENT_SECRET'))
-    print(jwt.decode(authentication_token, key=app.config.get('AUTHENTICATION_CLIENT_SECRET'), algorithms="RS256"))
+    if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'introspection':
+        introspection_body = {"token": authentication_token}
+        introspection = requests.post(
+            app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"),
+            auth=HTTPBasicAuth(app.config.get('AUTHENTICATION_CLIENT_ID'), app.config.get('AUTHENTICATION_CLIENT_SECRET')),
+            data=introspection_body,
+            verify=app.config.get("TLS_ROOT_CA")
+        )
+        if introspection.status_code == 200:
+            response_json = introspection.json()
 
-    if introspection.status_code == 200:
-        response_json = introspection.json()
+            if response_json.get("active", False) is True:
+                user_keycloak_id = response_json.get("sub")
 
-        print(response_json)
-        print(app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"))
-        print(introspection_body)
+                # Checks if a user exists with external_id having keycloak id as value
+                linked_user = get_user(user_keycloak_id, "external_id")
 
-        if response_json.get("active", False) is True:
-            user_keycloak_id = response_json.get("sub")
+                is_admin = app.config.get('AUTHENTICATION_APP_ADMIN_ROLE_NAME', '___not_admin___') in response_json \
+                    .get('resource_access', {}) \
+                    .get(app.config.get('AUTHENTICATION_CLIENT_ID', ''), {}) \
+                    .get('roles', [])
+                name = response_json.get("name")
+                email = response_json.get("email")
 
-            # Checks if a user exists with external_id having keycloak id as value
-            linked_user = get_user(user_keycloak_id, "external_id")
+                if linked_user is None:
+                    # Creates a new user with a random password and other properties being set to the corresponding JWT values
+                    username = response_json.get("preferred_username")
+                    password = ''.join(random.sample(string.ascii_lowercase+string.digits, 20))
 
-            is_admin = app.config.get('AUTHENTICATION_APP_ADMIN_ROLE_NAME', '___not_admin___') in response_json \
-                .get('resource_access', {}) \
-                .get(app.config.get('AUTHENTICATION_CLIENT_ID', ''), {}) \
-                .get('roles', [])
-            name = response_json.get("name")
-            email = response_json.get("email")
+                    linked_user = create_user(
+                        name,
+                        username,
+                        password,
+                        email,
+                        is_admin,
+                        user_keycloak_id
+                    )
+                else:
+                    if not linked_user.is_admin() == is_admin \
+                            or not linked_user.name == name \
+                            or not linked_user.email == email:
+                        update_user(linked_user, name=name, email=email, user_isadmin=is_admin)
+                        track_activity(f"User '{linked_user.id}' updated: (name: {not linked_user.name == name} - email: {not linked_user.email == email} - isadmin: {not linked_user.is_admin() == is_admin})", ctx_less=True)
+                        logout_user()
 
-            if linked_user is None:
-                # Creates a new user with a random password and other properties being set to the corresponding JWT values
+                if not current_user.is_authenticated or not current_user.id == linked_user.id:
+                    login_user(linked_user)
 
-                username = response_json.get("preferred_username")
-                password = ''.join(random.sample(string.ascii_lowercase+string.digits, 20))
+                    track_activity(f"User '{linked_user.id}' successfully logged-in", ctx_less=True)
+                    caseid = linked_user.ctx_case
+                    if caseid is None:
+                        case = Cases.query.order_by(Cases.case_id).first()
+                        linked_user.ctx_case = case.case_id
+                        linked_user.ctx_human_case = case.name
+                        db.session.commit()
 
-                linked_user = create_user(
-                    name,
-                    username,
-                    password,
-                    email,
-                    is_admin,
-                    user_keycloak_id
-                )
+                return True
             else:
-                if not linked_user.is_admin() == is_admin \
-                        or not linked_user.name == name \
-                        or not linked_user.email == email:
-                    update_user(linked_user, name=name, email=email, user_isadmin=is_admin)
-                    track_activity(f"User '{linked_user.id}' updated: (name: {not linked_user.name == name} - email: {not linked_user.email == email} - isadmin: {not linked_user.is_admin() == is_admin})", ctx_less=True)
-                    logout_user()
+                log.info("USER IS NOT AUTHENTICATED")
+                return False
 
-            if not current_user.is_authenticated or not current_user.id == linked_user.id:
-                login_user(linked_user)
+    elif app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'signature':
+        jwks_client = PyJWKClient(app.config.get("AUTHENTICATION_JWKS_URL"))
+        signing_key = jwks_client.get_signing_key_from_jwt(authentication_token)
 
-                track_activity(f"User '{linked_user.id}' successfully logged-in", ctx_less=True)
-                caseid = linked_user.ctx_case
-                if caseid is None:
-                    case = Cases.query.order_by(Cases.case_id).first()
-                    linked_user.ctx_case = case.case_id
-                    linked_user.ctx_human_case = case.name
-                    db.session.commit()
+        try:
 
-            return True
-        else:
-            log.info("USER IS NOT AUTHENTICATED")
+            data = jwt.decode(
+                authentication_token,
+                signing_key.key,
+                algorithms=["RS256"],
+                audience=app.config.get("AUTHENTICATION_AUDIENCE"),
+                options={"verify_exp": app.config.get("AUTHENTICATION_VERIFY_TOKEN_EXP")},
+            )
+
+        except jwt.ExpiredSignatureError:
+            log.error("Provided token has expired")
             return False
+
     else:
         log.error("ERROR DURING TOKEN INTROSPECTION PROCESS")
         return False

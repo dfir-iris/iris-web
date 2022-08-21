@@ -262,6 +262,7 @@ class Config():
     AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
     AUTHENTICATION_AUDIENCE = config.get('AUTHENTICATION', 'OIDC_AUDIENCE')
     AUTHENTICATION_VERIFY_TOKEN_EXP = config.get('AUTHENTICATION', 'OIDC_VERIFY_TOKEN_EXPIRATION', fallback=True)
+    AUTHENTICATION_TOKEN_VERIFY_MODE = config.get('AUTHENTICATION', 'OIDC_TOKEN_VERIFY_MODE', fallback='signature_check')
 
     AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
 
