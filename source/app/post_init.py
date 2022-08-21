@@ -473,16 +473,14 @@ def create_safe_auth_model():
 
 def create_safe_admin(def_org, gadm):
     user = User.query.filter(
-        User.user == "administrator",
-        User.name == "administrator",
-        User.email == "administrator@iris.local"
+        User.user == "administrator"
     ).first()
     if not user:
         password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choice(string.printable[:-6]) for i in range(16)))
         user = User(
             user="administrator",
             name="administrator",
-            email="administrator@iris.local",
+            email=app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local"),
             password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
             active=True
         )
@@ -502,7 +500,12 @@ def create_safe_admin(def_org, gadm):
         db.session.commit()
     else:
         log.warning(">>> Administrator already exists")
-
+        adm_email = app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local")
+        if user.email != adm_email:
+            log.warning(f'Email of administrator will be updated via config to {adm_email}')
+            user.email = adm_email
+            db.session.commit()
+            
     return user
 
 

@@ -301,12 +301,12 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
     # Get the OIDC JWT authentication token from the request header
     authentication_token = incoming_request.headers.get('X-Forwarded-Access-Token', '')
 
-    # Use the authentication server's token introspection endpoint in order to determine if the request is valid / authenticated
-    # The TLS_ROOT_CA is used to validate the authentication server's certificate.
-    # The other solution was to skip the certificate verification, BUT as the authentication server might be located on another server, this check is necessary.
-    # TODO: Add conditional verification methods. Choose between token introspection and just signature check. In the second case, all the additional information should be passed inside the JWT
-
     if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'introspection':
+        # Use the authentication server's token introspection endpoint in order to determine if the request is valid /
+        # authenticated. The TLS_ROOT_CA is used to validate the authentication server's certificate.
+        # The other solution was to skip the certificate verification, BUT as the authentication server might be
+        # located on another server, this check is necessary.
+
         introspection_body = {"token": authentication_token}
         introspection = requests.post(
             app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"),
@@ -368,6 +368,8 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
                 return False
 
     elif app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'signature':
+        # Use the JWKS urls provided by the OIDC discovery to fetch the signing keys
+        # and check the signature of the token
         jwks_client = PyJWKClient(app.config.get("AUTHENTICATION_JWKS_URL"))
         signing_key = jwks_client.get_signing_key_from_jwt(authentication_token)
 
@@ -384,6 +386,17 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
         except jwt.ExpiredSignatureError:
             log.error("Provided token has expired")
             return False
+
+        # Extract the user email
+        user_email = data.get("sub")
+        user = get_user(user_email, id_key="email")
+        if not user:
+            log.error(f'User with email {user_email} is not registered in the IRIS')
+            return False
+
+        login_user(user)
+        track_activity(f"User '{user.id}' successfully logged-in", ctx_less=True)
+        return True
 
     else:
         log.error("ERROR DURING TOKEN INTROSPECTION PROCESS")
