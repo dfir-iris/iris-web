@@ -318,49 +318,20 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
             response_json = introspection.json()
 
             if response_json.get("active", False) is True:
-                user_keycloak_id = response_json.get("sub")
+                user_email = response_json.get("sub")
 
                 # Checks if a user exists with external_id having keycloak id as value
-                linked_user = get_user(user_keycloak_id, "external_id")
+                linked_user = get_user(user_email, "email")
 
-                is_admin = app.config.get('AUTHENTICATION_APP_ADMIN_ROLE_NAME', '___not_admin___') in response_json \
-                    .get('resource_access', {}) \
-                    .get(app.config.get('AUTHENTICATION_CLIENT_ID', ''), {}) \
-                    .get('roles', [])
-                name = response_json.get("name")
-                email = response_json.get("email")
+                login_user(linked_user)
 
-                if linked_user is None:
-                    # Creates a new user with a random password and other properties being set to the corresponding JWT values
-                    username = response_json.get("preferred_username")
-                    password = ''.join(random.sample(string.ascii_lowercase+string.digits, 20))
-
-                    linked_user = create_user(
-                        name,
-                        username,
-                        password,
-                        email,
-                        is_admin,
-                        user_keycloak_id
-                    )
-                else:
-                    if not linked_user.is_admin() == is_admin \
-                            or not linked_user.name == name \
-                            or not linked_user.email == email:
-                        update_user(linked_user, name=name, email=email, user_isadmin=is_admin)
-                        track_activity(f"User '{linked_user.id}' updated: (name: {not linked_user.name == name} - email: {not linked_user.email == email} - isadmin: {not linked_user.is_admin() == is_admin})", ctx_less=True)
-                        logout_user()
-
-                if not current_user.is_authenticated or not current_user.id == linked_user.id:
-                    login_user(linked_user)
-
-                    track_activity(f"User '{linked_user.id}' successfully logged-in", ctx_less=True)
-                    caseid = linked_user.ctx_case
-                    if caseid is None:
-                        case = Cases.query.order_by(Cases.case_id).first()
-                        linked_user.ctx_case = case.case_id
-                        linked_user.ctx_human_case = case.name
-                        db.session.commit()
+                track_activity(f"User '{linked_user.id}' successfully logged-in", ctx_less=True)
+                caseid = linked_user.ctx_case
+                if caseid is None:
+                    case = Cases.query.order_by(Cases.case_id).first()
+                    linked_user.ctx_case = case.case_id
+                    linked_user.ctx_human_case = case.name
+                    db.session.commit()
 
                 return True
             else:
