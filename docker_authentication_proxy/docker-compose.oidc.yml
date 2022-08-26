@@ -4,24 +4,14 @@ services:
   proxy:
     image: bitnami/oauth2-proxy:7.3.0
     container_name: oauth2_proxy
-#    volumes:
-#      - ./proxy/oauth2-proxy_iris-web-app.cfg:/etc/oauth2-proxy.cfg:ro
-#      - ${CERTIFICATE_KEY_PATH}:/etc/authProxy.key:ro
-#      - ${CERTIFICATE_CRT_PATH}:/etc/authProxy.crt:ro
-#      # Following volume is necessary if the provider uses a certificate signed by a non-trusted CA
-#      - ${ROOT_CA_CRT_PATH}:/etc/rootCA.pem:ro
-#    command: oauth2-proxy --config=/etc/oauth2-proxy.cfg
     command:
       - --http-address
       - 0.0.0.0:4180
     ports:
       - "4180:4180"
       - "4443:4433"
-    extra_hosts:
-      - "auth_iris.app.dev:${AUTH_SERVER}"
     networks:
-#      - test_app_network
-      - app_network
+      - iris_backend
     environment:
       OAUTH2_PROXY_UPSTREAMS: ${IRIS_WEB_APP_URL}
       OAUTH2_PROXY_PROVIDER_DISPLAY_NAME: IRIS Auth
@@ -38,6 +28,7 @@ services:
       OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: true
       OAUTH2_PROXY_SESSION_STORE_TYPE: redis
       OAUTH2_PROXY_REDIS_CONNECTION_URL: redis://redis
+      OAUTH2_PROXY_SKIP_JWT_BEARER_TOKENS: true
 
     depends_on:
       - redis
@@ -48,26 +39,20 @@ services:
       - cache:/data
 
     networks:
-      - app_network
+      - iris_backend
+      - iris_frontend
+
+  nginx:
+    build:
+      context: ./docker/nginx
+      args:
+        NGINX_CONF_GID: 1234
+    image: iriswebapp_nginx:latest
+    container_name: iriswebapp_nginx
+    volumes:
+      - "./docker/nginx/nginx.oidc.conf:/etc/nginx/nginx.conf"
+
 
 volumes:
   cache:
     driver: local
-#  # TEST WEB APPLICATION
-#  test_web_application:
-#    image: nginx:1.21.5
-#    container_name: test_web_application
-#    volumes:
-#      - ./test_web_application/:/usr/share/nginx/html/:ro
-#      - ./test_web_application/nginx.conf:/etc/nginx/nginx.conf:ro
-#    ports:
-#      - "8081:80"
-#    networks:
-#      - test_app_network
-
-networks:
-#  test_app_network:
-#    driver: bridge
-  app_network:
-    external: true
-    name: iris_frontend

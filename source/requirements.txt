@@ -27,7 +27,7 @@ python-dateutil==2.8.2
 python-gnupg==0.4.8
 pyminizip~=0.2.6
 PyJWT==2.4.0
-cryptography=37.0.4
+cryptography==37.0.4
 
 dependencies/docx_generator-0.7.0-py3-none-any.whl
 dependencies/iris_interface-1.1-py3-none-any.whl

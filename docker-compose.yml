@@ -39,7 +39,7 @@ services:
       - POSTGRES_PASSWORD
       - POSTGRES_USER
       - POSTGRES_DB
-      - DB_USER
+      - DB_USERs
       - DB_PASS
     networks:
       - iris_backend
@@ -65,8 +65,6 @@ services:
       - "db"
     ports:
       - "127.0.0.1:8000:8000"
-    extra_hosts:
-      - "auth_iris.app.dev:172.17.0.1"
     environment:
       - POSTGRES_PASSWORD
       - POSTGRES_USER
@@ -98,8 +96,6 @@ services:
       - "rabbitmq"
       - "db"
       - "app"
-    extra_hosts:
-      - "auth_iris.app.dev:172.17.0.1"
     environment:
       - POSTGRES_PASSWORD
       - POSTGRES_USER
