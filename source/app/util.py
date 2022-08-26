@@ -325,13 +325,20 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
 
                 login_user(linked_user)
 
-                track_activity(f"User '{linked_user.id}' successfully logged-in", ctx_less=True)
                 caseid = linked_user.ctx_case
+                session['permissions'] = ac_get_effective_permissions_of_user(linked_user)
+
                 if caseid is None:
                     case = Cases.query.order_by(Cases.case_id).first()
                     linked_user.ctx_case = case.case_id
                     linked_user.ctx_human_case = case.name
                     db.session.commit()
+
+                session['current_case'] = {
+                    'case_name': linked_user.ctx_human_case,
+                    'case_info': "",
+                    'case_id': linked_user.ctx_case
+                }
 
                 return True
             else:
