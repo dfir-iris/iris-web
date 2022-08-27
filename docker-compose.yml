@@ -39,7 +39,7 @@ services:
       - POSTGRES_PASSWORD
       - POSTGRES_USER
       - POSTGRES_DB
-      - DB_USERs
+      - DB_USER
       - DB_PASS
     networks:
       - iris_backend
