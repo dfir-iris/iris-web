@@ -65,17 +65,19 @@ services:
       - "db"
     ports:
       - "127.0.0.1:8000:8000"
-    environment:
-      - POSTGRES_PASSWORD
-      - POSTGRES_USER
-      - POSTGRES_DB
-      - DB_USER
-      - DB_PASS
-      - DB_HOST
-      - DB_PORT
-      - DOCKERIZED
-      - SECRET_KEY
-      - SECURITY_PASSWORD_SALT
+    env_file:
+      - .env
+#    environment:
+#      - POSTGRES_PASSWORD
+#      - POSTGRES_USER
+#      - POSTGRES_DB
+#      - DB_USER
+#      - DB_PASS
+#      - DB_HOST
+#      - DB_PORT
+#      - DOCKERIZED
+#      - SECRET_KEY
+#      - SECURITY_PASSWORD_SALT
     networks:
       - iris_backend
       - iris_frontend
@@ -96,16 +98,18 @@ services:
       - "rabbitmq"
       - "db"
       - "app"
-    environment:
-      - POSTGRES_PASSWORD
-      - POSTGRES_USER
-      - POSTGRES_DB
-      - DB_USER
-      - DB_PASS
-      - DB_HOST
-      - DB_PORT
-      - DOCKERIZED
-      - IRIS_WORKER
+    env_file:
+      - .env
+#    environment:
+#      - POSTGRES_PASSWORD
+#      - POSTGRES_USER
+#      - POSTGRES_DB
+#      - DB_USER
+#      - DB_PASS
+#      - DB_HOST
+#      - DB_PORT
+#      - DOCKERIZED
+#      - IRIS_WORKER
     networks:
       - iris_frontend
       - iris_backend

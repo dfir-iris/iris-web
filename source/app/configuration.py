@@ -114,7 +114,7 @@ class AuthenticationType(Enum):
 
 authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
                                      config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback="local"))
-
+print(authentication_type)
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
                              config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None))
 
@@ -130,6 +130,8 @@ authentication_app_admin_role_name = None
 if authentication_type == 'oidc_proxy':
     oidc_discovery_url = os.environ.get('OIDC_IRIS_DISCOVERY_URL',
                                         config.get('AUTHENTICATION', 'OIDC_IRIS_DISCOVERY_URL', fallback=""))
+    print(oidc_discovery_url)
+
     try:
         oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
 
@@ -258,26 +260,28 @@ class Config():
     APP_PUBLIC_URL = app_public_url
 
     AUTHENTICATION_TYPE = authentication_type
-    AUTHENTICATION_LOGOUT_URL = authentication_logout_url
-    AUTHENTICATION_ACCOUNT_SERVICE_URL = authentication_account_service_url
-    AUTHENTICATION_PROXY_LOGOUT_URL = f"/oauth2/sign_out?rd={AUTHENTICATION_LOGOUT_URL}?redirect_uri={APP_PUBLIC_URL}"
-    AUTHENTICATION_TOKEN_INTROSPECTION_URL = authentication_token_introspection_url
-    AUTHENTICATION_JWKS_URL = authentication_jwks_url
-    AUTHENTICATION_CLIENT_ID = authentication_client_id
-    AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
-    AUTHENTICATION_AUDIENCE = os.environ.get('OIDC_IRIS_AUDIENCE', config.get('AUTHENTICATION', 'OIDC_IRIS_AUDIENCE',
-                                                                              fallback=""))
-    AUTHENTICATION_VERIFY_TOKEN_EXP = os.environ.get('OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
-                                                     config.get('AUTHENTICATION', 'OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
-                                                                fallback=True))
-    AUTHENTICATION_TOKEN_VERIFY_MODE = os.environ.get('OIDC_IRIS_TOKEN_VERIFY_MODE',
-                                                      config.get('AUTHENTICATION', 'OIDC_IRIS_TOKEN_VERIFY_MODE',
-                                                                 fallback='signature'))
-    AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = os.environ.get('OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
-                                                             config.get('AUTHENTICATION',
-                                                                        'OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
-                                                                        fallback=""))
-    AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
+
+    if authentication_type == 'oidc_proxy':
+        AUTHENTICATION_LOGOUT_URL = authentication_logout_url
+        AUTHENTICATION_ACCOUNT_SERVICE_URL = authentication_account_service_url
+        AUTHENTICATION_PROXY_LOGOUT_URL = f"/oauth2/sign_out?rd={AUTHENTICATION_LOGOUT_URL}?redirect_uri={APP_PUBLIC_URL}"
+        AUTHENTICATION_TOKEN_INTROSPECTION_URL = authentication_token_introspection_url
+        AUTHENTICATION_JWKS_URL = authentication_jwks_url
+        AUTHENTICATION_CLIENT_ID = authentication_client_id
+        AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
+        AUTHENTICATION_AUDIENCE = os.environ.get('OIDC_IRIS_AUDIENCE', config.get('AUTHENTICATION', 'OIDC_IRIS_AUDIENCE',
+                                                                                  fallback=""))
+        AUTHENTICATION_VERIFY_TOKEN_EXP = os.environ.get('OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
+                                                         config.get('AUTHENTICATION', 'OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
+                                                                    fallback=True))
+        AUTHENTICATION_TOKEN_VERIFY_MODE = os.environ.get('OIDC_IRIS_TOKEN_VERIFY_MODE',
+                                                          config.get('AUTHENTICATION', 'OIDC_IRIS_TOKEN_VERIFY_MODE',
+                                                                     fallback='signature'))
+        AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = os.environ.get('OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
+                                                                 config.get('AUTHENTICATION',
+                                                                            'OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
+                                                                            fallback=""))
+        AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
 
     """ Caching 
     """
