@@ -112,13 +112,11 @@ class AuthenticationType(Enum):
     oidc_proxy = 2
 
 
-authentication_type = getattr(
-    getattr(AuthenticationType, config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback=""), None),
-    'name',
-    'local'
-)
+authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
+                                     config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback="local"))
 
-tls_root_ca = config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None)
+tls_root_ca = os.environ.get('TLS_ROOT_CA',
+                             config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None))
 
 app_public_url = config.get("IRIS", "APP_PUBLIC_URL", fallback=None)
 
@@ -147,12 +145,13 @@ if authentication_type == 'oidc_proxy':
             raise Exception("Unsuccessful authN server discovery")
 
         authentication_client_id = os.environ.get('OIDC_IRIS_CLIENT_ID',
-                                                  config.get('AUTHENTICATION', 'OIDC_IRIS_CLIENT_ID'))
+                                                  config.get('AUTHENTICATION', 'OIDC_IRIS_CLIENT_ID', fallback=""))
 
         authentication_client_secret = os.environ.get('OIDC_IRIS_CLIENT_SECRET',
-                                                      config.get('AUTHENTICATION', 'OIDC_IRIS_CLIENT_SECRET'))
+                                                      config.get('AUTHENTICATION', 'OIDC_IRIS_CLIENT_SECRET',
+                                                                 fallback=""))
 
-        authentication_app_admin_role_name = config.get('AUTHENTICATION', 'OIDC_IRIS_ADMIN_ROLE_NAME')
+        authentication_app_admin_role_name = config.get('AUTHENTICATION', 'OIDC_IRIS_ADMIN_ROLE_NAME', fallback="")
     except Exception as e:
         log.error(f"OIDC ERROR - {e}")
         exit(0)
@@ -266,16 +265,18 @@ class Config():
     AUTHENTICATION_JWKS_URL = authentication_jwks_url
     AUTHENTICATION_CLIENT_ID = authentication_client_id
     AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
-    AUTHENTICATION_AUDIENCE = os.environ.get('OIDC_IRIS_AUDIENCE', config.get('AUTHENTICATION', 'OIDC_IRIS_AUDIENCE'))
+    AUTHENTICATION_AUDIENCE = os.environ.get('OIDC_IRIS_AUDIENCE', config.get('AUTHENTICATION', 'OIDC_IRIS_AUDIENCE',
+                                                                              fallback=""))
     AUTHENTICATION_VERIFY_TOKEN_EXP = os.environ.get('OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
                                                      config.get('AUTHENTICATION', 'OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
                                                                 fallback=True))
     AUTHENTICATION_TOKEN_VERIFY_MODE = os.environ.get('OIDC_IRIS_TOKEN_VERIFY_MODE',
                                                       config.get('AUTHENTICATION', 'OIDC_IRIS_TOKEN_VERIFY_MODE',
-                                                                 fallback='signature_check'))
+                                                                 fallback='signature'))
     AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = os.environ.get('OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
                                                              config.get('AUTHENTICATION',
-                                                                        'OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL'))
+                                                                        'OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
+                                                                        fallback=""))
     AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
 
     """ Caching 
