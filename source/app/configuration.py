@@ -130,7 +130,6 @@ authentication_app_admin_role_name = None
 if authentication_type == 'oidc_proxy':
     oidc_discovery_url = os.environ.get('OIDC_IRIS_DISCOVERY_URL',
                                         config.get('AUTHENTICATION', 'OIDC_IRIS_DISCOVERY_URL', fallback=""))
-    print(oidc_discovery_url)
 
     try:
         oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)

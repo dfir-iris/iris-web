@@ -100,7 +100,7 @@ services:
       - "app"
     env_file:
       - .env
-#    environment:
+    environment:
 #      - POSTGRES_PASSWORD
 #      - POSTGRES_USER
 #      - POSTGRES_DB
@@ -109,7 +109,7 @@ services:
 #      - DB_HOST
 #      - DB_PORT
 #      - DOCKERIZED
-#      - IRIS_WORKER
+      - IRIS_WORKER=1
     networks:
       - iris_frontend
       - iris_backend
