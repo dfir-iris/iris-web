@@ -296,12 +296,44 @@ def get_urlcasename():
 def _local_authentication_process(incoming_request: Request):
     return current_user.is_authenticated
 
+def _authenticate_with_email(user_email):
+    user = get_user(user_email, id_key="email")
+    if not user:
+        log.error(f'User with email {user_email} is not registered in the IRIS')
+        return False
+
+    login_user(user)
+    track_activity(f"User '{user.id}' successfully logged-in", ctx_less=True)
+
+    caseid = user.ctx_case
+    session['permissions'] = ac_get_effective_permissions_of_user(user)
+
+    if caseid is None:
+        case = Cases.query.order_by(Cases.case_id).first()
+        user.ctx_case = case.case_id
+        user.ctx_human_case = case.name
+        db.session.commit()
+
+    session['current_case'] = {
+        'case_name': user.ctx_human_case,
+        'case_info': "",
+        'case_id': user.ctx_case
+    }
+
+    return True
+
 
 def _oidc_proxy_authentication_process(incoming_request: Request):
     # Get the OIDC JWT authentication token from the request header
     authentication_token = incoming_request.headers.get('X-Forwarded-Access-Token', '')
 
-    if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'introspection':
+    if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'lazy':
+        user_email = incoming_request.headers.get('X-Email')
+        print(user_email)
+        if user_email:
+            return _authenticate_with_email(user_email.split(',')[0])
+
+    elif app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'introspection':
         # Use the authentication server's token introspection endpoint in order to determine if the request is valid /
         # authenticated. The TLS_ROOT_CA is used to validate the authentication server's certificate.
         # The other solution was to skip the certificate verification, BUT as the authentication server might be
@@ -318,29 +350,8 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
             response_json = introspection.json()
 
             if response_json.get("active", False) is True:
-                user_email = response_json.get("sub")
+                return _authenticate_with_email(user_email=user_email)
 
-                # Checks if a user exists with external_id having keycloak id as value
-                linked_user = get_user(user_email, "email")
-
-                login_user(linked_user)
-
-                caseid = linked_user.ctx_case
-                session['permissions'] = ac_get_effective_permissions_of_user(linked_user)
-
-                if caseid is None:
-                    case = Cases.query.order_by(Cases.case_id).first()
-                    linked_user.ctx_case = case.case_id
-                    linked_user.ctx_human_case = case.name
-                    db.session.commit()
-
-                session['current_case'] = {
-                    'case_name': linked_user.ctx_human_case,
-                    'case_info': "",
-                    'case_id': linked_user.ctx_case
-                }
-
-                return True
             else:
                 log.info("USER IS NOT AUTHENTICATED")
                 return False
@@ -372,30 +383,8 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
 
         # Extract the user email
         user_email = data.get("sub")
-        user = get_user(user_email, id_key="email")
-        if not user:
-            log.error(f'User with email {user_email} is not registered in the IRIS')
-            return False
 
-        login_user(user)
-        track_activity(f"User '{user.id}' successfully logged-in", ctx_less=True)
-
-        caseid = user.ctx_case
-        session['permissions'] = ac_get_effective_permissions_of_user(user)
-
-        if caseid is None:
-            case = Cases.query.order_by(Cases.case_id).first()
-            user.ctx_case = case.case_id
-            user.ctx_human_case = case.name
-            db.session.commit()
-
-        session['current_case'] = {
-            'case_name': user.ctx_human_case,
-            'case_info': "",
-            'case_id': user.ctx_case
-        }
-
-        return True
+        return _authenticate_with_email(user_email)
 
     else:
         log.error("ERROR DURING TOKEN INTROSPECTION PROCESS")
@@ -514,6 +503,9 @@ def ac_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
+            print(request.authorization)
+            print(request.cookies)
+            print(request.headers.get('X-Forwarded-Access-Token', ''))
             if not is_user_authenticated(request):
                 return redirect(not_authenticated_redirection_url())
 

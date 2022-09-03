@@ -114,11 +114,12 @@ class AuthenticationType(Enum):
 
 authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
                                      config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback="local"))
-print(authentication_type)
+
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
                              config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None))
 
-app_public_url = config.get("IRIS", "APP_PUBLIC_URL", fallback=None)
+app_public_url = os.environ.get('IRIS_PUBLIC_URL',
+                                config.get("IRIS", "APP_PUBLIC_URL", fallback=None))
 
 authentication_logout_url = None
 authentication_account_service_url = None
@@ -263,7 +264,7 @@ class Config():
     if authentication_type == 'oidc_proxy':
         AUTHENTICATION_LOGOUT_URL = authentication_logout_url
         AUTHENTICATION_ACCOUNT_SERVICE_URL = authentication_account_service_url
-        AUTHENTICATION_PROXY_LOGOUT_URL = f"/oauth2/sign_out?rd={AUTHENTICATION_LOGOUT_URL}?redirect_uri={APP_PUBLIC_URL}"
+        AUTHENTICATION_PROXY_LOGOUT_URL = f"/oauth2/sign_out?rd={AUTHENTICATION_LOGOUT_URL}?redirect_uri=/dashboard"
         AUTHENTICATION_TOKEN_INTROSPECTION_URL = authentication_token_introspection_url
         AUTHENTICATION_JWKS_URL = authentication_jwks_url
         AUTHENTICATION_CLIENT_ID = authentication_client_id
