@@ -751,7 +751,8 @@ def case_duplicate_event(cur_id, caseid):
         # Override event_added and user_id
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
-        event.event_title = f"[DUPLICATED] - {event.event_title}"
+        if event.event_title.startswith("[DUPLICATED] - ") is False:
+            event.event_title = f"[DUPLICATED] - {event.event_title}"
       
         db.session.add(event)
         update_timeline_state(caseid=caseid)
