@@ -25,13 +25,14 @@ RUN apt-get update && apt-get install -y curl
 
 # Used to pass protected files to the container through volumes
 ARG NGINX_CONF_GID
+ARG NGINX_CONF_FILE
+
 RUN groupadd -g ${NGINX_CONF_GID} az-app-nginx-conf && usermod -a -G az-app-nginx-conf www-data
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod 700 /entrypoint.sh
 RUN chown www-data:www-data /entrypoint.sh
 
-ARG NGINX_CONF_FILE
 COPY ${NGINX_CONF_FILE} /etc/nginx/nginx.conf
 
 # log
