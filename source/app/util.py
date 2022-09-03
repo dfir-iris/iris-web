@@ -505,9 +505,7 @@ def ac_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
-            print(request.authorization)
-            print(request.cookies)
-            print(request.headers.get('X-Forwarded-Access-Token', ''))
+
             if not is_user_authenticated(request):
                 return redirect(not_authenticated_redirection_url())
 
