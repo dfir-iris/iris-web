@@ -251,26 +251,42 @@ $(document).ready(function(){
           },
           {
             "data": "task_status_id",
-            "render": function(data, type, row, meta) {
+            "render": function(data, type, row) {
                if (type === 'display') {
                   data = sanitizeHTML(data);
                   data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
-              }
+               }
+               else if (type === 'filter' || type === 'sort'){
+                  data = row['status_name']
+               }
               return data;
             }
           },
           {
             "data": "task_assignees",
             "render": function (data, type, row, meta) {
-                if (type === 'display' && data != null) {
+                if (data != null) {
                     names = "";
+
                     if (data.length > 0) {
                         lst = [];
                         data.forEach(function (item, index) { lst.push(item['name']); });
-                        names = list_to_badges(lst, 'primary', 10, 'users');
+                        if (type === 'display') {
+                            names = list_to_badges(lst, 'primary', 10, 'users');
+                        }
+                        else {
+                            lst.forEach(function (item, index) {
+                                names += `${sanitizeHTML(item)}`;
+                            });
+                        }
                     }
                     else {
-                        names = '<span class="badge badge-light ml-2">' + "Unassigned" + '</span>';
+                        if (type === 'display') {
+                            names = '<span class="badge badge-light ml-2">' + "Unassigned" + '</span>';
+                        }
+                        else {
+                            names = "Unassigned";
+                        }
                     }
 
                     return names;
