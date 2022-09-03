@@ -296,6 +296,7 @@ def get_urlcasename():
 def _local_authentication_process(incoming_request: Request):
     return current_user.is_authenticated
 
+
 def _authenticate_with_email(user_email):
     user = get_user(user_email, id_key="email")
     if not user:
@@ -329,7 +330,7 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
 
     if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'lazy':
         user_email = incoming_request.headers.get('X-Email')
-        print(user_email)
+
         if user_email:
             return _authenticate_with_email(user_email.split(',')[0])
 
@@ -350,6 +351,7 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
             response_json = introspection.json()
 
             if response_json.get("active", False) is True:
+                user_email = response_json.get("sub")
                 return _authenticate_with_email(user_email=user_email)
 
             else:
