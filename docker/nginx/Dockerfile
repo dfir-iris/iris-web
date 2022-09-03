@@ -31,7 +31,8 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod 700 /entrypoint.sh
 RUN chown www-data:www-data /entrypoint.sh
 
-COPY nginx.conf /etc/nginx/nginx.conf
+ARG NGINX_CONF_FILE
+COPY ${NGINX_CONF_FILE} /etc/nginx/nginx.conf
 
 # log
 RUN touch /var/log/nginx/audit_platform_error.log && chown -R www-data:www-data /var/log/nginx/audit_platform_error.log

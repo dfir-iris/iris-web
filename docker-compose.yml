@@ -119,6 +119,7 @@ services:
       context: ./docker/nginx
       args:
         NGINX_CONF_GID: 1234
+        NGINX_CONF_FILE: nginx.conf
     image: iriswebapp_nginx:latest
     container_name: iriswebapp_nginx
     environment:

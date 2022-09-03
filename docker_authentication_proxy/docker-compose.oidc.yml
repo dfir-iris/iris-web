@@ -51,11 +51,9 @@ services:
       context: ./docker/nginx
       args:
         NGINX_CONF_GID: 1234
+        NGINX_CONF_FILE: nginx.oidc.conf
     image: iriswebapp_nginx:latest
     container_name: iriswebapp_nginx
-    volumes:
-      - "./docker/nginx/nginx.oidc.conf:/etc/nginx/nginx.conf"
-
 
 volumes:
   cache:
