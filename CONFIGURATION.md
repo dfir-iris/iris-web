@@ -12,11 +12,10 @@ There are 3 different options to set configuration variables
 ### Azure Key Vault
 The first option that is checked is the Azure Key Vault. In order to use this the `AZURE.KEY_VAULT_NAME` should be specified. 
 
-Since Azure Key Vault does not support dots and underscores you should remove this from the configuration name. For example: `POSTGRES.USER` becomes `POSTGRESUSER`.
+Since Azure Key Vault does not support underscores you should remove this from the configuration name. For example: `POSTGRES_USER` becomes `POSTGRESUSER`.
 
 ### Environment Variables
-The second option is using environment variables, which gives the most amount of flexibility. Environment variables do not use a dot, so `POSTGRES.USER` becomes `POSTGRES_USER`
-
+The second option is using environment variables, which gives the most amount of flexibility. 
 ### Config.ini
 The last and fallback option is the config.ini. Within the project there is a `config.model.ini`, which is not used but gives the example how the file should look like. If the application is started with the environment variable `DOCKERIZED=1` then the `config.docker.ini` is loaded, otherwhise the `config.priv.ini` is loaded.
 
