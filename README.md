@@ -64,8 +64,14 @@ If you want to define an admin password at the first start, you can also create 
 You can skip this part if you just want to try or develop. If used in production, please configure the .env file at the root of the project:
 
 - Nginx: you might want to specify your own certificate as specified above
-- Database credentials: **POSTGRES_PASSWORD** and **DB_PASS** (you can also customise the usernames)
-- IRIS secrets: **SECRET_KEY** and **SECURITY_PASSWORD_SALT**
+- Database credentials: **POSTGRES_PASSWORD** and **POSTGRES_ADMIN_PASSWORD** (you can also customise the usernames)
+- IRIS secrets: **IRIS_SECRET_KEY** and **IRIS_SECURITY_PASSWORD_SALT**
+
+## Configuration
+There are three different options for configuring the settings and credentials: Azure Key Vault, Environment Variables and Configuration Files. This is also the order of priority, if a settings is not set it will fallback on the next option.
+
+For all available configuration options see [CONFIGURATION.md](CONFIGURATION.md)
+
 
 ## Showcase
 For a more comprehensive overview of the case features, 
