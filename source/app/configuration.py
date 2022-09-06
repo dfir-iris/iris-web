@@ -109,8 +109,8 @@ class IrisConfig(configparser.ConfigParser):
             'POSTGRES_USER': 'DB_USER',
             'POSTGRES_PASSWORD': 'DB_PASS',
             'POSTGRES_ADMIN_USER': 'POSTGRES_USER',
-            'POSTGRES_HOST': 'DB_HOST',
-            'POSTGRES_SERVER': 'DB_PORT',
+            'POSTGRES_SERVER': 'DB_HOST',
+            'POSTGRES_PORT': 'DB_PORT',
             'IRIS_SECRET_KEY': 'SECRET_KEY',
             'IRIS_SECURITY_PASSWORD_SALT': 'SECURITY_PASSWORD_SALT',
         }
