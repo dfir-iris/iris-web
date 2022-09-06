@@ -10,9 +10,9 @@ There are 3 different options to set configuration variables
 3. The config.ini file
 
 ### Azure Key Vault
-The first option that is checked is the Azure Key Vault. In order to use this the `AZURE.KEY_VAULT_NAME` should be specified. 
+The first option that is checked is the Azure Key Vault. In order to use this the `AZURE_KEY_VAULT_NAME` should be specified. 
 
-Since Azure Key Vault does not support underscores you should remove this from the configuration name. For example: `POSTGRES_USER` becomes `POSTGRESUSER`.
+Since Azure Key Vault does not support underscores you should remove this from the configuration name. For example: `POSTGRES_USER` becomes `POSTGRES-USER`.
 
 ### Environment Variables
 The second option is using environment variables, which gives the most amount of flexibility. 
