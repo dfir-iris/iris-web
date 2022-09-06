@@ -117,8 +117,8 @@ class IrisConfig(configparser.ConfigParser):
             'POSTGRES_USER': 'DB_USER',
             'POSTGRES_PASSWORD': 'DB_PASS',
             'POSTGRES_ADMIN_USER': 'POSTGRES_USER',
-            'POSTGRES_HOST': 'DB_HOST',
-            'POSTGRES_SERVER': 'DB_PORT',
+            'POSTGRES_SERVER': 'DB_HOST',
+            'POSTGRES_PORT': 'DB_PORT',
             'IRIS_SECRET_KEY': 'SECRET_KEY',
             'IRIS_SECURITY_PASSWORD_SALT': 'SECURITY_PASSWORD_SALT',
         }
@@ -205,6 +205,7 @@ SQLALCHEMY_BASE_ADMIN_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{por
                                                                                             server=PG_SERVER_,
                                                                                             port=PG_PORT_)
 
+
 class AuthenticationType(Enum):
     local = 1
     oidc_proxy = 2
@@ -227,8 +228,7 @@ authentication_client_secret = None
 authentication_app_admin_role_name = None
 
 if authentication_type == 'oidc_proxy':
-    oidc_discovery_url = os.environ.get('OIDC_IRIS_DISCOVERY_URL',
-                                        config.get('AUTHENTICATION', 'OIDC_IRIS_DISCOVERY_URL', fallback=""))
+    oidc_discovery_url = config.load('AUTHENTICATION', 'OIDC_IRIS_DISCOVERY_URL', fallback="")
 
     try:
         oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
@@ -244,14 +244,11 @@ if authentication_type == 'oidc_proxy':
         else:
             raise Exception("Unsuccessful authN server discovery")
 
-        authentication_client_id = os.environ.get('OIDC_IRIS_CLIENT_ID',
-                                                  config.get('AUTHENTICATION', 'OIDC_IRIS_CLIENT_ID', fallback=""))
+        authentication_client_id = config.load('AUTHENTICATION', 'OIDC_IRIS_CLIENT_ID', fallback="")
 
-        authentication_client_secret = os.environ.get('OIDC_IRIS_CLIENT_SECRET',
-                                                      config.get('AUTHENTICATION', 'OIDC_IRIS_CLIENT_SECRET',
-                                                                 fallback=""))
+        authentication_client_secret = config.load('AUTHENTICATION', 'OIDC_IRIS_CLIENT_SECRET', fallback="")
 
-        authentication_app_admin_role_name = config.get('AUTHENTICATION', 'OIDC_IRIS_ADMIN_ROLE_NAME', fallback="")
+        authentication_app_admin_role_name = config.load('AUTHENTICATION', 'OIDC_IRIS_ADMIN_ROLE_NAME', fallback="")
     except Exception as e:
         log.error(f"OIDC ERROR - {e}")
         exit(0)
@@ -360,18 +357,13 @@ class Config():
         AUTHENTICATION_JWKS_URL = authentication_jwks_url
         AUTHENTICATION_CLIENT_ID = authentication_client_id
         AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
-        AUTHENTICATION_AUDIENCE = os.environ.get('OIDC_IRIS_AUDIENCE', config.get('AUTHENTICATION', 'OIDC_IRIS_AUDIENCE',
-                                                                                  fallback=""))
-        AUTHENTICATION_VERIFY_TOKEN_EXP = os.environ.get('OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
-                                                         config.get('AUTHENTICATION', 'OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
-                                                                    fallback=True))
-        AUTHENTICATION_TOKEN_VERIFY_MODE = os.environ.get('OIDC_IRIS_TOKEN_VERIFY_MODE',
-                                                          config.get('AUTHENTICATION', 'OIDC_IRIS_TOKEN_VERIFY_MODE',
-                                                                     fallback='signature'))
-        AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = os.environ.get('OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
-                                                                 config.get('AUTHENTICATION',
-                                                                            'OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
-                                                                            fallback=""))
+        AUTHENTICATION_AUDIENCE = config.load('AUTHENTICATION', 'OIDC_IRIS_AUDIENCE', fallback="")
+        AUTHENTICATION_VERIFY_TOKEN_EXP = config.load('AUTHENTICATION', 'OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
+                                                      fallback=True)
+        AUTHENTICATION_TOKEN_VERIFY_MODE = config.load('AUTHENTICATION', 'OIDC_IRIS_TOKEN_VERIFY_MODE',
+                                                       fallback='signature')
+        AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = config.load('AUTHENTICATION', 'OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
+                                                              fallback="")
         AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
 
     """ Caching 
