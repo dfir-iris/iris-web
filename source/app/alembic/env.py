@@ -14,9 +14,9 @@ fileConfig(config.config_file_name)
 import os
 os.environ["ALEMBIC"] = "1"
 
-from app.configuration import SQLALCHEMY_BASE_URI
+from app.configuration import SQLALCHEMY_BASE_ADMIN_URI
 
-config.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_URI + 'iris_db')
+config.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_ADMIN_URI + 'iris_db')
 
 
 # add your model's MetaData object here

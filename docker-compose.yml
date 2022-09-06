@@ -35,11 +35,11 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     environment:
-      - POSTGRES_PASSWORD
       - POSTGRES_USER
-      - POSTGRES_DB
-      - DB_USER
-      - DB_PASS
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_DB=iris_db
     networks:
       - iris_backend
     volumes:
@@ -62,16 +62,15 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      - POSTGRES_PASSWORD
       - POSTGRES_USER
-      - POSTGRES_DB
-      - DB_USER
-      - DB_PASS
-      - DB_HOST
-      - DB_PORT
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_SERVER
+      - POSTGRES_PORT
       - DOCKERIZED
-      - SECRET_KEY
-      - SECURITY_PASSWORD_SALT
+      - IRIS_SECRET_KEY
+      - IRIS_SECURITY_PASSWORD_SALT
     networks:
       - iris_backend
       - iris_frontend
@@ -91,14 +90,15 @@ services:
       - "db"
       - "app"
     environment:
-      - POSTGRES_PASSWORD
       - POSTGRES_USER
-      - POSTGRES_DB
-      - DB_USER
-      - DB_PASS
-      - DB_HOST
-      - DB_PORT
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_SERVER
+      - POSTGRES_PORT
       - DOCKERIZED
+      - IRIS_SECRET_KEY
+      - IRIS_SECURITY_PASSWORD_SALT
       - IRIS_WORKER
     networks:
       - iris_frontend
