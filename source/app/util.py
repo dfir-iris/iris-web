@@ -327,6 +327,7 @@ def _authenticate_with_email(user_email):
 def _oidc_proxy_authentication_process(incoming_request: Request):
     # Get the OIDC JWT authentication token from the request header
     authentication_token = incoming_request.headers.get('X-Forwarded-Access-Token', '')
+    print(authentication_token)
 
     if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'lazy':
         user_email = incoming_request.headers.get('X-Email')

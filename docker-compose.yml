@@ -134,6 +134,7 @@ services:
       - iris_backend
     ports:
       - "443:443"
+      - "80:80"
     volumes:
       - "./docker/dev_certs/:/www/certs/:ro"
     restart: on-failure:5

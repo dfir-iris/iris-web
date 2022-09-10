@@ -228,7 +228,7 @@ authentication_client_secret = None
 authentication_app_admin_role_name = None
 
 if authentication_type == 'oidc_proxy':
-    oidc_discovery_url = config.load('AUTHENTICATION', 'OIDC_IRIS_DISCOVERY_URL', fallback="")
+    oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
 
     try:
         oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
@@ -244,11 +244,11 @@ if authentication_type == 'oidc_proxy':
         else:
             raise Exception("Unsuccessful authN server discovery")
 
-        authentication_client_id = config.load('AUTHENTICATION', 'OIDC_IRIS_CLIENT_ID', fallback="")
+        authentication_client_id = config.load('OIDC', 'IRIS_CLIENT_ID', fallback="")
 
-        authentication_client_secret = config.load('AUTHENTICATION', 'OIDC_IRIS_CLIENT_SECRET', fallback="")
+        authentication_client_secret = config.load('OIDC', 'IRIS_CLIENT_SECRET', fallback="")
 
-        authentication_app_admin_role_name = config.load('AUTHENTICATION', 'OIDC_IRIS_ADMIN_ROLE_NAME', fallback="")
+        authentication_app_admin_role_name = config.load('OIDC', 'IRIS_ADMIN_ROLE_NAME', fallback="")
     except Exception as e:
         log.error(f"OIDC ERROR - {e}")
         exit(0)
@@ -357,12 +357,12 @@ class Config():
         AUTHENTICATION_JWKS_URL = authentication_jwks_url
         AUTHENTICATION_CLIENT_ID = authentication_client_id
         AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
-        AUTHENTICATION_AUDIENCE = config.load('AUTHENTICATION', 'OIDC_IRIS_AUDIENCE', fallback="")
-        AUTHENTICATION_VERIFY_TOKEN_EXP = config.load('AUTHENTICATION', 'OIDC_IRIS_VERIFY_TOKEN_EXPIRATION',
+        AUTHENTICATION_AUDIENCE = config.load('OIDC', 'IRIS_AUDIENCE', fallback="")
+        AUTHENTICATION_VERIFY_TOKEN_EXP = config.load('OIDC', 'IRIS_VERIFY_TOKEN_EXPIRATION',
                                                       fallback=True)
-        AUTHENTICATION_TOKEN_VERIFY_MODE = config.load('AUTHENTICATION', 'OIDC_IRIS_TOKEN_VERIFY_MODE',
+        AUTHENTICATION_TOKEN_VERIFY_MODE = config.load('OIDC', 'IRIS_TOKEN_VERIFY_MODE',
                                                        fallback='signature')
-        AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = config.load('AUTHENTICATION', 'OIDC_IRIS_INIT_ADMINISTRATOR_EMAIL',
+        AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = config.load('OIDC', 'IRIS_INIT_ADMINISTRATOR_EMAIL',
                                                               fallback="")
         AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
 
