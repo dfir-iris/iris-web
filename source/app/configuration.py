@@ -235,7 +235,6 @@ if authentication_type == 'oidc_proxy':
 
         if oidc_discovery_response.status_code == 200:
             response_json = oidc_discovery_response.json()
-
             authentication_logout_url = response_json.get('end_session_endpoint')
             authentication_account_service_url = f"{response_json.get('issuer')}/account"
             authentication_token_introspection_url = response_json.get('introspection_endpoint')
