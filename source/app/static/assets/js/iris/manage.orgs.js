@@ -259,7 +259,13 @@ function manage_organisation_cac(org_id) {
             data_sent['cases_list'] = $('#org_case_access_select').val();
 
             data_sent['csrf_token'] = $('#csrf_token').val();
-
+            window.swal({
+                  title: "Updating access",
+                  text: "Please wait. We are updating users permissions.",
+                  icon: "/static/assets/img/loader_cubes.gif",
+                  button: false,
+                  allowOutsideClick: false
+            });
             post_request_api('organisations/' + org_id + '/cases-access/add', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
@@ -267,6 +273,9 @@ function manage_organisation_cac(org_id) {
                     refresh_organisation_cac(org_id);
                     $('#modal_ac_additional').modal('hide');
                 }
+            })
+            .always(() => {
+                window.swal.close();
             });
 
             return false;

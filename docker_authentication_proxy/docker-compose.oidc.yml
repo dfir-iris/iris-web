@@ -1,7 +1,7 @@
 version: "3.9"
 services:
     # AUTHENTICATION PROXY
-  proxy:
+  oauth2_proxy:
     image: bitnami/oauth2-proxy:7.3.0
     container_name: oauth2_proxy
     command:
