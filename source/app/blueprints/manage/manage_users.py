@@ -257,7 +257,6 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
         return response_error("Invalid user ID")
 
     cases_list = list_cases_dict(current_user.id)
-    print(user.get('user_cases_access'))
 
     user_cases_access = [case.get('case_id') for case in user.get('user_cases_access')]
     outer_cases_list = []

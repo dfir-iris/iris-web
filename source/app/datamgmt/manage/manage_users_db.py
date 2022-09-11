@@ -442,6 +442,7 @@ def create_user(user_name: str, user_login: str, user_password: str, user_email:
     user.save()
 
     add_user_to_organisation(user.id, org_id=primary_org)
+    ac_auto_update_user_effective_access(user_id=user.id)
 
     return user
 
