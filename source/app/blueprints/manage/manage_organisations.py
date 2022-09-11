@@ -363,5 +363,6 @@ def manage_groups_ac_delete_case(cur_id, cur_id_2, caseid):
 
     remove_case_access_from_organisation(org.org_id, case.case_id)
     org = get_orgs_details(cur_id)
+    ac_recompute_effective_ac_from_users_list(org.org_members)
 
     return response_success('Case access removed from organisation', data=org)

@@ -288,7 +288,7 @@ function remove_case_access_from_org(org_id, case_id, on_finish) {
 
     swal({
       title: "Are you sure?",
-      text: "Members of this organisation won't be able to access this case anymore",
+      text: "Members of this organisation might not be able to access this case anymore",
       icon: "warning",
       buttons: true,
       dangerMode: true,
@@ -299,7 +299,13 @@ function remove_case_access_from_org(org_id, case_id, on_finish) {
     .then((willDelete) => {
         if (willDelete) {
             url = '/manage/organisations/' + org_id + '/cases-access/delete/' + case_id;
-
+            window.swal({
+                  title: "Updating access",
+                  text: "Please wait. We are updating users permissions.",
+                  icon: "/static/assets/img/loader_cubes.gif",
+                  button: false,
+                  allowOutsideClick: false
+            });
             get_request_api(url)
             .done((data) => {
                 if(notify_auto_api(data)) {
@@ -309,7 +315,7 @@ function remove_case_access_from_org(org_id, case_id, on_finish) {
                     if (on_finish !== undefined) {
                         on_finish();
                     }
-
+                    window.swal.close();
                 }
             });
         }
