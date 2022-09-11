@@ -128,7 +128,7 @@ function delete_group(id) {
 
     swal({
       title: "Are you sure?",
-      text: "You won't be able to revert this !",
+      text: "You won't be able to revert this!\nPlease make sure a group remains with enough rights to avoid a lockdown!",
       icon: "warning",
       buttons: true,
       dangerMode: true,
@@ -145,8 +145,6 @@ function delete_group(id) {
                 $('#modal_access_control').modal('hide');
             }
         });
-      } else {
-        swal("Pfew, that was close");
       }
     });
 }
