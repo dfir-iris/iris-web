@@ -463,7 +463,7 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
     db.session.commit()
 
     old_prim_org = get_user_primary_org(user.id)
-    print(old_prim_org[0].org_id, primary_org)
+
     if old_prim_org[0].org_id != primary_org:
 
         change_user_primary_org(user_id=user.id, old_org_id=old_prim_org[0].org_id, new_org_id=primary_org)

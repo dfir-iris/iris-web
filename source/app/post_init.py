@@ -455,8 +455,9 @@ def create_safe_client():
 
 
 def create_safe_auth_model():
+
     def_org = get_or_create(db.session, Organisation, org_name="Default Org",
-                          org_description="Default Organisation")
+                            org_description="Default Organisation")
 
     gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators")
     if gadm.group_permissions != ac_get_mask_full_permissions():

@@ -198,6 +198,13 @@ function manage_organisation_members(org_id) {
             var data_sent = Object();
             data_sent['org_members'] = $('#org_members').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
+            window.swal({
+                  title: "Updating access",
+                  text: "Please wait. We are updating users permissions.",
+                  icon: "/static/assets/img/loader_cubes.gif",
+                  button: false,
+                  allowOutsideClick: false
+            });
 
             post_request_api('organisations/' + org_id + '/members/update', JSON.stringify(data_sent))
             .done((data) => {
@@ -206,6 +213,9 @@ function manage_organisation_members(org_id) {
                     refresh_organisation_members(org_id);
                     $('#modal_ac_additional').modal('hide');
                 }
+            })
+            .always(() => {
+                window.swal.close();
             });
 
             return false;
