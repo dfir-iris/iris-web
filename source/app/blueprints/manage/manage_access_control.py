@@ -97,25 +97,25 @@ def manage_ac_audit_users_page(caseid, url_redir):
     return render_template("manage_user_audit.html", form=form)
 
 
-@manage_ac_blueprint.route('/manage/access-control/audit/cases', methods=['GET'])
-@ac_requires(Permissions.manage_organisations)
-def manage_ac_audit_cases_page(caseid, url_redir):
-    form = FlaskForm()
-
-    return render_template("manage_case_audit.html", form=form)
-
-
-@manage_ac_blueprint.route('/manage/access-control/audit/cases/<int:cur_id>/modal', methods=['GET'])
-@ac_api_requires(Permissions.manage_organisations)
-def manage_ac_audit_cases_modal(cur_id, caseid):
-    access_audit = ac_trace_case_access(cur_id)
-
-    return render_template("modal_case_audit.html", access_audit=access_audit)
-
-
-@manage_ac_blueprint.route('/manage/access-control/audit/cases/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.manage_organisations)
-def manage_ac_audit_cases(cur_id, caseid):
-    access_audit = ac_trace_case_access(cur_id)
-
-    return response_success(data=access_audit)
+# @manage_ac_blueprint.route('/manage/access-control/audit/cases', methods=['GET'])
+# @ac_requires(Permissions.manage_organisations)
+# def manage_ac_audit_cases_page(caseid, url_redir):
+#     form = FlaskForm()
+#
+#     return render_template("manage_case_audit.html", form=form)
+#
+#
+# @manage_ac_blueprint.route('/manage/access-control/audit/cases/<int:cur_id>/modal', methods=['GET'])
+# @ac_api_requires(Permissions.manage_organisations)
+# def manage_ac_audit_cases_modal(cur_id, caseid):
+#     access_audit = ac_trace_case_access(cur_id)
+#
+#     return render_template("modal_case_audit.html", access_audit=access_audit)
+#
+#
+# @manage_ac_blueprint.route('/manage/access-control/audit/cases/<int:cur_id>', methods=['GET'])
+# @ac_api_requires(Permissions.manage_organisations)
+# def manage_ac_audit_cases(cur_id, caseid):
+#     access_audit = ac_trace_case_access(cur_id)
+#
+#     return response_success(data=access_audit)

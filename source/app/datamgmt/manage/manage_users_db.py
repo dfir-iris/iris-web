@@ -149,6 +149,7 @@ def update_user_orgs(user_id, orgs):
 
 
 def change_user_primary_org(user_id, old_org_id, new_org_id):
+
     uo_old = UserOrganisation.query.filter(
         UserOrganisation.user_id == user_id,
         UserOrganisation.org_id == old_org_id
@@ -156,10 +157,11 @@ def change_user_primary_org(user_id, old_org_id, new_org_id):
 
     uo_new = UserOrganisation.query.filter(
         UserOrganisation.user_id == user_id,
-        UserOrganisation.org_id == old_org_id
+        UserOrganisation.org_id == new_org_id
     ).first()
 
     if uo_old:
+        print('Chaning old to false')
         uo_old.is_primary_org = False
 
     if not uo_new:
@@ -170,6 +172,7 @@ def change_user_primary_org(user_id, old_org_id, new_org_id):
         db.session.add(uo)
 
     else:
+        print('Chaning new to true')
         uo_new.is_primary_org = True
 
     db.session.commit()
@@ -460,6 +463,7 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
     db.session.commit()
 
     old_prim_org = get_user_primary_org(user.id)
+    print(old_prim_org[0].org_id, primary_org)
     if old_prim_org[0].org_id != primary_org:
 
         change_user_primary_org(user_id=user.id, old_org_id=old_prim_org[0].org_id, new_org_id=primary_org)

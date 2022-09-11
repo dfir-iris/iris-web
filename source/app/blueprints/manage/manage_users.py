@@ -351,7 +351,6 @@ def update_user_api(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-# TODO: might also need to be conditional to local authentication
 @manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.manage_users)
 def deactivate_user_api(cur_id, caseid):

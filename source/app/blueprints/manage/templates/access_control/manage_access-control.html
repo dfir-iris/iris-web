@@ -17,7 +17,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="row">
-                    <div class="col col-heading" href="#collapse_user_mgmt" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapse_user_mgmt">
+                        <div class="col col-heading" href="#collapse_user_mgmt" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_user_mgmt">
                             <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
                             <div class="card-title">Users</div>
                         </div>
@@ -27,7 +27,8 @@
                             <button class="btn btn-sm btn-dark float-right ml-2" onclick="add_user();">Add user</button>
                         </div>
                     </div>
-                    <div class="card-body collapse show" id="collapse_user_mgmt">
+                </div>
+                <div class="card-body collapse" id="collapse_user_mgmt">
                         <div class="table-responsive" id="users_table_wrapper">
                             <div class="selectgroup">
                                 <span id="table_buttons"></span>
@@ -56,12 +57,11 @@
                             </table>
                         </div>
                     </div>
-                </div>
             </div>
             <div class="card">
                 <div class="card-header">
                     <div class="row">
-                        <div class="col col-heading" href="#collapse_groups_mgmt" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapse_groups_mgmt">
+                        <div class="col col-heading" href="#collapse_groups_mgmt" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_groups_mgmt">
                             <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
                             <div class="card-title">Groups</div>
                         </div>
@@ -70,40 +70,40 @@
                             <button class="btn btn-sm btn-dark float-right" onclick="add_group();">Add group</button>
                         </div>
                     </div>
-                    <div class="card-body collapse show" id="collapse_groups_mgmt">
-                        <div class="table-responsive" id="groups_table_wrapper">
-                            <div class="selectgroup">
-                                <span id="groups_table_buttons"></span>
-                            </div>
-                            <table class="table display table table-striped table-hover" width="100%"
-                                   cellspacing="0" id="groups_table">
-                                <thead>
-                                <tr>
-
-                                    <th>#ID</th>
-                                    <th>Name</th>
-                                    <th>Description</th>
-                                    <th>Permissions</th>
-                                    <th>#Members</th>
-                                </tr>
-                                </thead>
-                                <tfoot>
-                                <tr>
-                                    <th>#ID</th>
-                                    <th>Name</th>
-                                    <th>Description</th>
-                                    <th>#Members</th>
-                                </tr>
-                                </tfoot>
-                            </table>
+                </div>
+                <div class="card-body collapse" id="collapse_groups_mgmt">
+˜                  <div class="table-responsive" id="groups_table_wrapper">
+                        <div class="selectgroup">
+                            <span id="groups_table_buttons"></span>
                         </div>
+                        <table class="table display table table-striped table-hover" width="100%"
+                               cellspacing="0" id="groups_table">
+                            <thead>
+                            <tr>
+
+                                <th>#ID</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Permissions</th>
+                                <th>#Members</th>
+                            </tr>
+                            </thead>
+                            <tfoot>
+                            <tr>
+                                <th>#ID</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>#Members</th>
+                            </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
             </div>
             <div class="card">
                 <div class="card-header">
                     <div class="row">
-                        <div class="col col-heading" href="#collapse_org_mgmt" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapse_org_mgmt">
+                        <div class="col col-heading" href="#collapse_org_mgmt" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_org_mgmt">
                             <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
                             <div class="card-title">Organisations</div>
                         </div>
@@ -112,9 +112,10 @@
                             <button class="btn btn-sm btn-dark float-right" onclick="add_organisation();">Add organisation</button>
                         </div>
                     </div>
-                    <div class="card-body collapse show">
 
-                        <div class="table-responsive" id="collapse_org_mgmt">
+                </div>
+                <div class="card-body collapse" id="collapse_org_mgmt">
+                        <div class="table-responsive">
                             <div class="selectgroup">
                                 <span id="org_table_buttons"></span>
                             </div>
@@ -142,7 +143,6 @@
                             </table>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
     {% endif %}
