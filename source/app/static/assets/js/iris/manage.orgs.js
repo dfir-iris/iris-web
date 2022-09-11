@@ -138,6 +138,13 @@ function delete_org(org_id) {
             if(notify_auto_api(data)) {
                 refresh_organisations();
                 $('#modal_access_control').modal('hide');
+            } else {
+                window.swal({
+                  title: "Cannot delete organisation",
+                  text: data.data,
+                  button: true,
+                  allowOutsideClick: false
+            });
             }
         });
       } else {

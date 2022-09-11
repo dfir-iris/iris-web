@@ -142,13 +142,19 @@ def update_org_members(org, members):
             ac_auto_update_user_effective_access(uid)
 
     for uid in users_to_remove:
-        UserOrganisation.query.filter(
+        uoa = UserOrganisation.query.filter(
             and_(UserOrganisation.user_id == uid,
                  UserOrganisation.org_id == org.org_id,
                  UserOrganisation.is_primary_org == False)
-        ).delete()
+        ).all()
+        has_deleted = False
+        for uo in uoa:
+            if uo:
+                has_deleted = True
+                uo.delete()
 
-        ac_auto_update_user_effective_access(uid)
+        if has_deleted:
+            ac_auto_update_user_effective_access(uid)
 
     db.session.commit()
 
@@ -176,13 +182,29 @@ def remove_user_from_organisation(org, member):
 
 def delete_organisation(org):
     if not org:
-        return None
+        return False, []
+
+    uo_prim = UserOrganisation.query.with_entities(
+        User.name,
+        User.email,
+    ).filter(
+        UserOrganisation.org_id == org.org_id,
+        UserOrganisation.is_primary_org == True
+    ).join(
+        UserOrganisation.user
+    ).all()
+
+    if uo_prim:
+        uo_prim = [f"{u.name} - {u.email}" for u in uo_prim]
+        return False, uo_prim
 
     UserOrganisation.query.filter(UserOrganisation.org_id == org.org_id).delete()
     OrganisationCaseAccess.query.filter(OrganisationCaseAccess.org_id == org.org_id).delete()
 
     db.session.delete(org)
     db.session.commit()
+
+    return True, None
 
 
 def get_user_organisations(user_id):

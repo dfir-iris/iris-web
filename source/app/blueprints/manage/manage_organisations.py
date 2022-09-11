@@ -196,7 +196,11 @@ def manage_org_delete(cur_id, caseid):
         return response_error("Invalid organisation ID")
 
     org_members = copy(org.org_members)
-    delete_organisation(org)
+    success, error_list = delete_organisation(org)
+    if not success:
+        return response_error('Cannot delete organisation because it is set as home organisation for '
+                              f'{len(error_list)} users',
+                              data=error_list)
 
     ac_recompute_effective_ac_from_users_list(org_members)
 
