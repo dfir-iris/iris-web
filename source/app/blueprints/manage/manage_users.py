@@ -78,53 +78,51 @@ def manage_users_list(caseid):
     return response_success('', data=users)
 
 
-if is_authentication_local():
-    @manage_users_blueprint.route('/manage/users/add/modal', methods=['GET'])
-    @ac_requires(Permissions.manage_users)
-    def add_user_modal(caseid, url_redir):
-        if url_redir:
-            return redirect(url_for('manage_users.add_user', cid=caseid))
+@manage_users_blueprint.route('/manage/users/add/modal', methods=['GET'])
+@ac_requires(Permissions.manage_users)
+def add_user_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_users.add_user', cid=caseid))
 
-        user = None
-        form = AddUserForm()
-        if ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
-            orgs_choices = [(org.org_id, org.org_name) for org in get_organisations_list()]
-        else:
-            orgs_choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
+    user = None
+    form = AddUserForm()
+    if ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        orgs_choices = [(org.org_id, org.org_name) for org in get_organisations_list()]
+    else:
+        orgs_choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
 
-        form.user_primary_organisation_id.choices = orgs_choices
-        server_settings = get_srv_settings()
+    form.user_primary_organisation_id.choices = orgs_choices
+    server_settings = get_srv_settings()
 
-        return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
+    return render_template("modal_add_user.html", form=form, user=user, server_settings=server_settings)
 
 
-if is_authentication_local():
-    @manage_users_blueprint.route('/manage/users/add', methods=['POST'])
-    @ac_api_requires(Permissions.manage_users)
-    def add_user(caseid):
-        try:
+@manage_users_blueprint.route('/manage/users/add', methods=['POST'])
+@ac_api_requires(Permissions.manage_users)
+def add_user(caseid):
+    try:
 
-            # validate before saving
-            user_schema = UserSchema()
-            jsdata = request.get_json()
-            jsdata['user_id'] = 0
-            jsdata['active'] = jsdata.get('active', True)
-            cuser = user_schema.load(jsdata, partial=True)
-            user = create_user(user_name=cuser.name,
-                               user_login=cuser.user,
-                               user_email=cuser.email,
-                               user_password=cuser.password,
-                               primary_org=jsdata.get('user_primary_organisation_id'),
-                               user_active=jsdata.get('active'))
+        # validate before saving
+        user_schema = UserSchema()
+        jsdata = request.get_json()
+        jsdata['user_id'] = 0
+        jsdata['active'] = jsdata.get('active', True)
+        cuser = user_schema.load(jsdata, partial=True)
+        user = create_user(user_name=cuser.name,
+                           user_login=cuser.user,
+                           user_email=cuser.email,
+                           user_password=cuser.password,
+                           primary_org=jsdata.get('user_primary_organisation_id'),
+                           user_active=jsdata.get('active'))
 
-            if cuser:
-                track_activity("created user {}".format(user.user), caseid=caseid)
-                return response_success("user created", data=user_schema.dump(user))
+        if cuser:
+            track_activity("created user {}".format(user.user), caseid=caseid)
+            return response_success("user created", data=user_schema.dump(user))
 
-            return response_error("Unable to create user for internal reasons")
+        return response_error("Unable to create user for internal reasons")
 
-        except marshmallow.exceptions.ValidationError as e:
-            return response_error(msg="Data error", data=e.messages, status=400)
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
@@ -326,33 +324,32 @@ def manage_user_cac_delete_case(cur_id, cur_id_2, caseid):
     return response_success('Case access removed from user', data=user)
 
 
-if is_authentication_local():
-    @manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])
-    @ac_api_requires(Permissions.manage_users)
-    def update_user_api(cur_id, caseid):
-        try:
-            user = get_user(cur_id)
-            if not user:
-                return response_error("Invalid user ID for this case")
+@manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])
+@ac_api_requires(Permissions.manage_users)
+def update_user_api(cur_id, caseid):
+    try:
+        user = get_user(cur_id)
+        if not user:
+            return response_error("Invalid user ID for this case")
 
-            # validate before saving
-            user_schema = UserSchema()
-            jsdata = request.get_json()
-            jsdata['user_id'] = cur_id
-            cuser = user_schema.load(jsdata, instance=user, partial=True)
-            update_user(password=jsdata.get('user_password'),
-                        primary_org=jsdata.get('user_primary_organisation_id'),
-                        user=user)
-            db.session.commit()
+        # validate before saving
+        user_schema = UserSchema()
+        jsdata = request.get_json()
+        jsdata['user_id'] = cur_id
+        cuser = user_schema.load(jsdata, instance=user, partial=True)
+        update_user(password=jsdata.get('user_password'),
+                    primary_org=jsdata.get('user_primary_organisation_id'),
+                    user=user)
+        db.session.commit()
 
-            if cuser:
-                track_activity("updated user {}".format(user.user), caseid=caseid)
-                return response_success("User updated", data=user_schema.dump(user))
+        if cuser:
+            track_activity("updated user {}".format(user.user), caseid=caseid)
+            return response_success("User updated", data=user_schema.dump(user))
 
-            return response_error("Unable to update user for internal reasons")
+        return response_error("Unable to update user for internal reasons")
 
-        except marshmallow.exceptions.ValidationError as e:
-            return response_error(msg="Data error", data=e.messages, status=400)
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
 
 
 # TODO: might also need to be conditional to local authentication
