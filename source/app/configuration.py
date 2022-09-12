@@ -226,6 +226,10 @@ authentication_token_introspection_url = None
 authentication_client_id = None
 authentication_client_secret = None
 authentication_app_admin_role_name = None
+ldap_server = None
+ldap_username = None
+ldap_password = None
+user_bind = f'cn={ldap_username},root_dn'
 
 if authentication_type == 'oidc_proxy':
     oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
@@ -254,6 +258,8 @@ if authentication_type == 'oidc_proxy':
         pass
     else:
         log.info("OIDC configuration properly parsed")
+
+if authentication_type == 'ldap':
 
 
 # --------- CELERY ---------
