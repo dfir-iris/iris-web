@@ -368,8 +368,16 @@ class Config():
 
     elif authentication_type == 'ldap':
         LDAP_SERVER = config.load('LDAP', 'SERVER')
+        if LDAP_SERVER is None:
+            raise Exception('LDAP enabled and no server configured')
+
         LDAP_USER_PREFIX = config.load('LDAP', 'USER_PREFIX')
+        if LDAP_USER_PREFIX is None:
+            raise Exception('LDAP enabled and no user prefix configured')
+
         LDAP_USER_SUFFIX = config.load('LDAP', 'USER_SUFFIX')
+        if LDAP_USER_SUFFIX is None:
+            raise Exception('LDAP enabled and no user suffix configured')
 
     """ Caching 
     """
