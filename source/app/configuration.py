@@ -226,10 +226,7 @@ authentication_token_introspection_url = None
 authentication_client_id = None
 authentication_client_secret = None
 authentication_app_admin_role_name = None
-ldap_server = None
-ldap_username = None
-ldap_password = None
-user_bind = f'cn={ldap_username},root_dn'
+
 
 if authentication_type == 'oidc_proxy':
     oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
@@ -258,8 +255,6 @@ if authentication_type == 'oidc_proxy':
         pass
     else:
         log.info("OIDC configuration properly parsed")
-
-if authentication_type == 'ldap':
 
 
 # --------- CELERY ---------
@@ -370,6 +365,11 @@ class Config():
         AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = config.load('OIDC', 'IRIS_INIT_ADMINISTRATOR_EMAIL',
                                                               fallback="")
         AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
+
+    elif authentication_type == 'ldap':
+        LDAP_SERVER = config.load('LDAP', 'SERVER')
+        LDAP_USER_PREFIX = config.load('LDAP', 'USER_PREFIX')
+        LDAP_USER_SUFFIX = config.load('LDAP', 'USER_SUFFIX')
 
     """ Caching 
     """

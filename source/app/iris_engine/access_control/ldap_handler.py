@@ -18,6 +18,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import ssl
 from ldap3 import NTLM
+from ldap3.utils import conv
 from app import app
 
 from ldap3 import Server, Connection, ALL, SUBTREE
@@ -31,11 +32,20 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     """
     Authenticate to the LDAP server
     """
+    ldap_user_name = conv.escape_filter_chars(ldap_user_name)
+    ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name}{app.config.get('LDAP_USER_SUFFIX')}"
 
     tls_configuration = Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2)
-    server = Server('ldap://<server_name_here>:389', use_ssl=True, tls=tls_configuration)
-    conn = Connection(server, user=ldap_user_name, password=ldap_user_pwd, authentication=NTLM,
+    server = Server(f'ldap://{app.config.get("LDAP_SERVER")}:389',
+                    use_ssl=True,
+                    tls=tls_configuration)
+
+    conn = Connection(server,
+                      user=ldap_user,
+                      password=ldap_user_pwd,
+                      authentication=NTLM,
                       auto_referrals=False)
+
     if not conn.bind():
         raise Exception(f"Cannot bind to ldap server: {conn.last_error} ")
 
