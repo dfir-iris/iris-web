@@ -36,7 +36,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name}{app.config.get('LDAP_USER_SUFFIX')}"
 
     tls_configuration = Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2)
-    server = Server(f'ldap://{app.config.get("LDAP_SERVER")}:389',
+    server = Server(f'ldap://{app.config.get("LDAP_SERVER")}:{app.config.get("LDAP_PORT")}',
                     use_ssl=True,
                     tls=tls_configuration)
 

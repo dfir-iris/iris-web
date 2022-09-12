@@ -371,6 +371,10 @@ class Config():
         if LDAP_SERVER is None:
             raise Exception('LDAP enabled and no server configured')
 
+        LDAP_PORT = config.load('LDAP', 'PORT')
+        if LDAP_PORT is None:
+            raise Exception('LDAP enabled and no server configured')
+
         LDAP_USER_PREFIX = config.load('LDAP', 'USER_PREFIX')
         if LDAP_USER_PREFIX is None:
             raise Exception('LDAP enabled and no user prefix configured')
