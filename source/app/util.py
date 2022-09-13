@@ -328,7 +328,6 @@ def _authenticate_with_email(user_email):
 def _oidc_proxy_authentication_process(incoming_request: Request):
     # Get the OIDC JWT authentication token from the request header
     authentication_token = incoming_request.headers.get('X-Forwarded-Access-Token', '')
-    print(authentication_token)
 
     if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'lazy':
         user_email = incoming_request.headers.get('X-Email')
@@ -398,7 +397,8 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
 def not_authenticated_redirection_url():
     redirection_mapper = {
         "oidc_proxy": lambda: app.config.get("AUTHENTICATION_PROXY_LOGOUT_URL"),
-        "local": lambda: url_for('login.login')
+        "local": lambda: url_for('login.login'),
+        "ldap": lambda: url_for('login.login')
     }
 
     return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
@@ -407,7 +407,8 @@ def not_authenticated_redirection_url():
 def is_user_authenticated(incoming_request: Request):
     authentication_mapper = {
         "oidc_proxy": _oidc_proxy_authentication_process,
-        "local": _local_authentication_process
+        "local": _local_authentication_process,
+        "ldap": _local_authentication_process
     }
 
     return authentication_mapper.get(app.config.get("AUTHENTICATION_TYPE"))(incoming_request)
@@ -415,6 +416,10 @@ def is_user_authenticated(incoming_request: Request):
 
 def is_authentication_local():
     return app.config.get("AUTHENTICATION_TYPE") == "local"
+
+
+def is_authentication_ldap():
+    return app.config.get('AUTHENTICATION_TYPE') == "ldap"
 
 
 def api_login_required(f):

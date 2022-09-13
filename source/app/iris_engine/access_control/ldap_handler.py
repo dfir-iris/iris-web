@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import ldap3.core.exceptions
 import ssl
 from ldap3 import NTLM
 from ldap3.utils import conv
@@ -45,10 +46,17 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
                       password=ldap_user_pwd,
                       authentication=NTLM,
                       auto_referrals=False)
+    try:
 
-    if not conn.bind():
-        raise Exception(f"Cannot bind to ldap server: {conn.last_error} ")
+        if not conn.bind():
+            raise Exception(f"Cannot bind to ldap server: {conn.last_error} ")
 
-    log.info(f"Successful bind to ldap server")
+    except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
+        log.error('Wrong credentials')
+        return False
+    except Exception as e:
+        raise Exception(e.__str__())
 
-    return server, conn
+    log.info(f"Successful authenticated user")
+
+    return True

@@ -35,10 +35,12 @@ from app import db
 from app.datamgmt.case.case_db import case_exists
 
 from app.forms import LoginForm
+from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.models.authorization import User
+from app.util import is_authentication_ldap
 
 login_blueprint = Blueprint(
     'login',
@@ -49,7 +51,7 @@ login_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 # Authenticate user
-if app.config.get("AUTHENTICATION_TYPE") == "local":
+if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
     @login_blueprint.route('/login', methods=['GET', 'POST'])
     def login():
         # cut the page for authenticated users
@@ -77,48 +79,48 @@ if app.config.get("AUTHENTICATION_TYPE") == "local":
             ).first()
 
             if user:
-                if bc.check_password_hash(user.password, password):
-                    login_user(user)
+                if is_authentication_ldap():
+                    if ldap_authenticate(username, password):
+                        wrap_login_user(user)
 
-                    track_activity("user '{}' successfully logged-in".format(username), ctx_less=True)
-                    caseid = user.ctx_case
-                    session['permissions'] = ac_get_effective_permissions_of_user(user)
+                    else:
+                        track_activity("someone tried to log with user '{}', which does not exist".format(username),
+                                       ctx_less=True)
+                        msg = "Unknown user"
+                        return render_template('login.html', form=form, msg=msg)
 
-                    if caseid is None:
-                        case = Cases.query.order_by(Cases.case_id).first()
-                        user.ctx_case = case.case_id
-                        user.ctx_human_case = case.name
-                        caseid = 1
-                        db.session.commit()
+                elif bc.check_password_hash(user.password, password):
+                    return wrap_login_user(user)
 
-                    session['current_case'] = {
-                        'case_name': user.ctx_human_case,
-                        'case_info': "",
-                        'case_id': user.ctx_case
-                    }
-
-                    return redirect(url_for('index.index', cid=user.ctx_case))
                 else:
                     track_activity("wrong login password for user '{}'".format(username), ctx_less=True)
                     msg = "Wrong password. Please try again."
-
-                caseid = user.ctx_case
-
-                if caseid is not None:
-                    c_exists = case_exists(caseid=caseid)
-
-                if caseid is None or not c_exists:
-                    case = Cases.query.order_by(Cases.case_id).first()
-                    user.ctx_case = case.case_id
-                    user.ctx_human_case = case.name
-
-                    db.session.commit()
-
-                track_activity("user '{}' successfully logged-in".format(username), ctx_less=True)
-                return redirect(url_for('index.index', cid=user.ctx_case))
 
             else:
                 track_activity("someone tried to log with user '{}', which does not exist".format(username), ctx_less=True)
                 msg = "Unknown user"
 
         return render_template('login.html', form=form, msg=msg)
+
+
+def wrap_login_user(user):
+    login_user(user)
+
+    track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True)
+    caseid = user.ctx_case
+    session['permissions'] = ac_get_effective_permissions_of_user(user)
+
+    if caseid is None:
+        case = Cases.query.order_by(Cases.case_id).first()
+        user.ctx_case = case.case_id
+        user.ctx_human_case = case.name
+        db.session.commit()
+
+    session['current_case'] = {
+        'case_name': user.ctx_human_case,
+        'case_info': "",
+        'case_id': user.ctx_case
+    }
+
+    track_activity("user '{}' successfully logged-in".format(user), ctx_less=True)
+    return redirect(url_for('index.index', cid=user.ctx_case))
