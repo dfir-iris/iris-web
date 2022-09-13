@@ -81,12 +81,13 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
             if user:
                 if is_authentication_ldap():
                     if ldap_authenticate(username, password):
-                        wrap_login_user(user)
+                        return wrap_login_user(user)
 
                     else:
                         track_activity("someone tried to log with user '{}', which does not exist".format(username),
                                        ctx_less=True)
-                        msg = "Unknown user"
+
+                        msg = "Invalid credentials"
                         return render_template('login.html', form=form, msg=msg)
 
                 elif bc.check_password_hash(user.password, password):

@@ -44,16 +44,17 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     conn = Connection(server,
                       user=ldap_user,
                       password=ldap_user_pwd,
-                      authentication=NTLM,
                       auto_referrals=False)
     try:
 
         if not conn.bind():
-            raise Exception(f"Cannot bind to ldap server: {conn.last_error} ")
+            log.error(f"Cannot bind to ldap server: {conn.last_error} ")
+            return False
 
     except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
         log.error('Wrong credentials')
         return False
+
     except Exception as e:
         raise Exception(e.__str__())
 
