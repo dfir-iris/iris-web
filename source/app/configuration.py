@@ -93,7 +93,7 @@ class IrisConfig(configparser.ConfigParser):
         if not (hasattr(self, 'key_vault_name') and self.key_vault_name):
             return
 
-        key = f"{section}{option}".replace('_', '-')
+        key = f"{section}-{option}".replace('_', '-')
 
         try:
             return self.az_client.get_secret(key).value
