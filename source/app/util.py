@@ -205,7 +205,7 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_case_access(request, access_level):
+def get_case_access(request, access_level, from_api=False):
     caseid = request.args.get('cid', default=None, type=int)
     redir = False
     if not caseid:
@@ -243,28 +243,30 @@ def get_case_access(request, access_level):
 
     eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
     if eaccess_level is None:
-
-        session['current_case'] = {
-            'case_name': "{} to #{}".format("Access denied", caseid),
-            'case_info': "",
-            'case_id': caseid,
-            'access': '<i class="ml-2 text-danger fa-solid fa-ban"></i>'
-        }
+        if not from_api:
+            session['current_case'] = {
+                'case_name': "{} to #{}".format("Access denied", caseid),
+                'case_info': "",
+                'case_id': caseid,
+                'access': '<i class="ml-2 text-danger fa-solid fa-ban"></i>'
+            }
 
         return redir, caseid, False
 
-    if CaseAccessLevel.read_only.value == eaccess_level:
-        restricted_access = '<i class="ml-2 text-warning fa-solid fa-lock" title="Read only access"></i>'
-        session['current_case']['access'] = restricted_access
+    if not from_api:
+        if CaseAccessLevel.read_only.value == eaccess_level:
+            restricted_access = '<i class="ml-2 text-warning fa-solid fa-lock" title="Read only access"></i>'
 
-    if session['current_case']['case_id'] != caseid:
-        case = get_case(caseid)
-        session['current_case'] = {
-            'case_name': "{}".format(case.name),
-            'case_info': "(#{} - {})".format(caseid, case.client.name),
-            'case_id': caseid,
-            'access': restricted_access
-        }
+            session['current_case']['access'] = restricted_access
+
+        if session['current_case']['case_id'] != caseid:
+            case = get_case(caseid)
+            session['current_case'] = {
+                'case_name': "{}".format(case.name),
+                'case_info': "(#{} - {})".format(caseid, case.client.name),
+                'case_id': caseid,
+                'access': restricted_access
+            }
 
     if not case and not case_exists(caseid):
         log.warning('No case found. Using default case')
@@ -439,7 +441,7 @@ def api_login_required(f):
             return response_error("Authentication required", status=401)
 
         else:
-            redir, caseid, access = get_case_access(request, [])
+            redir, caseid, access = get_case_access(request, [], from_api=True)
             if not caseid or redir:
                 return response_error("Invalid case ID", status=404)
             kwargs.update({"caseid": caseid})
@@ -550,7 +552,7 @@ def ac_api_case_requires(*access_level):
                 return response_error("Authentication required", status=401)
 
             else:
-                redir, caseid, has_access = get_case_access(request, access_level)
+                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
 
                 if not caseid or redir:
                     return response_error("Invalid case ID", status=404)
@@ -592,7 +594,7 @@ def ac_api_requires(*permissions):
                 return response_error("Authentication required", status=401)
 
             else:
-                redir, caseid, _ = get_case_access(request, [])
+                redir, caseid, _ = get_case_access(request, [], from_api=True)
                 if not caseid or redir:
                     return response_error("Invalid case ID", status=404)
                 kwargs.update({"caseid": caseid})
