@@ -214,6 +214,8 @@ class AuthenticationType(Enum):
 authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
                                      config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback="local"))
 
+authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST')
+
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
                              config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None))
 
@@ -348,6 +350,7 @@ class Config():
     APP_PUBLIC_URL = app_public_url
 
     AUTHENTICATION_TYPE = authentication_type
+    AUTHENTICATION_CREATE_USER_IF_NOT_EXIST = authentication_create_user_if_not_exists is "True"
 
     if authentication_type == 'oidc_proxy':
         AUTHENTICATION_LOGOUT_URL = authentication_logout_url
