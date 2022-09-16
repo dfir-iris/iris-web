@@ -103,11 +103,11 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
 
                 else:
                     track_activity("wrong login password for user '{}'".format(username), ctx_less=True)
-                    msg = "Wrong password. Please try again."
+                    msg = "Wrong credentials. Please try again."
 
             else:
                 track_activity("someone tried to log with user '{}', which does not exist".format(username), ctx_less=True)
-                msg = "Unknown user"
+                msg = "Wrong credentials. Please try again."
 
         return render_template('login.html', form=form, msg=msg)
 
