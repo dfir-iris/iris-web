@@ -148,7 +148,7 @@ def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/info/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only)
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:

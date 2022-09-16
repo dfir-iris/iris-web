@@ -34,7 +34,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     Authenticate to the LDAP server
     """
     ldap_user_name = conv.escape_filter_chars(ldap_user_name)
-    ldap_user = f"uid={ldap_user_name},{app.config.get('LDAP_USER_SUFFIX')}"
+    ldap_user = f"uid={ldap_user_name.strip()},{app.config.get('LDAP_USER_SUFFIX')}"
 
     tls_configuration = Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2)
     server = Server(f'ldap://{app.config.get("LDAP_SERVER")}:{app.config.get("LDAP_PORT")}',
@@ -44,7 +44,9 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     conn = Connection(server,
                       user=ldap_user,
                       password=ldap_user_pwd,
-                      auto_referrals=False)
+                      auto_referrals=False,
+                      authentication="SIMPLE")
+
     try:
 
         if not conn.bind():
