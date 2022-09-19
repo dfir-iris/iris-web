@@ -300,6 +300,10 @@ def _local_authentication_process(incoming_request: Request):
     return current_user.is_authenticated
 
 
+def is_user_or_create(identifier: str, id_key: str):
+    pass
+
+
 def _authenticate_with_email(user_email):
     user = get_user(user_email, id_key="email")
     if not user:

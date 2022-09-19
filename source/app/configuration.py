@@ -121,6 +121,8 @@ class IrisConfig(configparser.ConfigParser):
             'POSTGRES_PORT': 'DB_PORT',
             'IRIS_SECRET_KEY': 'SECRET_KEY',
             'IRIS_SECURITY_PASSWORD_SALT': 'SECURITY_PASSWORD_SALT',
+            'APP_HOST': 'IRIS_UPSTREAM_SERVER',
+            'APP_PORT': 'IRIS_UPSTREAM_PORT'
         }
 
         new_key = f"{section}_{option}"
@@ -145,7 +147,7 @@ class IrisConfig(configparser.ConfigParser):
             ('POSTGRES', 'ADMIN_USER'): ('POSTGRES', 'PGA_ACCOUNT'),
             ('POSTGRES', 'ADMIN_PASSWORD'): ('POSTGRES', 'PGA_PASSWD'),
             ('POSTGRES', 'SERVER'): ('POSTGRES', 'PG_SERVER'),
-            ('POSTGRES', 'PORT'): ('POSTGRES', 'PG_PORT'),
+            ('POSTGRES', 'PORT'): ('POSTGRES', 'PG_PORT')
         }
 
         new_key = (section, option)

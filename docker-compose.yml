@@ -123,8 +123,8 @@ services:
     image: iriswebapp_nginx:latest
     container_name: iriswebapp_nginx
     environment:
-      - APP_HOST
-      - APP_PORT
+      - IRIS_UPSTREAM_SERVER
+      - IRIS_UPSTREAM_PORT
       - SERVER_NAME
       - CERT_FILENAME
       - KEY_FILENAME
