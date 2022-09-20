@@ -297,6 +297,28 @@ def ac_recompute_effective_ac(user_id):
     return ac_auto_update_user_effective_access(user_id)
 
 
+def ac_add_user_effective_access(users_list, case_id, access_level):
+    """
+    Directly add a set of effective user access
+    """
+    # Remove current access - shouldn't be the case since this method is called upon case creation
+    UserCaseEffectiveAccess.query.filter(
+        UserCaseEffectiveAccess.case_id == case_id
+    ).delete()
+    db.session.commit()
+
+    access_to_add = []
+    for user in users_list:
+        ucea = UserCaseEffectiveAccess()
+        ucea.user_id = user.get('id')
+        ucea.case_id = case_id
+        ucea.access_level = access_level
+        access_to_add.append(ucea)
+
+    db.session.add_all(access_to_add)
+    db.session.commit()
+
+
 def ac_auto_update_user_effective_access(user_id):
     """
     Updates the effective access of a user given its ID

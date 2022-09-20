@@ -42,11 +42,14 @@ from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
 from app.datamgmt.manage.manage_organisations_db import get_org
+from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_users_db import add_case_access_to_user
 from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
+from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
+from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_users_list
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
@@ -238,11 +241,15 @@ def api_add_case(caseid):
 
         else:
             for org_id in case_orgs:
-                org = get_org(int(org_id))
+                org = get_org_with_members(int(org_id))
                 if not org:
                     raise marshmallow.exceptions.ValidationError("Invalid organisation ID",
                                                                  field_name="case_organisations")
                 add_case_access_to_org(org, [case.case_id], CaseAccessLevel.full_access.value)
+
+                ac_add_user_effective_access(org.org_members,
+                                             case_id=case.case_id,
+                                             access_level=CaseAccessLevel.full_access.value)
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
