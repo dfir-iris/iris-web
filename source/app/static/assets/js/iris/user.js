@@ -64,6 +64,7 @@ function refresh_user_permissions() {
         notify_auto_api(data);
     }).always(() => {
         $('#user_refresh_perms_btn').text(ori_txt);
+
     });
 }
 

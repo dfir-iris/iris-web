@@ -166,6 +166,7 @@ def update_group_members(group, members):
             ug.user_id = user.id
             db.session.add(ug)
 
+        db.session.commit()
         ac_auto_update_user_effective_access(uid)
 
     for uid in users_to_remove:
@@ -173,9 +174,9 @@ def update_group_members(group, members):
             and_(UserGroup.group_id == group.group_id,
                  UserGroup.user_id == uid)
         ).delete()
-        ac_auto_update_user_effective_access(uid)
 
-    db.session.commit()
+        db.session.commit()
+        ac_auto_update_user_effective_access(uid)
 
     return group
 
@@ -188,10 +189,9 @@ def remove_user_from_group(group, member):
         and_(UserGroup.group_id == group.group_id,
              UserGroup.user_id == member.id)
     ).delete()
+    db.session.commit()
 
     ac_auto_update_user_effective_access(member.id)
-
-    db.session.commit()
 
     return group
 
