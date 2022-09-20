@@ -499,10 +499,15 @@ def ac_socket_requires(*access_level):
                 return redirect(not_authenticated_redirection_url())
 
             else:
-                redir, caseid, has_access = get_case_access(request, access_level)
+                chan_id = args[0].get('channel')
+                if chan_id:
+                    case_id = int(chan_id.replace('case-', ''))
+                else:
+                    return ac_return_access_denied(caseid=0)
 
-                if not has_access:
-                    return ac_return_access_denied(caseid=caseid)
+                access = ac_fast_check_user_has_case_access(current_user.id, case_id, access_level)
+                if not access:
+                    return ac_return_access_denied(caseid=case_id)
 
                 return f(*args, **kwargs)
 
