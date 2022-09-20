@@ -161,7 +161,6 @@ def change_user_primary_org(user_id, old_org_id, new_org_id):
     ).first()
 
     if uo_old:
-        print('Chaning old to false')
         uo_old.is_primary_org = False
 
     if not uo_new:
@@ -172,7 +171,6 @@ def change_user_primary_org(user_id, old_org_id, new_org_id):
         db.session.add(uo)
 
     else:
-        print('Chaning new to true')
         uo_new.is_primary_org = True
 
     db.session.commit()
