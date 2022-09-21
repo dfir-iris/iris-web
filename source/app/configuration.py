@@ -221,9 +221,6 @@ authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_C
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
                              config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None))
 
-app_public_url = os.environ.get('IRIS_PUBLIC_URL',
-                                config.get("IRIS", "APP_PUBLIC_URL", fallback=None))
-
 authentication_logout_url = None
 authentication_account_service_url = None
 authentication_token_introspection_url = None
@@ -348,8 +345,6 @@ class Config():
         Authentication configuration
     """
     TLS_ROOT_CA = tls_root_ca
-
-    APP_PUBLIC_URL = app_public_url
 
     AUTHENTICATION_TYPE = authentication_type
     AUTHENTICATION_CREATE_USER_IF_NOT_EXIST = (authentication_create_user_if_not_exists == "True")
