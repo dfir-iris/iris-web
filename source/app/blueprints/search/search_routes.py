@@ -59,7 +59,7 @@ def search_file_post(caseid: int):
     search_value = jsdata.get('search_value')
     search_type = jsdata.get('search_type')
     files = []
-    search_condition = and_(Cases.case_id.in_([]))
+    search_condition = and_()
 
     track_activity("started a global search for {} on {}".format(search_value, search_type))
 
@@ -71,9 +71,6 @@ def search_file_post(caseid: int):
         else:
             return response_success("Results fetched", [])
 
-    else:
-        search_condition = and_()
-
     if search_type == "ioc":
         res = Ioc.query.with_entities(
                             Ioc.ioc_value.label('ioc_name'),
@@ -83,6 +80,7 @@ def search_file_post(caseid: int):
                             Tlp.tlp_name,
                             Tlp.tlp_bscolor,
                             Cases.name.label('case_name'),
+                            Cases.case_id,
                             Client.name.label('customer_name')
                     ).filter(
                         and_(

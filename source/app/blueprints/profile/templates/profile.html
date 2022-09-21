@@ -87,6 +87,7 @@
                             </div>
                         </div>
                     </div>
+                    {% if config['AUTHENTICATION_TYPE'] == 'local' or config['AUTHENTICATION_TYPE'] == 'ldap' %}
                     <div class="row mb-4">
                         <div class="form-group col">
                             <div class="input-group">
@@ -103,6 +104,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                     <div class="form-group">
                         <label class="form-label d-block">IRIS Theme</label>
                         <div class="selectgroup selectgroup-primary selectgroup-pills">

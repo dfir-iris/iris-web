@@ -41,6 +41,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.access_control.utils import ac_get_all_permissions
+from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_users_list
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.util import ac_api_requires
@@ -269,7 +270,7 @@ def manage_groups_cac_add_case(cur_id, caseid):
     if not data:
         return response_error("Invalid request, expecting JSON")
 
-    group = get_group(cur_id)
+    group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
@@ -288,6 +289,8 @@ def manage_groups_cac_add_case(cur_id, caseid):
 
     group = get_group_details(cur_id)
 
+    ac_recompute_effective_ac_from_users_list(group.group_members)
+
     return response_success(data=group)
 
 
@@ -295,7 +298,7 @@ def manage_groups_cac_add_case(cur_id, caseid):
 @ac_api_requires(Permissions.manage_groups)
 def manage_groups_cac_delete_case(cur_id, cur_id_2, caseid):
 
-    group = get_group(cur_id)
+    group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
@@ -304,7 +307,9 @@ def manage_groups_cac_delete_case(cur_id, cur_id_2, caseid):
         return response_error("Invalid case ID")
 
     remove_case_access_from_group(group.group_id, case.case_id)
-    org = get_group_details(cur_id)
+    group = get_group_details(cur_id)
 
-    return response_success('Case access removed from group', data=org)
+    ac_recompute_effective_ac_from_users_list(group.group_members)
+
+    return response_success('Case access removed from group', data=group)
 

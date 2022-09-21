@@ -373,9 +373,10 @@ def ac_auto_update_user_effective_access(user_id):
 def ac_get_fast_user_cases_access(user_id):
     ucea = UserCaseEffectiveAccess.query.with_entities(
         UserCaseEffectiveAccess.case_id
-    ).filter(
-        UserCaseEffectiveAccess.user_id == user_id
-    ).all()
+    ).filter(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.access_level != CaseAccessLevel.full_access.deny_all.value
+    )).all()
 
     return [e.case_id for e in ucea]
 

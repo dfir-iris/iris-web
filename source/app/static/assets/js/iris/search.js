@@ -49,7 +49,10 @@ Table_1 = $("#file_search_table_1").DataTable({
           }},
       { "data": "case_name",
          "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
+            if (type === 'display') {
+                data = sanitizeHTML(data);
+                data = '<a target="_blank" href="case?cid='+ row["case_id"] +'">' + data + '</a>';
+            }
             return data;
           }},
       { "data": "customer_name",

@@ -58,7 +58,9 @@ def activities_index(caseid: int, url_redir):
 @activities_blueprint.route('/activities/list', methods=['GET'])
 @ac_api_requires(Permissions.read_all_activities)
 def list_activities(caseid):
-    # Get User activites from database
+    # Get User activities from database
+
+
     user_activities = get_all_user_activities()
 
     data = [row._asdict() for row in user_activities]
