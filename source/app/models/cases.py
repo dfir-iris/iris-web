@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import uuid
 
 from datetime import datetime
 from flask_login import current_user
@@ -31,6 +32,7 @@ from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app import db
@@ -55,6 +57,7 @@ class Cases(db.Model):
     close_date = Column(Date)
     user_id = Column(ForeignKey('user.id'))
     custom_attributes = Column(JSON)
+    case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
 
     client = relationship('Client')
     user = relationship('User')
@@ -78,6 +81,7 @@ class Cases(db.Model):
         self.open_date = datetime.utcnow()
         self.gen_report = gen_report
         self.custom_attributes = custom_attributes
+        self.case_uuid = uuid.uuid4()
 
     def save(self):
         """
