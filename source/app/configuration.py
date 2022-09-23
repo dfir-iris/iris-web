@@ -20,6 +20,8 @@
 
 # --------- Configuration ---------
 # read the private configuration file
+import ssl
+
 import sys
 from enum import Enum
 import logging as log
@@ -382,6 +384,26 @@ class Config():
         LDAP_USER_SUFFIX = config.load('LDAP', 'USER_SUFFIX')
         if LDAP_USER_SUFFIX is None:
             raise Exception('LDAP enabled and no user suffix configured')
+
+        LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
+        LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
+
+        LDAP_VALIDATE_CERTIFICATE = config.load('LDAP', 'VALIDATE_CERTIFICATE', fallback='True')
+        LDAP_VALIDATE_CERTIFICATE = (LDAP_VALIDATE_CERTIFICATE == 'True')
+
+        ldap_tls_v = config.load('LDAP', 'TLS_VERSION', '1.2')
+        if ldap_tls_v not in ['1.0', '1.1', '1.2']:
+            raise Exception(f'Unsupported LDAP TLS version {ldap_tls_v}')
+
+        if ldap_tls_v == '1.1':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_1
+        elif ldap_tls_v == '1.2':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2
+        elif ldap_tls_v == '1.0':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1
+
+        proto = 'ldaps' if LDAP_USE_SSL else 'ldap'
+        LDAP_CONNECT_STRING = f'{proto}://{LDAP_SERVER}:{LDAP_PORT}'
 
     """ Caching 
     """

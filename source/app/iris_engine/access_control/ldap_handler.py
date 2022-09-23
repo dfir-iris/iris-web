@@ -35,9 +35,11 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     ldap_user_name = conv.escape_filter_chars(ldap_user_name)
     ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name.strip()},{app.config.get('LDAP_USER_SUFFIX')}"
 
-    tls_configuration = Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2)
-    server = Server(f'ldap://{app.config.get("LDAP_SERVER")}:{app.config.get("LDAP_PORT")}',
-                    use_ssl=True,
+    tls_configuration = Tls(validate=ssl.CERT_REQUIRED,
+                            version=app.config.get('LDAP_TLS_VERSION'))
+
+    server = Server(f'{app.config.get("LDAP_CONNECT_STRING")}',
+                    use_ssl=app.config.get('LDAP_USE_SSL'),
                     tls=tls_configuration)
 
     conn = Connection(server,
@@ -53,7 +55,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
             return False
 
     except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
-        log.error('Wrong credentials')
+        log.error(f'Wrong credentials. Error : {e.__str__()}')
         return False
 
     except Exception as e:
