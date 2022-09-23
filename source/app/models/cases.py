@@ -22,6 +22,7 @@ import uuid
 from datetime import datetime
 from flask_login import current_user
 # IMPORTS ------------------------------------------------
+from sqlalchemy import BigInteger
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Date
@@ -30,6 +31,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID
@@ -48,7 +50,7 @@ from app.models.models import Client
 class Cases(db.Model):
     __tablename__ = 'cases'
 
-    case_id = Column(Integer, primary_key=True)
+    case_id = Column(BigInteger, primary_key=True)
     soc_id = Column(String(256))
     client_id = Column(ForeignKey('client.client_id'), nullable=False)
     name = Column(String(256))
@@ -57,7 +59,8 @@ class Cases(db.Model):
     close_date = Column(Date)
     user_id = Column(ForeignKey('user.id'))
     custom_attributes = Column(JSON)
-    case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                       nullable=False)
 
     client = relationship('Client')
     user = relationship('User')
