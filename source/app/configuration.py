@@ -30,6 +30,7 @@ import requests
 import configparser
 import logging
 import os
+from pathlib import Path
 
 # --------- Configuration ---------
 # read the private configuration file
@@ -404,6 +405,19 @@ class Config():
 
         proto = 'ldaps' if LDAP_USE_SSL else 'ldap'
         LDAP_CONNECT_STRING = f'{proto}://{LDAP_SERVER}:{LDAP_PORT}'
+
+        if LDAP_USE_SSL:
+            LDAP_SERVER_CERTIFICATE = config.load('LDAP', 'SERVER_CERTIFICATE')
+            if not Path(f'certificates/ldap/{LDAP_SERVER_CERTIFICATE}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
+
+            LDAP_PRIVATE_KEY = config.load('LDAP', 'PRIVATE_KEY')
+            if not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
+
+            PRIVATE_KEY_PASSWORD = config.load('LDAP', 'PRIVATE_KEY_PASSWORD', fallback=None)
 
     """ Caching 
     """

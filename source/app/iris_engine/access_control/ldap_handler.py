@@ -36,7 +36,10 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name.strip()},{app.config.get('LDAP_USER_SUFFIX')}"
 
     tls_configuration = Tls(validate=ssl.CERT_REQUIRED,
-                            version=app.config.get('LDAP_TLS_VERSION'))
+                            version=app.config.get('LDAP_TLS_VERSION'),
+                            local_certificate_file=app.config.get('LDAP_SERVER_CERTIFICATE'),
+                            local_private_key_file=app.config.get('LDAP_PRIVATE_KEY'),
+                            local_private_key_password=app.config.get('LDAP_PRIVATE_KEY_PASSWORD'))
 
     server = Server(f'{app.config.get("LDAP_CONNECT_STRING")}',
                     use_ssl=app.config.get('LDAP_USE_SSL'),
