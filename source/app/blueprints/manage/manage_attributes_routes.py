@@ -45,7 +45,7 @@ manage_attributes_blueprint = Blueprint('manage_attributes',
 
 # CONTENT ------------------------------------------------
 @manage_attributes_blueprint.route('/manage/attributes')
-@ac_requires(Permissions.read_custom_attributes)
+@ac_requires(Permissions.read_custom_attributes, Permissions.manage_custom_attributes)
 def manage_attributes(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -56,7 +56,7 @@ def manage_attributes(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/list')
-@ac_api_requires(Permissions.read_custom_attributes)
+@ac_api_requires(Permissions.read_custom_attributes, Permissions.manage_custom_attributes)
 def list_attributes(caseid):
     # Get all attributes
     attributes = CustomAttribute.query.with_entities(
@@ -74,7 +74,7 @@ def list_attributes(caseid):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.read_custom_attributes)
+@ac_requires(Permissions.read_custom_attributes, Permissions.manage_custom_attributes)
 def attributes_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))

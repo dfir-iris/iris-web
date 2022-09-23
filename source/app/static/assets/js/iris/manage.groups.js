@@ -88,7 +88,7 @@ function group_detail(group_id) {
             post_request_api('/manage/groups/update/' + group_id, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_users();
+                    refresh_groups();
                     $('#modal_access_control').modal('hide');
                 }
             });
