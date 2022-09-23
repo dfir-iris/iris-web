@@ -369,6 +369,10 @@ def manage_user_cac_delete_case(cur_id, cur_id_2, caseid):
 @manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.manage_users)
 def update_user_api(cur_id, caseid):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
+
     try:
         user = get_user(cur_id)
         if not user:
@@ -397,6 +401,10 @@ def update_user_api(cur_id, caseid):
 @manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.manage_users)
 def deactivate_user_api(cur_id, caseid):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
+
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID for this case")
@@ -412,6 +420,10 @@ def deactivate_user_api(cur_id, caseid):
 @manage_users_blueprint.route('/manage/users/activate/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.manage_users)
 def activate_user_api(cur_id, caseid):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
+
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID for this case")
@@ -428,6 +440,10 @@ if is_authentication_local():
     @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['GET'])
     @ac_api_requires(Permissions.manage_users)
     def view_delete_user(cur_id, caseid):
+        if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+            if cur_id not in get_users_id_view_from_user_id(current_user.id):
+                return ac_api_return_access_denied(caseid)
+
         try:
             user = get_user(cur_id)
             if not user:
@@ -453,6 +469,10 @@ if is_authentication_local():
 @manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])
 @ac_api_requires()
 def exists_user_restricted(cur_id, caseid):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
+
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID")
@@ -472,6 +492,10 @@ def lookup_name_restricted(login, caseid):
     user = get_user_by_username(login)
     if not user:
         return response_error("Invalid login")
+
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if user.id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
 
     output = {
         "user_login": user.user,
