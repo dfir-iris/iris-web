@@ -20,6 +20,7 @@
                 <h3 class="font-weight-light mx-5 text-center">Seems like you shouldn't be here</h3>
             </div>
          </div>
+        {% if caseid %}
         <div class="mt-4 row d-flex text-center">
             <div class="col-12">
                 <button class="btn btn-dark btn-sm" onclick="load_context_switcher();return false;">
@@ -27,10 +28,15 @@
                 </button>
             </div>
         </div>
+        {% endif %}
         <div class="mt-4 row d-flex justify-content-center">
             <div class="col-12">
+                {% if caseid %}
                 <p class="text-muted mb-4 text-center"><small>Access denied while trying to access case #{{ caseid }}<br />
+                {% else %}
+                <p class="text-muted mb-4 text-center"><small>Access denied while trying to access the resource<br />
                 Error UUID {{ error_uuid }}</small></p>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -533,7 +533,7 @@ def ac_requires(*permissions):
                         if session['permissions'] & permission.value:
                             return f(*args, **kwargs)
 
-                    return response_error("Permission denied", status=403)
+                    return ac_return_access_denied()
 
                 return f(*args, **kwargs)
         return wrap
