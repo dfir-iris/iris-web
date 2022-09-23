@@ -148,6 +148,7 @@ def get_case_details_rt(case_id):
             Cases.open_date, Cases.close_date,
             Cases.soc_id.label('case_soc_id'),
             Cases.case_id,
+            Cases.case_uuid,
             Client.name.label('customer_name'),
             User.user.label('open_by_user'),
             Cases.custom_attributes
