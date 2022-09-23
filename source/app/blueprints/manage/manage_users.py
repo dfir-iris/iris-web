@@ -158,6 +158,7 @@ def view_user_modal(cur_id, caseid, url_redir):
 
     if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
         if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            print(get_users_id_view_from_user_id(current_user.id))
             return ac_return_access_denied(caseid)
 
     form = AddUserForm()

@@ -343,7 +343,7 @@ def get_user_details(user_id):
     row['user_cases_access'] = get_user_cases_access(user_id)
 
     upg = get_user_primary_org(user_id)
-    row['user_primary_organisation_id'] = upg[0].org_id if upg else 0
+    row['user_primary_organisation_id'] = upg.org_id if upg else 0
 
     return row
 
@@ -446,6 +446,8 @@ def get_users_id_view_from_user_id(user_id):
     )).join(
         UserOrganisation.user
     ).all()
+
+    users = [u[0] for u in users]
 
     return users
 
