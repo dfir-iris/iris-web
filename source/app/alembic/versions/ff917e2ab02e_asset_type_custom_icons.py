@@ -11,6 +11,8 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection
 
 # revision identifiers, used by Alembic.
+from app.alembic.alembic_utils import _table_has_column
+
 revision = 'ff917e2ab02e'
 down_revision = 'c832bd69f827'
 branch_labels = None
@@ -53,20 +55,6 @@ def upgrade():
 
 def downgrade():
     pass
-
-
-def _table_has_column(table, column):
-    config = op.get_context().config
-    engine = engine_from_config(
-        config.get_section(config.config_ini_section), prefix='sqlalchemy.')
-    insp = reflection.Inspector.from_engine(engine)
-    has_column = False
-
-    for col in insp.get_columns(table):
-        if column != col['name']:
-            continue
-        has_column = True
-    return has_column
 
 
 def _get_icons(asset_name):
