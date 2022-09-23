@@ -54,7 +54,7 @@ manage_customers_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @manage_customers_blueprint.route('/manage/customers')
-@ac_requires(Permissions.manage_customers)
+@ac_requires(Permissions.read_customers, Permissions.manage_customers)
 def manage_customers(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
