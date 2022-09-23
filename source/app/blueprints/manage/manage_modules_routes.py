@@ -188,13 +188,13 @@ def update_module_param(param_name, caseid):
         return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id, form=form)
 
 
-@manage_modules_blueprint.route('/manage/modules/update/<int:id>', methods=['GET', 'POST'])
-@ac_api_requires(Permissions.manage_modules)
-def view_module(id, caseid):
+@manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>', methods=['GET', 'POST'])
+@ac_api_requires(Permissions.read_modules, Permissions.manage_modules)
+def view_module(mod_id, caseid):
     form = AddModuleForm()
 
-    if id:
-        module = get_module_from_id(id)
+    if mod_id:
+        module = get_module_from_id(mod_id)
         config = module.module_config
 
         is_configured = is_mod_configured(config)
@@ -248,7 +248,7 @@ def view_delete_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/export-config/<int:id>', methods=['GET'])
-@ac_api_requires(Permissions.manage_modules)
+@ac_api_requires(Permissions.read_modules, Permissions.manage_modules)
 def export_mod_config(id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(id)
