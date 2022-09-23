@@ -293,7 +293,7 @@ def import_mod_config(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
-@ac_api_requires(Permissions.read_modules)
+@ac_api_requires(Permissions.read_modules, Permissions.manage_modules)
 def view_modules_hook(caseid):
     output = module_list_hooks_view()
     data = [item._asdict() for item in output]
