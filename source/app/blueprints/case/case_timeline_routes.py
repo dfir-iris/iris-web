@@ -205,6 +205,7 @@ def case_gettimeline_api(asset_id, caseid):
 
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
+            CasesEvent.event_uuid,
             CasesEvent.event_date,
             CasesEvent.event_date_wtz,
             CasesEvent.event_tz,

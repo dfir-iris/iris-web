@@ -36,6 +36,7 @@ from app.models import IocType
 def get_case_events_assets_graph(caseid):
     events = CaseEventsAssets.query.with_entities(
         CaseEventsAssets.event_id,
+        CasesEvent.event_uuid,
         CasesEvent.event_title,
         CaseAssets.asset_name,
         CaseAssets.asset_id,
@@ -63,6 +64,7 @@ def get_case_events_assets_graph(caseid):
 def get_case_events_ioc_graph(caseid):
     events = CaseEventsIoc.query.with_entities(
         CaseEventsIoc.event_id,
+        CasesEvent.event_uuid,
         CasesEvent.event_title,
         CasesEvent.event_date,
         Ioc.ioc_id,

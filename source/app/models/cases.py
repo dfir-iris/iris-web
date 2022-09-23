@@ -132,7 +132,9 @@ class Cases(db.Model):
 class CasesEvent(db.Model):
     __tablename__ = "cases_events"
 
-    event_id = Column(Integer, primary_key=True)
+    event_id = Column(BigInteger, primary_key=True)
+    event_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                        nullable=False)
     case_id = Column(ForeignKey('cases.case_id'))
     event_title = Column(Text)
     event_source = Column(Text)

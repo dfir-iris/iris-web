@@ -33,6 +33,17 @@ def upgrade():
                                 nullable=False)
                       )
 
+    op.alter_column('cases_events', 'event_id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    if not _table_has_column('cases_events', 'event_uuid'):
+        op.add_column('cases_events',
+                      sa.Column('event_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
+                                nullable=False)
+                      )
+
     pass
 
 
