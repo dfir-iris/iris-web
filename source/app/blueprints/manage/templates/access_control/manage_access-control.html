@@ -58,6 +58,7 @@
                         </div>
                     </div>
             </div>
+            {% if user_has_perm(std_permissions.manage_groups, std_permissions.search_across_all_cases) %}
             <div class="card">
                 <div class="card-header">
                     <div class="row">
@@ -100,6 +101,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
             <div class="card">
                 <div class="card-header">
                     <div class="row">
@@ -157,7 +159,9 @@
 
     <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
     <script src="/static/assets/js/iris/manage.users.js"></script>
-    <script src="/static/assets/js/iris/manage.groups.js"></script>
+    {% if user_has_perm(std_permissions.manage_groups, std_permissions.search_across_all_cases) %}
+        <script src="/static/assets/js/iris/manage.groups.js"></script>
+    {% endif %}
     <script src="/static/assets/js/iris/manage.orgs.js"></script>
     <script src="/static/assets/js/iris/common.js"></script>
 
