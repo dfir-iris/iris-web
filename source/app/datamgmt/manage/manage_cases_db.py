@@ -86,6 +86,7 @@ def list_cases_dict(user_id):
         Cases.soc_id.label('case_soc_id'),
         User.name.label('opened_by'),
         Cases.case_id,
+        Cases.case_uuid,
         UserCaseEffectiveAccess.access_level
     ).join(
         UserCaseEffectiveAccess.case,
