@@ -43,8 +43,11 @@ from app.datamgmt.manage.manage_users_db import get_user_by_username
 from app.datamgmt.manage.manage_users_db import get_user_details
 from app.datamgmt.manage.manage_users_db import get_user_effective_permissions
 from app.datamgmt.manage.manage_users_db import get_user_organisations
+from app.datamgmt.manage.manage_users_db import get_users_id_view_from_user_id
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted_user_view
+from app.datamgmt.manage.manage_users_db import get_users_list_user_view
 from app.datamgmt.manage.manage_users_db import remove_case_access_from_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
@@ -57,7 +60,9 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
 from app.util import ac_api_requires
+from app.util import ac_api_return_access_denied
 from app.util import ac_requires
+from app.util import ac_return_access_denied
 from app.util import api_login_required
 from app.util import is_authentication_local
 from app.util import response_error
@@ -73,7 +78,11 @@ manage_users_blueprint = Blueprint(
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])
 @ac_api_requires(Permissions.read_users, Permissions.manage_users)
 def manage_users_list(caseid):
-    users = get_users_list()
+
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        users = get_users_list_user_view(user_id=current_user.id)
+    else:
+        users = get_users_list()
 
     return response_success('', data=users)
 
@@ -128,6 +137,11 @@ def add_user(caseid):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.read_users, Permissions.manage_users)
 def view_user(cur_id, caseid):
+
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
+
     user = get_user_details(user_id=cur_id)
 
     if not user:
@@ -141,6 +155,10 @@ def view_user(cur_id, caseid):
 def view_user_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
+
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_return_access_denied(caseid)
 
     form = AddUserForm()
     user = get_user_details(cur_id)
@@ -174,6 +192,10 @@ def manage_user_group_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
 
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_return_access_denied(caseid)
+
     user = get_user_details(cur_id)
     if not user:
         return response_error("Invalid user ID")
@@ -186,6 +208,9 @@ def manage_user_group_modal(cur_id, caseid, url_redir):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/groups/update', methods=['POST'])
 @ac_api_requires(Permissions.manage_users)
 def manage_user_group_(cur_id, caseid):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
 
     if not request.is_json:
         return response_error("Invalid request", status=400)
@@ -209,6 +234,10 @@ def manage_user_group_(cur_id, caseid):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/organisations/modal', methods=['GET'])
 @ac_requires(Permissions.manage_users)
 def manage_user_orgs_modal(cur_id, caseid, url_redir):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_return_access_denied(caseid)
+
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
 
@@ -224,6 +253,9 @@ def manage_user_orgs_modal(cur_id, caseid, url_redir):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/organisations/update', methods=['POST'])
 @ac_api_requires(Permissions.manage_users)
 def manage_user_orgs(cur_id, caseid):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
 
     if not request.is_json:
         return response_error("Invalid request", status=400)
@@ -249,6 +281,10 @@ def manage_user_orgs(cur_id, caseid):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/modal', methods=['GET'])
 @ac_requires(Permissions.manage_users)
 def manage_user_cac_modal(cur_id, caseid, url_redir):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_return_access_denied(caseid)
+
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
 
@@ -276,6 +312,10 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/add', methods=['POST'])
 @ac_api_requires(Permissions.manage_users)
 def manage_user_cac_add_case(cur_id, caseid):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
+
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
 
@@ -308,6 +348,9 @@ def manage_user_cac_add_case(cur_id, caseid):
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete/<int:cur_id_2>', methods=['GET'])
 @ac_api_requires(Permissions.manage_groups)
 def manage_user_cac_delete_case(cur_id, cur_id_2, caseid):
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        if cur_id not in get_users_id_view_from_user_id(current_user.id):
+            return ac_api_return_access_denied(caseid)
 
     user = get_user(cur_id)
     if not user:
@@ -445,6 +488,10 @@ def lookup_name_restricted(login, caseid):
 @manage_users_blueprint.route('/manage/users/restricted/list', methods=['GET'])
 @ac_api_requires()
 def manage_users_list_restricted(caseid):
-    users = get_users_list_restricted()
+
+    if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
+        users = get_users_list_restricted_user_view(user_id=current_user.id)
+    else:
+        users = get_users_list_restricted()
 
     return response_success('', data=users)

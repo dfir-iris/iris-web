@@ -418,6 +418,70 @@ def get_users_list_restricted():
     return output
 
 
+def get_users_view_from_user_id(user_id):
+    organisations = get_user_organisations(user_id)
+    orgs_id = [uo.get('org_id') for uo in organisations]
+
+    users = UserOrganisation.query.with_entities(
+        User
+    ).filter(and_(
+        UserOrganisation.org_id.in_(orgs_id),
+        UserOrganisation.user_id != user_id
+    )).join(
+        UserOrganisation.user
+    ).all()
+
+    return users
+
+
+def get_users_id_view_from_user_id(user_id):
+    organisations = get_user_organisations(user_id)
+    orgs_id = [uo.get('org_id') for uo in organisations]
+
+    users = UserOrganisation.query.with_entities(
+        User.id
+    ).filter(and_(
+        UserOrganisation.org_id.in_(orgs_id),
+        UserOrganisation.user_id != user_id
+    )).join(
+        UserOrganisation.user
+    ).all()
+
+    return users
+
+
+def get_users_list_user_view(user_id):
+    users = get_users_view_from_user_id(user_id)
+    output = []
+    for user in users:
+        row = {}
+        row['user_id'] = user.id
+        row['user_uuid'] = user.uuid
+        row['user_name'] = user.name
+        row['user_login'] = user.user
+        row['user_email'] = user.email
+        row['user_active'] = user.active
+        output.append(row)
+
+    return output
+
+
+def get_users_list_restricted_user_view(user_id):
+    users = get_users_view_from_user_id(user_id)
+
+    output = []
+    for user in users:
+        row = {}
+        row['user_id'] = user.id
+        row['user_uuid'] = user.uuid
+        row['user_name'] = user.name
+        row['user_login'] = user.user
+        row['user_active'] = user.active
+        output.append(row)
+
+    return output
+
+
 def get_users_list_restricted_from_case(case_id):
 
     users = UserCaseEffectiveAccess.query.with_entities(
