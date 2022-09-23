@@ -505,20 +505,18 @@ function save_note(this_item, cid) {
 
     data_sent['custom_attributes'] = attributes;
 
-    post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent), undefined, undefined, cid)
+    post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent), false, undefined, cid, function() {
+        $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
+        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-xmark");
+        $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+    })
     .done((data) => {
         if (data.status == 'success') {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
         }
-    })
-    .fail(function (error) {
-        $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
-        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-xmark");
-        $('#last_saved').addClass('btn-danger').removeClass('btn-success');
-        propagate_form_api_errors(error.responseJSON.data);
-    })
+    });
 }
 
 /* Span for note edition */
