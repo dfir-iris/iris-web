@@ -33,6 +33,7 @@ from flask_wtf import FlaskForm
 from app import db
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import get_user_primary_org
 from app.datamgmt.manage.manage_users_db import update_user
 from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
@@ -128,6 +129,10 @@ def update_user_view(caseid):
         user_schema = UserSchema()
         jsdata = request.get_json()
         jsdata['user_id'] = current_user.id
+        puo = get_user_primary_org(current_user.id)
+
+        jsdata['user_primary_organisation_id'] = puo.org_id
+
         cuser = user_schema.load(jsdata, instance=user, partial=True)
         update_user(password=jsdata.get('user_password'),
                     user=user)

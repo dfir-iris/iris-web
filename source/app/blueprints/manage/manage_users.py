@@ -71,7 +71,7 @@ manage_users_blueprint = Blueprint(
 
 
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])
-@ac_api_requires(Permissions.read_users)
+@ac_api_requires(Permissions.read_users, Permissions.manage_users)
 def manage_users_list(caseid):
     users = get_users_list()
 
@@ -126,7 +126,7 @@ def add_user(caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.read_users)
+@ac_api_requires(Permissions.read_users, Permissions.manage_users)
 def view_user(cur_id, caseid):
     user = get_user_details(user_id=cur_id)
 
@@ -137,7 +137,7 @@ def view_user(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.read_users)
+@ac_requires(Permissions.read_users, Permissions.manage_users)
 def view_user_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
