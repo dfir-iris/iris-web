@@ -1,26 +1,28 @@
 <div class="modal-header">
-    <div class="row w-100 d-flex justify-content-center ml-2">
-        <div class="col-4">
-            <h4 class="modal-title mt-3 mr-4 text-truncate">{% if ioc.ioc_id %}Edit <i>{{ ioc.ioc_value }}</i> {% else %} Add IOC {% endif %}</h4>
-        </div>
-        <div class="col-5 d-flex justify-content-center ">
+    <div class="col md-12">
+        <div class="row">
+            <div class="col">
+                <h4 class="modal-title mt-1 mr-4">{% if ioc.ioc_id %}Edit IOC #{{ ioc.ioc_id }}{% else %} Add IOC {% endif %}</h4>
+                <small><i class="text-muted">{% if ioc.ioc_uuid %}#{{ ioc.ioc_uuid }}{% endif %}</i></small>
+            </div>
             {% include 'modals/modal_attributes_nav.html' %}
-        </div>
-        <div class="col-3 mt-1">
-            <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
-                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
-            {% if ioc.ioc_id %}
-             <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_ioc', '{% if ioc.ioc_id %}Edit {{ ioc.ioc_value }} {% else %} Add IOC {% endif %}');"> <i class='fa fa-minus'></i> </button>
-             <div class="dropdown">
-                  <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                      <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-                  </button>
-                  <div class="dropdown-menu pull-right" id="ioc_modal_quick_actions" aria-labelledby="dropdownMenuButton">
-                      <a class="dropdown-item" href="#" onclick='copy_object_link({{ioc.ioc_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
-                  </div>
-             </div>
-            {% endif %}
-
+            <div class="col">
+                <div class="row float-right">
+                    {% if ioc.ioc_id %}
+                     <div class="dropdown">
+                          <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                              <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                          </button>
+                          <div class="dropdown-menu pull-right" id="ioc_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                              <a class="dropdown-item" href="#" onclick='copy_object_link({{ioc.ioc_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                          </div>
+                     </div>
+                    {% endif %}
+                     <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_ioc', '{% if ioc.ioc_id %}Edit {{ ioc.ioc_value }} {% else %} Add IOC {% endif %}');"> <i class='fa fa-minus'></i> </button>
+                    <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

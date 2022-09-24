@@ -36,7 +36,8 @@ from app.models import Tlp
 def get_iocs(caseid):
     iocs = IocLink.query.with_entities(
         Ioc.ioc_value,
-        Ioc.ioc_id
+        Ioc.ioc_id,
+        Ioc.ioc_uuid
     ).filter(
         IocLink.case_id == caseid,
         IocLink.ioc_id == Ioc.ioc_id
@@ -112,6 +113,7 @@ def delete_ioc(ioc, caseid):
 def get_detailed_iocs(caseid):
     detailed_iocs = IocLink.query.with_entities(
         Ioc.ioc_id,
+        Ioc.ioc_uuid,
         Ioc.ioc_value,
         Ioc.ioc_type_id,
         IocType.type_name.label('ioc_type'),
