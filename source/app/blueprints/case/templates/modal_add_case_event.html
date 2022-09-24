@@ -1,29 +1,38 @@
 <div class="modal-header">
-        <h4 class="modal-title mt-1 mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
-            {% if event.modification_history %}
-                <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;max-width: 100%;"
-                        title="Modifications history"
-                        data-content="{% for mod in event.modification_history %}<code>{{ mod|format_datetime('%Y-%m-%d %H:%M') }}</code> -  {{ event.modification_history[mod].action }} by {{ event.modification_history[mod].user }}<br/>{% endfor %}">
-                </i>
-            {% endif %}
-        </h4>
-        {% include 'modals/modal_attributes_nav.html' %}
-        <div class="row justify-right">
-        {% if event.event_id %}
-            <div class="dropdown">
-                <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                    <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-                </button>
-                <div class="dropdown-menu pull-right" id="event_modal_quick_actions" aria-labelledby="dropdownMenuButton">
-                    <a class="dropdown-item" href="#" onclick='copy_object_link({{event.event_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
-                    <a class="dropdown-item" href="#" onclick='duplicate_event({{event.event_id}});return false;'><i class="fa fa-clone mr-2"></i>Duplicate</a>
+    <div class="col md-12">
+        <div class="row">
+            <div class="col">
+                <h4 class="modal-title mt-1 mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
+                    {% if event.modification_history %}
+                        <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
+                                title="Modifications history"
+                                data-content="<small>{% for mod in event.modification_history %}<code>{{ mod|format_datetime('%Y-%m-%d %H:%M') }}</code> -  {{ event.modification_history[mod].action }} by {{ event.modification_history[mod].user }}<br/>{% endfor %}</small>">
+                        </i>
+                    {% endif %}
+                </h4>
+                <small><i class="text-muted">{% if event.event_uuid %}#{{ event.event_uuid }}{% endif %}</i></small>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col ">
+                <div class="row float-right">
+                {% if event.event_id %}
+                    <div class="dropdown">
+                        <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                        </button>
+                        <div class="dropdown-menu pull-right" id="event_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item" href="#" onclick='copy_object_link({{event.event_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                            <a class="dropdown-item" href="#" onclick='duplicate_event({{event.event_id}});return false;'><i class="fa fa-clone mr-2"></i>Duplicate</a>
+                        </div>
+                    </div>
+                {% endif %}
+                    <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
+                    <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
                 </div>
             </div>
-        {% endif %}
-            <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
-            <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
-                aria-hidden="true"><i class="fa fa-times"></i></span></button>
         </div>
+    </div>
 </div>
 <div class="modal-body">
     <div role="tabpanel">

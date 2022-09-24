@@ -7901,7 +7901,6 @@ body .badge-danger {
 /*     	Popover     */
 
 .popover {
-    max-width: 240px;
     line-height: 1.7;
     border: 0;
     box-shadow: 0px 0px 20px 1px rgba(69, 65, 78, 0.2);
