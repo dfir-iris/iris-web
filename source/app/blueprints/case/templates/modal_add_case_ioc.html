@@ -18,7 +18,7 @@
                           </div>
                      </div>
                     {% endif %}
-                     <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_ioc', '{% if ioc.ioc_id %}Edit {{ ioc.ioc_value }} {% else %} Add IOC {% endif %}');"> <i class='fa fa-minus'></i> </button>
+                     <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_ioc', '{% if ioc.ioc_id %}Edit IOC #{{ ioc.ioc_id }} {% else %} Add IOC {% endif %}');"> <i class='fa fa-minus'></i> </button>
                     <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true"><i class="fa fa-times"></i></span></button>
                 </div>
