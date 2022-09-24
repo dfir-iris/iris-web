@@ -86,6 +86,17 @@ def upgrade():
                     type_=sa.BigInteger(),
                     existing_nullable=False)
 
+    # ---- IOC ----
+    op.alter_column('ioc', 'ioc_id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    if not _table_has_column('ioc', 'ioc_uuid'):
+        op.add_column('ioc',
+                      sa.Column('ioc_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
+                                nullable=False)
+                      )
 
     pass
 

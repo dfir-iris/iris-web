@@ -278,7 +278,8 @@ class Tlp(db.Model):
 class Ioc(db.Model):
     __tablename__ = 'ioc'
 
-    ioc_id = Column(Integer, primary_key=True)
+    ioc_id = Column(BigInteger, primary_key=True)
+    ioc_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     ioc_value = Column(Text)
     ioc_type_id = Column(ForeignKey('ioc_type.type_id'))
     ioc_description = Column(Text)
