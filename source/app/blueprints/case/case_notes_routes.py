@@ -109,6 +109,8 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
         form.content = note.note_content
         form.title = note.note_title
         form.note_title.render_kw = {"value": note.note_title}
+        setattr(form, 'note_id', note.note_id)
+        setattr(form, 'note_uuid', note.note_uuid)
         ca = note.custom_attributes
 
         return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca, ncid=note.note_case_id)

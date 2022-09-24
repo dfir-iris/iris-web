@@ -32,6 +32,7 @@ from app.models.authorization import User
 def get_note(note_id, caseid=None):
     note = Notes.query.with_entities(
         Notes.note_id,
+        Notes.note_uuid,
         Notes.note_title,
         Notes.note_content,
         Notes.note_creationdate,
@@ -133,6 +134,7 @@ def get_groups_short(caseid):
 def get_notes_from_group(caseid, group_id):
     notes = NotesGroupLink.query.with_entities(
         Notes.note_id,
+        Notes.note_uuid,
         Notes.note_title,
         User.user,
         Notes.note_lastupdate
@@ -154,6 +156,7 @@ def get_groups_detail(caseid):
         NotesGroup.group_id,
         NotesGroup.group_title,
         Notes.note_id,
+        Notes.note_uuid,
         Notes.note_title,
         User.user,
         Notes.note_lastupdate
