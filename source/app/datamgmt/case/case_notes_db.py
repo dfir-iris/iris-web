@@ -39,6 +39,7 @@ def get_note(note_id, caseid=None):
         Notes.note_lastupdate,
         NotesGroupLink.group_id,
         NotesGroup.group_title,
+        NotesGroup.group_uuid,
         Notes.custom_attributes,
         Notes.note_case_id
     ).filter(and_(
@@ -121,6 +122,7 @@ def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=
 def get_groups_short(caseid):
     groups_short = NotesGroup.query.with_entities(
         NotesGroup.group_id,
+        NotesGroup.group_uuid,
         NotesGroup.group_title
     ).filter(
         NotesGroup.group_case_id == caseid
@@ -154,6 +156,7 @@ def get_notes_from_group(caseid, group_id):
 def get_groups_detail(caseid):
     groups = NotesGroupLink.query.with_entities(
         NotesGroup.group_id,
+        NotesGroup.group_uuid,
         NotesGroup.group_title,
         Notes.note_id,
         Notes.note_uuid,
@@ -178,6 +181,7 @@ def get_groups_detail(caseid):
 def get_group_details(group_id, caseid):
     group_l = NotesGroup.query.with_entities(
         NotesGroup.group_id,
+        NotesGroup.group_uuid,
         NotesGroup.group_title,
         NotesGroup.group_creationdate,
         NotesGroup.group_lastupdate

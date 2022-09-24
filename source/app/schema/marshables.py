@@ -115,6 +115,7 @@ def store_icon(file):
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     csrf_token = fields.String(required=False)
     group_id = fields.Integer()
+    group_uuid = fields.UUID()
     group_title = fields.String()
 
     class Meta:
