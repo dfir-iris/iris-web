@@ -1,8 +1,8 @@
 <div class="modal-header">
     <div class="col md-12">
         <div class="row">
-            <div class="col">
-                <h4 class="modal-title mt-1 mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
                     {% if event.modification_history %}
                         <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
                                 title="Modifications history"

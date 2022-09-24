@@ -1,8 +1,8 @@
 <div class="modal-header">
     <div class="col md-12">
         <div class="row">
-            <div class="col">
-                <h4 class="modal-title mt-1 mr-4">{% if ioc.ioc_id %}Edit IOC #{{ ioc.ioc_id }}{% else %} Add IOC {% endif %}</h4>
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">{% if ioc.ioc_id %}Edit IOC #{{ ioc.ioc_id }}{% else %} Add IOC {% endif %}</h4>
                 <small><i class="text-muted">{% if ioc.ioc_uuid %}#{{ ioc.ioc_uuid }}{% endif %}</i></small>
             </div>
             {% include 'modals/modal_attributes_nav.html' %}

@@ -1,8 +1,8 @@
 <div class="modal-header">
     <div class="col md-12">
         <div class="row">
-            <div class="col">
-                <h4 class="modal-title mt-1 mr-4">{{ "Asset #{}".format(asset.asset_id) if asset.asset_name else "Add asset" }}</h4>
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">{{ "Asset #{}".format(asset.asset_id) if asset.asset_name else "Add asset" }}</h4>
                 <small><a class="text-muted">{{ "#{}".format(asset.asset_uuid) if asset.asset_uuid else "" }}</a></small>
             </div>
             {% include 'modals/modal_attributes_nav.html' %}
