@@ -414,7 +414,8 @@ class Notes(db.Model):
 class NotesGroup(db.Model):
     __tablename__ = 'notes_group'
 
-    group_id = Column(Integer, primary_key=True)
+    group_id = Column(BigInteger, primary_key=True)
+    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     group_title = Column(String(155))
     group_user = Column(ForeignKey('user.id'))
     group_creationdate = Column(DateTime)

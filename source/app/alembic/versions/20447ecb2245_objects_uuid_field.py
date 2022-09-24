@@ -110,6 +110,18 @@ def upgrade():
                                 nullable=False)
                       )
 
+    # ---- Notes group ----
+    op.alter_column('notes_group', 'group_id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    if not _table_has_column('notes_group', 'group_uuid'):
+        op.add_column('notes_group',
+                      sa.Column('group_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
+                                nullable=False)
+                      )
+
     pass
 
 
