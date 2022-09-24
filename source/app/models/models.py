@@ -36,6 +36,7 @@ from sqlalchemy import TIMESTAMP
 from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import or_
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
@@ -104,6 +105,7 @@ class Client(db.Model):
     __tablename__ = 'client'
 
     client_id = Column(Integer, primary_key=True)
+    client_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     name = Column(String(2048), unique=True)
     custom_attributes = Column(JSON)
 

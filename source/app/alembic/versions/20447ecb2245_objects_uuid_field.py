@@ -22,6 +22,7 @@ depends_on = None
 
 
 def upgrade():
+    # ---- Cases ----
     op.alter_column('cases', 'case_id',
                     existing_type=sa.INTEGER(),
                     type_=sa.BigInteger(),
@@ -32,7 +33,7 @@ def upgrade():
                       sa.Column('case_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
                                 nullable=False)
                       )
-
+    # ---- Events ----
     op.alter_column('cases_events', 'event_id',
                     existing_type=sa.INTEGER(),
                     type_=sa.BigInteger(),
@@ -41,6 +42,17 @@ def upgrade():
     if not _table_has_column('cases_events', 'event_uuid'):
         op.add_column('cases_events',
                       sa.Column('event_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
+                                nullable=False)
+                      )
+    # ---- Clients ----
+    op.alter_column('client', 'client_id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    if not _table_has_column('client', 'client_uuid'):
+        op.add_column('client',
+                      sa.Column('client_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
                                 nullable=False)
                       )
 
