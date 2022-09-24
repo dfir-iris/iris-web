@@ -53,6 +53,7 @@ def create_asset(asset, caseid, user_id):
 def get_assets(caseid):
     assets = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
+        CaseAssets.asset_uuid,
         CaseAssets.asset_name,
         AssetsType.asset_name.label('asset_type'),
         AssetsType.asset_icon_compromised,
