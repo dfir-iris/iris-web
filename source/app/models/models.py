@@ -156,7 +156,7 @@ class AnalysisStatus(db.Model):
 class CaseEventsAssets(db.Model):
     __tablename__ = 'case_events_assets'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     event_id = Column(ForeignKey('cases_events.event_id'))
     asset_id = Column(ForeignKey('case_assets.asset_id'))
     case_id = Column(ForeignKey('cases.case_id'))
@@ -169,7 +169,7 @@ class CaseEventsAssets(db.Model):
 class CaseEventsIoc(db.Model):
     __tablename__ = 'case_events_ioc'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     event_id = Column(ForeignKey('cases_events.event_id'))
     ioc_id = Column(ForeignKey('ioc.ioc_id'))
     case_id = Column(ForeignKey('cases.case_id'))
@@ -180,7 +180,9 @@ class CaseEventsIoc(db.Model):
 
 
 class ObjectState(db.Model):
-    object_id = Column(Integer, primary_key=True)
+    __tablename__ = 'object_state'
+
+    object_id = Column(BigInteger, primary_key=True)
     object_case_id = Column(ForeignKey('cases.case_id'))
     object_updated_by_id = db.Column(db.Integer(), db.ForeignKey('user.id'))
     object_name = Column(Text)

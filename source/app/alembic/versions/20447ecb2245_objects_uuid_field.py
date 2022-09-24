@@ -68,6 +68,25 @@ def upgrade():
                                 nullable=False)
                       )
 
+    # ---- Case objects states ----
+    op.alter_column('object_state', 'object_id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    # ---- Case event IOC ----
+    op.alter_column('case_events_ioc', 'id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    # ---- Case event assets ----
+    op.alter_column('case_events_assets', 'id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+
     pass
 
 
