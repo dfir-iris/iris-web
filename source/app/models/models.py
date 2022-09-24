@@ -321,7 +321,7 @@ class DataStoreFile(db.Model):
     __tablename__ = 'data_store_file'
 
     file_id = Column(BigInteger, primary_key=True)
-    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     file_original_name = Column(Text, nullable=False)
     file_local_name = Column(Text, nullable=False)
     file_description = Column(Text)
@@ -397,7 +397,8 @@ class CasesAssetsExt(db.Model):
 class Notes(db.Model):
     __tablename__ = 'notes'
 
-    note_id = Column(Integer, primary_key=True)
+    note_id = Column(BigInteger, primary_key=True)
+    note_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     note_title = Column(String(155))
     note_content = Column(Text)
     note_user = Column(ForeignKey('user.id'))
