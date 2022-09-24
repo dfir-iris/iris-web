@@ -122,6 +122,12 @@ def upgrade():
                                 nullable=False)
                       )
 
+    # ---- Notes group link ----
+    op.alter_column('notes_group_link', 'link_id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
     pass
 
 

@@ -429,7 +429,7 @@ class NotesGroup(db.Model):
 class NotesGroupLink(db.Model):
     __tablename__ = 'notes_group_link'
 
-    link_id = Column(Integer, primary_key=True)
+    link_id = Column(BigInteger, primary_key=True)
     group_id = Column(ForeignKey('notes_group.group_id'))
     note_id = Column(ForeignKey('notes.note_id'))
     case_id = Column(ForeignKey('cases.case_id'))
