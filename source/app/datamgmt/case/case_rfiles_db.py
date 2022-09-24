@@ -32,6 +32,7 @@ from app.models.authorization import User
 def get_rfiles(caseid):
     crf = CaseReceivedFile.query.with_entities(
         CaseReceivedFile.id,
+        CaseReceivedFile.file_uuid,
         CaseReceivedFile.filename,
         CaseReceivedFile.date_added,
         CaseReceivedFile.file_hash,

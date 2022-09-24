@@ -1,22 +1,29 @@
 <div class="modal-header">
-    <h4 class="modal-title mt-2 mr-4">Edit registered file</h4>
-
-    {% include 'modals/modal_attributes_nav.html' %}
-
-    <div class="row text-right">
-    {% if rfile.id %}
-     <div class="dropdown">
-          <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-              <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-          </button>
-          <div class="dropdown-menu pull-right" id="evidence_modal_quick_actions" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item" href="#" onclick='copy_object_link({{rfile.id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
-          </div>
-     </div>
-    {% endif %}
-        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_rfiles', 'Edit registered file');"> <i class='fa fa-minus'></i> </button>
-        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
-            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    <div class="col md-12">
+        <div class="row">
+            <div class="col">
+                <h4 class="modal-title mt-2 mr-4">Edit evidence {{rfile.id}}</h4>
+                <small><i class="text-muted">#{{ rfile.file_uuid }}</i></small>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col">
+                <div class="row float-right">
+                    {% if rfile.id %}
+                     <div class="dropdown">
+                          <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                              <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                          </button>
+                          <div class="dropdown-menu pull-right" id="evidence_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                              <a class="dropdown-item" href="#" onclick='copy_object_link({{rfile.id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                          </div>
+                     </div>
+                    {% endif %}
+                        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_rfiles', 'Edit registered file');"> <i class='fa fa-minus'></i> </button>
+                        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                    </div>
+            </div>
+        </div>
     </div>
 </div>
 <div class="modal-body">
