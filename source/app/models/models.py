@@ -478,7 +478,8 @@ class TaskStatus(db.Model):
 class CaseTasks(db.Model):
     __tablename__ = 'case_tasks'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    task_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     task_title = Column(Text)
     task_description = Column(Text)
     task_tags = Column(Text)

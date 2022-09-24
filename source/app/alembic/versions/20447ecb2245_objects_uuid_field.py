@@ -140,6 +140,18 @@ def upgrade():
                                 nullable=False)
                       )
 
+    # ---- case tasks ----
+    op.alter_column('case_tasks', 'id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    if not _table_has_column('case_tasks', 'task_uuid'):
+        op.add_column('case_tasks',
+                      sa.Column('task_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
+                                nullable=False)
+                      )
+
     pass
 
 
