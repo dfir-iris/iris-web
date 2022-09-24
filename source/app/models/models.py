@@ -540,7 +540,7 @@ class GlobalTasks(db.Model):
 class UserActivity(db.Model):
     __tablename__ = "user_activity"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     user_id = Column(ForeignKey('user.id'), nullable=True)
     case_id = Column(ForeignKey('cases.case_id'), nullable=True)
     activity_date = Column(DateTime)

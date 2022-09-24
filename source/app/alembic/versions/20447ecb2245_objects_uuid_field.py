@@ -164,6 +164,12 @@ def upgrade():
                                 nullable=False)
                       )
 
+    # ---- user activity ----
+    op.alter_column('user_activity', 'id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
     pass
 
 
