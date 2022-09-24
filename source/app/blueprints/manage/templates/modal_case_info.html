@@ -1,10 +1,20 @@
 {% set attributes = data.custom_attributes %}
 {% set page_uid = range(1, 99999) | random %}
 <div class="modal-header">
-    <h4 class="modal-title mt-2 mr-4">{{ data.case_name|unquote }}</h4>
-    {% include 'modals/modal_attributes_nav.html' %}
-    <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
-        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    <div class="col md-12">
+        <div class="row">
+            <div class="col">
+                <h4 class="modal-title mt-2 mr-4">{{ data.case_name|unquote }}</h4>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col ">
+                <div class="row float-right">
+                    <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="modal-body">
 
@@ -60,23 +70,30 @@
                     <span type="text" class="text-faded">{{ data.case_uuid }}</span>
                 </div>
               <hr/>
-              <h4>Case access</h4>
-              <table class="mb-4 table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
-                <thead>
-                  <tr>
-                      <th>User ID</th>
-                      <th>User login</th>
-                      <th>User display name</th>
-                  </tr>
-                </thead>
-                <tfoot>
-                  <tr>
-                      <th>User ID</th>
-                      <th>User login</th>
-                      <th>User display name</th>
-                  </tr>
-                </tfoot>
-              </table>
+              <div class="col col-heading" href="#collapse_case_access" title="Click to unfold"  data-toggle="collapse" aria-expanded="false" aria-controls="collapse_case_access" style="cursor:pointer;">
+                  <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
+                        <div class="card-title">Case access</div>
+              </div>
+              <div class="collapse" id="collapse_case_access">
+                  <div class="row mt-4">
+                      <table class="mb-4 table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
+                        <thead>
+                          <tr>
+                              <th>User ID</th>
+                              <th>User login</th>
+                              <th>User display name</th>
+                          </tr>
+                        </thead>
+                        <tfoot>
+                          <tr>
+                              <th>User ID</th>
+                              <th>User login</th>
+                              <th>User display name</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                  </div>
+              </div>
               </div>
               {% include 'modals/modal_attributes_tabs.html' %}
         </div>
