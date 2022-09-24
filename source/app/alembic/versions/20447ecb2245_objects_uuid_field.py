@@ -56,6 +56,18 @@ def upgrade():
                                 nullable=False)
                       )
 
+    # ---- Case assets ----
+    op.alter_column('case_assets', 'asset_id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    if not _table_has_column('case_assets', 'asset_uuid'):
+        op.add_column('case_assets',
+                      sa.Column('asset_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
+                                nullable=False)
+                      )
+
     pass
 
 

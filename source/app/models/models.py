@@ -104,7 +104,7 @@ def get_or_create(session, model, **kwargs):
 class Client(db.Model):
     __tablename__ = 'client'
 
-    client_id = Column(Integer, primary_key=True)
+    client_id = Column(BigInteger, primary_key=True)
     client_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     name = Column(String(2048), unique=True)
     custom_attributes = Column(JSON)
@@ -123,7 +123,8 @@ class AssetsType(db.Model):
 class CaseAssets(db.Model):
     __tablename__ = 'case_assets'
 
-    asset_id = Column(Integer, primary_key=True)
+    asset_id = Column(BigInteger, primary_key=True)
+    asset_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     asset_name = Column(Text)
     asset_description = Column(Text)
     asset_domain = Column(Text)
