@@ -451,7 +451,8 @@ class CaseKanban(db.Model):
 class CaseReceivedFile(db.Model):
     __tablename__ = 'case_received_file'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     filename = Column(Text)
     date_added = Column(DateTime)
     file_hash = Column(String(65))
