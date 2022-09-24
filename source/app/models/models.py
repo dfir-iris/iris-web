@@ -516,7 +516,8 @@ class TaskAssignee(db.Model):
 class GlobalTasks(db.Model):
     __tablename__ = 'global_tasks'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    task_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     task_title = Column(Text)
     task_description = Column(Text)
     task_tags = Column(Text)

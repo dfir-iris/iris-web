@@ -152,6 +152,18 @@ def upgrade():
                                 nullable=False)
                       )
 
+    # ---- global tasks ----
+    op.alter_column('global_tasks', 'id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
+
+    if not _table_has_column('global_tasks', 'task_uuid'):
+        op.add_column('global_tasks',
+                      sa.Column('task_uuid', UUID(as_uuid=True), server_default=text("gen_random_uuid()"),
+                                nullable=False)
+                      )
+
     pass
 
 
