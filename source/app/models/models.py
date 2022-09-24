@@ -599,7 +599,7 @@ class IrisHook(db.Model):
 class IrisModuleHook(db.Model):
     __tablename__ = "iris_module_hooks"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     module_id = Column(ForeignKey('iris_module.id'), nullable=False)
     hook_id = Column(ForeignKey('iris_hooks.id'), nullable=False)
     is_manual_hook = Column(Boolean)
@@ -660,7 +660,7 @@ class CeleryTaskMeta(db.Model):
     __bind_key__ = 'iris_tasks'
     __tablename__ = 'celery_taskmeta'
 
-    id = Column(Integer, Sequence('task_id_sequence'), primary_key=True)
+    id = Column(BigInteger, Sequence('task_id_sequence'), primary_key=True)
     task_id = Column(String(155))
     status = Column(String(50))
     result = Column(LargeBinary)
@@ -675,6 +675,7 @@ class CeleryTaskMeta(db.Model):
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
+
 
 def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):
     cat = CustomAttribute.query.filter(
