@@ -228,15 +228,20 @@ function delete_note(_item, cid) {
 
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
-    get_request_api('/case/notes/delete/' + n_id, undefined, undefined, cid)
-    .done((data) => {
-       $('#modal_note_detail').modal('hide');
-       notify_auto_api(data);
-    })
-    .fail(function (error) {
-        draw_kanban();
-        swal( 'Oh no :(', error.message, 'error');
-    })
+    do_deletion_prompt("You are about to delete note #" + n_id)
+    .then((doDelete) => {
+        if (doDelete) {
+            get_request_api('/case/notes/delete/' + n_id, undefined, undefined, cid)
+            .done((data) => {
+               $('#modal_note_detail').modal('hide');
+               notify_auto_api(data);
+            })
+            .fail(function (error) {
+                draw_kanban();
+                swal( 'Oh no :(', error.message, 'error');
+            });
+        }
+    });
 }
 
 /* List all the notes on the dashboard */

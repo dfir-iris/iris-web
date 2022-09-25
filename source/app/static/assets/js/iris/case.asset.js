@@ -105,7 +105,7 @@ function get_case_assets() {
 
 /* Delete an asset */
 function delete_asset(asset_id) {
-    do_deletion_prompt("You are about to delete asset ID " + asset_id)
+    do_deletion_prompt("You are about to delete asset #" + asset_id)
     .then((doDelete) => {
         if (doDelete) {
             get_request_api('assets/delete/' + asset_id)

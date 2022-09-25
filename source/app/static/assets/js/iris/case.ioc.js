@@ -153,7 +153,7 @@ function update_ioc(ioc_id) {
 
 /* Delete an ioc */
 function delete_ioc(ioc_id) {
-    do_deletion_prompt("You are about to delete IOC " + ioc_id)
+    do_deletion_prompt("You are about to delete IOC #" + ioc_id)
     .then((doDelete) => {
         if (doDelete) {
             get_request_api('ioc/delete/' + ioc_id)
