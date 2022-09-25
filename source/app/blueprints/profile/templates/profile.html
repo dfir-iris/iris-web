@@ -105,17 +105,36 @@
                         </div>
                     </div>
                     {% endif %}
-                    <div class="form-group">
-                        <label class="form-label d-block">IRIS Theme</label>
-                        <div class="selectgroup selectgroup-primary selectgroup-pills">
-                            <label class="selectgroup-item" title="Light mode">
-                                <input type="radio" name="iris-theme" value="false" class="selectgroup-input" {% if not current_user.in_dark_mode %}checked{% endif %}>
-                                <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-sun"></i></span>
-                            </label>
-                            <label class="selectgroup-item" title="Dark mode">
-                                <input type="radio" name="iris-theme" value="true" class="selectgroup-input" {% if current_user.in_dark_mode %}checked{% endif %}>
-                                <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-moon"></i></span>
-                            </label>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label class="form-label d-block">IRIS Theme</label>
+                                <div class="selectgroup selectgroup-primary selectgroup-pills">
+                                    <label class="selectgroup-item" title="Light mode">
+                                        <input type="radio" name="iris-theme" value="false" class="selectgroup-input" {% if not current_user.in_dark_mode %}checked{% endif %}>
+                                        <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-sun"></i></span>
+                                    </label>
+                                    <label class="selectgroup-item" title="Dark mode">
+                                        <input type="radio" name="iris-theme" value="true" class="selectgroup-input" {% if current_user.in_dark_mode %}checked{% endif %}>
+                                        <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-moon"></i></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label class="form-label d-block">Prompt a confirmation box before deleting objects</label>
+                                <div class="selectgroup selectgroup-primary selectgroup-pills">
+                                    <label class="selectgroup-item" title="Do not prompt a confirmation popup and delete objects directly">
+                                        <input type="radio" name="user-has-deletion-prompt" value="false" class="selectgroup-input" {% if not current_user.has_deletion_confirmation %}checked{% endif %}>
+                                        <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-comment-slash"></i></span>
+                                    </label>
+                                    <label class="selectgroup-item" title="Prompt a confirmation popup before deleting objects">
+                                        <input type="radio" name="user-has-deletion-prompt" value="true" class="selectgroup-input" {% if current_user.has_deletion_confirmation %}checked{% endif %}>
+                                        <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-comment"></i></span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="row">
