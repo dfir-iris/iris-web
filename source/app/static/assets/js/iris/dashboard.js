@@ -133,16 +133,11 @@ function update_gtask(id) {
 
 /* Delete an event from the timeline thank to its id */
 function delete_gtask(id) {
-    do_deletion_prompt("You are about to delete task #" + id)
-    .then((doDelete) => {
-        if (doDelete) {
-            get_request_api("/global/tasks/delete/" + id)
-            .done((data) => {
-                if(notify_auto_api(data)) {
-                    update_gtasks_list();
-                    $('#modal_add_gtask').modal('hide');
-                }
-            });
+    get_request_api("/global/tasks/delete/" + id)
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            update_gtasks_list();
+            $('#modal_add_gtask').modal('hide');
         }
     });
 }
