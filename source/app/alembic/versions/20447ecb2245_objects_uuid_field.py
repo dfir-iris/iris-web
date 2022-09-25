@@ -177,10 +177,10 @@ def upgrade():
                     existing_nullable=False)
 
     # ---- Celery task meta  ----
-    # op.alter_column('celery_taskmeta', 'id',
-    #                 existing_type=sa.INTEGER(),
-    #                 type_=sa.BigInteger(),
-    #                 existing_nullable=False)
+    op.alter_column('celery_taskmeta', 'id',
+                    existing_type=sa.INTEGER(),
+                    type_=sa.BigInteger(),
+                    existing_nullable=False)
 
     pass
 
