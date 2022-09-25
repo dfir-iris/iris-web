@@ -105,21 +105,19 @@ function get_case_assets() {
 
 /* Delete an asset */
 function delete_asset(asset_id) {
-    get_request_api('assets/delete/' + asset_id)
-    .done((data) => {
-        if (data.status == 'success') {
-
-            reload_assets();
-            $('#modal_add_asset').modal('hide');
-            notify_success('Asset deleted');
-
-
-        } else {
-
-            swal("Oh no !", data.message, "error")
-
-        }
-    })
+    do_deletion_prompt("You are about to delete asset ID " + asset_id)
+    .then(() => {
+        get_request_api('assets/delete/' + asset_id)
+        .done((data) => {
+            if (data.status == 'success') {
+                reload_assets();
+                $('#modal_add_asset').modal('hide');
+                notify_success('Asset deleted');
+            } else {
+                swal("Oh no !", data.message, "error")
+            }
+        });
+    });
 }
 
 /* Fetch the details of an asset and allow modification */

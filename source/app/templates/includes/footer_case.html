@@ -9,3 +9,6 @@
 <script src="/static/assets/js/iris/datatablesUtils.js"></script>
 <script src="/static/assets/js/plugin/select/select2.js"></script>
 <script src="/static/assets/js/iris/case.js"></script>
+<script>
+    var has_deletion_prompt = {% if current_user.has_deletion_confirmation %}true{% else %}false{% endif %};
+</script>

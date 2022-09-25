@@ -14,6 +14,37 @@ function getSharedLink(){
     return null;
 }
 
+function do_deletion_prompt(message) {
+    if (has_deletion_prompt) {
+            return new Promise((resolve, reject) => {
+                swal({
+                    title: "Are you sure?",
+                    text: message,
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Confirm'
+                })
+                .then((willDelete) => {
+                    if (willDelete) {
+                        resolve();
+                    } else {
+                        if (reject !== undefined) {
+                            reject();
+                        }
+                        return;
+                    }
+                });
+            });
+    } else {
+        return new Promise((resolve, reject) => {
+            resolve();
+        });
+    }
+}
+
 $(document).ready(function(){
     $(function(){
         var current = location.pathname;
