@@ -149,7 +149,7 @@ function get_tasks() {
                   });
 
                 Table.columns.adjust().draw();
-                load_menu_mod_options('task', Table);
+                load_menu_mod_options('task', Table, delete_task);
                 $('[data-toggle="popover"]').popover();
 
                 set_last_state(data.data.state);

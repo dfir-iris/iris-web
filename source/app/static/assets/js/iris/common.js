@@ -606,7 +606,7 @@ function get_row_id(row) {
     return null;
 }
 
-function load_menu_mod_options(data_type, table) {
+function load_menu_mod_options(data_type, table, deletion_fn) {
     var actionOptions = {
         classes: [],
         contextMenu: {
@@ -647,6 +647,7 @@ function load_menu_mod_options(data_type, table) {
                         copy_object_link(get_row_id(row));
                     }
                 });
+
                 actionOptions.items.push({
                     type: 'divider',
                 });
@@ -658,13 +659,31 @@ function load_menu_mod_options(data_type, table) {
                         multi: true,
                         multiTitle: opt.manual_hook_ui_name,
                         iconClass: 'fas fa-arrow-alt-circle-right',
-                        buttonClasses: ['btn', 'btn-outline-primary'],
                         contextMenuClasses: ['text-dark'],
                         action: function (rows) {
                             init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
                         },
                     })
                 }
+
+                if (deletion_fn !== undefined) {
+                    actionOptions.items.push({
+                        type: 'divider',
+                    });
+
+                    actionOptions.items.push({
+                        type: 'option',
+                        title: 'Delete',
+                        multi: false,
+                        iconClass: 'fas fa-trash',
+                        contextMenuClasses: ['text-danger'],
+                        action: function(rows){
+                            row = rows[0];
+                            deletion_fn(get_row_id(row));
+                        }
+                    });
+                }
+
                 table.contextualActions(actionOptions);
             }
         }

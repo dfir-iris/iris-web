@@ -126,7 +126,7 @@ function get_case_rfiles() {
                 Table.rows.add(jsdata.evidences);
                 Table.columns.adjust().draw();
 
-                load_menu_mod_options('evidence', Table);
+                load_menu_mod_options('evidence', Table, delete_rfile);
 
                 set_last_state(jsdata.state);
                 hide_loader();

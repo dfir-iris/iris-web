@@ -90,7 +90,7 @@ function get_case_ioc() {
                 $('#ioc_table_wrapper').show();
                 $('[data-toggle="popover"]').popover();
                 Table.columns.adjust().draw();
-                load_menu_mod_options('ioc', Table);
+                load_menu_mod_options('ioc', Table, delete_ioc);
                 hide_loader();
                 Table.responsive.recalc();
 

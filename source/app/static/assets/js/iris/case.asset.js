@@ -81,7 +81,7 @@ function get_case_assets() {
                 Table.clear();
                 Table.rows.add(jsdata.assets);
                 Table.columns.adjust().draw();
-                load_menu_mod_options('asset', Table);
+                load_menu_mod_options('asset', Table, delete_asset);
 
                 set_last_state(jsdata.state);
                 hide_loader();
