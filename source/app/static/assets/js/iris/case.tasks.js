@@ -79,12 +79,16 @@ function update_task(id) {
 
 /* Delete an event from the timeline thank to its id */ 
 function delete_task(id) {
-
-    get_request_api("tasks/delete/" + id)
-    .done((data) => {
-        if(notify_auto_api(data)) {
-            get_tasks();
-            $('#modal_add_task').modal('hide');
+    do_deletion_prompt("You are about to delete task #" + id)
+    .then((doDelete) => {
+        if (doDelete) {
+            get_request_api("tasks/delete/" + id)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    get_tasks();
+                    $('#modal_add_task').modal('hide');
+                }
+            });
         }
     });
 }
