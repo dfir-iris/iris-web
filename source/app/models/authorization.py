@@ -192,7 +192,7 @@ class User(UserMixin, db.Model):
     api_key = Column(Text(), unique=True)
     external_id = Column(Text, unique=True)
     in_dark_mode = Column(Boolean())
-    has_deletion_confirmation = Column(Boolean())
+    has_deletion_confirmation = Column(Boolean(), default=False)
 
     def __init__(self, user: str, name: str, email: str, password: str, active: bool,
                  external_id: str = None):
