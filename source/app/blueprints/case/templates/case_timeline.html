@@ -141,6 +141,7 @@
 <script src="/static/assets/js/timeline.js"></script>
 
 <script>
+    var has_deletion_prompt = {% if current_user.has_deletion_confirmation %}true{% else %}false{% endif %};
 </script>
 
 {% endblock javascripts %}

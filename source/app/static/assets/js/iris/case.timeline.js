@@ -96,15 +96,18 @@ function update_event(id) {
 /* Delete an event from the timeline thank to its id */ 
 function delete_event(id) {
     window.location.hash = id;
-
-    get_request_api("timeline/events/delete/" + id)
-    .done(function(data) {
-        if(notify_auto_api(data)) {
-            apply_filtering();
-            $('#modal_add_event').modal('hide');
+    do_deletion_prompt("You are about to delete event #" + id)
+    .then((doDelete) => {
+        if (doDelete) {
+            get_request_api("timeline/events/delete/" + id)
+            .done(function(data) {
+                if(notify_auto_api(data)) {
+                    apply_filtering();
+                    $('#modal_add_event').modal('hide');
+                }
+            });
         }
     });
-
 }
 
 /* Edit an event from the timeline thanks to its ID */
