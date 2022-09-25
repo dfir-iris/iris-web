@@ -21,26 +21,30 @@ function do_deletion_prompt(message) {
                     title: "Are you sure?",
                     text: message,
                     icon: "warning",
-                    buttons: true,
-                    dangerMode: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Confirm'
+                    buttons: {
+                        cancel: {
+                            text: "Cancel",
+                            value: false,
+                            visible: true,
+                            closeModal: true
+                        },
+                        confirm: {
+                           text: "Confirm",
+                           value: true
+                        }
+                    },
+                    dangerMode: true
                 })
                 .then((willDelete) => {
-                    if (willDelete) {
-                        resolve();
-                    } else {
-                        if (reject !== undefined) {
-                            reject();
-                        }
-                        return;
-                    }
+                    resolve(willDelete);
+                })
+                .catch((error) => {
+                    reject(error);
                 });
             });
     } else {
         return new Promise((resolve, reject) => {
-            resolve();
+            resolve(true);
         });
     }
 }
