@@ -12,13 +12,25 @@
                 <div class="row">
                     <div class="form-group" data-select2-id="7">
                         <label>Set cases access of group <i>{{ group.group_name }}</i> *</label>
-                        <div class="col-12">
-                            <select id="group_case_access_select" name="org_case_access_select" class="form-control select2-hidden-accessible ml-12" multiple="multiple"
-                                     tabindex="-1" aria-hidden="true" style="width: 100%">
-                            </select>
-                            <select id="group_case_ac_select" name="org_case_ac_select" class="form-control select2-hidden-accessible ml-12"
-                                     tabindex="-1" aria-hidden="true" style="width: 100%">
-                            </select>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input class="form-check-input" type="checkbox" id="enable_auto_follow_cases" name="enable_auto_follow_cases" {% if group.group_auto_follow %}checked{% endif %}>
+                                        <span class="form-check-sign">Apply to all current cases and future ones</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <select id="group_case_access_select" name="org_case_access_select" class="form-control select2-hidden-accessible ml-12" multiple="multiple"
+                                         tabindex="-1" aria-hidden="true" style="width: 100%">
+                                </select>
+                                <select id="group_case_ac_select" name="org_case_ac_select" class="form-control select2-hidden-accessible ml-12"
+                                         tabindex="-1" aria-hidden="true" style="width: 100%">
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -63,4 +75,12 @@ $('#group_case_ac_select').multiselect('dataprovider', [{% for acc in access_lev
  { label: "{{ acc.name }}", value: {{ acc.value  }} }, {% endfor %}]);
 
 $('#group_case_ac_select').multiselect('refresh');
+
+$('#enable_auto_follow_cases').on('change', function() {
+    if (this.checked) {
+        $('#group_case_access_select').multiselect('disable');
+    } else {
+        $('#group_case_access_select').multiselect('enable');
+    }
+});
 </script>
