@@ -151,7 +151,7 @@ def update_org_members(org, members):
         for uo in uoa:
             if uo:
                 has_deleted = True
-                uo.delete()
+                db.session.delete(uo)
 
         if has_deleted:
             ac_auto_update_user_effective_access(uid)
