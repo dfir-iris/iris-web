@@ -255,6 +255,7 @@ function manage_group_cac(group_id) {
             var data_sent = Object();
             data_sent['access_level'] = parseInt($('#group_case_ac_select').val());
             data_sent['cases_list'] = $('#group_case_access_select').val();
+            data_sent['auto_follow_cases'] = $('#enable_auto_follow_cases').is(':checked');
             data_sent['csrf_token'] = $('#csrf_token').val();
 
             post_request_api('groups/' + group_id + '/cases-access/add', JSON.stringify(data_sent))

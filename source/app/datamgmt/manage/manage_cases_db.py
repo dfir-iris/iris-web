@@ -49,6 +49,14 @@ from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 
 
+def list_cases_id():
+    res = Cases.query.with_entities(
+        Cases.case_id
+    ).all()
+
+    return [r.case_id for r in res]
+
+
 def list_cases_dict_unrestricted():
     res = Cases.query.with_entities(
         Cases.name.label('case_name'),
@@ -106,8 +114,6 @@ def list_cases_dict(user_id):
         row['case_open_date'] = row['case_open_date'].strftime("%m/%d/%Y")
         row['case_close_date'] = row['case_close_date'].strftime("%m/%d/%Y") if row["case_close_date"] else ""
         data.append(row)
-
-    print(len(data))
 
     return data
 

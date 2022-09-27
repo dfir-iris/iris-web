@@ -20,6 +20,7 @@ from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.manage.manage_cases_db import list_cases_id
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
@@ -235,6 +236,32 @@ def add_case_access_to_group(group, cases_list, access_level):
 
     db.session.commit()
 
+    return group, "Updated"
+
+
+def add_all_cases_access_to_group(group, access_level):
+    if not group:
+        return None, "Invalid group"
+
+    for case_id in list_cases_id():
+        access_level_mask = ac_access_level_mask_from_val_list([access_level])
+
+        ocas = GroupCaseAccess.query.filter(
+            and_(
+                GroupCaseAccess.case_id == case_id,
+                GroupCaseAccess.group_id == group.group_id
+            )).all()
+        if ocas:
+            for oca in ocas:
+                db.session.delete(oca)
+
+        oca = GroupCaseAccess()
+        oca.group_id = group.group_id
+        oca.access_level = access_level_mask
+        oca.case_id = case_id
+        db.session.add(oca)
+
+    db.session.commit()
     return group, "Updated"
 
 

@@ -280,10 +280,14 @@ def manage_groups_cac_add_case(cur_id, caseid):
         except:
             return response_error("Expecting access_level as int")
 
-    if not isinstance(data.get('cases_list'), list):
+    if not isinstance(data.get('cases_list'), list) and data.get('auto_follow_cases') is False:
         return response_error("Expecting cases_list as list")
 
-    group, logs = add_case_access_to_group(group, data.get('cases_list'), data.get('access_level'))
+    if data.get('auto_follow_cases') is True:
+        group, logs = add_case_access_to_group(group, data.get('access_level'))
+    else:
+        group, logs = add_case_access_to_group(group, data.get('cases_list'), data.get('access_level'))
+
     if not group:
         return response_error(msg=logs)
 
