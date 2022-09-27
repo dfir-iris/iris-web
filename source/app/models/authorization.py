@@ -103,6 +103,7 @@ class Group(db.Model):
     group_name = Column(Text, nullable=False, unique=True)
     group_description = Column(Text)
     group_permissions = Column(BigInteger, nullable=False)
+    group_auto_follow = Column(Boolean, nullable=False, default=False)
 
     UniqueConstraint('group_name')
 

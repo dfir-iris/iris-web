@@ -99,6 +99,7 @@ def upgrade():
                         sa.Column('group_name', sa.Text(), nullable=False),
                         sa.Column('group_description', sa.Text(), nullable=False),
                         sa.Column('group_permissions', sa.BigInteger(), nullable=False),
+                        sa.Column('group_auto_follow', sa.Boolean(), nullable=False, default=False),
                         keep_existing=True
                         )
         op.create_unique_constraint('groups_group_name_unique', 'groups', ['group_name'])
