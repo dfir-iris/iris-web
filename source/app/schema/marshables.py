@@ -654,7 +654,7 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
     @pre_load
     def parse_permissions(self, data, **kwargs):
         permissions = data.get('group_permissions')
-        if type(permissions) != list:
+        if type(permissions) != list and not isinstance(permissions, type(None)):
             permissions = [permissions]
 
         if permissions is not None:
