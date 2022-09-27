@@ -68,7 +68,6 @@
                     </div>
                     <div class="tab-pane" id="group_members_tab">
                         <div class="container col-md-12" >
-                            <div class="col" >
                               <div class="row d-flex">
                                 <div class="col pull-right">
                                     <button class="btn btn-dark btn-sm pull-right" onclick="refresh_group_members({{ group.group_id }});">
@@ -79,7 +78,6 @@
                                     </button>
                                 </div>
                               </div>
-                            </div>
                             <div class="row">
                               <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="group_members_table" >
                                 <thead>
@@ -102,8 +100,12 @@
                     </div>
                     <div class="tab-pane" id="group_cac_tab">
                         <div class="container col-md-12" >
-                            <div class="col" >
-                              <div class="row d-flex">
+                            <div class="row d-flex mb-2">
+                                <div class="col">
+                                    {% if group.group_auto_follow %}
+                                    <b><i class="fa fa-triangle-exclamation text-warning mr-2"></i>This group is set to automatically include all new cases.</b>
+                                    {% endif %}
+                                </div>
                                 <div class="col pull-right">
                                     <button class="btn btn-dark btn-sm pull-right" onclick="refresh_group_cac({{ group.group_id }});">
                                         <span class="menu-title">Refresh</span>
@@ -112,9 +114,8 @@
                                         <span class="menu-title" id="manage_group_cac_button">Set case access</span>
                                     </button>
                                 </div>
-                              </div>
                             </div>
-                            <div class="row">
+                            <div class="row mt-2">
                               <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="group_cac_table" >
                                 <thead>
                                   <tr>

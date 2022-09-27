@@ -207,7 +207,7 @@ function manage_organisation_members(org_id) {
             data_sent['csrf_token'] = $('#csrf_token').val();
             window.swal({
                   title: "Updating access",
-                  text: "Please wait. We are updating users permissions.",
+                  text: "Please wait. We are updating users access.",
                   icon: "/static/assets/img/loader_cubes.gif",
                   button: false,
                   allowOutsideClick: false
@@ -278,7 +278,7 @@ function manage_organisation_cac(org_id) {
             data_sent['csrf_token'] = $('#csrf_token').val();
             window.swal({
                   title: "Updating access",
-                  text: "Please wait. We are updating users permissions.",
+                  text: "Please wait. We are updating users access.",
                   icon: "/static/assets/img/loader_cubes.gif",
                   button: false,
                   allowOutsideClick: false

@@ -17,7 +17,7 @@
                                 <div class="form-check">
                                     <label class="form-check-label">
                                         <input class="form-check-input" type="checkbox" id="enable_auto_follow_cases" name="enable_auto_follow_cases" {% if group.group_auto_follow %}checked{% endif %}>
-                                        <span class="form-check-sign">Apply to all current cases and future ones</span>
+                                        <span class="form-check-sign">Apply to currents and futures cases</span>
                                     </label>
                                 </div>
                             </div>
@@ -83,4 +83,8 @@ $('#enable_auto_follow_cases').on('change', function() {
         $('#group_case_access_select').multiselect('enable');
     }
 });
+
+if ($('#enable_auto_follow_cases').is(':checked')) {
+    $('#group_case_access_select').multiselect('disable');
+}
 </script>

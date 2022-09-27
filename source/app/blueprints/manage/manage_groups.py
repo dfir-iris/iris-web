@@ -27,6 +27,7 @@ from werkzeug.utils import redirect
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
+from app.datamgmt.manage.manage_groups_db import add_all_cases_access_to_group
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_groups_db import delete_group
 from app.datamgmt.manage.manage_groups_db import get_group
@@ -284,9 +285,13 @@ def manage_groups_cac_add_case(cur_id, caseid):
         return response_error("Expecting cases_list as list")
 
     if data.get('auto_follow_cases') is True:
-        group, logs = add_case_access_to_group(group, data.get('access_level'))
+        group, logs = add_all_cases_access_to_group(group, data.get('access_level'))
+        group.group_auto_follow = True
+        db.session.commit()
     else:
         group, logs = add_case_access_to_group(group, data.get('cases_list'), data.get('access_level'))
+        group.group_auto_follow = False
+        db.session.commit()
 
     if not group:
         return response_error(msg=logs)
