@@ -235,8 +235,6 @@ def add_case_access_to_org(org, cases_list, access_level):
         if not case:
             return None, "Invalid case ID"
 
-        access_level_mask = ac_access_level_mask_from_val_list([access_level])
-
         ocas = OrganisationCaseAccess.query.filter(
             and_(
                 OrganisationCaseAccess.case_id == case_id,
@@ -248,7 +246,7 @@ def add_case_access_to_org(org, cases_list, access_level):
 
         oca = OrganisationCaseAccess()
         oca.org_id = org.org_id
-        oca.access_level = access_level_mask
+        oca.access_level = access_level
         oca.case_id = case_id
         db.session.add(oca)
 

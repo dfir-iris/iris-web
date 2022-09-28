@@ -280,4 +280,3 @@ def remove_case_access_from_group(group_id, case_id):
 
     db.session.commit()
     return
-

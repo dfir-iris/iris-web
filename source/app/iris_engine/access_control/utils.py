@@ -1,6 +1,7 @@
 from flask import session
 from flask_login import current_user
 from sqlalchemy import and_
+from sqlalchemy import case
 
 import app
 from app import db
@@ -33,6 +34,34 @@ def ac_get_mask_full_permissions():
         am |= Permissions[perm].value
 
     return am
+
+
+def get_auto_follow_groups():
+    return UserGroup.query.with_entities(
+        Group.group_auto_follow_access_level,
+        Group.group_id,
+        User.id
+    ).join(
+        UserGroup.user, UserGroup.group
+    ).filter(
+        Group.group_auto_follow == True
+    ).all()
+
+
+def ac_combine_groups_access(groups_list):
+    """
+    Combine a list of group access masks
+    """
+    users = {}
+    for group in groups_list:
+        if group.id in users:
+            if group.group_auto_follow_access_level > users[group.id]:
+                users[group.id] = group.group_auto_follow_access_level
+
+        else:
+            users[group.id] = group.group_auto_follow_access_level
+
+    return users
 
 
 def ac_get_mask_analyst():
@@ -301,22 +330,62 @@ def ac_add_user_effective_access(users_list, case_id, access_level):
     """
     Directly add a set of effective user access
     """
-    # Remove current access - shouldn't be the case since this method is called upon case creation
-    UserCaseEffectiveAccess.query.filter(
-        UserCaseEffectiveAccess.case_id == case_id
-    ).delete()
-    db.session.commit()
 
     access_to_add = []
-    for user in users_list:
+    for user_id in users_list:
         ucea = UserCaseEffectiveAccess()
-        ucea.user_id = user.get('id')
+        ucea.user_id = user_id
         ucea.case_id = case_id
         ucea.access_level = access_level
         access_to_add.append(ucea)
 
     db.session.add_all(access_to_add)
     db.session.commit()
+
+
+def ac_set_new_case_access(org_members, case_id):
+    """
+    Set a new case access
+    """
+
+    users = ac_apply_autofollow_groups_access(case_id)
+
+    users_full_access = list(set([u.get('id') for u in org_members]) - set(users.keys()))
+
+    ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.full_access.value)
+
+
+def ac_apply_autofollow_groups_access(case_id):
+    """
+    Apply a direct effective user access to users within a group
+    """
+
+    groups = get_auto_follow_groups()
+    users = ac_combine_groups_access(groups)
+
+    rows_to_push = []
+    for user_id in users:
+        ucea = UserCaseEffectiveAccess()
+        ucea.user_id = user_id
+        ucea.case_id = case_id
+        ucea.access_level = users[user_id]
+        rows_to_push.append(ucea)
+
+    grps_to_add = {}
+    for group in groups:
+        if group.group_id in grps_to_add:
+            grps_to_add[group.group_id] = group.group_auto_follow_access_level
+
+    for group_id in grps_to_add:
+        gca = GroupCaseAccess()
+        gca.case_id = case_id
+        gca.group_id = group_id
+        gca.access_level = grps_to_add[grps_to_add].group_auto_follow_access_level
+        rows_to_push.append(gca)
+
+    db.session.add_all(rows_to_push)
+    db.session.commit()
+    return users
 
 
 def ac_auto_update_user_effective_access(user_id):

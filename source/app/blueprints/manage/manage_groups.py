@@ -287,6 +287,7 @@ def manage_groups_cac_add_case(cur_id, caseid):
     if data.get('auto_follow_cases') is True:
         group, logs = add_all_cases_access_to_group(group, data.get('access_level'))
         group.group_auto_follow = True
+        group.group_auto_follow_access_level = data.get('access_level')
         db.session.commit()
     else:
         group, logs = add_case_access_to_group(group, data.get('cases_list'), data.get('access_level'))
