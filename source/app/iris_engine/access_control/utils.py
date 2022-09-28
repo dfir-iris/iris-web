@@ -373,14 +373,14 @@ def ac_apply_autofollow_groups_access(case_id):
 
     grps_to_add = {}
     for group in groups:
-        if group.group_id in grps_to_add:
+        if group.group_id not in grps_to_add:
             grps_to_add[group.group_id] = group.group_auto_follow_access_level
 
     for group_id in grps_to_add:
         gca = GroupCaseAccess()
         gca.case_id = case_id
         gca.group_id = group_id
-        gca.access_level = grps_to_add[grps_to_add].group_auto_follow_access_level
+        gca.access_level = grps_to_add[group_id]
         rows_to_push.append(gca)
 
     db.session.add_all(rows_to_push)

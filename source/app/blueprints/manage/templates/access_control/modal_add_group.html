@@ -239,6 +239,42 @@ var modal_group_cac_table = $("#group_cac_table").DataTable({
         processing: true
 });
 
+var actionOptions = {
+    classes: [],
+    contextMenu: {
+        enabled: true,
+        isMulti: true,
+        xoffset: -10,
+        yoffset: -10,
+        headerRenderer: function (rows) {
+            if (rows.length > 1) {
+                return rows.length + ' items selected';
+            } else {
+                let row = rows[0];
+                return 'Quick action';
+            }
+        },
+    },
+    buttonList: {
+        enabled: false,
+    },
+    deselectAfterAction: true,
+    items: [],
+};
+
+actionOptions.items.push({
+            type: 'option',
+            title: 'Remove access',
+            multi: true,
+            iconClass: 'fas fa-trash',
+            buttonClasses: ['btn', 'btn-outline-primary'],
+            action: function(rows){
+                delete_group_cases({{ group.group_id }}, rows);
+            }
+        });
+modal_group_cac_table.contextualActions(actionOptions);
+
+
 {% if group.group_id %}
     current_group_cases_access_list = {{ group.group_cases_access|tojson }};
     modal_group_cac_table.rows.add(current_group_cases_access_list);
