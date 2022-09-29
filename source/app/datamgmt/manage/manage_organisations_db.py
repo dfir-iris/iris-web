@@ -254,18 +254,18 @@ def add_case_access_to_org(org, cases_list, access_level):
     return org, "Updated"
 
 
-def remove_case_access_from_organisation(org_id, case_id):
+def remove_case_access_from_organisation(org_id, cases_list):
     if not org_id or type(org_id) is not int:
-        return
+        return False, "Invalid organisation"
 
-    if not case_id or type(case_id) is not int:
-        return
+    if not cases_list or type(cases_list[0]) is not int:
+        return False, "Invalid case"
 
     OrganisationCaseAccess.query.filter(
         and_(
-            OrganisationCaseAccess.case_id == case_id,
+            OrganisationCaseAccess.case_id.in_(cases_list),
             OrganisationCaseAccess.org_id == org_id
         )).delete()
 
     db.session.commit()
-    return
+    return  True, "Updated"

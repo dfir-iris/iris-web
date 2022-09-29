@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import traceback
+
 from copy import copy
 
 import marshmallow
@@ -27,8 +29,7 @@ from flask import url_for
 from flask_login import current_user
 from werkzeug.utils import redirect
 
-from app import db
-from app.datamgmt.case.case_db import get_case
+from app import db, app
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import list_cases_dict_unrestricted
 from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
@@ -61,6 +62,8 @@ manage_orgs_blueprint = Blueprint(
         template_folder='templates/access_control'
     )
 
+
+log = app.logger
 
 @manage_orgs_blueprint.route('/manage/organisations/list', methods=['GET'])
 @ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
@@ -349,24 +352,41 @@ def manage_org_cac_add_case(cur_id, caseid):
     return response_success(data=org)
 
 
-@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/cases-access/delete/<int:cur_id_2>', methods=['GET'])
+@manage_orgs_blueprint.route('/manage/organisations/<int:cur_id>/cases-access/delete', methods=['POST'])
 @ac_api_requires(Permissions.manage_own_organisation, Permissions.manage_organisations)
-def manage_groups_ac_delete_case(cur_id, cur_id_2, caseid):
+def manage_groups_ac_delete_case(cur_id, caseid):
 
     if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
         if not is_user_in_org(current_user.id, cur_id):
             return response_error('Access denied', status=403)
 
-    org = get_org(cur_id)
+    org = get_org_with_members(cur_id)
     if not org:
         return response_error("Invalid organisation ID")
 
-    case = get_case(cur_id_2)
-    if not case:
-        return response_error("Invalid case ID")
+    if not request.is_json:
+        return response_error("Invalid request")
 
-    remove_case_access_from_organisation(org.org_id, case.case_id)
-    org = get_orgs_details(cur_id)
-    ac_recompute_effective_ac_from_users_list(org.org_members)
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request")
 
-    return response_success('Case access removed from organisation', data=org)
+    if not isinstance(data.get('cases'), list):
+        return response_error("Expecting cases as list")
+
+    try:
+
+        success, logs = remove_case_access_from_organisation(org.org_id, data.get('cases'))
+        db.session.commit()
+
+    except Exception as e:
+        log.error("Error while removing cases access from group: {}".format(e))
+        log.error(traceback.format_exc())
+        return response_error(msg=str(e))
+
+    if success:
+        ac_recompute_effective_ac_from_users_list(org.org_members)
+        return response_success(msg="Cases access removed from organisation")
+
+    return response_error(msg=logs)
+

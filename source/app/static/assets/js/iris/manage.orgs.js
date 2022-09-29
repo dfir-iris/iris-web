@@ -301,21 +301,33 @@ function manage_organisation_cac(org_id) {
     });
 }
 
-function remove_case_access_from_org(org_id, case_id, on_finish) {
+function remove_case_access_from_org(group_id, case_id, on_finish) {
+     remove_cases_access(group_id, [case_id], on_finish);
+}
+
+function remove_cases_access_from_table(org_id, rows) {
+    cases = [];
+    for (cid in rows) {
+        cases.push(rows[cid].case_id);
+    }
+    remove_cases_access(org_id, cases);
+}
+
+function remove_cases_access(org_id, cases, on_finish) {
 
     swal({
       title: "Are you sure?",
-      text: "Members of this organisation might not be able to access this case anymore",
+      text: "Members of this organisation might not be able to access these case(s) anymore",
       icon: "warning",
       buttons: true,
       dangerMode: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, remove it!'
+      confirmButtonText: 'Yes, remove them!'
     })
     .then((willDelete) => {
         if (willDelete) {
-            url = '/manage/organisations/' + org_id + '/cases-access/delete/' + case_id;
+            url = '/manage/organisations/' + org_id + '/cases-access/delete';
             window.swal({
                   title: "Updating access",
                   text: "Please wait. We are updating users permissions.",
@@ -323,7 +335,12 @@ function remove_case_access_from_org(org_id, case_id, on_finish) {
                   button: false,
                   allowOutsideClick: false
             });
-            get_request_api(url)
+
+            var data_sent = Object();
+            data_sent['cases'] = cases;
+            data_sent['csrf_token'] = $('#csrf_token').val();
+
+            post_request_api(url, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_organisations();
