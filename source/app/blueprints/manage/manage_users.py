@@ -18,8 +18,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 import marshmallow
+# IMPORTS ------------------------------------------------
+import traceback
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -28,9 +29,8 @@ from flask import session
 from flask import url_for
 from flask_login import current_user
 
+from app import app
 from app import db
-from app.blueprints.profile.profile_routes import profile_blueprint
-from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_organisations_db import get_organisations_list
@@ -48,14 +48,13 @@ from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_user_view
 from app.datamgmt.manage.manage_users_db import get_users_list_user_view
-from app.datamgmt.manage.manage_users_db import remove_case_access_from_user
+from app.datamgmt.manage.manage_users_db import remove_cases_access_from_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_users_db import update_user_orgs
 from app.forms import AddUserForm
 from app.iris_engine.access_control.utils import ac_flag_match_mask
 from app.iris_engine.access_control.utils import ac_get_all_access_level
-from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
@@ -63,7 +62,6 @@ from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import ac_return_access_denied
-from app.util import api_login_required
 from app.util import is_authentication_local
 from app.util import response_error
 from app.util import response_success
@@ -73,6 +71,8 @@ manage_users_blueprint = Blueprint(
     __name__,
     template_folder='templates'
 )
+
+log = app.logger
 
 
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])
@@ -345,9 +345,9 @@ def manage_user_cac_add_case(cur_id, caseid):
     return response_success(data=group)
 
 
-@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete/<int:cur_id_2>', methods=['GET'])
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete', methods=['GET'])
 @ac_api_requires(Permissions.manage_groups)
-def manage_user_cac_delete_case(cur_id, cur_id_2, caseid):
+def manage_user_cac_delete_case(cur_id,  caseid):
     if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
         if cur_id not in get_users_id_view_from_user_id(current_user.id):
             return ac_api_return_access_denied(caseid)
@@ -356,14 +356,30 @@ def manage_user_cac_delete_case(cur_id, cur_id_2, caseid):
     if not user:
         return response_error("Invalid user ID")
 
-    case = get_case(cur_id_2)
-    if not case:
-        return response_error("Invalid user ID")
+    if not request.is_json:
+        return response_error("Invalid request")
 
-    remove_case_access_from_user(user.id, case.case_id)
-    user = get_user_details(cur_id)
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request")
 
-    return response_success('Case access removed from user', data=user)
+    if not isinstance(data.get('cases'), list):
+        return response_error("Expecting cases as list")
+
+    try:
+
+        success, logs = remove_cases_access_from_user(user.id, data.get('cases'))
+        db.session.commit()
+
+    except Exception as e:
+        log.error("Error while removing cases access from user: {}".format(e))
+        log.error(traceback.format_exc())
+        return response_error(msg=str(e))
+
+    if success:
+        return response_success(msg="Cases access removed from group")
+
+    return response_error(msg=logs)
 
 
 @manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])

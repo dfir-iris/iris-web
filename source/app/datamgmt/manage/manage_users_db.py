@@ -303,16 +303,16 @@ def get_user_cases_fast(user_id):
     return [c.case_id for c  in user_cases]
 
 
-def remove_case_access_from_user(user_id, case_id):
+def remove_cases_access_from_user(user_id, cases_list):
     if not user_id or type(user_id) is not int:
-        return
+        return False, 'Invalid user id'
 
-    if not case_id or type(case_id) is not int:
-        return
+    if not cases_list or type(cases_list[0]) is not int:
+        return False, "Invalid cases list"
 
     UserCaseAccess.query.filter(
         and_(
-            UserCaseAccess.case_id == case_id,
+            UserCaseAccess.case_id.in_(cases_list),
             UserCaseAccess.user_id == user_id
         )).delete()
 
