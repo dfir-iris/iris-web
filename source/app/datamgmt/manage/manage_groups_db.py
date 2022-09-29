@@ -286,7 +286,6 @@ def remove_cases_access_from_group(group_id, cases_list):
     if not group_id or type(group_id) is not int:
         return False, "Invalid group"
 
-    print(cases_list)
     if not cases_list or type(cases_list[0]) is not int:
         return False, "Invalid cases list"
 
