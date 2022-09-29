@@ -2,7 +2,7 @@ var modal_group_table;
 var current_groups_list;
 manage_groups_table = $('#groups_table').dataTable( {
     "order": [[ 1, "asc" ]],
-    "autoWidth": false,
+    "autoWidth": true,
     "columns": [
         {
             "data": "group_id",
