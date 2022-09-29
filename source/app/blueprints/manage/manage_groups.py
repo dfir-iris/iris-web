@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import traceback
+
 import marshmallow
 from flask import Blueprint
 from flask import render_template
@@ -24,8 +26,7 @@ from flask import url_for
 from flask_login import current_user
 from werkzeug.utils import redirect
 
-from app import db
-from app.datamgmt.case.case_db import get_case
+from app import db, app
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import add_all_cases_access_to_group
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
@@ -35,6 +36,7 @@ from app.datamgmt.manage.manage_groups_db import get_group_details
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_case_access_from_group
+from app.datamgmt.manage.manage_groups_db import remove_cases_access_from_group
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
@@ -55,6 +57,9 @@ manage_groups_blueprint = Blueprint(
         __name__,
         template_folder='templates/access_control'
     )
+
+
+log = app.logger
 
 
 @manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
@@ -304,22 +309,36 @@ def manage_groups_cac_add_case(cur_id, caseid):
     return response_success(data=group)
 
 
-@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/delete/<int:cur_id_2>', methods=['GET'])
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/delete', methods=['POST'])
 @ac_api_requires(Permissions.manage_groups)
-def manage_groups_cac_delete_case(cur_id, cur_id_2, caseid):
+def manage_groups_cac_delete_case(cur_id, caseid):
 
     group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
-    case = get_case(cur_id_2)
-    if not case:
-        return response_error("Invalid case ID")
+    if not request.is_json:
+        return response_error("Invalid request")
 
-    remove_case_access_from_group(group.group_id, case.case_id)
-    group = get_group_details(cur_id)
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request")
 
-    ac_recompute_effective_ac_from_users_list(group.group_members)
+    if not isinstance(data.get('cases'), list):
+        return response_error("Expecting cases as list")
 
-    return response_success('Case access removed from group', data=group)
+    try:
 
+        success, logs = remove_cases_access_from_group(group.group_id, data.get('cases'))
+        db.session.commit()
+
+    except Exception as e:
+        log.error("Error while removing cases access from group: {}".format(e))
+        log.error(traceback.format_exc())
+        return response_error(msg=str(e))
+
+    if success:
+        ac_recompute_effective_ac_from_users_list(group.group_members)
+        return response_success(msg="Cases access removed from group")
+
+    return response_error(msg=logs)

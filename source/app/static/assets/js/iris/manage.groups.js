@@ -284,82 +284,56 @@ function manage_group_cac(group_id) {
 }
 
 function remove_case_access_from_group(group_id, case_id, on_finish) {
+     delete_group_cases(group_id, [case_id], on_finish);
+}
+
+function delete_group_cases_from_table(group_id, rows) {
+    cases = [];
+    for (cid in rows) {
+        cases.push(rows[cid].case_id);
+    }
+    delete_group_cases(group_id, cases);
+}
+
+function delete_group_cases(group_id, cases, on_finish) {
 
     swal({
-      title: "Are you sure?",
-      text: "Members of this group won't be able to access this case anymore",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, remove it!'
-    })
-    .then((willDelete) => {
+        title: "Are you sure?",
+        text: "Members of this group won't be able to access these cases anymore",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, remove them!'
+    }).then((willDelete) => {
         if (willDelete) {
-            url = '/manage/groups/' + group_id + '/cases-access/delete/' + case_id;
+            url = '/manage/groups/' + group_id + '/cases-access/delete';
 
             window.swal({
-                  title: "Updating access",
-                  text: "Please wait. We are updating users access.",
-                  icon: "/static/assets/img/loader_cubes.gif",
-                  button: false,
-                  allowOutsideClick: false
+              title: "Updating access",
+              text: "Please wait. We are updating users access.",
+              icon: "/static/assets/img/loader_cubes.gif",
+              button: false,
+              allowOutsideClick: false
             });
+            var data_sent = Object();
+            data_sent['cases'] = cases;
+            data_sent['csrf_token'] = $('#csrf_token').val();
 
-            get_request_api(url)
+            post_request_api(url, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_group_cac(group_id);
-
                     if (on_finish !== undefined) {
                         on_finish();
                     }
-
                 }
             })
             .always(() => {
                 window.swal.close();
             });
         }
-    });
-
-}
-
-function delete_group_cases(group_id, cases) {
-
-    swal({
-      title: "Are you sure?",
-      text: "Members of this group won't be able to access these cases anymore",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, remove them!'
-      }).then((willDelete) => {
-            if (willDelete) {
-                for (case_id in cases) {
-                    cid = cases[case_id].case_id;
-                    url = '/manage/groups/' + group_id + '/cases-access/delete/' + cid;
-                    window.swal({
-                      title: "Updating access",
-                      text: "Please wait. We are updating users access.",
-                      icon: "/static/assets/img/loader_cubes.gif",
-                      button: false,
-                      allowOutsideClick: false
-                    });
-                    get_request_api(url)
-                    .done((data) => {
-                        if(notify_auto_api(data)) {
-                            refresh_group_cac(group_id);
-                        }
-                    })
-                    .always(() => {
-                        window.swal.close();
-                    });
-                }
-            }
     });
 }
 
