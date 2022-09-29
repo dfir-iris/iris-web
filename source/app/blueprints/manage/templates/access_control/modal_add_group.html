@@ -240,7 +240,7 @@ var modal_group_cac_table = $("#group_cac_table").DataTable({
         select: true
 });
 
-var actionOptions = {
+var actionOptionsGroup = {
     classes: [],
     contextMenu: {
         enabled: true,
@@ -263,7 +263,7 @@ var actionOptions = {
     items: [],
 };
 
-actionOptions.items.push({
+actionOptionsGroup.items.push({
             type: 'option',
             title: 'Remove access',
             multi: true,
@@ -273,7 +273,7 @@ actionOptions.items.push({
                 delete_group_cases_from_table({{ group.group_id }}, rows);
             }
         });
-modal_group_cac_table.contextualActions(actionOptions);
+modal_group_cac_table.contextualActions(actionOptionsGroup);
 
 
 {% if group.group_id %}
