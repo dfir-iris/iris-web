@@ -300,7 +300,7 @@
                   {
                     "data": "case_id",
                     "render": function ( data, type, row ) {
-                        return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_user('{{ user.user_id }}','${data}')"></i>${data}`;
+                        return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_user('{{ user.user_id }}',${data})"></i>${data}`;
                     },
                     "className": "dt-center"
                 },
@@ -323,8 +323,44 @@
                 filter: true,
                 info: true,
                 ordering: true,
-                processing: true
+                processing: true,
+                select: true
         });
+
+        var actionOptionsUser = {
+            classes: [],
+            contextMenu: {
+                enabled: true,
+                isMulti: true,
+                xoffset: -10,
+                yoffset: -10,
+                headerRenderer: function (rows) {
+                    if (rows.length > 1) {
+                        return rows.length + ' items selected';
+                    } else {
+                        let row = rows[0];
+                        return 'Quick action';
+                    }
+                },
+            },
+            buttonList: {
+                enabled: false,
+            },
+            deselectAfterAction: true,
+            items: [],
+        };
+
+        actionOptionsUser.items.push({
+                    type: 'option',
+                    title: 'Remove access',
+                    multi: true,
+                    iconClass: 'fas fa-trash',
+                    buttonClasses: ['btn', 'btn-outline-primary'],
+                    action: function(rows){
+                        remove_cases_access_from_user_table('{{ user.user_id }}', rows);
+                    }
+                });
+        modal_user_cac_table.contextualActions(actionOptionsUser);
 
         {% if user.user_id %}
             current_user_cases_access_list = {{ user.user_cases_access|tojson }};

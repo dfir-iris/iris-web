@@ -284,18 +284,18 @@ function manage_group_cac(group_id) {
 }
 
 function remove_case_access_from_group(group_id, case_id, on_finish) {
-     delete_group_cases(group_id, [case_id], on_finish);
+     remove_cases_access_group(group_id, [case_id], on_finish);
 }
 
-function delete_group_cases_from_table(group_id, rows) {
+function remove_group_cases_from_group_table(group_id, rows) {
     cases = [];
     for (cid in rows) {
         cases.push(rows[cid].case_id);
     }
-    delete_group_cases(group_id, cases);
+    remove_cases_access_group(group_id, cases);
 }
 
-function delete_group_cases(group_id, cases, on_finish) {
+function remove_cases_access_group(group_id, cases, on_finish) {
 
     swal({
         title: "Are you sure?",

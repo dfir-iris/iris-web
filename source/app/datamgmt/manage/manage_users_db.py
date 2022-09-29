@@ -319,7 +319,7 @@ def remove_cases_access_from_user(user_id, cases_list):
     db.session.commit()
 
     ac_auto_update_user_effective_access(user_id)
-    return
+    return True, 'Cases access removed'
 
 
 def get_user_details(user_id):

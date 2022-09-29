@@ -270,7 +270,7 @@ actionOptionsGroup.items.push({
             iconClass: 'fas fa-trash',
             buttonClasses: ['btn', 'btn-outline-primary'],
             action: function(rows){
-                delete_group_cases_from_table({{ group.group_id }}, rows);
+                remove_group_cases_from_group_table({{ group.group_id }}, rows);
             }
         });
 modal_group_cac_table.contextualActions(actionOptionsGroup);

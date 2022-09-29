@@ -258,7 +258,7 @@ actionOptionsOrg.items.push({
             iconClass: 'fas fa-trash',
             buttonClasses: ['btn', 'btn-outline-primary'],
             action: function(rows){
-                remove_cases_access_from_table({{ org.org_id }}, rows);
+                remove_cases_access_from_org_table({{ org.org_id }}, rows);
             }
         });
 modal_org_cac.contextualActions(actionOptionsOrg);

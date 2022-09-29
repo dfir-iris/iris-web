@@ -345,8 +345,8 @@ def manage_user_cac_add_case(cur_id, caseid):
     return response_success(data=group)
 
 
-@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete', methods=['GET'])
-@ac_api_requires(Permissions.manage_groups)
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete', methods=['POST'])
+@ac_api_requires(Permissions.manage_users)
 def manage_user_cac_delete_case(cur_id,  caseid):
     if not ac_flag_match_mask(session['permissions'], Permissions.manage_organisations.value):
         if cur_id not in get_users_id_view_from_user_id(current_user.id):

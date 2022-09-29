@@ -302,18 +302,18 @@ function manage_organisation_cac(org_id) {
 }
 
 function remove_case_access_from_org(group_id, case_id, on_finish) {
-     remove_cases_access(group_id, [case_id], on_finish);
+     remove_cases_access_org(group_id, [case_id], on_finish);
 }
 
-function remove_cases_access_from_table(org_id, rows) {
+function remove_cases_access_from_org_table(org_id, rows) {
     cases = [];
     for (cid in rows) {
         cases.push(rows[cid].case_id);
     }
-    remove_cases_access(org_id, cases);
+    remove_cases_access_org(org_id, cases);
 }
 
-function remove_cases_access(org_id, cases, on_finish) {
+function remove_cases_access_org(org_id, cases, on_finish) {
 
     swal({
       title: "Are you sure?",
@@ -349,8 +349,9 @@ function remove_cases_access(org_id, cases, on_finish) {
                     if (on_finish !== undefined) {
                         on_finish();
                     }
-                    window.swal.close();
                 }
+            }).always(() => {
+                window.swal.close();
             });
         }
     });
