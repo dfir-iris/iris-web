@@ -174,6 +174,7 @@ function asset_details(asset_id) {
             if (!data.hasOwnProperty('asset_compromised')) {
                 data['asset_compromised'] = 'false';
             }
+            data['asset_description'] = asset_desc_editor.getValue();
 
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
