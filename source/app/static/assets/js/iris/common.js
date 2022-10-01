@@ -606,6 +606,108 @@ function get_row_id(row) {
     return null;
 }
 
+function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_callback, readonly) {
+    var editor = ace.edit(anchor_id);
+    if ($("#"+anchor_id).attr("data-theme") != "dark") {
+        editor.setTheme("ace/theme/tomorrow");
+    } else {
+        editor.setTheme("ace/theme/tomorrow_night");
+    }
+    editor.session.setMode("ace/mode/markdown");
+    if (readonly !== undefined) {
+        editor.setReadOnly(readonly);
+    }
+    editor.renderer.setShowGutter(true);
+    editor.setOption("showLineNumbers", true);
+    editor.setOption("showPrintMargin", false);
+    editor.setOption("displayIndentGuides", true);
+    editor.setOption("maxLines", "Infinity");
+    editor.setOption("minLines", "10");
+    editor.setOption("autoScrollEditorIntoView", true);
+    editor.session.setUseWrapMode(true);
+    editor.setOption("indentedSoftWrap", false);
+    editor.renderer.setScrollMargin(8, 5)
+    editor.setOption("enableBasicAutocompletion", true);
+    editor.commands.addCommand({
+        name: 'save',
+        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+        exec: function(editor) {
+            save_note(this);
+        }
+    })
+    editor.commands.addCommand({
+        name: 'bold',
+        bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
+        exec: function(editor) {
+            editor.insertSnippet('**${1:$SELECTION}**');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'italic',
+        bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
+        exec: function(editor) {
+            editor.insertSnippet('*${1:$SELECTION}*');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_1',
+        bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
+        exec: function(editor) {
+            editor.insertSnippet('# ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_2',
+        bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
+        exec: function(editor) {
+            editor.insertSnippet('## ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_3',
+        bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
+        exec: function(editor) {
+            editor.insertSnippet('### ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_4',
+        bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
+        exec: function(editor) {
+            editor.insertSnippet('#### ${1:$SELECTION}');
+        }
+    });
+
+    var textarea = $('#'+content_anchor);
+    editor.getSession().on("change", function () {
+        if (onchange_callback !== undefined) {
+            onchange_callback();
+        }
+
+        textarea.val(editor.getSession().getValue());
+        target = document.getElementById(target_anchor);
+        converter = new showdown.Converter({
+            tables: true,
+            extensions: ['bootstrap-tables'],
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(editor.getSession().getValue());
+        target.innerHTML = html;
+    });
+
+    textarea.val(editor.getSession().getValue());
+    target = document.getElementById(target_anchor);
+    converter = new showdown.Converter({
+        tables: true,
+        extensions: ['bootstrap-tables'],
+        parseImgDimensions: true
+    });
+    html = converter.makeHtml(editor.getSession().getValue());
+    target.innerHTML = html;
+
+    return editor;
+}
+
 function load_menu_mod_options(data_type, table, deletion_fn) {
     var actionOptions = {
         classes: [],

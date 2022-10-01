@@ -317,111 +317,11 @@ function note_detail(id, cid) {
              return false;
         }
 
-        note_editor = ace.edit("editor_detail",
-            {
-                autoScrollEditorIntoView: true,
-                minLines: 4
-            });
-
-        $('#editor_detail').on('paste', (event) => {
-            event.preventDefault();
-            handle_ed_paste(event);
-        });
-
-        if ($("#editor_detail").attr("data-theme") != "dark") {
-            note_editor.setTheme("ace/theme/tomorrow");
-        } else {
-            note_editor.setTheme("ace/theme/tomorrow_night");
-        }
-        note_editor.session.setMode("ace/mode/markdown");
-        note_editor.renderer.setShowGutter(true);
-        note_editor.setOption("showLineNumbers", true);
-        note_editor.setOption("showPrintMargin", false);
-        note_editor.setOption("displayIndentGuides", true);
-        note_editor.setOption("maxLines", "Infinity");
-        note_editor.session.setUseWrapMode(true);
-        note_editor.setOption("indentedSoftWrap", false);
-        note_editor.renderer.setScrollMargin(8, 5)
-        note_editor.setOption("enableBasicAutocompletion", true);
-        note_editor.commands.addCommand({
-            name: 'save',
-            bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-            exec: function(editor) {
-                save_note(this);
-            }
-        })
-        note_editor.commands.addCommand({
-            name: 'bold',
-            bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
-            exec: function(editor) {
-                editor.insertSnippet('**${1:$SELECTION}**');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'italic',
-            bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
-            exec: function(editor) {
-                editor.insertSnippet('*${1:$SELECTION}*');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'head_1',
-            bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
-            exec: function(editor) {
-                editor.insertSnippet('# ${1:$SELECTION}');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'head_2',
-            bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
-            exec: function(editor) {
-                editor.insertSnippet('## ${1:$SELECTION}');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'head_3',
-            bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
-            exec: function(editor) {
-                editor.insertSnippet('### ${1:$SELECTION}');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'head_4',
-            bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
-            exec: function(editor) {
-                editor.insertSnippet('#### ${1:$SELECTION}');
-            }
-        });
-
-        var textarea = $('#note_content');
-        note_editor.getSession().on("change", function () {
+        note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function() {
             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
             $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
-
-            textarea.val(note_editor.getSession().getValue());
-            target = document.getElementById('targetDiv'),
-                converter = new showdown.Converter({
-                    tables: true,
-                    extensions: ['bootstrap-tables'],
-                    parseImgDimensions: true
-                }),
-
-                html = converter.makeHtml(note_editor.getSession().getValue());
-
-            target.innerHTML = html;
         });
-
-        textarea.val(note_editor.getSession().getValue());
-        target = document.getElementById('targetDiv'),
-            converter = new showdown.Converter({
-                tables: true,
-                extensions: ['bootstrap-tables'],
-                parseImgDimensions: true
-            }),
-            html = converter.makeHtml(note_editor.getSession().getValue());
-
-        target.innerHTML = html;
 
         edit_innote();
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
