@@ -426,15 +426,7 @@ function save_note(this_item, cid) {
 
 /* Span for note edition */
 function edit_innote() {
-    $('#container_note_content').toggle();
-    if ($('#container_note_content').is(':visible')) {
-        $('#notes_edition_btn').show(100);
-        $('#ctrd_notesum').removeClass('col-md-12').addClass('col-md-6');
-    } else {
-        $('#notes_edition_btn').hide();
-        $('#ctrd_notesum').removeClass('col-md-6').addClass('col-md-12');
-    }
-    return false;
+    return edit_inner_editor('notes_edition_btn', 'container_note_content', 'ctrd_notesum');
 }
 
 /* Load the kanban case data and build the board from it */

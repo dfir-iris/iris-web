@@ -628,13 +628,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     editor.setOption("indentedSoftWrap", false);
     editor.renderer.setScrollMargin(8, 5)
     editor.setOption("enableBasicAutocompletion", true);
-    editor.commands.addCommand({
-        name: 'save',
-        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-        exec: function(editor) {
-            save_note(this);
-        }
-    })
+
     editor.commands.addCommand({
         name: 'bold',
         bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
@@ -688,7 +682,6 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
         target = document.getElementById(target_anchor);
         converter = new showdown.Converter({
             tables: true,
-            extensions: ['bootstrap-tables'],
             parseImgDimensions: true
         });
         html = converter.makeHtml(editor.getSession().getValue());
@@ -699,7 +692,6 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     target = document.getElementById(target_anchor);
     converter = new showdown.Converter({
         tables: true,
-        extensions: ['bootstrap-tables'],
         parseImgDimensions: true
     });
     html = converter.makeHtml(editor.getSession().getValue());
@@ -707,6 +699,37 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
 
     return editor;
 }
+
+function edit_inner_editor(btn_id, container_id, ctrd_id) {
+    $('#'+container_id).toggle();
+    if ($('#'+container_id).is(':visible')) {
+        $('#'+btn_id).show(100);
+        $('#'+ctrd_id).removeClass('col-md-12').addClass('col-md-6');
+    } else {
+        $('#'+btn_id).hide();
+        $('#'+ctrd_id).removeClass('col-md-6').addClass('col-md-12');
+    }
+    return false;
+}
+
+function get_editor_headers(editor_instance, save, edition_btn) {
+    header = `
+                <div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="${save}( this );"><i class="fa-solid fa-file-circle-check"></i></div>
+                <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="${editor_instance}.insertSnippet`+"('**${1:$SELECTION}**');"+`${editor_instance}.focus();"><i class="fa-solid fa-bold"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="${editor_instance}.insertSnippet`+"('*${1:$SELECTION}*');"+`${editor_instance}.focus();"><i class="fa-solid fa-italic"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="${editor_instance}.insertSnippet`+"('# ${1:$SELECTION}');"+`${editor_instance}.focus();">H1</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="${editor_instance}.insertSnippet`+"('## ${1:$SELECTION}')"+`;${editor_instance}.focus();">H2</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="${editor_instance}.insertSnippet`+"('### ${1:$SELECTION}');"+`${editor_instance}.focus();">H3</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="${editor_instance}.insertSnippet`+"('#### ${1:$SELECTION}');"+`${editor_instance}.focus();">H4</div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="${editor_instance}.insertSnippet`+"('```${1:$SELECTION}```');"+`${editor_instance}.focus();"><i class="fa-solid fa-code"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="${editor_instance}.insertSnippet`+"('[New link](${1:$SELECTION})');"+`${editor_instance}.focus();"><i class="fa-solid fa-link"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="${editor_instance}.insertSnippet`+"('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');"+`${editor_instance}.focus();"><i class="fa-solid fa-table"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="${editor_instance}.insertSnippet`+"('\n- \n- \n- ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="${editor_instance}.insertSnippet`+"('\n1. a  \n2. b  \n3. c  ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list-ol"></i></div>
+    `
+    return header;
+}
+
 
 function load_menu_mod_options(data_type, table, deletion_fn) {
     var actionOptions = {

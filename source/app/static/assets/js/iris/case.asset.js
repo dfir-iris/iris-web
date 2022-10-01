@@ -3,6 +3,10 @@ function reload_assets() {
     get_case_assets();
 }
 
+function edit_in_asset_desc() {
+    return edit_inner_editor('asset_edition_btn', 'container_asset_desc_content', 'ctrd_asset');
+}
+
 /* Fetch a modal that is compatible with the requested asset type */
 function add_asset() {
     url = 'assets/add/modal' + case_param();
@@ -12,6 +16,9 @@ function add_asset() {
              ajax_notify_error(xhr, url);
              return false;
         }
+
+        asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc');
+        edit_in_asset_desc();
 
         $('#ioc_links').select2({});
 
@@ -63,7 +70,9 @@ function add_asset() {
 
             return false;
         })
+
         $('#modal_add_asset').modal({ show: true });
+
     });
 
     $('.dtr-modal').hide();
@@ -132,6 +141,11 @@ function asset_details(asset_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
+
+        asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc');
+        edit_in_asset_desc();
+        headers = get_editor_headers('asset_desc_editor', 'save_asset', 'asset_edition_btn');
+        $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
 
