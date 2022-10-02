@@ -1,4 +1,12 @@
 var current_users_list = [];
+var g_task_id = null;
+var g_task_desc_editor = null;
+
+function edit_in_task_desc() {
+    return edit_inner_editor('task_edition_btn', 'container_task_desc_content', 'ctrd_task');
+}
+
+
 /* Fetch a modal that allows to add an event */
 function add_task() {
     url = 'tasks/add/modal' + case_param();
@@ -8,6 +16,16 @@ function add_task() {
              ajax_notify_error(xhr, url);
              return false;
         }
+        
+        g_task_desc_editor = get_new_ace_editor('task_description', 'task_desc_content', 'target_task_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_task').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, save_task);
+
+        headers = get_editor_headers('g_task_desc_editor', 'save_task', 'task_edition_btn');
+        $('#task_edition_btn').append(headers);
 
         $('#submit_new_task').on("click", function () {
 
@@ -20,6 +38,7 @@ function add_task() {
             data_sent['task_tags'] = $('#task_tags').val();
             data_sent['task_assignees_id'] = $('#task_assignees_id').val();
             data_sent['task_status_id'] = $('#task_status_id').val();
+            data_sent['task_description'] = g_task_desc_editor.getValue();
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
             attributes = ret[1];
@@ -43,11 +62,23 @@ function add_task() {
 
 }
 
-function update_task(id) {
+function save_task() {
+    $('#submit_new_task').click();
+}
+
+function update_task(task_id) {
+    update_task_ext(task_id, true);
+}
+
+function update_task_ext(task_id, do_close) {
 
     clear_api_error();
     if(!$('form#form_new_task').valid()) {
         return false;
+    }
+
+    if (task_id === undefined || task_id === null) {
+        task_id = g_task_id;
     }
 
     var data_sent = $('#form_new_task').serializeObject();
@@ -62,14 +93,21 @@ function update_task(id) {
     if (has_error){return false;}
 
     data_sent['custom_attributes'] = attributes;
+    data_sent['task_description'] = g_task_desc_editor.getValue();
 
     $('#update_task_btn').text('Updating..');
 
-    post_request_api('tasks/update/' + id, JSON.stringify(data_sent), true)
+    post_request_api('tasks/update/' + task_id, JSON.stringify(data_sent), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             get_tasks();
-            $('#modal_add_task').modal('hide');
+            $('#submit_new_task').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
+            if (do_close !== undefined && do_close === true) {
+                $('#modal_add_task').modal('hide');
+            }
         }
     })
     .always(() => {
@@ -102,6 +140,19 @@ function edit_task(id) {
              ajax_notify_error(xhr, url);
              return false;
         }
+
+        g_task_id = id;
+
+        g_task_desc_editor = get_new_ace_editor('task_description', 'task_desc_content', 'target_task_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_task').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, update_task_ext);
+
+        headers = get_editor_headers('g_task_desc_editor', 'update_task_ext', 'task_edition_btn');
+        $('#task_edition_btn').append(headers);
+        edit_in_task_desc();
 
         load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
         $('#modal_add_task').modal({show:true});

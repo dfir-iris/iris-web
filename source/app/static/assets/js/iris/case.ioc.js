@@ -1,6 +1,6 @@
 /* reload the ioc table */
-g_ioc_id = null;
-g_ioc_desc_editor = null;
+var g_ioc_id = null;
+var g_ioc_desc_editor = null;
 
 
 function reload_iocs() {
