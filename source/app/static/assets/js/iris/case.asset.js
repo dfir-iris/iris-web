@@ -1,4 +1,8 @@
 /* reload the asset table */
+g_asset_id = null;
+g_asset_desc_editor = null;
+
+
 function reload_assets() {
     get_case_assets();
 }
@@ -17,8 +21,15 @@ function add_asset() {
              return false;
         }
 
-        asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc');
+        g_asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, save_asset);
         edit_in_asset_desc();
+        headers = get_editor_headers('g_asset_desc_editor', 'update_asset', 'asset_edition_btn');
+        $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
 
@@ -72,6 +83,7 @@ function add_asset() {
         })
 
         $('#modal_add_asset').modal({ show: true });
+        edit_in_asset_desc();
 
     });
 
@@ -130,8 +142,6 @@ function delete_asset(asset_id) {
         }
     });
 }
-g_asset_id = null;
-g_asset_desc_editor = null;
 
 /* Fetch the details of an asset and allow modification */
 function asset_details(asset_id) {
@@ -149,9 +159,9 @@ function asset_details(asset_id) {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                            }, save_asset);
+                            }, update_asset);
         edit_in_asset_desc();
-        headers = get_editor_headers('g_asset_desc_editor', 'save_asset', 'asset_edition_btn');
+        headers = get_editor_headers('g_asset_desc_editor', 'update_asset', 'asset_edition_btn');
         $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
@@ -170,7 +180,11 @@ function asset_details(asset_id) {
     return false;
 }
 
-function save_asset(do_close){
+function save_asset(){
+    $('#submit_new_asset').click();
+}
+
+function update_asset(do_close){
     if(!$('form#form_new_asset').valid()) {
         return false;
     }

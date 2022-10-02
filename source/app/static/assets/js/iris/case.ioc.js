@@ -1,6 +1,14 @@
 /* reload the ioc table */
+g_ioc_id = null;
+g_ioc_desc_editor = null;
+
+
 function reload_iocs() {
     get_case_ioc();
+}
+
+function edit_in_ioc_desc() {
+    return edit_inner_editor('ioc_edition_btn', 'container_ioc_desc_content', 'ctrd_ioc');
 }
 
 /* Fetch a modal that is compatible with the requested ioc type */ 
@@ -14,6 +22,17 @@ function add_ioc() {
              return false;
         }
 
+        g_ioc_desc_editor = get_new_ace_editor('ioc_description', 'ioc_desc_content', 'target_ioc_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, save_ioc);
+        edit_in_ioc_desc();
+        headers = get_editor_headers('g_ioc_desc_editor', 'save_ioc', 'ioc_edition_btn');
+        $('#ioc_edition_btn').append(headers);
+
+
         $('#submit_new_ioc').on("click", function () {
             if(!$('form#form_new_ioc').valid()) {
                 return false;
@@ -21,6 +40,8 @@ function add_ioc() {
 
             var data = $('#form_new_ioc').serializeObject();
             data['ioc_tags'] = $('#ioc_tags').val();
+            data['ioc_description'] = g_ioc_desc_editor.getValue();
+
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
             attributes = ret[1];
@@ -65,6 +86,10 @@ function add_ioc() {
     return false;
 }
 
+function save_ioc() {
+    $('#submit_new_ioc').click();
+}
+
 /* Retrieve the list of iocs and build a datatable for each type of ioc */
 function get_case_ioc() {
     show_loader();
@@ -104,12 +129,6 @@ function get_case_ioc() {
     })
 }
 
-function edit_in_ioc_desc() {
-    return edit_inner_editor('ioc_edition_btn', 'container_ioc_desc_content', 'ctrd_ioc');
-}
-
-g_ioc_id = null;
-g_ioc_desc_editor = null;
 
 /* Edit an ioc */
 function edit_ioc(ioc_id) {
