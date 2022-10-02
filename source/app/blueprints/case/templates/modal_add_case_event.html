@@ -72,16 +72,16 @@
                                 <div class="row">
                                     <div class="form-group mt-3 col-12">
                                         <label for="event_content" class="placeholder">Event description</label>
-                                        <div style="border-left: 2px solid #acacacdb;">
+                                        <div style="border-left: 1px solid #acacacdb;">
                                             <div class="form-group">
                                                     <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_event_desc();">
                                                     </button>
                                             </div>
-                                            <div class="row mb-1">
+                                            <div class="row">
                                                 <div class="col mb--2 ml--2" id="event_edition_btn">
                                                 </div>
                                             </div>
-                                            <div class="row">
+                                            <div class="row" style="margin-left:0px;">
                                                 <div class="col-md-6" id="container_event_desc_content">
                                                     <div id="event_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event %}{{ event.event_content  }}{% endif %}</div>
                                                     <textarea id="event_desc_content" rows="10" cols="82" style="display: none"></textarea>

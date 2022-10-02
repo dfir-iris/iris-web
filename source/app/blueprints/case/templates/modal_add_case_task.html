@@ -52,21 +52,23 @@
                                 </div>
                                 <div class="form-group mt-3">
                                     <label for="task_description" class="placeholder">Description</label>
-                                    <div class="form-group">
-                                            <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_task_desc();">
-                                            </button>
-                                    </div>
-                                    <div class="row mb-1">
-                                        <div class="col mb--2 ml--2" id="task_edition_btn">
+                                    <div style="border-left: 1px solid #acacacdb;">
+                                        <div class="form-group">
+                                                <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_task_desc();">
+                                                </button>
                                         </div>
-                                    </div>
-                                    <div class="row" style="border-left: 2px solid #acacacdb;">
-                                        <div class="col-md-6" id="container_task_desc_content">
-                                            <div id="task_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if task %}{{ task.task_description  }}{% endif %}</div>
-                                            <textarea id="task_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                        <div class="row">
+                                            <div class="col mb--2 ml--2" id="task_edition_btn">
+                                            </div>
                                         </div>
-                                        <div class="col-md-6" id="ctrd_task">
-                                            <div id="target_task_desc"></div>
+                                        <div class="row" style="margin-left:0px;">
+                                            <div class="col-md-6" id="container_task_desc_content">
+                                                <div id="task_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if task %}{{ task.task_description  }}{% endif %}</div>
+                                                <textarea id="task_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                            </div>
+                                            <div class="col-md-6" id="ctrd_task">
+                                                <div id="target_task_desc"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
