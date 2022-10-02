@@ -125,18 +125,7 @@
 {% endblock content %}
 {% block javascripts %}
 
-<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
-    charset="utf-8"></script>
-
-<script src="/static/assets/js/core/moments.min.js"></script>
-<script src="/static/assets/js/core/bootstrap-datetimepicker.min.js"></script>
-
-<script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
-<script src="/static/assets/js/plugin/select/select2.js"></script>
-<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
-
-<script src="/static/assets/js/iris/case.js"></script>
+{% include 'includes/footer_case.html' %}
 <script src="/static/assets/js/iris/case.timeline.js"></script>
 <script src="/static/assets/js/timeline.js"></script>
 

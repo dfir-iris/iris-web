@@ -61,7 +61,7 @@
                                             <div class="input-group ">
                                                 <input class="form-control col-9" type="text" id="event_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
                                                 <div class="input-group-append">
-                                                    <button class="btn btn-outline-secondary mr-2" type="button" onclick="time_converter();return false;">Submit</button>
+                                                    <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter();return false;">Submit</button>
                                                     <button class="btn btn-sm btn-outline" type="button" onclick="hide_time_converter();return false;"><i class="fas fa-magic"></i></button>
                                                 </div>
                                             </div>
@@ -71,8 +71,26 @@
                                 </div>
                                 <div class="row">
                                     <div class="form-group mt-3 col-12">
-                                        <label for="event_content" class="placeholder">{{ form.event_content.label.text }}</label>
-                                        {{ form.event_content(class='form-control col-md-12 col-sm-12 sizable-textarea',  autocomplete="off") }}
+                                        <label for="event_content" class="placeholder">Event description</label>
+                                        <div style="border-left: 2px solid #acacacdb;">
+                                            <div class="form-group">
+                                                    <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_event_desc();">
+                                                    </button>
+                                            </div>
+                                            <div class="row mb-1">
+                                                <div class="col mb--2 ml--2" id="event_edition_btn">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6" id="container_event_desc_content">
+                                                    <div id="event_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event %}{{ event.event_content  }}{% endif %}</div>
+                                                    <textarea id="event_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                                </div>
+                                                <div class="col-md-6" id="ctrd_event">
+                                                    <div id="target_event_desc"></div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -80,7 +98,7 @@
                                           <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseRawEvent" role="button" aria-expanded="false" aria-controls="collapseRawEvent">> Edit raw event data</a>
                                         <div class="collapse" id="collapseRawEvent">
                                             <div class="card card-body">
-                                                <label for="event_content" class="placeholder">{{ form.event_raw.label.text }}</label>
+                                                <label for="event_raw" class="placeholder">{{ form.event_raw.label.text }}</label>
                                                 {{ form.event_raw(class='form-control sizable-textarea',  autocomplete="off") }}
                                             </div>
                                         </div>
@@ -117,9 +135,6 @@
                                             </select>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="row">
-
                                 </div>
                                 <div class="row">
                                     <div class="form-group col-5">
@@ -203,7 +218,7 @@
         {% if event.event_id %}
             <button type="button" class="btn btn-outline-danger mt-5"
             onclick="delete_event({{ event.event_id }} );">Delete</button>
-            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_event"
             onclick="update_event({{ event.event_id }} );">Update</button>
 
         {% else %}
