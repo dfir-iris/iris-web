@@ -44,26 +44,6 @@
                                         {{ form.asset_type_id(class="selectpicker form-control") }}
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="asset_description" class="placeholder">Description</label>
-                                    <div class="form-group mt-3">
-                                            <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_asset_desc();">
-                                            </button>
-                                    </div>
-                                    <div class="row mb-1">
-                                        <div class="col mb--2" id="asset_edition_btn" style="display:none;">
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6" id="container_asset_desc_content">
-                                            <div id="asset_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if asset %}{{ asset.asset_description  }}{% endif %}</div>
-                                            <textarea id="asset_desc_content" rows="10" cols="82" style="display: none"></textarea>
-                                        </div>
-                                        <div class="col-md-6" id="ctrd_asset">
-                                            <div id="target_asset_desc"></div>
-                                        </div>
-                                    </div>
-                                </div>
                                 <div class="form-row ml-2">
                                     <div class="form-group col-6">
                                             <label for="asset_domain" class="placeholder">Domain</label>
@@ -112,7 +92,26 @@
                                         </select>
                                     </div>
                                 </div>
-
+                                <div class="form-group">
+                                    <label for="asset_description" class="placeholder">Description</label>
+                                    <div class="form-group mt-3">
+                                            <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_asset_desc();">
+                                            </button>
+                                    </div>
+                                    <div class="row mb-1">
+                                        <div class="col mb--2" id="asset_edition_btn" style="display:none;">
+                                        </div>
+                                    </div>
+                                    <div class="row" style="border-left: 2px solid #acacacdb;">
+                                        <div class="col-md-6" id="container_asset_desc_content">
+                                            <div id="asset_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if asset %}{{ asset.asset_description  }}{% endif %}</div>
+                                            <textarea id="asset_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                        </div>
+                                        <div class="col-md-6" id="ctrd_asset">
+                                            <div id="target_asset_desc"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>
