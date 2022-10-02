@@ -480,8 +480,22 @@ function downloadURI(uri, name) {
 function copy_object_link(node_id) {
     link = buildShareLink(node_id);
     navigator.clipboard.writeText(link).then(function() {
-          notify_success('Shared link copied')
+          notify_success('Shared link copied');
     }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error('Shared link', err);
+    });
+}
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function copy_object_link_md(data_type, node_id){
+    link = `[<i class="fa-solid fa-tag"></i> ${capitalizeFirstLetter(data_type)} #${node_id}](${buildShareLink(node_id)})`
+    navigator.clipboard.writeText(link).then(function() {
+        notify_success('MD link copied');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
         console.error('Shared link', err);
     });
 }
@@ -776,10 +790,20 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                     title: 'Share',
                     multi: false,
                     iconClass: 'fas fa-share',
-                    buttonClasses: ['btn', 'btn-outline-primary'],
                     action: function(rows){
                         row = rows[0];
                         copy_object_link(get_row_id(row));
+                    }
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Markdown Link',
+                    multi: false,
+                    iconClass: 'fa-brands fa-markdown',
+                    action: function(rows){
+                        row = rows[0];
+                        copy_object_link_md(data_type, get_row_id(row));
                     }
                 });
 

@@ -301,11 +301,6 @@ $(document).ready(function(){
 
                 share_link = buildShareLink(row['ioc_id']);
                 data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
-                if (row['ioc_misp'] != null) {
-                    jse = JSON.parse(row['ioc_misp']);
-                    data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
-                       data-toggle="popover" data-trigger="hover" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
-                }
               }
               return data;
             }
