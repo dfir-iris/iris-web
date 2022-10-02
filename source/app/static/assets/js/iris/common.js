@@ -695,7 +695,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
             parseImgDimensions: true
         });
         html = converter.makeHtml(editor.getSession().getValue());
-        target.innerHTML = html;
+        target.innerHTML = filterXSS(html);
     });
 
     textarea.val(editor.getSession().getValue());
@@ -705,7 +705,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
         parseImgDimensions: true
     });
     html = converter.makeHtml(editor.getSession().getValue());
-    target.innerHTML = html;
+    target.innerHTML = filterXSS(html);
 
     return editor;
 }

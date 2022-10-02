@@ -375,7 +375,7 @@ $(document).ready(function() {
         }),
         html = converter.makeHtml(editor.getSession().getValue());
 
-        target.innerHTML = html;
+        target.innerHTML = filterXSS(html);
 
     });
 
@@ -383,7 +383,7 @@ $(document).ready(function() {
     body_loaded();
     if (is_db_linked == 1) {
         sync_editor(true);
-        setInterval(auto_remove_typing, 3000);
+        setInterval(auto_remove_typing, 2000);
     }
 
     $('#generate_report_button').attr("href", '/report/generate/case/' + $("#select_report option:selected").val() + case_param());
