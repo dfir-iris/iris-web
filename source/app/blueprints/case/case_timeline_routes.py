@@ -300,11 +300,16 @@ def case_filter_timeline(caseid):
     end_date = filter_d.get('endDate')
     titles = filter_d.get('title')
     sources = filter_d.get('source')
+    flag = filter_d.get('flag')
 
     condition = (CasesEvent.case_id == caseid)
 
     if assets:
         assets = [asset.lower() for asset in assets]
+
+    if flag:
+        flags = (flag[0].lower() == 'true')
+        condition = and_(condition, CasesEvent.event_is_flagged == flags)
 
     if iocs:
         iocs = [ioc.lower() for ioc in iocs]

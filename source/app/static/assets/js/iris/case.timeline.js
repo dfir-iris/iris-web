@@ -562,7 +562,7 @@ function build_timeline(data) {
                                         <i class="fa fa-pen"></i>
                                     </span>
                                 </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Star">
+                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
                                     <span class="btn-label">
                                         ${flag}
                                     </span>
@@ -609,7 +609,7 @@ function build_timeline(data) {
                                         <i class="fa fa-pen"></i>
                                     </span>
                                 </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Star">
+                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
                                     <span class="btn-label">
                                         ${flag}
                                     </span>
@@ -722,9 +722,10 @@ function flag_event(event_id){
     .done(function(data) {
         if (notify_auto_api(data)) {
             if (data.data.event_is_flagged == true) {
-                $('#event_'+event_id).addClass('timeline-flagged');
+                $('#event_'+event_id).find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
+                $('#event_210').find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
             } else {
-                $('#event_'+event_id).removeClass('timeline-flagged');
+                $('#event_'+event_id).find('.fa-flag').addClass('fa-regular').removeClass('fas text-warning');
             }
         }
     });
@@ -815,7 +816,7 @@ function timelineToCsvWithUI(){
 }
 
 var parsed_filter = {};
-var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'startDate', 'endDate'];
+var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'flag', 'startDate', 'endDate'];
 
 
 function parse_filter(str_filter, keywords) {
@@ -864,7 +865,7 @@ function reset_filters() {
 }
 
 function apply_filtering(post_req_fn) {
-    keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'category', 'source',  'raw', 'startDate', 'endDate'];
+    keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'flag', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
