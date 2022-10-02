@@ -517,7 +517,7 @@ function build_timeline(data) {
 
         title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
         content_parsed = converter.makeHtml(evt.event_content);
-        //content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
+        content_parsed = filterXSS(content_parsed);
 
         if (!compact) {
             content_split = content_parsed.split('<br/>');
