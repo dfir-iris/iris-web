@@ -104,6 +104,13 @@ function get_case_ioc() {
     })
 }
 
+function edit_in_ioc_desc() {
+    return edit_inner_editor('ioc_edition_btn', 'container_ioc_desc_content', 'ctrd_ioc');
+}
+
+g_ioc_id = null;
+g_ioc_desc_editor = null;
+
 /* Edit an ioc */
 function edit_ioc(ioc_id) {
     url = 'ioc/' + ioc_id + '/modal' + case_param();
@@ -113,6 +120,17 @@ function edit_ioc(ioc_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
+        
+        g_ioc_id = ioc_id;
+        g_ioc_desc_editor = get_new_ace_editor('ioc_description', 'ioc_desc_content', 'target_ioc_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, update_ioc_ext);
+        edit_in_ioc_desc();
+        headers = get_editor_headers('g_ioc_desc_editor', 'update_ioc_ext', 'ioc_edition_btn');
+        $('#ioc_edition_btn').append(headers);
 
         load_menu_mod_options_modal(ioc_id, 'ioc', $("#ioc_modal_quick_actions"));
         $('.dtr-modal').hide();
@@ -120,10 +138,18 @@ function edit_ioc(ioc_id) {
     $('#modal_add_ioc').modal({ show: true });
 }
 
-/* Update an ioc */
 function update_ioc(ioc_id) {
+    update_ioc_ext(ioc_id, true);
+}
+
+/* Update an ioc */
+function update_ioc_ext(ioc_id, do_close) {
     if(!$('form#form_new_ioc').valid()) {
         return false;
+    }
+
+    if (ioc_id === undefined || ioc_id === null) {
+        ioc_id = g_ioc_id;
     }
 
     var data = $('#form_new_ioc').serializeObject();
@@ -133,14 +159,22 @@ function update_ioc(ioc_id) {
     attributes = ret[1];
 
     if (has_error){return false;}
-
+    data['ioc_description'] = g_ioc_desc_editor.getValue();
     data['custom_attributes'] = attributes;
 
     post_request_api('ioc/update/' + ioc_id, JSON.stringify(data), true)
     .done((data) => {
         if (data.status == 'success') {
             reload_iocs();
-            $('#modal_add_ioc').modal('hide');
+
+            $('#submit_new_ioc').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
+            if (do_close !== undefined && do_close === true) {
+                $('#modal_add_ioc').modal('hide');
+            }
+
             notify_success(data.message);
 
         } else {
