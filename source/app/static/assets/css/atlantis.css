@@ -8236,6 +8236,10 @@ body .badge-danger {
     box-shadow: 0px 0px 5px 5px rgba(255, 160, 36,.5),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12) !important;
 }
 
+.timeline-panel.timeline-flagged {
+    box-shadow: 0px 0px 5px 5px rgba(255, 48, 0, 0.3),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12) !important;
+}
+
 .timeline>li>.timeline-panel {
     width: 87%;
     float: left;
@@ -8263,7 +8267,6 @@ body .badge-danger {
 .timeline>li:not(.timeline-inverted)+li.timeline-inverted {
     margin-top: 30px;
 }
-
 
 .timeline>li>.timeline-badge {
     color: #ffffff;

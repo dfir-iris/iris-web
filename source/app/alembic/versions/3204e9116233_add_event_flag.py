@@ -1,4 +1,4 @@
-"""Add event star
+"""Add event flag
 
 Revision ID: 3204e9116233
 Revises: 11e066542a88
@@ -19,9 +19,9 @@ depends_on = None
 
 
 def upgrade():
-    if not _table_has_column('cases_events', 'event_is_starred'):
+    if not _table_has_column('cases_events', 'event_is_flagged'):
         op.add_column('cases_events',
-                      sa.Column('event_is_starred', sa.Boolean, default=False)
+                      sa.Column('event_is_flagged', sa.Boolean, default=False)
                       )
 
     pass

@@ -369,6 +369,7 @@ def case_filter_timeline(caseid):
             CasesEvent.event_content,
             CasesEvent.event_in_summary,
             CasesEvent.event_in_graph,
+            CasesEvent.event_is_flagged,
             User.user,
             CasesEvent.event_added,
             EventCategory.name.label("category_name")
@@ -537,6 +538,19 @@ def case_delete_event(cur_id, caseid):
     track_activity("deleted event ID {} in timeline".format(cur_id), caseid)
 
     return response_success('Event ID {} deleted'.format(cur_id))
+
+
+@case_timeline_blueprint.route('/case/timeline/events/flag/<int:cur_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def event_flag(cur_id, caseid):
+    event = get_case_event(cur_id, caseid)
+    if not event:
+        return response_error("Invalid event ID for this case")
+
+    event.event_is_flagged = not event.event_is_flagged
+    db.session.commit()
+
+    return response_success("Event flagged" if event.event_is_flagged else "Event unflagged", data=event)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])

@@ -543,6 +543,13 @@ function build_timeline(data) {
 
         shared_link = buildShareLink(evt.event_id);
 
+        flag = '';
+        if (evt.event_is_flagged) {
+            flag = `<i class="fas fa-flag text-warning" title="Flagged"></i>`;
+        } else {
+            flag = `<i class="fa-regular fa-flag" title="Not flagged"></i>`;
+        }
+
         if (compact) {
             entry = `<li class="timeline-inverted ${mtop_day}" title="Event ID #${evt.event_id}">
                 ${tmb_d}
@@ -555,6 +562,11 @@ function build_timeline(data) {
                                         <i class="fa fa-pen"></i>
                                     </span>
                                 </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Star">
+                                    <span class="btn-label">
+                                        ${flag}
+                                    </span>
+                                </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                     <span class="btn-label">
                                         <i class="fa fa-cog"></i>
@@ -562,6 +574,7 @@ function build_timeline(data) {
                                 </button>
                                 <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                                         <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                        <a href= "#" class="dropdown-item" onclick="copy_object_link_md('event', ${evt.event_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                                         <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                         <div class="dropdown-divider"></div>
                                         <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
@@ -594,6 +607,11 @@ function build_timeline(data) {
                                 <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
                                     <span class="btn-label">
                                         <i class="fa fa-pen"></i>
+                                    </span>
+                                </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Star">
+                                    <span class="btn-label">
+                                        ${flag}
                                     </span>
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -697,6 +715,19 @@ function hide_time_converter(){
     $('#event_date_convert').hide();
     $('#event_date_inputs').show();
     $('#event_date').focus();
+}
+
+function flag_event(event_id){
+    get_request_api('timeline/events/flag/'+event_id)
+    .done(function(data) {
+        if (notify_auto_api(data)) {
+            if (data.data.event_is_flagged == true) {
+                $('#event_'+event_id).addClass('timeline-flagged');
+            } else {
+                $('#event_'+event_id).removeClass('timeline-flagged');
+            }
+        }
+    });
 }
 
 function time_converter(){
