@@ -19,9 +19,9 @@ depends_on = None
 
 
 def upgrade():
-    if not _table_has_column('cases_events', 'event_is_stared'):
+    if not _table_has_column('cases_events', 'event_is_starred'):
         op.add_column('cases_events',
-                      sa.Column('event_is_stared', sa.Boolean, default=False)
+                      sa.Column('event_is_starred', sa.Boolean, default=False)
                       )
 
     pass
