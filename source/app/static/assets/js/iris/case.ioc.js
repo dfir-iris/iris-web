@@ -28,7 +28,7 @@ function add_ioc() {
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, save_ioc);
-        edit_in_ioc_desc();
+
         headers = get_editor_headers('g_ioc_desc_editor', 'save_ioc', 'ioc_edition_btn');
         $('#ioc_edition_btn').append(headers);
 

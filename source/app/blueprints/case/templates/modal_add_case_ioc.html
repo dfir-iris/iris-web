@@ -46,24 +46,24 @@
                                     {{ form.ioc_tlp_id(class="selectpicker pl--6 col-10") }}
                                 </div>
                             </div>
-                            <div class="form-group mt-3">
+                            <div class="form-group">
                                 <label for="ioc_value" class="placeholder">{{ form.ioc_value.label.text }} *</label>
                                 {{ form.ioc_value(class='form-control col-md-12 col-sm-12 sizable-textarea',  autocomplete="off") }}
                             </div>
-                            <div class="form-group mt-3">
+                            <div class="form-group">
                                 <label for="ioc_tags">IOC tags
                                 </label>
                                 <input type="text" id="ioc_tags"
                                     class="form-control col-md-12" {% if ioc.ioc_tags %} value="{{ ioc.ioc_tags }}" {% endif %}/>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group mt-3">
                                 <label for="ioc_description" class="placeholder">Description</label>
                                 <div class="form-group mt-3">
                                         <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_ioc_desc();">
                                         </button>
                                 </div>
                                 <div class="row mb-1">
-                                    <div class="col mb--2 ml--2" id="ioc_edition_btn" style="display:none;">
+                                    <div class="col mb--2 ml--2" id="ioc_edition_btn">
                                     </div>
                                 </div>
                                 <div class="row" style="border-left: 2px solid #acacacdb;">
