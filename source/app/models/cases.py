@@ -150,6 +150,7 @@ class CasesEvent(db.Model):
     event_tags = Column(Text)
     event_tz = Column(Text)
     event_date_wtz = Column(DateTime)
+    event_is_stared = Column(Boolean, default=False)
     custom_attributes = Column(JSONB)
 
     case = relationship('Cases')
