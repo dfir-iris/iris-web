@@ -423,6 +423,11 @@ function build_timeline(data) {
     }
     idx = 0;
 
+    converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+
     for (index in data.data.tim) {
         evt = data.data.tim[index];
         dta =  evt.event_date.split('T');
@@ -511,7 +516,8 @@ function build_timeline(data) {
         }
 
         title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
-        content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
+        content_parsed = converter.makeHtml(evt.event_content);
+        //content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
 
         if (!compact) {
             content_split = content_parsed.split('<br/>');
@@ -529,6 +535,7 @@ function build_timeline(data) {
                 ${long_content}
                 </div>
                 <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
+                formatted_content = formatted_content;
             } else {
                 formatted_content = match_replace_ioc(content_parsed, reap);
             }
@@ -607,17 +614,18 @@ function build_timeline(data) {
                         </div>
                         <div class="timeline-body text-faded" >
                             <span>${formatted_content}</span>
-                        </div>
-                        <div class="bottom-hour mt-2">
-                            <div class="row">
-                                <div class="col-4 d-flex">
-                                    <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${evt.event_date}${ori_date}</small></span>
-                                </div>
-                                <div class="col-8 ">
-                                    <span class="float-right">${tags}${asset} </span>
+
+                            <div class="bottom-hour mt-2">
+                                <div class="row">
+                                    <div class="col-4 d-flex">
+                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${evt.event_date}${ori_date}</small></span>
+                                    </div>
+                                    <div class="col-8 ">
+                                        <span class="float-right">${tags}${asset} </span>
+                                    </div>
                                 </div>
                             </div>
-                        <div>
+                        </div>
                     </div>
                 </li>`
         }
