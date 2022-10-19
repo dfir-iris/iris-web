@@ -249,7 +249,7 @@ def export_case_notes_json(case_id):
         for note in res:
             note = note._asdict()
             note["note_content"] = process_md_images_links_for_report(note["note_content"])
-            return_notes.append(return_notes)
+            return_notes.append(note)
 
     return return_notes
 
