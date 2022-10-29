@@ -33,6 +33,7 @@ from flask_wtf import FlaskForm
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import delete_event_category
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
@@ -64,6 +65,7 @@ from app.models.models import CaseEventsIoc
 from app.models.models import EventCategory
 from app.models.models import Ioc
 from app.models.models import IocLink
+from app.schema.marshables import CommentSchema
 from app.schema.marshables import EventSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
@@ -100,7 +102,7 @@ def case_getgraph_page(caseid, url_redir):
     return render_template("case_graph_timeline.html")
 
 
-@case_timeline_blueprint.route('/case/timeline/events/comments/<int:cur_id>/modal', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/modal', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -113,17 +115,49 @@ def case_comment_modal(cur_id, caseid, url_redir):
     return render_template("modal_conversation.html", event=event)
 
 
-@case_timeline_blueprint.route('/case/timeline/events/comments/<int:cur_id>', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
-def case_comment_get(cur_id, caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid, redirect=True))
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_get(cur_id, caseid):
 
     event_comments = get_case_event_comments(cur_id, caseid=caseid)
-    if not event_comments:
+    if event_comments is None:
         return response_error('Invalid event ID')
 
-    return response_success(event_comments)
+    res = [com._asdict() for com in event_comments]
+    return response_success(res)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_add(cur_id, caseid):
+
+    try:
+        event = get_case_event(event_id=cur_id, caseid=caseid)
+        if not event:
+            return response_error('Invalid event ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_event(event.event_id, comment.comment_id)
+
+        add_obj_history_entry(event, 'commented')
+
+        db.session.commit()
+
+        track_activity("event {} commented".format(event.event_id), caseid=caseid)
+        return response_success("Event added", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
 
 @case_timeline_blueprint.route('/case/timeline/state', methods=['GET'])

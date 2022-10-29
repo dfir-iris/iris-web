@@ -113,16 +113,27 @@ def get_case_event(event_id, caseid):
 
 def get_case_event_comments(event_id, caseid):
     return EventComments.query.filter(
-        EventComments.event_id == event_id,
-        EventComments.case_id == caseid
+        EventComments.comment_event_id == event_id
     ).with_entities(
-        Comments,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
         User.name,
         User.user
     ).join(
         EventComments.comment,
-        EventComments.user
+        Comments.user
     ).all()
+
+
+def add_comment_to_event(event_id, comment_id):
+    ec = EventComments()
+    ec.comment_event_id = event_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()
 
 
 def delete_event_category(event_id):

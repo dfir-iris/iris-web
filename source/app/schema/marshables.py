@@ -57,6 +57,7 @@ from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
 from app.models import Client
+from app.models import Comments
 from app.models import DataStoreFile
 from app.models import EventCategory
 from app.models import GlobalTasks
@@ -226,6 +227,14 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
 
         return data
+
+
+class CommentSchema(ma.SQLAlchemyAutoSchema):
+
+    class Meta:
+        model = Comments
+        load_instance = True
+        include_fk = True
 
 
 class EventSchema(ma.SQLAlchemyAutoSchema):

@@ -576,7 +576,7 @@ class Comments(db.Model):
     comment_text = Column(Text)
     comment_date = Column(DateTime)
     comment_update_date = Column(DateTime)
-    comment_userid = Column(ForeignKey('user.id'))
+    comment_user_id = Column(ForeignKey('user.id'))
     comment_case_id = Column(ForeignKey('cases.case_id'))
 
     user = relationship('User')
