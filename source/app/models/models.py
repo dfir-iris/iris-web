@@ -571,7 +571,7 @@ class ServerSettings(db.Model):
 class Comments(db.Model):
     __tablename__ = "comments"
 
-    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(BigInteger, primary_key=True)
     comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     comment_text = Column(Text)
     comment_date = Column(DateTime)
@@ -587,11 +587,10 @@ class EventComments(db.Model):
     __tablename__ = "event_comments"
 
     id = Column(BigInteger, primary_key=True)
-    comment_id = Column(ForeignKey('comments.id'))
-    comment_event_id = Column(ForeignKey('events.id'))
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_event_id = Column(ForeignKey('cases_events.event_id'))
 
-    user = relationship('User')
-    event = relationship('Events')
+    event = relationship('CasesEvent')
     comment = relationship('Comments')
 
 

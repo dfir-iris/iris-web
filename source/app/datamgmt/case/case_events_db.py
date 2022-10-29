@@ -27,10 +27,13 @@ from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
 from app.models import CasesEvent
+from app.models import Comments
 from app.models import EventCategory
+from app.models import EventComments
 from app.models import Ioc
 from app.models import IocLink
 from app.models import IocType
+from app.models.authorization import User
 
 
 def get_case_events_assets_graph(caseid):
@@ -109,10 +112,17 @@ def get_case_event(event_id, caseid):
 
 
 def get_case_event_comments(event_id, caseid):
-    return CasesEvent.query.filter(
-        CasesEvent.event_id == event_id,
-        CasesEvent.case_id == caseid
-    ).first()
+    return EventComments.query.filter(
+        EventComments.event_id == event_id,
+        EventComments.case_id == caseid
+    ).with_entities(
+        Comments,
+        User.name,
+        User.user
+    ).join(
+        EventComments.comment,
+        EventComments.user
+    ).all()
 
 
 def delete_event_category(event_id):
