@@ -99,6 +99,19 @@ def case_getgraph_page(caseid, url_redir):
     return render_template("case_graph_timeline.html")
 
 
+@case_timeline_blueprint.route('/case/timeline/comment/<int:cur_id>/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid, redirect=True))
+
+    event = get_case_event(cur_id, caseid=caseid)
+    if not event:
+        return response_error('Invalid event ID')
+
+    return render_template("modal_conversation.html", event=event)
+
+
 @case_timeline_blueprint.route('/case/timeline/state', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_timeline_state(caseid):

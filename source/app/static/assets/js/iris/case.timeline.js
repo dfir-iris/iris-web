@@ -567,6 +567,11 @@ function build_timeline(data) {
                                         ${flag}
                                     </span>
                                 </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="comment_event(${evt.event_id})" title="Comments">
+                                    <span class="btn-label">
+                                        <i class="fa-solid fa-comments"></i>
+                                    </span>
+                                </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                     <span class="btn-label">
                                         <i class="fa fa-cog"></i>
@@ -911,6 +916,16 @@ function show_timeline_filter_help() {
              return false;
         }
         $('#modal_help').modal('show');
+    });
+}
+
+function comment_event(event_id) {
+    $('#modal_comment_content').load('/case/timeline/comment/'+ event_id + '/modal' + case_param(), function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, '/case/timeline/comment/'+ event_id + '/modal');
+             return false;
+        }
+        $('#modal_comment').modal('show');
     });
 }
 
