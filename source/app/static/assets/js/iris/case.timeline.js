@@ -920,9 +920,9 @@ function show_timeline_filter_help() {
 }
 
 function comment_event(event_id) {
-    $('#modal_comment_content').load('/case/timeline/comment/'+ event_id + '/modal' + case_param(), function (response, status, xhr) {
+    $('#modal_comment_content').load('/case/timeline/events/comments/'+ event_id + '/modal' + case_param(), function (response, status, xhr) {
         if (status !== "success") {
-             ajax_notify_error(xhr, '/case/timeline/comment/'+ event_id + '/modal');
+             ajax_notify_error(xhr, '/case/timeline/events/comments/'+ event_id + '/modal');
              return false;
         }
         $('#modal_comment_content').resizable({
@@ -934,8 +934,24 @@ function comment_event(event_id) {
         $('.modal-comment').draggable({
             cursor: 'move'
         });
+
         $('#modal_comment').modal('show');
+
+        g_comment_desc_editor = get_new_ace_editor('comment_message', 'comment_content', 'target_comment_content',
+                    function() {
+                        $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                        $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                    }, save_comment);
+
+        headers = get_editor_headers('g_comment_desc_editor', 'save_comment', 'comment_edition_btn');
+        $('#comment_edition_btn').append(headers);
+
     });
+}
+
+function save_comment(){
+    return false;
 }
 
 /* Page is ready, fetch the assets of the case */

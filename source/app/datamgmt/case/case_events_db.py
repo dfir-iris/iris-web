@@ -108,6 +108,13 @@ def get_case_event(event_id, caseid):
     ).first()
 
 
+def get_case_event_comments(event_id, caseid):
+    return CasesEvent.query.filter(
+        CasesEvent.event_id == event_id,
+        CasesEvent.case_id == caseid
+    ).first()
+
+
 def delete_event_category(event_id):
     CaseEventCategory.query.filter(
         CaseEventCategory.event_id == event_id

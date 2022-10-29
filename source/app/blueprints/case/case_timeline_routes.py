@@ -36,6 +36,7 @@ from app import db
 from app.datamgmt.case.case_events_db import delete_event_category
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
+from app.datamgmt.case.case_events_db import get_case_event_comments
 from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
 from app.datamgmt.case.case_events_db import get_default_cat
 from app.datamgmt.case.case_events_db import get_event_assets_ids
@@ -99,7 +100,7 @@ def case_getgraph_page(caseid, url_redir):
     return render_template("case_graph_timeline.html")
 
 
-@case_timeline_blueprint.route('/case/timeline/comment/<int:cur_id>/modal', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/comments/<int:cur_id>/modal', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -110,6 +111,19 @@ def case_comment_modal(cur_id, caseid, url_redir):
         return response_error('Invalid event ID')
 
     return render_template("modal_conversation.html", event=event)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/comments/<int:cur_id>', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_get(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid, redirect=True))
+
+    event_comments = get_case_event_comments(cur_id, caseid=caseid)
+    if not event_comments:
+        return response_error('Invalid event ID')
+
+    return response_success(event_comments)
 
 
 @case_timeline_blueprint.route('/case/timeline/state', methods=['GET'])

@@ -636,7 +636,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     editor.setOption("showPrintMargin", false);
     editor.setOption("displayIndentGuides", true);
     editor.setOption("maxLines", "Infinity");
-    editor.setOption("minLines", "10");
+    editor.setOption("minLines", "2");
     editor.setOption("autoScrollEditorIntoView", true);
     editor.session.setUseWrapMode(true);
     editor.setOption("indentedSoftWrap", false);

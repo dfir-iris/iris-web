@@ -15,75 +15,44 @@
                 </div>
             </div>
             <div class="modal-body">
-                <div class="card-body">
-                    <div class="d-flex">
-                        <div class="avatar avatar-online">
-                            <span class="avatar-title rounded-circle border border-white bg-info">J</span>
-                        </div>
-                        <div class="flex-1 ml-3 pt-1">
-                            <h6 class="text-uppercase fw-bold mb-1">Joko Subianto <span class="text-warning pl-3">pending</span></h6>
-                            <span class="text-muted">I am facing some trouble with my viewport. When i start my</span>
-                        </div>
-                        <div class="float-right pt-1">
-                            <small class="text-muted">8:40 PM</small>
-                        </div>
-                    </div>
-                    <div class="separator-dashed"></div>
-                    <div class="d-flex">
-                        <div class="avatar avatar-offline">
-                            <span class="avatar-title rounded-circle border border-white bg-secondary">P</span>
-                        </div>
-                        <div class="flex-1 ml-3 pt-1">
-                            <h6 class="text-uppercase fw-bold mb-1">Prabowo Widodo <span class="text-success pl-3">open</span></h6>
-                            <span class="text-muted">I have some query regarding the license issue.</span>
-                        </div>
-                        <div class="float-right pt-1">
-                            <small class="text-muted">1 Day Ago</small>
-                        </div>
-                    </div>
-                    <div class="separator-dashed"></div>
-                    <div class="d-flex">
-                        <div class="avatar avatar-away">
-                            <span class="avatar-title rounded-circle border border-white bg-danger">L</span>
-                        </div>
-                        <div class="flex-1 ml-3 pt-1">
-                            <h6 class="text-uppercase fw-bold mb-1">Lee Chong Wei <span class="text-muted pl-3">closed</span></h6>
-                            <span class="text-muted">Is there any update plan for RTL version near future?</span>
-                        </div>
-                        <div class="float-right pt-1">
-                            <small class="text-muted">2 Days Ago</small>
-                        </div>
-                    </div>
-                    <div class="separator-dashed"></div>
-                    <div class="d-flex">
-                        <div class="avatar avatar-offline">
-                            <span class="avatar-title rounded-circle border border-white bg-secondary">P</span>
-                        </div>
-                        <div class="flex-1 ml-3 pt-1">
-                            <h6 class="text-uppercase fw-bold mb-1">Peter Parker <span class="text-success pl-3">open</span></h6>
-                            <span class="text-muted">I have some query regarding the license issue.</span>
-                        </div>
-                        <div class="float-right pt-1">
-                            <small class="text-muted">2 Day Ago</small>
-                        </div>
-                    </div>
-                    <div class="separator-dashed"></div>
-                    <div class="d-flex">
-                        <div class="avatar avatar-away">
-                            <span class="avatar-title rounded-circle border border-white bg-danger">L</span>
-                        </div>
-                        <div class="flex-1 ml-3 pt-1">
-                            <h6 class="text-uppercase fw-bold mb-1">Logan Paul <span class="text-muted pl-3">closed</span></h6>
-                            <span class="text-muted">Is there any update plan for RTL version near future?</span>
-                        </div>
-                        <div class="float-right pt-1">
-                            <small class="text-muted">2 Days Ago</small>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="d-flex">
+                            <div class="avatar avatar-online">
+                                <span class="avatar-title rounded-circle border border-white bg-info">J</span>
+                            </div>
+                            <div class="flex-1 ml-3 pt-1">
+                                <h6 class="text-uppercase fw-bold mb-1">Joko Subianto <span class="text-warning pl-3">pending</span></h6>
+                                <span class="text-muted">I am facing some trouble with my viewport. When i start my</span>
+                            </div>
+                            <div class="float-right pt-1">
+                                <small class="text-muted">8:40 PM</small>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <hr/>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col mb--2 ml--2" id="comment_edition_btn">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" id="container_comment_content">
+                                <div id="comment_message" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
+                                <textarea id="comment_content" rows="2" style="display: none"></textarea>
+                            </div>
+                            <div class="col-12" id="ctrd_ioc">
+                                <div id="target_comment_content"></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" id="container_comment_submit">
+                                <button type="button" class="btn btn-primary btn-sm float-right" id="comment_submit"><i class="fa-regular fa-paper-plane"></i> Comment</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 

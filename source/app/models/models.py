@@ -568,6 +568,33 @@ class ServerSettings(db.Model):
     password_policy_special_chars = Column(Text)
 
 
+class Comments(db.Model):
+    __tablename__ = "comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
+    comment_text = Column(Text)
+    comment_date = Column(DateTime)
+    comment_update_date = Column(DateTime)
+    comment_userid = Column(ForeignKey('user.id'))
+    comment_case_id = Column(ForeignKey('cases.case_id'))
+
+    user = relationship('User')
+    case = relationship('Cases')
+
+
+class EventComments(db.Model):
+    __tablename__ = "event_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.id'))
+    comment_event_id = Column(ForeignKey('events.id'))
+
+    user = relationship('User')
+    event = relationship('Events')
+    comment = relationship('Comments')
+
+
 class IrisModule(db.Model):
     __tablename__ = "iris_module"
 
