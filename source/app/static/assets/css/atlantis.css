@@ -14992,7 +14992,21 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
         border-radius: 0;
         border: none;
       }
-    
+
+.modal .modal-comment {
+   position: absolute;
+   bottom: 10px;
+   right: 30px;
+   max-width: 100%;
+   max-height: 100%;
+   min-width: 30%;
+   min-height: 30%;
+}
+
+.shadow-xl {
+   box-shadow: 0 0rem 3rem rgba(0,0,0,.175) !important;
+}
+
 .datetimepicker {
     display: inline-flex;
     align-items: center;

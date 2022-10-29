@@ -925,6 +925,15 @@ function comment_event(event_id) {
              ajax_notify_error(xhr, '/case/timeline/comment/'+ event_id + '/modal');
              return false;
         }
+        $('#modal_comment_content').resizable({
+            alsoResize: ".modal-dialog",
+            minHeight: 300,
+            minWidth: 300,
+            handles: "n, e, s, w, ne, se, sw, nw"
+        });
+        $('.modal-comment').draggable({
+            cursor: 'move'
+        });
         $('#modal_comment').modal('show');
     });
 }
