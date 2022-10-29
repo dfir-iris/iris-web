@@ -947,6 +947,8 @@ function comment_event(event_id) {
         headers = get_editor_headers('g_comment_desc_editor', 'save_comment', 'comment_edition_btn');
         $('#comment_edition_btn').append(headers);
 
+        load_comments(event_id);
+
     });
 }
 
@@ -960,7 +962,39 @@ function save_comment_ext(event_id, do_close){
     data['csrf_token'] = $('#csrf_token').val();
     post_request_api('/case/timeline/events/'+ event_id + '/comments/add', JSON.stringify(data), true)
     .done((data) => {
-        notify_auto_api(data, true);
+        if(notify_auto_api(data, true)) {
+            load_comments(event_id);
+        }
+    });
+}
+
+function load_comments(event_id) {
+    get_request_api('/case/timeline/events/'+ event_id + '/comments/list', true)
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            $('#comments_list').empty();
+            for (var i = 0; i < data['data'].length; i++) {
+                comment = `
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="d-flex">
+                                <div class="avatar avatar-online">
+                                    <span class="avatar-title rounded-circle border border-white bg-info">${data['data'][i].name.charAt(0)}</span>
+                                </div>
+                                <div class="flex-1 ml-3 pt-1">
+                                    <h6 class="text-uppercase fw-bold mb-1">${data['data'][i].name}</h6>
+                                    <span class="text-muted">${data['data'][i].comment_text}</span>
+                                </div>
+                                <div class="float-right pt-1">
+                                    <small class="text-muted">${data['data'][i].comment_date}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#comments_list').append(comment);
+            }
+        }
     });
 }
 

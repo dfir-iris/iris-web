@@ -112,10 +112,12 @@ def case_comment_modal(cur_id, caseid, url_redir):
     if not event:
         return response_error('Invalid event ID')
 
-    return render_template("modal_conversation.html", event=event)
+    comments = get_case_event_comments(cur_id, caseid=caseid)
+
+    return render_template("modal_conversation.html", event=event, comments=comments)
 
 
-@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_get(cur_id, caseid):
 
@@ -124,7 +126,7 @@ def case_comment_get(cur_id, caseid):
         return response_error('Invalid event ID')
 
     res = [com._asdict() for com in event_comments]
-    return response_success(res)
+    return response_success(data=res)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
