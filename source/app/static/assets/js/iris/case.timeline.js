@@ -983,7 +983,18 @@ function save_comment_ext(event_id, do_close){
     data['csrf_token'] = $('#csrf_token').val();
     post_request_api('/case/timeline/events/'+ event_id + '/comments/add', JSON.stringify(data), true)
     .done((data) => {
-        if(notify_auto_api(data, true)) {
+        if(notify_auto_api(data)) {
+            load_comments(event_id);
+        }
+    });
+}
+
+function delete_comment(comment_id, event_id) {
+    data = Object();
+    data['csrf_token'] = $('#csrf_token').val();
+    get_request_api('/case/timeline/events/'+ event_id + '/comments/'+ comment_id + '/delete')
+    .done((data) => {
+        if(notify_auto_api(data)) {
             load_comments(event_id);
         }
     });
@@ -1018,28 +1029,27 @@ function load_comments(event_id) {
 
                 can_edit = "";
                 current_user = $('#current_username').text();
-                console.log(current_user);
-                console.log(data['data'][i].user);
+
                 if (current_user === data['data'][i].user) {
-                    can_edit = '<a href="#" class="btn btn-sm" title="Edit comment" onclick="edit_comment(\'' + data['data'][i].id + '\', \'' + event_id + '\'); return false;"><i class="fa-solid fa-edit text-dark"></i></a>';
-                    can_edit += '<a href="#" class="btn btn-sm" title="Delete comment" onclick="delete_comment(\'' + data['data'][i].id + '\', \'' + event_id + '\'); return false;"><i class="fa-solid fa-trash text-dark"></i></a>';
+                    can_edit = '<a href="#" class="btn btn-sm comment-edition-hidden" title="Edit comment" onclick="edit_comment(\'' + data['data'][i].comment_id + '\', \'' + event_id + '\'); return false;"><i class="fa-solid fa-edit text-dark"></i></a>';
+                    can_edit += '<a href="#" class="btn btn-sm comment-edition-hidden" title="Delete comment" onclick="delete_comment(\'' + data['data'][i].comment_id + '\', \'' + event_id + '\'); return false;"><i class="fa-solid fa-trash text-dark"></i></a>';
                 }
 
                 comment = `
                     <div class="row mb-3 mr-1 ${is_last_one}">
                         <div class="col-12">
                             <div class="row">
-                                <div class="col-6">
+                                <div class="col-5">
                                     <div class="ml-2 row">
                                         ${avatar}
-                                         <div class="ml-3">
+                                         <div class="ml-3 mt-1">
                                             <h6 class="text-uppercase fw-bold mb-1">${data['data'][i].name}</h6>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6">
-                                    <div class="float-right pt-1">
-                                        ${can_edit} <small class="text-muted">${data['data'][i].comment_date}</small>
+                                <div class="col-7">
+                                    <div class="float-right">
+                                        ${can_edit} <small class="text-muted text-wrap">${data['data'][i].comment_date}</small>
                                     </div>
                                 </div>
                             </div>

@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
@@ -115,6 +115,7 @@ def get_case_event_comments(event_id, caseid):
     return EventComments.query.filter(
         EventComments.comment_event_id == event_id
     ).with_entities(
+        EventComments.comment_id,
         Comments.comment_text,
         Comments.comment_date,
         Comments.comment_update_date,
@@ -125,6 +126,35 @@ def get_case_event_comments(event_id, caseid):
         EventComments.comment,
         Comments.user
     ).all()
+
+
+def get_case_event_comment(event_id, comment_id, caseid):
+    return EventComments.query.filter(
+        EventComments.comment_event_id == event_id,
+        EventComments.comment_id == comment_id
+    ).with_entities(
+        EventComments,
+        Comments
+    ).first()
+
+
+def delete_event_comment(event_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    EventComments.query.filter(
+        EventComments.comment_event_id == event_id,
+        EventComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"
 
 
 def add_comment_to_event(event_id, comment_id):

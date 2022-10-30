@@ -35,8 +35,10 @@ from sqlalchemy import and_
 from app import db
 from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import delete_event_category
+from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
+from app.datamgmt.case.case_events_db import get_case_event_comment
 from app.datamgmt.case.case_events_db import get_case_event_comments
 from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
 from app.datamgmt.case.case_events_db import get_default_cat
@@ -127,6 +129,17 @@ def case_comment_get(cur_id, caseid):
 
     res = [com._asdict() for com in event_comments]
     return response_success(data=res)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_event_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    return response_success(msg)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
