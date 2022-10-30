@@ -1003,12 +1003,19 @@ function load_comments(event_id) {
                 });
                 html = converter.makeHtml(comment_text);
                 comment_html = filterXSS(html);
+                initial = data['data'][i].name.split(' ');
+                if (initial.length > 1) {
+                    initial = initial[0][0] + initial[1][0];
+                } else {
+                    initial = initial[0][0];
+                }
+                initial = initial.toUpperCase();
                 comment = `
-                    <div class="row mb-3">
+                    <div class="row mb-3 mr-1">
                         <div class="col-12">
                             <div class="d-flex">
-                                <div class="avatar avatar-online">
-                                    <span class="avatar-title rounded-circle border border-white bg-info">${data['data'][i].name.charAt(0).toUpperCase()}</span>
+                                <div class="avatar">
+                                    <span class="avatar-title rounded-circle border border-white bg-info">${initial}</span>
                                 </div>
                                 <div class="flex-1 ml-3 pt-1">
                                     <h6 class="text-uppercase fw-bold mb-1">${data['data'][i].name}</h6>
@@ -1022,6 +1029,9 @@ function load_comments(event_id) {
                     </div>
                 `;
                 $('#comments_list').append(comment);
+            }
+            if (data['data'].length === 0) {
+                $('#comments_list').html('<div class="text-center">No comments yet</div>');
             }
         }
     });

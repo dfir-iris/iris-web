@@ -14997,10 +14997,24 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
    position: absolute;
    bottom: 10px;
    right: 30px;
-   max-width: 100%;
-   max-height: 100%;
+   max-width: 100vh;
+   max-height: calc(100vh - 20px);
    min-width: 30%;
    min-height: 30%;
+}
+
+.comments-listing {
+  max-height: calc(100vh - 350px);
+  overflow-y: scroll;
+}
+
+.comment-content {
+    max-height: 30vh;
+    overflow-y: scroll;
+}
+
+.modal .modal-comment .modal-header {
+    padding: 0px;
 }
 
 .shadow-xl {
