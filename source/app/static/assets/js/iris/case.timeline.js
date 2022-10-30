@@ -994,6 +994,7 @@ function load_comments(event_id) {
     .done((data) => {
         if (notify_auto_api(data, true)) {
             $('#comments_list').empty();
+            var names = Object;
             for (var i = 0; i < data['data'].length; i++) {
 
                 comment_text = data['data'][i].comment_text;
@@ -1003,13 +1004,13 @@ function load_comments(event_id) {
                 });
                 html = converter.makeHtml(comment_text);
                 comment_html = filterXSS(html);
-                initial = data['data'][i].name.split(' ');
-                if (initial.length > 1) {
-                    initial = initial[0][0] + initial[1][0];
+                if (names.hasOwnProperty(data['data'][i].name)) {
+                    avatar = names[data['data'][i].name];
                 } else {
-                    initial = initial[0][0];
+                    avatar = get_avatar_initials(data['data'][i].name);
+                    names[data['data'][i].name] = avatar;
                 }
-                initial = initial.toUpperCase();
+
                 is_last_one = "";
                 if (i == data['data'].length - 1) {
                     is_last_one = "last-comment";
@@ -1018,9 +1019,7 @@ function load_comments(event_id) {
                     <div class="row mb-3 mr-1 ${is_last_one}">
                         <div class="col-12">
                             <div class="d-flex">
-                                <div class="avatar">
-                                    <span class="avatar-title rounded-circle border border-white bg-info">${initial}</span>
-                                </div>
+                                ${avatar}
                                 <div class="flex-1 ml-3 pt-1">
                                     <h6 class="text-uppercase fw-bold mb-1">${data['data'][i].name}</h6>
                                     <span class="text-muted">${comment_html}</span>

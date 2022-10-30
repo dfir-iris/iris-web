@@ -15018,7 +15018,7 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
 }
 
 .shadow-xl {
-   box-shadow: 0 0rem 3rem rgba(0,0,0,.175) !important;
+   box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.73) !important;
 }
 
 .datetimepicker {

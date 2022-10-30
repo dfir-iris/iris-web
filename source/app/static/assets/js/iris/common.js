@@ -726,6 +726,24 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     return editor;
 }
 
+function get_avatar_initials(name) {
+    initial = name.split(' ');
+    if (initial.length > 1) {
+        initial = initial[0][0] + initial[1][0];
+        snum = initial[0].charCodeAt(0) + initial[1].charCodeAt(0);
+    } else {
+        initial = initial[0][0];
+        snum = initial.charCodeAt(0);
+    }
+    initial = initial.toUpperCase();
+
+    bgs = ['bg-info', 'bg-default', 'bg-primary', 'bg-secondary', 'bg-success', 'bg-warning', 'bg-danger'];
+    bg = bgs[snum % bgs.length];
+    return `<div class="avatar">
+        <span class="avatar-title rounded-circle border border-white ${bg}">${initial}</span>
+    </div>`;
+}
+
 function edit_inner_editor(btn_id, container_id, ctrd_id) {
     $('#'+container_id).toggle();
     if ($('#'+container_id).is(':visible')) {
