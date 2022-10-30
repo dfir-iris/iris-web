@@ -948,7 +948,6 @@ function comment_event(event_id) {
         $('#comment_edition_btn').append(headers);
 
         load_comments(event_id);
-
     });
 }
 
