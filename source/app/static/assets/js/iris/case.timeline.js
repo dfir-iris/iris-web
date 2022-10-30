@@ -1008,11 +1008,23 @@ function edit_comment(comment_id, event_id) {
 
             $('#comment_'+comment_id).css('background-color','rgba(255, 167, 90, 0.44)');
             $('#comment_'+comment_id).css('border-radius','20px');
+            $('#comment_'+comment_id).addClass('comment_editing');
             g_comment_desc_editor.setValue(data.data.comment_text);
             $('#comment_edition').show();
             $('#comment_submit').hide();
+            $('#cancel_edition').show();
         }
     });
+}
+
+function cancel_edition(comment_id) {
+    $('.comment_editing').css('background-color', '');
+    $('.comment_editing').css('border-radius', '');
+    $('.comment_editing').removeClass('comment_editing');
+    $('#comment_edition').hide();
+    $('#cancel_edition').hide();
+    $('#comment_submit').show();
+    g_comment_desc_editor.setValue('');
 }
 
 function load_comments(event_id) {
