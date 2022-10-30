@@ -37,6 +37,7 @@
                         <div class="row">
                             <div class="col-12" id="container_comment_submit">
                                 <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_submit" onclick="save_comment({{ event.event_id }});"><i class="fa-regular fa-paper-plane"></i> Comment</button>
+                                <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_edition" style="display: none;" onclick="save_edit_comment({{ event.event_id }});"><i class="fa-regular fa-paper-plane"></i> Save</button>
                                 <button type="button" class="btn btn-dark btn-sm float-right" onclick="preview_comment();" id="comment_preview_button"><i class="fa-solid fa-eye"></i> Preview</button>
                             </div>
                         </div>

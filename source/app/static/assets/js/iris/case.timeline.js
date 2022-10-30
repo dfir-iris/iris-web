@@ -1000,6 +1000,21 @@ function delete_comment(comment_id, event_id) {
     });
 }
 
+function edit_comment(comment_id, event_id) {
+
+    get_request_api('/case/timeline/events/'+ event_id + '/comments/'+ comment_id)
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+
+            $('#comment_'+comment_id).css('background-color','rgba(255, 167, 90, 0.44)');
+            $('#comment_'+comment_id).css('border-radius','20px');
+            g_comment_desc_editor.setValue(data.data.comment_text);
+            $('#comment_edition').show();
+            $('#comment_submit').hide();
+        }
+    });
+}
+
 function load_comments(event_id) {
     get_request_api('/case/timeline/events/'+ event_id + '/comments/list', true)
     .done((data) => {
@@ -1036,9 +1051,9 @@ function load_comments(event_id) {
                 }
 
                 comment = `
-                    <div class="row mb-3 mr-1 ${is_last_one}">
-                        <div class="col-12">
-                            <div class="row">
+                    <div class="row mb-2 mr-1 ${is_last_one}" >
+                        <div class="col-12" id="comment_${data['data'][i].comment_id}">
+                            <div class="row mt-2">
                                 <div class="col-5">
                                     <div class="ml-2 row">
                                         ${avatar}

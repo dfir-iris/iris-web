@@ -133,8 +133,15 @@ def get_case_event_comment(event_id, comment_id, caseid):
         EventComments.comment_event_id == event_id,
         EventComments.comment_id == comment_id
     ).with_entities(
-        EventComments,
-        Comments
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        EventComments.comment
     ).first()
 
 

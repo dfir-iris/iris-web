@@ -121,7 +121,7 @@ def case_comment_modal(cur_id, caseid, url_redir):
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
-def case_comment_get(cur_id, caseid):
+def case_comments_get(cur_id, caseid):
 
     event_comments = get_case_event_comments(cur_id, caseid=caseid)
     if event_comments is None:
@@ -140,6 +140,17 @@ def case_comment_delete(cur_id, com_id, caseid):
         return response_error(msg)
 
     return response_success(msg)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_get(cur_id, com_id, caseid):
+
+    comment = get_case_event_comment(cur_id, com_id, caseid=caseid)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
