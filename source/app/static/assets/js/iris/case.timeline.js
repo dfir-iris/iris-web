@@ -1010,8 +1010,12 @@ function load_comments(event_id) {
                     initial = initial[0][0];
                 }
                 initial = initial.toUpperCase();
+                is_last_one = "";
+                if (i == data['data'].length - 1) {
+                    is_last_one = "last-comment";
+                }
                 comment = `
-                    <div class="row mb-3 mr-1">
+                    <div class="row mb-3 mr-1 ${is_last_one}">
                         <div class="col-12">
                             <div class="d-flex">
                                 <div class="avatar">
@@ -1032,6 +1036,8 @@ function load_comments(event_id) {
             }
             if (data['data'].length === 0) {
                 $('#comments_list').html('<div class="text-center">No comments yet</div>');
+            } else {
+                $('#comments_list').animate({ scrollTop: $('.last-comment').offset().top});
             }
         }
     });
