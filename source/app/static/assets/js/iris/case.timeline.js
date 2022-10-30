@@ -990,12 +990,18 @@ function save_comment_ext(event_id, do_close){
 }
 
 function delete_comment(comment_id, event_id) {
-    data = Object();
-    data['csrf_token'] = $('#csrf_token').val();
-    get_request_api('/case/timeline/events/'+ event_id + '/comments/'+ comment_id + '/delete')
-    .done((data) => {
-        if(notify_auto_api(data)) {
-            load_comments(event_id);
+
+    do_deletion_prompt("You are about to delete comment #" + comment_id)
+    .then((doDelete) => {
+        if (doDelete) {
+            data = Object();
+            data['csrf_token'] = $('#csrf_token').val();
+            get_request_api('/case/timeline/events/'+ event_id + '/comments/'+ comment_id + '/delete')
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    load_comments(event_id);
+                }
+            });
         }
     });
 }
@@ -1027,6 +1033,7 @@ function save_edit_comment(event_id){
     post_request_api('/case/timeline/events/'+ event_id + '/comments/'+ comment_id +'/edit', JSON.stringify(data), true)
     .done((data) => {
         if(notify_auto_api(data)) {
+            cancel_edition(comment_id);
             load_comments(event_id, comment_id);
         }
     });
