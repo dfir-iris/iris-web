@@ -125,6 +125,8 @@ def get_case_event_comments(event_id, caseid):
     ).join(
         EventComments.comment,
         Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
     ).all()
 
 
@@ -141,7 +143,15 @@ def get_case_event_comment(event_id, comment_id, caseid):
         User.name,
         User.user
     ).join(
-        EventComments.comment
+        EventComments.comment,
+        Comments.user
+    ).first()
+
+
+def get_case_comment(comment_id, caseid):
+    return Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_case_id == caseid
     ).first()
 
 

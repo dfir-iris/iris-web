@@ -37,6 +37,7 @@ from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import delete_event_category
 from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
+from app.datamgmt.case.case_events_db import get_case_comment
 from app.datamgmt.case.case_events_db import get_case_event
 from app.datamgmt.case.case_events_db import get_case_event_comment
 from app.datamgmt.case.case_events_db import get_case_event_comments
@@ -132,7 +133,7 @@ def case_comments_get(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_delete(cur_id, com_id, caseid):
 
     success, msg = delete_event_comment(cur_id, com_id)
@@ -153,8 +154,33 @@ def case_comment_get(cur_id, com_id, caseid):
     return response_success(data=comment._asdict())
 
 
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_edit(cur_id, com_id, caseid):
+
+    comment = get_case_comment(com_id, caseid=caseid)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    try:
+        rq_t = request.get_json()
+        comment_text = rq_t.get('comment_text')
+        comment.comment_text = comment_text
+        comment.comment_update_date = datetime.utcnow()
+        comment_schema = CommentSchema()
+        # request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        db.session.commit()
+
+        track_activity("comment {} edited".format(comment.comment_id), caseid=caseid)
+        return response_success("Comment edited", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_add(cur_id, caseid):
 
     try:
@@ -180,7 +206,7 @@ def case_comment_add(cur_id, caseid):
         db.session.commit()
 
         track_activity("event {} commented".format(event.event_id), caseid=caseid)
-        return response_success("Event added", data=comment_schema.dump(comment))
+        return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)

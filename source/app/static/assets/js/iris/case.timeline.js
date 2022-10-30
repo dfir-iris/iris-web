@@ -1009,10 +1009,25 @@ function edit_comment(comment_id, event_id) {
             $('#comment_'+comment_id).css('background-color','rgba(255, 167, 90, 0.44)');
             $('#comment_'+comment_id).css('border-radius','20px');
             $('#comment_'+comment_id).addClass('comment_editing');
+            $('#comment_'+comment_id).data('comment_id', comment_id);
             g_comment_desc_editor.setValue(data.data.comment_text);
             $('#comment_edition').show();
             $('#comment_submit').hide();
             $('#cancel_edition').show();
+
+        }
+    });
+}
+
+function save_edit_comment(event_id){
+    data = Object();
+    data['comment_text'] = g_comment_desc_editor.getValue();
+    comment_id = $('.comment_editing').data('comment_id');
+    data['csrf_token'] = $('#csrf_token').val();
+    post_request_api('/case/timeline/events/'+ event_id + '/comments/'+ comment_id +'/edit', JSON.stringify(data), true)
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            load_comments(event_id, comment_id);
         }
     });
 }
@@ -1021,13 +1036,14 @@ function cancel_edition(comment_id) {
     $('.comment_editing').css('background-color', '');
     $('.comment_editing').css('border-radius', '');
     $('.comment_editing').removeClass('comment_editing');
+    $('.comment_editing').data('comment_id', '');
     $('#comment_edition').hide();
     $('#cancel_edition').hide();
     $('#comment_submit').show();
     g_comment_desc_editor.setValue('');
 }
 
-function load_comments(event_id) {
+function load_comments(event_id, comment_id) {
     get_request_api('/case/timeline/events/'+ event_id + '/comments/list', true)
     .done((data) => {
         if (notify_auto_api(data, true)) {
@@ -1092,8 +1108,10 @@ function load_comments(event_id) {
             }
             if (data['data'].length === 0) {
                 $('#comments_list').html('<div class="text-center">No comments yet</div>');
-            } else {
+            } else if (comment_id === undefined) {
                 $('#comments_list').animate({ scrollTop: $('.last-comment').offset().top});
+            } else {
+                $('#comments_list').animate({ scrollTop: ($('#comment_'+comment_id).offset().top)});
             }
         }
     });
