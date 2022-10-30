@@ -29,13 +29,14 @@
                                 <div id="comment_message" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
                                 <textarea id="comment_content" rows="2" style="display: none"></textarea>
                             </div>
-                            <div class="col-12" id="ctrd_ioc">
+                            <div class="col-12" id="container_comment_preview" style="display:none;">
                                 <div id="target_comment_content"></div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-12" id="container_comment_submit">
-                                <button type="button" class="btn btn-primary btn-sm float-right" id="comment_submit" onclick="save_comment({{ event.event_id }});"><i class="fa-regular fa-paper-plane"></i> Comment</button>
+                                <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_submit" onclick="save_comment({{ event.event_id }});"><i class="fa-regular fa-paper-plane"></i> Comment</button>
+                                <button type="button" class="btn btn-dark btn-sm float-right" onclick="preview_comment();" id="comment_preview_button"><i class="fa-solid fa-eye"></i> Preview</button>
                             </div>
                         </div>
                     </div>

@@ -952,6 +952,19 @@ function comment_event(event_id) {
     });
 }
 
+function preview_comment() {
+    if(!$('#container_comment_preview').is(':visible')) {
+        $('#container_comment_preview').show();
+        $('#comment_preview_button').html('<i class="fa-solid fa-eye-slash"></i> Edit');
+        $('#container_comment_content').hide();
+    }
+    else {
+        $('#container_comment_preview').hide();
+        $('#comment_preview_button').html('<i class="fa-solid fa-eye"></i> Preview');
+        $('#container_comment_content').show();
+    }
+}
+
 function save_comment(event_id) {
     save_comment_ext(event_id, false);
 }
