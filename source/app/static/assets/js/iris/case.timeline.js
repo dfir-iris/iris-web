@@ -942,7 +942,7 @@ function comment_event(event_id) {
                         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                         $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                         $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                    }, save_comment_ext);
+                    }, save_comment_ext, false, false);
 
         headers = get_editor_headers('g_comment_desc_editor', 'save_comment', 'comment_edition_btn');
         $('#comment_edition_btn').append(headers);
@@ -954,6 +954,14 @@ function comment_event(event_id) {
 
 function preview_comment() {
     if(!$('#container_comment_preview').is(':visible')) {
+        comment_text = g_comment_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(comment_text);
+        comment_html = filterXSS(html);
+        $('#target_comment_content').html(comment_html);
         $('#container_comment_preview').show();
         $('#comment_preview_button').html('<i class="fa-solid fa-eye-slash"></i> Edit');
         $('#container_comment_content').hide();

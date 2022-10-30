@@ -620,7 +620,7 @@ function get_row_id(row) {
     return null;
 }
 
-function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_callback, do_save, readonly) {
+function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_callback, do_save, readonly, live_preview) {
     var editor = ace.edit(anchor_id);
     if ($("#"+anchor_id).attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");
@@ -696,11 +696,22 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
         }
     });
 
-    var textarea = $('#'+content_anchor);
-    editor.getSession().on("change", function () {
-        if (onchange_callback !== undefined && onchange_callback !== null) {
-            onchange_callback();
-        }
+    if (live_preview === undefined || live_preview === true) {
+        var textarea = $('#'+content_anchor);
+        editor.getSession().on("change", function () {
+            if (onchange_callback !== undefined && onchange_callback !== null) {
+                onchange_callback();
+            }
+
+            textarea.val(editor.getSession().getValue());
+            target = document.getElementById(target_anchor);
+            converter = new showdown.Converter({
+                tables: true,
+                parseImgDimensions: true
+            });
+            html = converter.makeHtml(editor.getSession().getValue());
+            target.innerHTML = filterXSS(html);
+        });
 
         textarea.val(editor.getSession().getValue());
         target = document.getElementById(target_anchor);
@@ -710,16 +721,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
         });
         html = converter.makeHtml(editor.getSession().getValue());
         target.innerHTML = filterXSS(html);
-    });
-
-    textarea.val(editor.getSession().getValue());
-    target = document.getElementById(target_anchor);
-    converter = new showdown.Converter({
-        tables: true,
-        parseImgDimensions: true
-    });
-    html = converter.makeHtml(editor.getSession().getValue());
-    target.innerHTML = filterXSS(html);
+    }
 
     return editor;
 }
