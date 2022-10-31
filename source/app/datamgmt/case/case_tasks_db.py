@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from datetime import datetime
+from flask_login import current_user
 from sqlalchemy import desc, and_
 
 from app import db
@@ -253,3 +254,40 @@ def get_case_tasks_comments_count(tasks_list):
         TaskComments.comment_task_id,
         TaskComments.comment_id
     ).all()
+
+
+def get_case_task_comment(task_id, comment_id):
+    return TaskComments.query.filter(
+        TaskComments.comment_task_id == task_id,
+        TaskComments.comment_id == comment_id
+    ).with_entities(
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        TaskComments.comment,
+        Comments.user
+    ).first()
+
+
+def delete_task_comment(task_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    TaskComments.query.filter(
+        TaskComments.comment_task_id == task_id,
+        TaskComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"

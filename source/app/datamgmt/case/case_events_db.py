@@ -160,13 +160,6 @@ def get_case_event_comment(event_id, comment_id, caseid):
     ).first()
 
 
-def get_case_comment(comment_id, caseid):
-    return Comments.query.filter(
-        Comments.comment_id == comment_id,
-        Comments.comment_case_id == caseid
-    ).first()
-
-
 def delete_event_comment(event_id, comment_id):
     comment = Comments.query.filter(
         Comments.comment_id == comment_id,

@@ -30,9 +30,13 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
+from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.case.case_tasks_db import delete_task_comment
+from app.datamgmt.case.case_tasks_db import get_case_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comments
 from app.datamgmt.case.case_tasks_db import get_case_tasks_comments_count
 from app.datamgmt.case.case_tasks_db import get_task_with_assignees
@@ -324,3 +328,32 @@ def case_comment_task_add(cur_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_task_get(cur_id, com_id, caseid):
+
+    comment = get_case_task_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_task_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'tasks', caseid)
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_task_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_task_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    return response_success(msg)

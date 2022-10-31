@@ -33,11 +33,12 @@ from flask_wtf import FlaskForm
 from sqlalchemy import and_
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
+from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import delete_event_category
 from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
-from app.datamgmt.case.case_events_db import get_case_comment
 from app.datamgmt.case.case_events_db import get_case_event
 from app.datamgmt.case.case_events_db import get_case_event_comment
 from app.datamgmt.case.case_events_db import get_case_event_comments
@@ -158,25 +159,7 @@ def case_comment_get(cur_id, com_id, caseid):
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_edit(cur_id, com_id, caseid):
 
-    comment = get_case_comment(com_id, caseid=caseid)
-    if not comment:
-        return response_error("Invalid comment ID")
-
-    try:
-        rq_t = request.get_json()
-        comment_text = rq_t.get('comment_text')
-        comment.comment_text = comment_text
-        comment.comment_update_date = datetime.utcnow()
-        comment_schema = CommentSchema()
-        # request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
-
-        db.session.commit()
-
-        track_activity("comment {} edited".format(comment.comment_id), caseid=caseid)
-        return response_success("Comment edited", data=comment_schema.dump(comment))
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+    return case_comment_update(com_id, 'events', caseid)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
