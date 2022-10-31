@@ -39,6 +39,7 @@ from app.datamgmt.case.case_rfiles_db import delete_evidence_comment
 from app.datamgmt.case.case_rfiles_db import delete_rfile
 from app.datamgmt.case.case_rfiles_db import get_case_evidence_comment
 from app.datamgmt.case.case_rfiles_db import get_case_evidence_comments
+from app.datamgmt.case.case_rfiles_db import get_case_evidence_comments_count
 from app.datamgmt.case.case_rfiles_db import get_rfile
 from app.datamgmt.case.case_rfiles_db import get_rfiles
 from app.datamgmt.case.case_rfiles_db import update_rfile
@@ -147,7 +148,10 @@ def case_edit_rfile_modal(cur_id, caseid, url_redir):
     if not crf:
         return response_error("Invalid evidence ID for this case")
 
-    return render_template("modal_add_case_rfile.html", rfile=crf, attributes=crf.custom_attributes)
+    comments_map = get_case_evidence_comments_count([cur_id])
+
+    return render_template("modal_add_case_rfile.html", rfile=crf, attributes=crf.custom_attributes,
+                           comments_map=comments_map)
 
 
 @case_rfiles_blueprint.route('/case/evidences/add/modal', methods=['GET'])

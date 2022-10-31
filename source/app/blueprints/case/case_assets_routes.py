@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+from datetime import datetime
+
 import csv
 import marshmallow
 from flask import Blueprint
@@ -29,14 +31,20 @@ from flask import url_for
 from flask_login import current_user
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
+from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset
+from app.datamgmt.case.case_assets_db import delete_asset_comment
 from app.datamgmt.case.case_assets_db import get_analysis_status_list
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import get_asset_type_id
 from app.datamgmt.case.case_assets_db import get_assets
 from app.datamgmt.case.case_assets_db import get_assets_ioc_links
 from app.datamgmt.case.case_assets_db import get_assets_types
+from app.datamgmt.case.case_assets_db import get_case_asset_comment
+from app.datamgmt.case.case_assets_db import get_case_asset_comments
+from app.datamgmt.case.case_assets_db import get_case_assets_comments_count
 from app.datamgmt.case.case_assets_db import get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import get_linked_iocs_id_from_asset
 from app.datamgmt.case.case_assets_db import get_similar_assets
@@ -58,6 +66,7 @@ from app.models import IocAssetLink
 from app.models import IocLink
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
+from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
@@ -338,9 +347,10 @@ def asset_view_modal(cur_id, caseid, url_redir):
     form.asset_type_id.choices = get_assets_types()
     form.analysis_status_id.choices = get_analysis_status_list()
     form.asset_tags.render_kw = {'value': asset.asset_tags}
+    comments_map = get_case_assets_comments_count([cur_id])
 
     return render_template("modal_add_case_asset.html", form=form, asset=asset, map={}, ioc=case_iocs,
-                           ioc_prefill=ioc_prefill, attributes=asset.custom_attributes)
+                           ioc_prefill=ioc_prefill, attributes=asset.custom_attributes, comments_map=comments_map)
 
 
 @case_assets_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
@@ -396,3 +406,89 @@ def asset_delete(cur_id, caseid):
     track_activity("removed asset ID {}".format(cur_id), caseid=caseid)
 
     return response_success("Deleted")
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_asset_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_task.case_task', cid=caseid, redirect=True))
+
+    asset = get_asset(cur_id, caseid=caseid)
+    if not asset:
+        return response_error('Invalid asset ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='assets',
+                           title=asset.asset_name)
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_asset_list(cur_id, caseid):
+
+    task_comments = get_case_asset_comments(cur_id)
+    if task_comments is None:
+        return response_error('Invalid asset ID')
+
+    res = [com._asdict() for com in task_comments]
+    return response_success(data=res)
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_asset_add(cur_id, caseid):
+
+    try:
+        asset = get_asset(cur_id, caseid=caseid)
+        if not asset:
+            return response_error('Invalid asset ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_asset(asset.asset_id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity("asset {} commented".format(asset.asset_id), caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_asset_get(cur_id, com_id, caseid):
+
+    comment = get_case_asset_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_asset_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'assets', caseid)
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_asset_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_asset_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    return response_success(msg)

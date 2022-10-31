@@ -19,20 +19,24 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
+from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
 
 from app import db
 from app.datamgmt.states import update_assets_state
 from app.models import AnalysisStatus
+from app.models import AssetComments
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets
 from app.models import Cases
+from app.models import Comments
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
 from app.models import IocType
+from app.models.authorization import User
 
 
 def create_asset(asset, caseid, user_id):
@@ -257,3 +261,80 @@ def get_linked_iocs_finfo_from_asset(asset_id):
     )).join(Ioc.ioc_type).all()
 
     return iocs
+
+
+def get_case_asset_comments(asset_id):
+    return AssetComments.query.filter(
+        AssetComments.comment_asset_id == asset_id
+    ).with_entities(
+        AssetComments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        AssetComments.comment,
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+
+def add_comment_to_asset(asset_id, comment_id):
+    ec = AssetComments()
+    ec.comment_asset_id = asset_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()
+
+
+def get_case_assets_comments_count(asset_id):
+    return AssetComments.query.filter(
+        AssetComments.comment_asset_id.in_(asset_id)
+    ).with_entities(
+        AssetComments.comment_asset_id,
+        AssetComments.comment_id
+    ).group_by(
+        AssetComments.comment_asset_id,
+        AssetComments.comment_id
+    ).all()
+
+
+def get_case_asset_comment(asset_id, comment_id):
+    return AssetComments.query.filter(
+        AssetComments.comment_asset_id == asset_id,
+        AssetComments.comment_id == comment_id
+    ).with_entities(
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        AssetComments.comment,
+        Comments.user
+    ).first()
+
+
+def delete_asset_comment(asset_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    AssetComments.query.filter(
+        AssetComments.comment_asset_id == asset_id,
+        AssetComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"
