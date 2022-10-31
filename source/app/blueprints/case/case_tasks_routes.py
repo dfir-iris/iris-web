@@ -261,3 +261,17 @@ def case_delete_task(cur_id, caseid):
     track_activity("deleted task ID {}".format(cur_id))
 
     return response_success("Task deleted")
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_task_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_task.case_task', cid=caseid, redirect=True))
+
+    task = get_task(cur_id, caseid=caseid)
+    if not task:
+        return response_error('Invalid task ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='tasks',
+                           title=task.task_title)

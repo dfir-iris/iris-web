@@ -438,7 +438,6 @@ function build_timeline(data) {
         style = '';
         asset = '';
 
-        console.log(data.data.comments_map);
         if (evt.event_id in data.data.comments_map) {
             nb_comments = data.data.comments_map[evt.event_id].length;
         } else {
@@ -574,7 +573,7 @@ function build_timeline(data) {
                                         ${flag}
                                     </span>
                                 </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="comment_event(${evt.event_id}, 'timeline/events')" title="Comments">
+                                <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
                                     <span class="btn-label">
                                         <i class="fa-solid fa-comments"></i><span class="notification">${nb_comments}</span>
                                     </span>

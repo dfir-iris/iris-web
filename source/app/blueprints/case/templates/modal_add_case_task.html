@@ -18,6 +18,11 @@
                           <a class="dropdown-item" href="#" onclick='copy_object_link_md("task", {{task.id}});return false;'><i class="fa-brands fa-markdown mr-2"></i>Markdown Link</a>
                       </div>
                  </div>
+                 <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ event.event_id }}, 'timeline/events')" title="Comments">
+                        <span class="btn-label">
+                            <i class="fa-solid fa-comments"></i><span class="notification">{{ comments_map|length }}</span>
+                        </span>
+                </button>
                 {% endif %}
                     <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_task', '{% if task.id %} Task ID #{{ task.id }}{% else %} Add task {% endif %}');"> <i class='fa fa-minus'></i> </button>
                     <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span

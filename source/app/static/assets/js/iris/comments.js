@@ -1,5 +1,5 @@
 var g_comment_desc_editor = null;
-function comment_event(element_id, element_type) {
+function comment_element(element_id, element_type) {
     var url = `/case/${element_type}/${element_id}/comments/modal`;
     $('#modal_comment_content').load(url + case_param(),
         function (response, status, xhr) {
@@ -63,7 +63,7 @@ function save_comment_ext(element_id, element_type, do_close){
     data = Object();
     data['comment_text'] = g_comment_desc_editor.getValue();
     data['csrf_token'] = $('#csrf_token').val();
-    post_request_api(`/case/${element_type}/${event_id}/comments/add`, JSON.stringify(data), true)
+    post_request_api(`/case/${element_type}/${element_id}/comments/add`, JSON.stringify(data), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             load_comments(element_id, element_type);
