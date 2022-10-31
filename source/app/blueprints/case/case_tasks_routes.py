@@ -357,3 +357,4 @@ def case_comment_task_delete(cur_id, com_id, caseid):
         return response_error(msg)
 
     return response_success(msg)
+
