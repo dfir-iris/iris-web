@@ -20,6 +20,11 @@
                          <div class="dropdown-menu pull-right" aria-labelledby="dropdownMenuButton">
                           </div>
                      </div>
+                     <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ ioc.ioc_id }}, 'ioc')" title="Comments">
+                        <span class="btn-label">
+                            <i class="fa-solid fa-comments"></i><span class="notification">{{ comments_map|length }}</span>
+                        </span>
+                     </button>
                     {% endif %}
                      <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_ioc', '{% if ioc.ioc_id %}Edit IOC #{{ ioc.ioc_id }} {% else %} Add IOC {% endif %}');"> <i class='fa fa-minus'></i> </button>
                     <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span

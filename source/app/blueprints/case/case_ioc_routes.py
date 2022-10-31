@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+from datetime import datetime
 
 import csv
 import logging as log
@@ -31,12 +32,18 @@ from flask import url_for
 from flask_login import current_user
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
 from app.datamgmt.case.case_iocs_db import delete_ioc
+from app.datamgmt.case.case_iocs_db import delete_ioc_comment
+from app.datamgmt.case.case_iocs_db import get_case_ioc_comment
+from app.datamgmt.case.case_iocs_db import get_case_ioc_comments
+from app.datamgmt.case.case_iocs_db import get_case_iocs_comments_count
 from app.datamgmt.case.case_iocs_db import get_detailed_iocs
 from app.datamgmt.case.case_iocs_db import get_ioc
 from app.datamgmt.case.case_iocs_db import get_ioc_links
@@ -53,6 +60,7 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.models.models import Ioc
+from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
@@ -303,8 +311,10 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     form.ioc_tags.render_kw = {'value': ioc.ioc_tags}
     form.ioc_description.data = ioc.ioc_description
     form.ioc_value.data = ioc.ioc_value
+    comments_map = get_case_iocs_comments_count([cur_id])
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=ioc.custom_attributes)
+    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=ioc.custom_attributes,
+                           comments_map=comments_map)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
@@ -350,3 +360,89 @@ def case_update_ioc(cur_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_ioc_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
+
+    ioc = get_ioc(cur_id, caseid=caseid)
+    if not ioc:
+        return response_error('Invalid ioc ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='ioc',
+                           title=ioc.ioc_value)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_ioc_list(cur_id, caseid):
+
+    ioc_comments = get_case_ioc_comments(cur_id)
+    if ioc_comments is None:
+        return response_error('Invalid ioc ID')
+
+    res = [com._asdict() for com in ioc_comments]
+    return response_success(data=res)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_ioc_add(cur_id, caseid):
+
+    try:
+        ioc = get_ioc(cur_id, caseid=caseid)
+        if not ioc:
+            return response_error('Invalid ioc ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_ioc(ioc.ioc_id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity("ioc {} commented".format(ioc.ioc_id), caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_ioc_get(cur_id, com_id, caseid):
+
+    comment = get_case_ioc_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_ioc_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'ioc', caseid)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_ioc_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_ioc_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    return response_success(msg)
