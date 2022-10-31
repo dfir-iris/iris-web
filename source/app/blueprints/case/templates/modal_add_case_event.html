@@ -28,7 +28,7 @@
                     </div>
                     <button type="button" class="btn bg-transparent btn-xs" onclick="comment_event({{ event.event_id }})" title="Comments">
                         <span class="btn-label">
-                            <i class="fa-solid fa-comments"></i>
+                            <i class="fa-solid fa-comments"></i><span class="notification">{{ comments_map|length }}</span>
                         </span>
                     </button>
                 {% endif %}

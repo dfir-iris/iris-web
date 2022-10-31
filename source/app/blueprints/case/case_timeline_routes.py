@@ -41,6 +41,7 @@ from app.datamgmt.case.case_events_db import get_case_comment
 from app.datamgmt.case.case_events_db import get_case_event
 from app.datamgmt.case.case_events_db import get_case_event_comment
 from app.datamgmt.case.case_events_db import get_case_event_comments
+from app.datamgmt.case.case_events_db import get_case_events_comments_count
 from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
 from app.datamgmt.case.case_events_db import get_default_cat
 from app.datamgmt.case.case_events_db import get_event_assets_ids
@@ -109,15 +110,14 @@ def case_getgraph_page(caseid, url_redir):
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_modal(cur_id, caseid, url_redir):
     if url_redir:
-        return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid, redirect=True))
+        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
 
     event = get_case_event(cur_id, caseid=caseid)
     if not event:
         return response_error('Invalid event ID')
 
-    comments = get_case_event_comments(cur_id, caseid=caseid)
-
-    return render_template("modal_conversation.html", event=event, comments=comments)
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='timeline/events',
+                           title=event.event_title)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
@@ -547,6 +547,7 @@ def case_filter_timeline(caseid):
                 iocs_filter.append(ioc.event_id)
 
     tim = []
+    events_list = []
     for row in timeline:
         if assets is not None:
             if row.event_id not in assets_filter:
@@ -561,6 +562,9 @@ def case_filter_timeline(caseid):
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S')
+
+        if row.event_id not in events_list:
+            events_list.append(row.event_id)
 
         alki = []
         for asset in assets_cache:
@@ -605,8 +609,14 @@ def case_filter_timeline(caseid):
             Ioc.ioc_id == IocLink.ioc_id
         ).all()
 
+        events_comments_map = {}
+        events_comments_set = get_case_events_comments_count(events_list)
+        for k, v in events_comments_set:
+            events_comments_map.setdefault(k, []).append(v)
+
         resp = {
             "tim": tim,
+            "comments_map": events_comments_map,
             "assets": cache,
             "iocs": [ioc._asdict() for ioc in iocs],
             "categories": [cat.name for cat in get_events_categories()],
@@ -672,7 +682,7 @@ def event_flag(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def event_view(cur_id, caseid):
 
     event = get_case_event(cur_id, caseid)
@@ -688,6 +698,7 @@ def event_view(cur_id, caseid):
     output['event_assets'] = linked_assets
     output['event_iocs'] = linked_iocs
     output['event_category_id'] = event.category[0].id
+    output['event_comments_map'] = get_case_events_comments_count([cur_id])
 
     return response_success(data=output)
 
@@ -718,11 +729,12 @@ def event_view_modal(cur_id, caseid, url_redir):
 
     assets_prefill = get_event_assets_ids(cur_id, caseid)
     iocs_prefill = get_event_iocs_ids(cur_id, caseid)
+    comments_map = get_case_events_comments_count([cur_id])
 
     usr_name, = User.query.filter(User.id == event.user_id).with_entities(User.name).first()
 
     return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
-                           assets=assets, iocs=iocs,
+                           assets=assets, iocs=iocs, comments_map=comments_map,
                            assets_prefill=assets_prefill, iocs_prefill=iocs_prefill,
                            category=event.category, attributes=event.custom_attributes)
 

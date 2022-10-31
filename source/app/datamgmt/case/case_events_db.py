@@ -130,6 +130,18 @@ def get_case_event_comments(event_id, caseid):
     ).all()
 
 
+def get_case_events_comments_count(events_list):
+    return EventComments.query.filter(
+        EventComments.comment_event_id.in_(events_list)
+    ).with_entities(
+        EventComments.comment_event_id,
+        EventComments.comment_id
+    ).group_by(
+        EventComments.comment_event_id,
+        EventComments.comment_id
+    ).all()
+
+
 def get_case_event_comment(event_id, comment_id, caseid):
     return EventComments.query.filter(
         EventComments.comment_event_id == event_id,

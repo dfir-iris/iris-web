@@ -13580,6 +13580,14 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
     padding-right: 0;
 }
 
+.dataTables_wrapper.container-fluid.dt-bootstrap4 {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+table.dataTable.stripe tbody > tr.selected {
+	background-color: #06397b3b;
+}
 
 /*     Responsive     */
 

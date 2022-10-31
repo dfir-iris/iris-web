@@ -594,6 +594,39 @@ class EventComments(db.Model):
     comment = relationship('Comments')
 
 
+class TaskComments(db.Model):
+    __tablename__ = "task_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_task_id = Column(ForeignKey('case_tasks.id'))
+
+    task = relationship('CaseTasks')
+    comment = relationship('Comments')
+
+
+class IocComments(db.Model):
+    __tablename__ = "ioc_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_ioc_id = Column(ForeignKey('ioc.ioc_id'))
+
+    ioc = relationship('Ioc')
+    comment = relationship('Comments')
+
+
+class AssetComments(db.Model):
+    __tablename__ = "asset_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_asset_id = Column(ForeignKey('case_assets.asset_id'))
+
+    asset = relationship('CaseAssets')
+    comment = relationship('Comments')
+
+
 class IrisModule(db.Model):
     __tablename__ = "iris_module"
 

@@ -373,12 +373,7 @@ $(document).ready(function(){
         retrieve: true,
         responsive: {
             details: {
-                display: $.fn.dataTable.Responsive.display.modal( {
-                    header: function ( row ) {
-                        var data = row.data();
-                        return 'Details for '+ sanitizeHTML(data.ioc_value) +'('+ sanitizeHTML(data.ioc_type) + ')';
-                    }
-                } ),
+                display: $.fn.dataTable.Responsive.display.childRow,
                 renderer: $.fn.dataTable.Responsive.renderer.tableAll()
             }
         },

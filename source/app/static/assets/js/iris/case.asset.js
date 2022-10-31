@@ -442,12 +442,7 @@ $(document).ready(function(){
         processing: true,
         responsive: {
                 details: {
-                    display: $.fn.dataTable.Responsive.display.modal( {
-                        header: function ( row ) {
-                            var data = row.data();
-                            return 'Details of '+ sanitizeHTML(data.asset_name) +' ('+ sanitizeHTML(data.asset_type)  + ')';
-                        }
-                    } ),
+                    display: $.fn.dataTable.Responsive.display.childRow,
                     renderer: $.fn.dataTable.Responsive.renderer.tableAll()
                 }
         },
