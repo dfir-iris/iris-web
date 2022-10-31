@@ -26,6 +26,8 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
 from app.models import CaseTasks, TaskAssignee
+from app.models import Comments
+from app.models import TaskComments
 from app.models import TaskStatus
 from app.models.authorization import User
 
@@ -211,3 +213,22 @@ def add_task(task, assignee_id_list, user_id, caseid):
     update_task_assignees(task, assignee_id_list, caseid)
 
     return task
+
+
+def get_case_task_comments(task_id):
+    return TaskComments.query.filter(
+        TaskComments.comment_task_id == task_id
+    ).with_entities(
+        TaskComments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        TaskComments.comment,
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()

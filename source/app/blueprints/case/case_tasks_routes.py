@@ -32,6 +32,7 @@ from flask_wtf import FlaskForm
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.case.case_tasks_db import get_case_task_comments
 from app.datamgmt.case.case_tasks_db import get_task_with_assignees
 from app.datamgmt.case.case_tasks_db import update_task_assignees
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
@@ -275,3 +276,15 @@ def case_comment_task_modal(cur_id, caseid, url_redir):
 
     return render_template("modal_conversation.html", element_id=cur_id, element_type='tasks',
                            title=task.task_title)
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_task_list(cur_id, caseid):
+
+    task_comments = get_case_task_comments(cur_id)
+    if task_comments is None:
+        return response_error('Invalid task ID')
+
+    res = [com._asdict() for com in task_comments]
+    return response_success(data=res)
