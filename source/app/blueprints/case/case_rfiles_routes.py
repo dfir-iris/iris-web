@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+from datetime import datetime
+
 import marshmallow
 from flask import Blueprint
 from flask import redirect
@@ -28,9 +30,15 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
+from app import db
+from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_rfiles_db import add_comment_to_evidence
 from app.datamgmt.case.case_rfiles_db import add_rfile
+from app.datamgmt.case.case_rfiles_db import delete_evidence_comment
 from app.datamgmt.case.case_rfiles_db import delete_rfile
+from app.datamgmt.case.case_rfiles_db import get_case_evidence_comment
+from app.datamgmt.case.case_rfiles_db import get_case_evidence_comments
 from app.datamgmt.case.case_rfiles_db import get_rfile
 from app.datamgmt.case.case_rfiles_db import get_rfiles
 from app.datamgmt.case.case_rfiles_db import update_rfile
@@ -40,6 +48,7 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseEvidenceSchema
+from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
@@ -200,3 +209,89 @@ def case_delete_rfile(cur_id, caseid):
     track_activity("deleted evidence ID {} from register".format(cur_id), caseid)
 
     return response_success("Evidence deleted")
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_evidence_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_task.case_task', cid=caseid, redirect=True))
+
+    evidence = get_rfile(cur_id, caseid=caseid)
+    if not evidence:
+        return response_error('Invalid evidence ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='evidences',
+                           title=evidence.filename)
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_evidence_list(cur_id, caseid):
+
+    task_comments = get_case_evidence_comments(cur_id)
+    if task_comments is None:
+        return response_error('Invalid evidence ID')
+
+    res = [com._asdict() for com in task_comments]
+    return response_success(data=res)
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_evidence_add(cur_id, caseid):
+
+    try:
+        evidence = get_rfile(cur_id, caseid=caseid)
+        if not evidence:
+            return response_error('Invalid evidence ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_evidence(evidence.id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity("evidence {} commented".format(evidence.id), caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_evidence_get(cur_id, com_id, caseid):
+
+    comment = get_case_evidence_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_evidence_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'tasks', caseid)
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_evidence_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_evidence_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    return response_success(msg)
