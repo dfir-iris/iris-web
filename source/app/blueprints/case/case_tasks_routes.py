@@ -34,6 +34,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import get_case_task_comments
+from app.datamgmt.case.case_tasks_db import get_case_tasks_comments_count
 from app.datamgmt.case.case_tasks_db import get_task_with_assignees
 from app.datamgmt.case.case_tasks_db import update_task_assignees
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
@@ -200,8 +201,10 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     form.task_title.render_kw = {'value': task.task_title}
     form.task_description.data = task.task_description
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
+    comments_map = get_case_tasks_comments_count([task.id])
 
-    return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name, attributes=task.custom_attributes)
+    return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
+                           comments_map=comments_map, attributes=task.custom_attributes)
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])

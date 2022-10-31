@@ -241,3 +241,15 @@ def add_comment_to_task(task_id, comment_id):
 
     db.session.add(ec)
     db.session.commit()
+
+
+def get_case_tasks_comments_count(tasks_list):
+    return TaskComments.query.filter(
+        TaskComments.comment_task_id.in_(tasks_list)
+    ).with_entities(
+        TaskComments.comment_task_id,
+        TaskComments.comment_id
+    ).group_by(
+        TaskComments.comment_task_id,
+        TaskComments.comment_id
+    ).all()
