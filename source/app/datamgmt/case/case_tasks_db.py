@@ -232,3 +232,12 @@ def get_case_task_comments(task_id):
     ).order_by(
         Comments.comment_date.asc()
     ).all()
+
+
+def add_comment_to_task(task_id, comment_id):
+    ec = TaskComments()
+    ec.comment_task_id = task_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()

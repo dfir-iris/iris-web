@@ -31,6 +31,7 @@ from flask_wtf import FlaskForm
 
 from app import db
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import get_case_task_comments
 from app.datamgmt.case.case_tasks_db import get_task_with_assignees
@@ -49,6 +50,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.models import CaseTasks, TaskAssignee
 from app.schema.marshables import CaseTaskSchema
+from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
@@ -288,3 +290,34 @@ def case_comment_task_list(cur_id, caseid):
 
     res = [com._asdict() for com in task_comments]
     return response_success(data=res)
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_task_add(cur_id, caseid):
+
+    try:
+        task = get_task(cur_id, caseid=caseid)
+        if not task:
+            return response_error('Invalid task ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_task(task.id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity("task {} commented".format(task.id), caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
