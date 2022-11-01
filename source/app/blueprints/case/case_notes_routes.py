@@ -30,13 +30,18 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_notes_db import add_comment_to_note
 from app.datamgmt.case.case_notes_db import add_note
 from app.datamgmt.case.case_notes_db import add_note_group
 from app.datamgmt.case.case_notes_db import delete_note
+from app.datamgmt.case.case_notes_db import delete_note_comment
 from app.datamgmt.case.case_notes_db import delete_note_group
 from app.datamgmt.case.case_notes_db import find_pattern_in_notes
+from app.datamgmt.case.case_notes_db import get_case_note_comment
+from app.datamgmt.case.case_notes_db import get_case_note_comments
 from app.datamgmt.case.case_notes_db import get_group_details
 from app.datamgmt.case.case_notes_db import get_groups_short
 from app.datamgmt.case.case_notes_db import get_note
@@ -332,6 +337,7 @@ def case_edit_notes_groups(cur_id, caseid):
 
     return response_error("Group ID {} not found".format(cur_id))
 
+
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/modal', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_note_modal(cur_id, caseid, url_redir):
@@ -378,11 +384,11 @@ def case_comment_note_add(cur_id, caseid):
         db.session.add(comment)
         db.session.commit()
 
-        add_comment_to_note(note.id, comment.comment_id)
+        add_comment_to_note(note.note_id, comment.comment_id)
 
         db.session.commit()
 
-        track_activity("note {} commented".format(note.id), caseid=caseid)
+        track_activity("note {} commented".format(note.note_id), caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
