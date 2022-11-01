@@ -15013,12 +15013,12 @@ table.dataTable.stripe tbody > tr.selected {
 
 .comments-listing {
   max-height: calc(100vh - 350px);
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .comment-content {
     max-height: 30vh;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .modal .modal-comment .modal-header {

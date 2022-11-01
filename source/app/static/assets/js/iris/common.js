@@ -803,6 +803,15 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
         items: [],
     };
 
+    datatype_map = {
+        'task': 'tasks',
+        'ioc': 'ioc',
+        'evidence': 'evidences',
+        'note': 'notes',
+        'asset': 'assets',
+        'event': 'timeline/events'
+    }
+
     get_request_api("/dim/hooks/options/"+ data_type +"/list")
     .done((data) => {
         if(notify_auto_api(data, true)) {
@@ -817,6 +826,19 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                     action: function(rows){
                         row = rows[0];
                         copy_object_link(get_row_id(row));
+                    }
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Comment',
+                    multi: false,
+                    iconClass: 'fas fa-comments',
+                    action: function(rows){
+                        row = rows[0];
+                        if (data_type in datatype_map) {
+                            comment_element(get_row_id(row), datatype_map[data_type]);
+                        }
                     }
                 });
 
