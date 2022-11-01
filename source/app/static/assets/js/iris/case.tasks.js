@@ -443,15 +443,16 @@ $(document).ready(function(){
     });
 
     var buttons = new $.fn.dataTable.Buttons(Table, {
-     buttons: [
-        { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Download as CSV' },
-        { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Copy' },
-    ]
-}).container().appendTo($('#tables_button'));
+         buttons: [
+            { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
+            , "titleAttr": 'Download as CSV' },
+            { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
+            , "titleAttr": 'Copy' },
+        ]
+    }).container().appendTo($('#tables_button'));
 
     get_tasks();
+
     setInterval(function() { check_update('tasks/state'); }, 3000);
 
     shared_id = getSharedLink();

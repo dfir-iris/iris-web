@@ -126,7 +126,7 @@ function notify_success(message) {
 
 function notify_auto_api(data, silent_success) {
     if (data.status == 'success') {
-        if (silent_success === undefined) {
+        if (silent_success === undefined || silent_success === false) {
             if (data.message.length === 0) {
                 data.message = 'Operation succeeded';
             }

@@ -184,7 +184,7 @@ function asset_details(asset_id) {
 
 
         $('#submit_new_asset').on("click", function () {
-            save_asset(true);
+            update_asset(true);
             return false;
         })
 

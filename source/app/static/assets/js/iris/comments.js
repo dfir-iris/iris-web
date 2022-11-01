@@ -133,14 +133,14 @@ function cancel_edition(comment_id) {
 function load_comments(element_id, element_type, comment_id, do_notification) {
 
     if (do_notification !== undefined) {
-        do_notification = !do_notification;
+        silent_success = !do_notification;
     } else {
-        do_notification = true;
+        silent_success = true;
     }
 
     get_request_api(`/case/${element_type}/${element_id}/comments/list`)
     .done((data) => {
-        if (notify_auto_api(data, !do_notification)) {
+        if (notify_auto_api(data, silent_success)) {
             $('#comments_list').empty();
             var names = Object;
             for (var i = 0; i < data['data'].length; i++) {
