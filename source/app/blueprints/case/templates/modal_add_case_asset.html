@@ -56,17 +56,18 @@
                                         <div class="form-group">
                                                 <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_asset_desc();">
                                                 </button>
+                                                <button type="button" style="display: none;" class="btn btn-dark btn-sm float-right mr-2" onclick="preview_asset_description();" id="asset_preview_button"><i class="fa-solid fa-eye"></i></button>
                                         </div>
                                         <div class="row">
                                             <div class="col mb--2 ml--2" id="asset_edition_btn" style="display:none;">
                                             </div>
                                         </div>
                                         <div class="row" style="margin-left:0px;">
-                                            <div class="col-md-6" id="container_asset_desc_content">
+                                            <div class="col-12" id="container_asset_desc_content">
                                                 <div id="asset_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if asset %}{{ asset.asset_description  }}{% endif %}</div>
                                                 <textarea id="asset_desc_content" rows="10" cols="82" style="display: none"></textarea>
                                             </div>
-                                            <div class="col-md-6" id="ctrd_asset">
+                                            <div class="col-12" id="container_asset_description" style="display:none">
                                                 <div id="target_asset_desc"></div>
                                             </div>
                                         </div>

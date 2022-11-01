@@ -8,7 +8,18 @@ function reload_assets() {
 }
 
 function edit_in_asset_desc() {
-    return edit_inner_editor('asset_edition_btn', 'container_asset_desc_content', 'ctrd_asset');
+
+    if($('#container_asset_desc_content').is(':visible')) {
+        $('#container_asset_description').show(100);
+        $('#container_asset_desc_content').hide(100);
+        $('#asset_edition_btn').hide(100);
+        $('#asset_preview_button').hide(100);
+    } else {
+        $('#asset_preview_button').show(100);
+        $('#asset_edition_btn').show(100);
+        $('#container_asset_desc_content').show(100);
+        $('#container_asset_description').hide(100);
+    }
 }
 
 /* Fetch a modal that is compatible with the requested asset type */
@@ -160,8 +171,8 @@ function asset_details(asset_id) {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                            }, update_asset);
-        edit_in_asset_desc();
+                            }, update_asset, false, false);
+        preview_asset_description(true);
         headers = get_editor_headers('g_asset_desc_editor', 'update_asset', 'asset_edition_btn');
         $('#asset_edition_btn').append(headers);
 
@@ -180,6 +191,34 @@ function asset_details(asset_id) {
     $('#modal_add_asset').modal({ show: true });
     return false;
 }
+
+function preview_asset_description(no_btn_update) {
+    if(!$('#container_asset_description').is(':visible')) {
+        asset_desc = g_asset_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(asset_desc);
+        asset_desc_html = filterXSS(html);
+        $('#target_asset_desc').html(asset_desc_html);
+        $('#container_asset_description').show();
+        if (!no_btn_update) {
+            $('#asset_preview_button').html('<i class="fa-solid fa-eye-slash"></i>');
+        }
+        $('#container_asset_desc_content').hide();
+    }
+    else {
+        $('#container_asset_description').hide();
+         if (!no_btn_update) {
+            $('#asset_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        }
+
+        $('#asset_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        $('#container_asset_desc_content').show();
+    }
+}
+
 
 function save_asset(){
     $('#submit_new_asset').click();
