@@ -5,7 +5,17 @@ var g_event_id = null;
 var g_event_desc_editor = null;
 
 function edit_in_event_desc() {
-    return edit_inner_editor('event_edition_btn', 'container_event_desc_content', 'ctrd_event');
+    if($('#container_event_desc_content').is(':visible')) {
+        $('#container_event_description').show(100);
+        $('#container_event_desc_content').hide(100);
+        $('#event_edition_btn').hide(100);
+        $('#event_preview_button').hide(100);
+    } else {
+        $('#event_preview_button').show(100);
+        $('#event_edition_btn').show(100);
+        $('#container_event_desc_content').show(100);
+        $('#container_event_description').hide(100);
+    }
 }
 
 /* Fetch a modal that allows to add an event */
@@ -25,8 +35,10 @@ function add_event() {
                                 $('#submit_new_event').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, save_event);
 
+        g_event_desc_editor.setOption("minLines", "10");
         headers = get_editor_headers('g_event_desc_editor', 'save_event', 'event_edition_btn');
         $('#event_edition_btn').append(headers);
+        edit_in_event_desc();
 
         $('#submit_new_event').on("click", function () {
             clear_api_error();
@@ -165,13 +177,41 @@ function edit_event(id) {
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_event').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, update_event_ext);
-        edit_in_event_desc();
+        g_event_desc_editor.setOption("minLines", "6");
+        preview_event_description(true);
         headers = get_editor_headers('g_event_desc_editor', 'update_event_ext', 'event_edition_btn');
         $('#event_edition_btn').append(headers);
         
         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
   });
+}
+
+function preview_event_description(no_btn_update) {
+    if(!$('#container_event_description').is(':visible')) {
+        event_desc = g_event_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(event_desc);
+        event_desc_html = filterXSS(html);
+        $('#target_event_desc').html(event_desc_html);
+        $('#container_event_description').show();
+        if (!no_btn_update) {
+            $('#event_preview_button').html('<i class="fa-solid fa-eye-slash"></i>');
+        }
+        $('#container_event_desc_content').hide();
+    }
+    else {
+        $('#container_event_description').hide();
+         if (!no_btn_update) {
+            $('#event_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        }
+
+        $('#event_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        $('#container_event_desc_content').show();
+    }
 }
 
 function is_timeline_compact_view() {

@@ -81,19 +81,21 @@
                                         <label for="event_content" class="placeholder">Event description</label>
                                         <div style="border-left: 1px solid #acacacdb;">
                                             <div class="form-group">
-                                                    <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_event_desc();">
+                                                    <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_event_desc();" >
                                                     </button>
+                                                    <button type="button" style="display: none;" class="btn btn-dark btn-sm float-right mr-2 mt-2"
+                                                            onclick="preview_event_description();" id="event_preview_button"><i class="fa-solid fa-eye"></i></button>
                                             </div>
                                             <div class="row">
-                                                <div class="col mb--2 ml--2" id="event_edition_btn">
+                                                <div class="col mb--2 ml--2" id="event_edition_btn" style="display:none;">
                                                 </div>
                                             </div>
                                             <div class="row" style="margin-left:0px;">
-                                                <div class="col-md-6" id="container_event_desc_content">
+                                                <div class="col-12" id="container_event_desc_content">
                                                     <div id="event_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event %}{{ event.event_content  }}{% endif %}</div>
                                                     <textarea id="event_desc_content" rows="10" cols="82" style="display: none"></textarea>
                                                 </div>
-                                                <div class="col-md-6" id="ctrd_event">
+                                                <div class="col-12" id="container_event_description" style="display:none">
                                                     <div id="target_event_desc"></div>
                                                 </div>
                                             </div>
