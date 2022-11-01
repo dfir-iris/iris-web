@@ -42,6 +42,7 @@ from app.datamgmt.case.case_notes_db import delete_note_group
 from app.datamgmt.case.case_notes_db import find_pattern_in_notes
 from app.datamgmt.case.case_notes_db import get_case_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comments
+from app.datamgmt.case.case_notes_db import get_case_notes_comments_count
 from app.datamgmt.case.case_notes_db import get_group_details
 from app.datamgmt.case.case_notes_db import get_groups_short
 from app.datamgmt.case.case_notes_db import get_note
@@ -119,8 +120,10 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
         setattr(form, 'note_id', note.note_id)
         setattr(form, 'note_uuid', note.note_uuid)
         ca = note.custom_attributes
+        comments_map = get_case_notes_comments_count([cur_id])
 
-        return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca, ncid=note.note_case_id)
+        return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca,
+                               ncid=note.note_case_id, comments_map=comments_map)
 
     return response_error(f'Unable to find note ID {cur_id} for case {caseid}')
 
