@@ -32,6 +32,7 @@ from app.forms import SearchForm
 from app.iris_engine.access_control.utils import ac_flag_match_mask
 from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.iris_engine.utils.tracker import track_activity
+from app.models import Comments
 from app.models.authorization import Permissions
 from app.models.authorization import UserCaseAccess
 from app.models.cases import Cases
@@ -119,6 +120,26 @@ def search_file_post(caseid: int):
             ns = [row._asdict() for row in ns]
 
         files = ns
+
+    if search_type == "comments":
+        search_value = "%{}%".format(search_value)
+        comments = Comments.query.filter(
+            Comments.comment_text.like(search_value),
+            Cases.client_id == Client.client_id,
+            search_condition
+        ).with_entities(
+            Comments.comment_id,
+            Comments.comment_text,
+            Cases.name.label('case_name'),
+            Client.name.label('customer_name'),
+            Cases.case_id
+        ).join(
+            Comments.case
+        ).order_by(
+            Client.name
+        ).all()
+
+        files = [row._asdict() for row in comments]
 
     return response_success("Results fetched", files)
 
