@@ -160,6 +160,7 @@ function get_case_rfiles() {
                 hide_loader();
 
                 $('#rfiles_table_wrapper').show();
+                Table.responsive.recalc();
 
             } else {
                 Table.clear().draw();
@@ -276,6 +277,7 @@ $(document).ready(function(){
 
     Table = $("#rfiles_table").DataTable({
         dom: 'Blfrtip',
+        fixedHeader: true,
         aaData: [],
         aoColumns: [
           {
@@ -323,6 +325,12 @@ $(document).ready(function(){
         retrieve: true,
         buttons: [
         ],
+        responsive: {
+            details: {
+                display: $.fn.dataTable.Responsive.display.childRow,
+                renderer: $.fn.dataTable.Responsive.renderer.tableAll()
+            }
+        },
         orderCellsTop: true,
         initComplete: function () {
             tableFiltering(this.api(), 'rfiles_table');
@@ -338,6 +346,10 @@ $(document).ready(function(){
             , "titleAttr": 'Copy' },
         ]
     }).container().appendTo($('#tables_button'));
+
+    Table.on( 'responsive-resize', function ( e, datatable, columns ) {
+            hide_table_search_input( columns );
+    });
 
     get_case_rfiles();
     setInterval(function() { check_update('evidences/state'); }, 3000);
