@@ -55,11 +55,11 @@ function add_modal_rfile() {
                         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                         $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                         $('#submit_new_evidence').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                    }, update_rfile);
+                    }, null);
         g_evidence_desc_editor.setOption("minLines", "10");
         edit_in_evidence_desc();
 
-        headers = get_editor_headers('g_evidence_desc_editor', 'update_rfile', 'evidence_edition_btn');
+        headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
         $('#evidence_edition_btn').append(headers);
         
         $('#modal_add_rfiles').modal({ show: true });

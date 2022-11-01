@@ -321,7 +321,7 @@ function note_detail(id, cid) {
             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
             $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
-        });
+        }, save_note);
 
         edit_innote();
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));

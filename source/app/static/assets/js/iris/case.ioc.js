@@ -37,7 +37,7 @@ function add_ioc() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                            }, save_ioc);
+                            }, null);
 
         g_ioc_desc_editor.setOption("minLines", "10");
         edit_in_ioc_desc();
@@ -159,11 +159,11 @@ function edit_ioc(ioc_id) {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                            }, update_ioc_ext, false, false);
+                            }, null, false, false);
 
-        g_ioc_desc_editor.setOption("minLines", "6");
+        g_ioc_desc_editor.setOption("minLines", "10");
         preview_ioc_description(true);
-        headers = get_editor_headers('g_ioc_desc_editor', 'update_ioc_ext', 'ioc_edition_btn');
+        headers = get_editor_headers('g_ioc_desc_editor', null, 'ioc_edition_btn');
         $('#ioc_edition_btn').append(headers);
 
         load_menu_mod_options_modal(ioc_id, 'ioc', $("#ioc_modal_quick_actions"));

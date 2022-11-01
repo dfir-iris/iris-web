@@ -24,7 +24,7 @@ function comment_element(element_id, element_type) {
                             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                             $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                        }, undefined, false, false);
+                        }, null, false, false);
 
             headers = get_editor_headers('g_comment_desc_editor', null, 'comment_edition_btn');
             $('#comment_edition_btn').append(headers);

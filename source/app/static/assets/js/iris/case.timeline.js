@@ -33,10 +33,10 @@ function add_event() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_event').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                            }, save_event);
+                            }, null);
 
         g_event_desc_editor.setOption("minLines", "10");
-        headers = get_editor_headers('g_event_desc_editor', 'save_event', 'event_edition_btn');
+        headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
         $('#event_edition_btn').append(headers);
         edit_in_event_desc();
 
@@ -176,10 +176,10 @@ function edit_event(id) {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_event').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                            }, update_event_ext);
+                            }, null);
         g_event_desc_editor.setOption("minLines", "6");
         preview_event_description(true);
-        headers = get_editor_headers('g_event_desc_editor', 'update_event_ext', 'event_edition_btn');
+        headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
         $('#event_edition_btn').append(headers);
         
         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
