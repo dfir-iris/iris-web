@@ -8,7 +8,17 @@ function reload_iocs() {
 }
 
 function edit_in_ioc_desc() {
-    return edit_inner_editor('ioc_edition_btn', 'container_ioc_desc_content', 'ctrd_ioc');
+    if($('#container_ioc_desc_content').is(':visible')) {
+        $('#container_ioc_description').show(100);
+        $('#container_ioc_desc_content').hide(100);
+        $('#ioc_edition_btn').hide(100);
+        $('#ioc_preview_button').hide(100);
+    } else {
+        $('#ioc_preview_button').show(100);
+        $('#ioc_edition_btn').show(100);
+        $('#container_ioc_desc_content').show(100);
+        $('#container_ioc_description').hide(100);
+    }
 }
 
 /* Fetch a modal that is compatible with the requested ioc type */ 
@@ -29,7 +39,10 @@ function add_ioc() {
                                 $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, save_ioc);
 
-        headers = get_editor_headers('g_ioc_desc_editor', 'save_ioc', 'ioc_edition_btn');
+        g_ioc_desc_editor.setOption("minLines", "10");
+        edit_in_ioc_desc();
+
+        headers = get_editor_headers('g_ioc_desc_editor', null, 'ioc_edition_btn');
         $('#ioc_edition_btn').append(headers);
 
 
@@ -146,8 +159,10 @@ function edit_ioc(ioc_id) {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
-                            }, update_ioc_ext);
-        edit_in_ioc_desc();
+                            }, update_ioc_ext, false, false);
+
+        g_ioc_desc_editor.setOption("minLines", "6");
+        preview_ioc_description(true);
         headers = get_editor_headers('g_ioc_desc_editor', 'update_ioc_ext', 'ioc_edition_btn');
         $('#ioc_edition_btn').append(headers);
 
@@ -155,6 +170,33 @@ function edit_ioc(ioc_id) {
         $('.dtr-modal').hide();
     });
     $('#modal_add_ioc').modal({ show: true });
+}
+
+function preview_ioc_description(no_btn_update) {
+    if(!$('#container_ioc_description').is(':visible')) {
+        ioc_desc = g_ioc_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(ioc_desc);
+        ioc_desc_html = filterXSS(html);
+        $('#target_ioc_desc').html(ioc_desc_html);
+        $('#container_ioc_description').show();
+        if (!no_btn_update) {
+            $('#ioc_preview_button').html('<i class="fa-solid fa-eye-slash"></i>');
+        }
+        $('#container_ioc_desc_content').hide();
+    }
+    else {
+        $('#container_ioc_description').hide();
+         if (!no_btn_update) {
+            $('#ioc_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        }
+
+        $('#ioc_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        $('#container_ioc_desc_content').show();
+    }
 }
 
 function update_ioc(ioc_id) {

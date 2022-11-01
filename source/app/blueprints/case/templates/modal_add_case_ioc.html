@@ -62,11 +62,13 @@
                                 <label for="ioc_description" class="placeholder">Description</label>
                                 <div style="border-left: 1px solid #acacacdb;">
                                     <div class="form-group">
-                                            <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_in_ioc_desc();">
+                                            <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_ioc_desc();">
                                             </button>
+                                            <button type="button" style="display: none;" class="btn btn-dark btn-sm float-right mr-2 mt-2"
+                                                    onclick="preview_ioc_description();" id="ioc_preview_button"><i class="fa-solid fa-eye"></i></button>
                                     </div>
                                     <div class="row">
-                                        <div class="col mb--2 ml--2" id="ioc_edition_btn">
+                                        <div class="col mb--2 ml--2" id="ioc_edition_btn" style="display:none;">
                                         </div>
                                     </div>
                                     <div class="row" style="margin-left:0px;">
@@ -74,7 +76,7 @@
                                             <div id="ioc_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if ioc %}{{ ioc.ioc_description  }}{% endif %}</div>
                                             <textarea id="ioc_desc_content" rows="10" cols="82" style="display: none"></textarea>
                                         </div>
-                                        <div class="col-12" id="ctrd_ioc">
+                                        <div class="col-12" id="container_ioc_description" style="display:none">
                                             <div id="target_ioc_desc"></div>
                                         </div>
                                     </div>
