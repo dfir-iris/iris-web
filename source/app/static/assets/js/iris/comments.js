@@ -93,8 +93,6 @@ function edit_comment(comment_id, element_id, element_type) {
     .done((data) => {
         if(notify_auto_api(data, true)) {
 
-            $('#comment_'+comment_id).css('background-color','rgba(255, 167, 90, 0.44)');
-            $('#comment_'+comment_id).css('border-radius','20px');
             $('#comment_'+comment_id).addClass('comment_editing');
             $('#comment_'+comment_id).data('comment_id', comment_id);
             g_comment_desc_editor.setValue(data.data.comment_text);
@@ -132,10 +130,17 @@ function cancel_edition(comment_id) {
     g_comment_desc_editor.setValue('');
 }
 
-function load_comments(element_id, element_type, comment_id) {
-    get_request_api(`/case/${element_type}/${element_id}/comments/list`, true)
+function load_comments(element_id, element_type, comment_id, do_notification) {
+
+    if (do_notification !== undefined) {
+        do_notification = !do_notification;
+    } else {
+        do_notification = true;
+    }
+
+    get_request_api(`/case/${element_type}/${element_id}/comments/list`)
     .done((data) => {
-        if (notify_auto_api(data, true)) {
+        if (notify_auto_api(data, !do_notification)) {
             $('#comments_list').empty();
             var names = Object;
             for (var i = 0; i < data['data'].length; i++) {
@@ -197,10 +202,16 @@ function load_comments(element_id, element_type, comment_id) {
             }
             if (data['data'].length === 0) {
                 $('#comments_list').html('<div class="text-center">No comments yet</div>');
-            } else if (comment_id === undefined) {
-                $('#comments_list').animate({ scrollTop: $('.last-comment').offset().top});
+            } else if (comment_id === undefined || comment_id === null) {
+                offset = $('.last-comment').offset().top;
+                if (offset > 20) {
+                    $('#comments_list').animate({ scrollTop: offset});
+                }
             } else {
-                $('#comments_list').animate({ scrollTop: ($('#comment_'+comment_id).offset().top)});
+                offset = $('#comment_'+comment_id).offset().top;
+                if (offset > 20) {
+                    $('#comments_list').animate({ scrollTop: offset});
+                }
             }
         }
     });

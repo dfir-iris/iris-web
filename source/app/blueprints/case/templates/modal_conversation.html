@@ -4,7 +4,7 @@
                 <div class="col md-12">
                     <div class="row">
                         <div class="col-8">
-                            <h4 class="modal-title mt-2 mr-4">Comments on <i>{{ title }}</i></h4>
+                            <h4 class="modal-title mt-2 mr-4 text-truncate">Comments on <i>{{ title }}</i></h4>
                         </div>
                         <div class="col">
                             <div class="row float-right">
@@ -35,14 +35,15 @@
                                 <div id="target_comment_content"></div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-12" id="container_comment_submit">
-                                <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_submit" onclick="save_comment({{ element_id }}, '{{ element_type }}');"><i class="fa-regular fa-paper-plane"></i> Comment</button>
-                                <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_edition" style="display: none;" onclick="save_edit_comment({{ element_id }}, '{{ element_type }}');"><i class="fa-regular fa-paper-plane"></i> Save</button>
-                                <button type="button" class="btn btn-danger btn-sm float-right ml-2" id="cancel_edition" style="display: none;" onclick="cancel_edition();"><i class="fa-solid fa-xmark"></i> Cancel</button>
-                                <button type="button" class="btn btn-dark btn-sm float-right" onclick="preview_comment();" id="comment_preview_button"><i class="fa-solid fa-eye"></i> Preview</button>
-                            </div>
-                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12" id="container_comment_submit">
+                        <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_submit" onclick="save_comment({{ element_id }}, '{{ element_type }}');"><i class="fa-regular fa-paper-plane"></i> Comment</button>
+                        <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_edition" style="display: none;" onclick="save_edit_comment({{ element_id }}, '{{ element_type }}');"><i class="fa-regular fa-paper-plane"></i> Save</button>
+                        <button type="button" class="btn btn-danger btn-sm float-right ml-2" id="cancel_edition" style="display: none;" onclick="cancel_edition();"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                        <button type="button" class="btn btn-dark btn-sm float-right ml-2" onclick="preview_comment();" id="comment_preview_button"><i class="fa-solid fa-eye"></i> Preview</button>
+                        <button type="button" class="btn btn-light btn-sm float-left" onclick="load_comments({{ element_id }}, '{{ element_type }}', null, true);"><i class="fa-solid fa-refresh"></i> Refresh</button>
                     </div>
                 </div>
             </div>

@@ -15021,6 +15021,13 @@ table.dataTable.stripe tbody > tr.selected {
     overflow-y: auto;
 }
 
+.comment_editing {
+    background-color: rgba(172, 172, 172, 0.44);
+    border-radius: 20px;
+    margin-left: 56px;
+    padding-right: 71px;
+}
+
 .modal .modal-comment .modal-header {
     padding: 0px;
 }
