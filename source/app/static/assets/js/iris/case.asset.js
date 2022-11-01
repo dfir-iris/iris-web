@@ -39,7 +39,7 @@ function add_asset() {
                                 $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, save_asset);
         g_asset_desc_editor.setOption("minLines", "10");
-        preview_asset_description(true);
+        edit_in_asset_desc();
 
         headers = get_editor_headers('g_asset_desc_editor', null, 'asset_edition_btn');
         $('#asset_edition_btn').append(headers);

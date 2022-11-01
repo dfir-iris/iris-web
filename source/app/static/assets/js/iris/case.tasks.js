@@ -3,7 +3,17 @@ var g_task_id = null;
 var g_task_desc_editor = null;
 
 function edit_in_task_desc() {
-    return edit_inner_editor('task_edition_btn', 'container_task_desc_content', 'ctrd_task');
+    if($('#container_task_desc_content').is(':visible')) {
+        $('#container_task_description').show(100);
+        $('#container_task_desc_content').hide(100);
+        $('#task_edition_btn').hide(100);
+        $('#task_preview_button').hide(100);
+    } else {
+        $('#task_preview_button').show(100);
+        $('#task_edition_btn').show(100);
+        $('#container_task_desc_content').show(100);
+        $('#container_task_description').hide(100);
+    }
 }
 
 
@@ -23,6 +33,8 @@ function add_task() {
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
                                 $('#submit_new_task').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, save_task);
+        g_task_desc_editor.setOption("minLines", "10");
+        edit_in_task_desc();
 
         headers = get_editor_headers('g_task_desc_editor', 'save_task', 'task_edition_btn');
         $('#task_edition_btn').append(headers);
@@ -150,13 +162,42 @@ function edit_task(id) {
                                 $('#submit_new_task').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, update_task_ext);
 
+        g_task_desc_editor.setOption("minLines", "6");
+        preview_task_description(true);
+
         headers = get_editor_headers('g_task_desc_editor', 'update_task_ext', 'task_edition_btn');
         $('#task_edition_btn').append(headers);
-        edit_in_task_desc();
 
         load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
         $('#modal_add_task').modal({show:true});
   });
+}
+
+function preview_task_description(no_btn_update) {
+    if(!$('#container_task_description').is(':visible')) {
+        task_desc = g_task_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(task_desc);
+        task_desc_html = filterXSS(html);
+        $('#target_task_desc').html(task_desc_html);
+        $('#container_task_description').show();
+        if (!no_btn_update) {
+            $('#task_preview_button').html('<i class="fa-solid fa-eye-slash"></i>');
+        }
+        $('#container_task_desc_content').hide();
+    }
+    else {
+        $('#container_task_description').hide();
+         if (!no_btn_update) {
+            $('#task_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        }
+
+        $('#task_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        $('#container_task_desc_content').show();
+    }
 }
 
 /* Fetch and draw the tasks */
