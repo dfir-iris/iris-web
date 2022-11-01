@@ -243,6 +243,7 @@ function get_tasks() {
                 Table.columns.adjust().draw();
                 load_menu_mod_options('task', Table, delete_task);
                 $('[data-toggle="popover"]').popover();
+                Table.responsive.recalc();
 
                 set_last_state(data.data.state);
                 hide_loader();
@@ -312,6 +313,7 @@ $(document).ready(function(){
     Table = $("#tasks_table").DataTable({
         dom: 'Blfrtip',
         aaData: [],
+        fixedHeader: true,
         aoColumns: [
           {
             "data": "task_title",
@@ -422,6 +424,12 @@ $(document).ready(function(){
         order: [[ 2, "asc" ]],
         buttons: [
         ],
+        responsive: {
+            details: {
+                display: $.fn.dataTable.Responsive.display.childRow,
+                renderer: $.fn.dataTable.Responsive.renderer.tableAll()
+            }
+        },
         orderCellsTop: true,
         initComplete: function () {
             tableFiltering(this.api(), 'tasks_table');
@@ -429,6 +437,11 @@ $(document).ready(function(){
         select: true
     });
     $("#tasks_table").css("font-size", 12);
+
+    Table.on( 'responsive-resize', function ( e, datatable, columns ) {
+            hide_table_search_input( columns );
+    });
+
     var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
         { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
