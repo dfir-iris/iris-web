@@ -15676,3 +15676,15 @@ td.dt-nowrap { white-space: nowrap }
   max-height: 35rem;
   min-height: 100px;
 }
+
+.md_description_field {
+    min-height: 73px;
+    border: 1px solid #ebedf2;
+    border-radius: 0.25rem;
+    padding: .6rem 1rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.md_description_field:focus {
+    border-color: #3e93ff;
+}
