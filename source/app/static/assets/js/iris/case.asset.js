@@ -341,7 +341,7 @@ $(document).ready(function(){
     });
 
     Table = $("#assets_table").DataTable({
-        dom: 'Blfrtip',
+        dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
         aaData: [],
         aoColumns: [
           {

@@ -276,7 +276,7 @@ $(document).ready(function(){
     });
 
     Table = $("#rfiles_table").DataTable({
-        dom: 'Blfrtip',
+        dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
         fixedHeader: true,
         aaData: [],
         aoColumns: [

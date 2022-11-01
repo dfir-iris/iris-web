@@ -311,7 +311,7 @@ $(document).ready(function(){
     });
 
     Table = $("#tasks_table").DataTable({
-        dom: 'Blfrtip',
+        dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
         aaData: [],
         fixedHeader: true,
         aoColumns: [

@@ -122,9 +122,6 @@ function get_case_ioc() {
                         $(e.target).popover('toggle');
                     });
 
-
-                $('#ioc_table_filter').addClass('mt--4');
-
                 $('#ioc_table_wrapper').show();
                 $('[data-toggle="popover"]').popover();
                 Table.columns.adjust().draw();
@@ -324,7 +321,7 @@ $(document).ready(function(){
     });
 
     Table = $("#ioc_table").DataTable({
-        dom: 'Blfrtip',
+        dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
         fixedHeader: true,
         aaData: [],
         aoColumns: [
