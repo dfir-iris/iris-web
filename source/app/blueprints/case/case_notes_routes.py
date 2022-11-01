@@ -29,6 +29,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
+from app import db
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import add_note
@@ -50,6 +51,7 @@ from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAddNoteSchema
 from app.schema.marshables import CaseGroupNoteSchema
 from app.schema.marshables import CaseNoteSchema
+from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
@@ -330,3 +332,87 @@ def case_edit_notes_groups(cur_id, caseid):
 
     return response_error("Group ID {} not found".format(cur_id))
 
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_note_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_note.case_note', cid=caseid, redirect=True))
+
+    note = get_note(cur_id, caseid=caseid)
+    if not note:
+        return response_error('Invalid note ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='notes',
+                           title=note.note_title)
+
+
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_note_list(cur_id, caseid):
+
+    note_comments = get_case_note_comments(cur_id)
+    if note_comments is None:
+        return response_error('Invalid note ID')
+
+    res = [com._asdict() for com in note_comments]
+    return response_success(data=res)
+
+
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_note_add(cur_id, caseid):
+
+    try:
+        note = get_note(cur_id, caseid=caseid)
+        if not note:
+            return response_error('Invalid note ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_note(note.id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity("note {} commented".format(note.id), caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_note_get(cur_id, com_id, caseid):
+
+    comment = get_case_note_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_note_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'notes', caseid)
+
+
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_note_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_note_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    return response_success(msg)
