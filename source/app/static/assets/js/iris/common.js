@@ -647,7 +647,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
         name: 'save',
         bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
         exec: function(editor) {
-            if (do_save !== undefined) {
+            if (do_save !== undefined || do_save !== null) {
                 do_save()
             }
         }
@@ -757,9 +757,9 @@ function edit_inner_editor(btn_id, container_id, ctrd_id) {
 }
 
 function get_editor_headers(editor_instance, save, edition_btn) {
-    var save_html = '';
-    if (save !== undefined || save !== null) {
-        save_html = `<div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="${save}( this );"><i class="fa-solid fa-file-circle-check"></i></div>`;
+    var save_html = `<div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="${save}( this );"><i class="fa-solid fa-file-circle-check"></i></div>`;
+    if (save === undefined || save === null) {
+        save_html = '';
     }
     header = `
                 ${save_html}
