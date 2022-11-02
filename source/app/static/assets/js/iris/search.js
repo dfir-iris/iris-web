@@ -157,6 +157,7 @@ function search() {
         if(notify_auto_api(data, true)) {
               $('#notes_msearch_list').empty();
               Table_1.clear();
+              Table_comments.clear();
               $('#search_table_wrapper_1').hide();
               $('#search_table_wrapper_2').hide();
               $('#search_table_wrapper_3').hide();

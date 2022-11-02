@@ -134,7 +134,8 @@ def search_file_post(caseid: int):
             Client.name.label('customer_name'),
             Cases.case_id
         ).join(
-            Comments.case
+            Comments.case,
+            Cases.client
         ).order_by(
             Client.name
         ).all()
