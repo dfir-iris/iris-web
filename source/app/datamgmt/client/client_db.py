@@ -31,7 +31,8 @@ from app.schema.marshables import CustomerSchema
 def get_client_list() -> List[Client]:
     client_list = Client.query.with_entities(
         Client.name.label('customer_name'),
-        Client.client_id.label('customer_id')
+        Client.client_id.label('customer_id'),
+        Client.client_uuid.label('customer_uuid')
     ).all()
 
     output = [c._asdict() for c in client_list]
@@ -47,7 +48,8 @@ def get_client(client_id: int) -> Client:
 def get_client_api(client_id: str) -> Client:
     client = Client.query.with_entities(
         Client.name.label('customer_name'),
-        Client.client_id.label('customer_id')
+        Client.client_id.label('customer_id'),
+        Client.client_uuid.label('customer_uuid')
     ).filter(Client.client_id == client_id).first()
 
     output = client._asdict()
@@ -102,12 +104,10 @@ def delete_client(client_id: int) -> None:
 
     try:
 
-        Client.query.filter(
-            Client.client_id == client_id
-        ).delete()
+        db.session.delete(client)
         db.session.commit()
 
     except Exception as e:
-        raise ElementInUseException('A used customer cannot be deleted')
+        raise ElementInUseException('A currently referenced customer cannot be deleted')
 
 

@@ -126,7 +126,7 @@ function notify_success(message) {
 
 function notify_auto_api(data, silent_success) {
     if (data.status == 'success') {
-        if (silent_success === undefined) {
+        if (silent_success === undefined || silent_success === false) {
             if (data.message.length === 0) {
                 data.message = 'Operation succeeded';
             }
@@ -480,8 +480,22 @@ function downloadURI(uri, name) {
 function copy_object_link(node_id) {
     link = buildShareLink(node_id);
     navigator.clipboard.writeText(link).then(function() {
-          notify_success('Shared link copied')
+          notify_success('Shared link copied');
     }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error('Shared link', err);
+    });
+}
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function copy_object_link_md(data_type, node_id){
+    link = `[<i class="fa-solid fa-tag"></i> ${capitalizeFirstLetter(data_type)} #${node_id}](${buildShareLink(node_id)})`
+    navigator.clipboard.writeText(link).then(function() {
+        notify_success('MD link copied');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
         console.error('Shared link', err);
     });
 }
@@ -606,7 +620,166 @@ function get_row_id(row) {
     return null;
 }
 
-function load_menu_mod_options(data_type, table) {
+function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_callback, do_save, readonly, live_preview) {
+    var editor = ace.edit(anchor_id);
+    if ($("#"+anchor_id).attr("data-theme") != "dark") {
+        editor.setTheme("ace/theme/tomorrow");
+    } else {
+        editor.setTheme("ace/theme/tomorrow_night");
+    }
+    editor.session.setMode("ace/mode/markdown");
+    if (readonly !== undefined) {
+        editor.setReadOnly(readonly);
+    }
+    editor.renderer.setShowGutter(true);
+    editor.setOption("showLineNumbers", true);
+    editor.setOption("showPrintMargin", false);
+    editor.setOption("displayIndentGuides", true);
+    editor.setOption("maxLines", "Infinity");
+    editor.setOption("minLines", "2");
+    editor.setOption("autoScrollEditorIntoView", true);
+    editor.session.setUseWrapMode(true);
+    editor.setOption("indentedSoftWrap", false);
+    editor.renderer.setScrollMargin(8, 5)
+    editor.setOption("enableBasicAutocompletion", true);
+
+    editor.commands.addCommand({
+        name: 'save',
+        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+        exec: function(editor) {
+            if (do_save !== undefined || do_save !== null) {
+                do_save()
+            }
+        }
+    });
+
+    editor.commands.addCommand({
+        name: 'bold',
+        bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
+        exec: function(editor) {
+            editor.insertSnippet('**${1:$SELECTION}**');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'italic',
+        bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
+        exec: function(editor) {
+            editor.insertSnippet('*${1:$SELECTION}*');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_1',
+        bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
+        exec: function(editor) {
+            editor.insertSnippet('# ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_2',
+        bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
+        exec: function(editor) {
+            editor.insertSnippet('## ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_3',
+        bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
+        exec: function(editor) {
+            editor.insertSnippet('### ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_4',
+        bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
+        exec: function(editor) {
+            editor.insertSnippet('#### ${1:$SELECTION}');
+        }
+    });
+
+    if (live_preview === undefined || live_preview === true) {
+        var textarea = $('#'+content_anchor);
+        editor.getSession().on("change", function () {
+            if (onchange_callback !== undefined && onchange_callback !== null) {
+                onchange_callback();
+            }
+
+            textarea.val(editor.getSession().getValue());
+            target = document.getElementById(target_anchor);
+            converter = new showdown.Converter({
+                tables: true,
+                parseImgDimensions: true
+            });
+            html = converter.makeHtml(editor.getSession().getValue());
+            target.innerHTML = filterXSS(html);
+        });
+
+        textarea.val(editor.getSession().getValue());
+        target = document.getElementById(target_anchor);
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(editor.getSession().getValue());
+        target.innerHTML = filterXSS(html);
+    }
+
+    return editor;
+}
+
+function get_avatar_initials(name) {
+    initial = name.split(' ');
+    if (initial.length > 1) {
+        initial = initial[0][0] + initial[1][0];
+        snum = initial[0].charCodeAt(0) + initial[1].charCodeAt(0);
+    } else {
+        initial = initial[0][0];
+        snum = initial.charCodeAt(0);
+    }
+    initial = initial.toUpperCase();
+
+    bgs = ['bg-info', 'bg-default', 'bg-primary', 'bg-secondary', 'bg-success', 'bg-warning', 'bg-danger'];
+    bg = bgs[snum % bgs.length];
+    return `<div class="avatar">
+        <span class="avatar-title rounded-circle border border-white ${bg}">${initial}</span>
+    </div>`;
+}
+
+function edit_inner_editor(btn_id, container_id, ctrd_id) {
+    $('#'+container_id).toggle();
+    if ($('#'+container_id).is(':visible')) {
+        $('#'+btn_id).show(100);
+        $('#'+ctrd_id).removeClass('col-md-12').addClass('col-md-6');
+    } else {
+        $('#'+btn_id).hide(100);
+        $('#'+ctrd_id).removeClass('col-md-6').addClass('col-md-12');
+    }
+    return false;
+}
+
+function get_editor_headers(editor_instance, save, edition_btn) {
+    var save_html = `<div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="${save}( this );"><i class="fa-solid fa-file-circle-check"></i></div>`;
+    if (save === undefined || save === null) {
+        save_html = '';
+    }
+    header = `
+                ${save_html}
+                <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="${editor_instance}.insertSnippet`+"('**${1:$SELECTION}**');"+`${editor_instance}.focus();"><i class="fa-solid fa-bold"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="${editor_instance}.insertSnippet`+"('*${1:$SELECTION}*');"+`${editor_instance}.focus();"><i class="fa-solid fa-italic"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="${editor_instance}.insertSnippet`+"('# ${1:$SELECTION}');"+`${editor_instance}.focus();">H1</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="${editor_instance}.insertSnippet`+"('## ${1:$SELECTION}')"+`;${editor_instance}.focus();">H2</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="${editor_instance}.insertSnippet`+"('### ${1:$SELECTION}');"+`${editor_instance}.focus();">H3</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="${editor_instance}.insertSnippet`+"('#### ${1:$SELECTION}');"+`${editor_instance}.focus();">H4</div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="${editor_instance}.insertSnippet`+"('```${1:$SELECTION}```');"+`${editor_instance}.focus();"><i class="fa-solid fa-code"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="${editor_instance}.insertSnippet`+"('[New link](${1:$SELECTION})');"+`${editor_instance}.focus();"><i class="fa-solid fa-link"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="${editor_instance}.insertSnippet`+"('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');"+`${editor_instance}.focus();"><i class="fa-solid fa-table"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="${editor_instance}.insertSnippet`+"('\n- \n- \n- ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="${editor_instance}.insertSnippet`+"('\n1. a  \n2. b  \n3. c  ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list-ol"></i></div>
+    `
+    return header;
+}
+
+
+function load_menu_mod_options(data_type, table, deletion_fn) {
     var actionOptions = {
         classes: [],
         contextMenu: {
@@ -630,6 +803,15 @@ function load_menu_mod_options(data_type, table) {
         items: [],
     };
 
+    datatype_map = {
+        'task': 'tasks',
+        'ioc': 'ioc',
+        'evidence': 'evidences',
+        'note': 'notes',
+        'asset': 'assets',
+        'event': 'timeline/events'
+    }
+
     get_request_api("/dim/hooks/options/"+ data_type +"/list")
     .done((data) => {
         if(notify_auto_api(data, true)) {
@@ -641,12 +823,36 @@ function load_menu_mod_options(data_type, table) {
                     title: 'Share',
                     multi: false,
                     iconClass: 'fas fa-share',
-                    buttonClasses: ['btn', 'btn-outline-primary'],
                     action: function(rows){
                         row = rows[0];
                         copy_object_link(get_row_id(row));
                     }
                 });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Comment',
+                    multi: false,
+                    iconClass: 'fas fa-comments',
+                    action: function(rows){
+                        row = rows[0];
+                        if (data_type in datatype_map) {
+                            comment_element(get_row_id(row), datatype_map[data_type]);
+                        }
+                    }
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Markdown Link',
+                    multi: false,
+                    iconClass: 'fa-brands fa-markdown',
+                    action: function(rows){
+                        row = rows[0];
+                        copy_object_link_md(data_type, get_row_id(row));
+                    }
+                });
+
                 actionOptions.items.push({
                     type: 'divider',
                 });
@@ -658,13 +864,31 @@ function load_menu_mod_options(data_type, table) {
                         multi: true,
                         multiTitle: opt.manual_hook_ui_name,
                         iconClass: 'fas fa-arrow-alt-circle-right',
-                        buttonClasses: ['btn', 'btn-outline-primary'],
                         contextMenuClasses: ['text-dark'],
                         action: function (rows) {
                             init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
                         },
                     })
                 }
+
+                if (deletion_fn !== undefined) {
+                    actionOptions.items.push({
+                        type: 'divider',
+                    });
+
+                    actionOptions.items.push({
+                        type: 'option',
+                        title: 'Delete',
+                        multi: false,
+                        iconClass: 'fas fa-trash',
+                        contextMenuClasses: ['text-danger'],
+                        action: function(rows){
+                            row = rows[0];
+                            deletion_fn(get_row_id(row));
+                        }
+                    });
+                }
+
                 table.contextualActions(actionOptions);
             }
         }

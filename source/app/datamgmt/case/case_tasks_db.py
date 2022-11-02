@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from datetime import datetime
+from flask_login import current_user
 from sqlalchemy import desc, and_
 
 from app import db
@@ -26,6 +27,8 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
 from app.models import CaseTasks, TaskAssignee
+from app.models import Comments
+from app.models import TaskComments
 from app.models import TaskStatus
 from app.models.authorization import User
 
@@ -37,6 +40,7 @@ def get_tasks_status():
 def get_tasks(caseid):
     return CaseTasks.query.with_entities(
         CaseTasks.id.label("task_id"),
+        CaseTasks.task_uuid,
         CaseTasks.task_title,
         CaseTasks.task_description,
         CaseTasks.task_open_date,
@@ -210,3 +214,80 @@ def add_task(task, assignee_id_list, user_id, caseid):
     update_task_assignees(task, assignee_id_list, caseid)
 
     return task
+
+
+def get_case_task_comments(task_id):
+    return TaskComments.query.filter(
+        TaskComments.comment_task_id == task_id
+    ).with_entities(
+        TaskComments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        TaskComments.comment,
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+
+def add_comment_to_task(task_id, comment_id):
+    ec = TaskComments()
+    ec.comment_task_id = task_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()
+
+
+def get_case_tasks_comments_count(tasks_list):
+    return TaskComments.query.filter(
+        TaskComments.comment_task_id.in_(tasks_list)
+    ).with_entities(
+        TaskComments.comment_task_id,
+        TaskComments.comment_id
+    ).group_by(
+        TaskComments.comment_task_id,
+        TaskComments.comment_id
+    ).all()
+
+
+def get_case_task_comment(task_id, comment_id):
+    return TaskComments.query.filter(
+        TaskComments.comment_task_id == task_id,
+        TaskComments.comment_id == comment_id
+    ).with_entities(
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        TaskComments.comment,
+        Comments.user
+    ).first()
+
+
+def delete_task_comment(task_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    TaskComments.query.filter(
+        TaskComments.comment_task_id == task_id,
+        TaskComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"

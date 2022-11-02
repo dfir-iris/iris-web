@@ -17,13 +17,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
+from app.models import Comments
 from app.models import Notes
+from app.models import NotesComments
 from app.models import NotesGroup
 from app.models import NotesGroupLink
 from app.models.authorization import User
@@ -32,12 +34,14 @@ from app.models.authorization import User
 def get_note(note_id, caseid=None):
     note = Notes.query.with_entities(
         Notes.note_id,
+        Notes.note_uuid,
         Notes.note_title,
         Notes.note_content,
         Notes.note_creationdate,
         Notes.note_lastupdate,
         NotesGroupLink.group_id,
         NotesGroup.group_title,
+        NotesGroup.group_uuid,
         Notes.custom_attributes,
         Notes.note_case_id
     ).filter(and_(
@@ -120,6 +124,7 @@ def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=
 def get_groups_short(caseid):
     groups_short = NotesGroup.query.with_entities(
         NotesGroup.group_id,
+        NotesGroup.group_uuid,
         NotesGroup.group_title
     ).filter(
         NotesGroup.group_case_id == caseid
@@ -133,6 +138,7 @@ def get_groups_short(caseid):
 def get_notes_from_group(caseid, group_id):
     notes = NotesGroupLink.query.with_entities(
         Notes.note_id,
+        Notes.note_uuid,
         Notes.note_title,
         User.user,
         Notes.note_lastupdate
@@ -152,8 +158,10 @@ def get_notes_from_group(caseid, group_id):
 def get_groups_detail(caseid):
     groups = NotesGroupLink.query.with_entities(
         NotesGroup.group_id,
+        NotesGroup.group_uuid,
         NotesGroup.group_title,
         Notes.note_id,
+        Notes.note_uuid,
         Notes.note_title,
         User.user,
         Notes.note_lastupdate
@@ -175,6 +183,7 @@ def get_groups_detail(caseid):
 def get_group_details(group_id, caseid):
     group_l = NotesGroup.query.with_entities(
         NotesGroup.group_id,
+        NotesGroup.group_uuid,
         NotesGroup.group_title,
         NotesGroup.group_creationdate,
         NotesGroup.group_lastupdate
@@ -283,3 +292,80 @@ def find_pattern_in_notes(pattern, caseid):
     ).all()
 
     return notes
+
+
+def get_case_note_comments(note_id):
+    return NotesComments.query.filter(
+        NotesComments.comment_note_id == note_id
+    ).with_entities(
+        NotesComments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        NotesComments.comment,
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+
+def add_comment_to_note(note_id, comment_id):
+    ec = NotesComments()
+    ec.comment_note_id = note_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()
+
+
+def get_case_notes_comments_count(notes_list):
+    return NotesComments.query.filter(
+        NotesComments.comment_note_id.in_(notes_list)
+    ).with_entities(
+        NotesComments.comment_note_id,
+        NotesComments.comment_id
+    ).group_by(
+        NotesComments.comment_note_id,
+        NotesComments.comment_id
+    ).all()
+
+
+def get_case_note_comment(note_id, comment_id):
+    return NotesComments.query.filter(
+        NotesComments.comment_note_id == note_id,
+        NotesComments.comment_id == comment_id
+    ).with_entities(
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        NotesComments.comment,
+        Comments.user
+    ).first()
+
+
+def delete_note_comment(note_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    NotesComments.query.filter(
+        NotesComments.comment_note_id == note_id,
+        NotesComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"

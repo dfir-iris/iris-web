@@ -1,6 +1,22 @@
 var tm_filter = null;
 var selector_active;
 var current_timeline;
+var g_event_id = null;
+var g_event_desc_editor = null;
+
+function edit_in_event_desc() {
+    if($('#container_event_desc_content').is(':visible')) {
+        $('#container_event_description').show(100);
+        $('#container_event_desc_content').hide(100);
+        $('#event_edition_btn').hide(100);
+        $('#event_preview_button').hide(100);
+    } else {
+        $('#event_preview_button').show(100);
+        $('#event_edition_btn').show(100);
+        $('#container_event_desc_content').show(100);
+        $('#container_event_description').hide(100);
+    }
+}
 
 /* Fetch a modal that allows to add an event */
 function add_event() {
@@ -11,6 +27,18 @@ function add_event() {
              ajax_notify_error(xhr, url);
              return false;
         }
+
+        g_event_desc_editor = get_new_ace_editor('event_description', 'event_desc_content', 'target_event_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_event').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, null);
+
+        g_event_desc_editor.setOption("minLines", "10");
+        headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
+        $('#event_edition_btn').append(headers);
+        edit_in_event_desc();
 
         $('#submit_new_event').on("click", function () {
             clear_api_error();
@@ -47,6 +75,11 @@ function add_event() {
     });
 }
 
+function save_event() {
+    $('#submit_new_event').click();
+}
+
+
 function duplicate_event(id) {
     window.location.hash = id;
     clear_api_error();
@@ -63,9 +96,17 @@ function duplicate_event(id) {
     });
 
 }
+function update_event(event_id) {
+    update_event_ext(event_id, true);
+}
 
-function update_event(id) {
-    window.location.hash = id;
+function update_event_ext(event_id, do_close) {
+
+    if (event_id === undefined || event_id === null) {
+        event_id = g_event_id;
+    }
+
+    window.location.hash = event_id;
     clear_api_error();
     var data_sent = $('#form_new_event').serializeObject();
     data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
@@ -75,6 +116,7 @@ function update_event(id) {
     data_sent['event_assets'] = $('#event_assets').val();
     data_sent['event_iocs'] = $('#event_iocs').val();
     data_sent['event_tz'] = $('#event_tz').val();
+    data_sent['event_content'] = g_event_desc_editor.getValue();
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];
@@ -83,11 +125,18 @@ function update_event(id) {
 
     data_sent['custom_attributes'] = attributes;
 
-    post_request_api('timeline/events/update/' + id, JSON.stringify(data_sent), true)
+    post_request_api('timeline/events/update/' + event_id, JSON.stringify(data_sent), true)
     .done(function(data) {
         if(notify_auto_api(data)) {
             apply_filtering();
-            $('#modal_add_event').modal('hide');
+            if (do_close !== undefined && do_close === true) {
+                $('#modal_add_event').modal('hide');
+            }
+
+            $('#submit_new_event').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
         }
     });
 
@@ -96,15 +145,18 @@ function update_event(id) {
 /* Delete an event from the timeline thank to its id */ 
 function delete_event(id) {
     window.location.hash = id;
-
-    get_request_api("timeline/events/delete/" + id)
-    .done(function(data) {
-        if(notify_auto_api(data)) {
-            apply_filtering();
-            $('#modal_add_event').modal('hide');
+    do_deletion_prompt("You are about to delete event #" + id)
+    .then((doDelete) => {
+        if (doDelete) {
+            get_request_api("timeline/events/delete/" + id)
+            .done(function(data) {
+                if(notify_auto_api(data)) {
+                    apply_filtering();
+                    $('#modal_add_event').modal('hide');
+                }
+            });
         }
     });
-
 }
 
 /* Edit an event from the timeline thanks to its ID */
@@ -117,9 +169,49 @@ function edit_event(id) {
              ajax_notify_error(xhr, url);
              return false;
         }
+        
+        g_event_id = id;
+        g_event_desc_editor = get_new_ace_editor('event_description', 'event_desc_content', 'target_event_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_event').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, null);
+        g_event_desc_editor.setOption("minLines", "6");
+        preview_event_description(true);
+        headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
+        $('#event_edition_btn').append(headers);
+        
         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
   });
+}
+
+function preview_event_description(no_btn_update) {
+    if(!$('#container_event_description').is(':visible')) {
+        event_desc = g_event_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(event_desc);
+        event_desc_html = filterXSS(html);
+        $('#target_event_desc').html(event_desc_html);
+        $('#container_event_description').show();
+        if (!no_btn_update) {
+            $('#event_preview_button').html('<i class="fa-solid fa-eye-slash"></i>');
+        }
+        $('#container_event_desc_content').hide();
+    }
+    else {
+        $('#container_event_description').hide();
+         if (!no_btn_update) {
+            $('#event_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        }
+
+        $('#event_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        $('#container_event_desc_content').show();
+    }
 }
 
 function is_timeline_compact_view() {
@@ -318,6 +410,7 @@ function build_timeline(data) {
                 {value: 'endDate:', score: 10, meta: 'Match end date of events'},
                 {value: 'tag:', score: 10, meta: 'Match tag of events'},
                 {value: 'description:', score: 10, meta: 'Match description of events'},
+                {value: 'flag', score: 10, meta: 'Match flagged events'},
                 {value: 'category:', score: 10, meta: 'Match category of events'},
                 {value: 'title:', score: 10, meta: 'Match title of events'},
                 {value: 'source:', score: 10, meta: 'Match source of events'},
@@ -371,6 +464,11 @@ function build_timeline(data) {
     }
     idx = 0;
 
+    converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+
     for (index in data.data.tim) {
         evt = data.data.tim[index];
         dta =  evt.event_date.split('T');
@@ -379,7 +477,12 @@ function build_timeline(data) {
         tmb_d = '';
         style = '';
         asset = '';
-        
+
+        if (evt.event_id in data.data.comments_map) {
+            nb_comments = data.data.comments_map[evt.event_id].length;
+        } else {
+            nb_comments = '';
+        }
 
         if(evt.category_name && evt.category_name != 'Unspecified') {
             tags += `<span class="badge badge-light float-right mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
@@ -459,7 +562,8 @@ function build_timeline(data) {
         }
 
         title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
-        content_parsed = sanitizeHTML(evt.event_content).replace(/&#13;&#10;/g, '<br/>');
+        content_parsed = converter.makeHtml(evt.event_content);
+        content_parsed = filterXSS(content_parsed);
 
         if (!compact) {
             content_split = content_parsed.split('<br/>');
@@ -477,12 +581,20 @@ function build_timeline(data) {
                 ${long_content}
                 </div>
                 <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
+                formatted_content = formatted_content;
             } else {
                 formatted_content = match_replace_ioc(content_parsed, reap);
             }
         }
 
         shared_link = buildShareLink(evt.event_id);
+
+        flag = '';
+        if (evt.event_is_flagged) {
+            flag = `<i class="fas fa-flag text-warning" title="Flagged"></i>`;
+        } else {
+            flag = `<i class="fa-regular fa-flag" title="Not flagged"></i>`;
+        }
 
         if (compact) {
             entry = `<li class="timeline-inverted ${mtop_day}" title="Event ID #${evt.event_id}">
@@ -496,6 +608,16 @@ function build_timeline(data) {
                                         <i class="fa fa-pen"></i>
                                     </span>
                                 </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
+                                    <span class="btn-label">
+                                        ${flag}
+                                    </span>
+                                </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
+                                    <span class="btn-label">
+                                        <i class="fa-solid fa-comments"></i><span class="notification">${nb_comments}</span>
+                                    </span>
+                                </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                     <span class="btn-label">
                                         <i class="fa fa-cog"></i>
@@ -503,6 +625,7 @@ function build_timeline(data) {
                                 </button>
                                 <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                                         <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                        <a href= "#" class="dropdown-item" onclick="copy_object_link_md('event', ${evt.event_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                                         <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                         <div class="dropdown-divider"></div>
                                         <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
@@ -537,6 +660,16 @@ function build_timeline(data) {
                                         <i class="fa fa-pen"></i>
                                     </span>
                                 </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
+                                    <span class="btn-label">
+                                        ${flag}
+                                    </span>
+                                </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="comment_event(${evt.event_id}, 'timeline/events'))" title="Comments">
+                                    <span class="btn-label">
+                                        <i class="fa-solid fa-comments"></i><span class="notification">${nb_comments}</span>
+                                    </span>
+                                </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                     <span class="btn-label">
                                         <i class="fa fa-cog"></i>
@@ -555,17 +688,18 @@ function build_timeline(data) {
                         </div>
                         <div class="timeline-body text-faded" >
                             <span>${formatted_content}</span>
-                        </div>
-                        <div class="bottom-hour mt-2">
-                            <div class="row">
-                                <div class="col-4 d-flex">
-                                    <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${evt.event_date}${ori_date}</small></span>
-                                </div>
-                                <div class="col-8 ">
-                                    <span class="float-right">${tags}${asset} </span>
+
+                            <div class="bottom-hour mt-2">
+                                <div class="row">
+                                    <div class="col-4 d-flex">
+                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${evt.event_date}${ori_date}</small></span>
+                                    </div>
+                                    <div class="col-8 ">
+                                        <span class="float-right">${tags}${asset} </span>
+                                    </div>
                                 </div>
                             </div>
-                        <div>
+                        </div>
                     </div>
                 </li>`
         }
@@ -637,6 +771,20 @@ function hide_time_converter(){
     $('#event_date_convert').hide();
     $('#event_date_inputs').show();
     $('#event_date').focus();
+}
+
+function flag_event(event_id){
+    get_request_api('timeline/events/flag/'+event_id)
+    .done(function(data) {
+        if (notify_auto_api(data)) {
+            if (data.data.event_is_flagged == true) {
+                $('#event_'+event_id).find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
+                $('#event_210').find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
+            } else {
+                $('#event_'+event_id).find('.fa-flag').addClass('fa-regular').removeClass('fas text-warning');
+            }
+        }
+    });
 }
 
 function time_converter(){
@@ -724,7 +872,7 @@ function timelineToCsvWithUI(){
 }
 
 var parsed_filter = {};
-var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'startDate', 'endDate'];
+var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'flag', 'startDate', 'endDate'];
 
 
 function parse_filter(str_filter, keywords) {
@@ -773,7 +921,7 @@ function reset_filters() {
 }
 
 function apply_filtering(post_req_fn) {
-    keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'category', 'source',  'raw', 'startDate', 'endDate'];
+    keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'flag', 'startDate', 'endDate'];
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));

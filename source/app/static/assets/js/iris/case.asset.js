@@ -1,6 +1,25 @@
 /* reload the asset table */
+g_asset_id = null;
+g_asset_desc_editor = null;
+
+
 function reload_assets() {
     get_case_assets();
+}
+
+function edit_in_asset_desc() {
+
+    if($('#container_asset_desc_content').is(':visible')) {
+        $('#container_asset_description').show(100);
+        $('#container_asset_desc_content').hide(100);
+        $('#asset_edition_btn').hide(100);
+        $('#asset_preview_button').hide(100);
+    } else {
+        $('#asset_preview_button').show(100);
+        $('#asset_edition_btn').show(100);
+        $('#container_asset_desc_content').show(100);
+        $('#container_asset_description').hide(100);
+    }
 }
 
 /* Fetch a modal that is compatible with the requested asset type */
@@ -12,6 +31,18 @@ function add_asset() {
              ajax_notify_error(xhr, url);
              return false;
         }
+
+        g_asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, null);
+        g_asset_desc_editor.setOption("minLines", "10");
+        edit_in_asset_desc();
+
+        headers = get_editor_headers('g_asset_desc_editor', null, 'asset_edition_btn');
+        $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
 
@@ -26,6 +57,7 @@ function add_asset() {
                 data["ioc_links"] = [data["ioc_links"]]
             }
             data['asset_tags'] = $('#asset_tags').val();
+            data['asset_description'] = g_asset_desc_editor.getValue();
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
             attributes = ret[1];
@@ -63,7 +95,10 @@ function add_asset() {
 
             return false;
         })
+
         $('#modal_add_asset').modal({ show: true });
+        edit_in_asset_desc();
+
     });
 
     $('.dtr-modal').hide();
@@ -81,7 +116,7 @@ function get_case_assets() {
                 Table.clear();
                 Table.rows.add(jsdata.assets);
                 Table.columns.adjust().draw();
-                load_menu_mod_options('asset', Table);
+                load_menu_mod_options('asset', Table, delete_asset);
 
                 set_last_state(jsdata.state);
                 hide_loader();
@@ -105,21 +140,21 @@ function get_case_assets() {
 
 /* Delete an asset */
 function delete_asset(asset_id) {
-    get_request_api('assets/delete/' + asset_id)
-    .done((data) => {
-        if (data.status == 'success') {
-
-            reload_assets();
-            $('#modal_add_asset').modal('hide');
-            notify_success('Asset deleted');
-
-
-        } else {
-
-            swal("Oh no !", data.message, "error")
-
+    do_deletion_prompt("You are about to delete asset #" + asset_id)
+    .then((doDelete) => {
+        if (doDelete) {
+            get_request_api('assets/delete/' + asset_id)
+            .done((data) => {
+                if (data.status == 'success') {
+                    reload_assets();
+                    $('#modal_add_asset').modal('hide');
+                    notify_success('Asset deleted');
+                } else {
+                    swal("Oh no !", data.message, "error")
+                }
+            });
         }
-    })
+    });
 }
 
 /* Fetch the details of an asset and allow modification */
@@ -132,55 +167,24 @@ function asset_details(asset_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
+        g_asset_id = asset_id;
+        g_asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, null, false, false);
+
+        g_asset_desc_editor.setOption("minLines", "10");
+        preview_asset_description(true);
+        headers = get_editor_headers('g_asset_desc_editor', null, 'asset_edition_btn');
+        $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
 
 
         $('#submit_new_asset').on("click", function () {
-            if(!$('form#form_new_asset').valid()) {
-                return false;
-            }
-
-            var data = $('#form_new_asset').serializeObject();
-            if (typeof data["ioc_links"] === "string") {
-                data["ioc_links"] = [data["ioc_links"]]
-            } else if (typeof data["ioc_links"] === "object") {
-                tmp_data = [];
-                for (ioc_link in data["ioc_links"]) {
-                    if (typeof ioc_link === "string") {
-                        tmp_data.push(data["ioc_links"][ioc_link]);
-                    }
-                }
-                data["ioc_links"] = tmp_data;
-            }
-            else {
-                data["ioc_links"] = [];
-            }
-            data['asset_tags'] = $('#asset_tags').val();
-            if (!data.hasOwnProperty('asset_compromised')) {
-                data['asset_compromised'] = 'false';
-            }
-
-            ret = get_custom_attributes_fields();
-            has_error = ret[0].length > 0;
-            attributes = ret[1];
-
-            if (has_error){return false;}
-
-            data['custom_attributes'] = attributes;
-
-            post_request_api('assets/update/' + asset_id, JSON.stringify(data),  true)
-            .done((data) => {
-                if (data.status == 'success') {
-                    reload_assets();
-                    $('#modal_add_asset').modal('hide');
-                    notify_success('Asset updated');
-                } else {
-                    $('#submit_new_asset').text('Save again');
-                    swal("Oh no !", data.message, "error")
-                }
-            })
-
+            update_asset(true);
             return false;
         })
 
@@ -189,6 +193,92 @@ function asset_details(asset_id) {
     });
 
     $('#modal_add_asset').modal({ show: true });
+    return false;
+}
+
+function preview_asset_description(no_btn_update) {
+    if(!$('#container_asset_description').is(':visible')) {
+        asset_desc = g_asset_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(asset_desc);
+        asset_desc_html = filterXSS(html);
+        $('#target_asset_desc').html(asset_desc_html);
+        $('#container_asset_description').show();
+        if (!no_btn_update) {
+            $('#asset_preview_button').html('<i class="fa-solid fa-eye-slash"></i>');
+        }
+        $('#container_asset_desc_content').hide();
+    }
+    else {
+        $('#container_asset_description').hide();
+         if (!no_btn_update) {
+            $('#asset_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        }
+
+        $('#asset_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        $('#container_asset_desc_content').show();
+    }
+}
+
+
+function save_asset(){
+    $('#submit_new_asset').click();
+}
+
+function update_asset(do_close){
+    if(!$('form#form_new_asset').valid()) {
+        return false;
+    }
+
+    var data = $('#form_new_asset').serializeObject();
+    if (typeof data["ioc_links"] === "string") {
+        data["ioc_links"] = [data["ioc_links"]]
+    } else if (typeof data["ioc_links"] === "object") {
+        tmp_data = [];
+        for (ioc_link in data["ioc_links"]) {
+            if (typeof ioc_link === "string") {
+                tmp_data.push(data["ioc_links"][ioc_link]);
+            }
+        }
+        data["ioc_links"] = tmp_data;
+    }
+    else {
+        data["ioc_links"] = [];
+    }
+    data['asset_tags'] = $('#asset_tags').val();
+    if (!data.hasOwnProperty('asset_compromised')) {
+        data['asset_compromised'] = 'false';
+    }
+    data['asset_description'] = g_asset_desc_editor.getValue();
+
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data['custom_attributes'] = attributes;
+
+    post_request_api('assets/update/' + g_asset_id, JSON.stringify(data),  true)
+    .done((data) => {
+        if (data.status == 'success') {
+            reload_assets();
+            $('#submit_new_asset').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+            if (do_close) {
+                $('#modal_add_asset').modal('hide');
+            }
+            notify_success('Asset updated');
+        } else {
+            $('#submit_new_asset').text('Save again');
+            swal("Oh no !", data.message, "error")
+        }
+    })
+
     return false;
 }
 
@@ -251,7 +341,7 @@ $(document).ready(function(){
     });
 
     Table = $("#assets_table").DataTable({
-        dom: 'Blfrtip',
+        dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
         aaData: [],
         aoColumns: [
           {
@@ -395,12 +485,7 @@ $(document).ready(function(){
         processing: true,
         responsive: {
                 details: {
-                    display: $.fn.dataTable.Responsive.display.modal( {
-                        header: function ( row ) {
-                            var data = row.data();
-                            return 'Details of '+ sanitizeHTML(data.asset_name) +' ('+ sanitizeHTML(data.asset_type)  + ')';
-                        }
-                    } ),
+                    display: $.fn.dataTable.Responsive.display.childRow,
                     renderer: $.fn.dataTable.Responsive.renderer.tableAll()
                 }
         },

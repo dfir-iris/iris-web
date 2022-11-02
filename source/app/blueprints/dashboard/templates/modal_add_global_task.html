@@ -1,13 +1,25 @@
-    <div class="modal-header">
-        <h4>{% if task.id %} Task ID #{{ task.id }}{% else %} Add global task {% endif %}</h4>
-        {% if task.id %}
-         <i class="fas fa-info-circle ml-3" data-toggle="popover"
+<div class="modal-header">
+    <div class="col md-12">
+        <div class="row">
+            <div class="col">
+                 <h4 class="modal-title mt-1 mr-4">{% if task.id %} Task ID #{{ task.id }}{% else %} Add global task {% endif %}
+                   {% if task.id %}
+                    <i class="fas fa-info-circle ml-3" data-toggle="popover"
                         title="Task info"
                         data-content="Last updated {{ task.task_last_update }} by {{ user_name }}."></i>
-        {% endif %}
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-        aria-hidden="true">&times;</span></button>
+                    {% endif %}
+                 </h4>
+                 <small><i class="text-muted">{% if task.task_uuid %}#{{ task.task_uuid }}{% endif %}</i></small>
+            </div>
+            <div class="col ">
+                <div class="row float-right">
+                    <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 
 <div class="modal-body">
 

@@ -94,6 +94,7 @@ def list_cases_dict(user_id):
         Cases.soc_id.label('case_soc_id'),
         User.name.label('opened_by'),
         Cases.case_id,
+        Cases.case_uuid,
         UserCaseEffectiveAccess.access_level
     ).join(
         UserCaseEffectiveAccess.case,
@@ -154,6 +155,7 @@ def get_case_details_rt(case_id):
             Cases.open_date, Cases.close_date,
             Cases.soc_id.label('case_soc_id'),
             Cases.case_id,
+            Cases.case_uuid,
             Client.name.label('customer_name'),
             User.user.label('open_by_user'),
             Cases.custom_attributes

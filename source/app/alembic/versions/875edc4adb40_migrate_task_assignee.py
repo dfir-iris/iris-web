@@ -29,6 +29,9 @@ def upgrade():
             for task in results_tasks:
                 task_id = task[0]
                 user_id = task[1]
+                if not user_id:
+                    user_id = 1
+
                 # Migrate assignees to task_assignee
                 conn.execute(f"insert into task_assignee (user_id, task_id) values ({user_id}, {task_id}) "
                              f"on conflict do nothing;")

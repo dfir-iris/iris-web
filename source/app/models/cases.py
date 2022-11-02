@@ -17,10 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import uuid
 
 from datetime import datetime
 from flask_login import current_user
 # IMPORTS ------------------------------------------------
+from sqlalchemy import BigInteger
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Date
@@ -29,8 +31,10 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app import db
@@ -46,7 +50,7 @@ from app.models.models import Client
 class Cases(db.Model):
     __tablename__ = 'cases'
 
-    case_id = Column(Integer, primary_key=True)
+    case_id = Column(BigInteger, primary_key=True)
     soc_id = Column(String(256))
     client_id = Column(ForeignKey('client.client_id'), nullable=False)
     name = Column(String(256))
@@ -55,6 +59,8 @@ class Cases(db.Model):
     close_date = Column(Date)
     user_id = Column(ForeignKey('user.id'))
     custom_attributes = Column(JSON)
+    case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                       nullable=False)
 
     client = relationship('Client')
     user = relationship('User')
@@ -78,6 +84,7 @@ class Cases(db.Model):
         self.open_date = datetime.utcnow()
         self.gen_report = gen_report
         self.custom_attributes = custom_attributes
+        self.case_uuid = uuid.uuid4()
 
     def save(self):
         """
@@ -125,7 +132,9 @@ class Cases(db.Model):
 class CasesEvent(db.Model):
     __tablename__ = "cases_events"
 
-    event_id = Column(Integer, primary_key=True)
+    event_id = Column(BigInteger, primary_key=True)
+    event_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                        nullable=False)
     case_id = Column(ForeignKey('cases.case_id'))
     event_title = Column(Text)
     event_source = Column(Text)
@@ -141,6 +150,7 @@ class CasesEvent(db.Model):
     event_tags = Column(Text)
     event_tz = Column(Text)
     event_date_wtz = Column(DateTime)
+    event_is_flagged = Column(Boolean, default=False)
     custom_attributes = Column(JSONB)
 
     case = relationship('Cases')

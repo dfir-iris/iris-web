@@ -33,9 +33,16 @@ from flask_wtf import FlaskForm
 from sqlalchemy import and_
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
+from app.datamgmt.case.case_comments import get_case_comment
+from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import delete_event_category
+from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
+from app.datamgmt.case.case_events_db import get_case_event_comment
+from app.datamgmt.case.case_events_db import get_case_event_comments
+from app.datamgmt.case.case_events_db import get_case_events_comments_count
 from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
 from app.datamgmt.case.case_events_db import get_default_cat
 from app.datamgmt.case.case_events_db import get_event_assets_ids
@@ -63,6 +70,7 @@ from app.models.models import CaseEventsIoc
 from app.models.models import EventCategory
 from app.models.models import Ioc
 from app.models.models import IocLink
+from app.schema.marshables import CommentSchema
 from app.schema.marshables import EventSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
@@ -97,6 +105,94 @@ def case_getgraph_page(caseid, url_redir):
         return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid, redirect=True))
 
     return render_template("case_graph_timeline.html")
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
+
+    event = get_case_event(cur_id, caseid=caseid)
+    if not event:
+        return response_error('Invalid event ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='timeline/events',
+                           title=event.event_title)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comments_get(cur_id, caseid):
+
+    event_comments = get_case_event_comments(cur_id, caseid=caseid)
+    if event_comments is None:
+        return response_error('Invalid event ID')
+
+    res = [com._asdict() for com in event_comments]
+    return response_success(data=res)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_event_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    return response_success(msg)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_get(cur_id, com_id, caseid):
+
+    comment = get_case_event_comment(cur_id, com_id, caseid=caseid)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'events', caseid)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_add(cur_id, caseid):
+
+    try:
+        event = get_case_event(event_id=cur_id, caseid=caseid)
+        if not event:
+            return response_error('Invalid event ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_event(event.event_id, comment.comment_id)
+
+        add_obj_history_entry(event, 'commented')
+
+        db.session.commit()
+
+        track_activity("event {} commented".format(event.event_id), caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
 
 @case_timeline_blueprint.route('/case/timeline/state', methods=['GET'])
@@ -205,6 +301,7 @@ def case_gettimeline_api(asset_id, caseid):
 
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
+            CasesEvent.event_uuid,
             CasesEvent.event_date,
             CasesEvent.event_date_wtz,
             CasesEvent.event_tz,
@@ -299,11 +396,16 @@ def case_filter_timeline(caseid):
     end_date = filter_d.get('endDate')
     titles = filter_d.get('title')
     sources = filter_d.get('source')
+    flag = filter_d.get('flag')
 
     condition = (CasesEvent.case_id == caseid)
 
     if assets:
         assets = [asset.lower() for asset in assets]
+
+    if flag:
+        flags = (flag[0].lower() == 'true')
+        condition = and_(condition, CasesEvent.event_is_flagged == flags)
 
     if iocs:
         iocs = [ioc.lower() for ioc in iocs]
@@ -358,6 +460,7 @@ def case_filter_timeline(caseid):
 
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
+            CasesEvent.event_uuid,
             CasesEvent.event_date,
             CasesEvent.event_date_wtz,
             CasesEvent.event_tz,
@@ -367,6 +470,7 @@ def case_filter_timeline(caseid):
             CasesEvent.event_content,
             CasesEvent.event_in_summary,
             CasesEvent.event_in_graph,
+            CasesEvent.event_is_flagged,
             User.user,
             CasesEvent.event_added,
             EventCategory.name.label("category_name")
@@ -426,6 +530,7 @@ def case_filter_timeline(caseid):
                 iocs_filter.append(ioc.event_id)
 
     tim = []
+    events_list = []
     for row in timeline:
         if assets is not None:
             if row.event_id not in assets_filter:
@@ -440,6 +545,9 @@ def case_filter_timeline(caseid):
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S')
+
+        if row.event_id not in events_list:
+            events_list.append(row.event_id)
 
         alki = []
         for asset in assets_cache:
@@ -484,8 +592,14 @@ def case_filter_timeline(caseid):
             Ioc.ioc_id == IocLink.ioc_id
         ).all()
 
+        events_comments_map = {}
+        events_comments_set = get_case_events_comments_count(events_list)
+        for k, v in events_comments_set:
+            events_comments_map.setdefault(k, []).append(v)
+
         resp = {
             "tim": tim,
+            "comments_map": events_comments_map,
             "assets": cache,
             "iocs": [ioc._asdict() for ioc in iocs],
             "categories": [cat.name for cat in get_events_categories()],
@@ -537,8 +651,21 @@ def case_delete_event(cur_id, caseid):
     return response_success('Event ID {} deleted'.format(cur_id))
 
 
-@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/flag/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
+def event_flag(cur_id, caseid):
+    event = get_case_event(cur_id, caseid)
+    if not event:
+        return response_error("Invalid event ID for this case")
+
+    event.event_is_flagged = not event.event_is_flagged
+    db.session.commit()
+
+    return response_success("Event flagged" if event.event_is_flagged else "Event unflagged", data=event)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def event_view(cur_id, caseid):
 
     event = get_case_event(cur_id, caseid)
@@ -554,6 +681,7 @@ def event_view(cur_id, caseid):
     output['event_assets'] = linked_assets
     output['event_iocs'] = linked_iocs
     output['event_category_id'] = event.category[0].id
+    output['event_comments_map'] = get_case_events_comments_count([cur_id])
 
     return response_success(data=output)
 
@@ -584,11 +712,12 @@ def event_view_modal(cur_id, caseid, url_redir):
 
     assets_prefill = get_event_assets_ids(cur_id, caseid)
     iocs_prefill = get_event_iocs_ids(cur_id, caseid)
+    comments_map = get_case_events_comments_count([cur_id])
 
     usr_name, = User.query.filter(User.id == event.user_id).with_entities(User.name).first()
 
     return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
-                           assets=assets, iocs=iocs,
+                           assets=assets, iocs=iocs, comments_map=comments_map,
                            assets_prefill=assets_prefill, iocs_prefill=iocs_prefill,
                            category=event.category, attributes=event.custom_attributes)
 

@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
+from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import desc
 
@@ -26,12 +27,15 @@ from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_evidences_state
 from app.models import CaseReceivedFile
+from app.models import Comments
+from app.models import EvidencesComments
 from app.models.authorization import User
 
 
 def get_rfiles(caseid):
     crf = CaseReceivedFile.query.with_entities(
         CaseReceivedFile.id,
+        CaseReceivedFile.file_uuid,
         CaseReceivedFile.filename,
         CaseReceivedFile.date_added,
         CaseReceivedFile.file_hash,
@@ -87,3 +91,80 @@ def delete_rfile(rfile_id, caseid):
     update_evidences_state(caseid=caseid)
 
     db.session.commit()
+
+
+def get_case_evidence_comments(evidence_id):
+    return EvidencesComments.query.filter(
+        EvidencesComments.comment_evidence_id == evidence_id
+    ).with_entities(
+        EvidencesComments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        EvidencesComments.comment,
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+
+def add_comment_to_evidence(evidence_id, comment_id):
+    ec = EvidencesComments()
+    ec.comment_evidence_id = evidence_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()
+
+
+def get_case_evidence_comments_count(evidences_list):
+    return EvidencesComments.query.filter(
+        EvidencesComments.comment_evidence_id.in_(evidences_list)
+    ).with_entities(
+        EvidencesComments.comment_evidence_id,
+        EvidencesComments.comment_id
+    ).group_by(
+        EvidencesComments.comment_evidence_id,
+        EvidencesComments.comment_id
+    ).all()
+
+
+def get_case_evidence_comment(evidence_id, comment_id):
+    return EvidencesComments.query.filter(
+        EvidencesComments.comment_evidence_id == evidence_id,
+        EvidencesComments.comment_id == comment_id
+    ).with_entities(
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        EvidencesComments.comment,
+        Comments.user
+    ).first()
+
+
+def delete_evidence_comment(evidence_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    EvidencesComments.query.filter(
+        EvidencesComments.comment_evidence_id == evidence_id,
+        EvidencesComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"

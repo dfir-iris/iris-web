@@ -25,6 +25,7 @@
 	<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 	<link rel="stylesheet" href="/static/assets/css/suggestags.css">
 
+
     <!-- Specific CSS goes HERE -->
     {% block stylesheets %}{% endblock stylesheets %}
 	{% if current_user.in_dark_mode %}
@@ -93,6 +94,8 @@
 
 	<script src="/static/assets/js/core/crypto.core.js"></script>
 	<script src="/static/assets/js/core/crypto.md5.js"></script>
+	<script src="/static/assets/js/plugin/xss/xss.js"></script>
+
 
 	<!-- Specific JS goes HERE -->
     {% block javascripts %}{% endblock javascripts %}

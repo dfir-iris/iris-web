@@ -7901,7 +7901,6 @@ body .badge-danger {
 /*     	Popover     */
 
 .popover {
-    max-width: 240px;
     line-height: 1.7;
     border: 0;
     box-shadow: 0px 0px 20px 1px rgba(69, 65, 78, 0.2);
@@ -8237,6 +8236,10 @@ body .badge-danger {
     box-shadow: 0px 0px 5px 5px rgba(255, 160, 36,.5),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12) !important;
 }
 
+.timeline-panel.timeline-flagged {
+    box-shadow: 0px 0px 5px 5px rgba(255, 48, 0, 0.3),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12) !important;
+}
+
 .timeline>li>.timeline-panel {
     width: 87%;
     float: left;
@@ -8249,6 +8252,9 @@ body .badge-danger {
     box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
 }
 
+.timeline>li>.timeline-even {
+    background: rgba(181, 181, 181, 0.1);
+}
 
 .timeline>li.timeline-inverted+li:not(.timeline-inverted) {
     margin-top: -30px;
@@ -8261,7 +8267,6 @@ body .badge-danger {
 .timeline>li:not(.timeline-inverted)+li.timeline-inverted {
     margin-top: 30px;
 }
-
 
 .timeline>li>.timeline-badge {
     color: #ffffff;
@@ -13575,6 +13580,14 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
     padding-right: 0;
 }
 
+.dataTables_wrapper.container-fluid.dt-bootstrap4 {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+table.dataTable.stripe tbody > tr.selected {
+	background-color: #06397b3b;
+}
 
 /*     Responsive     */
 
@@ -13997,7 +14010,7 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
 }
 
 .timeline-body {
-    color: rgb(130, 130, 130);
+    color: rgb(91, 91, 91);
 }
 
 
@@ -14844,13 +14857,13 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
 
 .kanban-board {
     position: relative;
-    background-color: #5a5a621c;
+    background-color: #4b4b4d2b;
     box-shadow: 1px 1px 1px 1px rgba(122, 128, 134, 0.178), 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
     ;
-    border-radius: 2px;
+    border-radius: 9px;
     padding: .5rem;
     display: inline-block;
-    width: 20rem;
+    min-width: 15rem;
     padding: .5rem;
     vertical-align: top;
     margin-top: 1rem;
@@ -14914,7 +14927,7 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
     margin-bottom: 8px;
     margin-top: 8px;
     box-shadow: 0 0 0 1px rgba(122, 128, 134, 0.05), 0 1px 5px 5px rgba(103, 110, 117, 0.15);
-    border-radius: 0px;
+    border-radius: 6px;
     position: relative;
 }
 
@@ -14987,7 +15000,42 @@ div.table-responsive>div.dataTables_wrapper>div.row>div[class^="col-"]:last-chil
         border-radius: 0;
         border: none;
       }
-    
+
+.modal .modal-comment {
+   position: absolute;
+   bottom: 10px;
+   right: 30px;
+   max-width: 100vh;
+   max-height: calc(100vh - 20px);
+   min-width: 30%;
+   min-height: 30%;
+}
+
+.comments-listing {
+  max-height: calc(100vh - 350px);
+  overflow-y: auto;
+}
+
+.comment-content {
+    max-height: 30vh;
+    overflow-y: auto;
+}
+
+.comment_editing {
+    background-color: rgba(172, 172, 172, 0.44);
+    border-radius: 20px;
+    margin-left: 56px;
+    padding-right: 71px;
+}
+
+.modal .modal-comment .modal-header {
+    padding: 0px;
+}
+
+.shadow-xl {
+   box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.73) !important;
+}
+
 .datetimepicker {
     display: inline-flex;
     align-items: center;
@@ -15634,4 +15682,16 @@ td.dt-nowrap { white-space: nowrap }
 .multiselect-container {
   max-height: 35rem;
   min-height: 100px;
+}
+
+.md_description_field {
+    min-height: 73px;
+    border: 1px solid #ebedf2;
+    border-radius: 0.25rem;
+    padding: .6rem 1rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.md_description_field:focus {
+    border-color: #3e93ff;
 }

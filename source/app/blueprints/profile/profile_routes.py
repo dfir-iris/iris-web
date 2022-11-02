@@ -164,6 +164,22 @@ def profile_set_theme(theme, caseid):
     return response_success('Theme changed')
 
 
+@profile_blueprint.route('/user/deletion-prompt/set/<string:val>', methods=['GET'])
+@ac_api_requires()
+def profile_set_deletion_prompt(val, caseid):
+    if val not in ['true', 'false']:
+        return response_error('Invalid data')
+
+    user = get_user(current_user.id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    user.has_deletion_confirmation = (val == 'true')
+    db.session.commit()
+
+    return response_success('Deletion prompt {}'.format('enabled' if val == 'true' else 'disabled'))
+
+
 @profile_blueprint.route('/user/refresh-permissions', methods=['GET'])
 @ac_api_requires()
 def profile_refresh_permissions_and_ac(caseid):

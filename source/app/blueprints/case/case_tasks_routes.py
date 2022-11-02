@@ -30,8 +30,15 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
+from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.case.case_tasks_db import delete_task_comment
+from app.datamgmt.case.case_tasks_db import get_case_task_comment
+from app.datamgmt.case.case_tasks_db import get_case_task_comments
+from app.datamgmt.case.case_tasks_db import get_case_tasks_comments_count
 from app.datamgmt.case.case_tasks_db import get_task_with_assignees
 from app.datamgmt.case.case_tasks_db import update_task_assignees
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
@@ -48,6 +55,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.models import CaseTasks, TaskAssignee
 from app.schema.marshables import CaseTaskSchema
+from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
@@ -197,8 +205,10 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     form.task_title.render_kw = {'value': task.task_title}
     form.task_description.data = task.task_description
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
+    comments_map = get_case_tasks_comments_count([task.id])
 
-    return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name, attributes=task.custom_attributes)
+    return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
+                           comments_map=comments_map, attributes=task.custom_attributes)
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
@@ -261,3 +271,90 @@ def case_delete_task(cur_id, caseid):
     track_activity("deleted task ID {}".format(cur_id))
 
     return response_success("Task deleted")
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_task_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_task.case_task', cid=caseid, redirect=True))
+
+    task = get_task(cur_id, caseid=caseid)
+    if not task:
+        return response_error('Invalid task ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='tasks',
+                           title=task.task_title)
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_task_list(cur_id, caseid):
+
+    task_comments = get_case_task_comments(cur_id)
+    if task_comments is None:
+        return response_error('Invalid task ID')
+
+    res = [com._asdict() for com in task_comments]
+    return response_success(data=res)
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_task_add(cur_id, caseid):
+
+    try:
+        task = get_task(cur_id, caseid=caseid)
+        if not task:
+            return response_error('Invalid task ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_task(task.id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity("task {} commented".format(task.id), caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_task_get(cur_id, com_id, caseid):
+
+    comment = get_case_task_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_task_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'tasks', caseid)
+
+
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_task_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_task_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    return response_success(msg)
+

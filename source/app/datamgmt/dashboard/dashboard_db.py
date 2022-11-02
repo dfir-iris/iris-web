@@ -32,6 +32,7 @@ from app.models.authorization import User
 def list_global_tasks():
     ct = GlobalTasks.query.with_entities(
         GlobalTasks.id.label("task_id"),
+        GlobalTasks.task_uuid,
         GlobalTasks.task_title,
         GlobalTasks.task_description,
         GlobalTasks.task_last_update,
@@ -55,6 +56,7 @@ def list_global_tasks():
 def get_global_task(task_id):
     ct = GlobalTasks.query.with_entities(
         GlobalTasks.id.label("task_id"),
+        GlobalTasks.task_uuid,
         GlobalTasks.task_title,
         GlobalTasks.task_description,
         GlobalTasks.task_last_update,

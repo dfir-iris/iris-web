@@ -1,29 +1,45 @@
 <div class="modal-header">
-        <h4 class="modal-title mt-1 mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
-            {% if event.modification_history %}
-                <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;max-width: 100%;"
-                        title="Modifications history"
-                        data-content="{% for mod in event.modification_history %}<code>{{ mod|format_datetime('%Y-%m-%d %H:%M') }}</code> -  {{ event.modification_history[mod].action }} by {{ event.modification_history[mod].user }}<br/>{% endfor %}">
-                </i>
-            {% endif %}
-        </h4>
-        {% include 'modals/modal_attributes_nav.html' %}
-        <div class="row justify-right">
-        {% if event.event_id %}
-            <div class="dropdown">
-                <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                    <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-                </button>
-                <div class="dropdown-menu pull-right" id="event_modal_quick_actions" aria-labelledby="dropdownMenuButton">
-                    <a class="dropdown-item" href="#" onclick='copy_object_link({{event.event_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
-                    <a class="dropdown-item" href="#" onclick='duplicate_event({{event.event_id}});return false;'><i class="fa fa-clone mr-2"></i>Duplicate</a>
+    <div class="col md-12">
+        <div class="row">
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
+                    {% if event.modification_history %}
+                        <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
+                                title="Modifications history"
+                                data-content="<small>{% for mod in event.modification_history %}<code>{{ mod|format_datetime('%Y-%m-%d %H:%M') }}</code> -  {{ event.modification_history[mod].action }} by {{ event.modification_history[mod].user }}<br/>{% endfor %}</small>">
+                        </i>
+                    {% endif %}
+                </h4>
+                <small><i class="text-muted">{% if event.event_uuid %}#{{ event.event_uuid }}{% endif %}</i></small>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col ">
+                <div class="row float-right">
+                {% if event.event_id %}
+                    <div class="dropdown">
+                        <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                        </button>
+                        <div class="dropdown-menu pull-right" id="event_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item" href="#" onclick='copy_object_link({{event.event_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                            <a class="dropdown-item" href="#" onclick='copy_object_link_md("event", {{event.event_id}});return false;'><i class="fa-brands fa-markdown mr-2"></i>Markdown Link</a>
+                            <a class="dropdown-item" href="#" onclick='duplicate_event({{event.event_id}});return false;'><i class="fa fa-clone mr-2"></i>Duplicate</a>
+                        </div>
+                    </div>
+                    <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ event.event_id }}, 'timeline/events')" title="Comments">
+                        <span class="btn-label">
+                            <i class="fa-solid fa-comments"></i><span class="notification">{{ comments_map|length }}</span>
+                        </span>
+                    </button>
+                {% endif %}
+
+                    <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
+                    <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
                 </div>
             </div>
-        {% endif %}
-            <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
-            <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
-                aria-hidden="true"><i class="fa fa-times"></i></span></button>
         </div>
+    </div>
 </div>
 <div class="modal-body">
     <div role="tabpanel">
@@ -52,7 +68,7 @@
                                             <div class="input-group ">
                                                 <input class="form-control col-9" type="text" id="event_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
                                                 <div class="input-group-append">
-                                                    <button class="btn btn-outline-secondary mr-2" type="button" onclick="time_converter();return false;">Submit</button>
+                                                    <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter();return false;">Submit</button>
                                                     <button class="btn btn-sm btn-outline" type="button" onclick="hide_time_converter();return false;"><i class="fas fa-magic"></i></button>
                                                 </div>
                                             </div>
@@ -62,8 +78,28 @@
                                 </div>
                                 <div class="row">
                                     <div class="form-group mt-3 col-12">
-                                        <label for="event_content" class="placeholder">{{ form.event_content.label.text }}</label>
-                                        {{ form.event_content(class='form-control col-md-12 col-sm-12 sizable-textarea',  autocomplete="off") }}
+                                        <label for="event_content" class="placeholder">Event description</label>
+                                        <div class="md_description_field">
+                                            <div class="form-group mt--2">
+                                                    <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_event_desc();" >
+                                                    </button>
+                                                    <button type="button" style="display: none;" class="btn btn-dark btn-sm float-right mr-2 mt-2"
+                                                            onclick="preview_event_description();" id="event_preview_button"><i class="fa-solid fa-eye"></i></button>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col mb--2 ml--2" id="event_edition_btn" style="display:none;">
+                                                </div>
+                                            </div>
+                                            <div class="row" style="margin-left:0px;">
+                                                <div class="col-12" id="container_event_desc_content">
+                                                    <div id="event_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event %}{{ event.event_content  }}{% endif %}</div>
+                                                    <textarea id="event_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                                </div>
+                                                <div class="col-12" id="container_event_description" style="display:none">
+                                                    <div id="target_event_desc"></div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -71,7 +107,7 @@
                                           <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseRawEvent" role="button" aria-expanded="false" aria-controls="collapseRawEvent">> Edit raw event data</a>
                                         <div class="collapse" id="collapseRawEvent">
                                             <div class="card card-body">
-                                                <label for="event_content" class="placeholder">{{ form.event_raw.label.text }}</label>
+                                                <label for="event_raw" class="placeholder">{{ form.event_raw.label.text }}</label>
                                                 {{ form.event_raw(class='form-control sizable-textarea',  autocomplete="off") }}
                                             </div>
                                         </div>
@@ -108,9 +144,6 @@
                                             </select>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="row">
-
                                 </div>
                                 <div class="row">
                                     <div class="form-group col-5">
@@ -194,7 +227,7 @@
         {% if event.event_id %}
             <button type="button" class="btn btn-outline-danger mt-5"
             onclick="delete_event({{ event.event_id }} );">Delete</button>
-            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_event"
             onclick="update_event({{ event.event_id }} );">Update</button>
 
         {% else %}

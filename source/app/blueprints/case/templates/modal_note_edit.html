@@ -1,30 +1,43 @@
 <div class="modal-header">
-
-    <h4 class="modal-title mt-2 mr-4">{{ note.title }}</h4>
-    {% include 'modals/modal_attributes_nav.html' %}
-      <div class="row text-right">
-      <button class="btn bg-transparent pull-right" title="Toggle focus mode" id="focus_mode" onclick="toggle_focus_mode();return false;">
-          <span aria-hidden="true"><i class="fas fas fa-coffee"></i></span>
-        </button>
-         <div class="dropdown">
-              <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                  <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-              </button>
-              <div class="dropdown-menu pull-right" id="note_modal_quick_actions" aria-labelledby="dropdownMenuButton">
-                  <a class="dropdown-item" href="#" onclick='copy_object_link({{note.note_id if note.note_id|length else id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
-              </div>
-         </div>
-        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_note_detail', '{{ note.title }}');"> <i class='fa fa-minus'></i> </button>
-        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
-            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    <div class="col md-12">
+        <div class="row">
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">Note #{{ note.note_id }}</h4>
+                <small><i class="text-muted">#{{ note.note_uuid }}</i></small>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col">
+              <div class="row float-right">
+              <button class="btn bg-transparent pull-right" title="Toggle focus mode" id="focus_mode" onclick="toggle_focus_mode();return false;">
+                  <span aria-hidden="true"><i class="fas fas fa-coffee"></i></span>
+                </button>
+                <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ note.note_id }}, 'notes')" title="Comments">
+                    <span class="btn-label">
+                        <i class="fa-solid fa-comments"></i><span class="notification">{{ comments_map|length }}</span>
+                    </span>
+                </button>
+                 <div class="dropdown">
+                      <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                          <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                      </button>
+                      <div class="dropdown-menu pull-right" id="note_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                          <a class="dropdown-item" href="#" onclick='copy_object_link({{ note.note_id }});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                      </div>
+                 </div>
+                <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_note_detail', '{{ note.title }}');"> <i class='fa fa-minus'></i> </button>
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
         </div>
+    </div>
 </div>
 <div class="modal-body">
     <div role="tabpanel">
         <div class="tab-content">
             <div class="tab-pane active" id="details">
                 <form method="post" action="" id="form_note">
-        <iris_notein style="display: none;">{{ note.note_id if note.note_id|length else id }}</iris_notein>
+        <iris_notein style="display: none;">{{ note.note_id }}</iris_notein>
 
     {{ note.hidden_tag() }}
         <div class="container col-md-12">

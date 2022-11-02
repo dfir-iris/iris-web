@@ -36,6 +36,7 @@ from sqlalchemy import TIMESTAMP
 from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import or_
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
@@ -103,7 +104,8 @@ def get_or_create(session, model, **kwargs):
 class Client(db.Model):
     __tablename__ = 'client'
 
-    client_id = Column(Integer, primary_key=True)
+    client_id = Column(BigInteger, primary_key=True)
+    client_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     name = Column(String(2048), unique=True)
     custom_attributes = Column(JSON)
 
@@ -121,7 +123,8 @@ class AssetsType(db.Model):
 class CaseAssets(db.Model):
     __tablename__ = 'case_assets'
 
-    asset_id = Column(Integer, primary_key=True)
+    asset_id = Column(BigInteger, primary_key=True)
+    asset_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     asset_name = Column(Text)
     asset_description = Column(Text)
     asset_domain = Column(Text)
@@ -153,7 +156,7 @@ class AnalysisStatus(db.Model):
 class CaseEventsAssets(db.Model):
     __tablename__ = 'case_events_assets'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     event_id = Column(ForeignKey('cases_events.event_id'))
     asset_id = Column(ForeignKey('case_assets.asset_id'))
     case_id = Column(ForeignKey('cases.case_id'))
@@ -166,7 +169,7 @@ class CaseEventsAssets(db.Model):
 class CaseEventsIoc(db.Model):
     __tablename__ = 'case_events_ioc'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     event_id = Column(ForeignKey('cases_events.event_id'))
     ioc_id = Column(ForeignKey('ioc.ioc_id'))
     case_id = Column(ForeignKey('cases.case_id'))
@@ -177,7 +180,9 @@ class CaseEventsIoc(db.Model):
 
 
 class ObjectState(db.Model):
-    object_id = Column(Integer, primary_key=True)
+    __tablename__ = 'object_state'
+
+    object_id = Column(BigInteger, primary_key=True)
     object_case_id = Column(ForeignKey('cases.case_id'))
     object_updated_by_id = db.Column(db.Integer(), db.ForeignKey('user.id'))
     object_name = Column(Text)
@@ -273,7 +278,8 @@ class Tlp(db.Model):
 class Ioc(db.Model):
     __tablename__ = 'ioc'
 
-    ioc_id = Column(Integer, primary_key=True)
+    ioc_id = Column(BigInteger, primary_key=True)
+    ioc_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     ioc_value = Column(Text)
     ioc_type_id = Column(ForeignKey('ioc_type.type_id'))
     ioc_description = Column(Text)
@@ -315,7 +321,7 @@ class DataStoreFile(db.Model):
     __tablename__ = 'data_store_file'
 
     file_id = Column(BigInteger, primary_key=True)
-    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     file_original_name = Column(Text, nullable=False)
     file_local_name = Column(Text, nullable=False)
     file_description = Column(Text)
@@ -391,7 +397,8 @@ class CasesAssetsExt(db.Model):
 class Notes(db.Model):
     __tablename__ = 'notes'
 
-    note_id = Column(Integer, primary_key=True)
+    note_id = Column(BigInteger, primary_key=True)
+    note_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     note_title = Column(String(155))
     note_content = Column(Text)
     note_user = Column(ForeignKey('user.id'))
@@ -407,7 +414,8 @@ class Notes(db.Model):
 class NotesGroup(db.Model):
     __tablename__ = 'notes_group'
 
-    group_id = Column(Integer, primary_key=True)
+    group_id = Column(BigInteger, primary_key=True)
+    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     group_title = Column(String(155))
     group_user = Column(ForeignKey('user.id'))
     group_creationdate = Column(DateTime)
@@ -421,7 +429,7 @@ class NotesGroup(db.Model):
 class NotesGroupLink(db.Model):
     __tablename__ = 'notes_group_link'
 
-    link_id = Column(Integer, primary_key=True)
+    link_id = Column(BigInteger, primary_key=True)
     group_id = Column(ForeignKey('notes_group.group_id'))
     note_id = Column(ForeignKey('notes.note_id'))
     case_id = Column(ForeignKey('cases.case_id'))
@@ -443,7 +451,8 @@ class CaseKanban(db.Model):
 class CaseReceivedFile(db.Model):
     __tablename__ = 'case_received_file'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     filename = Column(Text)
     date_added = Column(DateTime)
     file_hash = Column(String(65))
@@ -469,7 +478,8 @@ class TaskStatus(db.Model):
 class CaseTasks(db.Model):
     __tablename__ = 'case_tasks'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    task_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     task_title = Column(Text)
     task_description = Column(Text)
     task_tags = Column(Text)
@@ -506,7 +516,8 @@ class TaskAssignee(db.Model):
 class GlobalTasks(db.Model):
     __tablename__ = 'global_tasks'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    task_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     task_title = Column(Text)
     task_description = Column(Text)
     task_tags = Column(Text)
@@ -529,7 +540,7 @@ class GlobalTasks(db.Model):
 class UserActivity(db.Model):
     __tablename__ = "user_activity"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     user_id = Column(ForeignKey('user.id'), nullable=True)
     case_id = Column(ForeignKey('cases.case_id'), nullable=True)
     activity_date = Column(DateTime)
@@ -555,6 +566,87 @@ class ServerSettings(db.Model):
     password_policy_lower_case = Column(Boolean)
     password_policy_digit = Column(Boolean)
     password_policy_special_chars = Column(Text)
+
+
+class Comments(db.Model):
+    __tablename__ = "comments"
+
+    comment_id = Column(BigInteger, primary_key=True)
+    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
+    comment_text = Column(Text)
+    comment_date = Column(DateTime)
+    comment_update_date = Column(DateTime)
+    comment_user_id = Column(ForeignKey('user.id'))
+    comment_case_id = Column(ForeignKey('cases.case_id'))
+
+    user = relationship('User')
+    case = relationship('Cases')
+
+
+class EventComments(db.Model):
+    __tablename__ = "event_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_event_id = Column(ForeignKey('cases_events.event_id'))
+
+    event = relationship('CasesEvent')
+    comment = relationship('Comments')
+
+
+class TaskComments(db.Model):
+    __tablename__ = "task_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_task_id = Column(ForeignKey('case_tasks.id'))
+
+    task = relationship('CaseTasks')
+    comment = relationship('Comments')
+
+
+class IocComments(db.Model):
+    __tablename__ = "ioc_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_ioc_id = Column(ForeignKey('ioc.ioc_id'))
+
+    ioc = relationship('Ioc')
+    comment = relationship('Comments')
+
+
+class AssetComments(db.Model):
+    __tablename__ = "asset_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_asset_id = Column(ForeignKey('case_assets.asset_id'))
+
+    asset = relationship('CaseAssets')
+    comment = relationship('Comments')
+
+
+class EvidencesComments(db.Model):
+    __tablename__ = "evidence_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_evidence_id = Column(ForeignKey('case_received_file.id'))
+
+    evidence = relationship('CaseReceivedFile')
+    comment = relationship('Comments')
+
+
+class NotesComments(db.Model):
+    __tablename__ = "note_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_note_id = Column(ForeignKey('notes.note_id'))
+
+    note = relationship('Notes')
+    comment = relationship('Comments')
 
 
 class IrisModule(db.Model):
@@ -588,7 +680,7 @@ class IrisHook(db.Model):
 class IrisModuleHook(db.Model):
     __tablename__ = "iris_module_hooks"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     module_id = Column(ForeignKey('iris_module.id'), nullable=False)
     hook_id = Column(ForeignKey('iris_hooks.id'), nullable=False)
     is_manual_hook = Column(Boolean)
@@ -649,7 +741,7 @@ class CeleryTaskMeta(db.Model):
     __bind_key__ = 'iris_tasks'
     __tablename__ = 'celery_taskmeta'
 
-    id = Column(Integer, Sequence('task_id_sequence'), primary_key=True)
+    id = Column(BigInteger, Sequence('task_id_sequence'), primary_key=True)
     task_id = Column(String(155))
     status = Column(String(50))
     result = Column(LargeBinary)
@@ -664,6 +756,7 @@ class CeleryTaskMeta(db.Model):
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
+
 
 def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):
     cat = CustomAttribute.query.filter(

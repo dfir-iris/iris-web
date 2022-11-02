@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
@@ -27,15 +27,19 @@ from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
 from app.models import CasesEvent
+from app.models import Comments
 from app.models import EventCategory
+from app.models import EventComments
 from app.models import Ioc
 from app.models import IocLink
 from app.models import IocType
+from app.models.authorization import User
 
 
 def get_case_events_assets_graph(caseid):
     events = CaseEventsAssets.query.with_entities(
         CaseEventsAssets.event_id,
+        CasesEvent.event_uuid,
         CasesEvent.event_title,
         CaseAssets.asset_name,
         CaseAssets.asset_id,
@@ -63,6 +67,7 @@ def get_case_events_assets_graph(caseid):
 def get_case_events_ioc_graph(caseid):
     events = CaseEventsIoc.query.with_entities(
         CaseEventsIoc.event_id,
+        CasesEvent.event_uuid,
         CasesEvent.event_title,
         CasesEvent.event_date,
         Ioc.ioc_id,
@@ -104,6 +109,83 @@ def get_case_event(event_id, caseid):
         CasesEvent.event_id == event_id,
         CasesEvent.case_id == caseid
     ).first()
+
+
+def get_case_event_comments(event_id, caseid):
+    return EventComments.query.filter(
+        EventComments.comment_event_id == event_id
+    ).with_entities(
+        EventComments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        EventComments.comment,
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+
+def get_case_events_comments_count(events_list):
+    return EventComments.query.filter(
+        EventComments.comment_event_id.in_(events_list)
+    ).with_entities(
+        EventComments.comment_event_id,
+        EventComments.comment_id
+    ).group_by(
+        EventComments.comment_event_id,
+        EventComments.comment_id
+    ).all()
+
+
+def get_case_event_comment(event_id, comment_id, caseid):
+    return EventComments.query.filter(
+        EventComments.comment_event_id == event_id,
+        EventComments.comment_id == comment_id
+    ).with_entities(
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        EventComments.comment,
+        Comments.user
+    ).first()
+
+
+def delete_event_comment(event_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    EventComments.query.filter(
+        EventComments.comment_event_id == event_id,
+        EventComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"
+
+
+def add_comment_to_event(event_id, comment_id):
+    ec = EventComments()
+    ec.comment_event_id = event_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()
 
 
 def delete_event_category(event_id):

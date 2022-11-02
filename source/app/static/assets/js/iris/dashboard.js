@@ -133,7 +133,6 @@ function update_gtask(id) {
 
 /* Delete an event from the timeline thank to its id */
 function delete_gtask(id) {
-
     get_request_api("/global/tasks/delete/" + id)
     .done((data) => {
         if(notify_auto_api(data)) {
@@ -179,7 +178,7 @@ function update_gtasks_list() {
             Table.buttons().container().appendTo($('#gtasks_table_info'));
                $('[data-toggle="popover"]').popover();
 
-            load_menu_mod_options('global_task', Table);
+            load_menu_mod_options('global_task', Table, delete_gtask);
             $('#tasks_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
         }
     });

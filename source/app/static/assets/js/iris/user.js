@@ -84,3 +84,18 @@ $('input[type=radio][name=iris-theme]').change(function() {
         }
     });
 });
+
+$('input[type=radio][name=user-has-deletion-prompt]').change(function() {
+    if (this.value == 'false') {
+        do_prompt = false;
+    }
+    else if (this.value == 'true') {
+       do_prompt = true;
+    } else {
+        return;
+    }
+    get_request_api('deletion-prompt/set/'+ do_prompt)
+    .done((data) => {
+        notify_auto_api(data);
+    });
+});
