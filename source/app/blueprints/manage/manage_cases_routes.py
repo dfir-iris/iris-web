@@ -30,7 +30,9 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
+from flask_wtf import FlaskForm
 
+from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
@@ -117,9 +119,10 @@ def details_case_from_case(cur_id, caseid, url_redir):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
+    form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info_from_case.html", data=res)
+        return render_template("modal_case_info_from_case.html", data=res, form=form)
 
     else:
         return response_error("Unknown case")
@@ -253,6 +256,38 @@ def api_list_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def update_case_info(caseid):
+
+    # case update request. The files should have already arrived with the request upload_files
+    case_schema = CaseSchema()
+
+    case_i = get_case(caseid)
+    if not case_i:
+        return response_error("Case not found")
+
+    try:
+
+        request_data = request.get_json()
+        request_data['case_name'] = f"#{case_i.case_id} - {request_data['case_name']}"
+        request_data['case_customer'] = case_i.client_id
+        case = case_schema.load(request_data, instance=case_i, partial=True)
+
+        db.session.commit()
+
+        track_activity("Case updated {case_name}".format(case_name=case.name), caseid=caseid, ctx_less=True)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+    except Exception as e:
+        log.error(e.__str__())
+        log.error(traceback.format_exc())
+        return response_error(msg="Error creating case", data=e.__str__(), status=400)
+
+    return response_success(msg='Case updated', data=case_schema.dump(case))
+
+
+@manage_cases_blueprint.route('/manage/cases/trigger-pipeline', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def update_case_files(caseid):
 

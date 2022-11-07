@@ -154,6 +154,7 @@ function edit_gtask(id) {
   });
 }
 
+
 /* Fetch and draw the tasks */
 function update_gtasks_list() {
     $('#gtasks_list').empty();

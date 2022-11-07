@@ -20,53 +20,54 @@
         <div role="tabpanel">
           <div class="tab-content">
               <div class="tab-pane active" id="details">
-                <h4>General info</h4>
-                <div class="form-group">
-                    <label>Case name :</label>
-                    <span type="text" class="">{{ data.case_name|unquote }}</span>
-                </div>
-                <div class="form-group mt--3">
-                    <label>Case description :</label>
-                    <span type="text" class="">{{ data.case_description[0:50] }}</span>
-                </div>
-                <div class="form-group mt--3">
-                    <label>Customer :</label>
-                    <span type="text" class="text-faded">{{ data.customer_name }}</span>
-                </div>
-                <div class="form-group mt--3">
-                    <label>Status :</label>
-                    {% if data.close_date %}
-                        <span type="text" class="text-faded text-danger">Closed</span>
-                        {% else %}
-                        <span type="text" class="text-faded text-success">Open</span>
-                    {% endif %}
-                </div>
-                <div class="form-group mt--3">
-                    <label>Open date :</label>
-                    <span type="text" class="">{{ data.open_date }}</span>
-                </div>
-                {% if data.close_date %}
-                    <div class="form-group mt--3">
-                        <label>Close date :</label>
-                        <span type="text" class="">{{ data.close_date }}</span>
+                <div id="case_gen_info_content">
+                    <h4>General info <i class="ml-2 fa-solid fa-pen-to-square" onclick="edit_case_info();"></i></h4>
+                    <div class="form-group">
+                        <label>Case name :</label>
+                        <span type="text" class="">{{ data.case_name|unquote }}</span>
                     </div>
-                {% endif %}
-                <div class="form-group mt--3">
-                    <label>Opening user :</label>
-                    <span type="text" class="">{{ data.open_by_user }}</span>
-                </div>
-                <div class="form-group mt--3">
-                    <label>SOC ID :</label>
-                    <span type="text" class="text-faded">{{ data.case_soc_id }}</span>
-                </div>
-                <div class="form-group mt--3">
-                    <label>Case ID :</label>
-                    <span type="text" class="text-faded">{{ data.case_id }}</span>
-                </div>
-                <div class="form-group mt--3">
-                    <label>Case UUID :</label>
-                    <span type="text" class="text-faded">{{ data.case_uuid }}</span>
-                </div>
+                    <div class="form-group mt--3">
+                        <label>Case description :</label>
+                        <span type="text" class="">{{ data.case_description[0:50] }}</span>
+                    </div>
+                    <div class="form-group mt--3">
+                        <label>Customer :</label>
+                        <span type="text" class="text-faded">{{ data.customer_name }}</span>
+                    </div>
+                    <div class="form-group mt--3">
+                        <label>Status :</label>
+                        {% if data.close_date %}
+                            <span type="text" class="text-faded text-danger">Closed</span>
+                            {% else %}
+                            <span type="text" class="text-faded text-success">Open</span>
+                        {% endif %}
+                    </div>
+                    <div class="form-group mt--3">
+                        <label>Open date :</label>
+                        <span type="text" class="">{{ data.open_date }}</span>
+                    </div>
+                    {% if data.close_date %}
+                        <div class="form-group mt--3">
+                            <label>Close date :</label>
+                            <span type="text" class="">{{ data.close_date }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="form-group mt--3">
+                        <label>Opening user :</label>
+                        <span type="text" class="">{{ data.open_by_user }}</span>
+                    </div>
+                    <div class="form-group mt--3">
+                        <label>SOC ID :</label>
+                        <span type="text" class="text-faded">{{ data.case_soc_id }}</span>
+                    </div>
+                    <div class="form-group mt--3">
+                        <label>Case ID :</label>
+                        <span type="text" class="text-faded">{{ data.case_id }}</span>
+                    </div>
+                    <div class="form-group mt--3">
+                        <label>Case UUID :</label>
+                        <span type="text" class="text-faded">{{ data.case_uuid }}</span>
+                    </div>
                 <hr/>
                   <div class="col col-heading" href="#collapse_case_access" title="Click to unfold"  data-toggle="collapse" aria-expanded="false" aria-controls="collapse_case_access" style="cursor:pointer;">
                       <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
@@ -94,6 +95,30 @@
                           </div>
                       </div>
                   </div>
+                </div>
+                <div id="case_gen_info_edit" style="display:none;">
+                    <div class="col-md-12 col-lg-6 col-sm-12">
+                        <h4 class=" pb-3">Edit case information</h4>
+                        <form method="post" action='' id="form_update_case" autocomplete="off">
+                            {{ form.hidden_tag() }}
+                            <div class="mt-4">
+                                <div class="input-group mb-4">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Case name  <i class="ml-2">{{"#{} - ".format(data.case_id)}}</i></span>
+                                    </div>
+                                     <input type="text" class="form-input" name="case_name" value="{{ data.case_name.replace('#{} - '.format(data.case_id), '')}}">
+                                </div>
+                                <div class="input-group mb-4">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">SOC ticket ID</span>
+                                    </div>
+                                    <input type="text" class="form-input" name="case_soc_id" value="{{ data.case_soc_id }}">
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
               </div>
               {% include 'modals/modal_attributes_tabs.html' %}
             </div>
@@ -104,6 +129,8 @@
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-default mr-auto" onclick="manage_case({{ data.case_id }});">Manage case</button>
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+    <button type="button" class="btn btn-outline-danger mr-2" style="display:none;" id="cancel_case_info"  onclick="cancel_case_edit();">Cancel</button>
+    <button type="button" class="btn btn-outline-success mr-2" style="display:none;" id="save_case_info" onclick="save_case_edit({{ data.case_id }});">Save edit</button>
 </div>
 
 <script>
