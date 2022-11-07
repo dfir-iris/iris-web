@@ -46,11 +46,7 @@ function save_case_edit(case_id) {
     post_request_api('/manage/cases/update', JSON.stringify(data_sent), true)
     .done((data) => {
         if(notify_auto_api(data)) {
-            $('#case_gen_info_content').show();
-            $('#case_gen_info_edit').hide();
-            $('#cancel_case_info').hide();
-            $('#case_info').show();
-            $('#cancel_case_info').hide();
+            case_detail(case_id);
         }
     });
 }
