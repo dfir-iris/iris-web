@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
 
+from app.datamgmt.case.case_tasks_db import get_tasks_cases_mapping
 from app.models import Cases
 from app.models import Client
 from app.models.authorization import User
@@ -43,11 +44,26 @@ def get_overview_db():
         Cases.client
     ).all()
 
+    tasks_map = get_tasks_cases_mapping()
+    tmap = {}
+    for task in tasks_map:
+        if tmap.get(task.task_case_id) is None:
+            tmap[task.task_case_id] = {
+                'open_tasks': 0,
+                'closed_tasks': 0
+            }
+
+        if task.task_status_id in [1, 2, 3]:
+            tmap[task.task_case_id]['open_tasks'] += 1
+        elif task.task_status_id == 4:
+            tmap[task.task_case_id]['closed_tasks'] += 1
+
     open_cases_list = []
     for case in open_cases:
         c_case = case._asdict()
         c_case['case_open_since'] = f"{(datetime.date.today() - case.case_open_date).days} days"
         c_case['case_open_date'] = case.case_open_date.strftime('%d-%m-%Y')
+        c_case['tasks_status'] = tmap.get(case.case_id)
         open_cases_list.append(c_case)
 
     return open_cases_list

@@ -27,6 +27,7 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
 from app.models import CaseTasks, TaskAssignee
+from app.models import Cases
 from app.models import Comments
 from app.models import TaskComments
 from app.models import TaskStatus
@@ -291,3 +292,14 @@ def delete_task_comment(task_id, comment_id):
     db.session.commit()
 
     return True, "Comment deleted"
+
+
+def get_tasks_cases_mapping():
+    return CaseTasks.query.filter(
+        Cases.close_date == None
+    ).with_entities(
+        CaseTasks.task_case_id,
+        CaseTasks.task_status_id
+    ).join(
+        CaseTasks.case
+    ).all()
