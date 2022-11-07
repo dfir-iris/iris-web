@@ -1,7 +1,23 @@
+function get_cases_overview() {
+    get_request_api('overview/filter')
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            overview_list = data.data;
+            OverviewTable.clear();
+            OverviewTable.rows.add(overview_list);
+            OverviewTable.columns.adjust().draw();
+        }
+    });
+}
+
 $(document).ready(function() {
 
+    $.each($.find("table"), function(index, element){
+        addFilterFields($(element).attr("id"));
+    });
+
     OverviewTable = $("#overview_table").DataTable({
-    dom: 'Blfrtip',
+    dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
     aaData: [],
     aoColumns: [
       {
@@ -9,7 +25,7 @@ $(document).ready(function() {
         "render": function (data, type, row, meta) {
           if (type === 'display') {
             if (isWhiteSpace(data)) {
-                data = '#' + row['task_id'];
+                data = '#' + row['case_id'];
             } else {
                 data = sanitizeHTML(data);
             }
@@ -48,7 +64,6 @@ $(document).ready(function() {
         "render": function (data, type, row, meta) {
             if (type === 'display' && data != null) {
               data = sanitizeHTML(data);
-              data = data.replace(/GMT/g, "");
             }
             return data;
           }
@@ -57,20 +72,7 @@ $(document).ready(function() {
         "data": "opened_by",
         "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
-              data = sanitizeHTML(data);
-          }
-          return data;
-        }
-      },
-      { "data": "task_tags",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              tags = "";
-              de = data.split(',');
-              for (tag in de) {
-                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
-              }
-              return tags;
+              data = get_avatar_initials(sanitizeHTML(data), true);
           }
           return data;
         }
@@ -82,13 +84,22 @@ $(document).ready(function() {
     processing: true,
     retrieve: true,
     lengthChange: false,
-    pageLength: 10,
+    pageLength: 25,
     order: [[ 2, "asc" ]],
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
     ],
-    select: true
+    responsive: {
+        details: {
+            display: $.fn.dataTable.Responsive.display.childRow,
+            renderer: $.fn.dataTable.Responsive.renderer.tableAll()
+        }
+    },
+    select: true,
+    initComplete: function () {
+            tableFiltering(this.api(), 'overview_table');
+        }
     });
 
     get_cases_overview();

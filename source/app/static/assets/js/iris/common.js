@@ -731,7 +731,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     return editor;
 }
 
-function get_avatar_initials(name) {
+function get_avatar_initials(name, small) {
     initial = name.split(' ');
     if (initial.length > 1) {
         initial = initial[0][0] + initial[1][0];
@@ -744,7 +744,14 @@ function get_avatar_initials(name) {
 
     bgs = ['bg-info', 'bg-default', 'bg-primary', 'bg-secondary', 'bg-success', 'bg-warning', 'bg-danger'];
     bg = bgs[snum % bgs.length];
-    return `<div class="avatar">
+    if (small === undefined || small === null || small === false) {
+        av_size = 'avatar';
+    } else {
+        av_size = 'avatar-sm';
+    }
+
+
+    return `<div class="${av_size}" title="${name}">
         <span class="avatar-title rounded-circle border border-white ${bg}">${initial}</span>
     </div>`;
 }

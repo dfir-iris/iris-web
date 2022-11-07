@@ -24,7 +24,10 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
+from app.datamgmt.overview.overview_db import get_overview_db
+from app.util import ac_api_requires
 from app.util import ac_requires
+from app.util import response_success
 
 overview_blueprint = Blueprint(
     'overview',
@@ -45,3 +48,14 @@ def get_overview(caseid, url_redir):
     form = FlaskForm()
 
     return render_template('overview.html', caseid=caseid, form=form)
+
+
+@overview_blueprint.route('/overview/filter', methods=['GET'])
+@ac_api_requires()
+def get_overview_filter(caseid):
+    """
+    Return an overview of the cases
+    """
+    overview = get_overview_db()
+
+    return response_success('', data=overview)
