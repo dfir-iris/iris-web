@@ -598,6 +598,8 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
                 jsdata = data.data;
                 if (jsdata.length != 0) {
                     anchor.append('<div class="dropdown-divider"></div>');
+                } else {
+                    anchor.append('<div class="dropdown-item">No module available</div>');
                 }
                 for (option in jsdata) {
                     opt = jsdata[option];
@@ -605,6 +607,9 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
                                 `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
                     anchor.append(menu_opt);
                 }
+
+            } else {
+                anchor.append('<div>No module available</div>');
             }
         }
     })
