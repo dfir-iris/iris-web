@@ -14125,8 +14125,8 @@ table.dataTable.stripe tbody > tr.selected {
 
 .bg-info-gradient {
     background: #48ABF7 !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #0A5A97, #5A9ACC) !important;
-    background: linear-gradient(-45deg, #0A5A97, #5A9ACC) !important;
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #0003964, #3E81AA) !important;
+    background:linear-gradient(-45deg, #003964, #3E81AA) !important;
 }
 
 .bg-success-gradient {

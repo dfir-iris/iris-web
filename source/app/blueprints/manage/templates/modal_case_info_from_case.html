@@ -5,7 +5,24 @@
             <div class="col align-self-center">
                 <h4 class="modal-title mr-4">{{ data.case_name|unquote }}</h4>
             </div>
-            {% include 'modals/modal_attributes_nav.html' %}
+            {% if attributes and attributes|length > 0 %}
+            <div class="row text-center">
+                    <ul class="nav nav-pills nav-default mr-4" id="pills-tab-custom-attr" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active show" id="pills-home-tab-nobd" data-toggle="pill" href="#details" role="tab" aria-controls="pills-home-nobd" aria-selected="false">Info</a>
+                    </li>
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#case-info-access" role="tab" aria-controls="case-info-access" aria-selected="false">Access</a>
+                    </li>
+                    {% for ca in attributes %}
+                        <li class="nav-item submenu">
+                            <a class="nav-link"  data-toggle="pill" href="#{{page_uid}}{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" role="tab" aria-controls="{{page_uid}}{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" aria-selected="false">{{ca}}</a>
+                        </li>
+                    {% endfor %}
+
+                </ul>
+            </div>
+            {% endif %}
             <div class="col ">
                 <div class="row float-right">
                     <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
@@ -68,33 +85,6 @@
                         <label>Case UUID :</label>
                         <span type="text" class="text-faded">{{ data.case_uuid }}</span>
                     </div>
-                <hr/>
-                  <div class="col col-heading" href="#collapse_case_access" title="Click to unfold"  data-toggle="collapse" aria-expanded="false" aria-controls="collapse_case_access" style="cursor:pointer;">
-                      <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
-                            <div class="card-title">Case access</div>
-                  </div>
-                  <div class="collapse" id="collapse_case_access">
-                      <div class="row mt-4">
-                          <div class="col">
-                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
-                                <thead>
-                                  <tr>
-                                      <th>User ID</th>
-                                      <th>User login</th>
-                                      <th>User display name</th>
-                                  </tr>
-                                </thead>
-                                <tfoot>
-                                  <tr>
-                                      <th>User ID</th>
-                                      <th>User login</th>
-                                      <th>User display name</th>
-                                  </tr>
-                                </tfoot>
-                              </table>
-                          </div>
-                      </div>
-                  </div>
                 </div>
                 <div id="case_gen_info_edit" style="display:none;">
                     <div class="col-md-12 col-lg-6 col-sm-12">
@@ -119,6 +109,29 @@
                         </form>
                     </div>
                 </div>
+              </div>
+              <div class="tab-pane" id="case-info-access">
+                    <div class="card-title">Case access</div>
+                      <div class="row mt-4">
+                          <div class="col">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
+                                <thead>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User login</th>
+                                      <th>User display name</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User login</th>
+                                      <th>User display name</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                          </div>
+                  </div>
               </div>
               {% include 'modals/modal_attributes_tabs.html' %}
             </div>
