@@ -32,6 +32,7 @@ from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.context.context import ctx_blueprint
 # Blueprints
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
+from app.blueprints.overview.overview_routes import overview_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 from app.blueprints.login.login_routes import login_blueprint
@@ -58,6 +59,7 @@ from app.models.authorization import User
 from app.post_init import run_post_init
 
 app.register_blueprint(dashboard_blueprint)
+app.register_blueprint(overview_blueprint)
 app.register_blueprint(login_blueprint)
 app.register_blueprint(profile_blueprint)
 app.register_blueprint(search_blueprint)

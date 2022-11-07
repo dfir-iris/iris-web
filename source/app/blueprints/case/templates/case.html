@@ -9,11 +9,11 @@
     <div class="page-inner py-5">
         <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
             <div class="col">
-                <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-3"></i> {{ case.name|unquote }}
+                <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
                 </h2>
-                <h5 class="text-white op-7 mb-2">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
+                <h5 class="text-white op-7 mb-3 ml-1">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
                 {% if case.close_date %}
-                <h5 class="text-warning  mb-2">Closed on {{ case.close_date }}</h5>
+                <h5 class="text-warning  mb-3 ml-1">Closed on {{ case.close_date }}</h5>
                 {% endif %}
                 <small><a href="#" onclick="case_detail('{{ case.case_id }}');" class="btn btn-sm btn-outline-light btn-rounded float-left">
                     <i class="fa-solid fa-info mr-1"></i>
