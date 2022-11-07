@@ -21,15 +21,6 @@ $(document).ready(function() {
     aaData: [],
     aoColumns: [
       {
-        "data": "case_id",
-        "render": function(data, type, row) {
-             if (type === 'display') {
-                data = '<a rel="noopener" title="Open case in new tab" target="_blank" href="case?cid='+ row['case_id'] + '">' + data +'</a>';
-             }
-             return data;
-        }
-    },
-      {
         "data": "case_title",
         "render": function (data, type, row, meta) {
           if (type === 'display') {
@@ -63,12 +54,13 @@ $(document).ready(function() {
         "data": "case_open_since_days",
         "render": function(data, type, row, meta) {
            if (type === 'display') {
+              title = "You\'re not forgetting me, are you?";
               if (data <= 7) {
-                data = `<i class="text-success fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days`;
+                data = `<i title="Sounds good" class="text-success fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days`;
               } else if (7 < data && data < 14) {
-                data = `<i class="text-warning fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days</div>`;
+                data = `<i title="${title}" class="text-warning fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days</div>`;
               } else {
-                data = `<i class="text-danger fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days</div>`;
+                data = `<i title="${title}" class="text-danger fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days</div>`;
               }
           }
           return data;
@@ -90,7 +82,7 @@ $(document).ready(function() {
               now = (data.closed_tasks / (data.closed_tasks + data.open_tasks))*100;
               data = `<div class="progress progress-sm">
                     <div class="progress-bar bg-success" style="width:${now}%" role="progressbar" aria-valuenow="${now}" aria-valuemin="0" aria-valuemax="100"></div>
-               </div><small>${data.open_tasks} open / ${data.closed_tasks} done</small>`
+               </div><small>${data.open_tasks} open / ${data.closed_tasks} done</small>`;
 		  }
           return data;
         }
@@ -112,7 +104,7 @@ $(document).ready(function() {
     retrieve: true,
     lengthChange: false,
     pageLength: 25,
-    order: [[ 0, "desc" ]],
+    order: [[ 2, "asc" ]],
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
