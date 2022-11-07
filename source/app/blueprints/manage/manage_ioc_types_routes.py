@@ -63,7 +63,7 @@ def get_ioc_type(cur_id, caseid):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/update/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
+@ac_requires(Permissions.server_administrator)
 def view_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_ioc_types.view_ioc_modal', cid=caseid))
@@ -83,7 +83,7 @@ def view_ioc_modal(cur_id, caseid, url_redir):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/add/modal', methods=['GET'])
-@ac_requires(Permissions.manage_case_objects)
+@ac_requires(Permissions.server_administrator)
 def add_ioc_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_ioc_types.view_ioc_modal', cid=caseid))
@@ -94,7 +94,7 @@ def add_ioc_modal(caseid, url_redir):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/add', methods=['POST'])
-@ac_api_requires(Permissions.manage_case_objects)
+@ac_api_requires(Permissions.server_administrator)
 def add_ioc_type_api(caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -116,7 +116,7 @@ def add_ioc_type_api(caseid):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.manage_case_objects)
+@ac_api_requires(Permissions.server_administrator)
 def remove_ioc_type(cur_id, caseid):
 
     type_id = IocType.query.filter(
@@ -139,7 +139,7 @@ def remove_ioc_type(cur_id, caseid):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.manage_case_objects)
+@ac_api_requires(Permissions.server_administrator)
 def update_ioc(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")

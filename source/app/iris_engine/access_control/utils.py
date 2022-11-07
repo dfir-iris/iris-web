@@ -69,7 +69,7 @@ def ac_get_mask_analyst():
     Return a standard access mask for analysts
     """
 
-    return 0
+    return Permissions.standard_user.value
 
 
 def ac_permission_to_list(permission):

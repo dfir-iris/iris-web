@@ -18,10 +18,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import glob
-import secrets
-
 import os
 import random
+import secrets
 import string
 from alembic import command
 from alembic.config import Config
@@ -34,19 +33,18 @@ from app import bc
 from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
-from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
-from app.iris_engine.access_control.utils import ac_recompute_all_users_effective_ac
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
+from app.models import create_safe_limited
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
-from app.models import create_safe_limited
+from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import Client
 from app.models.models import AnalysisStatus
@@ -61,7 +59,6 @@ from app.models.models import ReportType
 from app.models.models import ServerSettings
 from app.models.models import TaskStatus
 from app.models.models import Tlp
-from app.models.authorization import User
 from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
@@ -529,9 +526,6 @@ def create_safe_case(user, client, def_org):
         case.save()
 
         db.session.commit()
-
-        # Add case to default org
-        add_case_access_to_org(def_org, [case.case_id], CaseAccessLevel.full_access.value)
 
     return case
 

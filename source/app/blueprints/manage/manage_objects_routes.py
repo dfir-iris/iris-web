@@ -35,7 +35,7 @@ manage_objects_blueprint = Blueprint('manage_objects',
 
 # CONTENT ------------------------------------------------
 @manage_objects_blueprint.route('/manage/objects')
-@ac_requires(Permissions.read_case_objects, Permissions.manage_case_objects)
+@ac_requires(Permissions.server_administrator)
 def manage_objects(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_objects.manage_objects', cid=caseid))

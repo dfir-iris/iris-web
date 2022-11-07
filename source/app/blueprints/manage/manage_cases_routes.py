@@ -40,22 +40,15 @@ from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
-from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
-from app.datamgmt.manage.manage_organisations_db import get_org
-from app.datamgmt.manage.manage_organisations_db import get_org_with_members
 from app.datamgmt.manage.manage_users_db import add_case_access_to_user
 from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
-from app.iris_engine.access_control.utils import ac_add_user_effective_access
-from app.iris_engine.access_control.utils import ac_apply_autofollow_groups_access
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
-from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_users_list
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
-from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
@@ -78,7 +71,7 @@ manage_cases_blueprint = Blueprint('manage_case',
 
 # CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
-@ac_requires(Permissions.manage_case)
+@ac_requires(Permissions.server_administrator)
 def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
@@ -147,7 +140,7 @@ def get_case_api(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.manage_case)
+@ac_api_requires(Permissions.standard_user)
 def api_delete_case(cur_id, caseid):
 
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
@@ -185,7 +178,7 @@ def api_delete_case(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.manage_case)
+@ac_api_requires(Permissions.standard_user)
 def api_reopen_case(cur_id, caseid):
 
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
@@ -205,7 +198,7 @@ def api_reopen_case(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.manage_case)
+@ac_api_requires(Permissions.standard_user)
 def api_case_close(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -224,7 +217,7 @@ def api_case_close(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])
-@ac_api_requires(Permissions.manage_case)
+@ac_api_requires(Permissions.standard_user)
 def api_add_case(caseid):
 
     case_schema = CaseSchema()
@@ -235,20 +228,6 @@ def api_add_case(caseid):
         case = case_schema.load(request_data)
 
         case.save()
-
-        case_orgs = request.json.get('case_organisations')
-        if not case_orgs:
-            # Only add the user in case access
-            add_case_access_to_user(current_user, [case.case_id], CaseAccessLevel.full_access.value)
-
-        else:
-            for org_id in case_orgs:
-                org = get_org_with_members(int(org_id))
-                if not org:
-                    raise marshmallow.exceptions.ValidationError("Invalid organisation ID",
-                                                                 field_name="case_organisations")
-                add_case_access_to_org(org, [case.case_id], CaseAccessLevel.full_access.value)
-                ac_set_new_case_access(org.org_members, case.case_id)
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 

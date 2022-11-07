@@ -178,6 +178,7 @@ def change_user_primary_org(user_id, old_org_id, new_org_id):
 
 
 def add_user_to_organisation(user_id, org_id, make_primary=False):
+    org_id = Organisation.query.first().org_id
 
     uo_exists = UserOrganisation.query.filter(
         UserOrganisation.user_id == user_id,
@@ -503,7 +504,7 @@ def get_users_list_restricted_from_case(case_id):
 
 
 def create_user(user_name: str, user_login: str, user_password: str, user_email: str, user_active: bool,
-                primary_org: int, user_external_id: str = None):
+                user_external_id: str = None):
 
     pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
 
@@ -511,13 +512,13 @@ def create_user(user_name: str, user_login: str, user_password: str, user_email:
                 external_id=user_external_id)
     user.save()
 
-    add_user_to_organisation(user.id, org_id=primary_org)
+    add_user_to_organisation(user.id, org_id=1)
     ac_auto_update_user_effective_access(user_id=user.id)
 
     return user
 
 
-def update_user(user: User, name: str = None, email: str = None, password: str = None, primary_org: int = None):
+def update_user(user: User, name: str = None, email: str = None, password: str = None):
 
     if password is not None:
         pw_hash = bc.generate_password_hash(password.encode('utf8')).decode('utf8')
@@ -528,13 +529,6 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
             setattr(user, key, value)
 
     db.session.commit()
-
-    if primary_org:
-        old_prim_org = get_user_primary_org(user.id)
-
-        if old_prim_org.org_id != primary_org:
-
-            change_user_primary_org(user_id=user.id, old_org_id=old_prim_org.org_id, new_org_id=primary_org)
 
     return user
 

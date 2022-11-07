@@ -53,7 +53,7 @@ search_blueprint = Blueprint('search',
 
 # CONTENT ------------------------------------------------
 @search_blueprint.route('/search', methods=['POST'])
-@ac_api_requires(Permissions.search_across_cases, Permissions.search_across_all_cases)
+@ac_api_requires(Permissions.server_administrator)
 def search_file_post(caseid: int):
 
     jsdata = request.get_json()
@@ -64,13 +64,13 @@ def search_file_post(caseid: int):
 
     track_activity("started a global search for {} on {}".format(search_value, search_type))
 
-    if not ac_flag_match_mask(session['permissions'],  Permissions.search_across_all_cases.value):
-        user_search_limitations = ac_get_fast_user_cases_access(current_user.id)
-        if user_search_limitations:
-            search_condition = and_(Cases.case_id.in_(user_search_limitations))
-
-        else:
-            return response_success("Results fetched", [])
+    # if not ac_flag_match_mask(session['permissions'],  Permissions.search_across_all_cases.value):
+    #     user_search_limitations = ac_get_fast_user_cases_access(current_user.id)
+    #     if user_search_limitations:
+    #         search_condition = and_(Cases.case_id.in_(user_search_limitations))
+    #
+    #     else:
+    #         return response_success("Results fetched", [])
 
     if search_type == "ioc":
         res = Ioc.query.with_entities(
@@ -146,7 +146,7 @@ def search_file_post(caseid: int):
 
 
 @search_blueprint.route('/search', methods=['GET'])
-@ac_requires(Permissions.search_across_cases, Permissions.search_across_all_cases)
+@ac_requires(Permissions.standard_user)
 def search_file_get(caseid, url_redir):
     if url_redir:
         return redirect(url_for('search.search_file_get', cid=caseid))

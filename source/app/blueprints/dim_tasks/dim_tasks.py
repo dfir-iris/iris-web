@@ -66,7 +66,7 @@ basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 # CONTENT ------------------------------------------------
 @dim_tasks_blueprint.route('/dim/tasks', methods=['GET'])
-@ac_requires(Permissions.read_all_dim_tasks)
+@ac_requires(Permissions.standard_user)
 def dim_index(caseid: int, url_redir):
     if url_redir:
         return redirect(url_for('dim.dim_index', cid=caseid))
@@ -188,7 +188,7 @@ def dim_hooks_call(caseid):
 
 
 @dim_tasks_blueprint.route('/dim/tasks/list/<int:count>', methods=['GET'])
-@ac_api_requires(Permissions.read_all_dim_tasks)
+@ac_api_requires()
 def list_dim_tasks(count, caseid):
     tasks = CeleryTaskMeta.query.filter(
         ~ CeleryTaskMeta.name.like('app.iris_engine.updater.updater.%')

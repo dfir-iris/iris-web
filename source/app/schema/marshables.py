@@ -18,36 +18,27 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
-import re
-
-from flask_login import current_user
-
-from pathlib import Path
-
 import dateutil.parser
 import marshmallow
 import os
+import pyminizip
 import random
+import re
 import string
-import tempfile
+from flask_login import current_user
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
+from pathlib import Path
 from sqlalchemy import func
-import pyminizip
 
 from app import app
 from app import db
 from app import ma
-from app.datamgmt.datastore.datastore_db import datastore_get_interactive_path_node
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
-from app.datamgmt.manage.manage_organisations_db import add_case_access_to_org
-from app.datamgmt.manage.manage_organisations_db import get_org
-from app.datamgmt.manage.manage_users_db import add_case_access_to_user
-from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus
 from app.models import AssetsType
@@ -68,7 +59,6 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -716,16 +706,6 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email']
-
-    @pre_load()
-    def verify_primary_org(self, data, **kwargs):
-        prim_org = data.get('user_primary_organisation_id')
-        org = get_org(prim_org)
-        if not org:
-            raise marshmallow.exceptions.ValidationError('Invalid organisation ID',
-                                                          field_name="user_primary_organisation_id")
-
-        return data
 
     @pre_load()
     def verify_username(self, data, **kwargs):

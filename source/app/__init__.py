@@ -67,6 +67,7 @@ def ac_current_user_has_permission(*permissions):
     Return True if current user has permission
     """
     for permission in permissions:
+        print(session['permissions'])
         if session['permissions'] & permission.value == permission.value:
             return True
 

@@ -17,7 +17,6 @@
           <div>
             <h2 class="text-white pb-2 fw-bold">Dashboard</h2>
           </div>
-         {% if user_has_perm(std_permissions.manage_case) %}
           <div class="ml-md-auto py-2 py-md-0">
             <a href="/manage/cases" class="btn btn-white btn-border btn-round mr-2">
               <span class="btn-label">
@@ -26,7 +25,6 @@
               Add case
             </a>
           </div>
-        {% endif %}
         </div>
           <div class="chart-container mt--2 mb--2">
             <canvas id="htmlLegendsChart" style="display: block; width: auto; height: 100px;" width="auto" height="100px" class="chartjs-render-monitor"></canvas>
