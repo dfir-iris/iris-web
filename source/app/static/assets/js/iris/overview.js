@@ -60,10 +60,16 @@ $(document).ready(function() {
         }
       },
       {
-        "data": "case_open_since",
+        "data": "case_open_since_days",
         "render": function(data, type, row, meta) {
            if (type === 'display') {
-              data = sanitizeHTML(data);
+              if (data <= 7) {
+                data = `<i class="text-success fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days`;
+              } else if (7 < data && data < 14) {
+                data = `<i class="text-warning fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days</div>`;
+              } else {
+                data = `<i class="text-danger fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days</div>`;
+              }
           }
           return data;
         }

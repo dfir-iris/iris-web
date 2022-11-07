@@ -61,7 +61,7 @@ def get_overview_db():
     open_cases_list = []
     for case in open_cases:
         c_case = case._asdict()
-        c_case['case_open_since'] = f"{(datetime.date.today() - case.case_open_date).days} days"
+        c_case['case_open_since_days'] = (datetime.date.today() - case.case_open_date).days
         c_case['case_open_date'] = case.case_open_date.strftime('%d-%m-%Y')
         c_case['tasks_status'] = tmap.get(case.case_id)
         open_cases_list.append(c_case)
