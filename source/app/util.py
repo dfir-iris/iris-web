@@ -17,11 +17,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import uuid
-
 import datetime
 import decimal
 import hashlib
+import jwt
 import logging as log
 import pickle
 import random
@@ -29,6 +28,7 @@ import requests
 import shutil
 import string
 import traceback
+import uuid
 import weakref
 from flask import Request
 from flask import json
@@ -38,26 +38,22 @@ from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
-from flask_login import logout_user
 from flask_wtf import FlaskForm
 from functools import wraps
+from jwt import PyJWKClient
 from pathlib import Path
 from pyunpack import Archive
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
-import jwt
-from jwt import PyJWKClient
 
 from app import TEMPLATE_PATH
 from app import app
 from app import db
 from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
-from app.datamgmt.manage.manage_users_db import update_user
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity

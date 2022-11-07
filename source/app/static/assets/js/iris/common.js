@@ -154,7 +154,7 @@ function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
         type: 'GET',
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
-            if (beforeSend_fn !== undefined) {
+            if (beforeSend_fn !== undefined && beforeSend_fn !== null) {
                 beforeSend_fn(jqXHR, settings);
             }
         },
@@ -778,6 +778,22 @@ function get_editor_headers(editor_instance, save, edition_btn) {
     return header;
 }
 
+function goto_case_number() {
+    case_id = $('#goto_case_number_input').val();
+    if (case_id !== '' && isNaN(case_id) === false) {
+
+        get_request_api('/case/exists', true, null, case_id)
+        .done(function (data){
+            if(notify_auto_api(data, true)) {
+                var url = new window.URL(document.location);
+                url.searchParams.set("cid", case_id);
+                window.location.href = url.href;
+            }
+        });
+
+    }
+}
+
 
 function load_menu_mod_options(data_type, table, deletion_fn) {
     var actionOptions = {
@@ -1032,6 +1048,16 @@ function load_context_switcher() {
 
         }
     });
+}
+
+function focus_on_input_chg_case(){
+    $('#goto_case_number_input').focus();
+    $('#goto_case_number_input').keydown(function(event) {
+        if (event.keyCode == 13) {
+             goto_case_number();
+             return false;
+        }
+  });
 }
 
 function split_bool(split_str) {

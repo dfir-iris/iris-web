@@ -7106,7 +7106,7 @@ body .badge-danger {
         border-left: 8px solid transparent;
         border-right: 8px solid transparent;
         content: "";
-        right: 10px;
+        left: 10px;
         top: -8px;
         position: absolute;
         z-index: 1001;

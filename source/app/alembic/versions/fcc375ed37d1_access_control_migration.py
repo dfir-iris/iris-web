@@ -192,15 +192,6 @@ def upgrade():
     result_cases = [case[0] for case in res.fetchall()]
     access_level = ac_get_mask_case_access_level_full()
 
-    # Make a list of the cases that are not already linked to the org
-    res = conn.execute(f"select case_id from organisation_case_access "
-                       f"where org_id = {default_org_id};")
-    result_org_cases = [case[0] for case in res.fetchall()]
-    cases_to_add_to_org = list(set(result_cases) - set(result_org_cases))
-    for case_id in cases_to_add_to_org:
-        conn.execute(f"insert into organisation_case_access (org_id, case_id, access_level) values "
-                     f"('{default_org_id}', '{case_id}', '{access_level}');")
-
     # Migrate the users to the new access control system
     conn = op.get_bind()
 

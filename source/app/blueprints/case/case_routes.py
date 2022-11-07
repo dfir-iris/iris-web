@@ -42,6 +42,7 @@ from app.blueprints.case.case_notes_routes import case_notes_blueprint
 from app.blueprints.case.case_rfiles_routes import case_rfiles_blueprint
 from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
 from app.blueprints.case.case_timeline_routes import case_timeline_blueprint
+from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
@@ -100,6 +101,16 @@ def case_r(caseid, url_redir):
 
     return render_template('case.html', case=case, desc=desc, crc=desc_crc32,
                            reports=reports, reports_act=reports_act, form=form)
+
+
+@case_blueprint.route('/case/exists', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_exists_r(caseid):
+
+    if case_exists(caseid):
+        return response_success('Case exists')
+    else:
+        return response_error('Case does not exist', 404)
 
 
 @case_blueprint.route('/case/pipelines-modal', methods=['GET'])
