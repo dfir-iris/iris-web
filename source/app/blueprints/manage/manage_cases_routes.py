@@ -277,6 +277,9 @@ def update_case_info(caseid):
     try:
 
         request_data = request.get_json()
+
+        print(request_data)
+
         request_data['case_name'] = f"#{case_i.case_id} - {request_data['case_name']}"
         request_data['case_customer'] = case_i.client_id
 

@@ -119,7 +119,7 @@
                                     <input type="text" class="form-input" name="case_soc_id" value="{{ data.case_soc_id }}">
                                 </div>
 
-                                <button type="button" class="btn btn-sm btn-outline-dark mr-2" id="add_protagonist"  onclick="add_protagonist();">Add protagonist</button>
+                                <button type="button" class="btn btn-sm btn-outline-dark mr-2" id="add_protagonist_btn"  onclick="add_protagonist();">Add protagonist</button>
                                 <div id="protagonist_list_edit">
                                 </div>
                                 {% if protagonists %}
@@ -128,7 +128,7 @@
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">{{ protagonist.role }}</span>
                                             </div>
-                                            <input type="text" class="form-input" name="case_soc_id" value="{{ protagonist.user_name }}">
+                                            <input type="text" class="form-input" name="case_soc_id"  value="{{ protagonist.user_name }}">
                                         </div>
                                     {% endfor %}
                                 {% endif %}
@@ -167,11 +167,11 @@
     </div>
 </div>
 <div id="protagonist_list_edit_template" style="display:none;">
-    <div class="input-group mb-4">
+    <div class="input-group mb-2 mt-2">
         <div class="input-group-prepend">
-            <span class="input-group-text"> <input type="text" class="form-input" name="" value=""></span>
+            <span class="input-group-text"> <input type="text" class="form-input" name="protagonist_role" value="" placeholder="Role"></span>
         </div>
-        <input type="text" class="form-input" name="" value="">
+        <input type="text" class="form-input" name="protagonist_name" value="" placeholder="Name">
     </div>
 </div>
 
