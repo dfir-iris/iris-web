@@ -167,11 +167,14 @@
     </div>
 </div>
 <div id="protagonist_list_edit_template" style="display:none;">
-    <div class="input-group mb-2 mt-2">
+    <div class="input-group mb-2 mt-2" id="__PROTAGONIST_ID__">
+        <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('__PROTAGONIST_ID__');">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </button>
         <div class="input-group-prepend">
-            <span class="input-group-text"> <input type="text" class="form-input" name="protagonist_role" value="" placeholder="Role"></span>
+            <span class="input-group-text"> <input type="text" class="form-input" name="protagonist_role___PROTAGONIST_ID__" value="" placeholder="Role"></span>
         </div>
-        <input type="text" class="form-input" name="protagonist_name" value="" placeholder="Name">
+        <input type="text" class="form-input" name="protagonist_name___PROTAGONIST_ID__" value="" placeholder="Name">
     </div>
 </div>
 
