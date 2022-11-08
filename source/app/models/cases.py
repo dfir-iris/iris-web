@@ -31,6 +31,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
+from sqlalchemy import UniqueConstraint
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import JSONB
@@ -159,3 +160,15 @@ class CasesEvent(db.Model):
                             primaryjoin="CasesEvent.event_id==CaseEventCategory.event_id",
                             secondaryjoin="CaseEventCategory.category_id==EventCategory.id",
                             viewonly=True)
+
+
+class CaseProtagonist(db.Model):
+    __tablename__ = "case_protagonist"
+
+    id = Column(Integer, primary_key=True)
+    case_id = Column(ForeignKey('cases.case_id'))
+    user_id = Column(ForeignKey('user.id'))
+    role = Column(Text)
+
+    case = relationship('Cases')
+    user = relationship('User')
