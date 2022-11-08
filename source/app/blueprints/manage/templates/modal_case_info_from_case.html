@@ -5,7 +5,7 @@
             <div class="col align-self-center">
                 <h4 class="modal-title mr-4">{{ data.case_name|unquote }}</h4>
             </div>
-            {% if attributes and attributes|length > 0 %}
+
             <div class="row text-center">
                     <ul class="nav nav-pills nav-default mr-4" id="pills-tab-custom-attr" role="tablist">
                     <li class="nav-item">
@@ -14,15 +14,15 @@
                     <li class="nav-item submenu">
                         <a class="nav-link"  data-toggle="pill" href="#case-info-access" role="tab" aria-controls="case-info-access" aria-selected="false">Access</a>
                     </li>
-                    {% for ca in attributes %}
-                        <li class="nav-item submenu">
-                            <a class="nav-link"  data-toggle="pill" href="#{{page_uid}}{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" role="tab" aria-controls="{{page_uid}}{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" aria-selected="false">{{ca}}</a>
-                        </li>
-                    {% endfor %}
-
+                    {% if attributes and attributes|length > 0 %}
+                        {% for ca in attributes %}
+                            <li class="nav-item submenu">
+                                <a class="nav-link"  data-toggle="pill" href="#{{page_uid}}{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" role="tab" aria-controls="{{page_uid}}{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" aria-selected="false">{{ca}}</a>
+                            </li>
+                        {% endfor %}
+                    {% endif %}
                 </ul>
             </div>
-            {% endif %}
             <div class="col ">
                 <div class="row float-right">
                     <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
