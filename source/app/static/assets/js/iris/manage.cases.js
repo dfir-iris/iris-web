@@ -30,32 +30,8 @@ function submit_new_case() {
 
     data_sent['custom_attributes'] = attributes;
 
-    if(typeof data_sent['case_organisations'] === 'string') {
-        data_sent['case_organisations'] = [data_sent['case_organisations']];
-    }
+    send_add_case(data_sent);
 
-    if (data_sent['case_organisations'] === undefined) {
-        swal({
-            title: "Attention",
-            text: "No organisation selected.\n No one other than you will be able to see and run this case.\n Continue?",
-            icon: "warning",
-            buttons: true,
-            dangerMode: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            buttons: ["Cancel", "Let\'s do that"]
-        })
-        .then((allAlone) => {
-            if (allAlone) {
-                send_add_case(data_sent);
-            } else {
-                notify_success('Case addition canceled');
-            }
-        });
-    }
-    else {
-        send_add_case(data_sent);
-    }
     return false;
 };
 
@@ -283,6 +259,43 @@ function close_case(id) {
                 refresh_case_table();
                 $('#modal_case_detail').modal('hide');
             });
+        }
+    });
+}
+
+function edit_case_info() {
+    $('#case_gen_info_content').hide();
+    $('#case_gen_info_edit').show();
+    $('#cancel_case_info').show();
+    $('#save_case_info').show();
+    $('#case_info').hide();
+}
+
+function cancel_case_edit() {
+    $('#case_gen_info_content').show();
+    $('#case_gen_info_edit').hide();
+    $('#cancel_case_info').hide();
+    $('#case_info').show();
+    $('#cancel_case_info').hide();
+}
+
+function save_case_edit(case_id) {
+
+    var data_sent = $('form#form_update_case').serializeObject();
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
+
+    data_sent['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api('/manage/cases/update', JSON.stringify(data_sent), true, undefined, case_id)
+    .done((data) => {
+        if(notify_auto_api(data)) {
+            case_detail(case_id);
         }
     });
 }

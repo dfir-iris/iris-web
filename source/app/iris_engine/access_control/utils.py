@@ -1,7 +1,6 @@
 from flask import session
 from flask_login import current_user
 from sqlalchemy import and_
-from sqlalchemy import case
 
 import app
 from app import db
@@ -349,8 +348,8 @@ def ac_set_new_case_access(org_members, case_id):
     """
 
     users = ac_apply_autofollow_groups_access(case_id)
-
-    users_full_access = list(set([u.get('id') for u in org_members]) - set(users.keys()))
+    users_full = User.query.with_entities(User.id).all()
+    users_full_access = list(set([u.id for u in users_full]) - set(users.keys()))
 
     ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.full_access.value)
 
@@ -451,14 +450,17 @@ def ac_get_fast_user_cases_access(user_id):
 
 
 def ac_get_user_cases_access(user_id):
-    ocas = OrganisationCaseAccess.query.with_entities(
-        Cases.case_id,
-        OrganisationCaseAccess.access_level
-    ).filter(
-        and_(UserOrganisation.user_id == user_id,
-             OrganisationCaseAccess.org_id == UserOrganisation.org_id)
-    ).join(
-        OrganisationCaseAccess.case,
+    # ocas = OrganisationCaseAccess.query.with_entities(
+    #     Cases.case_id,
+    #     OrganisationCaseAccess.access_level
+    # ).filter(
+    #     and_(UserOrganisation.user_id == user_id,
+    #          OrganisationCaseAccess.org_id == UserOrganisation.org_id)
+    # ).join(
+    #     OrganisationCaseAccess.case,
+    # ).all()
+    cases = Cases.query.with_entities(
+        Cases.case_id
     ).all()
 
     gcas = GroupCaseAccess.query.with_entities(
@@ -481,8 +483,8 @@ def ac_get_user_cases_access(user_id):
     ).all()
 
     effective_cases_access = {}
-    for oca in ocas:
-        effective_cases_access[oca.case_id] = oca.access_level
+    for oca in cases:
+        effective_cases_access[oca.case_id] = CaseAccessLevel.full_access.value
 
     for gca in gcas:
         effective_cases_access[gca.case_id] = gca.access_level
@@ -494,19 +496,6 @@ def ac_get_user_cases_access(user_id):
 
 
 def ac_trace_user_effective_cases_access_2(user_id):
-    ocas = OrganisationCaseAccess.query.with_entities(
-        Organisation.org_name,
-        Organisation.org_id,
-        Organisation.org_uuid,
-        Cases.name,
-        Cases.case_id,
-        OrganisationCaseAccess.access_level
-    ).filter(
-        and_(UserOrganisation.user_id == user_id,
-             OrganisationCaseAccess.org_id == UserOrganisation.org_id)
-    ).join(
-        OrganisationCaseAccess.case, OrganisationCaseAccess.org
-    ).all()
 
     gcas = GroupCaseAccess.query.with_entities(
         Group.group_name,
@@ -536,33 +525,32 @@ def ac_trace_user_effective_cases_access_2(user_id):
     ).all()
 
     effective_cases_access = {}
-    for oca in ocas:
+    cases = Cases.query.with_entities(
+        Cases.case_id,
+        Cases.name
+    ).all()
+
+    for oca in cases:
         access = {
             'state': 'Effective',
-            'access_list': ac_access_level_to_list(oca.access_level),
-            'access_value': oca.access_level,
+            'access_list': CaseAccessLevel.full_access.name,
+            'access_value': CaseAccessLevel.full_access.value,
             'inherited_from': {
-                'object_type': 'organisation_access_level',
-                'object_name': oca.org_name,
-                'object_id': oca.org_id,
-                'object_uuid': oca.org_uuid
+                'object_type': 'default_access_level',
+                'object_name': 'Default access level',
+                'object_id': '',
+                'object_uuid': ''
             }
         }
 
-        if oca.case_id in effective_cases_access:
-            effective_cases_access[oca.case_id]['user_effective_access'] = oca.access_level
-            for kec in effective_cases_access[oca.case_id]['user_access']:
-                kec['state'] = f'Overwritten by organisation {oca.org_name}'
-
-        else:
-            effective_cases_access[oca.case_id] = {
-                'case_info': {
-                    'case_name': oca.name,
-                    'case_id': oca.case_id
-                },
-                'user_access': [],
-                'user_effective_access': oca.access_level
-            }
+        effective_cases_access[oca.case_id] = {
+            'case_info': {
+                'case_name': oca.name,
+                'case_id': oca.case_id
+            },
+            'user_access': [],
+            'user_effective_access': CaseAccessLevel.full_access.value
+        }
 
         effective_cases_access[oca.case_id]['user_access'].append(access)
 

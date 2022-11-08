@@ -51,6 +51,66 @@ function save_case_edit(case_id) {
     });
 }
 
+/* Remove case function */
+function remove_case(id) {
+
+    swal({
+        title: "Are you sure?",
+        text: "You won't be able to revert this !\nAll associated data will be deleted",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    })
+        .then((willDelete) => {
+            if (willDelete) {
+                get_request_api('/manage/cases/delete/' + id)
+                .done((data) => {
+                    if (notify_auto_api(data)) {
+                        $('#modal_case_detail').modal('hide');
+                    }
+                });
+            } else {
+                swal("Pfew, that was close");
+            }
+        });
+}
+
+/* Reopen case function */
+function reopen_case(id) {
+    get_request_api('/manage/cases/reopen/' + id)
+    .done((data) => {
+        window.location.reload();
+        $('#modal_case_detail').modal('hide');
+    });
+}
+
+/* Close case function */
+function close_case(id) {
+    swal({
+        title: "Are you sure?",
+        text: "Case ID " + id + " will be closed",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, close it!'
+    })
+    .then((willClose) => {
+        if (willClose) {
+            get_request_api('/manage/cases/close/' + id)
+            .done((data) => {
+                window.location.reload();
+                $('#modal_case_detail').modal('hide');
+            });
+        }
+    });
+}
+
+
 function do_deletion_prompt(message) {
     if (has_deletion_prompt) {
             return new Promise((resolve, reject) => {

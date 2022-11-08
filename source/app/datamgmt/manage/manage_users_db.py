@@ -42,6 +42,11 @@ def get_user(user_id, id_key: str = 'id'):
     return user
 
 
+def list_users_id():
+    users = User.query.with_entities(User.user_id).all()
+    return users
+
+
 def get_user_effective_permissions(user_id):
     groups_perms = UserGroup.query.with_entities(
         Group.group_permissions,

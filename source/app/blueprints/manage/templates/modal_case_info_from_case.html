@@ -140,7 +140,11 @@
 </div>
 
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-default mr-auto" onclick="manage_case({{ data.case_id }});">Manage case</button>
+    {% if not data.close_date %}
+        <button type="button" class="btn btn-outline-success" onclick="close_case('{{ data.case_id }}');">Close case</button>
+    {% else %}
+        <button type="button" class="btn btn-outline-success" onclick="reopen_case('{{ data.case_id }}');">Reopen case</button>
+    {% endif %}
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
     <button type="button" class="btn btn-outline-danger mr-2" style="display:none;" id="cancel_case_info"  onclick="cancel_case_edit();">Cancel</button>
     <button type="button" class="btn btn-outline-success mr-2" style="display:none;" id="save_case_info" onclick="save_case_edit({{ data.case_id }});">Save edit</button>
@@ -150,7 +154,7 @@
 var modal_org_table = $("#case_access_users_list_table").DataTable({
         dom: 'Blfrtip',
         "ajax": {
-            "url": "case/users/list" + case_param(),
+            "url": "/case/users/list?cid={{ data.case_id }}",
             "contentType": "application/json",
             "type": "GET",
             "data": function (d) {

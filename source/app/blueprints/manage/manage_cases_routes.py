@@ -101,9 +101,10 @@ def details_case(cur_id, caseid, url_redir):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
+    form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info.html", data=res)
+        return render_template("modal_case_info_from_case.html", data=res, form=form)
 
     else:
         return response_error("Unknown case")
@@ -232,12 +233,15 @@ def api_add_case(caseid):
 
         case.save()
 
+        ac_set_new_case_access(None, case.case_id)
+
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
         track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+
     except Exception as e:
         log.error(e.__str__())
         log.error(traceback.format_exc())

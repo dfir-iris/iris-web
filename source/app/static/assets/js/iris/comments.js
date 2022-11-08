@@ -67,6 +67,7 @@ function save_comment_ext(element_id, element_type, do_close){
     .done((data) => {
         if(notify_auto_api(data)) {
             load_comments(element_id, element_type);
+            g_comment_desc_editor.setValue('');
         }
     });
 }
