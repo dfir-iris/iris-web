@@ -160,11 +160,6 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
                     names[data['data'][i].name] = avatar;
                 }
 
-                is_last_one = "";
-                if (i == data['data'].length - 1) {
-                    is_last_one = "last-comment";
-                }
-
                 can_edit = "";
                 current_user = $('#current_username').text();
 
@@ -174,7 +169,7 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
                 }
 
                 comment = `
-                    <div class="row mb-2 mr-1 ${is_last_one}" >
+                    <div class="row mb-2 mr-1" >
                         <div class="col-12" id="comment_${data['data'][i].comment_id}">
                             <div class="row mt-2">
                                 <div class="col-5">
@@ -201,15 +196,17 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
                 `;
                 $('#comments_list').append(comment);
             }
+            $('#comments_list').append('<div id="last-comment"><div>');
+
             if (data['data'].length === 0) {
                 $('#comments_list').html('<div class="text-center">No comments yet</div>');
             } else if (comment_id === undefined || comment_id === null) {
-                offset = $('.last-comment').offset().top;
+                offset = document.getElementById("last-comment").offsetTop;
                 if (offset > 20) {
                     $('#comments_list').animate({ scrollTop: offset});
                 }
             } else {
-                offset = $('#comment_'+comment_id).offset().top;
+                offset = document.getElementById('#comment_'+comment_id).offsetTop;
                 if (offset > 20) {
                     $('#comments_list').animate({ scrollTop: offset});
                 }
