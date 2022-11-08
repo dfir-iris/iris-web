@@ -104,7 +104,7 @@ def details_case(cur_id, caseid, url_redir):
     form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form)
+        return render_template("modal_case_info_from_case.html", data=res, form=form, protagnists=None)
 
     else:
         return response_error("Unknown case")
@@ -123,7 +123,7 @@ def details_case_from_case(cur_id, caseid, url_redir):
     form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form)
+        return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=None)
 
     else:
         return response_error("Unknown case")
