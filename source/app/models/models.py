@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import enum
+
 import secrets
 import uuid
 
@@ -48,6 +50,12 @@ from app import db
 
 Base = declarative_base()
 metadata = Base.metadata
+
+
+class CaseStatus(enum.Enum):
+    false_positive = 0x1
+    true_positive = 0x2
+    unknown = 0x4
 
 
 def create_safe(session, model, **kwargs):
