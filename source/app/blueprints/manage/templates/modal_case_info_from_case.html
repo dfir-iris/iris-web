@@ -120,7 +120,8 @@
                                 </div>
 
                                 <button type="button" class="btn btn-sm btn-outline-dark mr-2" id="add_protagonist"  onclick="add_protagonist();">Add protagonist</button>
-
+                                <div id="protagonist_list_edit">
+                                </div>
                                 {% if protagonists %}
                                     {% for protagonist in protagonists %}
                                         <div class="input-group mb-4">
@@ -163,6 +164,14 @@
               {% include 'modals/modal_attributes_tabs.html' %}
             </div>
         </div>
+    </div>
+</div>
+<div id="protagonist_list_edit_template" style="display:none;">
+    <div class="input-group mb-4">
+        <div class="input-group-prepend">
+            <span class="input-group-text"> <input type="text" class="form-input" name="" value=""></span>
+        </div>
+        <input type="text" class="form-input" name="" value="">
     </div>
 </div>
 

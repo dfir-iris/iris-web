@@ -110,6 +110,11 @@ function close_case(id) {
     });
 }
 
+function add_protagonist() {
+    prota_html = $('#protagonist_list_edit_template').html();
+    $('#protagonist_list_edit').append(prota_html);
+}
+
 
 function do_deletion_prompt(message) {
     if (has_deletion_prompt) {

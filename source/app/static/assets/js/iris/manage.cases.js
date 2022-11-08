@@ -35,6 +35,11 @@ function submit_new_case() {
     return false;
 };
 
+function add_protagonist() {
+    prota_html = $('#protagonist_list_edit_template').html();
+    $('#protagonist_list_edit').append(prota_html);
+}
+
 function send_add_case(data_sent) {
 
     post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {
