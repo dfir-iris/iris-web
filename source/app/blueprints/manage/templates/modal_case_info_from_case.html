@@ -118,6 +118,19 @@
                                     </div>
                                     <input type="text" class="form-input" name="case_soc_id" value="{{ data.case_soc_id }}">
                                 </div>
+
+                                <button type="button" class="btn btn-sm btn-outline-dark mr-2" id="add_protagonist"  onclick="add_protagonist();">Add protagonist</button>
+
+                                {% if protagonists %}
+                                    {% for protagonist in protagonists %}
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">{{ protagonist.role }}</span>
+                                            </div>
+                                            <input type="text" class="form-input" name="case_soc_id" value="{{ protagonist.user_name }}">
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
 
                         </form>
