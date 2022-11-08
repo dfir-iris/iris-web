@@ -47,6 +47,7 @@ from app.models.authorization import User
 from app.models import UserActivity
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
+from app.models.cases import CaseProtagonist
 
 
 def list_cases_id():
@@ -145,6 +146,20 @@ def reopen_case(case_id):
         return res
 
     return None
+
+
+def get_case_protagonists(case_id):
+    protagonists = CaseProtagonist.query.with_entities(
+        CaseProtagonist.role,
+        User.name.label('user_name'),
+        User.user.label('user_login')
+    ).filter(
+        CaseProtagonist.case_id == case_id
+    ).join(
+        CaseProtagonist.user
+    ).all()
+
+    return protagonists
 
 
 def get_case_details_rt(case_id):

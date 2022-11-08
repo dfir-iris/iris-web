@@ -40,6 +40,7 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
+from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_users_db import add_case_access_to_user
@@ -120,10 +121,13 @@ def details_case_from_case(cur_id, caseid, url_redir):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
+
+    protagonists = get_case_protagonists(cur_id)
+
     form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=None)
+        return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists)
 
     else:
         return response_error("Unknown case")
@@ -275,6 +279,7 @@ def update_case_info(caseid):
         request_data = request.get_json()
         request_data['case_name'] = f"#{case_i.case_id} - {request_data['case_name']}"
         request_data['case_customer'] = case_i.client_id
+
         case = case_schema.load(request_data, instance=case_i, partial=True)
 
         db.session.commit()
