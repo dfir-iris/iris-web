@@ -187,7 +187,9 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-11 ml-4">
+                                <div class="col-1">
+                                </div>
+                                <div class="col-10">
                                     <span class="text-muted">${comment_html}</span>
                                 </div>
                             </div>
