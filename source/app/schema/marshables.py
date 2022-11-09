@@ -494,6 +494,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     case_soc_id = auto_field('soc_id', required=True)
     case_customer = auto_field('client_id', required=True)
     case_organisations = fields.List(fields.Integer, required=False)
+    protagonists = fields.List(fields.Dict, required=False)
     csrf_token = fields.String(required=False)
 
     class Meta:
