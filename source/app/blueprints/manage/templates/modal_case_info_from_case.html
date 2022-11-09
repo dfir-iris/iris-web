@@ -118,10 +118,10 @@
                                     </div>
                                     <input type="text" class="form-input" name="case_soc_id" value="{{ data.case_soc_id }}">
                                 </div>
-
-                                <button type="button" class="btn btn-sm btn-outline-dark mr-2" id="add_protagonist_btn"  onclick="add_protagonist();">Add protagonist</button>
                                 <div id="protagonist_list_edit">
                                 </div>
+                                <button type="button" class="btn btn-sm btn-outline-dark mt-2 mr-2" id="add_protagonist_btn"  onclick="add_protagonist();">Add protagonist</button>
+
                                 {% if protagonists %}
                                     {% for protagonist in protagonists %}
                                         <div class="input-group mb-4">
@@ -167,12 +167,20 @@
     </div>
 </div>
 <div id="protagonist_list_edit_template" style="display:none;">
-    <div class="input-group mb-2 mt-2" id="__PROTAGONIST_ID__">
+    <div class="input-group mb-2 mt-2" id="protagonist___PROTAGONIST_ID__">
         <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('__PROTAGONIST_ID__');">
             <i class="fa-solid fa-circle-xmark"></i>
         </button>
         <div class="input-group-prepend">
-            <span class="input-group-text"> <input type="text" class="form-input" name="protagonist_role___PROTAGONIST_ID__" value="" placeholder="Role"></span>
+            <span class="input-group-text">
+                <input type="text"  list="roles-list" class="form-input" name="protagonist_role___PROTAGONIST_ID__" value="" placeholder="Role">
+                  <datalist id="roles-list">
+                    <option value="Analyst">
+                    <option value="Lead">
+                    <option value="Communication">
+                    <option value="Customer contact">
+                  </datalist>
+            </span>
         </div>
         <input type="text" class="form-input" name="protagonist_name___PROTAGONIST_ID__" value="" placeholder="Name">
     </div>

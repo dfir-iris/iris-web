@@ -33,6 +33,25 @@ function cancel_case_edit() {
 function save_case_edit(case_id) {
 
     var data_sent = $('form#form_update_case').serializeObject();
+    var map_protagonists = Object();
+
+    for (e in data_sent) {
+        if (e.startsWith('protagonist_role_')) {
+            map_protagonists[e.replace('protagonist_role_', '')] = {
+                'role': data_sent[e]
+            };
+            delete data_sent[e];
+        }
+        if (e.startsWith('protagonist_name_')) {
+            map_protagonists[e.replace('protagonist_name_', '')]['name'] = data_sent[e];
+            delete data_sent[e];
+        }
+    }
+    data_sent['protagonists'] = [];
+    for (e in map_protagonists) {
+        data_sent['protagonists'].push(map_protagonists[e]);
+    }
+
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];
@@ -115,6 +134,10 @@ function add_protagonist() {
     prota_html = $('#protagonist_list_edit_template').html();
     prota_html = prota_html.replace(/__PROTAGONIST_ID__/g, random_string);
     $('#protagonist_list_edit').append(prota_html);
+}
+
+function remove_protagonist(id) {
+    $('#protagonist_' + id).remove();
 }
 
 
