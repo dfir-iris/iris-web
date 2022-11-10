@@ -508,6 +508,14 @@ class CaseTasks(db.Model):
     status = relationship('TaskStatus', foreign_keys=[task_status_id])
 
 
+class Tags(db.Model):
+    __tablename__ = 'tags'
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    tag_title = Column(Text)
+    tag_creation_date = Column(DateTime)
+
+
 class TaskAssignee(db.Model):
     __tablename__ = "task_assignee"
 
