@@ -52,6 +52,7 @@ from app.datamgmt.reporter.report_db import export_case_json
 from app.forms import PipelinesCaseForm
 from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.utils.tracker import track_activity
+from app.models import CaseStatus
 from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
@@ -260,5 +261,31 @@ def case_get_users(caseid):
     users = get_users_list_restricted_from_case(caseid)
 
     return response_success(data=users)
+
+
+@case_blueprint.route('/case/update-status', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_update_status(caseid):
+
+    case = get_case(caseid)
+    if not case:
+        return response_error('Invalid case ID')
+
+    status = request.get_json().get('status_id')
+    case_status = set(item.value for item in CaseStatus)
+
+    try:
+        status = int(status)
+    except ValueError:
+        return response_error('Invalid status')
+
+    if status not in case_status:
+        return response_error('Invalid status')
+
+    case.status = status
+    db.session.commit()
+
+    return response_success("Case status updated", data=case.status)
+
 
 
