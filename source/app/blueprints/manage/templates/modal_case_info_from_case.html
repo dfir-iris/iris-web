@@ -152,15 +152,14 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="ingname_{{loop.index}}">Name</span>
                                                     </div>
-                                                    <select id="protagonist_name_{{loop.index}}"  aria-describedby="ingname_{{loop.index}}" name="protagonist_name_{{loop.index}}" class="form-control select2-select ml-12"
-                            data-select2-id="protagonist_name_{{loop.index}}" tabindex="-1" style="width: 80%"></select>
+                                                    <input type="text" aria-describedby="ingname_{{loop.index}}" class="form-control" name="protagonist_name_{{loop.index}}" placeholder="Name" list="username-list" value="{{ iprota.name }}">
                                                 </div>
 
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="ingp_{{loop.index}}">Contact</span>
                                                     </div>
-                                                    <input type="text" aria-describedby="ingp_{{loop.index}}" class="form-control" name="protagonist_contact_{{loop.index}}" value="{{ iprota.contact }}" placeholder="Contact">
+                                                    <input type="text" aria-describedby="ingp_{{loop.index}}" class="form-control" name="protagonist_contact_{{loop.index}}" value="{{ iprota.contact }}" placeholder="Contact" list="emails-list">
                                                 </div>
                                                 <button type="button" class="btn btn-sm  btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('{{loop.index}}');">
                                                     Remove
@@ -222,16 +221,14 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text" id="ingname___PROTAGONIST_ID__">Name</span>
                     </div>
-                    <select id="protagonist_name___PROTAGONIST_ID__" name="protagonist_name___PROTAGONIST_ID__" class="form-control select2-select ml-12"
-                            data-select2-id="protagonist_name___PROTAGONIST_ID__" tabindex="-1" aria-hidden="true" style="width: 80%"></select>
-
+                    <input type="text" aria-describedby="ingname___PROTAGONIST_ID__" class="form-control" name="protagonist_name___PROTAGONIST_ID__" placeholder="Name" list="username-list" value="">
                 </div>
 
                 <div class="input-group mb-3">
                     <div class="input-group-prepend">
                         <span class="input-group-text" id="ingp___PROTAGONIST_ID__">Contact</span>
                     </div>
-                    <input type="text" aria-describedby="ingp___PROTAGONIST_ID__" class="form-control" name="protagonist_contact___PROTAGONIST_ID__" value="" placeholder="Contact">
+                    <input type="text" aria-describedby="ingp___PROTAGONIST_ID__" class="form-control" name="protagonist_contact___PROTAGONIST_ID__" value="" list="emails-list" placeholder="Contact">
                 </div>
                 <button type="button" class="btn btn-sm  btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('__PROTAGONIST_ID__');">
                     Remove
@@ -246,6 +243,11 @@
     <option value="Lead">
     <option value="Communication">
     <option value="Customer contact">
+</datalist>
+
+<datalist id="username-list">
+</datalist>
+<datalist id="emails-list">
 </datalist>
 
 <div class="modal-footer">
@@ -288,15 +290,14 @@
                 ordering: true,
                 processing: true
         });
-        var data = [];
         for (var i = 0; i < req_users.length; i++) {
-            data.push({id: req_users[i].user_id, text: req_users[i].user_name});
+            $('#username-list').append($('<option>', {
+                value: req_users[i].user_name
+            }));
+            $('#emails-list').append($('<option>', {
+                value: req_users[i].user_email
+            }));
         }
-        $('.select2-select').select2({ data: data,
-            tags: true,
-            createTag: function (tag) {
-                return {id: tag.term, text: tag.term, tag: true};
-            }});
     });
 
 </script>
