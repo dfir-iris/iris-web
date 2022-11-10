@@ -4948,6 +4948,11 @@ label {
     }
 }
 
+#case_quick_status {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
 
 /*     Card Annoucement    */
 

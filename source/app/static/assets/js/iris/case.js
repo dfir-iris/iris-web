@@ -204,7 +204,9 @@ $(document).ready(function(){
             'csrf_token': $('#csrf_token').val()
         }))
         .done((data) => {
-            notify_auto_api(data);
+            if (notify_auto_api(data)) {
+                window.location.reload();
+            }
         })
     });
 });

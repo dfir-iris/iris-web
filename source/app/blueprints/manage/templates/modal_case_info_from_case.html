@@ -101,7 +101,7 @@
                     </div>
                 </div>
                 <div id="case_gen_info_edit" style="display:none;">
-                    <div class="col-12">
+                    <div class="col-6 col-xs-12">
                         <h4 class=" pb-3">Edit case information</h4>
                         <form method="post" action='' id="form_update_case" autocomplete="off">
                             {{ form.hidden_tag() }}
@@ -118,10 +118,22 @@
                                     </div>
                                     <input type="text" class="form-control" name="case_soc_id" value="{{ data.case_soc_id }}">
                                 </div>
+                                <div class="input-group mb-4">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Case outcome</span>
+                                    </div>
+                                    <select class="btn btn-sm dropdown-toggle btn-outline-white"
+                                          id="case_quick_status" aria-labelledby="dropdownMenuButton" name="status_id">
+                                      <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
+                                      <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
+                                      <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
+                                      <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
+                                  </select>
+                                </div>
                                 {% if protagonists %}
                                 {% for iprota in protagonists %}
                                     <div class="input-group mb-2 mt-2" id="protagonist_{{loop.index}}">
-                                        <div class="col-6">
+                                        <div class="col-12">
                                                 <h5>Protagonist</h5>
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
@@ -190,7 +202,7 @@
 </div>
 <div id="protagonist_list_edit_template" style="display:none;">
     <div class="input-group mb-2 mt-2" id="protagonist___PROTAGONIST_ID__">
-        <div class="col-6">
+        <div class="col-12">
                 <h5>Protagonist</h5>
                 <div class="input-group mb-3">
                     <div class="input-group-prepend">
@@ -203,7 +215,7 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text" id="ingname___PROTAGONIST_ID__">Name</span>
                     </div>
-                    <select aria-describedby="ingname___PROTAGONIST_ID__" class="form-control selectpicker" name="protagonist_name___PROTAGONIST_ID__"></select>
+                    <input type="text" aria-describedby="ingname___PROTAGONIST_ID__" class="form-control" name="protagonist_name___PROTAGONIST_ID__" placeholder="Name">
                 </div>
 
                 <div class="input-group mb-3">

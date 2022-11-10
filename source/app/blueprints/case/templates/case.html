@@ -12,14 +12,17 @@
                 <div class="row">
                     <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
                     </h2>
-                     <div class="dropdown">
-                          <select class="btn btn-sm btn-rounded ml-3" id="case_quick_status" aria-labelledby="dropdownMenuButton">
-                              <option value="0" {% if case.status_id == 0 %}selected{% endif %}>Unknown</option>
-                              <option value="1" {% if case.status_id == 1 %}selected{% endif %}>False Positive</option>
-                              <option value="2" {% if case.status_id == 2 %}selected{% endif %}>True Positive</option>
-                              <option value="3" {% if case.status_id == 3 %}selected{% endif %}>Not applicable</option>
-                          </select>
-                     </div>
+                    <div class="row mb-2">
+                         <div class="col-md-12">
+                              <select title="Case outcome" class="btn btn-rounded pull-right hidden-caret btn-sm ml-3 {% if case.status_id == 1 %}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-outline-light{% endif %}"
+                                      id="case_quick_status" aria-labelledby="dropdownMenuButton">
+                                  <option value="0" {% if case.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
+                                  <option value="1" {% if case.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
+                                  <option value="2" {% if case.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
+                                  <option value="3" {% if case.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
+                              </select>
+                         </div>
+                    </div>
                 </div>
                 <h5 class="text-white op-7 mb-3 ml-1">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
                 {% if case.close_date %}
@@ -40,7 +43,9 @@
                     <span aria-hidden="true"><i class="fa-solid fa-upload mr-1"></i>Pipelines</span>
                 </button>
             </div>
+
             <div class="ml-md-auto py-2 py-md-0">
+
                 <h5 class="text-white op-7 mb-2 ">Customer : {{ case.client.name }}</h5>
                 <h5 class="text-white op-7 mb-2 ">SOC ID : {{ case.soc_id }}</h5>
                 <a href="#" onclick="act_report_template_selector();" class="btn btn-sm btn-info btn-rounded btn-border float-right mt-2 ml-2">
