@@ -165,7 +165,7 @@ class AnalysisStatus(db.Model):
 class Contact(db.Model):
     __tablename__ = 'contact'
 
-    contact_id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     contact_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     contact_name = Column(Text)
     contact_email = Column(Text)
@@ -174,6 +174,7 @@ class Contact(db.Model):
     contact_work_phone = Column(Text)
     contact_mobile_phone = Column(Text)
     custom_attributes = Column(JSON)
+    client_id = Column(ForeignKey('client.client_id'))
 
     client = relationship('Client')
 
