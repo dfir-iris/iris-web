@@ -168,6 +168,8 @@ class CaseProtagonist(db.Model):
     id = Column(Integer, primary_key=True)
     case_id = Column(ForeignKey('cases.case_id'))
     user_id = Column(ForeignKey('user.id'))
+    name = Column(Text)
+    contact = Column(Text)
     role = Column(Text)
 
     case = relationship('Cases')

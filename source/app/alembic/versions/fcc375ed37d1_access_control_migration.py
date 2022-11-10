@@ -164,15 +164,18 @@ def upgrade():
     # Create the groups if they don't exist
     res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
     if res.rowcount == 0:
-        conn.execute(f"insert into groups (group_name, group_description, group_permissions, group_uuid) "
-                     f"values ('Administrators', 'Administrators', '{ac_get_mask_full_permissions()}', '{uuid.uuid4()}');")
+        conn.execute(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
+                     f"group_auto_follow, group_auto_follow_access_level) "
+                     f"values ('Administrators', 'Administrators', '{ac_get_mask_full_permissions()}', '{uuid.uuid4()}',"
+                     f" true, 4);")
         res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
     admin_group_id = res.fetchone()[0]
 
     res = conn.execute(f"select group_id from groups where group_name = 'Analysts';")
     if res.rowcount == 0:
-        conn.execute(f"insert into groups (group_name, group_description, group_permissions, group_uuid) "
-                     f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}', '{uuid.uuid4()}');")
+        conn.execute(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
+                     f"group_auto_follow, group_auto_follow_access_level) "
+                     f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}', '{uuid.uuid4()}', false, 4);")
         res = conn.execute(f"select group_id from groups where group_name = 'Analysts';")
 
     analyst_group_id = res.fetchone()[0]

@@ -92,8 +92,8 @@
                             {% if protagonists %}
                                 {% for protagonist in protagonists %}
                                     <div class="form-group mt--3">
-                                        <label>{{ protagonist.role }}</label>
-                                        <span type="text" class="">{{ protagonist.user_name }}</span>
+                                        <label>{{ protagonist.role }}: </label>
+                                        <span type="text" class="">{{ protagonist.name }} ({{protagonist.contact}})</span>
                                     </div>
                                 {% endfor %}
                             {% endif %}
@@ -110,28 +110,50 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Case name  <i class="ml-2">{{"#{} - ".format(data.case_id)}}</i></span>
                                     </div>
-                                     <input type="text" class="form-input" name="case_name" value="{{ data.case_name.replace('#{} - '.format(data.case_id), '')}}">
+                                     <input type="text" class="form-control" name="case_name" value="{{ data.case_name.replace('#{} - '.format(data.case_id), '')}}">
                                 </div>
                                 <div class="input-group mb-4">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">SOC ticket ID</span>
                                     </div>
-                                    <input type="text" class="form-input" name="case_soc_id" value="{{ data.case_soc_id }}">
+                                    <input type="text" class="form-control" name="case_soc_id" value="{{ data.case_soc_id }}">
                                 </div>
+                                {% if protagonists %}
+                                {% for iprota in protagonists %}
+                                    <div class="input-group mb-2 mt-2" id="protagonist_{{loop.index}}">
+                                        <div class="col-6">
+                                                <h5>Protagonist</h5>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="ingrole_{{loop.index}}">Role</span>
+                                                    </div>
+                                                    <input type="text" aria-describedby="ingrole_{{loop.index}}" list="roles-list"  class="form-control" name="protagonist_role_{{loop.index}}" value="{{ iprota.role }}" placeholder="Role">
+                                                </div>
+
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="ingname_{{loop.index}}">Name</span>
+                                                    </div>
+                                                    <input type="text" aria-describedby="ingname_{{loop.index}}" class="form-control" name="protagonist_name_{{loop.index}}" value="{{ iprota.name }}" placeholder="Name">
+                                                </div>
+
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="ingp_{{loop.index}}">Contact</span>
+                                                    </div>
+                                                    <input type="text" aria-describedby="ingp_{{loop.index}}" class="form-control" name="protagonist_contact_{{loop.index}}" value="{{ iprota.contact }}" placeholder="Contact">
+                                                </div>
+                                                <button type="button" class="btn btn-sm  btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('{{loop.index}}');">
+                                                    Remove
+                                                </button>
+                                                <hr/>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                {% endif %}
                                 <div id="protagonist_list_edit">
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-dark mt-2 mr-2" id="add_protagonist_btn"  onclick="add_protagonist();">Add protagonist</button>
-
-                                {% if protagonists %}
-                                    {% for protagonist in protagonists %}
-                                        <div class="input-group mb-4">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text">{{ protagonist.role }}</span>
-                                            </div>
-                                            <input type="text" class="form-input" name="case_soc_id"  value="{{ protagonist.user_name }}">
-                                        </div>
-                                    {% endfor %}
-                                {% endif %}
                             </div>
 
                         </form>
@@ -168,23 +190,42 @@
 </div>
 <div id="protagonist_list_edit_template" style="display:none;">
     <div class="input-group mb-2 mt-2" id="protagonist___PROTAGONIST_ID__">
-        <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('__PROTAGONIST_ID__');">
-            <i class="fa-solid fa-circle-xmark"></i>
-        </button>
-        <div class="input-group-prepend">
-            <span class="input-group-text">
-                <input type="text"  list="roles-list" class="form-input" name="protagonist_role___PROTAGONIST_ID__" value="" placeholder="Role">
-                  <datalist id="roles-list">
-                    <option value="Analyst">
-                    <option value="Lead">
-                    <option value="Communication">
-                    <option value="Customer contact">
-                  </datalist>
-            </span>
+        <div class="col-6">
+                <h5>Protagonist</h5>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="ingrole___PROTAGONIST_ID__">Role</span>
+                    </div>
+                    <input type="text" aria-describedby="ingrole___PROTAGONIST_ID__" list="roles-list"  class="form-control" name="protagonist_role___PROTAGONIST_ID__" value="" placeholder="Role">
+                </div>
+
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="ingname___PROTAGONIST_ID__">Name</span>
+                    </div>
+                    <select aria-describedby="ingname___PROTAGONIST_ID__" class="form-control selectpicker" name="protagonist_name___PROTAGONIST_ID__"></select>
+                </div>
+
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="ingp___PROTAGONIST_ID__">Contact</span>
+                    </div>
+                    <input type="text" aria-describedby="ingp___PROTAGONIST_ID__" class="form-control" name="protagonist_contact___PROTAGONIST_ID__" value="" placeholder="Contact">
+                </div>
+                <button type="button" class="btn btn-sm  btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('__PROTAGONIST_ID__');">
+                    Remove
+                </button>
+                <hr/>
         </div>
-        <input type="text" class="form-input" name="protagonist_name___PROTAGONIST_ID__" value="" placeholder="Name">
     </div>
+
 </div>
+<datalist id="roles-list">
+    <option value="Analyst">
+    <option value="Lead">
+    <option value="Communication">
+    <option value="Customer contact">
+</datalist>
 
 <div class="modal-footer">
     {% if not data.close_date %}
@@ -193,7 +234,7 @@
         <button type="button" class="btn btn-outline-success" onclick="reopen_case('{{ data.case_id }}');">Reopen case</button>
     {% endif %}
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
-    <button type="button" class="btn btn-outline-danger mr-2" style="display:none;" id="cancel_case_info"  onclick="cancel_case_edit();">Cancel</button>
+    <button type="button" class="btn btn-outline-danger mr-2" style="display:none;" id="cancel_case_info"  onclick="cancel_case_edit();">Cancel edit</button>
     <button type="button" class="btn btn-outline-success mr-2" style="display:none;" id="save_case_info" onclick="save_case_edit({{ data.case_id }});">Save edit</button>
 </div>
 

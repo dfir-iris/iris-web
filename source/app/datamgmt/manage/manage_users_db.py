@@ -497,7 +497,8 @@ def get_users_list_restricted_from_case(case_id):
         User.uuid.label('user_uuid'),
         User.name.label('user_name'),
         User.user.label('user_login'),
-        User.active.label('user_active')
+        User.active.label('user_active'),
+        User.email.label('user_email')
     ).filter(
         and_(UserCaseEffectiveAccess.case_id == case_id,
              UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value)

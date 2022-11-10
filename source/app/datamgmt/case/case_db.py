@@ -22,6 +22,7 @@ import binascii
 from sqlalchemy import and_
 
 from app import db
+from app.models.cases import CaseProtagonist
 from app.models.cases import Cases
 from app.models.models import CaseTemplateReport
 from app.models.models import Client
@@ -144,3 +145,20 @@ def case_name_exists(case_name, client_name):
     ).first()
 
     return True if res else False
+
+
+def register_case_protagonists(case_id, protagonists):
+
+    CaseProtagonist.query.filter(
+        CaseProtagonist.case_id == case_id
+    ).delete()
+
+    for protagonist in protagonists:
+        cp = CaseProtagonist()
+        cp.case_id = case_id
+        cp.role = protagonist.get('role')
+        cp.name = protagonist.get('name')
+        cp.contact = protagonist.get('contact')
+        db.session.add(cp)
+
+    db.session.commit()

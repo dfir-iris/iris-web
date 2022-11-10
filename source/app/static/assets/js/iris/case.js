@@ -27,7 +27,7 @@ function cancel_case_edit() {
     $('#case_gen_info_edit').hide();
     $('#cancel_case_info').hide();
     $('#case_info').show();
-    $('#cancel_case_info').hide();
+    $('#save_case_info').hide();
 }
 
 function save_case_edit(case_id) {
@@ -44,6 +44,14 @@ function save_case_edit(case_id) {
         }
         if (e.startsWith('protagonist_name_')) {
             map_protagonists[e.replace('protagonist_name_', '')]['name'] = data_sent[e];
+            delete data_sent[e];
+        }
+        if (e.startsWith('protagonist_contact_')) {
+            map_protagonists[e.replace('protagonist_contact_', '')]['contact'] = data_sent[e];
+            delete data_sent[e];
+        }
+        if (e.startsWith('protagonist_id_')) {
+            map_protagonists[e.replace('protagonist_id_', '')]['id'] = data_sent[e];
             delete data_sent[e];
         }
     }

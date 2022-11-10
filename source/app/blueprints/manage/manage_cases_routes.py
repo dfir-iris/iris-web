@@ -34,6 +34,7 @@ from flask_wtf import FlaskForm
 
 from app import db
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_db import register_case_protagonists
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -278,8 +279,6 @@ def update_case_info(caseid):
 
         request_data = request.get_json()
 
-        print(request_data)
-
         request_data['case_name'] = f"#{case_i.case_id} - {request_data['case_name']}"
         request_data['case_customer'] = case_i.client_id
 
@@ -287,7 +286,9 @@ def update_case_info(caseid):
 
         db.session.commit()
 
-        track_activity("Case updated {case_name}".format(case_name=case.name), caseid=caseid, ctx_less=True)
+        register_case_protagonists(case.case_id, request_data['protagonists'])
+
+        track_activity("Case updated {case_name}".format(case_name=case.name), caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)

@@ -151,11 +151,13 @@ def reopen_case(case_id):
 def get_case_protagonists(case_id):
     protagonists = CaseProtagonist.query.with_entities(
         CaseProtagonist.role,
+        CaseProtagonist.name,
+        CaseProtagonist.contact,
         User.name.label('user_name'),
         User.user.label('user_login')
     ).filter(
         CaseProtagonist.case_id == case_id
-    ).join(
+    ).outerjoin(
         CaseProtagonist.user
     ).all()
 
