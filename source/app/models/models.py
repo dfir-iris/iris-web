@@ -162,6 +162,22 @@ class AnalysisStatus(db.Model):
     name = Column(Text)
 
 
+class Contact(db.Model):
+    __tablename__ = 'contact'
+
+    contact_id = Column(BigInteger, primary_key=True)
+    contact_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
+    contact_name = Column(Text)
+    contact_email = Column(Text)
+    contact_role = Column(Text)
+    contact_notes = Column(Text)
+    contact_work_phone = Column(Text)
+    contact_mobile_phone = Column(Text)
+    custom_attributes = Column(JSON)
+
+    client = relationship('Client')
+
+
 class CaseEventsAssets(db.Model):
     __tablename__ = 'case_events_assets'
 
