@@ -59,6 +59,7 @@ class Cases(db.Model):
     open_date = Column(Date)
     close_date = Column(Date)
     user_id = Column(ForeignKey('user.id'))
+    status_id = Column(Integer, nullable=False, server_default=text("0"))
     custom_attributes = Column(JSON)
     case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
                        nullable=False)
