@@ -130,6 +130,19 @@ class Cases(db.Model):
         return True, []
 
 
+class CaseTags(db.Model):
+    __tablename__ = 'case_tags'
+    __table_args__ = (
+        UniqueConstraint('case_id', 'tag_id', name='case_tags_case_id_tag_id_key'),
+    )
+
+    case_id = Column(ForeignKey('cases.case_id'), primary_key=True, nullable=False)
+    tag_id = Column(ForeignKey('tags.id'), primary_key=True, nullable=False, index=True)
+
+    case = relationship('Cases')
+    tag = relationship('Tags')
+
+
 class CasesEvent(db.Model):
     __tablename__ = "cases_events"
 
