@@ -282,10 +282,10 @@ def case_update_status(caseid):
     if status not in case_status:
         return response_error('Invalid status')
 
-    case.status = status
+    case.status_id = status
     db.session.commit()
 
-    return response_success("Case status updated", data=case.status)
+    return response_success("Case status updated", data=case.status_id)
 
 
 
