@@ -9,8 +9,18 @@
     <div class="page-inner py-5">
         <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
             <div class="col">
-                <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
-                </h2>
+                <div class="row">
+                    <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
+                    </h2>
+                     <div class="dropdown">
+                          <select class="btn btn-sm badge-danger btn-rounded ml-3" id="case_quick_status" aria-labelledby="dropdownMenuButton" data-toggle="dropdown">
+                              <option value="0">Unknown</option>
+                              <option value="1">False Positive</option>
+                              <option value="2">True Positive</option>
+                              <option value="3">Not applicable</option>
+                          </select>
+                     </div>
+                </div>
                 <h5 class="text-white op-7 mb-3 ml-1">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
                 {% if case.close_date %}
                 <h5 class="text-warning  mb-3 ml-1">Closed on {{ case.close_date }}</h5>
@@ -46,8 +56,10 @@
                   Generate report
                 </a>
             </div>
-
         </div>
+        <div class="d-flex align-items-right flex-column flex-md-row mt-2">
+
+            </div>
     </div>
 </div>
 <div class="page-inner mt--5">

@@ -53,9 +53,10 @@ metadata = Base.metadata
 
 
 class CaseStatus(enum.Enum):
+    other = 0x0
     false_positive = 0x1
     true_positive = 0x2
-    unknown = 0x4
+    not_applicable = 0x3
 
 
 def create_safe(session, model, **kwargs):
