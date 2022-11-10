@@ -1,4 +1,7 @@
-{% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %} {% block stylesheets %} {% endblock stylesheets %} {% block content %}
+{% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %}
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/assets/css/select2.css">
+{% endblock stylesheets %} {% block content %}
 {% if current_user.is_authenticated %}
 
 {% if case.close_date %}
@@ -189,6 +192,7 @@
 <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/assets/js/core/socket.io.js"></script>
+<script src="/static/assets/js/plugin/select/select2.js"></script>
 
 <script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
 <script src="/static/assets/js/iris/crc32.js"></script>

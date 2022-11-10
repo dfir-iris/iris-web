@@ -101,22 +101,28 @@
                     </div>
                 </div>
                 <div id="case_gen_info_edit" style="display:none;">
-                    <div class="col-6 col-xs-12">
+                    <form method="post" action='' id="form_update_case" autocomplete="off">
                         <h4 class=" pb-3">Edit case information</h4>
-                        <form method="post" action='' id="form_update_case" autocomplete="off">
+                            <div class="col-12">
                             {{ form.hidden_tag() }}
                             <div class="mt-4">
-                                <div class="input-group mb-4">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">Case name  <i class="ml-2">{{"#{} - ".format(data.case_id)}}</i></span>
+                                <div class="row">
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">Case name  <i class="ml-2">{{"#{} - ".format(data.case_id)}}</i></span>
+                                            </div>
+                                             <input type="text" class="form-control" name="case_name" value="{{ data.case_name.replace('#{} - '.format(data.case_id), '')}}">
+                                        </div>
                                     </div>
-                                     <input type="text" class="form-control" name="case_name" value="{{ data.case_name.replace('#{} - '.format(data.case_id), '')}}">
-                                </div>
-                                <div class="input-group mb-4">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">SOC ticket ID</span>
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">SOC ticket ID</span>
+                                            </div>
+                                            <input type="text" class="form-control" name="case_soc_id" value="{{ data.case_soc_id }}">
+                                        </div>
                                     </div>
-                                    <input type="text" class="form-control" name="case_soc_id" value="{{ data.case_soc_id }}">
                                 </div>
                                 <div class="input-group mb-4">
                                     <div class="input-group-prepend">
@@ -133,7 +139,7 @@
                                 {% if protagonists %}
                                 {% for iprota in protagonists %}
                                     <div class="input-group mb-2 mt-2" id="protagonist_{{loop.index}}">
-                                        <div class="col-12">
+                                        <div class="col-6">
                                                 <h5>Protagonist</h5>
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
@@ -146,7 +152,8 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="ingname_{{loop.index}}">Name</span>
                                                     </div>
-                                                    <input type="text" aria-describedby="ingname_{{loop.index}}" class="form-control" name="protagonist_name_{{loop.index}}" value="{{ iprota.name }}" placeholder="Name">
+                                                    <select id="protagonist_name_{{loop.index}}"  aria-describedby="ingname_{{loop.index}}" name="protagonist_name_{{loop.index}}" class="form-control select2-select ml-12"
+                            data-select2-id="protagonist_name_{{loop.index}}" tabindex="-1" style="width: 80%"></select>
                                                 </div>
 
                                                 <div class="input-group mb-3">
@@ -202,7 +209,7 @@
 </div>
 <div id="protagonist_list_edit_template" style="display:none;">
     <div class="input-group mb-2 mt-2" id="protagonist___PROTAGONIST_ID__">
-        <div class="col-12">
+        <div class="col-6">
                 <h5>Protagonist</h5>
                 <div class="input-group mb-3">
                     <div class="input-group-prepend">
@@ -215,7 +222,9 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text" id="ingname___PROTAGONIST_ID__">Name</span>
                     </div>
-                    <input type="text" aria-describedby="ingname___PROTAGONIST_ID__" class="form-control" name="protagonist_name___PROTAGONIST_ID__" placeholder="Name">
+                    <select id="protagonist_name___PROTAGONIST_ID__" name="protagonist_name___PROTAGONIST_ID__" class="form-control select2-select ml-12"
+                            data-select2-id="protagonist_name___PROTAGONIST_ID__" tabindex="-1" aria-hidden="true" style="width: 80%"></select>
+
                 </div>
 
                 <div class="input-group mb-3">
@@ -251,38 +260,43 @@
 </div>
 
 <script>
-var modal_org_table = $("#case_access_users_list_table").DataTable({
-        dom: 'Blfrtip',
-        "ajax": {
-            "url": "/case/users/list?cid={{ data.case_id }}",
-            "contentType": "application/json",
-            "type": "GET",
-            "data": function (d) {
-                if (d.status == 'success') {
-                    return JSON.stringify(d.data);
-                } else {
-                    return [];
+    var req_users = [];
+    var modal_org_table = null;
+
+    get_request_api('/case/users/list')
+    .done((data) => {
+        req_users = data.data;
+        $("#case_access_users_list_table").DataTable({
+                dom: 'Blfrtip',
+                aaData: req_users,
+                aoColumns: [
+                  {
+                    "data": "user_id",
+                    "className": "dt-center"
+                },
+                {
+                    "data": "user_name",
+                    "className": "dt-center"
+                },
+                {
+                    "data": "user_login",
+                    "className": "dt-center"
                 }
-            }
-        },
-        aaData: [],
-        aoColumns: [
-          {
-            "data": "user_id",
-            "className": "dt-center"
-        },
-        {
-            "data": "user_name",
-            "className": "dt-center"
-        },
-        {
-            "data": "user_login",
-            "className": "dt-center"
+                ],
+                filter: true,
+                info: true,
+                ordering: true,
+                processing: true
+        });
+        var data = [];
+        for (var i = 0; i < req_users.length; i++) {
+            data.push({id: req_users[i].user_id, text: req_users[i].user_name});
         }
-        ],
-        filter: true,
-        info: true,
-        ordering: true,
-        processing: true
-});
+        $('.select2-select').select2({ data: data,
+            tags: true,
+            createTag: function (tag) {
+                return {id: tag.term, text: tag.term, tag: true};
+            }});
+    });
+
 </script>
