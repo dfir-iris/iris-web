@@ -175,6 +175,7 @@ def get_case_details_rt(case_id):
             Cases.case_uuid,
             Client.name.label('customer_name'),
             User.user.label('open_by_user'),
+            Cases.status_id,
             Cases.custom_attributes
         ).filter(and_(
             Cases.case_id == case_id,

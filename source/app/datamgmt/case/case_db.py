@@ -154,6 +154,10 @@ def register_case_protagonists(case_id, protagonists):
     ).delete()
 
     for protagonist in protagonists:
+        for key in ['role', 'name']:
+            if not protagonist.get(key):
+                continue
+
         cp = CaseProtagonist()
         cp.case_id = case_id
         cp.role = protagonist.get('role')
