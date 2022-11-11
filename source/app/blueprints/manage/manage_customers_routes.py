@@ -36,9 +36,11 @@ from app.datamgmt.client.client_db import delete_client
 from app.datamgmt.client.client_db import get_client
 from app.datamgmt.client.client_db import get_client_api
 from app.datamgmt.client.client_db import get_client_cases
+from app.datamgmt.client.client_db import get_client_contact
 from app.datamgmt.client.client_db import get_client_contacts
 from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.client.client_db import update_client
+from app.datamgmt.client.client_db import update_contact
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -120,6 +122,55 @@ def customer_add_contact_modal(cur_id, caseid, url_redir):
     return render_template('modal_customer_add_contact.html', form=form, contact=None)
 
 
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/modal', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def customer_edit_contact_modal(cur_id, contact_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_customers.manage_customers', cid=caseid))
+
+    contact = get_client_contact(cur_id, contact_id)
+    if not contact:
+        return response_error(f"Invalid Contact ID {contact_id}")
+
+    form = ContactForm()
+    form.contact_name.render_kw = {'value': contact.contact_name}
+    form.contact_email.render_kw = {'value':  contact.contact_email}
+    form.contact_mobile_phone.render_kw = {'value': contact.contact_mobile_phone}
+    form.contact_work_phone.render_kw = {'value': contact.contact_work_phone}
+    form.contact_note.data = contact.contact_note
+    form.contact_role.render_kw = {'value':  contact.contact_role}
+
+    return render_template('modal_customer_add_contact.html', form=form, contact=contact)
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/update', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def customer_update_contact(cur_id, contact_id, caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    if not get_client(cur_id):
+        return response_error(f"Invalid Customer ID {cur_id}")
+
+    try:
+
+        contact = update_contact(request.json, contact_id, cur_id)
+
+    except ValidationError as e:
+        return response_error(msg='Error update contact', data=e.messages, status=400)
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return response_error(f'An error occurred during contact update. {e}')
+
+    track_activity(f"Updated contact {contact.contact_name}", caseid=caseid, ctx_less=True)
+
+    # Return the customer
+    contact_schema = ContactSchema()
+    return response_success("Added successfully", data=contact_schema.dump(contact))
+
+
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/add', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def customer_add_contact(cur_id, caseid):
@@ -141,7 +192,7 @@ def customer_add_contact(cur_id, caseid):
         print(traceback.format_exc())
         return response_error(f'An error occurred during contact addition. {e}')
 
-    track_activity(f"Added customer {contact.contact_name}", caseid=caseid, ctx_less=True)
+    track_activity(f"Added contact {contact.contact_name}", caseid=caseid, ctx_less=True)
 
     # Return the customer
     contact_schema = ContactSchema()

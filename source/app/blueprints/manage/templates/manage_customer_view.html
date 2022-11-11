@@ -139,7 +139,7 @@
 									{% for contact in contacts %}
 									<div class="contact-list-item">
 										<div class="contact-list-detail">
-											<span class="date float-right"><button class="btn btn-light btn-sm" onclick="edit_contact({{ customer.customer_id }});">Edit</button></span>
+											<span class="date float-right"><button class="btn btn-light btn-sm" onclick="edit_contact('{{ contact.id }}','{{ customer.customer_id }}');">Edit</button></span>
 											<span class="h4">{{ contact.contact_name }}</span>
 											<p class="ml-2">
 											{% if contact.contact_role %}

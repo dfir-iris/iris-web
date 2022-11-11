@@ -94,9 +94,20 @@ def create_client(data) -> Client:
 def get_client_contacts(client_id: int) -> List[Contact]:
     contacts = Contact.query.filter(
         Contact.client_id == client_id
+    ).order_by(
+        Contact.contact_name
     ).all()
 
     return contacts
+
+
+def get_client_contact(client_id: int, contact_id: int) -> Contact:
+    contact = Contact.query.filter(
+        Contact.client_id == client_id,
+        Contact.id == contact_id
+    ).first()
+
+    return contact
 
 
 def create_contact(data, customer_id) -> Contact:
@@ -105,6 +116,17 @@ def create_contact(data, customer_id) -> Contact:
     contact = contact_schema.load(data)
 
     db.session.add(contact)
+    db.session.commit()
+
+    return contact
+
+
+def update_contact(data, contact_id, customer_id) -> Contact:
+    contact = get_client_contact(customer_id, contact_id)
+    data['client_id'] = customer_id
+    contact_schema = ContactSchema()
+    contact_schema.load(data, instance=contact)
+
     db.session.commit()
 
     return contact
