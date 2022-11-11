@@ -97,7 +97,6 @@ function add_asset() {
         })
 
         $('#modal_add_asset').modal({ show: true });
-        edit_in_asset_desc();
 
     });
 

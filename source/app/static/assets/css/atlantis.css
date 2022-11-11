@@ -15693,7 +15693,7 @@ td.dt-nowrap { white-space: nowrap }
     min-height: 73px;
     border: 1px solid #ebedf2;
     border-radius: 0.25rem;
-    padding: .6rem 1rem;
+    padding: 0rem 0rem 0.6rem;
     transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 
