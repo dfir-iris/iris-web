@@ -17,12 +17,13 @@
 				<div class="mt-2 mb-4">
 					<h2 class="pb-2">Customer > {{ customer.customer_name }}</h2>
 				</div>
+				<input id="customer_id" style="display:none;" value="{{ customer.customer_id }}"/>
 					<div class="row">
-						<div class="col-md-4">
-							<div class="card card-dark bg-primary-gradient">
+						<div class="col-md-2">
+							<div class="card card-dark bg-success-gradient">
 								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right">+5%</div>
-									<h2 class="mb-2">17</h2>
+									<div class="h1 fw-bold float-right"></div>
+									<h2 id="current_open_cases" class="mb-2">0</h2>
 									<p>Current open cases</p>
 									<div class="pull-in sparkline-fix chart-as-background">
 										<div id="chart_current_open_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
@@ -30,26 +31,62 @@
 								</div>
 							</div>
 						</div>
-						<div class="col-md-4">
-							<div class="card card-dark bg-secondary-gradient">
+						<div class="col-md-2">
+							<div class="card card-dark bg-info-gradient">
 								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right">-3%</div>
-									<h2 class="mb-2">27</h2>
-									<p>Cases opened last month</p>
+									<div class="h1 fw-bold float-right"></div>
+									<h2 id="cases_rolling_week" class="mb-2">0</h2>
+									<p>Rolling week</p>
+									<div class="pull-in sparkline-fix chart-as-background">
+										<div id=""><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-2">
+							<div class="card card-dark bg-info-gradient">
+								<div class="card-body pb-0">
+									<div class="h1 fw-bold float-right"></div>
+									<h2 id="cases_rolling_month" class="mb-2">0</h2>
+									<p>Rolling month</p>
 									<div class="pull-in sparkline-fix chart-as-background">
 										<div id="chart_month_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
 									</div>
 								</div>
 							</div>
 						</div>
-						<div class="col-md-4">
-							<div class="card card-dark bg-primary-gradient">
+						<div class="col-md-2">
+							<div class="card card-dark bg-info-gradient">
 								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right">+7%</div>
-									<h2 class="mb-2">213</h2>
-									<p>Cases opened last year</p>
+									<div class="h1 fw-bold float-right"></div>
+									<h2 id="cases_rolling_year" class="mb-2">0</h2>
+									<p>Rolling year</p>
 									<div class="pull-in sparkline-fix chart-as-background">
 										<div id="chart_year_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-2">
+							<div class="card card-dark bg-primary-gradient">
+								<div class="card-body pb-0">
+									<div class="h1 fw-bold float-right"></div>
+									<h2 id="cases_last_year" class="mb-2">0</h2>
+									<p>Opened in <span id="last_year"></span></p>
+									<div class="pull-in sparkline-fix chart-as-background">
+										<div><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-2">
+							<div class="card card-dark bg-primary-gradient">
+								<div class="card-body pb-0">
+									<div class="h1 fw-bold float-right"></div>
+									<h2 id="cases_total" class="mb-2">0</h2>
+									<p>Total</p>
+									<div class="pull-in sparkline-fix chart-as-background">
+										<div><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
 									</div>
 								</div>
 							</div>
@@ -63,6 +100,7 @@
 {% block javascripts %}
 
     <script src="/static/assets/js/iris/manage.customers.js"></script>
+    <script src="/static/assets/js/iris/view.customers.js"></script>
     <script src="/static/assets/js/iris/common.js"></script>
 
 {% endblock javascripts %}

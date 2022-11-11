@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import datetime
+
 import traceback
 from flask import Blueprint
 from flask import redirect
@@ -106,6 +108,52 @@ def view_customer_page(cur_id, caseid, url_redir):
 def get_customer_case_stats(cur_id, caseid):
 
     cases = get_client_cases(cur_id)
+    cases_list = []
+
+    now = datetime.date.today()
+    cases_stats = {
+        'cases_last_month': 0,
+        'cases_last_year': 0,
+        'open_cases': 0,
+        'last_year': now.year - 1,
+        'last_month': now.month - 1,
+        'cases_rolling_week': 0,
+        'cases_rolling_month': 0,
+        'cases_rolling_year': 0,
+        'cases_total': len(cases)
+    }
+
+    last_month_start = datetime.date(now.year, now.month-1, 1)
+    last_month_end = datetime.date(now.year, now.month, 1)
+
+    last_year_start = datetime.date(now.year - 1, 1, 1)
+    last_year_end = datetime.date(now.year - 1, 12, 31)
+    this_year_start = datetime.date(now.year, 1, 1)
+
+    for case in cases:
+        cases_list.append(case._asdict())
+        if now - datetime.timedelta(days=7) <= case.open_date <= now:
+            cases_stats['cases_rolling_week'] += 1
+
+        if now - datetime.timedelta(days=30) <= case.open_date <= now:
+            cases_stats['cases_rolling_month'] += 1
+
+        if now - datetime.timedelta(days=365) <= case.open_date <= now:
+            cases_stats['cases_rolling_year'] += 1
+
+        if last_month_start < case.open_date < last_month_end:
+            cases_stats['cases_last_month'] += 1
+
+        if last_year_start < case.open_date < last_year_end:
+            cases_stats['cases_last_year'] += 1
+
+        if case.close_date is None:
+            cases_stats['open_cases'] += 1
+
+    cases = {
+        'cases': cases_list,
+        'stats': cases_stats
+    }
 
     return response_success(data=cases)
 
