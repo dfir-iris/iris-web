@@ -25,12 +25,14 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask_wtf import FlaskForm
 from marshmallow import ValidationError
 
 from app.datamgmt.client.client_db import create_client
 from app.datamgmt.client.client_db import delete_client
 from app.datamgmt.client.client_db import get_client
 from app.datamgmt.client.client_db import get_client_api
+from app.datamgmt.client.client_db import get_client_cases
 from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.client.client_db import update_client
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
@@ -82,6 +84,30 @@ def view_customer(cur_id, caseid):
         return response_error(f"Invalid Customer ID {cur_id}")
 
     return response_success(data=customer)
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/view', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def view_customer_page(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_customers.manage_customers', cid=caseid))
+
+    customer = get_client_api(cur_id)
+    if not customer:
+        return response_error(f"Invalid Customer ID {cur_id}")
+
+    form = FlaskForm()
+
+    return render_template('manage_customer_view.html', customer=customer, form=form)
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/cases', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def get_customer_case_stats(cur_id, caseid):
+
+    cases = get_client_cases(cur_id)
+
+    return response_success(data=cases)
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>/modal', methods=['GET'])

@@ -24,7 +24,9 @@ from typing import List
 from app import db
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
+from app.models import Cases
 from app.models import Client
+from app.models.authorization import User
 from app.schema.marshables import CustomerSchema
 
 
@@ -55,6 +57,25 @@ def get_client_api(client_id: str) -> Client:
     output = client._asdict()
 
     return output
+
+
+def get_client_cases(client_id: int):
+    cases_list = Cases.query.with_entities(
+        Cases.case_id.label('case_id'),
+        Cases.case_uuid.label('case_uuid'),
+        Cases.name.label('case_name'),
+        Cases.description.label('case_description'),
+        Cases.status_id.label('case_status'),
+        User.name.label('case_owner'),
+        Cases.open_date,
+        Cases.close_date
+    ).filter(
+        Cases.client_id == client_id,
+    ).join(
+        Cases.user
+    ).all()
+
+    return cases_list
 
 
 def create_client(data) -> Client:

@@ -1,0 +1,68 @@
+{% extends "layouts/default.html" %}
+
+{% block title %} Manage Customers {% endblock title %}
+
+{% block stylesheets %}
+
+    <link rel="stylesheet" href="/static/assets/css/suggestags.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+    {% if current_user.is_authenticated %}
+    {{ form.hidden_tag() }}
+		<div class="page-inner">
+			    <a class="mb-2 ml-1 text-dark" href="/manage/customers?cid={{ session['current_case'].case_id }}"><i class="fa-solid fa-arrow-left"></i> Back</a>
+				<div class="mt-2 mb-4">
+					<h2 class="pb-2">Customer > {{ customer.customer_name }}</h2>
+				</div>
+					<div class="row">
+						<div class="col-md-4">
+							<div class="card card-dark bg-primary-gradient">
+								<div class="card-body pb-0">
+									<div class="h1 fw-bold float-right">+5%</div>
+									<h2 class="mb-2">17</h2>
+									<p>Current open cases</p>
+									<div class="pull-in sparkline-fix chart-as-background">
+										<div id="chart_current_open_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card card-dark bg-secondary-gradient">
+								<div class="card-body pb-0">
+									<div class="h1 fw-bold float-right">-3%</div>
+									<h2 class="mb-2">27</h2>
+									<p>Cases opened last month</p>
+									<div class="pull-in sparkline-fix chart-as-background">
+										<div id="chart_month_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card card-dark bg-primary-gradient">
+								<div class="card-body pb-0">
+									<div class="h1 fw-bold float-right">+7%</div>
+									<h2 class="mb-2">213</h2>
+									<p>Cases opened last year</p>
+									<div class="pull-in sparkline-fix chart-as-background">
+										<div id="chart_year_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+    {% endif %}
+
+{% endblock content %}
+
+{% block javascripts %}
+
+    <script src="/static/assets/js/iris/manage.customers.js"></script>
+    <script src="/static/assets/js/iris/common.js"></script>
+
+{% endblock javascripts %}
