@@ -565,6 +565,7 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
     customer_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    #customer_description = auto_field('description', allow_none=True)
     customer_id = auto_field('client_id')
     csrf_token = fields.String(required=False)
 
