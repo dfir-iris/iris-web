@@ -91,6 +91,14 @@ def create_client(data) -> Client:
     return client
 
 
+def get_client_contacts(client_id: int) -> List[Contact]:
+    contacts = Contact.query.filter(
+        Contact.client_id == client_id
+    ).all()
+
+    return contacts
+
+
 def create_contact(data, customer_id) -> Contact:
     data['client_id'] = customer_id
     contact_schema = ContactSchema()

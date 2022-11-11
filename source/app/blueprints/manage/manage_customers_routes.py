@@ -36,6 +36,7 @@ from app.datamgmt.client.client_db import delete_client
 from app.datamgmt.client.client_db import get_client
 from app.datamgmt.client.client_db import get_client_api
 from app.datamgmt.client.client_db import get_client_cases
+from app.datamgmt.client.client_db import get_client_contacts
 from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.client.client_db import update_client
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
@@ -102,8 +103,10 @@ def view_customer_page(cur_id, caseid, url_redir):
         return response_error(f"Invalid Customer ID {cur_id}")
 
     form = FlaskForm()
+    contacts = get_client_contacts(cur_id)
+    contacts = ContactSchema().dump(contacts, many=True)
 
-    return render_template('manage_customer_view.html', customer=customer, form=form)
+    return render_template('manage_customer_view.html', customer=customer, form=form, contacts=contacts)
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/add/modal', methods=['GET'])

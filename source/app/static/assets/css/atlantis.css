@@ -15713,3 +15713,18 @@ td.dt-nowrap { white-space: nowrap }
   font-size: 27px;
   font-weight: 400;
 }
+
+
+.contact-list-detail:hover {
+  background: #f6f5f5;
+}
+
+.contact-list-detail {
+  padding: 14px 20px;
+  display: table;
+  cursor: pointer;
+  position: relative;
+  font-size: 12px;
+  width: 100%;
+  border-top: 1px solid #f1f1f1;
+}
