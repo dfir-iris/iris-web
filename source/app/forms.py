@@ -48,8 +48,10 @@ class SearchForm(FlaskForm):
     search_value = StringField(u'Search Value', validators=[DataRequired()])
 
 
-class CustomerForm(FlaskForm):
+class AddCustomerForm(FlaskForm):
     customer_name = StringField(u'Customer name', validators=[DataRequired()])
+    customer_description = TextAreaField(u'Customer description', validators=[DataRequired()])
+    customer_sla = TextAreaField(u'Customer SLAs', validators=[DataRequired()])
 
 
 class MultiCheckboxField(SelectMultipleField):
@@ -74,10 +76,6 @@ class AddIocTypeForm(FlaskForm):
     type_taxonomy = TextAreaField(u'Type taxonomy')
     type_validation_regex = StringField(u'Type validation regex')
     type_validation_expect = StringField(u'Type validation expectation')
-
-
-class AddCustomerForm(FlaskForm):
-    customer_name = StringField(u'Customer name', validators=[DataRequired()])
 
 
 class AddReportTemplateForm(FlaskForm):

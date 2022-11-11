@@ -30,6 +30,7 @@ from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_login import logout_user
+from flask_wtf import FlaskForm
 from sqlalchemy import distinct
 
 from app import db
@@ -38,7 +39,6 @@ from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
 from app.forms import CaseGlobalTaskForm
-from app.forms import CustomerForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
@@ -146,7 +146,7 @@ def index(caseid, url_redir):
     }
 
     # Create the customer form to be able to quickly add a customer
-    form = CustomerForm(request.form)
+    form = FlaskForm()
 
     return render_template('index.html', data=data, form=form, msg=msg)
 

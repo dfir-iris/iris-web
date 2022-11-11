@@ -565,14 +565,15 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
     customer_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
-    #customer_description = auto_field('description', allow_none=True)
+    customer_description = auto_field('description', allow_none=True)
+    customer_sla = auto_field('sla', allow_none=True)
     customer_id = auto_field('client_id')
     csrf_token = fields.String(required=False)
 
     class Meta:
         model = Client
         load_instance = True
-        exclude = ['name', 'client_id']
+        exclude = ['name', 'client_id', 'description', 'sla']
 
     @post_load
     def verify_unique(self, data, **kwargs):

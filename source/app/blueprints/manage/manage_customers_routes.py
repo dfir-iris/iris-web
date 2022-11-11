@@ -295,6 +295,8 @@ def view_customer_modal(cur_id, caseid, url_redir):
         return response_error("Invalid Customer ID")
 
     form.customer_name.render_kw = {'value': customer.name}
+    form.customer_description.data = customer.description
+    form.customer_sla.data = customer.sla
 
     return render_template("modal_add_customer.html", form=form, customer=customer,
                            attributes=customer.custom_attributes)
