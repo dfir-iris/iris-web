@@ -119,7 +119,7 @@ class Client(db.Model):
     description = Column(Text)
     sla = Column(Text)
     creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
-    created_by = Column(ForeignKey('user.id'))
+    created_by = Column(ForeignKey('user.id'), nullable=True)
     last_update_date = Column(DateTime, server_default=text("now()"), nullable=True)
 
     custom_attributes = Column(JSON)
