@@ -15722,7 +15722,6 @@ td.dt-nowrap { white-space: nowrap }
 .contact-list-detail {
   padding: 14px 20px;
   display: table;
-  cursor: pointer;
   position: relative;
   font-size: 12px;
   width: 100%;
