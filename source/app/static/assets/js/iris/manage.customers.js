@@ -60,6 +60,9 @@ $(document).ready(function() {
                         data = sanitizeHTML(data);
                         return '<a href="/manage/customers/' + row['customer_id'] + '/view'+ cid +'">' + data + '</a>';
                     }
+                },
+                {
+                    "data": "customer_description"
                 }
             ]
         }

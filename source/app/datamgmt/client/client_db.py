@@ -36,7 +36,9 @@ def get_client_list() -> List[Client]:
     client_list = Client.query.with_entities(
         Client.name.label('customer_name'),
         Client.client_id.label('customer_id'),
-        Client.client_uuid.label('customer_uuid')
+        Client.client_uuid.label('customer_uuid'),
+        Client.description.label('customer_description'),
+        Client.sla.label('customer_sla')
     ).all()
 
     output = [c._asdict() for c in client_list]
