@@ -116,10 +116,11 @@ class Client(db.Model):
     client_id = Column(BigInteger, primary_key=True)
     client_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     name = Column(String(Text), unique=True)
-    # description = Column(Text)
-    # creation_date = Column(DateTime, server_default=text("now()"), nullable=False)
-    # created_by = Column(ForeignKey('user.id'))
-    # last_update = Column(DateTime, server_default=text("now()"), nullable=False)
+    description = Column(Text)
+    sla = Column(Text)
+    creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    created_by = Column(ForeignKey('user.id'))
+    last_update_date = Column(DateTime, server_default=text("now()"), nullable=True)
 
     custom_attributes = Column(JSON)
 
