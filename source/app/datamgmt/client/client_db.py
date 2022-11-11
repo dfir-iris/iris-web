@@ -110,6 +110,23 @@ def get_client_contact(client_id: int, contact_id: int) -> Contact:
     return contact
 
 
+def delete_contact(contact_id: int) -> None:
+    contact = Contact.query.filter(
+        Contact.id == contact_id
+    ).first()
+
+    if not contact:
+        raise ElementNotFoundException('No Contact found with this uuid.')
+
+    try:
+
+        db.session.delete(contact)
+        db.session.commit()
+
+    except Exception as e:
+        raise ElementInUseException('A currently referenced contact cannot be deleted')
+
+
 def create_contact(data, customer_id) -> Contact:
     data['client_id'] = customer_id
     contact_schema = ContactSchema()

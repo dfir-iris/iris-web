@@ -33,6 +33,7 @@ from marshmallow import ValidationError
 from app.datamgmt.client.client_db import create_client
 from app.datamgmt.client.client_db import create_contact
 from app.datamgmt.client.client_db import delete_client
+from app.datamgmt.client.client_db import delete_contact
 from app.datamgmt.client.client_db import get_client
 from app.datamgmt.client.client_db import get_client_api
 from app.datamgmt.client.client_db import get_client_cases
@@ -370,5 +371,26 @@ def delete_customers(cur_id, caseid):
         return response_error('An error occurred during customer deletion')
 
     track_activity("Deleted Customer with ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)
+
+    return response_success("Deleted successfully")
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/delete', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def delete_contact_route(cur_id, contact_id, caseid):
+    try:
+
+        delete_contact(contact_id)
+
+    except ElementNotFoundException:
+        return response_error('Invalid contact ID')
+
+    except ElementInUseException:
+        return response_error('Cannot delete a referenced contact')
+
+    except Exception:
+        return response_error('An error occurred during contact deletion')
+
+    track_activity("Deleted Customer with ID {contact_id}".format(contact_id=cur_id), caseid=caseid, ctx_less=True)
 
     return response_success("Deleted successfully")
