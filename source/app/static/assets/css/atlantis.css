@@ -15700,3 +15700,16 @@ td.dt-nowrap { white-space: nowrap }
 .md_description_field:focus {
     border-color: #3e93ff;
 }
+
+
+.card-customer .card-header {
+  padding: 20px 0px 2px;
+  border: 0px !important;
+  width: 95%;
+  margin: auto;
+}
+
+.card-customer .customer-header .customer-title {
+  font-size: 27px;
+  font-weight: 400;
+}

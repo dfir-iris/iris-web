@@ -31,6 +31,7 @@ from flask_wtf import FlaskForm
 from marshmallow import ValidationError
 
 from app.datamgmt.client.client_db import create_client
+from app.datamgmt.client.client_db import create_contact
 from app.datamgmt.client.client_db import delete_client
 from app.datamgmt.client.client_db import get_client
 from app.datamgmt.client.client_db import get_client_api
@@ -41,8 +42,10 @@ from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.forms import AddCustomerForm
+from app.forms import ContactForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
+from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
@@ -103,6 +106,45 @@ def view_customer_page(cur_id, caseid, url_redir):
     return render_template('manage_customer_view.html', customer=customer, form=form)
 
 
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/add/modal', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def customer_add_contact_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_customers.manage_customers', cid=caseid))
+
+    form = ContactForm()
+
+    return render_template('modal_customer_add_contact.html', form=form, contact=None)
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/add', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def customer_add_contact(cur_id, caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    if not get_client(cur_id):
+        return response_error(f"Invalid Customer ID {cur_id}")
+
+    try:
+
+        contact = create_contact(request.json, cur_id)
+
+    except ValidationError as e:
+        return response_error(msg='Error adding contact', data=e.messages, status=400)
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return response_error(f'An error occurred during contact addition. {e}')
+
+    track_activity(f"Added customer {contact.contact_name}", caseid=caseid, ctx_less=True)
+
+    # Return the customer
+    contact_schema = ContactSchema()
+    return response_success("Added successfully", data=contact_schema.dump(contact))
+
+
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/cases', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
 def get_customer_case_stats(cur_id, caseid):
@@ -118,8 +160,11 @@ def get_customer_case_stats(cur_id, caseid):
         'last_year': now.year - 1,
         'last_month': now.month - 1,
         'cases_rolling_week': 0,
-        'cases_rolling_month': 0,
-        'cases_rolling_year': 0,
+        'cases_current_month': 0,
+        'cases_current_year': 0,
+        'ratio_year': 0,
+        'ratio_month': 0,
+        'average_case_duration': 0,
         'cases_total': len(cases)
     }
 
@@ -129,26 +174,51 @@ def get_customer_case_stats(cur_id, caseid):
     last_year_start = datetime.date(now.year - 1, 1, 1)
     last_year_end = datetime.date(now.year - 1, 12, 31)
     this_year_start = datetime.date(now.year, 1, 1)
+    this_month_start = datetime.date(now.year, now.month, 1)
 
     for case in cases:
         cases_list.append(case._asdict())
         if now - datetime.timedelta(days=7) <= case.open_date <= now:
             cases_stats['cases_rolling_week'] += 1
 
-        if now - datetime.timedelta(days=30) <= case.open_date <= now:
-            cases_stats['cases_rolling_month'] += 1
+        if this_month_start <= case.open_date <= now:
+            cases_stats['cases_current_month'] += 1
 
-        if now - datetime.timedelta(days=365) <= case.open_date <= now:
-            cases_stats['cases_rolling_year'] += 1
+        if this_year_start <= case.open_date <= now:
+            cases_stats['cases_current_year'] += 1
 
         if last_month_start < case.open_date < last_month_end:
             cases_stats['cases_last_month'] += 1
 
-        if last_year_start < case.open_date < last_year_end:
+        if last_year_start <= case.open_date <= last_year_end:
             cases_stats['cases_last_year'] += 1
 
         if case.close_date is None:
             cases_stats['open_cases'] += 1
+
+        if cases_stats['cases_last_year'] == 0:
+            st = 1
+            et = cases_stats['cases_current_year'] + 1
+        else:
+            st = cases_stats['cases_last_year']
+            et = cases_stats['cases_current_year']
+
+        cases_stats['ratio_year'] = ((et - st)/(st)) * 100
+
+        if cases_stats['cases_last_month'] == 0:
+            st = 1
+            et = cases_stats['cases_current_month'] + 1
+        else:
+            st = cases_stats['cases_last_month']
+            et = cases_stats['cases_current_month']
+
+        cases_stats['ratio_month'] = ((et - st)/(st)) * 100
+
+        if (case.close_date is not None) and (case.open_date is not None):
+            cases_stats['average_case_duration'] += (case.close_date - case.open_date).days
+
+    if cases_stats['cases_total'] > 0 and cases_stats['open_cases'] > 0 and cases_stats['average_case_duration'] > 0:
+        cases_stats['average_case_duration'] = cases_stats['average_case_duration'] / (cases_stats['cases_total'] - cases_stats['open_cases'])
 
     cases = {
         'cases': cases_list,

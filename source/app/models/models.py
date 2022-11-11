@@ -170,7 +170,7 @@ class Contact(db.Model):
     contact_name = Column(Text)
     contact_email = Column(Text)
     contact_role = Column(Text)
-    contact_notes = Column(Text)
+    contact_note = Column(Text)
     contact_work_phone = Column(Text)
     contact_mobile_phone = Column(Text)
     custom_attributes = Column(JSON)

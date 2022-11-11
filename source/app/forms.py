@@ -123,6 +123,15 @@ class AddCaseForm(FlaskForm):
     case_organisations = SelectMultipleField(u'Organisations')
 
 
+class ContactForm(FlaskForm):
+    contact_name = StringField(u'Contact name', validators=[DataRequired()])
+    contact_role = StringField(u'Contact role', validators=[DataRequired()])
+    contact_email = StringField(u'Contact email', validators=[DataRequired(), Email()])
+    contact_work_phone = StringField(u'Work phone', validators=[DataRequired()])
+    contact_mobile_phone = StringField(u'Mobile phone', validators=[DataRequired()])
+    contact_note = TextAreaField(u'Contact description', validators=[DataRequired()])
+
+
 class PipelinesCaseForm(FlaskForm):
     pipeline = SelectField(u'Processing pipeline')
 

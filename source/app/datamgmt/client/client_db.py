@@ -26,7 +26,9 @@ from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.models import Cases
 from app.models import Client
+from app.models import Contact
 from app.models.authorization import User
+from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
 
 
@@ -87,6 +89,17 @@ def create_client(data) -> Client:
     db.session.commit()
 
     return client
+
+
+def create_contact(data, customer_id) -> Contact:
+    data['client_id'] = customer_id
+    contact_schema = ContactSchema()
+    contact = contact_schema.load(data)
+
+    db.session.add(contact)
+    db.session.commit()
+
+    return contact
 
 
 def update_client(client_id: int, data) -> Client:

@@ -49,6 +49,7 @@ from app.models import Cases
 from app.models import CasesEvent
 from app.models import Client
 from app.models import Comments
+from app.models import Contact
 from app.models import DataStoreFile
 from app.models import EventCategory
 from app.models import GlobalTasks
@@ -459,6 +460,20 @@ class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = ServerSettings
+        load_instance = True
+
+
+class ContactSchema(ma.SQLAlchemyAutoSchema):
+    contact_name = auto_field('contact_name', required=True, validate=Length(min=2), allow_none=False)
+    contact_email = auto_field('contact_email', required=False, allow_none=False)
+    contact_work_phone = auto_field('contact_work_phone', required=False, allow_none=False)
+    contact_mobile_phone = auto_field('contact_mobile_phone', required=False, allow_none=False)
+    contact_role = auto_field('contact_role', required=False, allow_none=False)
+    contact_note = auto_field('contact_note', required=False, allow_none=False)
+    client_id = auto_field('client_id', required=True)
+
+    class Meta:
+        model = Contact
         load_instance = True
 
 

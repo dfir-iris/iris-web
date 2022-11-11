@@ -13,88 +13,149 @@
     {% if current_user.is_authenticated %}
     {{ form.hidden_tag() }}
 		<div class="page-inner">
-			    <a class="mb-2 ml-1 text-dark" href="/manage/customers?cid={{ session['current_case'].case_id }}"><i class="fa-solid fa-arrow-left"></i> Back</a>
-				<div class="mt-2 mb-4">
+			<a class="mb-2 ml-1 text-dark" href="/manage/customers?cid={{ session['current_case'].case_id }}"><i class="fa-solid fa-arrow-left"></i> Back</a>
+			<div class="mt-2 mb-4">
+				<div class="row ml-2 mr-2">
 					<h2 class="pb-2">Customer > {{ customer.customer_name }}</h2>
+					<button class="btn btn-light btn-sm ml-auto" onclick="customer_detail('{{ customer.customer_id }}');">Edit customer</button>
 				</div>
-				<input id="customer_id" style="display:none;" value="{{ customer.customer_id }}"/>
-					<div class="row">
-						<div class="col-md-2">
-							<div class="card card-dark bg-success-gradient">
-								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right"></div>
-									<h2 id="current_open_cases" class="mb-2">0</h2>
-									<p>Current open cases</p>
-									<div class="pull-in sparkline-fix chart-as-background">
-										<div id="chart_current_open_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
-									</div>
+			</div>
+			<input id="customer_id" style="display:none;" value="{{ customer.customer_id }}"/>
+				<div class="row">
+					<div class="col-md-2">
+						<div class="card card-dark bg-success-gradient">
+							<div class="card-body pb-0">
+								<div class="h1 fw-bold float-right"></div>
+								<h2 id="current_open_cases" class="mb-2">0</h2>
+								<p>Current open cases</p>
+								<div class="pull-in sparkline-fix chart-as-background">
+									<div id="chart_current_open_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
 								</div>
 							</div>
 						</div>
-						<div class="col-md-2">
-							<div class="card card-dark bg-info-gradient">
-								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right"></div>
-									<h2 id="cases_rolling_week" class="mb-2">0</h2>
-									<p>Rolling week</p>
-									<div class="pull-in sparkline-fix chart-as-background">
-										<div id=""><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
-									</div>
+					</div>
+					<div class="col-md-2">
+						<div class="card card-dark bg-info-gradient">
+							<div class="card-body pb-0">
+								<div class="h5 fw-bold float-right"><span id="ratio_month"></span></div>
+								<h2 id="cases_current_month" class="mb-2"></h2>
+								<p>Current month</p>
+								<div class="pull-in sparkline-fix chart-as-background">
+									<div id="chart_month_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
 								</div>
 							</div>
 						</div>
-						<div class="col-md-2">
-							<div class="card card-dark bg-info-gradient">
-								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right"></div>
-									<h2 id="cases_rolling_month" class="mb-2">0</h2>
-									<p>Rolling month</p>
-									<div class="pull-in sparkline-fix chart-as-background">
-										<div id="chart_month_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
-									</div>
+					</div>
+					<div class="col-md-2">
+						<div class="card card-dark bg-info-gradient">
+							<div class="card-body pb-0">
+								<div class="h1 fw-bold float-right"></div>
+								<h2 id="cases_last_month" class="mb-2">0</h2>
+								<p>Last month</p>
+								<div class="pull-in sparkline-fix chart-as-background">
+									<div id=""><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
 								</div>
 							</div>
 						</div>
-						<div class="col-md-2">
-							<div class="card card-dark bg-info-gradient">
-								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right"></div>
-									<h2 id="cases_rolling_year" class="mb-2">0</h2>
-									<p>Rolling year</p>
-									<div class="pull-in sparkline-fix chart-as-background">
-										<div id="chart_year_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
-									</div>
+					</div>
+					<div class="col-md-2">
+						<div class="card card-dark bg-info-gradient">
+							<div class="card-body pb-0">
+								<div class="h5 fw-bold float-right"><span id="ratio_year"></span></div>
+								<h2 id="cases_current_year" class="mb-2">0</h2>
+								<p>Current year </p>
+								<div class="pull-in sparkline-fix chart-as-background">
+									<div id="chart_year_cases"><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
 								</div>
 							</div>
 						</div>
-						<div class="col-md-2">
-							<div class="card card-dark bg-primary-gradient">
-								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right"></div>
-									<h2 id="cases_last_year" class="mb-2">0</h2>
-									<p>Opened in <span id="last_year"></span></p>
-									<div class="pull-in sparkline-fix chart-as-background">
-										<div><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
-									</div>
+					</div>
+					<div class="col-md-2">
+						<div class="card card-dark bg-info-gradient">
+							<div class="card-body pb-0">
+								<div class="h3 fw-bold float-right"></div>
+								<h2 id="cases_last_year" class="mb-2">0</h2>
+								<p>Last year (<span id="last_year"></span>)</p>
+								<div class="pull-in sparkline-fix chart-as-background">
+									<div><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
 								</div>
 							</div>
 						</div>
-						<div class="col-md-2">
-							<div class="card card-dark bg-primary-gradient">
-								<div class="card-body pb-0">
-									<div class="h1 fw-bold float-right"></div>
-									<h2 id="cases_total" class="mb-2">0</h2>
-									<p>Total</p>
-									<div class="pull-in sparkline-fix chart-as-background">
-										<div><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
+					</div>
+					<div class="col-md-2">
+						<div class="card card-dark bg-close-gradient">
+							<div class="card-body pb-0">
+								<div class="h1 fw-bold float-right"></div>
+								<h2 id="cases_total" class="mb-2">0</h2>
+								<p>Total</p>
+								<div class="pull-in sparkline-fix chart-as-background">
+									<div><canvas style="display: inline-block; width: 352.333px; height: 70px; vertical-align: top;" width="352" height="70"></canvas></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-12">
+						<div class="card card-customer">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-md-3 info-customer">
+										<h5 class="sub"><b>Customer name</b></h5>
+										<p>{{ customer.customer_name }}</p>
+									</div>
+									<div class="col-md-3 info-customer">
+										<h5 class="sub"><b>Customer ID</b></h5>
+										<p>#{{ customer.customer_id }}</p>
+									</div>
+									<div class="col-md-3 info-customer">
+										<h5 class="sub  text-bold"><b>Customer UUID</b></h5>
+										<p>#{{ customer.customer_uuid }}</p>
+									</div>
+									<div class="col-md-3 info-customer">
+										<h5 class="sub  text-bold"><b>Average case duration</b></h5>
+										<p><span id="average_case_duration"></span> days</p>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-    {% endif %}
+				<div class="row">
+					<div class="col-12">
+						<div class="card card-customer">
+							<div class="card-header">
+								<div class="row">
+									<div class="col-12">
+										<div class="row">
+											<h3><strong><i class="ml-1 fa-regular fa-address-book mr-1"></i> Contacts</strong></h3>
+											<button class="btn btn-light btn-sm ml-auto" onclick="add_new_contact({{ customer.customer_id }});">Add Contact</button>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="card-body">
 
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+    {% endif %}
+<div class="modal" tabindex="-1" role="dialog" id="modal_add_customer" data-backdrop="true">
+	<div class="modal-xl modal-dialog" role="document">
+		<div class="modal-content" id="modal_add_customer_content">
+
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div>
+<div class="modal" tabindex="-1" role="dialog" id="modal_add_contact" data-backdrop="true">
+	<div class="modal-lg modal-dialog" role="document">
+		<div class="modal-content" id="modal_add_contact_content">
+
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div>
 {% endblock content %}
 
 {% block javascripts %}
