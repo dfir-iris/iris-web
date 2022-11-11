@@ -294,6 +294,8 @@ function manage_case(case_id) {
 
 $(document).ready(function() {
 
+
+
     if ($("#editor_summary").attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");
     } else {
@@ -395,6 +397,7 @@ $(document).ready(function() {
     $("#select_report_act").on("change", function(){
         $('#generate_report_act_button').attr("href", '/report/generate/activities/' + $("#select_report_act option:selected").val() + case_param());
     });
+
 });
 
 

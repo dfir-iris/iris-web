@@ -14868,7 +14868,7 @@ table.dataTable.stripe tbody > tr.selected {
     border-radius: 9px;
     padding: .5rem;
     display: inline-block;
-    min-width: 15rem;
+    width: 20rem;
     padding: .5rem;
     vertical-align: top;
     margin-top: 1rem;

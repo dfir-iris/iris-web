@@ -104,6 +104,7 @@ function load_customer_stats(customer_id) {
             }
 
             $('#last_year').text(data.data.stats.last_year);
+
         }
     });
 }
