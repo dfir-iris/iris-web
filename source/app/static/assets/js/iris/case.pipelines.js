@@ -3,9 +3,22 @@
  *************************/
 /* Dropzone creation for update */
 Dropzone.autoDiscover = false;
+
+Dropzone.prototype.getErroredFiles = function () {
+    var file, _i, _len, _ref, _results;
+    _ref = this.files;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        file = _ref[_i];
+        if (file.status === Dropzone.ERROR) {
+            _results.push(file);
+        }
+    }
+    return _results;
+};
+
 var dropUpdate = new Dropzone("div#files_drop_1", {
     url: "/manage/cases/upload_files" + case_param(),
-    acceptedFiles: ".zip,.7z,.tar.gz,.tgz,.evtx,.evtx_data,.txt,.ml",
     addRemoveLinks: true,
     autoProcessQueue: false,
     parallelUploads: 40,
@@ -13,15 +26,16 @@ var dropUpdate = new Dropzone("div#files_drop_1", {
     maxFilesize: 10000,
     timeout: 0,
     complete: function () {
-        if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
+        if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0 && this.getErroredFiles().length === 0) {
             $('#submit_update_case').text('Notifying for new import')
             send_update_case_data();
         }
     },
-    error: function(jqXHR) {
-        if(jqXHR.responseJSON) {
-            notify_error(jqXHR.responseJSON.message);
+    error: function(jqXHR, error) {
+        if(error !== null || error !== undefined) {
+            notify_error(error.message);
         } else {
+            notify_error(jqXHR);
             ajax_notify_error(jqXHR, this.url);
         }
     }
@@ -46,8 +60,8 @@ function send_update_case_data() {
     args['pipeline'] = $('#update_pipeline_selector').val();
     args['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('/manage/cases/update', JSON.stringify(args), true, function () {
-        $('#submit_update_case').text('Starting update');
+    post_request_api('/manage/cases/trigger-pipeline', JSON.stringify(args), true, function () {
+        $('#submit_update_case').text('Starting pipeline');
          $('#submit_update_case')
             .attr("disabled", true)
             .addClass('bt-outline-success')
