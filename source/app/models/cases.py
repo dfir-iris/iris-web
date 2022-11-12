@@ -87,6 +87,7 @@ class Cases(db.Model):
         self.gen_report = gen_report
         self.custom_attributes = custom_attributes
         self.case_uuid = uuid.uuid4()
+        self.status_id = 0
 
     def save(self):
         """

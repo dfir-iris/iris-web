@@ -115,7 +115,7 @@ class Client(db.Model):
 
     client_id = Column(BigInteger, primary_key=True)
     client_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
-    name = Column(String(Text), unique=True)
+    name = Column(Text, unique=True)
     description = Column(Text)
     sla = Column(Text)
     creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
