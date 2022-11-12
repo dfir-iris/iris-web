@@ -125,6 +125,16 @@ def delete_asset(asset_id, caseid):
         CaseEventsAssets.case_id == caseid,
         CaseEventsAssets.asset_id == asset_id
     ).delete()
+
+    Comments.query.filter(and_(
+        Comments.comment_id == AssetComments.comment_id,
+        AssetComments.comment_asset_id == asset_id
+    )).delete()
+
+    AssetComments.query.filter(
+        AssetComments.comment_asset_id == asset_id
+    ).delete()
+
     db.session.commit()
 
     # Directly delete

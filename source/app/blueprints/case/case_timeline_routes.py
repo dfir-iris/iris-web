@@ -639,10 +639,14 @@ def case_delete_event(cur_id, caseid):
         CaseEventsIoc.case_id == caseid
     ).delete()
 
+    EventComments.query.filter(
+        EventComments.comment_event_id == cur_id
+    ).delete(synchronize_session='fetch')
+
     Comments.query.filter(and_(
         Comments.comment_id == EventComments.comment_id,
         EventComments.comment_event_id == cur_id
-    )).delete()
+    )).delete(synchronize_session='fetch')
 
     db.session.commit()
 
