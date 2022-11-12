@@ -166,7 +166,7 @@ def get_case_tags(case_id):
         CaseTags.tag
     ).all()
 
-    return ",".join([tag.tag_title for tag in tags])
+    return [tag.tag_title for tag in tags]
 
 
 def get_activities_report_template():

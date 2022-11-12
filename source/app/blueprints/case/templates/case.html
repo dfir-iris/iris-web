@@ -15,38 +15,37 @@
                 <div class="row">
                     <h2 class="text-white pb-2 fw-bold case-name"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
                     </h2>
-                    <div class="row mb-2">
-                         <div class="col-md-12">
-                              <select title="Case outcome" class="btn btn-rounded pull-right hidden-caret btn-sm ml-3 {% if case.status_id == 1 %}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-outline-light{% endif %}"
-                                      id="case_quick_status" aria-labelledby="dropdownMenuButton">
-                                  <option value="0" {% if case.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
-                                  <option value="1" {% if case.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
-                                  <option value="2" {% if case.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
-                                  <option value="3" {% if case.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
-                              </select>
-                         </div>
+                    <div class="col mb-2">
+                      <select title="Case outcome" class="btn btn-rounded badge-pill hidden-caret btn-sm ml-2 {% if case.status_id == 1 %}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-outline-light{% endif %}"
+                              id="case_quick_status" aria-labelledby="dropdownMenuButton">
+                          <option value="0" {% if case.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
+                          <option value="1" {% if case.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
+                          <option value="2" {% if case.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
+                          <option value="3" {% if case.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
+                      </select>
                     </div>
                 </div>
-                <h5 class="text-white op-7 mb-3 ml-1">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
+                <h5 class="text-white op-7 mb-3">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
                 {% if case.close_date %}
-                <h5 class="text-warning  mb-3 ml-1">Closed on {{ case.close_date }}</h5>
+                <h5 class="text-warning  mb-3">Closed on {{ case.close_date }}</h5>
                 {% endif %}
-                <small><a href="#" onclick="case_detail('{{ case.case_id }}');" class="btn btn-sm btn-outline-light btn-rounded float-left">
-                    <i class="fa-solid fa-info mr-1"></i>
-                    Case info
-                    </a></small>
-                <div class="dropdown">
-                      <button class="btn btn-sm btn-outline-light btn-rounded float-left ml-2" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                          <span aria-hidden="true"><i class="fa-solid fa-bolt mr-1"></i> Processors</span>
-                      </button>
-                      <div class="dropdown-menu pull-right" id="case_modal_quick_actions" aria-labelledby="dropdownMenuButton">
-                      </div>
-                 </div>
-                <button class="btn btn-sm btn-outline-light btn-rounded float-left ml-2" id="case_pipeline" onclick="case_pipeline_popup();">
-                    <span aria-hidden="true"><i class="fa-solid fa-upload mr-1"></i>Pipelines</span>
-                </button>
+                <div class="row">
+                    <small><a href="#" onclick="case_detail('{{ case.case_id }}');" class="btn btn-sm btn-outline-light btn-rounded float-left ml-2">
+                        <i class="fa-solid fa-info mr-1"></i>
+                        Case info
+                        </a></small>
+                    <div class="dropdown">
+                          <button class="btn btn-sm btn-outline-light btn-rounded float-left ml-2" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                              <span aria-hidden="true"><i class="fa-solid fa-bolt mr-1"></i> Processors</span>
+                          </button>
+                          <div class="dropdown-menu pull-right" id="case_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                          </div>
+                     </div>
+                    <button class="btn btn-sm btn-outline-light btn-rounded float-left ml-2" id="case_pipeline" onclick="case_pipeline_popup();">
+                        <span aria-hidden="true"><i class="fa-solid fa-upload mr-1"></i>Pipelines</span>
+                    </button>
+                </div>
             </div>
-
             <div class="ml-md-auto py-2 py-md-0">
 
                 <h5 class="text-white op-7 mb-2 ">Customer : {{ case.client.name }}</h5>
@@ -64,10 +63,18 @@
                   Generate report
                 </a>
             </div>
-        </div>
-        <div class="d-flex align-items-right flex-column flex-md-row mt-2">
 
+        </div>
+        <div class="row mt-2 mb--2">
+
+            <div class="col">
+                {% if case.case_tags %}
+                {% for tag in case.case_tags %}
+                <span class="badge badge-pill badge-light ml-1 pull-right"><i class="fa fa-tag mr-1"></i> {{ tag }}</span>
+                {% endfor %}
+                {% endif %}
             </div>
+        </div>
     </div>
 </div>
 <div class="page-inner mt--5">

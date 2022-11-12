@@ -185,7 +185,7 @@ def get_case_details_rt(case_id):
         )).first()
 
         res = res._asdict()
-        res['case_tags'] = get_case_tags(case_id)
+        res['case_tags'] = ",".join(get_case_tags(case_id))
 
     else:
         res = None

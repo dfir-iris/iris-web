@@ -47,6 +47,7 @@ from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_report_template
+from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.reporter.report_db import export_case_json
 from app.forms import PipelinesCaseForm
@@ -87,6 +88,7 @@ def case_r(caseid, url_redir):
         return redirect(url_for('case.case_r', cid=caseid, redirect=True))
 
     case = get_case(caseid)
+    setattr(case, 'case_tags', get_case_tags(caseid))
     form = FlaskForm()
 
     reports = get_case_report_template()

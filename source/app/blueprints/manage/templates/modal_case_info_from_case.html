@@ -83,6 +83,10 @@
                             <label>Case UUID :</label>
                             <span type="text" class="text-faded">{{ data.case_uuid }}</span>
                         </div>
+                        <div class="form-group mt--3">
+                            <label>Case tags :</label>
+                            <span type="text" class="text-faded">{% if data.case_tags %} {{ data.case_tags }} {% endif %}</span>
+                        </div>
                     </div>
                     <div class="col-6 col-xs-12 col-md-6">
                         <div class="form-group mt--3">
