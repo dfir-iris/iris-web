@@ -231,7 +231,7 @@ function delete_note(_item, cid) {
     do_deletion_prompt("You are about to delete note #" + n_id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api('/case/notes/delete/' + n_id, undefined, undefined, cid)
+            post_request_api('/case/notes/delete/' + n_id, null, null, cid)
             .done((data) => {
                $('#modal_note_detail').modal('hide');
                notify_auto_api(data);

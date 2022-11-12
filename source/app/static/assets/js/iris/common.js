@@ -225,7 +225,7 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
         dataType: "json",
         contentType: "application/json;charset=UTF-8",
         beforeSend: function(jqXHR, settings) {
-            if (beforeSend_fn !== undefined) {
+            if (typeof beforeSend_fn === 'function') {
                 beforeSend_fn(jqXHR, settings);
             }
         },
