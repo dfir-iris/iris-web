@@ -168,7 +168,7 @@ def download_template(report_id, caseid):
         return response_error("Unable to download file")
 
 
-@manage_templates_blueprint.route('/manage/templates/delete/<report_id>', methods=['GET'])
+@manage_templates_blueprint.route('/manage/templates/delete/<report_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def delete_template(report_id, caseid):
     error = ""

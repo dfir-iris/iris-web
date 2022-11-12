@@ -148,7 +148,7 @@ def get_case_api(cur_id, caseid):
     return response_error(f'Case ID {cur_id} not found')
 
 
-@manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['GET'])
+@manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def api_delete_case(cur_id, caseid):
 

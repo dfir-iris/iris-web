@@ -354,7 +354,7 @@ def activate_user_api(cur_id, caseid):
 
 
 if is_authentication_local():
-    @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['GET'])
+    @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['POST'])
     @ac_api_requires(Permissions.server_administrator)
     def view_delete_user(cur_id, caseid):
 

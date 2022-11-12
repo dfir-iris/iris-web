@@ -326,7 +326,7 @@ def edit_gtask(cur_id, caseid):
     return response_error('Unknown task ID !')
 
 
-@dashboard_blueprint.route('/global/tasks/delete/<int:cur_id>', methods=['GET'])
+@dashboard_blueprint.route('/global/tasks/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires()
 def gtask_delete(cur_id, caseid):
 

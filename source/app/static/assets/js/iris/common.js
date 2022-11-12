@@ -211,6 +211,13 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
    } else {
      cid = '?cid=' + cid;
    }
+
+   if (data === undefined || data === null) {
+        data = JSON.stringify({
+            'csrf_token': $('#csrf_token').val()
+        });
+   }
+
    return $.ajax({
         url: uri + cid,
         type: 'POST',

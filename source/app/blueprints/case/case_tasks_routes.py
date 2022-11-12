@@ -253,7 +253,7 @@ def case_edit_task(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@case_tasks_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['GET'])
+@case_tasks_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_task(cur_id, caseid):
     call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
@@ -348,7 +348,7 @@ def case_comment_task_edit(cur_id, com_id, caseid):
     return case_comment_update(com_id, 'tasks', caseid)
 
 
-@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_task_delete(cur_id, com_id, caseid):
 

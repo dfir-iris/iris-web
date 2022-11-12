@@ -133,7 +133,7 @@ def case_comments_get(cur_id, caseid):
     return response_success(data=res)
 
 
-@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_delete(cur_id, com_id, caseid):
 
@@ -615,7 +615,7 @@ def case_filter_timeline(caseid):
     return response_success("ok", data=resp)
 
 
-@case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['GET'])
+@case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_event(cur_id, caseid):
 

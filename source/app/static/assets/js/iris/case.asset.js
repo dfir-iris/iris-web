@@ -142,7 +142,7 @@ function delete_asset(asset_id) {
     do_deletion_prompt("You are about to delete asset #" + asset_id)
     .then((doDelete) => {
         if (doDelete) {
-            get_request_api('assets/delete/' + asset_id)
+            post_request_api('assets/delete/' + asset_id)
             .done((data) => {
                 if (data.status == 'success') {
                     reload_assets();

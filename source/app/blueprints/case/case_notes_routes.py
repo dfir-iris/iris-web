@@ -128,7 +128,7 @@ def case_note_detail_modal(cur_id, caseid, url_redir):
     return response_error(f'Unable to find note ID {cur_id} for case {caseid}')
 
 
-@case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['GET'])
+@case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_note_delete(cur_id, caseid):
 
@@ -295,7 +295,7 @@ def case_add_notes_groups(caseid):
     return response_error("Invalid request")
 
 
-@case_notes_blueprint.route('/case/notes/groups/delete/<int:cur_id>', methods=['GET'])
+@case_notes_blueprint.route('/case/notes/groups/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_notes_groups(cur_id, caseid):
 
@@ -416,7 +416,7 @@ def case_comment_note_edit(cur_id, com_id, caseid):
     return case_comment_update(com_id, 'notes', caseid)
 
 
-@case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_note_delete(cur_id, com_id, caseid):
 

@@ -356,7 +356,7 @@ def add_customers(caseid):
     return response_success("Added successfully", data=client_schema.dump(client))
 
 
-@manage_customers_blueprint.route('/manage/customers/delete/<int:cur_id>', methods=['GET'])
+@manage_customers_blueprint.route('/manage/customers/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def delete_customers(cur_id, caseid):
     try:
@@ -377,7 +377,7 @@ def delete_customers(cur_id, caseid):
     return response_success("Deleted successfully")
 
 
-@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/delete', methods=['GET'])
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/delete', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def delete_contact_route(cur_id, contact_id, caseid):
     try:

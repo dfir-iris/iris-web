@@ -148,7 +148,7 @@ function delete_event(id) {
     do_deletion_prompt("You are about to delete event #" + id)
     .then((doDelete) => {
         if (doDelete) {
-            get_request_api("timeline/events/delete/" + id)
+            post_request_api("timeline/events/delete/" + id)
             .done(function(data) {
                 if(notify_auto_api(data)) {
                     apply_filtering();
@@ -380,7 +380,7 @@ function events_bulk_delete() {
             selected_rows.each(function(index) {
                 var object = selected_rows[index];
                 var event_id = object.getAttribute('id').replace("event_","");
-                get_request_api("timeline/events/delete/" + event_id)
+                post_request_api("timeline/events/delete/" + event_id)
                 .done(function(data) {
                     notify_auto_api(data);
                     if (index === selected_rows.length - 1) {

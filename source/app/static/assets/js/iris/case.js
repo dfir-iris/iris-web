@@ -93,7 +93,7 @@ function remove_case(id) {
     })
         .then((willDelete) => {
             if (willDelete) {
-                get_request_api('/manage/cases/delete/' + id)
+                post_request_api('/manage/cases/delete/' + id)
                 .done((data) => {
                     if (notify_auto_api(data)) {
                         $('#modal_case_detail').modal('hide');

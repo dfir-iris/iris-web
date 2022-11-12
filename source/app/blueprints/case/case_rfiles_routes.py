@@ -197,7 +197,7 @@ def case_edit_rfile(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@case_rfiles_blueprint.route('/case/evidences/delete/<int:cur_id>', methods=['GET'])
+@case_rfiles_blueprint.route('/case/evidences/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_rfile(cur_id, caseid):
 
@@ -290,7 +290,7 @@ def case_comment_evidence_edit(cur_id, com_id, caseid):
     return case_comment_update(com_id, 'tasks', caseid)
 
 
-@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_evidence_delete(cur_id, com_id, caseid):
 

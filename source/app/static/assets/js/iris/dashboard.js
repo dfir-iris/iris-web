@@ -133,7 +133,7 @@ function update_gtask(id) {
 
 /* Delete an event from the timeline thank to its id */
 function delete_gtask(id) {
-    get_request_api("/global/tasks/delete/" + id)
+    post_request_api("/global/tasks/delete/" + id)
     .done((data) => {
         if(notify_auto_api(data)) {
             update_gtasks_list();

@@ -182,7 +182,7 @@ def add_assets(caseid):
     return response_error("Unexpected error server-side. Nothing updated")
 
 
-@manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])
+@manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def delete_assets(cur_id, caseid):
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()

@@ -185,7 +185,7 @@ function delete_remote_groupnote(group_id) {
         data['group_id'] = group_id;
         data['csrf_token'] = $('#csrf_token').val();
 
-        get_request_api('/case/notes/groups/delete/'+ group_id)
+        post_request_api('/case/notes/groups/delete/'+ group_id)
         .done((data) => {
             if (data.status == 'success') {
                 swal("Done !", data.message, "success");
@@ -231,7 +231,7 @@ function delete_note(_item, cid) {
     do_deletion_prompt("You are about to delete note #" + n_id)
     .then((doDelete) => {
         if (doDelete) {
-            get_request_api('/case/notes/delete/' + n_id, undefined, undefined, cid)
+            post_request_api('/case/notes/delete/' + n_id, undefined, undefined, cid)
             .done((data) => {
                $('#modal_note_detail').modal('hide');
                notify_auto_api(data);

@@ -115,7 +115,7 @@ def add_ioc_type_api(caseid):
     return response_success("Added successfully", data=ioct_sc)
 
 
-@manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['GET'])
+@manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def remove_ioc_type(cur_id, caseid):
 

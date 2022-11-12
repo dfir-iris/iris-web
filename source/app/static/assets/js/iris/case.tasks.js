@@ -132,7 +132,7 @@ function delete_task(id) {
     do_deletion_prompt("You are about to delete task #" + id)
     .then((doDelete) => {
         if (doDelete) {
-            get_request_api("tasks/delete/" + id)
+            post_request_api("tasks/delete/" + id)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     get_tasks();

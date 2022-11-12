@@ -274,7 +274,7 @@ def case_add_ioc_modal(caseid, url_redir):
     return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc(), attributes=attributes)
 
 
-@case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['GET'])
+@case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_ioc(cur_id, caseid):
     call_modules_hook('on_preload_ioc_delete', data=cur_id, caseid=caseid)
@@ -437,7 +437,7 @@ def case_comment_ioc_edit(cur_id, com_id, caseid):
     return case_comment_update(com_id, 'ioc', caseid)
 
 
-@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/delete', methods=['GET'])
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_ioc_delete(cur_id, com_id, caseid):
 
