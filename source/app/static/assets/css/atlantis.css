@@ -14849,7 +14849,7 @@ table.dataTable.stripe tbody > tr.selected {
 .kanban-container {
     position: relative;
     width: auto;
-    margin-left: 2%;
+    margin-left: 3%;
 }
 
 .kanban-container:after {
@@ -14864,7 +14864,6 @@ table.dataTable.stripe tbody > tr.selected {
     position: relative;
     background-color: #4b4b4d2b;
     box-shadow: 1px 1px 1px 1px rgba(122, 128, 134, 0.178), 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-    ;
     border-radius: 9px;
     padding: .5rem;
     display: inline-block;
@@ -14875,7 +14874,7 @@ table.dataTable.stripe tbody > tr.selected {
 }
 
 .kanban-board:not(:last-child) {
-    margin-right: 1.25rem;
+    margin-right: 2rem;
 }
 
 .kanban-board.disabled-board {
@@ -14927,8 +14926,6 @@ table.dataTable.stripe tbody > tr.selected {
 .kanban-item {
     background: #fff;
     padding: 15px;
-    background: #fff;
-    padding: 15px;
     margin-bottom: 8px;
     margin-top: 8px;
     box-shadow: 0 0 0 1px rgba(122, 128, 134, 0.05), 0 1px 5px 5px rgba(103, 110, 117, 0.15);
@@ -14943,10 +14940,6 @@ table.dataTable.stripe tbody > tr.selected {
 
 .kanban-item:hover .kanban-edit {
     opacity: 1 !important;
-}
-
-.kanban-item:last-child {
-    margin: 0;
 }
 
 .kanban-item.is-moving.gu-mirror {
