@@ -69,6 +69,15 @@ def delete_note(note_id, caseid):
         NotesGroupLink.case_id == caseid
     )).delete()
 
+    NotesComments.query.filter(
+        NotesComments.comment_note_id == note_id
+    ).delete(synchronize_session='fetch')
+
+    Comments.query.filter(and_(
+        Comments.comment_id == NotesComments.comment_note_id,
+        NotesComments.comment_note_id == note_id
+    )).delete(synchronize_session='fetch')
+
     db.session.commit()
     Notes.query.filter(Notes.note_id == note_id).delete()
 
