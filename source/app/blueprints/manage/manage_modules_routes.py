@@ -78,7 +78,7 @@ def site_map(caseid, url_redir):
             url = url_for(rule.endpoint, **(rule.defaults or {}))
             links.append((url, rule.endpoint))
 
-    return response_error('', data=links)
+    return response_success('', data=links)
 
 
 @manage_modules_blueprint.route('/manage/modules', methods=['GET'])

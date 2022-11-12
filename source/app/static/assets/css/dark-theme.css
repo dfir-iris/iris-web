@@ -804,3 +804,7 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 .md_description_field {
     border: 1px solid #aeaeae33;
 }
+
+.contact-list-detail:hover {
+  background: #f6f5f512;
+}

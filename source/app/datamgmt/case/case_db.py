@@ -17,12 +17,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
 
 import binascii
 from sqlalchemy import and_
 
 from app import db
+from app.models import Tags
 from app.models.cases import CaseProtagonist
+from app.models.cases import CaseTags
 from app.models.cases import Cases
 from app.models.models import CaseTemplateReport
 from app.models.models import Client
@@ -116,6 +119,54 @@ def get_case_report_template():
     ).all()
 
     return reports
+
+
+def save_case_tags(tags, case_id):
+    case = get_case(case_id)
+    to_add = []
+
+    existing_tags = CaseTags.query.filter(
+        CaseTags.case_id == case_id
+    ).all()
+    existing_tags = [tag.tag_id for tag in existing_tags]
+
+    for tag in tags.split(','):
+        tag = tag.strip()
+        if tag:
+            tg = Tags.query.filter(Tags.tag_title == tag).first()
+            if not tg:
+                tg = Tags()
+                tg.tag_title = tag
+                tg.tag_creation_date = datetime.datetime.now()
+                db.session.add(tg)
+                db.session.commit()
+            to_add.append(tg.id)
+
+    CaseTags.query.filter(and_(
+        CaseTags.case_id == case_id,
+        CaseTags.tag_id.notin_(to_add)
+    )).delete()
+
+    for tag in to_add:
+        if tag not in existing_tags:
+            ct = CaseTags()
+            ct.case_id = case_id
+            ct.tag_id = tag
+            db.session.add(ct)
+
+    db.session.commit()
+
+
+def get_case_tags(case_id):
+    tags = CaseTags.query.with_entities(
+        Tags.tag_title
+    ).filter(
+        CaseTags.case_id == case_id
+    ).join(
+        CaseTags.tag
+    ).all()
+
+    return ",".join([tag.tag_title for tag in tags])
 
 
 def get_activities_report_template():

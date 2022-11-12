@@ -35,6 +35,7 @@ from flask_wtf import FlaskForm
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import register_case_protagonists
+from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -287,6 +288,7 @@ def update_case_info(caseid):
         db.session.commit()
 
         register_case_protagonists(case.case_id, request_data['protagonists'])
+        save_case_tags(request_data['case_tags'], case_i.case_id)
 
         track_activity("Case updated {case_name}".format(case_name=case.name), caseid=caseid)
 

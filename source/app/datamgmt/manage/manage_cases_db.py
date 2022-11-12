@@ -23,6 +23,7 @@ from datetime import datetime
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.states import delete_case_states
 from app.models import CaseAssets
 from app.models import CaseEventCategory
@@ -182,6 +183,9 @@ def get_case_details_rt(case_id):
             Cases.user_id == User.id,
             Client.client_id == Cases.client_id
         )).first()
+
+        res = res._asdict()
+        res['case_tags'] = get_case_tags(case_id)
 
     else:
         res = None

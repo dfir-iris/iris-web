@@ -60,6 +60,8 @@ function save_case_edit(case_id) {
         data_sent['protagonists'].push(map_protagonists[e]);
     }
 
+    data_sent['case_tags'] = $('#case_tags').val();
+
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];

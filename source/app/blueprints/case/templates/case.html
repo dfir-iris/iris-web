@@ -9,14 +9,11 @@
 {% else %}
 <div class="panel-header bg-info-gradient">
 {% endif %}
-    <div class="pull-in sparkline-fix chart-as-background">
-        <div id="activity_chart"></div>
-    </div>
     <div class="page-inner py-5">
         <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
             <div class="col">
                 <div class="row">
-                    <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
+                    <h2 class="text-white pb-2 fw-bold case-name"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
                     </h2>
                     <div class="row mb-2">
                          <div class="col-md-12">

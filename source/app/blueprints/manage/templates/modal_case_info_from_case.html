@@ -84,20 +84,20 @@
                             <span type="text" class="text-faded">{{ data.case_uuid }}</span>
                         </div>
                     </div>
-                        <div class="col-6 col-xs-12 col-md-6">
-                            <div class="form-group mt--3">
-                                <label>Opening user :</label>
-                                <span type="text" class="">{{ data.open_by_user }}</span>
-                            </div>
-                            {% if protagonists %}
-                                {% for protagonist in protagonists %}
-                                    <div class="form-group mt--3">
-                                        <label>{{ protagonist.role }}: </label>
-                                        <span type="text" class="">{{ protagonist.name }} ({{protagonist.contact}})</span>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
+                    <div class="col-6 col-xs-12 col-md-6">
+                        <div class="form-group mt--3">
+                            <label>Opening user :</label>
+                            <span type="text" class="">{{ data.open_by_user }}</span>
                         </div>
+                        {% if protagonists %}
+                            {% for protagonist in protagonists %}
+                                <div class="form-group mt--3">
+                                    <label>{{ protagonist.role }}: </label>
+                                    <span type="text" class="">{{ protagonist.name }} ({{protagonist.contact}})</span>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
                     </div>
                 </div>
                 <div id="case_gen_info_edit" style="display:none;">
@@ -136,6 +136,12 @@
                                       <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
                                   </select>
                                 </div>
+                                <div class="form-group">
+                                    <label for="asset_tags">Case tags
+                                    </label>
+                                    <input type="text" id="case_tags"
+                                        class="form-control col-md-12" {% if data.case_tags %} value="{{ data.case_tags }}" {% endif %}/>
+                                </div>
                                 {% if protagonists %}
                                 {% for iprota in protagonists %}
                                     <div class="input-group mb-2 mt-2" id="protagonist_{{loop.index}}">
@@ -173,7 +179,6 @@
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-dark mt-2 mr-2" id="add_protagonist_btn"  onclick="add_protagonist();">Add protagonist</button>
                             </div>
-
                         </form>
                     </div>
                 </div>
@@ -298,6 +303,11 @@
                 value: req_users[i].user_email
             }));
         }
+    });
+
+    $('#case_tags').amsifySuggestags({
+        printValues: false,
+        suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
     });
 
 </script>

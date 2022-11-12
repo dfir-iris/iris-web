@@ -37,6 +37,7 @@ from sqlalchemy import func
 from app import app
 from app import db
 from app import ma
+from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
@@ -510,6 +511,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     case_customer = auto_field('client_id', required=True)
     case_organisations = fields.List(fields.Integer, required=False)
     protagonists = fields.List(fields.Dict, required=False)
+    case_tags = fields.String(required=False)
     csrf_token = fields.String(required=False)
 
     class Meta:
