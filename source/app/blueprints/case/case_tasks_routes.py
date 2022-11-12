@@ -35,6 +35,7 @@ from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import delete_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comments
@@ -51,6 +52,8 @@ from app.datamgmt.states import update_tasks_state
 from app.forms import CaseTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models import Comments
+from app.models import TaskComments
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.models import CaseTasks, TaskAssignee
@@ -261,8 +264,7 @@ def case_delete_task(cur_id, caseid):
     if not task:
         return response_error("Invalid task ID for this case")
 
-    TaskAssignee.query.filter(TaskAssignee.task_id == cur_id).delete()
-    CaseTasks.query.filter(CaseTasks.id == cur_id, CaseTasks.task_case_id == caseid).delete()
+    delete_task(task.id)
 
     update_tasks_state(caseid=caseid)
 
