@@ -107,7 +107,7 @@ def delete_ioc(ioc, caseid):
 
     Comments.query.filter(and_(
         Comments.comment_id == IocComments.comment_id,
-        IocComments.ioc_id == ioc.ioc_id
+        IocComments.comment_ioc_id == ioc.ioc_id
     )).delete()
 
     IocComments.query.filter(
