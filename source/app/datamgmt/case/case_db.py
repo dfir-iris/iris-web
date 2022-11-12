@@ -147,6 +147,10 @@ def save_case_tags(tags, case_id):
         CaseTags.tag_id.notin_(to_add)
     )).delete()
 
+    to_delete = [tag for tag in existing_tags if tag not in to_add]
+    if to_delete:
+        Tags.query.filter(Tags.id.in_(to_delete)).delete()
+
     for tag in to_add:
         if tag not in existing_tags:
             ct = CaseTags()

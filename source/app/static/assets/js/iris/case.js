@@ -27,7 +27,7 @@ function cancel_case_edit() {
     $('#case_gen_info_edit').hide();
     $('#cancel_case_info').hide();
     $('#case_info').show();
-    $('#save_case_info').hide();
+    $('#cancel_case_info').hide();
 }
 
 function save_case_edit(case_id) {
