@@ -3754,12 +3754,12 @@ body {
 
 .card,
 .card-light {
-    border-radius: 5px;
+    border-radius: 10px;
     background-color: #ffffff;
     margin-bottom: 30px;
-    -webkit-box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.1);
-    -moz-box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.1);
-    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.1);
+    -webkit-box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.17);
+    -moz-box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.17);
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.17);
     border: 0px;
 }
 
@@ -5090,7 +5090,7 @@ label {
 /*      Row Card No Padding      */
 
 .row-card-no-pd {
-    border-radius: 5px;
+    border-radius: 10px;
     margin-left: 0;
     margin-right: 0;
     background: #ffffff;
@@ -5134,7 +5134,7 @@ label {
 /*     Accordion     */
 
 .accordion .card {
-    border-radius: 5px !important;
+    border-radius: 10px !important;
     background: #f7f7f7;
     color: #575962;
     border: 0;
