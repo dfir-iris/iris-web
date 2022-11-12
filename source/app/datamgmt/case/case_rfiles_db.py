@@ -83,6 +83,16 @@ def update_rfile(evidence, user_id, caseid):
 
 
 def delete_rfile(rfile_id, caseid):
+
+    EvidencesComments.query.filter(
+        EvidencesComments.comment_evidence_id == rfile_id
+    ).delete(synchronize_session='fetch')
+
+    Comments.query.filter(and_(
+        Comments.comment_id == EvidencesComments.comment_id,
+        EvidencesComments.comment_evidence_id == rfile_id
+    )).delete(synchronize_session='fetch')
+
     CaseReceivedFile.query.filter(and_(
         CaseReceivedFile.id == rfile_id,
         CaseReceivedFile.case_id == caseid,
