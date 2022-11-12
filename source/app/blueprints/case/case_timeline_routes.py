@@ -59,6 +59,7 @@ from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.iris_engine.utils.tracker import track_activity
+from app.models import Comments
 from app.models import EventComments
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
@@ -638,9 +639,10 @@ def case_delete_event(cur_id, caseid):
         CaseEventsIoc.case_id == caseid
     ).delete()
 
-    EventComments.query.filter(
+    Comments.query.filter(and_(
+        Comments.comment_id == EventComments.comment_id,
         EventComments.comment_event_id == cur_id
-    ).delete()
+    )).delete()
 
     db.session.commit()
 

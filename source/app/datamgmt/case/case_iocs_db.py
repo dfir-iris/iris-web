@@ -105,6 +105,15 @@ def delete_ioc(ioc, caseid):
         CaseEventsIoc.ioc_id == ioc.ioc_id
     ).delete()
 
+    Comments.query.filter(and_(
+        Comments.comment_id == IocComments.comment_id,
+        IocComments.ioc_id == ioc.ioc_id
+    )).delete()
+
+    IocComments.query.filter(
+        IocComments.comment_ioc_id == ioc.ioc_id
+    ).delete()
+
     db.session.delete(ioc)
 
     update_ioc_state(caseid=caseid)
