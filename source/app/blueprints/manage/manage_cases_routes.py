@@ -76,7 +76,7 @@ manage_cases_blueprint = Blueprint('manage_case',
 
 # CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.standard_user)
 def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
@@ -257,7 +257,7 @@ def api_add_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(Permissions.standard_user)
 def api_list_case(caseid):
 
     data = list_cases_dict(current_user.id)
@@ -266,8 +266,11 @@ def api_list_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_api_requires(Permissions.standard_user)
 def update_case_info(caseid):
+
+    if not ac_fast_check_current_user_has_case_access(caseid, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=caseid)
 
     # case update request. The files should have already arrived with the request upload_files
     case_schema = CaseSchema()
@@ -303,8 +306,10 @@ def update_case_info(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/trigger-pipeline', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_api_requires(Permissions.standard_user)
 def update_case_files(caseid):
+    if not ac_fast_check_current_user_has_case_access(caseid, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=caseid)
 
     # case update request. The files should have already arrived with the request upload_files
     try:
@@ -362,13 +367,15 @@ def update_case_files(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/upload_files', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_api_requires(Permissions.standard_user)
 def manage_cases_uploadfiles(caseid):
     """
     Handles the entire the case management, i.e creation, update, list and files imports
     :param path: Path within the URL
     :return: Depends on the path, either a page a JSON
     """
+    if not ac_fast_check_current_user_has_case_access(caseid, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=caseid)
 
     # Files uploads of a case. Get the files, create the folder tree
     # The request "add" will start the check + import of the files.

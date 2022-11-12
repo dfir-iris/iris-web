@@ -82,7 +82,7 @@
 							</a>
 						</li>
 
-						{% if user_has_perm(std_permissions.server_administrator) %}
+
 						<li class="nav-section nav-advanced">
 							<span class="sidebar-mini-icon">
 								<i class="fa fa-ellipsis-h"></i>
@@ -95,6 +95,7 @@
 								<span>Manage cases</span>
 							</a>
 						</li>
+						{% if user_has_perm(std_permissions.server_administrator) %}
 						<li class="nav-item submenu nav-advanced">
 							<a data-toggle="collapse" href="#advanced-nav" class="" aria-expanded="false">
 								<i class="flaticon-interface-3"></i>

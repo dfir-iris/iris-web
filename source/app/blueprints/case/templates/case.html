@@ -18,7 +18,7 @@
                     <div class="col mb-2">
                       <select title="Case outcome" class="btn btn-rounded badge-pill hidden-caret btn-sm ml-2 {% if case.status_id == 1 %}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-outline-light{% endif %}"
                               id="case_quick_status" aria-labelledby="dropdownMenuButton">
-                          <option value="0" {% if case.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
+                          <option value="0" {% if case.status_id == 0 %}selected{% endif %} class="badge-text">Unknown outcome</option>
                           <option value="1" {% if case.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
                           <option value="2" {% if case.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
                           <option value="3" {% if case.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
