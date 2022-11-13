@@ -457,15 +457,31 @@ def create_safe_auth_model():
     def_org = get_or_create(db.session, Organisation, org_name="Default Org",
                             org_description="Default Organisation")
 
-    gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators")
+    gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators",
+                         group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                         group_permissions=ac_get_mask_full_permissions())
     if gadm.group_permissions != ac_get_mask_full_permissions():
         gadm.group_permissions = ac_get_mask_full_permissions()
-        db.session.commit()
+
+    if gadm.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
+        gadm.group_auto_follow_access_level = CaseAccessLevel.full_access.value
+
+    if gadm.group_auto_follow is not True:
+        gadm.group_auto_follow = True
+
+    db.session.commit()
 
     ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts")
     if ganalysts.group_permissions != ac_get_mask_analyst():
         ganalysts.group_permissions = ac_get_mask_analyst()
-        db.session.commit()
+
+    if ganalysts.group_auto_follow is not True:
+        ganalysts.group_auto_follow = True
+
+    if ganalysts.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
+        ganalysts.group_auto_follow_access_level = CaseAccessLevel.full_access.value
+
+    db.session.commit()
 
     return def_org, gadm, ganalysts
 
