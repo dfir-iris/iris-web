@@ -37,6 +37,7 @@ from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
+from app.iris_engine.access_control.utils import ac_recompute_all_users_effective_ac
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
@@ -136,10 +137,10 @@ def run_post_init(development=False):
         log.info("Registering default modules")
         register_default_modules()
 
-        log.info("Creating demo client")
+        log.info("Creating initian client")
         client = create_safe_client()
 
-        log.info("Creating demo case")
+        log.info("Creating initial case")
         case = create_safe_case(
             user=admin,
             client=client,
@@ -147,7 +148,7 @@ def run_post_init(development=False):
         )
 
         log.info("Recalculating effective users permissions.. might take a while")
-        #ac_recompute_all_users_effective_ac()
+        ac_recompute_all_users_effective_ac()
 
         # setup symlinks for custom_assets
         log.info("Creating symlinks for custom asset icons")
