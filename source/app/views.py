@@ -55,6 +55,7 @@ from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
 from app.blueprints.reports.reports_route import reports_blueprint
 from app.blueprints.search.search_routes import search_blueprint
+from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.models.authorization import User
 from app.post_init import run_post_init
 
@@ -88,6 +89,7 @@ app.register_blueprint(dim_tasks_blueprint)
 app.register_blueprint(datastore_blueprint)
 
 app.register_blueprint(api_blueprint)
+app.register_blueprint(demo_blueprint)
 
 run_post_init(development=app.config["DEVELOPMENT"])
 
