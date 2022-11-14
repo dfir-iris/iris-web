@@ -267,7 +267,11 @@ def case_getgraph(caseid):
         tmp['date'] = row.event_date
         tmp['group'] = row.category[0].name
         tmp['content'] = row.event_title
-        content = row.event_content.replace('\n', '<br/>')
+        if row.event_content:
+            content = row.event_content.replace('\n', '<br/>')
+        else:
+            content = ''
+
         tmp['title'] = f"<small>{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')}</small><br/>{content}"
 
         if row.event_color:
