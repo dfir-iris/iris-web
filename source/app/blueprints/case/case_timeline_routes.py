@@ -230,7 +230,7 @@ def case_getgraph_assets(caseid):
         for asset in assets_cache:
             if asset.event_id == row.event_id:
                 tmp = {}
-                tmp['date'] = row.event_date.timestamp()
+                tmp['date'] = row.event_date
                 tmp['group'] = asset.asset_name
                 tmp['content'] = row.event_title
                 tmp['title'] = f"{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')} - {row.event_content}"
