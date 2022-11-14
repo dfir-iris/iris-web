@@ -18,6 +18,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import os
 
 from flask import Blueprint
 from flask import redirect
@@ -49,9 +50,11 @@ demo_blueprint = Blueprint(
 
 log = app.logger
 
+if app.config.get('DEMO_MODE_ENABLED') == 'True':
+    @demo_blueprint.route('/welcome', methods=['GET'])
+    def demo_landing():
+        iris_version = app.config.get('IRIS_VERSION')
+        demo_domain = app.config.get('DEMO_DOMAIN')
 
-@demo_blueprint.route('/welcome', methods=['GET'])
-def demo_landing():
-    iris_version = app.config.get('IRIS_VERSION')
-    return render_template('demo-landing.html', iris_version=iris_version)
+        return render_template('demo-landing.html', iris_version=iris_version, demo_domain=demo_domain)
 

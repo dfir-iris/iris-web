@@ -1,8 +1,9 @@
-    body {
-  background: repeating-linear-gradient(0deg, #0E0D0E 25%, #0E0D0E 50%, #171819 50%, #171819 75%);
+body {
+  background: repeating-linear-gradient(0deg, #000 25%, #040404 50%, #17181a 50%, #151617 75%);
   background-size: 10px 10px;
   height: 100vh;
-  overflow: hidden;
+  overflow-y: scroll;
+  overflow-x: hidden;
   display: flex;
   font-family: "Barlow", sans-serif;
   justify-content: center;
@@ -22,8 +23,8 @@
   left: 0;
 }
 .line:nth-child(1) {
-  -webkit-animation: clip 3000ms -30ms linear infinite, glitch1 500ms -93ms linear infinite;
-          animation: clip 3000ms -30ms linear infinite, glitch1 500ms -93ms linear infinite;
+  -webkit-animation: clip 3000ms -3000ms linear infinite, glitch1 5000ms -500ms linear infinite;
+          animation: clip 3000ms -3000ms linear infinite, glitch1 5000ms -500ms linear infinite;
 }
 @-webkit-keyframes glitch1 {
   0% {
@@ -74,8 +75,8 @@
   }
 }
 .line:nth-child(2) {
-  -webkit-animation: clip 3000ms -600ms linear infinite, glitch2 500ms -526ms linear infinite;
-          animation: clip 3000ms -600ms linear infinite, glitch2 500ms -526ms linear infinite;
+  -webkit-animation: clip 3000ms -3000ms linear infinite, glitch2 5000ms -500ms linear infinite;
+          animation: clip 3000ms -3000ms linear infinite, glitch2 5000ms -500ms linear infinite;
 }
 @-webkit-keyframes glitch2 {
   0% {
@@ -126,8 +127,8 @@
   }
 }
 .line:nth-child(3) {
-  -webkit-animation: clip 3000ms -900ms linear infinite, glitch3 500ms -987ms linear infinite;
-          animation: clip 3000ms -900ms linear infinite, glitch3 500ms -987ms linear infinite;
+  -webkit-animation: clip 3000ms -3000ms linear infinite, glitch3 5000ms -500ms linear infinite;
+          animation: clip 3000ms -3000ms linear infinite, glitch3 5000ms -500ms linear infinite;
 }
 @-webkit-keyframes glitch3 {
   0% {
@@ -178,8 +179,8 @@
   }
 }
 .line:nth-child(4) {
-  -webkit-animation: clip 3000ms -1200ms linear infinite, glitch4 500ms -349ms linear infinite;
-          animation: clip 3000ms -1200ms linear infinite, glitch4 500ms -349ms linear infinite;
+  -webkit-animation: clip 3000ms -3000ms linear infinite, glitch4 5000ms -500ms linear infinite;
+          animation: clip 3000ms -3000ms linear infinite, glitch4 5000ms -500ms linear infinite;
 }
 @-webkit-keyframes glitch4 {
   0% {
@@ -230,8 +231,8 @@
   }
 }
 .line:nth-child(5) {
-  -webkit-animation: clip 3000ms -1500ms linear infinite, glitch5 500ms -521ms linear infinite;
-          animation: clip 3000ms -1500ms linear infinite, glitch5 500ms -521ms linear infinite;
+  -webkit-animation: clip 3000ms -3000ms linear infinite, glitch5 5000ms -400ms linear infinite;
+          animation: clip 3000ms -3000ms linear infinite, glitch5 5000ms -400ms linear infinite;
 }
 @-webkit-keyframes glitch5 {
   0% {
@@ -282,8 +283,8 @@
   }
 }
 .line:nth-child(6) {
-  -webkit-animation: clip 3000ms -1800ms linear infinite, glitch6 500ms -783ms linear infinite;
-          animation: clip 3000ms -1800ms linear infinite, glitch6 500ms -783ms linear infinite;
+  -webkit-animation: clip 3000ms -3000ms linear infinite, glitch6 5000ms -300ms linear infinite;
+          animation: clip 3000ms -3000ms linear infinite, glitch6 5000ms -300ms linear infinite;
 }
 @-webkit-keyframes glitch6 {
   0% {
@@ -562,4 +563,8 @@
     -webkit-clip-path: polygon(0 -20%, 100% -20%, 100% 0%, 0 0);
             clip-path: polygon(0 -20%, 100% -20%, 100% 0%, 0 0);
   }
+}
+
+.text-muted {
+  color: #959697 !important;
 }
