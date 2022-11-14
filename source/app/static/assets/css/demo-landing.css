@@ -22,8 +22,8 @@
   left: 0;
 }
 .line:nth-child(1) {
-  -webkit-animation: clip 3000ms -300ms linear infinite, glitch1 500ms -93ms linear infinite;
-          animation: clip 3000ms -300ms linear infinite, glitch1 500ms -93ms linear infinite;
+  -webkit-animation: clip 3000ms -30ms linear infinite, glitch1 500ms -93ms linear infinite;
+          animation: clip 3000ms -30ms linear infinite, glitch1 500ms -93ms linear infinite;
 }
 @-webkit-keyframes glitch1 {
   0% {
