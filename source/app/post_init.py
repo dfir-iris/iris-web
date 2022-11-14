@@ -492,6 +492,7 @@ def create_safe_admin(def_org, gadm):
     ).first()
     if not user:
         password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choice(string.printable[:-6]) for i in range(16)))
+        api_key = os.environ.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
         user = User(
             user="administrator",
             name="administrator",
@@ -499,7 +500,7 @@ def create_safe_admin(def_org, gadm):
             password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
             active=True
         )
-        user.api_key = secrets.token_urlsafe(nbytes=64)
+        user.api_key = api_key
         db.session.add(user)
 
         db.session.commit()

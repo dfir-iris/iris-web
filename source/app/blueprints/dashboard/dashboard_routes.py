@@ -344,5 +344,5 @@ def gtask_delete(cur_id, caseid):
 
     call_modules_hook('on_postload_global_task_delete', data=request.get_json(), caseid=caseid)
     track_activity("deleted global task ID {}".format(cur_id), caseid=caseid)
-    print('jow')
+
     return response_success("Task deleted")

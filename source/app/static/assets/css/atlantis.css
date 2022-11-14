@@ -7106,7 +7106,17 @@ body .badge-danger {
     .navbar-header .dropdown-menu {
         margin-top: 13px;
     }
-    .navbar-header .dropdown-menu:after {
+    .navbar-header .dropdown-menu:not(.dropdown-left):after  {
+        border-bottom: 8px solid #fff;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        content: "";
+        right: 10px;
+        top: -8px;
+        position: absolute;
+        z-index: 1001;
+    }
+    .navbar-header .dropdown-left.dropdown-menu:after {
         border-bottom: 8px solid #fff;
         border-left: 8px solid transparent;
         border-right: 8px solid transparent;
