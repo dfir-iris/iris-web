@@ -50,6 +50,8 @@ function add_event() {
             data_sent['event_assets'] = $('#event_assets').val();
             data_sent['event_iocs'] = $('#event_iocs').val();
             data_sent['event_tz'] = $('#event_tz').val();
+            data_sent['event_content'] = g_event_desc_editor.getValue();
+
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
             attributes = ret[1];
