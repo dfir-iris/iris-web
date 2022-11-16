@@ -1,5 +1,5 @@
 body {
-  background: repeating-linear-gradient(0deg, #000 25%, #040404 50%, #17181a 50%, #151617 75%);
+  background: repeating-linear-gradient(0deg, #000 25%, #040404 50%, #000 50%, #151617 75%);
   background-size: 10px 10px;
   height: 100vh;
   overflow-y: scroll;
@@ -7,7 +7,7 @@ body {
   display: flex;
   font-family: "Barlow", sans-serif;
   justify-content: center;
-  align-items: center;
+  color: #000;
 }
 
 .glitch {

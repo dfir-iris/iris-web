@@ -20,44 +20,77 @@
             </div>
         </div>
         <div class="row">
-            <h5 class="text-white ml-auto mr-auto">demonstration instance <span class="text-muted">{{ iris_version }}</span></h5>
+            <h5 class=" ml-auto mr-auto">demonstration instance <span class="text-muted">{{ iris_version }}</span></h5>
          </div>
 		<div class="main-panel">
 
-        <div class="row mt-4">
-        </div>
-         <div class="row mt-4">
-            <h3 class="text-white ml-auto mr-auto"><span class="text-warning">This is a shared instance</span></h3><br/>
-         </div>
-         <div class="row">
-             <h5 class="text-muted ml-auto mr-auto"><i>try out IRIS, find bugs and security vulnerabilities</i></h5><br/>
-         </div>
-         <div class="row">
-             <h5 class="text-white ml-auto mr-auto">Please read carefully the following</h5><br/>
-         </div>
-         <div class="row mt-4">
-            <h4 class="text-white ml-auto mr-auto">Do not upload any illegal or confidential materials</h4>
-         </div>
-         <div class="row mt-2">
-            <h4 class="text-white ml-auto mr-auto">Do not blindly download and open files from other users</h4>
-         </div>
-         <div class="row mt-2 mb-2">
-            <h4 class="text-white ml-auto mr-auto">Respect a <a class="text-muted" target="_blank" rel="noopener noreferrer" href="https://cheatsheetseries.owasp.org/cheatsheets/Vulnerability_Disclosure_Cheat_Sheet.html#responsible-or-coordinated-disclosure">responsible disclosure</a> of 30 days</h4>
-         </div>
-         <div class="row mt-4">
-         </div>
-        <div class="row mt-2">
-            <div class="col-2"></div>
-            <div class="col-8 ml-4">
-                <p class="text-white ml-auto mr-auto"><b>If you notice anything suspicious</b>, please <a href="mailto:contact@dfir-iris.org">contact us</a> immediately.</p>
-                <p class="text-white ml-auto mr-auto"><b>If you find a vulnerability</b>, contact us before going public as it may impact systems in production.
-                    In other words, please respect a responsible disclosure of 30 days. We will patch and then publish the vulnerability. It will have your name except if you don't want to. You can report anything you find at <a href="mailto:contact@dfir-iris.org">contact@dfir-iris.org</a></p>
-                <p class="text-white ml-auto mr-auto"><b>The scope of the security tests</b> is limited to the Web Application IRIS hosted on <a class="text-white" href="{{ demo_domain }}">{{ demo_domain }}</a>. <b class="text-danger">Subdomains, scanning the IP, BF the SSH, and other flavors are out of scope.</b></p>
-
+            <div class="row mt-4">
             </div>
-            <div class="col-2"></div>
-        </div>
+             <div class="row mt-4">
+                <h3 class=" ml-auto mr-auto"><span class="text-warning">This is a shared instance</span></h3><br/>
+             </div>
+             <div class="row">
+                 <h5 class="text-muted ml-auto mr-auto"><i>try out IRIS, find bugs and security vulnerabilities</i></h5><br/>
+             </div>
+             <div class="row">
+                 <h5 class=" ml-auto mr-auto">Please read carefully the following</h5><br/>
+             </div>
+             <div class="row mt-4">
+                <h4 class=" ml-auto mr-auto">Do not upload any illegal or confidential materials</h4>
+             </div>
+             <div class="row mt-2">
+                <h4 class=" ml-auto mr-auto">Do not blindly download and open files from other users</h4>
+             </div>
+             <div class="row mt-2 mb-2">
+                <h4 class=" ml-auto mr-auto">Respect a <a class="text-muted" target="_blank" rel="noopener noreferrer" href="https://cheatsheetseries.owasp.org/cheatsheets/Vulnerability_Disclosure_Cheat_Sheet.html#responsible-or-coordinated-disclosure">responsible disclosure</a> of 30 days if you find a vulnerability</h4>
+             </div>
+             <div class="row mt-2">
+                <h4 class=" ml-auto mr-auto">The instance is reset every Sunday at 23:59:59 UTC</h4>
+             </div>
+             <div class="row mt-4">
+             </div>
+            <div class="row mt-4">
+            </div>
+            <div class="row mt-2">
+                <div class="col-2"></div>
+                <div class="col-8 ml-4">
+                    <p class=" ml-auto mr-auto"><b>If you notice anything suspicious</b>, please <a href="mailto:contact@dfir-iris.org">contact us</a> immediately.</p>
+                    <p class=" ml-auto mr-auto"><b>If you find a vulnerability</b>, <a href="mailto:contact@dfir-iris.org">contact us</a> before going public as it may impact systems in production.
+                        In other words, please respect a responsible disclosure of 30 days. We will patch and then publish the vulnerability. It will have your name except if you don't want to. You can report anything you find at <a href="mailto:contact@dfir-iris.org">contact@dfir-iris.org</a>.</p>
+                    <p class=" ml-auto mr-auto"><b>The scope of the security tests</b> is limited to the Web Application IRIS hosted on <a class="" href="{{ demo_domain }}">{{ demo_domain }}</a>.
+                        <b class="text-danger">Subdomains, SSH, scanning of the IP, BF, and other flavors are out of scope.</b> You can read the full rules and what we are looking for below. <b>Thank you for your help!</b></p>.
+                </div>
+                <div class="col-2"></div>
+            </div>
+            <p class="ml-4">
+              <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseSecRules" aria-expanded="false" aria-controls="collapseSecRules">
+                Security tests rules
+              </button>
+            </p>
+            <div class="collapse" id="collapseSecRules">
+              <div class="card card-body">
+                <h3 class="mt-2">What to look for</h3>
+                  We are interested in the following:
+                <ul>
+                    <li><b>authentication bypass</b>: achieve any action requiring an authentication without being authenticated</li>
+                    <li><b>privilege escalations within the application</b>: from a standard user (<code>user_std_XX</code>) to administrative rights (<code>adm_XX</code>) of IRIS</li>
+                    <li><b>privilege escalations to the server</b>: from a standard user (<code>user_std_XX</code>) to code execution on the server</li>
+                    <li><b>data leakage</b>: from a standard user (<code>user_std_XX</code>) read data of non-accessible cases (titled <code>Restricted Case XXX</code>)</li>
+                </ul>
+                <h3>Important Remarks</h3>
+                  <ul>
+                      <li>If you can, use a local instance of IRIS instead of this one. It only takes a few minutes to <a href="https://docs.dfir-iris.org/getting_started/">get it on docker.</a></li>
+                      <li>The administrators account can publish stored XSS on the platform via Custom Attributes. This is an operational requirement and not recognized as a vulnerability.</li>
+                  </ul>
+
+                <h3>Resources</h3>
+                  <p>You can read about the IRIS on the <a href="https://docs.dfir-iris.org">official documentation</a>.</p>
+              </div>
+            </div>
         </div>
       </div>
   </body>
+    <script src="/static/assets/js/core/jquery.3.2.1.min.js"></script>
+    <script src="/static/assets/js/core/bootstrap.min.js"></script>
+
 </html>
