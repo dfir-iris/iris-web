@@ -70,7 +70,7 @@ class Group(db.Model):
     group_description = Column(Text)
     group_permissions = Column(BigInteger, nullable=False)
     group_auto_follow = Column(Boolean, nullable=False, default=False)
-    group_auto_follow_access_level = Column(BigInteger, nullable=False)
+    group_auto_follow_access_level = Column(BigInteger, nullable=False, default=0)
 
     UniqueConstraint('group_name')
 
