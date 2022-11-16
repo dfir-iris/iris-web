@@ -471,7 +471,9 @@ def create_safe_auth_model():
 
     db.session.commit()
 
-    ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts")
+    ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
+                              group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                              group_permissions=ac_get_mask_analyst())
     if ganalysts.group_permissions != ac_get_mask_analyst():
         ganalysts.group_permissions = ac_get_mask_analyst()
 
