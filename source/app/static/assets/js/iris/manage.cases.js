@@ -182,12 +182,6 @@ $('#cases_table').dataTable({
     ]
 });
 
-/* Refresh case table function */
-function refresh_case_table() {
-    $('#cases_table').DataTable().ajax.reload();
-    $('#cases_table').DataTable().columns.adjust().draw();
-    notify_success("Refreshed");
-}
 
 $(document).ready(function() {
 

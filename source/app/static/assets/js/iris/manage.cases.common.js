@@ -4,6 +4,15 @@ function add_protagonist() {
     $('#protagonist_list_edit').append(prota_html);
 }
 
+function refresh_case_table() {
+    if ($('#cases_table').length === 0) {
+        return false;
+    }
+    $('#cases_table').DataTable().ajax.reload();
+    $('#cases_table').DataTable().columns.adjust().draw();
+    notify_success("Refreshed");
+    return true;
+}
 
 /* Create detail modal function */
 function case_detail(id) {
@@ -52,7 +61,9 @@ function remove_case(id) {
 function reopen_case(id) {
     get_request_api('/manage/cases/reopen/' + id)
     .done((data) => {
-        refresh_case_table();
+        if (!refresh_case_table()) {
+            window.location.reload();
+        }
         $('#modal_case_detail').modal('hide');
     });
 }
@@ -73,8 +84,9 @@ function close_case(id) {
         if (willClose) {
             get_request_api('/manage/cases/close/' + id)
             .done((data) => {
-                refresh_case_table();
-                $('#modal_case_detail').modal('hide');
+                if (!refresh_case_table()) {
+                    window.location.reload();
+                }
             });
         }
     });
