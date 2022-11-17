@@ -189,7 +189,12 @@
               </div>
               <div class="tab-pane" id="case-info-access">
                     <div class="row">
-                        <div class="card-title ml-4">Case access</div>
+                        <div class="col">
+                            <div class="card-title">Case access</div>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-dark float-right ml-3" onclick="set_case_access('{{ data.case_id }}');">Set case access</button>
+                        </div>
                     </div>
                       <div class="row mt-4">
                           <div class="col">
@@ -285,7 +290,10 @@
                 aoColumns: [
                   {
                     "data": "user_id",
-                    "className": "dt-center"
+                    "className": "dt-center",
+                    "render": function ( data, type, row ) {
+                        return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_user('${data}',{{ data.case_id }})"></i>${data}`;
+                    }
                 },
                 {
                     "data": "user_name",

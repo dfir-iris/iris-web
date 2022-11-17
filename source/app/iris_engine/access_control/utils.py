@@ -438,6 +438,37 @@ def ac_auto_update_user_effective_access(user_id):
     return
 
 
+def ac_remove_case_access_from_user(user_id, case_id):
+    """
+    Remove a case access from a user
+    """
+
+    uac = UserCaseEffectiveAccess.query.where(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.case_id == case_id
+    )).all()
+
+    if len(uac) > 1:
+        log.error(f'Multiple access found for user {user_id} and case {case_id}')
+        for u in uac:
+            db.session.delete(u)
+        db.session.commit()
+
+        uac = UserCaseEffectiveAccess()
+        uac.user_id = user_id
+        uac.case_id = case_id
+        uac.access_level = CaseAccessLevel.deny_all.value
+        db.session.add(uac)
+
+    elif len(uac) == 1:
+        uac = uac[0]
+        uac.access_level = CaseAccessLevel.deny_all.value
+
+    db.session.commit()
+
+    return
+
+
 def ac_get_fast_user_cases_access(user_id):
     ucea = UserCaseEffectiveAccess.query.with_entities(
         UserCaseEffectiveAccess.case_id

@@ -177,7 +177,7 @@
                         <div class="container col-md-12" >
                               <div class="row d-flex mb-4">
                                 <div class="col-8">
-                                    <span>Cases accesses are usually inherited from organisations and groups memberships. These are not displayed here. This tab allows to add granular case access if necessary.</span>
+                                    <span>Cases accesses are usually inherited from groups memberships. These are not displayed here. This tab allows to add granular case access if necessary.</span>
                                 </div>
                                 <div class="col-4 pull-right">
                                     <button class="btn btn-dark btn-sm pull-right" onclick="refresh_user_cac({{ user.user_id }});">
@@ -189,7 +189,7 @@
                                 </div>
                               </div>
                             <div class="row mt-4">
-                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="user_cac_table" >
+                              <table class="table display table-striped table-hover responsive" width="100%" cellspacing="0" id="user_cac_table" >
                                 <thead>
                                   <tr>
                                       <th>Case ID</th>
@@ -227,7 +227,7 @@
                     "title": "Group name",
                     "render": function ( data, type, row, meta ) {
                         if (type === 'display' ) {
-                            return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_member_from_group_wrap('${row[1]}','{{ user.user_id }}')"></i>${data}`;
+                            return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_member_from_group_wrap('${row[1]}','{{ user.user_id }}')"></i>${data}`;
                         }
                         return data;
                     }},
@@ -243,7 +243,7 @@
                   {
                     "data": "case_id",
                     "render": function ( data, type, row ) {
-                        return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_user('{{ user.user_id }}',${data})"></i>${data}`;
+                        return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_user('{{ user.user_id }}',${data})"></i>${data}`;
                     },
                     "className": "dt-center"
                 },
