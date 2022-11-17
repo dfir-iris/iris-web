@@ -194,7 +194,6 @@
                         </div>
                         <div class="col">
                             <button class="btn btn-dark btn-sm ml-3 float-right" onclick="access_case_info_reload('{{ data.case_id }}');">Refresh</button>
-                            <button class="btn btn-dark btn-sm ml-3 float-right" onclick="set_case_access('{{ data.case_id }}');">Set case access</button>
                         </div>
                     </div>
                       <div class="row mt-4">
@@ -203,17 +202,17 @@
                                 <thead>
                                   <tr>
                                       <th>User ID</th>
-                                      <th>User login</th>
-                                      <th>User display name</th>
-                                      <th>User access</th>
+                                      <th>User Name</th>
+                                      <th>User Login</th>
+                                      <th>User Access</th>
                                   </tr>
                                 </thead>
                                 <tfoot>
                                   <tr>
                                       <th>User ID</th>
-                                      <th>User login</th>
-                                      <th>User display name</th>
-                                      <th>User access</th>
+                                      <th>User Name</th>
+                                      <th>User Login</th>
+                                      <th>User Access</th>
                                   </tr>
                                 </tfoot>
                               </table>
@@ -273,7 +272,7 @@
     <button type="button" class="btn btn-default mr-auto" data-dismiss="modal">Dismiss</button>
 
     {% if not data.close_date %}
-        <button type="button" class="btn btn-warning" onclick="close_case('{{ data.case_id }}');">Close case</button>
+        <button type="button" class="btn btn-outline-warning" onclick="close_case('{{ data.case_id }}');">Close case</button>
     {% else %}
         <button type="button" class="btn btn-success" onclick="reopen_case('{{ data.case_id }}');">Reopen case</button>
     {% endif %}

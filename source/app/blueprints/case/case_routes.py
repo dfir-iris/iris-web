@@ -18,11 +18,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
-import traceback
-
 import binascii
 import marshmallow
+# IMPORTS ------------------------------------------------
+import traceback
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -52,7 +51,6 @@ from app.datamgmt.case.case_db import get_case_report_template
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
-from app.datamgmt.manage.manage_users_db import remove_case_access_from_user
 from app.datamgmt.manage.manage_users_db import set_user_case_access
 from app.datamgmt.reporter.report_db import export_case_json
 from app.forms import PipelinesCaseForm
