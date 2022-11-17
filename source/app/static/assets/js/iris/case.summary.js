@@ -292,6 +292,66 @@ function manage_case(case_id) {
    window.location = 'manage/cases?cid='+ case_id +'#view';
 }
 
+
+function access_case_info_reload(case_id) {
+    var req_users = [];
+
+    get_request_api('/case/users/list')
+    .done((data) => {
+         has_table = $.fn.dataTable.isDataTable( '#case_access_users_list_table' );
+        if (!notify_auto_api(data, !has_table)) {
+            return;
+        }
+
+        req_users = data.data;
+        if ( has_table ) {
+            table = $('#case_access_users_list_table').DataTable();
+            table.clear();
+            table.rows.add(req_users);
+        } else {
+            $("#case_access_users_list_table").DataTable({
+                    dom: 'Blfrtip',
+                    aaData: req_users,
+                    aoColumns: [
+                      {
+                        "data": "user_id",
+                        "className": "dt-center",
+                        "render": function ( data, type, row ) {
+                            return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_user('${data}',${case_id})"></i>${data}`;
+                        }
+                    },
+                    {
+                        "data": "user_name",
+                        "className": "dt-center"
+                    },
+                    {
+                        "data": "user_login",
+                        "className": "dt-center"
+                    }
+                    ],
+                    filter: true,
+                    info: true,
+                    ordering: true,
+                    processing: true
+            });
+        }
+        for (var i = 0; i < req_users.length; i++) {
+            $('#username-list').append($('<option>', {
+                value: req_users[i].user_name
+            }));
+            $('#emails-list').append($('<option>', {
+                value: req_users[i].user_email
+            }));
+        }
+    });
+
+    $('#case_tags').amsifySuggestags({
+        printValues: false,
+        suggestions: []
+    });
+}
+
+
 $(document).ready(function() {
 
 
