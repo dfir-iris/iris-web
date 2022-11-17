@@ -956,6 +956,7 @@ def create_safe_tlp():
     create_safe(db.session, Tlp, tlp_name="red", tlp_bscolor="danger")
     create_safe(db.session, Tlp, tlp_name="amber", tlp_bscolor="warning")
     create_safe(db.session, Tlp, tlp_name="green", tlp_bscolor="success")
+    create_safe(db.session, Tlp, tlp_name="clear", tlp_bscolor="black")
 
 
 def create_safe_server_settings():

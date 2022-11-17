@@ -616,7 +616,8 @@ def ac_trace_user_effective_cases_access_2(user_id):
         effective_cases_access[uca.case_id]['user_access'].append(access)
 
     for case_id in effective_cases_access:
-        effective_cases_access[case_id]['user_effective_access'] = ac_access_level_to_list(effective_cases_access[case_id]['user_effective_access'])
+        effective_cases_access[case_id]['user_effective_access'] = ac_access_level_to_list(
+            effective_cases_access[case_id]['user_effective_access'])
 
     return effective_cases_access
 
