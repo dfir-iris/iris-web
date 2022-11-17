@@ -308,6 +308,7 @@ function access_case_info_reload(case_id) {
             table = $('#case_access_users_list_table').DataTable();
             table.clear();
             table.rows.add(req_users);
+            table.draw();
         } else {
             $("#case_access_users_list_table").DataTable({
                     dom: 'Blfrtip',
@@ -315,10 +316,7 @@ function access_case_info_reload(case_id) {
                     aoColumns: [
                       {
                         "data": "user_id",
-                        "className": "dt-center",
-                        "render": function ( data, type, row ) {
-                            return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_user('${data}',${case_id})"></i>${data}`;
-                        }
+                        "className": "dt-center"
                     },
                     {
                         "data": "user_name",
@@ -327,6 +325,13 @@ function access_case_info_reload(case_id) {
                     {
                         "data": "user_login",
                         "className": "dt-center"
+                    },
+                    {
+                        "data": "user_access_level",
+                        "className": "dt-center",
+                        "render": function ( data, type, row ) {
+                            return `<select class="form-control" onchange="update_user_case_access_level('${row.user_id}',${case_id},this.value)">${get_access_level_options(data)}</select>`;
+                        }
                     }
                     ],
                     filter: true,
@@ -351,10 +356,35 @@ function access_case_info_reload(case_id) {
     });
 }
 
+var access_levels = [
+    { "id": 1, "name": "Deny all" },
+    { "id": 2, "name": "Read only" },
+    { "id": 4, "name": "Full access" }
+]
+
+function get_access_level_options(data) {
+    var options = "";
+
+    for (var i = 0; i < access_levels.length; i++) {
+        options += `<option value="${access_levels[i].id}" ${data == access_levels[i].id ? 'selected' : ''}>${access_levels[i].name}</option>`;
+    }
+    return options;
+}
+
+function update_user_case_access_level(user_id, case_id, access_level) {
+    var data = {
+        "case_id": case_id,
+        "access_level": parseInt(access_level),
+        "csrf_token": $('#csrf_token').val()
+    };
+
+    post_request_api('/case/users/'+ user_id +'/access/set', JSON.stringify(data))
+    .done((data) => {
+        notify_auto_api(data);
+    });
+}
 
 $(document).ready(function() {
-
-
 
     if ($("#editor_summary").attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");

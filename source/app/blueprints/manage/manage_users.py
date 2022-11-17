@@ -310,7 +310,7 @@ def manage_user_cac_delete_case(cur_id,  caseid):
         return response_error("Invalid request")
 
     if not isinstance(data.get('case'), int):
-        return response_error("Expecting cases as list")
+        return response_error("Expecting cases as int")
 
     try:
 

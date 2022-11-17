@@ -22,6 +22,10 @@ class CaseAccessLevel(enum.Enum):
     read_only = 0x2
     full_access = 0x4
 
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
 
 class Permissions(enum.Enum):
     standard_user = 0x1

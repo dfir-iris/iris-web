@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import traceback
+
 import binascii
 import marshmallow
 from flask import Blueprint
@@ -48,7 +50,10 @@ from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_report_template
 from app.datamgmt.case.case_db import get_case_tags
+from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
+from app.datamgmt.manage.manage_users_db import remove_case_access_from_user
+from app.datamgmt.manage.manage_users_db import set_user_case_access
 from app.datamgmt.reporter.report_db import export_case_json
 from app.forms import PipelinesCaseForm
 from app.iris_engine.module_handler.module_handler import list_available_pipelines
@@ -77,6 +82,9 @@ case_blueprint = Blueprint('case',
                            template_folder='templates')
 
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
+
+
+log = app.logger
 
 
 # CONTENT ------------------------------------------------
@@ -263,6 +271,37 @@ def case_get_users(caseid):
     users = get_users_list_restricted_from_case(caseid)
 
     return response_success(data=users)
+
+
+@case_blueprint.route('/case/users/<int:cur_id>/access/set', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def user_cac_set_case(cur_id,  caseid):
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request")
+
+    if data.get('case_id') != caseid:
+        return response_error("Inconsistent case ID")
+
+    try:
+
+        success, logs = set_user_case_access(user.id, data.get('case_id'), data.get('access_level'))
+        db.session.commit()
+
+    except Exception as e:
+        log.error("Error while setting case access for user: {}".format(e))
+        log.error(traceback.format_exc())
+        return response_error(msg=str(e))
+
+    if success:
+        return response_success(msg=logs)
+
+    return response_error(msg=logs)
 
 
 @case_blueprint.route('/case/update-status', methods=['POST'])
