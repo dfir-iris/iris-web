@@ -267,12 +267,13 @@
 </datalist>
 
 <div class="modal-footer">
+    <button type="button" class="btn btn-default mr-auto" data-dismiss="modal">Dismiss</button>
+
     {% if not data.close_date %}
-        <button type="button" class="btn btn-outline-success" onclick="close_case('{{ data.case_id }}');">Close case</button>
+        <button type="button" class="btn btn-warning" onclick="close_case('{{ data.case_id }}');">Close case</button>
     {% else %}
-        <button type="button" class="btn btn-outline-success" onclick="reopen_case('{{ data.case_id }}');">Reopen case</button>
+        <button type="button" class="btn btn-success" onclick="reopen_case('{{ data.case_id }}');">Reopen case</button>
     {% endif %}
-    <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
     <button type="button" class="btn btn-outline-danger mr-2" style="display:none;" id="cancel_case_info"  onclick="cancel_case_edit();">Cancel edit</button>
     <button type="button" class="btn btn-outline-success mr-2" style="display:none;" id="save_case_info" onclick="save_case_edit({{ data.case_id }});">Save edit</button>
 </div>
