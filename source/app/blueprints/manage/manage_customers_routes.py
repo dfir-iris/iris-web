@@ -53,6 +53,7 @@ from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
+from app.util import page_not_found
 from app.util import response_error
 from app.util import response_success
 
@@ -90,7 +91,7 @@ def view_customer(cur_id, caseid):
 
     customer = get_client_api(cur_id)
     if not customer:
-        return response_error(f"Invalid Customer ID {cur_id}")
+        return page_not_found(None)
 
     return response_success(data=customer)
 
@@ -103,7 +104,7 @@ def view_customer_page(cur_id, caseid, url_redir):
 
     customer = get_client_api(cur_id)
     if not customer:
-        return response_error(f"Invalid Customer ID {cur_id}")
+        return page_not_found(None)
 
     form = FlaskForm()
     contacts = get_client_contacts(cur_id)
