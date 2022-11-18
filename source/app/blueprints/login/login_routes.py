@@ -109,7 +109,8 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
                 track_activity("someone tried to log with user '{}', which does not exist".format(username), ctx_less=True)
                 msg = "Wrong credentials. Please try again."
 
-        return render_template('login.html', form=form, msg=msg)
+        return render_template('login.html', form=form, msg=msg,
+                               organisation_name=app.config.get('ORGANISATION_NAME'))
 
 
 def wrap_login_user(user):

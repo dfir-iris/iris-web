@@ -328,6 +328,8 @@ class Config():
     DATASTORE_PATH = config.load('IRIS', 'DATASTORE_PATH', fallback="/home/iris/server_data/datastore")
     ASSET_SHOW_PATH = "/static/assets/img/graph"
 
+    ORGANISATION_NAME = config.load('IRIS', 'ORGANISATION_NAME', fallback='')
+
     UPDATE_DIR_NAME = '_updates_'
 
     DROPZONE_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 10  # 10 GB

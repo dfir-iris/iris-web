@@ -310,8 +310,11 @@ function access_case_info_reload(case_id) {
             table.rows.add(req_users);
             table.draw();
         } else {
+            $.each($.find("table"), function(index, element){
+                addFilterFields($(element).attr("id"));
+            });
             $("#case_access_users_list_table").DataTable({
-                    dom: 'Blfrtip',
+                    dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
                     aaData: req_users,
                     aoColumns: [
                       {
@@ -337,7 +340,10 @@ function access_case_info_reload(case_id) {
                     filter: true,
                     info: true,
                     ordering: true,
-                    processing: true
+                    processing: true,
+                    initComplete: function () {
+                        tableFiltering(this.api(), 'case_access_users_list_table');
+                    }
             });
         }
         for (var i = 0; i < req_users.length; i++) {

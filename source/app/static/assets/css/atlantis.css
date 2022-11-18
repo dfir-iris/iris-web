@@ -15730,3 +15730,10 @@ td.dt-nowrap { white-space: nowrap }
   width: 100%;
   border-top: 1px solid #f1f1f1;
 }
+
+.truncate {
+  max-width:50px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

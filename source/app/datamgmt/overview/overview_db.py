@@ -34,7 +34,6 @@ def get_overview_db(user_id):
         Cases.case_id,
         Cases.case_uuid,
         Cases.name.label('case_title'),
-        Cases.description.label('case_description'),
         Client.name.label('customer_name'),
         Cases.open_date.label('case_open_date'),
         User.name.label('opened_by')

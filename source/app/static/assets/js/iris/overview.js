@@ -19,18 +19,10 @@ var OverviewTable = $("#overview_table").DataTable({
           return data;
         }
       },
-      { "data": "case_description",
+      { "data": "customer_name",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
             data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-            if (data.length > 70) {
-                datas += ' (..)</span>';
-            } else {
-                datas += '</span>';
-            }
-            return datas;
           }
           return data;
         }
@@ -76,7 +68,8 @@ var OverviewTable = $("#overview_table").DataTable({
         "data": "opened_by",
         "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
-              data = get_avatar_initials(sanitizeHTML(data), true);
+              sdata = sanitizeHTML(data);
+              data = `<div class="row">${get_avatar_initials(sanitizeHTML(data), true)} <span class="mt-2 ml-1">${sdata}</span></div>`;
           }
           return data;
         }
@@ -106,7 +99,6 @@ var OverviewTable = $("#overview_table").DataTable({
         }
     });
 
-
 function get_cases_overview(silent) {
     get_request_api('overview/filter')
     .done((data) => {
@@ -115,6 +107,10 @@ function get_cases_overview(silent) {
             OverviewTable.clear();
             OverviewTable.rows.add(overview_list);
             OverviewTable.columns.adjust().draw();
+            $(".truncate").on("click", function() {
+                var index = $(this).index() + 1;
+                $('table tr td:nth-child(' + index  + ')').toggleClass("truncate");
+            });
         }
     });
 }
