@@ -74,9 +74,9 @@ def set_ctx():
 
 @app.context_processor
 def iris_version():
-    #session['permissions'] = ac_get_effective_permissions_of_user(current_user)
-
-    return dict(iris_version=app.config.get('IRIS_VERSION'))
+    return dict(iris_version=app.config.get('IRIS_VERSION'),
+                organisation_name=app.config.get('ORGANISATION_NAME'),
+                std_permissions=Permissions)
 
 
 @app.context_processor
@@ -88,16 +88,6 @@ def has_updates():
     server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
 
     return dict(has_updates=server_settings[0])
-
-
-# @app.context_processor
-# def case_name():
-#     return dict(case_name=get_urlcasename())
-
-
-@app.context_processor
-def std_permissions():
-    return dict(std_permissions=Permissions)
 
 
 @ctx_blueprint.route('/context/get-cases', methods=['GET'])

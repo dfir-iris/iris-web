@@ -15737,3 +15737,11 @@ td.dt-nowrap { white-space: nowrap }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.sidebar[data-background-color="white"] .nav>.nav-item-dead>a:hover {
+  background: #fff;
+}
+
+.sidebar[data-background-color="dark"] .nav>.nav-item-dead>a:hover {
+  background: #000;
+}
