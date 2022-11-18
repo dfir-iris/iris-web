@@ -21,6 +21,7 @@
 from flask import Blueprint
 from flask import render_template
 from flask import url_for
+from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
@@ -56,6 +57,6 @@ def get_overview_filter(caseid):
     """
     Return an overview of the cases
     """
-    overview = get_overview_db()
+    overview = get_overview_db(current_user.id)
 
     return response_success('', data=overview)
