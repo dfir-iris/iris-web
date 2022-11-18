@@ -275,6 +275,9 @@ def case_get_users(caseid):
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def user_cac_set_case(cur_id,  caseid):
 
+    if cur_id == current_user.id:
+        return response_error("I can't let you do that, Dave")
+
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID")
