@@ -330,6 +330,11 @@ def ac_add_user_effective_access(users_list, case_id, access_level):
     Directly add a set of effective user access
     """
 
+    UserCaseEffectiveAccess.query.filter(
+        UserCaseEffectiveAccess.case_id == case_id,
+        UserCaseEffectiveAccess.user_id.in_(users_list)
+    ).delete()
+
     access_to_add = []
     for user_id in users_list:
         ucea = UserCaseEffectiveAccess()
@@ -348,10 +353,27 @@ def ac_set_new_case_access(org_members, case_id):
     """
 
     users = ac_apply_autofollow_groups_access(case_id)
+    if current_user.id in users.keys():
+        del users[current_user.id]
+
     users_full = User.query.with_entities(User.id).all()
     users_full_access = list(set([u.id for u in users_full]) - set(users.keys()))
 
     ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.full_access.value)
+
+    UserCaseAccess.query.filter(
+        UserCaseAccess.case_id == case_id,
+        UserCaseAccess.user_id == current_user.id
+    ).delete()
+    db.session.commit()
+    uca = UserCaseAccess()
+    uca.case_id = case_id
+    uca.user_id = current_user.id
+    uca.access_level = CaseAccessLevel.full_access.value
+    db.session.add(uca)
+    db.session.commit()
+
+    ac_add_user_effective_access([current_user.id], case_id, CaseAccessLevel.full_access.value)
 
 
 def ac_apply_autofollow_groups_access(case_id):
