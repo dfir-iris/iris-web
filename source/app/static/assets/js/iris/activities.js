@@ -66,7 +66,6 @@ Table = $("#activities_table").DataTable({
 });
 $("#activities_table").css("font-size", 12);
 
-
 function refresh_activities() {
     get_activities ();
     notify_success('Refreshed');
@@ -74,8 +73,15 @@ function refresh_activities() {
 
 function get_activities () {
     show_loader();
-    get_request_api('/activities/list')
+    if ($('#non_case_related_act').is(':checked')) {
+        url = '/activities/list-all';
+    } else {
+        url = '/activities/list';
+    }
+
+    get_request_api(url)
     .done((data) => {
+        if(notify_auto_api(data, true)) {
             jsdata = data;
             if (jsdata.status == "success") {
                   Table.clear();
@@ -84,9 +90,17 @@ function get_activities () {
                   Table.buttons().container().appendTo($('#activities_table_info'));
                 hide_loader();
             }
-        })
+        }
+    }).fail((data) => {
+        hide_loader();
+        Table.clear();
+        Table.columns.adjust().draw();
+    });
 }
 
 $(document).ready(function(){
     get_activities();
+    $('#non_case_related_act').on('change', function() {
+        get_activities();
+    });
 });

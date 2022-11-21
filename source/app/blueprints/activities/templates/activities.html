@@ -16,15 +16,23 @@
             <div class="card" id="card_main_load" style="display:none;">
                 <div class="card-header">
                     <div class="card-title">User activities ( max 10k entries + unbound )
-                    <button type="button" class="btn btn-icon btn-round btn-outline-dark float-right ml-2" onclick="refresh_activities();">
-                            <i class="fas fa-sync rotate"></i></button></div>
+                        <button type="button" class="btn btn-sm btn-outline-dark float-right ml-2" onclick="refresh_activities();">
+                                Refresh
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
+                   <div class="form-check">
+                            <label class="form-check-label">
+                                <input class="form-check-input" type="checkbox" value="" id="non_case_related_act">
+                                <span class="form-check-sign">Show non case related activity</span>
+                            </label>
+                    </div>
                     <div class="table-responsive" id="activities_table_wrapper">
                         <div class="selectgroup">
                             <span id="table_buttons"></span>
                         </div>
-                      <table class="table display table-bordered table-striped table-hover" width="100%" cellspacing="0" id="activities_table" >
+                      <table class="table display table-striped table-hover" width="100%" cellspacing="0" id="activities_table" >
                         <thead>
                           <tr>
                             <th>Date</th>

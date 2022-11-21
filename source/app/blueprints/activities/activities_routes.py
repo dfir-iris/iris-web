@@ -28,7 +28,8 @@ from flask import url_for
 from flask_wtf import FlaskForm
 
 import app
-from app.datamgmt.activities.activities_db import get_all_user_activities
+from app.datamgmt.activities.activities_db import get_all_users_activities
+from app.datamgmt.activities.activities_db import get_users_activities
 from app.models.authorization import Permissions
 from app.util import ac_api_requires
 from app.util import ac_requires
@@ -60,7 +61,20 @@ def activities_index(caseid: int, url_redir):
 def list_activities(caseid):
     # Get User activities from database
 
-    user_activities = get_all_user_activities()
+    user_activities = get_users_activities()
+
+    data = [row._asdict() for row in user_activities]
+    data = sorted(data, key=lambda i: i['activity_date'], reverse=True)
+
+    return response_success("", data=data)
+
+
+@activities_blueprint.route('/activities/list-all', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def list_all_activities(caseid):
+    # Get User activities from database
+
+    user_activities = get_all_users_activities()
 
     data = [row._asdict() for row in user_activities]
     data = sorted(data, key=lambda i: i['activity_date'], reverse=True)
