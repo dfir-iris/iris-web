@@ -77,7 +77,7 @@ case_assets_blueprint = Blueprint('case_assets',
                                   template_folder='templates')
 
 
-@case_assets_blueprint.route('/case/assets', methods=['GET', 'POST'])
+@case_assets_blueprint.route('/case/assets', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_assets(caseid, url_redir):
     """
@@ -194,7 +194,7 @@ def add_asset(caseid):
         asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
         if asset:
-            track_activity("added asset {}".format(asset.asset_name), caseid=caseid)
+            track_activity(f"added asset \"{asset.asset_name}\"", caseid=caseid)
             return response_success("Asset added", data=add_asset_schema.dump(asset))
 
         return response_error("Unable to create asset for internal reasons")
@@ -260,7 +260,7 @@ def case_upload_ioc(caseid):
             type_id = get_asset_type_id(row['asset_type_name'].lower())
             if not type_id:
                 errors.append(f"{row.get('asset_name')} (invalid asset type: {row.get('asset_type_name')}) for row {index}")
-                track_activity(f"Attempted to upload unrecognized asset type {row.get('asset_type_name')}")
+                track_activity(f"Attempted to upload unrecognized asset type \"{row.get('asset_type_name')}\"")
                 index += 1
                 continue
 
@@ -379,8 +379,9 @@ def asset_update(cur_id, caseid):
         asset_schema = call_modules_hook('on_postload_asset_update', data=asset_schema, caseid=caseid)
 
         if asset_schema:
-            track_activity("updated asset {}".format(asset_schema.asset_name), caseid=caseid)
-            return response_success("Updated asset {}".format(asset_schema.asset_name), add_asset_schema.dump(asset_schema))
+            track_activity(f"updated asset \"{asset_schema.asset_name}\"", caseid=caseid)
+            return response_success("Updated asset {}".format(asset_schema.asset_name),
+                                    add_asset_schema.dump(asset_schema))
 
         return response_error("Unable to update asset for internal reasons")
 
@@ -403,7 +404,7 @@ def asset_delete(cur_id, caseid):
 
     call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
 
-    track_activity("removed asset ID {}".format(cur_id), caseid=caseid)
+    track_activity(f"removed asset ID {asset.asset_name}", caseid=caseid)
 
     return response_success("Deleted")
 
@@ -458,8 +459,8 @@ def case_comment_asset_add(cur_id, caseid):
 
         db.session.commit()
 
-        track_activity("asset {} commented".format(asset.asset_id), caseid=caseid)
-        return response_success("Event commented", data=comment_schema.dump(comment))
+        track_activity(f"asset \"{asset.asset_name}\" commented", caseid=caseid)
+        return response_success("Asset commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
@@ -491,4 +492,5 @@ def case_comment_asset_delete(cur_id, com_id, caseid):
     if not success:
         return response_error(msg)
 
+    track_activity(f"comment {com_id} on asset {cur_id} deleted", caseid=caseid)
     return response_success(msg)

@@ -26,7 +26,7 @@ def case_comment_update(comment_id, object_type, caseid):
 
         db.session.commit()
 
-        track_activity("comment \"{comment.comment_id}\" on {object_type} edited", caseid=caseid)
+        track_activity(f"comment \"{comment.comment_id}\" on {object_type} edited", caseid=caseid)
         return response_success("Comment edited", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
