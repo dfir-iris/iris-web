@@ -496,8 +496,8 @@ def ac_set_case_access_for_users(users, case_id, access_level):
     Set a case access for a list of users
     """
 
-    for user_id in users:
-        ac_set_case_access_for_user(user_id, case_id, access_level)
+    for user in users:
+        ac_set_case_access_for_user(user.get('id') , case_id, access_level)
 
     db.session.commit()
     return
