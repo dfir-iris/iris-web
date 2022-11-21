@@ -147,8 +147,8 @@ def case_note_delete(cur_id, caseid):
 
     call_modules_hook('on_postload_note_delete', data=cur_id, caseid=caseid)
 
-    track_activity("deleted note ID {}".format(cur_id), caseid=caseid)
-    return response_success("Note deleted {}".format(cur_id))
+    track_activity(f"deleted note \"{note.note_title}\"", caseid=caseid)
+    return response_success(f"Note deleted {cur_id}")
 
 
 @case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
@@ -180,8 +180,8 @@ def case_note_save(cur_id, caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    track_activity("updated note {}".format(request_data.get('note_title')), caseid=caseid)
-    return response_success("Note ID {} saved".format(cur_id), data=addnote_schema.dump(note))
+    track_activity(f"updated note \"{note.note_title}\"", caseid=caseid)
+    return response_success(f"Note ID {cur_id} saved", data=addnote_schema.dump(note))
 
 
 @case_notes_blueprint.route('/case/notes/add', methods=['POST'])
@@ -206,7 +206,7 @@ def case_note_add(caseid):
 
         if note:
             casenote_schema = CaseNoteSchema()
-            track_activity("added note ID {}".format(note.note_id), caseid=caseid)
+            track_activity(f"added note \"{note.note_title}\"", caseid=caseid)
             return response_success('Note added', data=casenote_schema.dump(note))
 
         return response_error("Unable to create note for internal reasons")
@@ -285,7 +285,7 @@ def case_add_notes_groups(caseid):
 
         if ng.group_id:
             group_schema = CaseGroupNoteSchema()
-            track_activity("added group note ID {}".format(ng.group_id), caseid=caseid)
+            track_activity(f"added group note \"{ng.group_title}\"", caseid=caseid)
 
             return response_success("Notes group added", data=group_schema.dump(ng))
 
@@ -334,7 +334,7 @@ def case_edit_notes_groups(cur_id, caseid):
 
     if ng:
         # Note group has been properly found and updated in db
-        track_activity("updated group note {}".format(group_title), caseid=caseid)
+        track_activity("updated group note \"{}\"".format(group_title), caseid=caseid)
         group_schema = CaseGroupNoteSchema()
         return response_success("Updated title of group ID {}".format(cur_id), data=group_schema.dump(ng))
 
@@ -391,7 +391,7 @@ def case_comment_note_add(cur_id, caseid):
 
         db.session.commit()
 
-        track_activity("note {} commented".format(note.note_id), caseid=caseid)
+        track_activity("note \"{}\" commented".format(note.note_title), caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -424,4 +424,5 @@ def case_comment_note_delete(cur_id, com_id, caseid):
     if not success:
         return response_error(msg)
 
+    track_activity(f"comment {com_id} on note {cur_id} deleted", caseid=caseid)
     return response_success(msg)

@@ -78,7 +78,7 @@ function delete_comment(comment_id, element_id, element_type) {
         if (doDelete) {
             data = Object();
             data['csrf_token'] = $('#csrf_token').val();
-            get_request_api(`/case/${element_type}/${element_id}/comments/${comment_id}/delete`)
+            post_request_api(`/case/${element_type}/${element_id}/comments/${comment_id}/delete`, JSON.stringify(data))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     load_comments(element_id, element_type);
