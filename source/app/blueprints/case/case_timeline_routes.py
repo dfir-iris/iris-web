@@ -143,6 +143,7 @@ def case_comment_delete(cur_id, com_id, caseid):
     if not success:
         return response_error(msg)
 
+    track_activity(f"comment {com_id} on event {cur_id} deleted", caseid=caseid)
     return response_success(msg)
 
 
@@ -190,7 +191,7 @@ def case_comment_add(cur_id, caseid):
 
         db.session.commit()
 
-        track_activity("event {} commented".format(event.event_id), caseid=caseid)
+        track_activity(f"event \"{event.event_title}\" commented", caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -661,7 +662,7 @@ def case_delete_event(cur_id, caseid):
 
     call_modules_hook('on_postload_event_delete', data=cur_id, caseid=caseid)
 
-    track_activity("deleted event ID {} in timeline".format(cur_id), caseid)
+    track_activity(f"deleted event \"{event.event_title}\" in timeline", caseid)
 
     return response_success('Event ID {} deleted'.format(cur_id))
 
@@ -782,7 +783,7 @@ def case_edit_event(cur_id, caseid):
 
         event = call_modules_hook('on_postload_event_update', data=event, caseid=caseid)
 
-        track_activity("updated event {}".format(cur_id), caseid=caseid)
+        track_activity(f"updated event \"{event.event_title}\"", caseid=caseid)
         return response_success("Event updated", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -863,7 +864,7 @@ def case_add_event(caseid):
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
-        track_activity("added event {}".format(event.event_id), caseid=caseid)
+        track_activity(f"added event \"{event.event_title}\"", caseid=caseid)
         return response_success("Event added", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -925,7 +926,7 @@ def case_duplicate_event(cur_id, caseid):
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
-        track_activity("added event {}".format(event.event_id), caseid=caseid)
+        track_activity(f"added event \"{event.event_title}\"", caseid=caseid)
         return response_success("Event duplicated", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
