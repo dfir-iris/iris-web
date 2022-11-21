@@ -289,7 +289,7 @@ function case_detail(case_id) {
 }
 
 function manage_case(case_id) {
-   window.location = 'manage/cases?cid='+ case_id +'#view';
+   window.location = '/manage/cases?cid='+ case_id +'#view';
 }
 
 
@@ -380,14 +380,42 @@ function get_access_level_options(data) {
 function update_user_case_access_level(user_id, case_id, access_level) {
     var data = {
         "case_id": case_id,
+        "user_id": user_id,
         "access_level": parseInt(access_level),
         "csrf_token": $('#csrf_token').val()
     };
 
-    post_request_api('/case/users/'+ user_id +'/access/set', JSON.stringify(data))
+    post_request_api('/case/access/set-user', JSON.stringify(data))
     .done((data) => {
         notify_auto_api(data);
     });
+}
+
+function view_case_access_via_group(case_id) {
+    url = '/case/groups/access/modal' + case_param();
+    $('#modal_ac_additional').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_ac_additional').modal({ show: true });
+        access_case_info_reload(case_id);
+    });
+}
+
+function set_case_access_via_group(case_id) {
+    var data = {
+        "case_id": parseInt(case_id),
+        "access_level": parseInt($('#group_case_ac_select').val()),
+        "group_id": parseInt($('#group_case_access_select').val()),
+        "csrf_token": $('#csrf_token').val()
+    };
+
+    post_request_api('/case/access/set-group', JSON.stringify(data))
+    .done((data) => {
+        notify_auto_api(data);
+    });
+
 }
 
 $(document).ready(function() {

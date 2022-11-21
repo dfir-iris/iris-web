@@ -1,6 +1,8 @@
 {% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %}
 {% block stylesheets %}
 <link rel="stylesheet" href="/static/assets/css/select2.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 {% endblock stylesheets %} {% block content %}
 {% if current_user.is_authenticated %}
 
@@ -194,6 +196,8 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div>
+<div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional" data-backdrop="true">
+</div>
 {% endif %} {% endblock content %} {% block javascripts %}
 
 <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -207,6 +211,8 @@
 <script src="/static/assets/js/iris/case.js"></script>
 <script src="/static/assets/js/iris/manage.cases.common.js"></script>
 <script src="/static/assets/js/iris/case.summary.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 
 <script>
     var is_db_linked = {{ 1 if case.name else 0 }};

@@ -491,7 +491,19 @@ def ac_remove_case_access_from_user(user_id, case_id):
     return
 
 
-def ac_set_case_access_from_user(user_id, case_id, access_level):
+def ac_set_case_access_for_users(users, case_id, access_level):
+    """
+    Set a case access for a list of users
+    """
+
+    for user_id in users:
+        ac_set_case_access_for_user(user_id, case_id, access_level)
+
+    db.session.commit()
+    return
+
+
+def ac_set_case_access_for_user(user_id, case_id, access_level, commit=True):
     """
     Set a case access from a user
     """
@@ -517,7 +529,8 @@ def ac_set_case_access_from_user(user_id, case_id, access_level):
         uac = uac[0]
         uac.access_level = access_level
 
-    db.session.commit()
+    if commit:
+        db.session.commit()
 
     return
 

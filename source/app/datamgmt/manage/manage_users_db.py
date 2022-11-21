@@ -23,15 +23,17 @@ from sqlalchemy import and_
 from app import bc
 from app import db
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.iris_engine.access_control.utils import ac_remove_case_access_from_user
-from app.iris_engine.access_control.utils import ac_set_case_access_from_user
+from app.iris_engine.access_control.utils import ac_set_case_access_for_user
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
+from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
@@ -385,7 +387,7 @@ def set_user_case_access(user_id, case_id, access_level):
 
     db.session.commit()
 
-    ac_set_case_access_from_user(user_id, case_id, access_level)
+    ac_set_case_access_for_user(user_id, case_id, access_level)
 
     return True, 'Case access set to {} for user {}'.format(access_level, user_id)
 
