@@ -118,7 +118,7 @@ def case_add_rfile(caseid):
         crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=caseid)
 
         if crf:
-            track_activity("added evidence {}".format(crf.filename), caseid=caseid)
+            track_activity(f"added evidence \"{crf.filename}\"", caseid=caseid)
             return response_success("Evidence added", data=evidence_schema.dump(crf))
 
         return response_error("Unable to create task for internal reasons")
@@ -188,7 +188,7 @@ def case_edit_rfile(cur_id, caseid):
         evd = call_modules_hook('on_postload_evidence_update', data=evd, caseid=caseid)
 
         if evd:
-            track_activity("updated evidence {}".format(evd.filename), caseid=caseid)
+            track_activity(f"updated evidence \"{evd.filename}\"", caseid=caseid)
             return response_success("Evidence {} updated".format(evd.filename), data=evidence_schema.dump(evd))
 
         return response_error("Unable to update task for internal reasons")
@@ -210,7 +210,7 @@ def case_delete_rfile(cur_id, caseid):
 
     call_modules_hook('on_postload_evidence_delete', data=cur_id, caseid=caseid)
 
-    track_activity("deleted evidence ID {} from register".format(cur_id), caseid)
+    track_activity(f"deleted evidence \"{crf.filename}\" from registry", caseid)
 
     return response_success("Evidence deleted")
 
@@ -265,7 +265,7 @@ def case_comment_evidence_add(cur_id, caseid):
 
         db.session.commit()
 
-        track_activity("evidence {} commented".format(evidence.id), caseid=caseid)
+        track_activity(f"evidence \"{evidence.filename}\" commented", caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -298,4 +298,5 @@ def case_comment_evidence_delete(cur_id, com_id, caseid):
     if not success:
         return response_error(msg)
 
+    track_activity(f"comment {com_id} on evidence {cur_id} deleted", caseid=caseid)
     return response_success(msg)
