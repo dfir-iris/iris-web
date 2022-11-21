@@ -379,8 +379,8 @@ function get_access_level_options(data) {
 
 function update_user_case_access_level(user_id, case_id, access_level) {
     var data = {
-        "case_id": case_id,
-        "user_id": user_id,
+        "case_id": parseInt(case_id),
+        "user_id": parseInt(user_id),
         "access_level": parseInt(access_level),
         "csrf_token": $('#csrf_token').val()
     };

@@ -307,7 +307,9 @@ def group_cac_set_case(caseid):
     try:
 
         success, logs = add_case_access_to_group(group, [data.get('case_id')], access_level)
-        ac_set_case_access_for_users(group.group_members, caseid, access_level)
+
+        if success:
+            success, logs = ac_set_case_access_for_users(group.group_members, caseid, access_level)
 
     except Exception as e:
         log.error("Error while setting case access for group: {}".format(e))

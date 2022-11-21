@@ -495,12 +495,19 @@ def ac_set_case_access_for_users(users, case_id, access_level):
     """
     Set a case access for a list of users
     """
+    logs = "Access updated"
 
     for user in users:
-        ac_set_case_access_for_user(user.get('id') , case_id, access_level)
+        user_id = user.get('id')
+        if user_id == current_user.id:
+            logs = "It's done, but I excluded you from the list of users to update, Dave"
+            ac_set_case_access_for_user(user.get('id'), case_id, access_level=CaseAccessLevel.full_access.value)
+            continue
+
+        ac_set_case_access_for_user(user.get('id'), case_id, access_level)
 
     db.session.commit()
-    return
+    return True, logs
 
 
 def ac_set_case_access_for_user(user_id, case_id, access_level, commit=True):
