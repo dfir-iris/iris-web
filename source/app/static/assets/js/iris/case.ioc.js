@@ -93,6 +93,7 @@ function add_ioc() {
         });
 
         $('#modal_add_ioc').modal({ show: true });
+        $('#ioc_value').focus();
 
     });
 

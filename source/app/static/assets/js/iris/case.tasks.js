@@ -70,6 +70,8 @@ function add_task() {
             return false;
         })
         $('#modal_add_task').modal({ show: true });
+        $('#task_title').focus();
+
     });
 
 }
