@@ -227,16 +227,16 @@ function is_timeline_compact_view() {
 }
 
 function toggle_compact_view() {
-    var x = getCookie('iris_tm_compact');
+    var x = localStorage.getItem('iris-tm-compact');
     if (typeof x === 'undefined') {
-        setCookie('iris_tm_compact', 'true', 365);
+        localStorage.setItem('iris-tm-compact', 'true');
         location.reload();
     } else {
         if (x === 'true') {
-            setCookie('iris_tm_compact', 'false', 365);
+            localStorage.setItem('iris-tm-compact', 'false');
             location.reload();
         } else {
-            setCookie('iris_tm_compact', 'true', 365);
+             localStorage.setItem('iris-tm-compact', 'true');
             location.reload();
         }
     }
