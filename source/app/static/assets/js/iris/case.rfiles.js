@@ -63,6 +63,7 @@ function add_modal_rfile() {
         $('#evidence_edition_btn').append(headers);
         
         $('#modal_add_rfiles').modal({ show: true });
+        $('#filename').focus();
     });
 }
 
