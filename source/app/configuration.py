@@ -20,6 +20,8 @@
 
 # --------- Configuration ---------
 # read the private configuration file
+from datetime import timedelta
+
 import ssl
 
 import sys
@@ -290,12 +292,18 @@ class Config():
 
         SECURITY_LOGIN_USER_TEMPLATE = 'login.html'
 
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = True
+
     PG_ACCOUNT = PG_ACCOUNT_
     PG_PASSWD = PG_PASSWD_
     PGA_ACCOUNT = PGA_ACCOUNT_
     PGA_PASSWD = PGA_PASSWD_
     PG_SERVER = PG_SERVER_
     PG_PORT = PG_PORT_
+
+    WTF_CSRF_TIME_LIMIT = None
 
     """ SqlAlchemy configuration
     """

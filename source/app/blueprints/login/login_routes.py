@@ -55,8 +55,11 @@ log = app.logger
 if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
     @login_blueprint.route('/login', methods=['GET', 'POST'])
     def login():
+        session.permanent = True
+
         # cut the page for authenticated users
         if current_user.is_authenticated:
+
             return redirect(url_for('index.index'))
 
         # Declare the login form
