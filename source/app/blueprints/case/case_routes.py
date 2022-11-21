@@ -31,6 +31,7 @@ from flask_login import current_user
 from flask_socketio import emit
 from flask_socketio import join_room
 from flask_wtf import FlaskForm
+from sqlalchemy import and_
 from sqlalchemy import desc
 
 from app import app
@@ -230,9 +231,10 @@ def activity_fetch(caseid):
         User.name,
         UserActivity.activity_desc,
         UserActivity.is_from_api
-    ).filter(
-        UserActivity.case_id == caseid
-    ).join(
+    ).filter(and_(
+        UserActivity.case_id == caseid,
+        UserActivity.display_in_ui == True
+    )).join(
         UserActivity.user
     ).order_by(
         desc(UserActivity.activity_date)

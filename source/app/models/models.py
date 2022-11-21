@@ -585,8 +585,9 @@ class UserActivity(db.Model):
     case_id = Column(ForeignKey('cases.case_id'), nullable=True)
     activity_date = Column(DateTime)
     activity_desc = Column(Text)
-    user_input = Column(Boolean)
-    is_from_api = Column(Boolean)
+    user_input = Column(Boolean, default=False)
+    is_from_api = Column(Boolean, default=False)
+    display_in_ui = Column(Boolean, default=True)
 
     user = relationship('User')
     case = relationship('Cases')

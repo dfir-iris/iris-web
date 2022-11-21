@@ -88,7 +88,7 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
 
                         else:
                             track_activity("someone tried to log with user '{}', which does not exist".format(username),
-                                           ctx_less=True)
+                                           ctx_less=True, display_in_ui=False)
 
                             msg = "Invalid credentials"
                             return render_template('login.html', form=form, msg=msg)
@@ -102,11 +102,13 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
                     return wrap_login_user(user)
 
                 else:
-                    track_activity("wrong login password for user '{}'".format(username), ctx_less=True)
+                    track_activity("wrong login password for user '{}'".format(username), ctx_less=True,
+                                   display_in_ui=False)
                     msg = "Wrong credentials. Please try again."
 
             else:
-                track_activity("someone tried to log with user '{}', which does not exist".format(username), ctx_less=True)
+                track_activity("someone tried to log with user '{}', which does not exist".format(username),
+                               ctx_less=True, display_in_ui=False)
                 msg = "Wrong credentials. Please try again."
 
         return render_template('login.html', form=form, msg=msg,
@@ -116,7 +118,7 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
 def wrap_login_user(user):
     login_user(user)
 
-    track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True)
+    track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True, display_in_ui=False)
     caseid = user.ctx_case
     session['permissions'] = ac_get_effective_permissions_of_user(user)
 
@@ -132,5 +134,5 @@ def wrap_login_user(user):
         'case_id': user.ctx_case
     }
 
-    track_activity("user '{}' successfully logged-in".format(user), ctx_less=True)
+    track_activity("user '{}' successfully logged-in".format(user), ctx_less=True, display_in_ui=False)
     return redirect(url_for('index.index', cid=user.ctx_case))

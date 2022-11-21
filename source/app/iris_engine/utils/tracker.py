@@ -30,7 +30,7 @@ from app.models import UserActivity
 
 
 # CONTENT ------------------------------------------------
-def track_activity(message, caseid=None, ctx_less=False, user_input=False):
+def track_activity(message, caseid=None, ctx_less=False, user_input=False, display_in_ui=True):
     """
     Register a user activity in DB.
     :param message: Message to save as activity
@@ -56,6 +56,7 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False):
     log.info(ua.activity_desc)
 
     ua.user_input = user_input
+    ua.display_in_ui = display_in_ui
 
     ua.is_from_api = (request.cookies.get('session') is None if request else False)
 
