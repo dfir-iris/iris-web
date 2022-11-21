@@ -41,6 +41,26 @@ function eraseCookie(name) {
     document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
 
+function ellipsis_field( data, cutoff, wordbreak ) {
+
+    data = data.toString();
+
+    if ( data.length <= cutoff ) {
+        return filterXSS( data );
+    }
+
+    var shortened = data.substr(0, cutoff-1);
+
+    // Find the last white space character in the string
+    if ( wordbreak ) {
+        shortened = shortened.replace(/\s([^\s]*)$/, '');
+    }
+
+    shortened = filterXSS( shortened );
+
+    return '<span class="ellipsis" title="'+filterXSS(data)+'">'+shortened+'&#8230;</span>';
+};
+
 function propagate_form_api_errors(data_error) {
     for (e in data_error) {
         if($("#" + e).length != 0) {
