@@ -118,7 +118,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
 class CaseAddNoteSchema(ma.Schema):
     note_id = fields.Integer(required=False)
-    note_title = fields.String(required=True, validate=Length(min=1), allow_none=False)
+    note_title = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
     note_content = fields.String(required=False, validate=Length(min=1))
     group_id = fields.Integer(required=True)
     csrf_token = fields.String(required=False)
