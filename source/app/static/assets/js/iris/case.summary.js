@@ -399,7 +399,6 @@ function view_case_access_via_group(case_id) {
              return false;
         }
         $('#modal_ac_additional').modal({ show: true });
-        access_case_info_reload(case_id);
     });
 }
 
@@ -414,6 +413,8 @@ function set_case_access_via_group(case_id) {
     post_request_api('/case/access/set-group', JSON.stringify(data))
     .done((data) => {
         notify_auto_api(data);
+        access_case_info_reload(case_id);
+        $('#modal_ac_additional').modal('hide');
     });
 
 }
