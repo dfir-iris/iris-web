@@ -187,7 +187,10 @@ function delete_ds_folder(node) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            get_request_api('/datastore/folder/delete/' + node)
+           var data_sent = {
+                "csrf_token": $('#csrf_token').val()
+            }
+            post_request_api('/datastore/folder/delete/' + node, JSON.stringify(data_sent))
             .done((data) => {
                 if (notify_auto_api(data)) {
                     reset_ds_file_view();
@@ -441,7 +444,10 @@ function delete_ds_file(file_id) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            get_request_api('/datastore/file/delete/' + file_id)
+            var data_sent = {
+                "csrf_token": $('#csrf_token').val()
+            }
+            post_request_api('/datastore/file/delete/' + file_id, JSON.stringify(data_sent))
             .done((data) => {
                 if (notify_auto_api(data)) {
                     reset_ds_file_view();
@@ -471,7 +477,10 @@ function delete_bulk_ds_file() {
         if (willDelete) {
             selected_files.each((index) => {
                 file_id = $(selected_files[index]).data('file-id').replace('f-', '');
-                get_request_api('/datastore/file/delete/' + file_id)
+                var data_sent = {
+                    "csrf_token": $('#csrf_token').val()
+                }
+                post_request_api('/datastore/file/delete/' + file_id, JSON.stringify(data_sent))
                 .done((data) => {
                     if (notify_auto_api(data)) {
                         if (index == $(".file-selected").length - 1) {
