@@ -73,6 +73,7 @@ function add_event() {
         })
 
         $('#modal_add_event').modal({ show: true });
+        $('#event_title').focus();
 
     });
 }
