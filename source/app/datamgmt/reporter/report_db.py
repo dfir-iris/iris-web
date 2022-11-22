@@ -33,6 +33,7 @@ from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
 from app.models import Client
+from app.models import Comments
 from app.models import EventCategory
 from app.models import Ioc
 from app.models import IocAssetLink
@@ -89,6 +90,7 @@ def export_case_json_for_report(case_id):
     export['assets'] = export_case_assets_json(case_id)
     export['tasks'] = export_case_tasks_json(case_id)
     export['notes'] = export_case_notes_json(case_id)
+    export['comments'] = export_case_comments_json(case_id)
     export['export_date'] = datetime.datetime.utcnow()
 
     return export
@@ -199,7 +201,9 @@ def export_caseinfo_json(case_id):
         User.name.label('opened_by'),
         Client.name.label('for_customer'),
         Cases.close_date,
-        Cases.custom_attributes
+        Cases.custom_attributes,
+        Cases.case_id,
+        Cases.case_uuid
     ).join(
         Cases.user, Cases.client
     ).all()
@@ -218,7 +222,10 @@ def export_case_evidences_json(case_id):
         CaseReceivedFile.date_added,
         CaseReceivedFile.file_hash,
         User.name.label('added_by'),
-        CaseReceivedFile.custom_attributes
+        CaseReceivedFile.custom_attributes,
+        CaseReceivedFile.file_uuid,
+        CaseReceivedFile.id,
+        CaseReceivedFile.file_size,
     ).order_by(
         CaseReceivedFile.date_added
     ).join(
@@ -239,7 +246,9 @@ def export_case_notes_json(case_id):
         Notes.note_content,
         Notes.note_creationdate,
         Notes.note_lastupdate,
-        Notes.custom_attributes
+        Notes.custom_attributes,
+        Notes.note_id,
+        Notes.note_uuid
     ).filter(
         Notes.note_case_id == case_id
     ).all()
@@ -268,7 +277,12 @@ def export_case_tm_json(case_id):
         CasesEvent.event_raw,
         CasesEvent.custom_attributes,
         EventCategory.name.label('category'),
-        User.name.label('last_edited_by')
+        User.name.label('last_edited_by'),
+        CasesEvent.event_uuid,
+        CasesEvent.event_in_graph,
+        CasesEvent.event_in_summary,
+        CasesEvent.event_color,
+        CasesEvent.event_is_flagged
     ).filter(
         CasesEvent.case_id == case_id
     ).order_by(
@@ -323,12 +337,18 @@ def export_case_iocs_json(case_id):
         IocType.type_name,
         Ioc.ioc_tags,
         Ioc.ioc_description,
-        Ioc.custom_attributes
+        Ioc.custom_attributes,
+        Ioc.ioc_id,
+        Ioc.ioc_uuid,
+        Tlp.tlp_name,
+        User.name.label('added_by'),
     ).filter(
         IocLink.case_id == case_id
     ).join(
         IocLink.ioc,
-        Ioc.ioc_type
+        Ioc.ioc_type,
+        Ioc.tlp,
+        Ioc.user
     ).order_by(
         IocType.type_name
     ).all()
@@ -349,11 +369,12 @@ def export_case_tasks_json(case_id):
         CaseTasks.task_last_update,
         CaseTasks.task_description,
         CaseTasks.custom_attributes,
-        User.name.label('assigned_to')
+        CaseTasks.task_uuid,
+        CaseTasks.id
     ).filter(
         CaseTasks.task_case_id == case_id
     ).join(
-        CaseTasks.user_assigned, CaseTasks.status
+       CaseTasks.status
     ).all()
 
     if res:
@@ -367,6 +388,7 @@ def export_case_assets_json(case_id):
 
     res = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
+        CaseAssets.asset_uuid,
         CaseAssets.asset_name,
         CaseAssets.asset_description,
         CaseAssets.asset_compromised.label('compromised'),
@@ -407,3 +429,21 @@ def export_case_assets_json(case_id):
         ret.append(row)
 
     return ret
+
+
+def export_case_comments_json(case_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date,
+    ).filter(
+        Comments.comment_case_id == case_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date
+    ).all()
+
+    return [row._asdict() for row in comments]
