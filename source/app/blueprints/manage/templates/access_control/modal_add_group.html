@@ -146,7 +146,8 @@ var data = [
         {
             value: {{ e.value }},
             label: "{{ e.name }}"
-        },
+        }
+        {% if not loop.last %},{% endif %}
     {% endfor %}
 ];
 
@@ -164,8 +165,6 @@ $('#group_permissions').multiselect({
 $('#group_permissions').multiselect('dataprovider', data );
 
 {% if group.group_permissions_list %}
-
-
 $('#group_permissions').multiselect('select', [
     {% for perm in group.group_permissions_list %} {{ perm.value }}, {% endfor %}
 ]);
@@ -181,7 +180,7 @@ var modal_group_table = $("#group_members_table").DataTable({
           {
             "data": "id",
             "render": function ( data, type, row ) {
-                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_members_from_group('{{ group.group_id }}','${data}')"></i>${data}`;
+                return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_members_from_group('{{ group.group_id }}',${data})"></i>${data}`;
             },
             "className": "dt-center"
         },
@@ -213,7 +212,7 @@ var modal_group_cac_table = $("#group_cac_table").DataTable({
           {
             "data": "case_id",
             "render": function ( data, type, row ) {
-                return `<i class="fa-solid fa-circle-minus mr-2 text-warning" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_group('{{ group.group_id }}',${data})"></i>${data}`;
+                return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_group('{{ group.group_id }}',${data})"></i>${data}`;
             },
             "className": "dt-center"
         },
@@ -263,20 +262,20 @@ var actionOptionsGroup = {
     items: [],
 };
 
-actionOptionsGroup.items.push({
-            type: 'option',
-            title: 'Remove access',
-            multi: true,
-            iconClass: 'fas fa-trash',
-            buttonClasses: ['btn', 'btn-outline-primary'],
-            action: function(rows){
-                remove_group_cases_from_group_table({{ group.group_id }}, rows);
-            }
-        });
-modal_group_cac_table.contextualActions(actionOptionsGroup);
-
 
 {% if group.group_id %}
+    actionOptionsGroup.items.push({
+                type: 'option',
+                title: 'Remove access',
+                multi: true,
+                iconClass: 'fas fa-trash',
+                buttonClasses: ['btn', 'btn-outline-primary'],
+                action: function(rows){
+                    remove_group_cases_from_group_table({{ group.group_id }}, rows);
+                }
+            });
+    modal_group_cac_table.contextualActions(actionOptionsGroup);
+
     current_group_cases_access_list = {{ group.group_cases_access|tojson }};
     modal_group_cac_table.rows.add(current_group_cases_access_list);
     modal_group_cac_table.columns.adjust().draw();

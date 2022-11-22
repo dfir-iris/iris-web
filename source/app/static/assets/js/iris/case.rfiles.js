@@ -63,6 +63,7 @@ function add_modal_rfile() {
         $('#evidence_edition_btn').append(headers);
         
         $('#modal_add_rfiles').modal({ show: true });
+        $('#filename').focus();
     });
 }
 
@@ -339,11 +340,13 @@ $(document).ready(function(){
     });
     $("#rfiles_table").css("font-size", 12);
     var buttons = new $.fn.dataTable.Buttons(Table, {
-         buttons: [
+        buttons: [
             { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
-            , "titleAttr": 'Download as CSV' },
+            , "titleAttr": 'Download as CSV', "exportOptions": { "columns": ':visible', 'orthogonal':  'export' } } ,
             { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
-            , "titleAttr": 'Copy' },
+            , "titleAttr": 'Copy', "exportOptions": { "columns": ':visible', 'orthogonal':  'export' } },
+            { "extend": 'colvis', "text":'<i class="fas fa-eye-slash"></i>',"className": 'btn btn-link text-white'
+            , "titleAttr": 'Toggle columns' }
         ]
     }).container().appendTo($('#tables_button'));
 

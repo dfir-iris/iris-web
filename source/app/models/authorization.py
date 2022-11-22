@@ -22,6 +22,10 @@ class CaseAccessLevel(enum.Enum):
     read_only = 0x2
     full_access = 0x4
 
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
 
 class Permissions(enum.Enum):
     standard_user = 0x1
@@ -70,7 +74,7 @@ class Group(db.Model):
     group_description = Column(Text)
     group_permissions = Column(BigInteger, nullable=False)
     group_auto_follow = Column(Boolean, nullable=False, default=False)
-    group_auto_follow_access_level = Column(BigInteger, nullable=False)
+    group_auto_follow_access_level = Column(BigInteger, nullable=False, default=0)
 
     UniqueConstraint('group_name')
 

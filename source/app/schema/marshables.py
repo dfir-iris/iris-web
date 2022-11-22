@@ -118,7 +118,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
 class CaseAddNoteSchema(ma.Schema):
     note_id = fields.Integer(required=False)
-    note_title = fields.String(required=True, validate=Length(min=1), allow_none=False)
+    note_title = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
     note_content = fields.String(required=False, validate=Length(min=1))
     group_id = fields.Integer(required=True)
     csrf_token = fields.String(required=False)
@@ -652,6 +652,7 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
 class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
     group_name = auto_field('group_name', required=True, validate=Length(min=2), allow_none=False)
     group_description = auto_field('group_description', required=True, validate=Length(min=2))
+    group_auto_follow_access_level = auto_field('group_auto_follow_access_level', required=False, default=False)
 
     class Meta:
         model = Group

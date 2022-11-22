@@ -330,6 +330,11 @@ def ac_add_user_effective_access(users_list, case_id, access_level):
     Directly add a set of effective user access
     """
 
+    UserCaseEffectiveAccess.query.filter(
+        UserCaseEffectiveAccess.case_id == case_id,
+        UserCaseEffectiveAccess.user_id.in_(users_list)
+    ).delete()
+
     access_to_add = []
     for user_id in users_list:
         ucea = UserCaseEffectiveAccess()
@@ -348,10 +353,27 @@ def ac_set_new_case_access(org_members, case_id):
     """
 
     users = ac_apply_autofollow_groups_access(case_id)
+    if current_user.id in users.keys():
+        del users[current_user.id]
+
     users_full = User.query.with_entities(User.id).all()
     users_full_access = list(set([u.id for u in users_full]) - set(users.keys()))
 
     ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.full_access.value)
+
+    UserCaseAccess.query.filter(
+        UserCaseAccess.case_id == case_id,
+        UserCaseAccess.user_id == current_user.id
+    ).delete()
+    db.session.commit()
+    uca = UserCaseAccess()
+    uca.case_id = case_id
+    uca.user_id = current_user.id
+    uca.access_level = CaseAccessLevel.full_access.value
+    db.session.add(uca)
+    db.session.commit()
+
+    ac_add_user_effective_access([current_user.id], case_id, CaseAccessLevel.full_access.value)
 
 
 def ac_apply_autofollow_groups_access(case_id):
@@ -434,6 +456,88 @@ def ac_auto_update_user_effective_access(user_id):
         db.session.add(ucea)
 
     db.session.commit()
+
+    return
+
+
+def ac_remove_case_access_from_user(user_id, case_id):
+    """
+    Remove a case access from a user
+    """
+
+    uac = UserCaseEffectiveAccess.query.where(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.case_id == case_id
+    )).all()
+
+    if len(uac) > 1:
+        log.error(f'Multiple access found for user {user_id} and case {case_id}')
+        for u in uac:
+            db.session.delete(u)
+        db.session.commit()
+
+        uac = UserCaseEffectiveAccess()
+        uac.user_id = user_id
+        uac.case_id = case_id
+        uac.access_level = CaseAccessLevel.deny_all.value
+        db.session.add(uac)
+
+    elif len(uac) == 1:
+        uac = uac[0]
+        uac.access_level = CaseAccessLevel.deny_all.value
+
+    db.session.commit()
+
+    return
+
+
+def ac_set_case_access_for_users(users, case_id, access_level):
+    """
+    Set a case access for a list of users
+    """
+    logs = "Access updated"
+
+    for user in users:
+        user_id = user.get('id')
+        if user_id == current_user.id:
+            logs = "It's done, but I excluded you from the list of users to update, Dave"
+            ac_set_case_access_for_user(user.get('id'), case_id, access_level=CaseAccessLevel.full_access.value)
+            continue
+
+        ac_set_case_access_for_user(user.get('id'), case_id, access_level)
+
+    db.session.commit()
+    return True, logs
+
+
+def ac_set_case_access_for_user(user_id, case_id, access_level, commit=True):
+    """
+    Set a case access from a user
+    """
+
+    uac = UserCaseEffectiveAccess.query.where(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.case_id == case_id
+    )).all()
+
+    if len(uac) > 1:
+        log.error(f'Multiple access found for user {user_id} and case {case_id}')
+        for u in uac:
+            db.session.delete(u)
+        db.session.commit()
+
+        uac = UserCaseEffectiveAccess()
+        uac.user_id = user_id
+        uac.case_id = case_id
+        uac.access_level = access_level
+        db.session.add(uac)
+
+    elif len(uac) == 1:
+        uac = uac[0]
+        uac.access_level = access_level
+
+    if commit:
+        db.session.commit()
 
     return
 
@@ -616,7 +720,8 @@ def ac_trace_user_effective_cases_access_2(user_id):
         effective_cases_access[uca.case_id]['user_access'].append(access)
 
     for case_id in effective_cases_access:
-        effective_cases_access[case_id]['user_effective_access'] = ac_access_level_to_list(effective_cases_access[case_id]['user_effective_access'])
+        effective_cases_access[case_id]['user_effective_access'] = ac_access_level_to_list(
+            effective_cases_access[case_id]['user_effective_access'])
 
     return effective_cases_access
 

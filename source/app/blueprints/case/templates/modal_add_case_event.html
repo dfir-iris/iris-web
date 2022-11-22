@@ -92,7 +92,7 @@
                                             </div>
                                             <div class="row" style="margin-left:0px;">
                                                 <div class="col-12" id="container_event_desc_content">
-                                                    <div id="event_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event %}{{ event.event_content  }}{% endif %}</div>
+                                                    <div id="event_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event.event_content %}{{ event.event_content  }}{% endif %}</div>
                                                     <textarea id="event_desc_content" rows="10" cols="82" style="display: none"></textarea>
                                                 </div>
                                                 <div class="col-12" id="container_event_description" style="display:none">

@@ -289,12 +289,137 @@ function case_detail(case_id) {
 }
 
 function manage_case(case_id) {
-   window.location = 'manage/cases?cid='+ case_id +'#view';
+   window.location = '/manage/cases?cid='+ case_id +'#view';
+}
+
+
+function access_case_info_reload(case_id) {
+    var req_users = [];
+
+    get_request_api('/case/users/list')
+    .done((data) => {
+         has_table = $.fn.dataTable.isDataTable( '#case_access_users_list_table' );
+        if (!notify_auto_api(data, !has_table)) {
+            return;
+        }
+
+        req_users = data.data;
+        if ( has_table ) {
+            table = $('#case_access_users_list_table').DataTable();
+            table.clear();
+            table.rows.add(req_users);
+            table.draw();
+        } else {
+            $.each($.find("table"), function(index, element){
+                addFilterFields($(element).attr("id"));
+            });
+            $("#case_access_users_list_table").DataTable({
+                    dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
+                    aaData: req_users,
+                    aoColumns: [
+                      {
+                        "data": "user_id",
+                        "className": "dt-center"
+                    },
+                    {
+                        "data": "user_name",
+                        "className": "dt-center"
+                    },
+                    {
+                        "data": "user_login",
+                        "className": "dt-center"
+                    },
+                    {
+                        "data": "user_access_level",
+                        "className": "dt-center",
+                        "render": function ( data, type, row ) {
+                            return `<select class="form-control" onchange="update_user_case_access_level('${row.user_id}',${case_id},this.value)">${get_access_level_options(data)}</select>`;
+                        }
+                    }
+                    ],
+                    filter: true,
+                    info: true,
+                    ordering: true,
+                    processing: true,
+                    initComplete: function () {
+                        tableFiltering(this.api(), 'case_access_users_list_table');
+                    }
+            });
+        }
+        for (var i = 0; i < req_users.length; i++) {
+            $('#username-list').append($('<option>', {
+                value: req_users[i].user_name
+            }));
+            $('#emails-list').append($('<option>', {
+                value: req_users[i].user_email
+            }));
+        }
+    });
+
+    $('#case_tags').amsifySuggestags({
+        printValues: false,
+        suggestions: []
+    });
+}
+
+var access_levels = [
+    { "id": 1, "name": "Deny all" },
+    { "id": 2, "name": "Read only" },
+    { "id": 4, "name": "Full access" }
+]
+
+function get_access_level_options(data) {
+    var options = "";
+
+    for (var i = 0; i < access_levels.length; i++) {
+        options += `<option value="${access_levels[i].id}" ${data == access_levels[i].id ? 'selected' : ''}>${access_levels[i].name}</option>`;
+    }
+    return options;
+}
+
+function update_user_case_access_level(user_id, case_id, access_level) {
+    var data = {
+        "case_id": parseInt(case_id),
+        "user_id": parseInt(user_id),
+        "access_level": parseInt(access_level),
+        "csrf_token": $('#csrf_token').val()
+    };
+
+    post_request_api('/case/access/set-user', JSON.stringify(data))
+    .done((data) => {
+        notify_auto_api(data);
+    });
+}
+
+function view_case_access_via_group(case_id) {
+    url = '/case/groups/access/modal' + case_param();
+    $('#modal_ac_additional').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_ac_additional').modal({ show: true });
+    });
+}
+
+function set_case_access_via_group(case_id) {
+    var data = {
+        "case_id": parseInt(case_id),
+        "access_level": parseInt($('#group_case_ac_select').val()),
+        "group_id": parseInt($('#group_case_access_select').val()),
+        "csrf_token": $('#csrf_token').val()
+    };
+
+    post_request_api('/case/access/set-group', JSON.stringify(data))
+    .done((data) => {
+        notify_auto_api(data);
+        access_case_info_reload(case_id);
+        $('#modal_ac_additional').modal('hide');
+    });
+
 }
 
 $(document).ready(function() {
-
-
 
     if ($("#editor_summary").attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");
@@ -388,14 +513,14 @@ $(document).ready(function() {
         setInterval(auto_remove_typing, 2000);
     }
 
-    $('#generate_report_button').attr("href", '/report/generate/case/' + $("#select_report option:selected").val() + case_param());
+    $('#generate_report_button').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param());
     $("#select_report").on("change", function(){
-        $('#generate_report_button').attr("href", '/report/generate/case/' + $("#select_report option:selected").val() + case_param());
+        $('#generate_report_button').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param());
     });
 
-    $('#generate_report_act_button').attr("href", '/report/generate/activities/' + $("#select_report_act option:selected").val() + case_param());
+    $('#generate_report_act_button').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param());
     $("#select_report_act").on("change", function(){
-        $('#generate_report_act_button').attr("href", '/report/generate/activities/' + $("#select_report_act option:selected").val() + case_param());
+        $('#generate_report_act_button').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param());
     });
 
 });

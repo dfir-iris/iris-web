@@ -48,7 +48,7 @@ reports_blueprint = Blueprint('reports',
 file_remover = FileRemover()
 
 
-@reports_blueprint.route('/report/generate/activities/<report_id>', methods=['GET'])
+@reports_blueprint.route('/case/report/generate-activities/<report_id>', methods=['GET'])
 @api_login_required
 def download_case_activity(report_id, caseid):
 
@@ -76,7 +76,7 @@ def download_case_activity(report_id, caseid):
     return redirect(url_for('index.index'))
 
 
-@reports_blueprint.route("/report/generate/case/<report_id>")
+@reports_blueprint.route("/case/report/generate-investigation/<report_id>", methods=['GET'])
 @api_login_required
 def _gen_report(report_id, caseid):
     if not current_user.is_authenticated:

@@ -20,6 +20,8 @@
 
 # --------- Configuration ---------
 # read the private configuration file
+from datetime import timedelta
+
 import ssl
 
 import sys
@@ -291,6 +293,10 @@ class Config():
 
         SECURITY_LOGIN_USER_TEMPLATE = 'login.html'
 
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = True
+
     PG_ACCOUNT = PG_ACCOUNT_
     PG_PASSWD = PG_PASSWD_
     PGA_ACCOUNT = PGA_ACCOUNT_
@@ -300,6 +306,7 @@ class Config():
 
     DEMO_MODE_ENABLED = config.load('IRIS_DEMO', 'ENABLED', fallback=False)
     DEMO_DOMAIN = config.load('IRIS_DEMO', 'DOMAIN', fallback='')
+    WTF_CSRF_TIME_LIMIT = None
 
     """ SqlAlchemy configuration
     """
@@ -331,6 +338,8 @@ class Config():
     ASSET_STORE_PATH = config.load('IRIS', 'ASSET_STORE_PATH', fallback="/home/iris/server_data/custom_assets")
     DATASTORE_PATH = config.load('IRIS', 'DATASTORE_PATH', fallback="/home/iris/server_data/datastore")
     ASSET_SHOW_PATH = "/static/assets/img/graph"
+
+    ORGANISATION_NAME = config.load('IRIS', 'ORGANISATION_NAME', fallback='')
 
     UPDATE_DIR_NAME = '_updates_'
 

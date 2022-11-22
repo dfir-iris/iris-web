@@ -60,7 +60,9 @@ def get_client_api(client_id: str) -> Client:
         Client.sla.label('customer_sla')
     ).filter(Client.client_id == client_id).first()
 
-    output = client._asdict()
+    output = None
+    if client:
+        output = client._asdict()
 
     return output
 

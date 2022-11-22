@@ -164,9 +164,15 @@
 					</ul>
 					{% endif %}
 				</div>
-
-				<div class="d-flex justify-content-center text-faded iris-version-menu">
-					<a href="https://github.com/dfir-iris/iris-web" target="_blank" rel="noopener">IRIS {{ iris_version }}</a> {% if has_updates %}<a href="/manage/settings?cid={{session['current_case'].case_id}}"> <i class="ml-1 text-warning fas fa-exclamation-circle" title="Updates are available for the server"></i></a>{% endif %}
+				<div class="mt--2">
+					<div class="row ml-2 mr-2">
+						<span class="text-dark ml-auto mr-auto">{{ organisation_name }}</span>
+					</div>
+					<div class="row ml-2 mr-2">
+						<span class="text-dark ml-auto mr-auto"><a href="https://github.com/dfir-iris/iris-web" target="_blank" rel="noopener">IRIS {{ iris_version }}</a> {% if has_updates %}
+								<a href="/manage/settings?cid={{session['current_case'].case_id}}"> <i class="ml-1 text-warning fas fa-exclamation-circle" title="Updates are available for the server"></i></a>{% endif %}
+						</span>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -75,7 +75,7 @@ case_ioc_blueprint = Blueprint(
 
 
 # CONTENT ------------------------------------------------
-@case_ioc_blueprint.route('/case/ioc', methods=['GET', 'POST'])
+@case_ioc_blueprint.route('/case/ioc', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_ioc(caseid, url_redir):
     if url_redir:
@@ -152,7 +152,7 @@ def case_add_ioc(caseid):
             ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
 
         if ioc:
-            track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
+            track_activity("added ioc \"{}\"".format(ioc.ioc_value), caseid=caseid)
 
             msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
 
@@ -240,7 +240,7 @@ def case_upload_ioc(caseid):
             if ioc:
                 ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
                 ret.append(request_data)
-                track_activity(f"added ioc {ioc.ioc_value}", caseid=caseid)
+                track_activity(f"added ioc \"{ioc.ioc_value}\"", caseid=caseid)
 
             else:
                 errors.append(f"{ioc.ioc_value} (internal reasons)")
@@ -284,13 +284,13 @@ def case_delete_ioc(cur_id, caseid):
         return response_error('Not a valid IOC for this case')
 
     if not delete_ioc(ioc, caseid):
-        track_activity("unlinked IOC ID {}".format(cur_id))
-        return response_success("IOC {} unlinked".format(cur_id))
+        track_activity(f"unlinked IOC ID {ioc.ioc_value}", caseid=caseid)
+        return response_success(f"IOC {cur_id} unlinked")
 
     call_modules_hook('on_postload_ioc_delete', data=cur_id, caseid=caseid)
 
-    track_activity("deleted IOC ID {}".format(cur_id))
-    return response_success("IOC {} deleted".format(cur_id))
+    track_activity(f"deleted IOC \"{ioc.ioc_value}\"", caseid=caseid)
+    return response_success(f"IOC {cur_id} deleted")
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
@@ -353,8 +353,8 @@ def case_update_ioc(cur_id, caseid):
         ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=caseid)
 
         if ioc_sc:
-            track_activity("updated ioc {}".format(ioc_sc.ioc_value), caseid=caseid)
-            return response_success("Updated ioc {}".format(ioc_sc.ioc_value), data=ioc_schema.dump(ioc))
+            track_activity("updated ioc \"{ioc_sc.ioc_value}\"", caseid=caseid)
+            return response_success("Updated ioc \"{ioc_sc.ioc_value}\"", data=ioc_schema.dump(ioc))
 
         return response_error("Unable to update ioc for internal reasons")
 
@@ -412,7 +412,7 @@ def case_comment_ioc_add(cur_id, caseid):
 
         db.session.commit()
 
-        track_activity("ioc {} commented".format(ioc.ioc_id), caseid=caseid)
+        track_activity(f"ioc \"{ioc.ioc_value}\" commented", caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -445,4 +445,5 @@ def case_comment_ioc_delete(cur_id, com_id, caseid):
     if not success:
         return response_error(msg)
 
+    track_activity(f"comment {com_id} on ioc {cur_id} deleted", caseid=caseid)
     return response_success(msg)

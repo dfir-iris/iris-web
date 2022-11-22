@@ -121,6 +121,17 @@ def list_cases_dict(user_id):
     return data
 
 
+def user_list_cases_view(user_id):
+    res = UserCaseEffectiveAccess.query.with_entities(
+        UserCaseEffectiveAccess.case_id
+    ).filter(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value
+    )).all()
+
+    return [r.case_id for r in res]
+
+
 def close_case(case_id):
     res = Cases.query.filter(
         Cases.case_id == case_id

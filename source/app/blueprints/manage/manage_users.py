@@ -47,6 +47,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_user_view
 from app.datamgmt.manage.manage_users_db import get_users_list_user_view
+from app.datamgmt.manage.manage_users_db import remove_case_access_from_user
 from app.datamgmt.manage.manage_users_db import remove_cases_access_from_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
@@ -261,7 +262,7 @@ def manage_user_cac_add_case(cur_id, caseid):
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
-def manage_user_cac_delete_case(cur_id,  caseid):
+def manage_user_cac_delete_cases(cur_id,  caseid):
 
     user = get_user(cur_id)
     if not user:
@@ -288,7 +289,41 @@ def manage_user_cac_delete_case(cur_id,  caseid):
         return response_error(msg=str(e))
 
     if success:
-        return response_success(msg="Cases access removed from group")
+        return response_success(msg="User removed from cases")
+
+    return response_error(msg=logs)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/case-access/delete', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def manage_user_cac_delete_case(cur_id,  caseid):
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request")
+
+    if not isinstance(data.get('case'), int):
+        return response_error("Expecting cases as int")
+
+    try:
+
+        success, logs = remove_case_access_from_user(user.id, data.get('case'))
+        db.session.commit()
+
+    except Exception as e:
+        log.error("Error while removing cases access from user: {}".format(e))
+        log.error(traceback.format_exc())
+        return response_error(msg=str(e))
+
+    if success:
+        return response_success(msg="User removed from cases")
 
     return response_error(msg=logs)
 

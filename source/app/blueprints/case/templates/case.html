@@ -1,6 +1,8 @@
 {% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %}
 {% block stylesheets %}
 <link rel="stylesheet" href="/static/assets/css/select2.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 {% endblock stylesheets %} {% block content %}
 {% if current_user.is_authenticated %}
 
@@ -31,8 +33,8 @@
                 {% endif %}
                 <div class="row">
                     <small><a href="#" onclick="case_detail('{{ case.case_id }}');" class="btn btn-sm btn-outline-light btn-rounded float-left ml-2">
-                        <i class="fa-solid fa-info mr-1"></i>
-                        Case info
+                        <i class="fa-solid fa-gear mr-1"></i>
+                        Manage
                         </a></small>
                     <div class="dropdown">
                           <button class="btn btn-sm btn-outline-light btn-rounded float-left ml-2" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
@@ -95,10 +97,10 @@
                             <small id="content_last_saved_by" class="mr-3 mt-1"></small>
                             <span id="last_saved" class="badge mr-3 ml-2"></span>
                             <small id="content_last_sync"></small>
-                            <button type="button" class="btn btn-xs btn-icon btn-round btn-outline-default mr-3 ml-3" onclick="sync_editor();">
-                                <i class="fas fa-sync rotate"></i>
+                            <button type="button" class="btn btn-sm btn-outline-default mr-2 ml-3" onclick="sync_editor();">
+                                Refresh
                             </button>
-                            <button class="btn btn-sm icon-note mr-3" onclick="edit_case_summary();"></button>
+                            <button class="btn btn-sm mr-3" onclick="edit_case_summary();">Edit</button>
                         </div>
                     </div>
                 </div>
@@ -194,6 +196,8 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div>
+<div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional" data-backdrop="true">
+</div>
 {% endif %} {% endblock content %} {% block javascripts %}
 
 <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -203,8 +207,12 @@
 
 <script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
 <script src="/static/assets/js/iris/crc32.js"></script>
+<script src="/static/assets/js/iris/datatablesUtils.js"></script>
 <script src="/static/assets/js/iris/case.js"></script>
+<script src="/static/assets/js/iris/manage.cases.common.js"></script>
 <script src="/static/assets/js/iris/case.summary.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 
 <script>
     var is_db_linked = {{ 1 if case.name else 0 }};

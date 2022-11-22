@@ -75,7 +75,7 @@ def logout():
         current_user.ctx_human_case = session['current_case']['case_name']
         db.session.commit()
 
-    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True)
+    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
     logout_user()
 
     return redirect(not_authenticated_redirection_url())

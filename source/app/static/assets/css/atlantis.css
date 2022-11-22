@@ -15730,3 +15730,32 @@ td.dt-nowrap { white-space: nowrap }
   width: 100%;
   border-top: 1px solid #f1f1f1;
 }
+
+.truncate {
+  max-width:50px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar[data-background-color="white"] .nav>.nav-item-dead>a:hover {
+  background: #fff;
+}
+
+.sidebar[data-background-color="dark"] .nav>.nav-item-dead>a:hover {
+  background: #000;
+}
+
+
+.ellipsis {
+    position: relative;
+}
+
+.ellipsis span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

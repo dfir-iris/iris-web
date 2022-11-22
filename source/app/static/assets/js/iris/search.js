@@ -198,3 +198,7 @@ function search() {
         $('#submit_search').text("Search");
     });
 }
+
+$(document).ready(function(){
+    $('#search_value').focus();
+});

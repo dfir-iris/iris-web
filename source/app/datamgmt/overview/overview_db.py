@@ -20,12 +20,13 @@
 import datetime
 
 from app.datamgmt.case.case_tasks_db import get_tasks_cases_mapping
+from app.datamgmt.manage.manage_cases_db import user_list_cases_view
 from app.models import Cases
 from app.models import Client
 from app.models.authorization import User
 
 
-def get_overview_db():
+def get_overview_db(user_id):
     """
     Get overview data from the database
     """
@@ -33,12 +34,12 @@ def get_overview_db():
         Cases.case_id,
         Cases.case_uuid,
         Cases.name.label('case_title'),
-        Cases.description.label('case_description'),
         Client.name.label('customer_name'),
         Cases.open_date.label('case_open_date'),
         User.name.label('opened_by')
     ).filter(
-        Cases.close_date == None
+        Cases.close_date == None,
+        Cases.case_id.in_(user_list_cases_view(user_id))
     ).join(
         Cases.user,
         Cases.client

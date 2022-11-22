@@ -17,18 +17,23 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from flask_login import current_user
 from sqlalchemy import and_
 
 from app import bc
 from app import db
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
+from app.iris_engine.access_control.utils import ac_remove_case_access_from_user
+from app.iris_engine.access_control.utils import ac_set_case_access_for_user
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
+from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
@@ -328,6 +333,65 @@ def remove_cases_access_from_user(user_id, cases_list):
     return True, 'Cases access removed'
 
 
+def remove_case_access_from_user(user_id, case_id):
+    if not user_id or type(user_id) is not int:
+        return False, 'Invalid user id'
+
+    if not case_id or type(case_id) is not int:
+        return False, "Invalid case id"
+
+    UserCaseAccess.query.filter(
+        and_(
+            UserCaseAccess.case_id == case_id,
+            UserCaseAccess.user_id == user_id
+        )).delete()
+
+    db.session.commit()
+
+    ac_remove_case_access_from_user(user_id, case_id)
+    return True, 'Case access removed'
+
+
+def set_user_case_access(user_id, case_id, access_level):
+    if user_id is None or type(user_id) is not int:
+        return False, 'Invalid user id'
+
+    if case_id is None or type(case_id) is not int:
+        return False, "Invalid case id"
+
+    if access_level is None or type(access_level) is not int:
+        return False, "Invalid access level"
+
+    if CaseAccessLevel.has_value(access_level) is False:
+        return False, "Invalid access level"
+
+    uca = UserCaseAccess.query.filter(
+        UserCaseAccess.user_id == user_id,
+        UserCaseAccess.case_id == case_id
+    ).all()
+
+    if len(uca) > 1:
+        for u in uca:
+            db.session.delete(u)
+        db.session.commit()
+        uca = None
+
+    if not uca:
+        uca = UserCaseAccess()
+        uca.user_id = user_id
+        uca.case_id = case_id
+        uca.access_level = access_level
+        db.session.add(uca)
+    else:
+        uca[0].access_level = access_level
+
+    db.session.commit()
+
+    ac_set_case_access_for_user(user_id, case_id, access_level)
+
+    return True, 'Case access set to {} for user {}'.format(access_level, user_id)
+
+
 def get_user_details(user_id):
 
     user = User.query.filter(User.id == user_id).first()
@@ -498,10 +562,10 @@ def get_users_list_restricted_from_case(case_id):
         User.name.label('user_name'),
         User.user.label('user_login'),
         User.active.label('user_active'),
-        User.email.label('user_email')
+        User.email.label('user_email'),
+        UserCaseEffectiveAccess.access_level.label('user_access_level')
     ).filter(
-        and_(UserCaseEffectiveAccess.case_id == case_id,
-             UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value)
+        UserCaseEffectiveAccess.case_id == case_id
     ).join(
         UserCaseEffectiveAccess.user
     ).all()
