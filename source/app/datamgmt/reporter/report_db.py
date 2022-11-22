@@ -29,6 +29,7 @@ from app.models import CaseAssets
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
 from app.models import CaseReceivedFile
+from app.models import CaseStatus
 from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
@@ -58,12 +59,15 @@ def export_case_json(case_id):
         export['errors'] = ["Invalid case number"]
         return export
 
+    case['description'] = process_md_images_links_for_report(case['description'])
+
     export['case'] = case
     export['evidences'] = export_case_evidences_json(case_id)
     export['timeline'] = export_case_tm_json(case_id)
     export['iocs'] = export_case_iocs_json(case_id)
     export['assets'] = export_case_assets_json(case_id)
     export['tasks'] = export_case_tasks_json(case_id)
+    export['comments'] = export_case_comments_json(case_id)
     export['notes'] = export_case_notes_json(case_id)
     export['export_date'] = datetime.datetime.utcnow()
 
@@ -203,15 +207,20 @@ def export_caseinfo_json(case_id):
         Cases.close_date,
         Cases.custom_attributes,
         Cases.case_id,
-        Cases.case_uuid
+        Cases.case_uuid,
+        Cases.status_id
     ).join(
         Cases.user, Cases.client
-    ).all()
+    ).first()
 
     if not case:
         return None
 
-    return [row._asdict() for row in case][0]
+    case = case._asdict()
+
+    case['status_name'] = CaseStatus(case['status_id']).name
+
+    return case
 
 
 def export_case_evidences_json(case_id):
@@ -258,7 +267,7 @@ def export_case_notes_json(case_id):
         for note in res:
             note = note._asdict()
             note["note_content"] = process_md_images_links_for_report(note["note_content"])
-            return_notes.append(return_notes)
+            return_notes.append(note)
 
     return return_notes
 

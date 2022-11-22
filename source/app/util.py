@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from collections import OrderedDict
+
 import datetime
 import decimal
 import hashlib
@@ -89,10 +91,10 @@ def response_success(msg='', data=None):
         "message": msg,
         "data": data if data is not None else []
     }
-
     return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
                               status=200,
                               mimetype='application/json')
+
 
 def g_db_commit():
     db.session.commit()
@@ -124,7 +126,6 @@ class AlchemyEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj.__class__, DeclarativeMeta):
-
             # an SQLAlchemy class
             fields = {}
             for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata'
