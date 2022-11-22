@@ -328,17 +328,16 @@ $(document).ready(function(){
         aoColumns: [
           {
             "data": "ioc_value",
-            "className": "ellipsis",
             "render": function (data, type, row, meta) {
               if (type === 'display') {
-                datak= ellipsis_field(data, 70);
+                datak= ellipsis_field(data, 64);
 
                 if (isWhiteSpace(data)) {
                     datak = '#' + row['ioc_id'];
                 }
 
                 share_link = buildShareLink(row['ioc_id']);
-                data = '<a href="' + share_link + '" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
+                data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
               }
 
               return data;
@@ -353,7 +352,6 @@ $(document).ready(function(){
               }
           },
           { "data": "ioc_description",
-          "className": "ellipsis",
            "render": function (data, type, row, meta) {
               if (type === 'display') {
               data = sanitizeHTML(data);
@@ -433,9 +431,9 @@ $(document).ready(function(){
     var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
         { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Download as CSV' },
+        , "titleAttr": 'Download as CSV', "exportOptions": { "columns": ':visible', 'orthogonal':  'export' } } ,
         { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Copy' },
+        , "titleAttr": 'Copy', "exportOptions": { "columns": ':visible', 'orthogonal':  'export' } },
         { "extend": 'colvis', "text":'<i class="fas fa-eye-slash"></i>',"className": 'btn btn-link text-white'
         , "titleAttr": 'Toggle columns' }
     ]

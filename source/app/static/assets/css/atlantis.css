@@ -15750,10 +15750,7 @@ td.dt-nowrap { white-space: nowrap }
 .ellipsis {
     position: relative;
 }
-.ellipsis:before {
-    content: '&nbsp;';
-    visibility: hidden;
-}
+
 .ellipsis span {
     position: absolute;
     left: 0;

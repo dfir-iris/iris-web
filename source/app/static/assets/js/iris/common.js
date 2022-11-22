@@ -58,7 +58,7 @@ function ellipsis_field( data, cutoff, wordbreak ) {
 
     shortened = filterXSS( shortened );
 
-    return '<span class="ellipsis" title="'+filterXSS(data)+'">'+shortened+'&#8230;</span>';
+    return '<div class="ellipsis" title="'+filterXSS(data)+'">'+shortened+'&#8230;</div>';
 };
 
 function propagate_form_api_errors(data_error) {
