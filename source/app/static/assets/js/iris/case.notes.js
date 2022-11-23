@@ -442,6 +442,11 @@ function draw_kanban() {
         success: function (data) {
             if (data.status == 'success') {
                 gidl = [];
+                if (data.data.groups.length > 0) {
+                    $('#empty-set-notes').hide();
+                } else {
+                    $('#empty-set-notes').show();
+                }
                 for (idx in data.data.groups) {
                     group = data.data.groups[idx];
                     if (!gidl.includes(group.group_id)) {
