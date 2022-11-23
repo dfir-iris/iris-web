@@ -5,44 +5,39 @@
                                 <div class="col col-md-ml-12 col-sm-12">
                                     <ul class="nav page-navigation page-navigation-style-2 page-navigation-primary" id="h_nav_tab">
                                         <li class="nav-item {{ active if page == 'case' }}">
-                                            <a class="nav-link" href="/case?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Summary</span>
-                                            </a>
+                                            <button class="btn btn-sm btn-light" href="#" onclick="case_detail('{{ case.case_id }}');">
+                                                <i class="fa-solid fa-gear mr-1"></i>
+                                                <span class="">Manage</span>
+                                            </button>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/notes?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Notes</span>
-                                            </a>
+                                            <div class="dropdown">
+                                              <button class="btn btn-sm btn-light float-left ml-2" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                                  <span aria-hidden="true"><i class="fa-solid fa-bolt mr-1"></i> Processors</span>
+                                              </button>
+                                              <div class="dropdown-menu pull-right" id="case_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                                              </div>
+                                         </div>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="/case/assets?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Assets</span>
-                                            </a>
+                                                <button class="btn btn-sm btn-light float-left ml-2" id="case_pipeline" onclick="case_pipeline_popup();">
+                                                                                    <span aria-hidden="true"><i class="fa-solid fa-upload mr-1"></i>Pipelines</span>
+                                                </button>
                                         </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/ioc?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">IOC</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/timeline?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Timeline</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/graph?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Graph</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/tasks?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Tasks</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/evidences?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Evidences</span>
-                                            </a>
+
+                                        <li class="nav-item ml-auto">
+                                            <btn href="#" onclick="report_template_selector();" class="btn btn-dark btn-sm float-right ml-2">
+                                              <span class="btn-label">
+                                                <i class="fa fa-file-arrow-down"></i>
+                                              </span>
+                                              Generate report
+                                            </btn>
+                                            <btn href="#" onclick="act_report_template_selector();" class="btn btn-sm btn-dark float-right ml-2">
+                                              <span class="btn-label">
+                                                <i class="fa fa-chart-line"></i>
+                                              </span>
+                                              Activity report
+                                            </btn>
                                         </li>
                                     </ul>
                                 </div>

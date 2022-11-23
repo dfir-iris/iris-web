@@ -193,7 +193,7 @@ $(document).ready(function(){
             var $this = $(this);
             var child = $this.children();
             // if the current path is like this link, make it active
-            if(child.attr('href').split("?")[0] == current){
+            if(child.attr('href') !== undefined && child.attr('href').split("?")[0] == current){
                 $this.addClass('active');
                 return;
             }
