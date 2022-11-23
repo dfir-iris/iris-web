@@ -39,7 +39,7 @@
                      </ul>
                     <ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
                         <li class="nav-item ml-2">
-                            <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
+                            <span class="text-white text-sm mr-2" id="last_resfresh">Loading</span>
                         </li>
                         <li class="nav-item hidden-caret">
                             <button class="btn btn-primary btn-sm" onclick="get_or_filter_tm();">
@@ -58,9 +58,9 @@
                                   <span class="menu-title"><i class="fas fa-ellipsis-v"></i></span>
                               </button>
                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}"> Visualize</a>
-                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}&group-by=asset"> Visualize by asset</a>
-                                  <a class="dropdown-item" href="timeline/visualize?cid={{case_name[2]}}&group-by=category">Visualize by category</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}"> Visualize</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=asset"> Visualize by asset</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=category">Visualize by category</a>
                                   <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsvWithUI();"><small class="fa fa-download mr-2"></small> Download as CSV with user info</a>
@@ -107,8 +107,9 @@
             </div>
         
         </div>
-        
-        <div class="modal shadow-xl" tabindex="-1" id="modal_add_event" data-backdrop="true">
+
+
+        <div class="modal shadow-lg" tabindex="-1" id="modal_add_event" data-backdrop="true">
             <div class="modal-xl modal-dialog" role="document">
                 <div class="modal-content" id="modal_add_event_content">
         
@@ -125,22 +126,12 @@
 {% endblock content %}
 {% block javascripts %}
 
-<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
-    charset="utf-8"></script>
-
-<script src="/static/assets/js/core/moments.min.js"></script>
-<script src="/static/assets/js/core/bootstrap-datetimepicker.min.js"></script>
-
-<script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
-<script src="/static/assets/js/plugin/select/select2.js"></script>
-<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
-
-<script src="/static/assets/js/iris/case.js"></script>
+{% include 'includes/footer_case.html' %}
 <script src="/static/assets/js/iris/case.timeline.js"></script>
 <script src="/static/assets/js/timeline.js"></script>
 
 <script>
+    var has_deletion_prompt = {% if current_user.has_deletion_confirmation %}true{% else %}false{% endif %};
 </script>
 
 {% endblock javascripts %}

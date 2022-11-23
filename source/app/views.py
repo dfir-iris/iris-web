@@ -32,15 +32,18 @@ from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.context.context import ctx_blueprint
 # Blueprints
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
+from app.blueprints.overview.overview_routes import overview_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 from app.blueprints.login.login_routes import login_blueprint
+from app.blueprints.manage.manage_access_control import manage_ac_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
 from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.manage.manage_customers_routes import manage_customers_blueprint
 from app.blueprints.manage.manage_event_categories_routes import manage_event_cat_blueprint
+from app.blueprints.manage.manage_groups import manage_groups_blueprint
 from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
 from app.blueprints.manage.manage_modules_routes import manage_modules_blueprint
 from app.blueprints.manage.manage_objects_routes import manage_objects_blueprint
@@ -52,10 +55,11 @@ from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
 from app.blueprints.reports.reports_route import reports_blueprint
 from app.blueprints.search.search_routes import search_blueprint
-from app.models.models import User
+from app.models.authorization import User
 from app.post_init import run_post_init
 
 app.register_blueprint(dashboard_blueprint)
+app.register_blueprint(overview_blueprint)
 app.register_blueprint(login_blueprint)
 app.register_blueprint(profile_blueprint)
 app.register_blueprint(search_blueprint)
@@ -73,6 +77,8 @@ app.register_blueprint(manage_objects_blueprint)
 app.register_blueprint(manage_tlp_type_blueprint)
 app.register_blueprint(manage_task_status_blueprint)
 app.register_blueprint(manage_attributes_blueprint)
+app.register_blueprint(manage_ac_blueprint)
+app.register_blueprint(manage_groups_blueprint)
 
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)

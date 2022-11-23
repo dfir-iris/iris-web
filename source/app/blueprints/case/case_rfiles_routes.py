@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+from datetime import datetime
+
 import marshmallow
 from flask import Blueprint
 from flask import redirect
@@ -28,9 +30,16 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
+from app import db
+from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_rfiles_db import add_comment_to_evidence
 from app.datamgmt.case.case_rfiles_db import add_rfile
+from app.datamgmt.case.case_rfiles_db import delete_evidence_comment
 from app.datamgmt.case.case_rfiles_db import delete_rfile
+from app.datamgmt.case.case_rfiles_db import get_case_evidence_comment
+from app.datamgmt.case.case_rfiles_db import get_case_evidence_comments
+from app.datamgmt.case.case_rfiles_db import get_case_evidence_comments_count
 from app.datamgmt.case.case_rfiles_db import get_rfile
 from app.datamgmt.case.case_rfiles_db import get_rfiles
 from app.datamgmt.case.case_rfiles_db import update_rfile
@@ -38,9 +47,11 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.states import get_evidences_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseEvidenceSchema
-from app.util import api_login_required
-from app.util import login_required
+from app.schema.marshables import CommentSchema
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -53,7 +64,7 @@ case_rfiles_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @case_rfiles_blueprint.route('/case/evidences', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_rfile(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
@@ -65,7 +76,7 @@ def case_rfile(caseid, url_redir):
 
 
 @case_rfiles_blueprint.route('/case/evidences/list', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_rfiles(caseid):
     crf = get_rfiles(caseid)
 
@@ -78,7 +89,7 @@ def case_list_rfiles(caseid):
 
 
 @case_rfiles_blueprint.route('/case/evidences/state', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_rfiles_state(caseid):
     os = get_evidences_state(caseid=caseid)
     if os:
@@ -88,7 +99,7 @@ def case_rfiles_state(caseid):
 
 
 @case_rfiles_blueprint.route('/case/evidences/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_rfile(caseid):
 
     try:
@@ -107,7 +118,7 @@ def case_add_rfile(caseid):
         crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=caseid)
 
         if crf:
-            track_activity("added evidence {}".format(crf.filename), caseid=caseid)
+            track_activity(f"added evidence \"{crf.filename}\"", caseid=caseid)
             return response_success("Evidence added", data=evidence_schema.dump(crf))
 
         return response_error("Unable to create task for internal reasons")
@@ -117,7 +128,7 @@ def case_add_rfile(caseid):
 
 
 @case_rfiles_blueprint.route('/case/evidences/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_evidence(cur_id, caseid):
     crf = get_rfile(cur_id, caseid)
     if not crf:
@@ -128,7 +139,7 @@ def case_get_evidence(cur_id, caseid):
 
 
 @case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_edit_rfile_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
@@ -137,11 +148,14 @@ def case_edit_rfile_modal(cur_id, caseid, url_redir):
     if not crf:
         return response_error("Invalid evidence ID for this case")
 
-    return render_template("modal_add_case_rfile.html", rfile=crf, attributes=crf.custom_attributes)
+    comments_map = get_case_evidence_comments_count([cur_id])
+
+    return render_template("modal_add_case_rfile.html", rfile=crf, attributes=crf.custom_attributes,
+                           comments_map=comments_map)
 
 
 @case_rfiles_blueprint.route('/case/evidences/add/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.full_access)
 def case_add_rfile_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
@@ -150,7 +164,7 @@ def case_add_rfile_modal(caseid, url_redir):
 
 
 @case_rfiles_blueprint.route('/case/evidences/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_rfile(cur_id, caseid):
 
     try:
@@ -174,7 +188,7 @@ def case_edit_rfile(cur_id, caseid):
         evd = call_modules_hook('on_postload_evidence_update', data=evd, caseid=caseid)
 
         if evd:
-            track_activity("updated evidence {}".format(evd.filename), caseid=caseid)
+            track_activity(f"updated evidence \"{evd.filename}\"", caseid=caseid)
             return response_success("Evidence {} updated".format(evd.filename), data=evidence_schema.dump(evd))
 
         return response_error("Unable to update task for internal reasons")
@@ -183,8 +197,8 @@ def case_edit_rfile(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@case_rfiles_blueprint.route('/case/evidences/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@case_rfiles_blueprint.route('/case/evidences/delete/<int:cur_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_rfile(cur_id, caseid):
 
     call_modules_hook('on_preload_evidence_delete', data=cur_id, caseid=caseid)
@@ -196,6 +210,93 @@ def case_delete_rfile(cur_id, caseid):
 
     call_modules_hook('on_postload_evidence_delete', data=cur_id, caseid=caseid)
 
-    track_activity("deleted evidence ID {} from register".format(cur_id), caseid)
+    track_activity(f"deleted evidence \"{crf.filename}\" from registry", caseid)
 
     return response_success("Evidence deleted")
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_evidence_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_task.case_task', cid=caseid, redirect=True))
+
+    evidence = get_rfile(cur_id, caseid=caseid)
+    if not evidence:
+        return response_error('Invalid evidence ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='evidences',
+                           title=evidence.filename)
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_evidence_list(cur_id, caseid):
+
+    task_comments = get_case_evidence_comments(cur_id)
+    if task_comments is None:
+        return response_error('Invalid evidence ID')
+
+    res = [com._asdict() for com in task_comments]
+    return response_success(data=res)
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_evidence_add(cur_id, caseid):
+
+    try:
+        evidence = get_rfile(cur_id, caseid=caseid)
+        if not evidence:
+            return response_error('Invalid evidence ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_evidence(evidence.id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity(f"evidence \"{evidence.filename}\" commented", caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_evidence_get(cur_id, com_id, caseid):
+
+    comment = get_case_evidence_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_evidence_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'tasks', caseid)
+
+
+@case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_evidence_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_evidence_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    track_activity(f"comment {com_id} on evidence {cur_id} deleted", caseid=caseid)
+    return response_success(msg)

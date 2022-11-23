@@ -18,10 +18,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import glob
-import secrets
-
 import os
 import random
+import secrets
 import string
 from alembic import command
 from alembic.config import Config
@@ -34,10 +33,19 @@ from app import bc
 from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.datamgmt.manage.manage_users_db import add_user_to_group
+from app.datamgmt.manage.manage_users_db import add_user_to_organisation
+from app.iris_engine.access_control.utils import ac_get_mask_analyst
+from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
+from app.iris_engine.access_control.utils import ac_recompute_all_users_effective_ac
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
 from app.models import create_safe_limited
+from app.models.authorization import CaseAccessLevel
+from app.models.authorization import Group
+from app.models.authorization import Organisation
+from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import Client
 from app.models.models import AnalysisStatus
@@ -49,12 +57,9 @@ from app.models.models import IrisModule
 from app.models.models import Languages
 from app.models.models import OsType
 from app.models.models import ReportType
-from app.models.models import Role
 from app.models.models import ServerSettings
 from app.models.models import TaskStatus
 from app.models.models import Tlp
-from app.models.models import User
-from app.models.models import UserRoles
 from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
@@ -69,6 +74,9 @@ def run_post_init(development=False):
 
     if os.getenv("IRIS_WORKER") is None:
         # Setup database before everything
+        log.info("Adding pgcrypto extension")
+        pg_add_pgcrypto_ext()
+
         log.info("Creating all Iris tables")
         db.create_all(bind=None)
         db.session.commit()
@@ -86,9 +94,6 @@ def run_post_init(development=False):
 
         log.info("Creating base languages")
         create_safe_languages()
-
-        log.info("Creating base user roles")
-        create_safe_roles()
 
         log.info("Creating base os types")
         create_safe_os_types()
@@ -123,20 +128,27 @@ def run_post_init(development=False):
         log.info("Creating base server settings")
         create_safe_server_settings()
 
+        log.info("Creating initial authorisation model")
+        def_org, gadm, ganalysts = create_safe_auth_model()
+
         log.info("Creating first administrative user")
-        admin = create_safe_admin()
+        admin = create_safe_admin(def_org=def_org, gadm=gadm)
 
         log.info("Registering default modules")
         register_default_modules()
 
-        log.info("Creating demo client")
+        log.info("Creating initian client")
         client = create_safe_client()
 
-        log.info("Creating demo case")
+        log.info("Creating initial case")
         case = create_safe_case(
             user=admin,
-            client=client
+            client=client,
+            def_org=def_org
         )
+
+        log.info("Recalculating effective users permissions.. might take a while")
+        ac_recompute_all_users_effective_ac()
 
         # setup symlinks for custom_assets
         log.info("Creating symlinks for custom asset icons")
@@ -323,6 +335,12 @@ def create_safe_hooks():
                 hook_description='Triggered on activities report creation, before download of the document')
 
 
+def pg_add_pgcrypto_ext():
+    # Open a cursor to perform database operations.
+    with db.engine.connect() as con:
+        con.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
+
+
 def create_safe_languages():
     create_safe(db.session, Languages, name="french", code="FR")
     create_safe(db.session, Languages, name="english", code="EN")
@@ -347,12 +365,6 @@ def create_safe_events_cats():
     create_safe(db.session, EventCategory, name="Impact")
 
 
-def create_safe_roles():
-    get_or_create(db.session, Role, name='administrator')
-    get_or_create(db.session, Role, name='investigator')
-    get_or_create(db.session, Role, name='viewer')
-
-
 def create_safe_analysis_status():
     create_safe(db.session, AnalysisStatus, name='Unspecified')
     create_safe(db.session, AnalysisStatus, name='To be done')
@@ -371,6 +383,7 @@ def create_safe_task_status():
 
 
 def create_safe_assets():
+
     get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Account",
                            asset_description="Generic Account", asset_icon_not_compromised="user.png",
                            asset_icon_compromised="ioc_user.png")
@@ -439,42 +452,82 @@ def create_safe_client():
     return client
 
 
-def create_safe_admin():
+def create_safe_auth_model():
+
+    def_org = get_or_create(db.session, Organisation, org_name="Default Org",
+                            org_description="Default Organisation")
+
+    gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators",
+                         group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                         group_permissions=ac_get_mask_full_permissions())
+    if gadm.group_permissions != ac_get_mask_full_permissions():
+        gadm.group_permissions = ac_get_mask_full_permissions()
+
+    if gadm.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
+        gadm.group_auto_follow_access_level = CaseAccessLevel.full_access.value
+
+    if gadm.group_auto_follow is not True:
+        gadm.group_auto_follow = True
+
+    db.session.commit()
+
+    ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
+                              group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                              group_permissions=ac_get_mask_analyst())
+    if ganalysts.group_permissions != ac_get_mask_analyst():
+        ganalysts.group_permissions = ac_get_mask_analyst()
+
+    if ganalysts.group_auto_follow is not True:
+        ganalysts.group_auto_follow = True
+
+    if ganalysts.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
+        ganalysts.group_auto_follow_access_level = CaseAccessLevel.full_access.value
+
+    db.session.commit()
+
+    return def_org, gadm, ganalysts
+
+
+def create_safe_admin(def_org, gadm):
     user = User.query.filter(
-        User.user == "administrator",
-        User.name == "administrator",
-        User.email == "administrator@iris.local"
+        User.user == "administrator"
     ).first()
     if not user:
         password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choice(string.printable[:-6]) for i in range(16)))
-        user = User(user="administrator",
-                    name="administrator",
-                    email="administrator@iris.local",
-                    password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
-                    active=True
-                    )
-        user.api_key = secrets.token_urlsafe(nbytes=64)
+        api_key = os.environ.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        user = User(
+            user="administrator",
+            name="administrator",
+            email=app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local"),
+            password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
+            active=True
+        )
+        user.api_key = api_key
         db.session.add(user)
 
         db.session.commit()
 
-        log.warning(">>> Administrator password: {pwd}".format(pwd=password))
+        # Add user to admin group
+        add_user_to_group(user_id=user.id, group_id=gadm.group_id)
 
-        ur = UserRoles()
-        ur.user_id = user.id
-        row_role_id = Role.query.with_entities(Role.id).filter(Role.name == 'administrator').first()
-        if row_role_id and len(row_role_id) > 0:
-            ur.role_id = row_role_id[0]
-            db.session.add(ur)
+        # Add user to organisation
+        add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
+
+        log.warning(">>> Administrator password: {pwd}".format(pwd=password))
 
         db.session.commit()
     else:
         log.warning(">>> Administrator already exists")
+        adm_email = app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local")
+        if user.email != adm_email:
+            log.warning(f'Email of administrator will be updated via config to {adm_email}')
+            user.email = adm_email
+            db.session.commit()
 
     return user
 
 
-def create_safe_case(user, client):
+def create_safe_case(user, client, def_org):
     case = Cases.query.filter(
         Cases.client_id == client.client_id
     ).first()
@@ -903,6 +956,7 @@ def create_safe_tlp():
     create_safe(db.session, Tlp, tlp_name="red", tlp_bscolor="danger")
     create_safe(db.session, Tlp, tlp_name="amber", tlp_bscolor="warning")
     create_safe(db.session, Tlp, tlp_name="green", tlp_bscolor="success")
+    create_safe(db.session, Tlp, tlp_name="clear", tlp_bscolor="black")
 
 
 def create_safe_server_settings():
@@ -965,7 +1019,6 @@ def register_default_modules():
             iris_module_disable_by_id(mod_id)
             log.info('Successfully registered {mod}'.format(mod=module))
 
-
 def custom_assets_symlinks():
     try:
 
@@ -982,3 +1035,4 @@ def custom_assets_symlinks():
 
     except Exception as e:
         log.error(f"Error: {e}")
+

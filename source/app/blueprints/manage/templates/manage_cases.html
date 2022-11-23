@@ -3,7 +3,6 @@
 {% block title %} Manage Cases {% endblock title %}
 
 {% block stylesheets %}
-<link rel="stylesheet" href="/static/assets/css/dropzone.css">
 <link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 {% endblock stylesheets %}
 
@@ -19,57 +18,62 @@
                 </div>
                 <div class="card-body">
                     <div class="col-md-12">
-                        <!-- Bordered tabs-->
-                        <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tabs-manage-case"
-                            role="tablist">
-                            <li class="nav-item submenu">
-                                <a class="nav-link active show" id="add-tab" data-toggle="pill" href="#add" role="tab"
-                                    aria-controls="pills-home-nobd" aria-selected="true">New</a>
-                            </li>
-                            <li class="nav-item submenu">
-                                <a class="nav-link" id="update-tab" data-toggle="pill" href="#update" role="tab"
-                                    aria-controls="update-tab" aria-selected="false">Update</a>
-                            </li>
-                            <li class="nav-item submenu">
-                                <a class="nav-link" id="view-tab" data-toggle="pill" href="#view" role="tab"
-                                    aria-controls="view-tab" aria-selected="false">View</a>
-                            </li>
-                        </ul>
+                        <div class="row">
+                            <div class="col d-flex justify-content-center">
+                                <ul class="nav nav-pills nav-dark" id="pills-tabs-manage-case"
+                                    role="tablist">
+                                    <li class="nav-item submenu">
+                                        <a class="nav-link active show" id="add-tab" data-toggle="pill" href="#add" role="tab"
+                                            aria-controls="pills-home-nobd" aria-selected="true">New</a>
+                                    </li>
+                                    <li class="nav-item submenu">
+                                        <a class="nav-link" id="view-tab" data-toggle="pill" href="#view" role="tab"
+                                            aria-controls="view-tab" aria-selected="false">Cases list</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                         <div id="myTab1Content" class="tab-content col-md-12">
                             <div id="add" role="tabpanel" aria-labelledby="add-tab"
                                 class="tab-pane fade px-4 py-5 show active">
                                 <div class="row">
-                                    <div class="col-md-6 col-lg-6 col-sm-12">
+                                    <div class="col-md-12 col-lg-6 col-sm-12">
                                         <h4 class="border-bottom pb-3">General info</h4>
+                                        Fields with an asterix are mandatory. If no organisation is selected, only you will have access to the case. Additional access can be set after creation.
                                         <form method="post" action='' id="form_new_case" autocomplete="off">
                                             {{ form.hidden_tag() }}
-                                            <div class="form-group ml-1 mb-2">
-                                                    {{ form.case_customer(class="selectpicker pl--6 btn-outline-white") }}
-                                            </div>
-                                            <div class="col-md-12 col-lg-12 col-sm-12">
 
+                                            <div class="mt-4 col-md-12 col-lg-12 col-sm-12">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="input-group mb-4">
+                                                            {{ form.case_customer(class="selectpicker w-100 pl--6 btn-outline-white") }}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="input-group mb-4">
                                                     <div class="input-group-prepend">
-														<span class="input-group-text">Case name</span>
+														<span class="input-group-text">Case name *</span>
 													</div>
                                                     {{ form.case_name(class="form-control", type="text") }}
                                                 </div>
                                                 <div class="input-group mb-4">
                                                     <div class="input-group-prepend">
-														<span class="input-group-text">Short description</span>
+														<span class="input-group-text">Short description *</span>
 													</div>
                                                     {{ form.case_description(class="form-control", type="text") }}
                                                 </div>
                                                 <div class="input-group mb-4">
                                                     <div class="input-group-prepend">
-														<span class="input-group-text">SOC ticket #</span>
+														<span class="input-group-text">SOC ticket ID *</span>
 													</div>
                                                     {{ form.case_soc_id(class="form-control", type="text") }}
                                                 </div>
                                             </div>
+
                                         </form>
                                     </div>
-                                    <div class="col-md-6 col-lg-6 col-sm-12">
+                                    <div class="col-md-12 col-lg-6 col-sm-12">
                                         {% if attributes and attributes|length > 0 %}
                                             <h4><ul class="nav nav-tabs nav-lines mr-4" role="tablist">
                                                     {% for ca in attributes %}
@@ -91,52 +95,10 @@
                                 </div>
                                 <button class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_case_btn" onclick="submit_new_case();">Create</button>
                             </div>
-
-                            <div id="update" role="tabpanel" aria-labelledby="update-tab"
-                                class="tab-pane fade px-4 py-5">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <h5>Select processing pipeline and drop analysis files below. Press Update to start the update</h5>
-
-                                            <div class="form-group">
-                                                <div class="form-group">
-                                                 <label for="import_pipeline" class="placeholder">Processing pipeline</label>
-                                                    <i class="fas fa-question-circle" data-toggle="popover"
-                                                            title="Pipelines"
-                                                            data-content="Pipelines are the way files dropped below are processed. Each pipelines handles a different type of file."></i>
-
-                                                {{ form.pipeline(class="selectpicker pl--6 btn-outline-white", id="update_pipeline_selector") }}
-                                                </div>
-                                                <div class="form-group col-md-6 mb-2">
-                                                {% for itm in pipeline_args %}
-                                                    {% for tm in itm[2] %}
-                                                    <div class="input-group mb-4 control-update-pipeline-args control-update-pipeline-{{itm[0]}}">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">{{tm[0]}} ({{tm[1]}})</span>
-                                                        </div>
-                                                        <input class="form-control update-{{itm[0]}}" id="{{tm[0]}}" name="{{tm[0]}}" type="text" value="" {{tm[1]}}>
-                                                    </div>
-                                                    {% endfor %}
-
-                                                {% endfor %}
-                                                </div>
-                                                <div class="tab-content col-md-12">
-                                                    <div class="dropzone  col-md-12" id="files_drop_1">
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        <button type="button" class="btn btn-outline-success ml-4 mt-5"
-                                            id="submit_update_case" onclick="submit_update_casefn();">Update</button>
-                                        <span id="msg_submit" class="ml-4"></span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div id="view" role="tabpanel" aria-labelledby="view-tab" class="tab-pane fade px-4 py-5">
-                                <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-primary"
+                                <button type="button" class="btn btn-sm btn-outline-dark float-right mr-3"
                                     onclick="refresh_case_table();">
-                                    <i class="fas fa-redo"></i>
+                                    Refresh
                                 </button>
                                 <div class="table-responsive" id="cases_table_wrapper">
                                     <div class="selectgroup">
@@ -197,10 +159,10 @@
 <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
 
-<script src="/static/assets/js/plugin/dropzone/dropzone.js"></script>
 <script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
 
-<script src="/static/assets/js/iris/manage_cases.js"></script>
+<script src="/static/assets/js/iris/manage.cases.common.js"></script>
+<script src="/static/assets/js/iris/manage.cases.js"></script>
 
 <script>
     $('form#form_new_case').validate();

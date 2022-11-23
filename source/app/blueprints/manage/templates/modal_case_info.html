@@ -1,17 +1,28 @@
 {% set attributes = data.custom_attributes %}
 {% set page_uid = range(1, 99999) | random %}
 <div class="modal-header">
-    <h4 class="modal-title mt-2 mr-4">{{ data.case_name|unquote }}</h4>
-    {% include 'modals/modal_attributes_nav.html' %}
-    <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
-        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    <div class="col md-12">
+        <div class="row">
+            <div class="col">
+                <h4 class="modal-title mt-2 mr-4">{{ data.case_name|unquote }}</h4>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col ">
+                <div class="row float-right">
+                    <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="modal-body">
 
     <div class="container col-md-12">
         <div role="tabpanel">
           <div class="tab-content">
-              <div class="tab-pane active" id="details">
+              <div class="tab-pane active mb-4" id="details">
+                <h4>General info</h4>
                 <div class="form-group">
                     <label>Case name :</label>
                     <span type="text" class="">{{ data.case_name|unquote }}</span>
@@ -54,9 +65,38 @@
                     <label>Case ID :</label>
                     <span type="text" class="text-faded">{{ data.case_id }}</span>
                 </div>
+                <div class="form-group mt--3">
+                    <label>Case UUID :</label>
+                    <span type="text" class="text-faded">{{ data.case_uuid }}</span>
+                </div>
+              <hr/>
+              <div class="col col-heading" href="#collapse_case_access" title="Click to unfold"  data-toggle="collapse" aria-expanded="false" aria-controls="collapse_case_access" style="cursor:pointer;">
+                  <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
+                        <div class="card-title">Case access</div>
+              </div>
+              <div class="collapse" id="collapse_case_access">
+                  <div class="row mt-4">
+                      <table class="mb-4 table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
+                        <thead>
+                          <tr>
+                              <th>User ID</th>
+                              <th>User login</th>
+                              <th>User display name</th>
+                          </tr>
+                        </thead>
+                        <tfoot>
+                          <tr>
+                              <th>User ID</th>
+                              <th>User login</th>
+                              <th>User display name</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                  </div>
+              </div>
               </div>
               {% include 'modals/modal_attributes_tabs.html' %}
-          </div>
+        </div>
     </div>
 </div>
 <div class="modal-footer">
@@ -68,3 +108,41 @@
     {% endif %}
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
 </div>
+
+
+<script>
+$("#case_access_users_list_table").DataTable({
+        dom: 'Blfrtip',
+        "ajax": {
+            "url": "/case/users/list" + case_param(),
+            "contentType": "application/json",
+            "type": "GET",
+            "data": function (d) {
+                if (d.status == 'success') {
+                    return JSON.stringify(d.data);
+                } else {
+                    return [];
+                }
+            }
+        },
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "user_id",
+            "className": "dt-center"
+        },
+        {
+            "data": "user_name",
+            "className": "dt-center"
+        },
+        {
+            "data": "user_login",
+            "className": "dt-center"
+        }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true
+});
+</script>

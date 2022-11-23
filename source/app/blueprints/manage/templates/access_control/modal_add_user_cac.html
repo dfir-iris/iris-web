@@ -1,0 +1,66 @@
+<div class="modal-lg modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title mt-2 mr-4">Set case access</h4>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="container col-md-12" >
+                <div class="row">
+                    <div class="form-group" data-select2-id="7">
+                        <label>Set cases access of user <i>{{ user.user_name }}</i> *</label>
+                        <div class="col-12">
+                            <select id="user_case_access_select" name="org_case_access_select" class="form-control ml-12" multiple="multiple"
+                                     tabindex="-1" aria-hidden="true" style="width: 100%">
+                            </select>
+                            <select id="user_case_ac_select" name="org_case_ac_select" class="form-control ml-12"
+                                     tabindex="-1" aria-hidden="true" style="width: 100%">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="grant_case_access_to_user">Set access</button>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+<script>
+var data = [];
+
+$('#user_case_access_select').multiselect({
+    buttonWidth: 400,
+    nonSelectedText: 'Select case',
+    emptyText: 'No case available to add',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#user_case_access_select').multiselect('dataprovider', [{% for ocs in outer_cases %}
+ { label: "{{ ocs.case_name }}", value: {{ ocs.case_id  }} }, {% endfor %}]);
+
+
+$('#user_case_access_select').multiselect('refresh')
+
+$('#user_case_ac_select').multiselect({
+    nonSelectedText: 'Select access level',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#user_case_ac_select').multiselect('dataprovider', [{% for acc in access_levels %}
+ { label: "{{ acc.name }}", value: {{ acc.value  }} }, {% endfor %}]);
+
+$('#user_case_ac_select').multiselect('refresh');
+</script>

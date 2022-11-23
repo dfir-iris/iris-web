@@ -19,11 +19,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import enum
+
 import secrets
 import uuid
 
 from flask_login import UserMixin
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger, UniqueConstraint
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -36,6 +38,7 @@ from sqlalchemy import TIMESTAMP
 from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import or_
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
@@ -47,6 +50,13 @@ from app import db
 
 Base = declarative_base()
 metadata = Base.metadata
+
+
+class CaseStatus(enum.Enum):
+    other = 0x0
+    false_positive = 0x1
+    true_positive = 0x2
+    not_applicable = 0x3
 
 
 def create_safe(session, model, **kwargs):
@@ -103,8 +113,15 @@ def get_or_create(session, model, **kwargs):
 class Client(db.Model):
     __tablename__ = 'client'
 
-    client_id = Column(Integer, primary_key=True)
-    name = Column(String(2048), unique=True)
+    client_id = Column(BigInteger, primary_key=True)
+    client_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
+    name = Column(Text, unique=True)
+    description = Column(Text)
+    sla = Column(Text)
+    creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    created_by = Column(ForeignKey('user.id'), nullable=True)
+    last_update_date = Column(DateTime, server_default=text("now()"), nullable=True)
+
     custom_attributes = Column(JSON)
 
 
@@ -121,7 +138,8 @@ class AssetsType(db.Model):
 class CaseAssets(db.Model):
     __tablename__ = 'case_assets'
 
-    asset_id = Column(Integer, primary_key=True)
+    asset_id = Column(BigInteger, primary_key=True)
+    asset_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     asset_name = Column(Text)
     asset_description = Column(Text)
     asset_domain = Column(Text)
@@ -150,10 +168,27 @@ class AnalysisStatus(db.Model):
     name = Column(Text)
 
 
+class Contact(db.Model):
+    __tablename__ = 'contact'
+
+    id = Column(BigInteger, primary_key=True)
+    contact_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
+    contact_name = Column(Text)
+    contact_email = Column(Text)
+    contact_role = Column(Text)
+    contact_note = Column(Text)
+    contact_work_phone = Column(Text)
+    contact_mobile_phone = Column(Text)
+    custom_attributes = Column(JSON)
+    client_id = Column(ForeignKey('client.client_id'))
+
+    client = relationship('Client')
+
+
 class CaseEventsAssets(db.Model):
     __tablename__ = 'case_events_assets'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     event_id = Column(ForeignKey('cases_events.event_id'))
     asset_id = Column(ForeignKey('case_assets.asset_id'))
     case_id = Column(ForeignKey('cases.case_id'))
@@ -166,7 +201,7 @@ class CaseEventsAssets(db.Model):
 class CaseEventsIoc(db.Model):
     __tablename__ = 'case_events_ioc'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     event_id = Column(ForeignKey('cases_events.event_id'))
     ioc_id = Column(ForeignKey('ioc.ioc_id'))
     case_id = Column(ForeignKey('cases.case_id'))
@@ -177,7 +212,9 @@ class CaseEventsIoc(db.Model):
 
 
 class ObjectState(db.Model):
-    object_id = Column(Integer, primary_key=True)
+    __tablename__ = 'object_state'
+
+    object_id = Column(BigInteger, primary_key=True)
     object_case_id = Column(ForeignKey('cases.case_id'))
     object_updated_by_id = db.Column(db.Integer(), db.ForeignKey('user.id'))
     object_name = Column(Text)
@@ -229,12 +266,6 @@ class CaseGraphLinks(db.Model):
     case = relationship('Cases')
 
 
-class Role(db.Model):
-    __tablename__ = 'roles'
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(50), unique=True)
-
-
 class Languages(db.Model):
     __tablename__ = 'languages'
 
@@ -268,71 +299,6 @@ class CaseTemplateReport(db.Model):
     created_by_user = relationship('User')
 
 
-# Define the UserRoles association table
-class UserRoles(db.Model):
-    __tablename__ = 'user_roles'
-    id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
-    role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))
-
-
-class User(UserMixin, db.Model):
-    __tablename__ = 'user'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user = db.Column(db.String(64), unique=True)
-    name = db.Column(db.String(64), unique=False)
-    email = db.Column(db.String(120), unique=True)
-    password = db.Column(db.String(500))
-    ctx_case = db.Column(Integer)
-    ctx_human_case = db.Column(db.String(256))
-    active = db.Column(db.Boolean())
-    api_key = db.Column(db.Text(), unique=True)
-    in_dark_mode = db.Column(db.Boolean())
-
-    roles = db.relationship('Role', secondary='user_roles')
-
-    def __init__(self, user, name, email, password, active):
-        self.user = user
-        self.name = name
-        self.password = password
-        self.email = email
-        self.active = active
-        self.roles = []
-
-    def __repr__(self):
-        return str(self.id) + ' - ' + str(self.user)
-
-    def save(self):
-
-        # Default roles:
-        roles = Role.query.filter(or_(Role.id == 2, Role.id == 3)).all()
-        self.roles = roles
-
-        self.api_key = secrets.token_urlsafe(nbytes=64)
-
-        # inject self into db session
-        db.session.add(self)
-        db.session.commit()
-
-        for role in roles:
-            ur = UserRoles()
-            ur.user_id = self.id
-            ur.role_id = role.id
-            db.session.add(ur)
-
-        # commit change and save the object
-        db.session.commit()
-
-        return self
-
-    def is_admin(self):
-        roles = [role.name for role in self.roles]
-        if "administrator" in roles:
-            return True
-        return False
-
-
 class Tlp(db.Model):
     __tablename__ = 'tlp'
 
@@ -344,7 +310,8 @@ class Tlp(db.Model):
 class Ioc(db.Model):
     __tablename__ = 'ioc'
 
-    ioc_id = Column(Integer, primary_key=True)
+    ioc_id = Column(BigInteger, primary_key=True)
+    ioc_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
     ioc_value = Column(Text)
     ioc_type_id = Column(ForeignKey('ioc_type.type_id'))
     ioc_description = Column(Text)
@@ -386,7 +353,7 @@ class DataStoreFile(db.Model):
     __tablename__ = 'data_store_file'
 
     file_id = Column(BigInteger, primary_key=True)
-    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4)
+    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     file_original_name = Column(Text, nullable=False)
     file_local_name = Column(Text, nullable=False)
     file_description = Column(Text)
@@ -462,7 +429,8 @@ class CasesAssetsExt(db.Model):
 class Notes(db.Model):
     __tablename__ = 'notes'
 
-    note_id = Column(Integer, primary_key=True)
+    note_id = Column(BigInteger, primary_key=True)
+    note_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     note_title = Column(String(155))
     note_content = Column(Text)
     note_user = Column(ForeignKey('user.id'))
@@ -478,7 +446,8 @@ class Notes(db.Model):
 class NotesGroup(db.Model):
     __tablename__ = 'notes_group'
 
-    group_id = Column(Integer, primary_key=True)
+    group_id = Column(BigInteger, primary_key=True)
+    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     group_title = Column(String(155))
     group_user = Column(ForeignKey('user.id'))
     group_creationdate = Column(DateTime)
@@ -492,7 +461,7 @@ class NotesGroup(db.Model):
 class NotesGroupLink(db.Model):
     __tablename__ = 'notes_group_link'
 
-    link_id = Column(Integer, primary_key=True)
+    link_id = Column(BigInteger, primary_key=True)
     group_id = Column(ForeignKey('notes_group.group_id'))
     note_id = Column(ForeignKey('notes.note_id'))
     case_id = Column(ForeignKey('cases.case_id'))
@@ -514,7 +483,8 @@ class CaseKanban(db.Model):
 class CaseReceivedFile(db.Model):
     __tablename__ = 'case_received_file'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     filename = Column(Text)
     date_added = Column(DateTime)
     file_hash = Column(String(65))
@@ -540,7 +510,8 @@ class TaskStatus(db.Model):
 class CaseTasks(db.Model):
     __tablename__ = 'case_tasks'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    task_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     task_title = Column(Text)
     task_description = Column(Text)
     task_tags = Column(Text)
@@ -550,7 +521,6 @@ class CaseTasks(db.Model):
     task_userid_open = Column(ForeignKey('user.id'))
     task_userid_close = Column(ForeignKey('user.id'))
     task_userid_update = Column(ForeignKey('user.id'))
-    task_assignee_id = Column(ForeignKey('user.id'))
     task_status_id = Column(ForeignKey('task_status.id'))
     task_case_id = Column(ForeignKey('cases.case_id'))
     custom_attributes = Column(JSON)
@@ -559,14 +529,35 @@ class CaseTasks(db.Model):
     user_open = relationship('User', foreign_keys=[task_userid_open])
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
-    user_assigned = relationship('User', foreign_keys=[task_assignee_id])
     status = relationship('TaskStatus', foreign_keys=[task_status_id])
+
+
+class Tags(db.Model):
+    __tablename__ = 'tags'
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    tag_title = Column(Text)
+    tag_creation_date = Column(DateTime)
+
+
+class TaskAssignee(db.Model):
+    __tablename__ = "task_assignee"
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
+    task_id = Column(BigInteger, ForeignKey('case_tasks.id'), nullable=False)
+
+    user = relationship('User')
+    task = relationship('CaseTasks')
+
+    UniqueConstraint('user_id', 'task_id')
 
 
 class GlobalTasks(db.Model):
     __tablename__ = 'global_tasks'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
+    task_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
     task_title = Column(Text)
     task_description = Column(Text)
     task_tags = Column(Text)
@@ -589,13 +580,14 @@ class GlobalTasks(db.Model):
 class UserActivity(db.Model):
     __tablename__ = "user_activity"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     user_id = Column(ForeignKey('user.id'), nullable=True)
     case_id = Column(ForeignKey('cases.case_id'), nullable=True)
     activity_date = Column(DateTime)
     activity_desc = Column(Text)
-    user_input = Column(Boolean)
-    is_from_api = Column(Boolean)
+    user_input = Column(Boolean, default=False)
+    is_from_api = Column(Boolean, default=False)
+    display_in_ui = Column(Boolean, default=True)
 
     user = relationship('User')
     case = relationship('Cases')
@@ -615,6 +607,87 @@ class ServerSettings(db.Model):
     password_policy_lower_case = Column(Boolean)
     password_policy_digit = Column(Boolean)
     password_policy_special_chars = Column(Text)
+
+
+class Comments(db.Model):
+    __tablename__ = "comments"
+
+    comment_id = Column(BigInteger, primary_key=True)
+    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
+    comment_text = Column(Text)
+    comment_date = Column(DateTime)
+    comment_update_date = Column(DateTime)
+    comment_user_id = Column(ForeignKey('user.id'))
+    comment_case_id = Column(ForeignKey('cases.case_id'))
+
+    user = relationship('User')
+    case = relationship('Cases')
+
+
+class EventComments(db.Model):
+    __tablename__ = "event_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_event_id = Column(ForeignKey('cases_events.event_id'))
+
+    event = relationship('CasesEvent')
+    comment = relationship('Comments')
+
+
+class TaskComments(db.Model):
+    __tablename__ = "task_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_task_id = Column(ForeignKey('case_tasks.id'))
+
+    task = relationship('CaseTasks')
+    comment = relationship('Comments')
+
+
+class IocComments(db.Model):
+    __tablename__ = "ioc_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_ioc_id = Column(ForeignKey('ioc.ioc_id'))
+
+    ioc = relationship('Ioc')
+    comment = relationship('Comments')
+
+
+class AssetComments(db.Model):
+    __tablename__ = "asset_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_asset_id = Column(ForeignKey('case_assets.asset_id'))
+
+    asset = relationship('CaseAssets')
+    comment = relationship('Comments')
+
+
+class EvidencesComments(db.Model):
+    __tablename__ = "evidence_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_evidence_id = Column(ForeignKey('case_received_file.id'))
+
+    evidence = relationship('CaseReceivedFile')
+    comment = relationship('Comments')
+
+
+class NotesComments(db.Model):
+    __tablename__ = "note_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_note_id = Column(ForeignKey('notes.note_id'))
+
+    note = relationship('Notes')
+    comment = relationship('Comments')
 
 
 class IrisModule(db.Model):
@@ -648,7 +721,7 @@ class IrisHook(db.Model):
 class IrisModuleHook(db.Model):
     __tablename__ = "iris_module_hooks"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     module_id = Column(ForeignKey('iris_module.id'), nullable=False)
     hook_id = Column(ForeignKey('iris_hooks.id'), nullable=False)
     is_manual_hook = Column(Boolean)
@@ -709,7 +782,7 @@ class CeleryTaskMeta(db.Model):
     __bind_key__ = 'iris_tasks'
     __tablename__ = 'celery_taskmeta'
 
-    id = Column(Integer, Sequence('task_id_sequence'), primary_key=True)
+    id = Column(BigInteger, Sequence('task_id_sequence'), primary_key=True)
     task_id = Column(String(155))
     status = Column(String(50))
     result = Column(LargeBinary)
@@ -721,6 +794,9 @@ class CeleryTaskMeta(db.Model):
     worker = Column(String(155))
     retries = Column(Integer)
     queue = Column(String(155))
+
+    def __repr__(self):
+        return str(self.id) + ' - ' + str(self.user)
 
 
 def create_safe_attr(session, attribute_display_name, attribute_description, attribute_for, attribute_content):
@@ -741,3 +817,4 @@ def create_safe_attr(session, attribute_display_name, attribute_description, att
         session.add(instance)
         session.commit()
         return True
+

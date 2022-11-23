@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -31,13 +31,18 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from sqlalchemy import and_
-from sqlalchemy import func
-from sqlalchemy import or_
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
+from app.datamgmt.case.case_comments import get_case_comment
+from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import delete_event_category
+from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
+from app.datamgmt.case.case_events_db import get_case_event_comment
+from app.datamgmt.case.case_events_db import get_case_event_comments
+from app.datamgmt.case.case_events_db import get_case_events_comments_count
 from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
 from app.datamgmt.case.case_events_db import get_default_cat
 from app.datamgmt.case.case_events_db import get_event_assets_ids
@@ -54,6 +59,10 @@ from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.iris_engine.utils.tracker import track_activity
+from app.models import Comments
+from app.models import EventComments
+from app.models.authorization import CaseAccessLevel
+from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
 from app.models.models import AssetsType
@@ -63,11 +72,11 @@ from app.models.models import CaseEventsIoc
 from app.models.models import EventCategory
 from app.models.models import Ioc
 from app.models.models import IocLink
-from app.models.models import User
+from app.schema.marshables import CommentSchema
 from app.schema.marshables import EventSchema
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import add_obj_history_entry
-from app.util import api_login_required
-from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 
@@ -79,7 +88,7 @@ case_timeline_blueprint = Blueprint('case_timeline',
 
 
 @case_timeline_blueprint.route('/case/timeline', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_timeline(caseid, url_redir):
 
     if url_redir:
@@ -92,7 +101,7 @@ def case_timeline(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph_page(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_timeline.case_getgraph_page', cid=caseid, redirect=True))
@@ -100,8 +109,97 @@ def case_getgraph_page(caseid, url_redir):
     return render_template("case_graph_timeline.html")
 
 
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
+
+    event = get_case_event(cur_id, caseid=caseid)
+    if not event:
+        return response_error('Invalid event ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='timeline/events',
+                           title=event.event_title)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comments_get(cur_id, caseid):
+
+    event_comments = get_case_event_comments(cur_id, caseid=caseid)
+    if event_comments is None:
+        return response_error('Invalid event ID')
+
+    res = [com._asdict() for com in event_comments]
+    return response_success(data=res)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_event_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    track_activity(f"comment {com_id} on event {cur_id} deleted", caseid=caseid)
+    return response_success(msg)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_get(cur_id, com_id, caseid):
+
+    comment = get_case_event_comment(cur_id, com_id, caseid=caseid)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'events', caseid)
+
+
+@case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_add(cur_id, caseid):
+
+    try:
+        event = get_case_event(event_id=cur_id, caseid=caseid)
+        if not event:
+            return response_error('Invalid event ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_event(event.event_id, comment.comment_id)
+
+        add_obj_history_entry(event, 'commented')
+
+        db.session.commit()
+
+        track_activity(f"event \"{event.event_title}\" commented", caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
 @case_timeline_blueprint.route('/case/timeline/state', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_timeline_state(caseid):
     os = get_timeline_state(caseid=caseid)
     if os:
@@ -111,7 +209,7 @@ def case_get_timeline_state(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph_assets(caseid):
 
     assets_cache = CaseAssets.query.with_entities(
@@ -133,7 +231,7 @@ def case_getgraph_assets(caseid):
         for asset in assets_cache:
             if asset.event_id == row.event_id:
                 tmp = {}
-                tmp['date'] = row.event_date.timestamp()
+                tmp['date'] = row.event_date
                 tmp['group'] = asset.asset_name
                 tmp['content'] = row.event_title
                 tmp['title'] = f"{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')} - {row.event_content}"
@@ -152,7 +250,7 @@ def case_getgraph_assets(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-category', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph(caseid):
 
     timeline = CasesEvent.query.filter(and_(
@@ -170,7 +268,11 @@ def case_getgraph(caseid):
         tmp['date'] = row.event_date
         tmp['group'] = row.category[0].name
         tmp['content'] = row.event_title
-        content = row.event_content.replace('\n', '<br/>')
+        if row.event_content:
+            content = row.event_content.replace('\n', '<br/>')
+        else:
+            content = ''
+
         tmp['title'] = f"<small>{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')}</small><br/>{content}"
 
         if row.event_color:
@@ -187,13 +289,13 @@ def case_getgraph(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/list', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_gettimeline_api_nofilter(caseid):
     return case_gettimeline_api(0)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/list/filter/<int:asset_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_gettimeline_api(asset_id, caseid):
     if asset_id:
         condition = and_(
@@ -206,6 +308,7 @@ def case_gettimeline_api(asset_id, caseid):
 
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
+            CasesEvent.event_uuid,
             CasesEvent.event_date,
             CasesEvent.event_date_wtz,
             CasesEvent.event_tz,
@@ -278,7 +381,7 @@ def case_gettimeline_api(asset_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/advanced-filter', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_filter_timeline(caseid):
     args = request.args.to_dict()
     query_filter = args.get('q')
@@ -300,11 +403,16 @@ def case_filter_timeline(caseid):
     end_date = filter_d.get('endDate')
     titles = filter_d.get('title')
     sources = filter_d.get('source')
+    flag = filter_d.get('flag')
 
     condition = (CasesEvent.case_id == caseid)
 
     if assets:
         assets = [asset.lower() for asset in assets]
+
+    if flag:
+        flags = (flag[0].lower() == 'true')
+        condition = and_(condition, CasesEvent.event_is_flagged == flags)
 
     if iocs:
         iocs = [ioc.lower() for ioc in iocs]
@@ -359,6 +467,7 @@ def case_filter_timeline(caseid):
 
     timeline = CasesEvent.query.with_entities(
             CasesEvent.event_id,
+            CasesEvent.event_uuid,
             CasesEvent.event_date,
             CasesEvent.event_date_wtz,
             CasesEvent.event_tz,
@@ -368,6 +477,7 @@ def case_filter_timeline(caseid):
             CasesEvent.event_content,
             CasesEvent.event_in_summary,
             CasesEvent.event_in_graph,
+            CasesEvent.event_is_flagged,
             User.user,
             CasesEvent.event_added,
             EventCategory.name.label("category_name")
@@ -427,6 +537,7 @@ def case_filter_timeline(caseid):
                 iocs_filter.append(ioc.event_id)
 
     tim = []
+    events_list = []
     for row in timeline:
         if assets is not None:
             if row.event_id not in assets_filter:
@@ -441,6 +552,9 @@ def case_filter_timeline(caseid):
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
         ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S')
+
+        if row.event_id not in events_list:
+            events_list.append(row.event_id)
 
         alki = []
         for asset in assets_cache:
@@ -485,8 +599,14 @@ def case_filter_timeline(caseid):
             Ioc.ioc_id == IocLink.ioc_id
         ).all()
 
+        events_comments_map = {}
+        events_comments_set = get_case_events_comments_count(events_list)
+        for k, v in events_comments_set:
+            events_comments_map.setdefault(k, []).append(v)
+
         resp = {
             "tim": tim,
+            "comments_map": events_comments_map,
             "assets": cache,
             "iocs": [ioc._asdict() for ioc in iocs],
             "categories": [cat.name for cat in get_events_categories()],
@@ -502,8 +622,8 @@ def case_filter_timeline(caseid):
     return response_success("ok", data=resp)
 
 
-@case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_event(cur_id, caseid):
 
     call_modules_hook('on_preload_event_delete', data=cur_id, caseid=caseid)
@@ -524,6 +644,15 @@ def case_delete_event(cur_id, caseid):
         CaseEventsIoc.case_id == caseid
     ).delete()
 
+    EventComments.query.filter(
+        EventComments.comment_event_id == cur_id
+    ).delete(synchronize_session='fetch')
+
+    Comments.query.filter(and_(
+        Comments.comment_id == EventComments.comment_id,
+        EventComments.comment_event_id == cur_id
+    )).delete(synchronize_session='fetch')
+
     db.session.commit()
 
     db.session.delete(event)
@@ -533,13 +662,26 @@ def case_delete_event(cur_id, caseid):
 
     call_modules_hook('on_postload_event_delete', data=cur_id, caseid=caseid)
 
-    track_activity("deleted event ID {} in timeline".format(cur_id), caseid)
+    track_activity(f"deleted event \"{event.event_title}\" in timeline", caseid)
 
     return response_success('Event ID {} deleted'.format(cur_id))
 
 
+@case_timeline_blueprint.route('/case/timeline/events/flag/<int:cur_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def event_flag(cur_id, caseid):
+    event = get_case_event(cur_id, caseid)
+    if not event:
+        return response_error("Invalid event ID for this case")
+
+    event.event_is_flagged = not event.event_is_flagged
+    db.session.commit()
+
+    return response_success("Event flagged" if event.event_is_flagged else "Event unflagged", data=event)
+
+
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def event_view(cur_id, caseid):
 
     event = get_case_event(cur_id, caseid)
@@ -555,12 +697,13 @@ def event_view(cur_id, caseid):
     output['event_assets'] = linked_assets
     output['event_iocs'] = linked_iocs
     output['event_category_id'] = event.category[0].id
+    output['event_comments_map'] = get_case_events_comments_count([cur_id])
 
     return response_success(data=output)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def event_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
@@ -585,17 +728,18 @@ def event_view_modal(cur_id, caseid, url_redir):
 
     assets_prefill = get_event_assets_ids(cur_id, caseid)
     iocs_prefill = get_event_iocs_ids(cur_id, caseid)
+    comments_map = get_case_events_comments_count([cur_id])
 
     usr_name, = User.query.filter(User.id == event.user_id).with_entities(User.name).first()
 
     return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
-                           assets=assets, iocs=iocs,
+                           assets=assets, iocs=iocs, comments_map=comments_map,
                            assets_prefill=assets_prefill, iocs_prefill=iocs_prefill,
                            category=event.category, attributes=event.custom_attributes)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_event(cur_id, caseid):
 
     try:
@@ -639,7 +783,7 @@ def case_edit_event(cur_id, caseid):
 
         event = call_modules_hook('on_postload_event_update', data=event, caseid=caseid)
 
-        track_activity("updated event {}".format(cur_id), caseid=caseid)
+        track_activity(f"updated event \"{event.event_title}\"", caseid=caseid)
         return response_success("Event updated", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -647,7 +791,7 @@ def case_edit_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.full_access)
 def case_add_event_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
@@ -668,7 +812,7 @@ def case_add_event_modal(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/filter-help/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_filter_help_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
@@ -677,7 +821,7 @@ def case_filter_help_modal(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_event(caseid):
 
     try:
@@ -720,7 +864,7 @@ def case_add_event(caseid):
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
-        track_activity("added event {}".format(event.event_id), caseid=caseid)
+        track_activity(f"added event \"{event.event_title}\"", caseid=caseid)
         return response_success("Event added", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -728,7 +872,7 @@ def case_add_event(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/duplicate/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_duplicate_event(cur_id, caseid):
 
     call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
@@ -752,7 +896,8 @@ def case_duplicate_event(cur_id, caseid):
         # Override event_added and user_id
         event.event_added = datetime.utcnow()
         event.user_id = current_user.id
-        event.event_title = f"[DUPLICATED] - {event.event_title}"
+        if event.event_title.startswith("[DUPLICATED] - ") is False:
+            event.event_title = f"[DUPLICATED] - {event.event_title}"
       
         db.session.add(event)
         update_timeline_state(caseid=caseid)
@@ -781,7 +926,7 @@ def case_duplicate_event(cur_id, caseid):
 
         event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
 
-        track_activity("added event {}".format(event.event_id), caseid=caseid)
+        track_activity(f"added event \"{event.event_title}\"", caseid=caseid)
         return response_success("Event duplicated", data=event_schema.dump(event))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -789,7 +934,7 @@ def case_duplicate_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_event_date_convert(caseid):
 
     jsdata = request.get_json()

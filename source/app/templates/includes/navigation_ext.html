@@ -28,10 +28,24 @@
 				<div class="container-fluid">
 					<div class="collapse" id="search-nav">
 							<div class="input-group">
-								{% if current_user.ctx_human_case %}
-								<div class="text-light"><a class="text-light" title="Switch case" onclick="load_context_switcher();return false;" href="#"> {{ current_user.ctx_human_case }}</a></div>
+								{% if session['current_case'] %}
+								<div class="text-light"><a class="text-white dropdown hidden-caret submenu" href="#" title="Go to case number" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" onclick="setTimeout(focus_on_input_chg_case, 100);">
+									<i class="fa-solid fa-leaf mr-2"></i></a>
+									<ul class="dropdown-menu dropdown-left messages-notif-box animated shadow-xl" aria-labelledby="messageDropdown">
+										<li>
+											<div class="ml-2 mr-2 mt-2 mb-2 d-flex justify-content-between align-items-center">
+												<div class="input-group">
+												  <input type="number" min="1" class="form-control" placeholder="Go to case number #" id="goto_case_number_input" aria-label="Go to case number #">
+												   <div class="input-group-append">
+													<button class="btn btn-sm btn-outline-dark" type="button" title="Go" onclick="goto_case_number();">Go</button>
+												  </div>
+												</div>
+											</div>
+										</li>
+									</ul>
+									<a class="text-light" title="Switch case" onclick="load_context_switcher();return false;" href="#">{{ session['current_case'].case_name }}</a> {{ session['current_case'].access|safe }}</div>
 								{% else %}
-								<div class="text-warning">No context</div>
+								<div class="text-warning" style="cursor:pointer;" title="Switch case" onclick="load_context_switcher();return false;">No context</div>
 								{% endif %}
 							</div>
 					</div>

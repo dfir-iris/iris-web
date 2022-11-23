@@ -95,7 +95,7 @@ function add_gtask() {
         $('#submit_new_gtask').on("click", function () {
             var data_sent = $('#form_new_gtask').serializeObject();
             data_sent['task_tags'] = $('#task_tags').val();
-            data_sent['task_assignee_id'] = $('#task_assignee_id').val();
+            data_sent['task_assignees_id'] = $('#task_assignees_id').val();
             data_sent['task_status_id'] = $('#task_status_id').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
@@ -133,8 +133,7 @@ function update_gtask(id) {
 
 /* Delete an event from the timeline thank to its id */
 function delete_gtask(id) {
-
-    get_request_api("/global/tasks/delete/" + id)
+    post_request_api("/global/tasks/delete/" + id)
     .done((data) => {
         if(notify_auto_api(data)) {
             update_gtasks_list();
@@ -154,6 +153,7 @@ function edit_gtask(id) {
         $('#modal_add_gtask').modal({show:true});
   });
 }
+
 
 /* Fetch and draw the tasks */
 function update_gtasks_list() {
@@ -179,7 +179,7 @@ function update_gtasks_list() {
             Table.buttons().container().appendTo($('#gtasks_table_info'));
                $('[data-toggle="popover"]').popover();
 
-            load_menu_mod_options('global_task', Table);
+            load_menu_mod_options('global_task', Table, delete_gtask);
             $('#tasks_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
         }
     });

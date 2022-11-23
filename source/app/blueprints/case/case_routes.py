@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -18,10 +18,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 import binascii
-
 import marshmallow
+# IMPORTS ------------------------------------------------
+import traceback
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -31,6 +31,7 @@ from flask_login import current_user
 from flask_socketio import emit
 from flask_socketio import join_room
 from flask_wtf import FlaskForm
+from sqlalchemy import and_
 from sqlalchemy import desc
 
 from app import app
@@ -43,18 +44,32 @@ from app.blueprints.case.case_notes_routes import case_notes_blueprint
 from app.blueprints.case.case_rfiles_routes import case_rfiles_blueprint
 from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
 from app.blueprints.case.case_timeline_routes import case_timeline_blueprint
+from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_report_template
+from app.datamgmt.case.case_db import get_case_tags
+from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
+from app.datamgmt.manage.manage_groups_db import get_group_with_members
+from app.datamgmt.manage.manage_groups_db import get_groups_list
+from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
+from app.datamgmt.manage.manage_users_db import set_user_case_access
 from app.datamgmt.reporter.report_db import export_case_json
-from app.datamgmt.reporter.report_db import export_case_json_extended
+from app.forms import PipelinesCaseForm
+from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_set_case_access_for_users
+from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.utils.tracker import track_activity
-from app.models import User
+from app.models import CaseStatus
 from app.models import UserActivity
+from app.models.authorization import CaseAccessLevel
+from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema
-from app.util import api_login_required
-from app.util import login_required
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
+from app.util import ac_socket_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -73,15 +88,19 @@ case_blueprint = Blueprint('case',
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
 
 
+log = app.logger
+
+
 # CONTENT ------------------------------------------------
 @case_blueprint.route('/case', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_r(caseid, url_redir):
 
     if url_redir:
         return redirect(url_for('case.case_r', cid=caseid, redirect=True))
 
     case = get_case(caseid)
+    setattr(case, 'case_tags', get_case_tags(caseid))
     form = FlaskForm()
 
     reports = get_case_report_template()
@@ -99,7 +118,40 @@ def case_r(caseid, url_redir):
                            reports=reports, reports_act=reports_act, form=form)
 
 
+@case_blueprint.route('/case/exists', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_exists_r(caseid):
+
+    if case_exists(caseid):
+        return response_success('Case exists')
+    else:
+        return response_error('Case does not exist', 404)
+
+
+@case_blueprint.route('/case/pipelines-modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.full_access)
+def case_pipelines_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case.case_r', cid=caseid, redirect=True))
+
+    case = get_case(caseid)
+
+    form = PipelinesCaseForm()
+
+    pl = list_available_pipelines()
+
+    form.pipeline.choices = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
+                                         ap[1]['pipeline_human_name'])for ap in pl]
+
+    # Return default page of case management
+    pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
+                      ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
+
+    return render_template('modal_case_pipelines.html', case=case, form=form, pipeline_args=pipeline_args)
+
+
 @socket_io.on('change')
+@ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onchange(data):
     if not current_user.is_authenticated:
         return
@@ -109,6 +161,7 @@ def socket_summary_onchange(data):
 
 
 @socket_io.on('save')
+@ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onsave(data):
     if not current_user.is_authenticated:
         return
@@ -118,6 +171,7 @@ def socket_summary_onsave(data):
 
 
 @socket_io.on('clear_buffer')
+@ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onchange(message):
     if not current_user.is_authenticated:
         return
@@ -126,6 +180,7 @@ def socket_summary_onchange(message):
 
 
 @socket_io.on('join')
+@ac_socket_requires(CaseAccessLevel.full_access)
 def get_message(data):
     if not current_user.is_authenticated:
         return
@@ -136,7 +191,7 @@ def get_message(data):
 
 
 @case_blueprint.route('/case/summary/update', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def desc_fetch(caseid):
 
     js_data = request.get_json()
@@ -161,7 +216,7 @@ def desc_fetch(caseid):
 
 
 @case_blueprint.route('/case/summary/fetch', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def summary_fetch(caseid):
     desc_crc32, desc = case_get_desc_crc(caseid)
 
@@ -169,16 +224,17 @@ def summary_fetch(caseid):
 
 
 @case_blueprint.route('/case/activities/list', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def activity_fetch(caseid):
     ua = UserActivity.query.with_entities(
         UserActivity.activity_date,
         User.name,
         UserActivity.activity_desc,
         UserActivity.is_from_api
-    ).filter(
-        UserActivity.case_id == caseid
-    ).join(
+    ).filter(and_(
+        UserActivity.case_id == caseid,
+        UserActivity.display_in_ui == True
+    )).join(
         UserActivity.user
     ).order_by(
         desc(UserActivity.activity_date)
@@ -190,13 +246,13 @@ def activity_fetch(caseid):
 
 
 @case_blueprint.route("/case/export", methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def export_case(caseid):
     return response_success('', data=export_case_json(caseid))
 
 
 @case_blueprint.route('/case/tasklog/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_tasklog(caseid):
 
     log_schema = TaskLogSchema()
@@ -211,3 +267,120 @@ def case_add_tasklog(caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
     return response_success("Log saved", data=ua)
+
+
+@case_blueprint.route('/case/users/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_get_users(caseid):
+
+    users = get_users_list_restricted_from_case(caseid)
+
+    return response_success(data=users)
+
+
+@case_blueprint.route('/case/groups/access/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.full_access)
+def groups_cac_view(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case.case_r', cid=caseid, redirect=True))
+
+    groups = get_groups_list()
+    access_levels = ac_get_all_access_level()
+
+    return render_template('modal_cac_to_groups.html', groups=groups, access_levels=access_levels, caseid=caseid)
+
+
+@case_blueprint.route('/case/access/set-group', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def group_cac_set_case(caseid):
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request")
+
+    if data.get('case_id') != caseid:
+        return response_error("Inconsistent case ID")
+
+    group_id = data.get('group_id')
+    access_level = data.get('access_level')
+
+    group = get_group_with_members(group_id)
+
+    try:
+
+        success, logs = add_case_access_to_group(group, [data.get('case_id')], access_level)
+
+        if success:
+            success, logs = ac_set_case_access_for_users(group.group_members, caseid, access_level)
+
+    except Exception as e:
+        log.error("Error while setting case access for group: {}".format(e))
+        log.error(traceback.format_exc())
+        return response_error(msg=str(e))
+
+    if success:
+        return response_success(msg=logs)
+
+    return response_error(msg=logs)
+
+
+@case_blueprint.route('/case/access/set-user', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def user_cac_set_case(caseid):
+
+    data = request.get_json()
+    if not data:
+        return response_error("Invalid request")
+
+    if data.get('user_id') == current_user.id:
+        return response_error("I can't let you do that, Dave")
+
+    user = get_user(data.get('user_id'))
+    if not user:
+        return response_error("Invalid user ID")
+
+    if data.get('case_id') != caseid:
+        return response_error("Inconsistent case ID")
+
+    try:
+
+        success, logs = set_user_case_access(user.id, data.get('case_id'), data.get('access_level'))
+        db.session.commit()
+
+    except Exception as e:
+        log.error("Error while setting case access for user: {}".format(e))
+        log.error(traceback.format_exc())
+        return response_error(msg=str(e))
+
+    if success:
+        return response_success(msg=logs)
+
+    return response_error(msg=logs)
+
+
+@case_blueprint.route('/case/update-status', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_update_status(caseid):
+
+    case = get_case(caseid)
+    if not case:
+        return response_error('Invalid case ID')
+
+    status = request.get_json().get('status_id')
+    case_status = set(item.value for item in CaseStatus)
+
+    try:
+        status = int(status)
+    except ValueError:
+        return response_error('Invalid status')
+
+    if status not in case_status:
+        return response_error('Invalid status')
+
+    case.status_id = status
+    db.session.commit()
+
+    return response_success("Case status updated", data=case.status_id)
+
+
+

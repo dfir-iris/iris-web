@@ -23,6 +23,7 @@ from datetime import datetime
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.states import delete_case_states
 from app.models import CaseAssets
 from app.models import CaseEventCategory
@@ -40,11 +41,25 @@ from app.models import IocLink
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
-from app.models import User
+from app.models.authorization import CaseAccessLevel
+from app.models.authorization import GroupCaseAccess
+from app.models.authorization import OrganisationCaseAccess
+from app.models.authorization import User
 from app.models import UserActivity
+from app.models.authorization import UserCaseAccess
+from app.models.authorization import UserCaseEffectiveAccess
+from app.models.cases import CaseProtagonist
 
 
-def list_cases_dict():
+def list_cases_id():
+    res = Cases.query.with_entities(
+        Cases.case_id
+    ).all()
+
+    return [r.case_id for r in res]
+
+
+def list_cases_dict_unrestricted():
     res = Cases.query.with_entities(
         Cases.name.label('case_name'),
         Cases.description.label('case_description'),
@@ -59,7 +74,7 @@ def list_cases_dict():
         Cases.user
     ).order_by(
         Cases.open_date
-    )
+    ).all()
 
     data = []
     for row in res:
@@ -69,6 +84,52 @@ def list_cases_dict():
         data.append(row)
 
     return data
+
+
+def list_cases_dict(user_id):
+    res = UserCaseEffectiveAccess.query.with_entities(
+        Cases.name.label('case_name'),
+        Cases.description.label('case_description'),
+        Client.name.label('client_name'),
+        Cases.open_date.label('case_open_date'),
+        Cases.close_date.label('case_close_date'),
+        Cases.soc_id.label('case_soc_id'),
+        User.name.label('opened_by'),
+        Cases.case_id,
+        Cases.case_uuid,
+        UserCaseEffectiveAccess.access_level
+    ).join(
+        UserCaseEffectiveAccess.case,
+        Cases.client,
+        Cases.user
+    ).filter(
+        UserCaseEffectiveAccess.user_id == user_id
+    ).order_by(
+        Cases.open_date
+    ).all()
+
+    data = []
+    for row in res:
+        if row.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+            continue
+
+        row = row._asdict()
+        row['case_open_date'] = row['case_open_date'].strftime("%m/%d/%Y")
+        row['case_close_date'] = row['case_close_date'].strftime("%m/%d/%Y") if row["case_close_date"] else ""
+        data.append(row)
+
+    return data
+
+
+def user_list_cases_view(user_id):
+    res = UserCaseEffectiveAccess.query.with_entities(
+        UserCaseEffectiveAccess.case_id
+    ).filter(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value
+    )).all()
+
+    return [r.case_id for r in res]
 
 
 def close_case(case_id):
@@ -99,6 +160,22 @@ def reopen_case(case_id):
     return None
 
 
+def get_case_protagonists(case_id):
+    protagonists = CaseProtagonist.query.with_entities(
+        CaseProtagonist.role,
+        CaseProtagonist.name,
+        CaseProtagonist.contact,
+        User.name.label('user_name'),
+        User.user.label('user_login')
+    ).filter(
+        CaseProtagonist.case_id == case_id
+    ).outerjoin(
+        CaseProtagonist.user
+    ).all()
+
+    return protagonists
+
+
 def get_case_details_rt(case_id):
     if Cases.query.filter(Cases.case_id == case_id).first():
         res = db.session.query(Cases, Client, User).with_entities(
@@ -107,14 +184,19 @@ def get_case_details_rt(case_id):
             Cases.open_date, Cases.close_date,
             Cases.soc_id.label('case_soc_id'),
             Cases.case_id,
+            Cases.case_uuid,
             Client.name.label('customer_name'),
             User.user.label('open_by_user'),
+            Cases.status_id,
             Cases.custom_attributes
         ).filter(and_(
             Cases.case_id == case_id,
             Cases.user_id == User.id,
             Client.client_id == Cases.client_id
         )).first()
+
+        res = res._asdict()
+        res['case_tags'] = ",".join(get_case_tags(case_id))
 
     else:
         res = None
@@ -160,6 +242,11 @@ def delete_case(case_id):
         CaseEventCategory.query.filter(CaseEventCategory.event_id == event.event_id).delete()
 
     CasesEvent.query.filter(CasesEvent.case_id == case_id).delete()
+
+    UserCaseAccess.query.filter(UserCaseAccess.case_id == case_id).delete()
+    UserCaseEffectiveAccess.query.filter(UserCaseEffectiveAccess.case_id == case_id).delete()
+    GroupCaseAccess.query.filter(GroupCaseAccess.case_id == case_id).delete()
+    OrganisationCaseAccess.query.filter(OrganisationCaseAccess.case_id == case_id).delete()
 
     Cases.query.filter(Cases.case_id == case_id).delete()
     db.session.commit()

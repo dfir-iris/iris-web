@@ -23,6 +23,7 @@ import logging as logger
 import os
 import urllib.parse
 from flask import Flask
+from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
 from flask_login import LoginManager
@@ -60,9 +61,32 @@ logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT
 
 app = Flask(__name__)
 
+
+def ac_current_user_has_permission(*permissions):
+    """
+    Return True if current user has permission
+    """
+    for permission in permissions:
+
+        if session['permissions'] & permission.value == permission.value:
+            return True
+
+    return False
+
+
+def ac_current_user_has_manage_perms():
+
+    if session['permissions'] != 1 and session['permissions'] & 0x1FFFFF0 != 0:
+        return True
+    return False
+
+
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
 app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
+app.jinja_env.globals.update(user_has_perm=ac_current_user_has_permission)
+app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_perms)
+
 app.config.from_object('app.configuration.Config')
 
 cache = Cache(app)

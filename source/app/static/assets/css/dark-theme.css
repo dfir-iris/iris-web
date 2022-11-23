@@ -787,3 +787,24 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
   border-color: transparent;
   color: #000;
 }
+
+.multiselect-container .multiselect-all.active:not(.multiselect-active-item-fallback), .multiselect-container .multiselect-all:not(.multiselect-active-item-fallback):active, .multiselect-container .multiselect-group.active:not(.multiselect-active-item-fallback), .multiselect-container .multiselect-group:not(.multiselect-active-item-fallback):active, .multiselect-container .multiselect-option.active:not(.multiselect-active-item-fallback), .multiselect-container .multiselect-option:not(.multiselect-active-item-fallback):active {
+  background-color: #1f1f26;
+  color: #000;
+}
+
+.btn.bg-transparent {
+    color: #ccc;
+}
+
+.btn.bg-transparent:hover {
+    color: #fff;
+}
+
+.md_description_field {
+    border: 1px solid #aeaeae33;
+}
+
+.contact-list-detail:hover {
+  background: #f6f5f512;
+}

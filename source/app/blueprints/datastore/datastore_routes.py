@@ -4,7 +4,6 @@
 #  IRIS Source Code
 #  Copyright (C) 2022 - DFIR IRIS Team
 #  contact@dfir-iris.org
-#  Created by whitekernel - 2022-05-17
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -20,18 +19,17 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import base64
-import json
-import urllib.parse
-from pathlib import Path
-
 import datetime
+import json
 import marshmallow.exceptions
+import urllib.parse
 from flask import Blueprint
 from flask import render_template
 from flask import request
 from flask import send_file
 from flask import url_for
 from flask_login import current_user
+from pathlib import Path
 from werkzeug.utils import redirect
 
 import app
@@ -50,11 +48,12 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.forms import ModalDSFileForm
-from app.models import DataStoreFile
+from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import DSFileSchema
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import add_obj_history_entry
-from app.util import api_login_required
-from app.util import login_required
 from app.util import response_error
 from app.util import response_success
 
@@ -68,7 +67,7 @@ logger = app.logger
 
 
 @datastore_blueprint.route('/datastore/list/tree', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_list_tree(caseid):
 
     data = ds_list_tree(caseid)
@@ -77,7 +76,7 @@ def datastore_list_tree(caseid):
 
 
 @datastore_blueprint.route('/datastore/list/filter', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_list_filter(caseid):
 
     args = request.args.to_dict()
@@ -101,7 +100,7 @@ def datastore_list_filter(caseid):
 
 
 @datastore_blueprint.route('/datastore/file/add/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.full_access)
 def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -117,7 +116,7 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/filter-help/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_filter_help_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('index.index', cid=caseid, redirect=True))
@@ -126,7 +125,7 @@ def datastore_filter_help_modal(caseid, url_redir):
 
 
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -150,7 +149,7 @@ def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/info/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -166,7 +165,7 @@ def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_update_file(cur_id: int, caseid: int):
 
     dsf = datastore_get_file(cur_id, caseid)
@@ -206,6 +205,7 @@ def datastore_update_file(cur_id: int, caseid: int):
             datastore_add_file_as_evidence(dsf, caseid)
             msg_added_as += ' and evidence' if len(msg_added_as) > 0 else 'and added in evidence'
 
+        track_activity(f'File \"{dsf.file_original_name}\" updated in DS', caseid=caseid)
         return response_success('File updated in datastore')
 
     except marshmallow.exceptions.ValidationError as e:
@@ -213,7 +213,7 @@ def datastore_update_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/move/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_move_file(cur_id: int, caseid: int):
 
     if not request.json:
@@ -230,11 +230,12 @@ def datastore_move_file(cur_id: int, caseid: int):
     dsf.file_parent_id = dsp.path_id
     db.session.commit()
 
+    track_activity(f'File \"{dsf.file_original_name}\" moved to \"{dsp.path_name}\" in DS', caseid=caseid)
     return response_success(f"File successfully moved to {dsp.path_name}")
 
 
 @datastore_blueprint.route('/datastore/folder/move/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_move_folder(cur_id: int, caseid: int):
 
     if not request.json:
@@ -254,11 +255,13 @@ def datastore_move_folder(cur_id: int, caseid: int):
     dsp.path_parent_id = dsp_dst.path_id
     db.session.commit()
 
-    return response_success(f"Folder {dsp.path_name} successfully moved to {dsp_dst.path_name}")
+    msg = f"Folder \"{dsp.path_name}\" successfully moved to \"{dsp_dst.path_name}\""
+    track_activity(msg, caseid=caseid)
+    return response_success(msg)
 
 
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_view_file(cur_id: int, caseid: int):
     has_error, dsf = datastore_get_local_file_path(cur_id, caseid)
     if has_error:
@@ -268,16 +271,18 @@ def datastore_view_file(cur_id: int, caseid: int):
         dsf.file_original_name += ".zip"
 
     if not Path(dsf.file_local_name).is_file():
-        return response_error(f'File {dsf.file_local_name} does not exists on the server. Update or delete virtual entry')
+        return response_error(f'File {dsf.file_local_name} does not exists on the server. '
+                              f'Update or delete virtual entry')
 
     resp = send_file(dsf.file_local_name, as_attachment=True,
                      attachment_filename=dsf.file_original_name)
 
+    track_activity(f"File \"{dsf.file_original_name}\" downloaded", caseid=caseid, display_in_ui=False)
     return resp
 
 
 @datastore_blueprint.route('/datastore/file/add/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_add_file(cur_id: int, caseid: int):
 
     dsp = datastore_get_path_node(cur_id, caseid)
@@ -320,6 +325,7 @@ def datastore_add_file(cur_id: int, caseid: int):
             datastore_add_file_as_evidence(dsf_sc, caseid)
             msg_added_as += ' and evidence' if len(msg_added_as) > 0 else 'and added in evidence'
 
+        track_activity(f"File \"{dsf_sc.file_original_name}\" added to DS", caseid=caseid)
         return response_success(f'File saved in datastore {msg_added_as}')
 
     except marshmallow.exceptions.ValidationError as e:
@@ -327,7 +333,7 @@ def datastore_add_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/add-interactive', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_add_interactive_file(caseid: int):
 
     dsp = datastore_get_interactive_path_node(caseid)
@@ -352,6 +358,7 @@ def datastore_add_interactive_file(caseid: int):
         else:
             msg = "File already existing in datastore. Using it."
 
+        track_activity(f"File \"{dsf_sc.file_original_name}\" added to DS", caseid=caseid)
         return response_success(msg, data={"file_url": f"/datastore/file/view/{dsf_sc.file_id}"})
 
     except marshmallow.exceptions.ValidationError as e:
@@ -359,7 +366,7 @@ def datastore_add_interactive_file(caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_add_folder(caseid: int):
     data = request.json
     if not data:
@@ -373,11 +380,12 @@ def datastore_add_folder(caseid: int):
 
     has_error, logs = datastore_add_child_node(parent_node, folder_name, caseid)
 
+    track_activity(f"Folder \"{folder_name}\" added to DS", caseid=caseid)
     return response_success(logs) if not has_error else response_error(logs)
 
 
 @datastore_blueprint.route('/datastore/folder/rename/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_rename_folder(cur_id: int, caseid: int):
     data = request.json
     if not data:
@@ -394,22 +402,32 @@ def datastore_rename_folder(cur_id: int, caseid: int):
 
     has_error, logs = datastore_rename_node(parent_node, folder_name, caseid)
 
-    return response_success(logs) if not has_error else response_error(logs)
+    if has_error:
+        return response_error(logs)
+
+    track_activity(f"Folder \"{parent_node}\" renamed to \"{folder_name}\" in DS", caseid=caseid)
+    return response_success(logs)
 
 
-@datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_delete_folder_route(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_node(cur_id, caseid)
+    if has_error:
+        return response_error(logs)
 
-    return response_success(logs) if not has_error else response_error(logs)
+    track_activity(f"Folder \"{cur_id}\" deleted from DS", caseid=caseid)
+    return response_success(logs)
 
 
-@datastore_blueprint.route('/datastore/file/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@datastore_blueprint.route('/datastore/file/delete/<int:cur_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_delete_file_route(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_file(cur_id, caseid)
+    if has_error:
+        return response_error(logs)
 
-    return response_success(logs) if not has_error else response_error(logs)
+    track_activity(f"File \"{cur_id}\" deleted from DS", caseid=caseid)
+    return response_success(logs)

@@ -18,32 +18,29 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
-import re
-
-from flask_login import current_user
-
-from pathlib import Path
-
 import dateutil.parser
 import marshmallow
 import os
+import pyminizip
 import random
+import re
 import string
-import tempfile
+from flask_login import current_user
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
+from pathlib import Path
 from sqlalchemy import func
-import pyminizip
 
 from app import app
 from app import db
 from app import ma
-from app.datamgmt.datastore.datastore_db import datastore_get_interactive_path_node
+from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
+from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus
 from app.models import AssetsType
 from app.models import CaseAssets
@@ -52,6 +49,8 @@ from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
 from app.models import Client
+from app.models import Comments
+from app.models import Contact
 from app.models import DataStoreFile
 from app.models import EventCategory
 from app.models import GlobalTasks
@@ -62,7 +61,9 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models import User
+from app.models.authorization import Group
+from app.models.authorization import Organisation
+from app.models.authorization import User
 from app.util import file_sha256sum
 from app.util import stream_sha256sum
 
@@ -107,6 +108,7 @@ def store_icon(file):
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     csrf_token = fields.String(required=False)
     group_id = fields.Integer()
+    group_uuid = fields.UUID()
     group_title = fields.String()
 
     class Meta:
@@ -116,7 +118,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
 class CaseAddNoteSchema(ma.Schema):
     note_id = fields.Integer(required=False)
-    note_title = fields.String(required=True, validate=Length(min=1), allow_none=False)
+    note_title = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
     note_content = fields.String(required=False, validate=Length(min=1))
     group_id = fields.Integer(required=True)
     csrf_token = fields.String(required=False)
@@ -219,6 +221,14 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class CommentSchema(ma.SQLAlchemyAutoSchema):
+
+    class Meta:
+        model = Comments
+        load_instance = True
+        include_fk = True
+
+
 class EventSchema(ma.SQLAlchemyAutoSchema):
     event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
     event_assets = fields.List(fields.Integer, required=True, allow_none=False)
@@ -228,6 +238,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
     event_category_id = fields.Integer(required=True, allow_none=False)
     event_date_wtz = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
     modification_history = auto_field('modification_history', required=False, readonly=True)
+    event_comments_map = fields.List(fields.Integer, required=False, allow_none=True)
 
     class Meta:
         model = CasesEvent
@@ -454,6 +465,20 @@ class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
 
+class ContactSchema(ma.SQLAlchemyAutoSchema):
+    contact_name = auto_field('contact_name', required=True, validate=Length(min=2), allow_none=False)
+    contact_email = auto_field('contact_email', required=False, allow_none=False)
+    contact_work_phone = auto_field('contact_work_phone', required=False, allow_none=False)
+    contact_mobile_phone = auto_field('contact_mobile_phone', required=False, allow_none=False)
+    contact_role = auto_field('contact_role', required=False, allow_none=False)
+    contact_note = auto_field('contact_note', required=False, allow_none=False)
+    client_id = auto_field('client_id', required=True)
+
+    class Meta:
+        model = Contact
+        load_instance = True
+
+
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
     type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
     type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
@@ -485,6 +510,9 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     case_description = auto_field('description', required=True, validate=Length(min=2))
     case_soc_id = auto_field('soc_id', required=True)
     case_customer = auto_field('client_id', required=True)
+    case_organisations = fields.List(fields.Integer, required=False)
+    protagonists = fields.List(fields.Dict, required=False)
+    case_tags = fields.String(required=False)
     csrf_token = fields.String(required=False)
 
     class Meta:
@@ -528,7 +556,7 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
         user = User.query.filter(User.id == data.get('task_assignee_id')).count()
         if not user:
             raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
-                                                         field_name="task_assignee_id")
+                                                         field_name="task_assignees_id")
 
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
@@ -540,13 +568,15 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
     customer_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    customer_description = auto_field('description', allow_none=True)
+    customer_sla = auto_field('sla', allow_none=True)
     customer_id = auto_field('client_id')
     csrf_token = fields.String(required=False)
 
     class Meta:
         model = Client
         load_instance = True
-        exclude = ['name', 'client_id']
+        exclude = ['name', 'client_id', 'description', 'sla']
 
     @post_load
     def verify_unique(self, data, **kwargs):
@@ -577,7 +607,6 @@ class TaskLogSchema(ma.Schema):
 
 
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
-    task_assignee_id = fields.Integer(required=True)
     task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     task_status_id = auto_field('task_status_id', required=True)
 
@@ -588,11 +617,6 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
-        user = User.query.filter(User.id == data.get('task_assignee_id')).count()
-        if not user:
-            raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
-                                                         field_name="task_assignee_id")
-
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
             raise marshmallow.exceptions.ValidationError("Invalid task status ID",
@@ -625,6 +649,69 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
+    group_name = auto_field('group_name', required=True, validate=Length(min=2), allow_none=False)
+    group_description = auto_field('group_description', required=True, validate=Length(min=2))
+    group_auto_follow_access_level = auto_field('group_auto_follow_access_level', required=False, default=False)
+
+    class Meta:
+        model = Group
+        load_instance = True
+
+    @pre_load
+    def verify_unique(self, data, **kwargs):
+        groups = Group.query.filter(
+            func.upper(Group.group_name) == data.get('group_name').upper()
+        ).all()
+
+        for group in groups:
+            if data.get('group_id') is None or group.group_id != data.get('group_id'):
+                raise marshmallow.exceptions.ValidationError(
+                    "Group already exists",
+                    field_name="group_name"
+                )
+
+        return data
+
+    @pre_load
+    def parse_permissions(self, data, **kwargs):
+        permissions = data.get('group_permissions')
+        if type(permissions) != list and not isinstance(permissions, type(None)):
+            permissions = [permissions]
+
+        if permissions is not None:
+            data['group_permissions'] = ac_mask_from_val_list(permissions)
+
+        else:
+            data['group_permissions'] = 0
+
+        return data
+
+
+class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
+    org_name = auto_field('org_name', required=True, validate=Length(min=2), allow_none=False)
+    org_description = auto_field('org_description', required=True, validate=Length(min=2))
+
+    class Meta:
+        model = Organisation
+        load_instance = True
+
+    @pre_load
+    def verify_unique(self, data, **kwargs):
+        organisations = Organisation.query.filter(
+            func.upper(Organisation.org_name) == data.get('org_name').upper()
+        ).all()
+
+        for organisation in organisations:
+            if data.get('org_id') is None or organisation.org_id != data.get('org_id'):
+                raise marshmallow.exceptions.ValidationError(
+                    "Organisation name already exists",
+                    field_name="org_name"
+                )
+
+        return data
+
+
 class UserSchema(ma.SQLAlchemyAutoSchema):
     user_roles_str = fields.List(fields.String, required=False)
     user_name = auto_field('name', required=True, validate=Length(min=2))
@@ -634,6 +721,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     user_isadmin = fields.Boolean(required=True)
     csrf_token = fields.String(required=False)
     user_id = fields.Integer(required=False)
+    user_primary_organisation_id = fields.Integer(required=False)
 
     class Meta:
         model = User

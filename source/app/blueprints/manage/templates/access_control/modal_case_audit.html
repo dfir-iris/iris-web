@@ -1,0 +1,65 @@
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col col-heading">
+                            <div class="card-title">Case access</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <p>Click on a user to unveil access control path</p>
+                            <table class="table table-striped table-bordered" id="case_audit_access_table">
+                                <thead>
+                                    <tr>
+                                        <th>User ID</th>
+                                        <th>User Name</th>
+                                        <th>User UUID</th>
+                                        <th>Access</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for user_id in access_audit %}
+                                    <tr>
+                                        <td>
+                                        {% if access_audit[user_id].user_effective_access_list|length == 0 %}
+                                            <i class="mr-2 fa-solid text-danger fa-circle-xmark" title="No access"></i>
+                                        {% elif access_audit[user_id].user_effective_access_list|length == 1 %}
+                                            <i class="mr-2 fa-solid text-warning fa-circle-minus" title="Partial access"></i>
+                                        {% else %}
+                                            <i class="mr-2 fa-solid fa-circle-check text-success" title="All access"></i>
+                                        {% endif %}
+                                            {{ user_id }}
+                                        </td>
+                                        <td>{{ access_audit[user_id].user_info.user_name }}</td>
+                                        <td>{{ access_audit[user_id].user_info.user_uuid }}</td>
+                                        <td>{% if access_audit[user_id].user_effective_access_list|length == 0 %}
+                                            <span class="badge badge-pill badge-light" title="Click to show trace"  href="#collapse_cac_{{user_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_cac_{{user_id}}">No access</span>
+                                        {% else %}
+                                            {% for uac in access_audit[user_id].user_effective_access_list %}
+                                            <span class="badge badge-pill badge-light" title="Click to show trace"  href="#collapse_cac_{{user_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_cac_{{user_id}}">{{ uac }}</span>
+                                            {% endfor %}
+                                            <i class="fa-solid fa-eye ml-2" title="Click to show trace"  href="#collapse_cac_{{user_id}}" style="cursor:pointer;" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_cac_{{user_id}}"></i>
+                                        {% endif %}
+                                            <ol class="activity-feed collapse" id="collapse_cac_{{user_id}}">
+                                                {% if access_audit[user_id].user_effective_access_list|length == 0 %}
+                                                    The user is neither in a group nor an organisation who has access to this case
+                                                {% endif %}
+                                                {% for uac in access_audit[user_id].access_trace %}
+                                                <li class="feed-item {% if uac.state == 'Effective' %} feed-item-success {% else %} feed-item-danger {% endif %}" title="{{ uac.state }}">
+                                                    <span class="text"><span class="badge badge-pill badge-light">{{ uac.name }}</span> ({{ uac.state }})</span><br />
+                                                    <span class="text">Inherited from {{ uac.inherited_from.object_type }} <i class="fa-solid fa-right-long"></i> {{ uac.inherited_from.object_name }} (ID {{ uac.inherited_from.object_id }} :: UUID {{ uac.inherited_from.object_uuid }})</span>
+                                                </li>
+                                                {% endfor %}
+                                            </ol>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>

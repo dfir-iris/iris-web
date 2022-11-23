@@ -21,9 +21,9 @@
                             {{ form.hidden_tag() }}
                         </div>
                         <div class="col">
-                           <button class="btn btn-sm btn-icon btn-round btn-primary-success float-right ml-3" onclick="add_module();"><i class="fas fa-plus-circle"></i></button>
-                            <button type="button" class="btn btn-sm btn-icon btn-round btn-outline-black float-right" onclick="refresh_modules();">
-                                <i class="fas fa-sync rotate"></i>
+                           <button class="btn btn-sm btn-primary-success float-right ml-3" onclick="add_module();">Add module</button>
+                            <button type="button" class="btn btn-sm btn-outline-black float-right" onclick="refresh_modules();">
+                                Refresh
                             </button>
                         </div>
                     </div>
@@ -139,5 +139,5 @@
     <script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
         charset="utf-8"></script>
     <script src="/static/assets/js/plugin/datatables/dataTables.group.min.js"></script>
-    <script src="/static/assets/js/iris/manage_modules.js"></script>
+    <script src="/static/assets/js/iris/manage.modules.js"></script>
     {% endblock javascripts %}

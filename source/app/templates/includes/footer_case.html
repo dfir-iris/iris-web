@@ -1,3 +1,9 @@
+<div class="modal" role="dialog" tabindex="-1" id="modal_comment" data-backdrop="false">
+    <div class="modal-lg modal-dialog modal-comment" role="document">
+        <div class="modal-content shadow-xl" id="modal_comment_content">
+        </div>
+    </div>
+</div>
 <script src="/static/assets/js/core/jquery.validate.js"></script>
 <script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/dataTables.contextualActions.min.js"></script>
@@ -5,7 +11,13 @@
 <script src="/static/assets/js/plugin/datatables/dataTables.responsive.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
+<script src="/static/assets/js/plugin/datatables/buttons.colVis.min.js"></script>
+<script src="/static/assets/js/plugin/showdown/showdown.min.js" type="text/javascript" charset="utf-8"></script>
 
 <script src="/static/assets/js/iris/datatablesUtils.js"></script>
 <script src="/static/assets/js/plugin/select/select2.js"></script>
 <script src="/static/assets/js/iris/case.js"></script>
+<script src="/static/assets/js/iris/comments.js"></script>
+<script>
+    var has_deletion_prompt = {% if current_user.has_deletion_confirmation %}true{% else %}false{% endif %};
+</script>

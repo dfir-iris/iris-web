@@ -1,0 +1,54 @@
+<link rel="stylesheet" href="/static/assets/css/dropzone.css">
+<div class="modal-header">
+    <h4 class="modal-title mt-2 mr-4">Processing pipelines</h4>
+    <button type="button" class="pull-right btn btn-white" data-dismiss="modal" aria-label="Close"><span
+        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+</div>
+<div class="modal-body">
+    <div class="container col-md-12">
+        <div class="row">
+            <div class="col-12">
+                <p>Select processing pipeline and drop analysis files below. Press Process to start the processing. Do not close the page until the upload is finished.<br/>
+                Supports up to 40 files and 10GB at once.</p>
+
+                    <div class="form-group">
+                        <div class="form-group">
+                         <label for="import_pipeline" class="placeholder">Processing pipeline</label>
+                            <i class="fas fa-question-circle mr-2" data-toggle="popover"
+                                    title="Pipelines"
+                                    data-content="Pipelines are the way files dropped below are processed. Each pipelines handles a different type of file."></i>
+
+                        {{ form.pipeline(class="selectpicker pl--6 btn-outline-white", id="update_pipeline_selector") }}
+                        </div>
+                        <div class="form-group col-md-6 mb-2">
+                        {% for itm in pipeline_args %}
+                            {% for tm in itm[2] %}
+                            <div class="input-group mb-4 control-update-pipeline-args control-update-pipeline-{{itm[0]}}">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">{{tm[0]}} ({{tm[1]}})</span>
+                                </div>
+                                <input class="form-control update-{{itm[0]}}" id="{{tm[0]}}" name="{{tm[0]}}" type="text" value="" {{tm[1]}}>
+                            </div>
+                            {% endfor %}
+
+                        {% endfor %}
+                        </div>
+                        <div class="tab-content col-md-12">
+                            <div class="dropzone  col-md-12" id="files_drop_1">
+                            </div>
+                        </div>
+                    </div>
+                <span id="msg_submit" class="ml-4"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-default float-left" data-dismiss="modal">Dismiss</button>
+
+    <button type="button" class="btn btn-outline-success float-right"
+        id="submit_update_case" onclick="submit_update_casefn();">Process</button>
+</div>
+<script src="/static/assets/js/plugin/dropzone/dropzone.js"></script>
+<script src="/static/assets/js/iris/case.pipelines.js"></script>

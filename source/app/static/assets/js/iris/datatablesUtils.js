@@ -16,22 +16,23 @@ function addFilterFields(tableId){
 }
 
 /* callback function to activate filtering on a datatable */
-function tableFiltering(api) {
+function tableFiltering(api, table_anchor) {
     // For each column
     api
         .columns()
         .eq(0)
         .each(function (colIdx) {
             // Set the header cell to contain the input element
-            var cell = $('.filters th').eq(
+            var cell = $('#'+table_anchor+' .filters th').eq(
                 $(api.column(colIdx).header()).index()
             );
+
             var title = $(cell).text();
             $(cell).html('<div class="form-group has-feedback"><input type="text" class="form-control" placeholder="Filter"><i class="fas fa-times-circle form-control-feedback" onclick="removeFilter(this);"></i></div>');
             // On every keypress in this input
             $(
                 'input',
-                $('.filters th').eq($(api.column(colIdx).header()).index())
+                $('#'+table_anchor+' .filters th').eq($(api.column(colIdx).header()).index())
             )
                 .off('keyup change')
                 .on('keyup change', function (e) {

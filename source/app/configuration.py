@@ -17,9 +17,22 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# --------- Configuration ---------
+# read the private configuration file
+from datetime import timedelta
+
+import ssl
+
+import sys
+from enum import Enum
+import logging as log
+
+import requests
 import configparser
 import logging
 import os
+from pathlib import Path
 
 # --------- Configuration ---------
 # read the private configuration file
@@ -113,6 +126,8 @@ class IrisConfig(configparser.ConfigParser):
             'POSTGRES_PORT': 'DB_PORT',
             'IRIS_SECRET_KEY': 'SECRET_KEY',
             'IRIS_SECURITY_PASSWORD_SALT': 'SECURITY_PASSWORD_SALT',
+            'APP_HOST': 'IRIS_UPSTREAM_SERVER',
+            'APP_PORT': 'IRIS_UPSTREAM_PORT'
         }
 
         new_key = f"{section}_{option}"
@@ -137,7 +152,7 @@ class IrisConfig(configparser.ConfigParser):
             ('POSTGRES', 'ADMIN_USER'): ('POSTGRES', 'PGA_ACCOUNT'),
             ('POSTGRES', 'ADMIN_PASSWORD'): ('POSTGRES', 'PGA_PASSWD'),
             ('POSTGRES', 'SERVER'): ('POSTGRES', 'PG_SERVER'),
-            ('POSTGRES', 'PORT'): ('POSTGRES', 'PG_PORT'),
+            ('POSTGRES', 'PORT'): ('POSTGRES', 'PG_PORT')
         }
 
         new_key = (section, option)
@@ -154,6 +169,8 @@ class IrisConfig(configparser.ConfigParser):
         return value
 
 
+# --------- Configuration ---------
+# read the private configuration file
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
@@ -176,15 +193,74 @@ CELERY_BROKER_ = config.load('CELERY', 'BROKER',
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Build of SQLAlchemy connectors. One is admin and the other is only for iris. Admin is needed to create new DB
-SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PG_ACCOUNT_,
-                                                                                      passwd=PG_PASSWD_,
-                                                                                      server=PG_SERVER_,
-                                                                                      port=PG_PORT_)
+SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
+    user=PG_ACCOUNT_,
+    passwd=PG_PASSWD_,
+    server=PG_SERVER_,
+    port=PG_PORT_
+)
+
+SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
+    user=PGA_ACCOUNT_,
+    passwd=PGA_PASSWD_,
+    server=PG_SERVER_,
+    port=PG_PORT_
+)
 
 SQLALCHEMY_BASE_ADMIN_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PGA_ACCOUNT_,
-                                                                                       passwd=PGA_PASSWD_,
-                                                                                       server=PG_SERVER_,
-                                                                                       port=PG_PORT_)
+                                                                                            passwd=PGA_PASSWD_,
+                                                                                            server=PG_SERVER_,
+                                                                                            port=PG_PORT_)
+
+
+class AuthenticationType(Enum):
+    local = 1
+    oidc_proxy = 2
+
+
+authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
+                                     config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback="local"))
+
+authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST')
+
+tls_root_ca = os.environ.get('TLS_ROOT_CA',
+                             config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None))
+
+authentication_logout_url = None
+authentication_account_service_url = None
+authentication_token_introspection_url = None
+authentication_client_id = None
+authentication_client_secret = None
+authentication_app_admin_role_name = None
+
+
+if authentication_type == 'oidc_proxy':
+    oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
+
+    try:
+        oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
+
+        if oidc_discovery_response.status_code == 200:
+            response_json = oidc_discovery_response.json()
+            authentication_logout_url = response_json.get('end_session_endpoint')
+            authentication_account_service_url = f"{response_json.get('issuer')}/account"
+            authentication_token_introspection_url = response_json.get('introspection_endpoint')
+            authentication_jwks_url = response_json.get('jwks_uri')
+
+        else:
+            raise Exception("Unsuccessful authN server discovery")
+
+        authentication_client_id = config.load('OIDC', 'IRIS_CLIENT_ID', fallback="")
+
+        authentication_client_secret = config.load('OIDC', 'IRIS_CLIENT_SECRET', fallback="")
+
+        authentication_app_admin_role_name = config.load('OIDC', 'IRIS_ADMIN_ROLE_NAME', fallback="")
+    except Exception as e:
+        log.error(f"OIDC ERROR - {e}")
+        exit(0)
+        pass
+    else:
+        log.info("OIDC configuration properly parsed")
 
 
 # --------- CELERY ---------
@@ -216,12 +292,18 @@ class Config():
 
         SECURITY_LOGIN_USER_TEMPLATE = 'login.html'
 
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = True
+
     PG_ACCOUNT = PG_ACCOUNT_
     PG_PASSWD = PG_PASSWD_
     PGA_ACCOUNT = PGA_ACCOUNT_
     PGA_PASSWD = PGA_PASSWD_
     PG_SERVER = PG_SERVER_
     PG_PORT = PG_PORT_
+
+    WTF_CSRF_TIME_LIMIT = None
 
     """ SqlAlchemy configuration
     """
@@ -254,6 +336,8 @@ class Config():
     DATASTORE_PATH = config.load('IRIS', 'DATASTORE_PATH', fallback="/home/iris/server_data/datastore")
     ASSET_SHOW_PATH = "/static/assets/img/graph"
 
+    ORGANISATION_NAME = config.load('IRIS', 'ORGANISATION_NAME', fallback='')
+
     UPDATE_DIR_NAME = '_updates_'
 
     DROPZONE_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 10  # 10 GB
@@ -269,6 +353,81 @@ class Config():
         DEVELOPMENT = True
     else:
         DEVELOPMENT = config.load('DEVELOPMENT', 'IS_DEV_INSTANCE') == "True"
+
+    """
+        Authentication configuration
+    """
+    TLS_ROOT_CA = tls_root_ca
+
+    AUTHENTICATION_TYPE = authentication_type
+    AUTHENTICATION_CREATE_USER_IF_NOT_EXIST = (authentication_create_user_if_not_exists == "True")
+
+    if authentication_type == 'oidc_proxy':
+        AUTHENTICATION_LOGOUT_URL = authentication_logout_url
+        AUTHENTICATION_ACCOUNT_SERVICE_URL = authentication_account_service_url
+        AUTHENTICATION_PROXY_LOGOUT_URL = f"/oauth2/sign_out?rd={AUTHENTICATION_LOGOUT_URL}?redirect_uri=/dashboard"
+        AUTHENTICATION_TOKEN_INTROSPECTION_URL = authentication_token_introspection_url
+        AUTHENTICATION_JWKS_URL = authentication_jwks_url
+        AUTHENTICATION_CLIENT_ID = authentication_client_id
+        AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
+        AUTHENTICATION_AUDIENCE = config.load('OIDC', 'IRIS_AUDIENCE', fallback="")
+        AUTHENTICATION_VERIFY_TOKEN_EXP = config.load('OIDC', 'IRIS_VERIFY_TOKEN_EXPIRATION',
+                                                      fallback=True)
+        AUTHENTICATION_TOKEN_VERIFY_MODE = config.load('OIDC', 'IRIS_TOKEN_VERIFY_MODE',
+                                                       fallback='signature')
+        AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = config.load('OIDC', 'IRIS_INIT_ADMINISTRATOR_EMAIL',
+                                                              fallback="")
+        AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
+
+    elif authentication_type == 'ldap':
+        LDAP_SERVER = config.load('LDAP', 'SERVER')
+        if LDAP_SERVER is None:
+            raise Exception('LDAP enabled and no server configured')
+
+        LDAP_PORT = config.load('LDAP', 'PORT')
+        if LDAP_PORT is None:
+            raise Exception('LDAP enabled and no server configured')
+
+        LDAP_USER_PREFIX = config.load('LDAP', 'USER_PREFIX')
+        if LDAP_USER_PREFIX is None:
+            raise Exception('LDAP enabled and no user prefix configured')
+
+        LDAP_USER_SUFFIX = config.load('LDAP', 'USER_SUFFIX')
+        if LDAP_USER_SUFFIX is None:
+            raise Exception('LDAP enabled and no user suffix configured')
+
+        LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
+        LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
+
+        LDAP_VALIDATE_CERTIFICATE = config.load('LDAP', 'VALIDATE_CERTIFICATE', fallback='True')
+        LDAP_VALIDATE_CERTIFICATE = (LDAP_VALIDATE_CERTIFICATE == 'True')
+
+        ldap_tls_v = config.load('LDAP', 'TLS_VERSION', '1.2')
+        if ldap_tls_v not in ['1.0', '1.1', '1.2']:
+            raise Exception(f'Unsupported LDAP TLS version {ldap_tls_v}')
+
+        if ldap_tls_v == '1.1':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_1
+        elif ldap_tls_v == '1.2':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2
+        elif ldap_tls_v == '1.0':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1
+
+        proto = 'ldaps' if LDAP_USE_SSL else 'ldap'
+        LDAP_CONNECT_STRING = f'{proto}://{LDAP_SERVER}:{LDAP_PORT}'
+
+        if LDAP_USE_SSL:
+            LDAP_SERVER_CERTIFICATE = config.load('LDAP', 'SERVER_CERTIFICATE')
+            if not Path(f'certificates/ldap/{LDAP_SERVER_CERTIFICATE}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
+
+            LDAP_PRIVATE_KEY = config.load('LDAP', 'PRIVATE_KEY')
+            if not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
+
+            PRIVATE_KEY_PASSWORD = config.load('LDAP', 'PRIVATE_KEY_PASSWORD', fallback=None)
 
     """ Caching 
     """

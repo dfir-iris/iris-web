@@ -17,25 +17,30 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.states import update_ioc_state
+from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.models import CaseEventsIoc
 from app.models import Cases
 from app.models import Client
+from app.models import Comments
 from app.models import Ioc
 from app.models import IocAssetLink
+from app.models import IocComments
 from app.models import IocLink
 from app.models import IocType
 from app.models import Tlp
+from app.models.authorization import User
 
 
 def get_iocs(caseid):
     iocs = IocLink.query.with_entities(
         Ioc.ioc_value,
-        Ioc.ioc_id
+        Ioc.ioc_id,
+        Ioc.ioc_uuid
     ).filter(
         IocLink.case_id == caseid,
         IocLink.ioc_id == Ioc.ioc_id
@@ -100,6 +105,17 @@ def delete_ioc(ioc, caseid):
         CaseEventsIoc.ioc_id == ioc.ioc_id
     ).delete()
 
+    IocComments.query.filter(
+        IocComments.comment_ioc_id == ioc.ioc_id
+    ).delete(synchronize_session='fetch')
+
+    Comments.query.filter(and_(
+        Comments.comment_id == IocComments.comment_id,
+        IocComments.comment_ioc_id == ioc.ioc_id
+    )).delete(synchronize_session='fetch')
+
+    db.session.commit()
+
     db.session.delete(ioc)
 
     update_ioc_state(caseid=caseid)
@@ -111,6 +127,7 @@ def delete_ioc(ioc, caseid):
 def get_detailed_iocs(caseid):
     detailed_iocs = IocLink.query.with_entities(
         Ioc.ioc_id,
+        Ioc.ioc_uuid,
         Ioc.ioc_value,
         Ioc.ioc_type_id,
         IocType.type_name.label('ioc_type'),
@@ -133,13 +150,20 @@ def get_detailed_iocs(caseid):
 
 
 def get_ioc_links(ioc_id, caseid):
+    search_condition = and_(Cases.case_id.in_([]))
+
+    user_search_limitations = ac_get_fast_user_cases_access(current_user.id)
+    if user_search_limitations:
+        search_condition = and_(Cases.case_id.in_(user_search_limitations))
+
     ioc_link = IocLink.query.with_entities(
         Cases.case_id,
         Cases.name.label('case_name'),
         Client.name.label('client_name')
-    ).filter(
+    ).filter(and_(
         IocLink.ioc_id == ioc_id,
-        IocLink.case_id != caseid
+        IocLink.case_id != caseid,
+        search_condition)
     ).join(IocLink.case, Cases.client).all()
 
     return ioc_link
@@ -250,3 +274,79 @@ def get_tlps_dict():
         tlpDict[tlp.tlp_name]=tlp.tlp_id 
     return tlpDict
 
+
+def get_case_ioc_comments(ioc_id):
+    return IocComments.query.filter(
+        IocComments.comment_ioc_id == ioc_id
+    ).with_entities(
+        IocComments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        IocComments.comment,
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+
+def add_comment_to_ioc(ioc_id, comment_id):
+    ec = IocComments()
+    ec.comment_ioc_id = ioc_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()
+
+
+def get_case_iocs_comments_count(iocs_list):
+    return IocComments.query.filter(
+        IocComments.comment_ioc_id.in_(iocs_list)
+    ).with_entities(
+        IocComments.comment_ioc_id,
+        IocComments.comment_id
+    ).group_by(
+        IocComments.comment_ioc_id,
+        IocComments.comment_id
+    ).all()
+
+
+def get_case_ioc_comment(ioc_id, comment_id):
+    return IocComments.query.filter(
+        IocComments.comment_ioc_id == ioc_id,
+        IocComments.comment_id == comment_id
+    ).with_entities(
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        IocComments.comment,
+        Comments.user
+    ).first()
+
+
+def delete_ioc_comment(ioc_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    IocComments.query.filter(
+        IocComments.comment_ioc_id == ioc_id,
+        IocComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"

@@ -17,10 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import uuid
 
 from datetime import datetime
 from flask_login import current_user
 # IMPORTS ------------------------------------------------
+from sqlalchemy import BigInteger
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Date
@@ -29,8 +31,11 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
+from sqlalchemy import UniqueConstraint
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app import db
@@ -46,7 +51,7 @@ from app.models.models import Client
 class Cases(db.Model):
     __tablename__ = 'cases'
 
-    case_id = Column(Integer, primary_key=True)
+    case_id = Column(BigInteger, primary_key=True)
     soc_id = Column(String(256))
     client_id = Column(ForeignKey('client.client_id'), nullable=False)
     name = Column(String(256))
@@ -54,7 +59,10 @@ class Cases(db.Model):
     open_date = Column(Date)
     close_date = Column(Date)
     user_id = Column(ForeignKey('user.id'))
+    status_id = Column(Integer, nullable=False, server_default=text("0"))
     custom_attributes = Column(JSON)
+    case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                       nullable=False)
 
     client = relationship('Client')
     user = relationship('User')
@@ -78,6 +86,8 @@ class Cases(db.Model):
         self.open_date = datetime.utcnow()
         self.gen_report = gen_report
         self.custom_attributes = custom_attributes
+        self.case_uuid = uuid.uuid4()
+        self.status_id = 0
 
     def save(self):
         """
@@ -122,10 +132,25 @@ class Cases(db.Model):
         return True, []
 
 
+class CaseTags(db.Model):
+    __tablename__ = 'case_tags'
+    __table_args__ = (
+        UniqueConstraint('case_id', 'tag_id', name='case_tags_case_id_tag_id_key'),
+    )
+
+    case_id = Column(ForeignKey('cases.case_id'), primary_key=True, nullable=False)
+    tag_id = Column(ForeignKey('tags.id'), primary_key=True, nullable=False, index=True)
+
+    case = relationship('Cases')
+    tag = relationship('Tags')
+
+
 class CasesEvent(db.Model):
     __tablename__ = "cases_events"
 
-    event_id = Column(Integer, primary_key=True)
+    event_id = Column(BigInteger, primary_key=True)
+    event_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                        nullable=False)
     case_id = Column(ForeignKey('cases.case_id'))
     event_title = Column(Text)
     event_source = Column(Text)
@@ -141,6 +166,7 @@ class CasesEvent(db.Model):
     event_tags = Column(Text)
     event_tz = Column(Text)
     event_date_wtz = Column(DateTime)
+    event_is_flagged = Column(Boolean, default=False)
     custom_attributes = Column(JSONB)
 
     case = relationship('Cases')
@@ -149,3 +175,17 @@ class CasesEvent(db.Model):
                             primaryjoin="CasesEvent.event_id==CaseEventCategory.event_id",
                             secondaryjoin="CaseEventCategory.category_id==EventCategory.id",
                             viewonly=True)
+
+
+class CaseProtagonist(db.Model):
+    __tablename__ = "case_protagonist"
+
+    id = Column(Integer, primary_key=True)
+    case_id = Column(ForeignKey('cases.case_id'))
+    user_id = Column(ForeignKey('user.id'))
+    name = Column(Text)
+    contact = Column(Text)
+    role = Column(Text)
+
+    case = relationship('Cases')
+    user = relationship('User')

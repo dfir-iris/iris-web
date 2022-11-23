@@ -1,178 +1,205 @@
-{% extends "layouts/default.html" %} {% block title %} Case summary {% endblock title %} {% block stylesheets %} {% endblock stylesheets %} {% block content %}
+{% extends "layouts/default_ext.html" %} {% block title %} Case summary {% endblock title %}
+{% block stylesheets %}
+{% include 'includes/header_case.html' %}
+<link rel="stylesheet" href="/static/assets/css/select2.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+{% endblock stylesheets %}
+{% block content %}
 {% if current_user.is_authenticated %}
 
-{% if case.close_date %}
-<div class="panel-header bg-close-gradient">
-{% else %}
-<div class="panel-header bg-info-gradient">
-{% endif %}
-    <div class="page-inner py-5">
-        <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
-            <div>
-                <h2 class="text-white pb-2 fw-bold"> <i class="icon-big flaticon-network mr-3"></i> {{ case.name|unquote }}
-                </h2>
-                <h5 class="text-white op-7 mb-2">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
-                {% if case.close_date %}
-                <h5 class="text-warning  mb-2">Closed on {{ case.close_date }}</h5>
-                {% endif %}
-                <small><a href="#" onclick="case_detail({{ case.case_id }});" class="btn btn-sm btn-outline-light btn-rounded float-left">
-                  Case info
-                    </a></small>
-                <div class="dropdown">
-                      <button class="btn btn-sm btn-outline-light btn-rounded float-left ml-2" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                          <span aria-hidden="true">Processors</span>
-                      </button>
-                      <div class="dropdown-menu pull-right" id="case_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+{% include 'includes/navigation_ext.html' %}
+{% include 'includes/sidenav.html' %}
+
+<div class="main-panel">
+
+    <div class="content">
+        {% if case.close_date %}
+        <div class="panel-header bg-close-gradient">
+            {% else %}
+            <div class="panel-header bg-info-gradient">
+            {% endif %}
+                <div class="page-inner py-5">
+                    <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
+                        <div class="col">
+                            <div class="row">
+                                <h2 class="text-white pb-2 fw-bold case-name"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
+                                </h2>
+                            </div>
+                            <h5 class="text-white op-7 mb-3">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
+                            {% if case.close_date %}
+                            <h5 class="text-warning  mb-3">Closed on {{ case.close_date }}</h5>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <div class="row">
+                                 <select title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret btn-sm ml-auto mb-2 {% if case.status_id == 1 %}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-outline-light{% endif %}"
+                                          id="case_quick_status" aria-labelledby="dropdownMenuButton">
+                                      <option value="0" {% if case.status_id == 0 %}selected{% endif %} class="badge-text">Unknown outcome</option>
+                                      <option value="1" {% if case.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
+                                      <option value="2" {% if case.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
+                                      <option value="3" {% if case.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
+                                  </select>
+                            </div>
+                            <div class="row">
+                                  <div class=" ml-auto">
+                                    <h5 class="text-white op-7 mb-2 float-right"><b>Customer</b> : {{ case.client.name }}</h5>
+                                    <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-2 mb--2">
+
+                        <div class="col">
+                            {% if case.case_tags %}
+                            {% for tag in case.case_tags %}
+                            <span class="badge badge-pill badge-light ml-1 pull-right"><i class="fa fa-tag mr-1"></i> {{ tag }}</span>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="page-inner mt--5">
+                <div class="row row-card-no-pd" style="padding-top: 0px;padding-bottom: 3px;">
+                    {% include 'case-nav_landing.html' %}
+                </div>
+                <div class="row row-card-no-pd">
+                    <div class="col-md-12">
+                        <div class="card mb-4" id="rescard1">
+                            <div class="card-header">
+                                <div class="row">
+                                    {{ form.hidden_tag() }}
+                                    <a href="#case_summary_card" class="d-block nav-link mr-auto" data-toggle="collapse" aria-expanded="true" aria-controls="case_summary_card">
+                                        <h4 class="m-0 font-weight-bold">Case summary {{ "(Syncing with DB )" if case.id }}</h4>
+                                    </a>
+                                    <div class="mr-0 float-right">
+                                        <small id="content_typing" class="mr-3 mt-1"></small>
+                                        <small id="content_last_saved_by" class="mr-3 mt-1"></small>
+                                        <span id="last_saved" class="badge mr-3 ml-2"></span>
+                                        <small id="content_last_sync"></small>
+                                        <button type="button" class="btn btn-sm btn-outline-default mr-2 ml-3" onclick="sync_editor();">
+                                            Refresh
+                                        </button>
+                                        <button class="btn btn-sm mr-3" onclick="edit_case_summary();">Edit</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="collapsed" id="case_summary_card">
+                                <div class="card-body">
+                                   <div class="row mb-1">
+                                        <div class="col" id="summary_edition_btn" style="display:none;">
+                                                <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="editor.insertSnippet('**${1:$SELECTION}**');editor.focus();"><i class="fa-solid fa-bold"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="editor.insertSnippet('*${1:$SELECTION}*');editor.focus();"><i class="fa-solid fa-italic"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="editor.insertSnippet('# ${1:$SELECTION}');editor.focus();">H1</div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="editor.insertSnippet('## ${1:$SELECTION}');editor.focus();">H2</div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="editor.insertSnippet('### ${1:$SELECTION}');editor.focus();">H3</div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="editor.insertSnippet('#### ${1:$SELECTION}');editor.focus();">H4</div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="editor.insertSnippet('```${1:$SELECTION}```');editor.focus();"><i class="fa-solid fa-code"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="editor.insertSnippet('[New link](${1:$SELECTION})');editor.focus();"><i class="fa-solid fa-link"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');editor.focus();"><i class="fa-solid fa-table"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="editor.insertSnippet('\n- \n- \n- ');editor.focus();"><i class="fa-solid fa-list"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6" id="container_editor_summary">
+                                            <div style="display: none" id="fetched_crc"></div>
+                                            <div id="editor_summary" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
+                                            <textarea id="case_summary" rows="10" cols="82" style="display: none"></textarea>
+                                        </div>
+                                        <div class="col-md-6" id="ctrd_casesum">
+                                            <div id="targetDiv"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal " tabindex="-1" role="dialog" id="modal_select_report" data-backdrop="true">
+                <div class="modal-lg modal-dialog" role="document">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                      <h5>Select report template</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
                       </div>
-                 </div>
+                      <div class="modal-body">
+                          <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report">
+                                {% for report in reports %}
+                                      <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
+                                {% endfor %}
+                          </select>
+                      </div>
+                      <div class="modal-footer">
+                          <a href="#" class="btn btn-light float-right mt-2 ml-2" id="generate_report_button">
+                              <span class="btn-label">
+                                <i class="fa fa-file-download"></i>
+                              </span>
+                              Generate
+                            </a>
+                      </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
             </div>
-            <div class="ml-md-auto py-2 py-md-0">
-                <h5 class="text-white op-7 mb-2 ">Customer : {{ case.client.name }}</h5>
-                <h5 class="text-white op-7 mb-2 ">SOC ID : {{ case.soc_id }}</h5>
-                <a href="#" onclick="act_report_template_selector();" class="btn btn-sm btn-info btn-rounded btn-border float-right mt-2 ml-2">
-                  <span class="btn-label">
-                    <i class="fa fa-chart-line"></i>
-                  </span>
-                  Activity report
-                </a>
-                <a href="#" onclick="report_template_selector();" class="btn btn-sm btn-white btn-rounded btn-border float-right mt-2">
-                  <span class="btn-label">
-                    <i class="fa fa-file-arrow-down"></i>
-                  </span>
-                  Generate report
-                </a>
+            <div class="modal " tabindex="-1" role="dialog" id="modal_select_report_act" data-backdrop="true">
+                <div class="modal-lg modal-dialog" role="document">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                      <h5>Select activity report template</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                      </div>
+                      <div class="modal-body">
+                          <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report_act">
+                                {% for report in reports_act %}
+                                      <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
+                                {% endfor %}
+                          </select>
+                      </div>
+                      <div class="modal-footer">
+                          <a href="#" class="btn btn-light float-right mt-2 ml-2" id="generate_report_act_button">
+                              <span class="btn-label">
+                                <i class="fa fa-file-download"></i>
+                              </span>
+                              Generate
+                            </a>
+                      </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
             </div>
+            <div class="modal" tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
+                <div class="modal-xl modal-dialog" role="document">
+                    <div class="modal-content" id="info_case_modal_content">
 
-        </div>
-    </div>
-</div>
-<div class="page-inner mt--5">
-    <div class="row row-card-no-pd">
-        {% include 'case-nav_landing.html' %}
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card mb-4" id="rescard1">
-                <div class="card-header">
-                    <div class="row">
-                        {{ form.hidden_tag() }}
-                        <a href="#case_summary_card" class="d-block nav-link mr-auto" data-toggle="collapse" aria-expanded="true" aria-controls="case_summary_card">
-                            <h4 class="m-0 font-weight-bold">Case summary {{ "(Syncing with DB )" if case.id }}</h4>
-                        </a>
-                        <div class="mr-0 float-right">
-                            <small id="content_typing" class="mr-3 mt-1"></small>
-                            <small id="content_last_saved_by" class="mr-3 mt-1"></small>
-                            <span id="last_saved" class="badge mr-3 ml-2"></span>
-                            <small id="content_last_sync"></small>
-                            <button type="button" class="btn btn-xs btn-icon btn-round btn-outline-default mr-3 ml-3" onclick="sync_editor();">
-                                <i class="fas fa-sync rotate"></i>
-                            </button>
-                            <button class="btn btn-sm icon-note mr-3" onclick="edit_case_summary();"></button>
-                        </div>
-                    </div>
-                </div>
-                <div class="collapsed" id="case_summary_card">
-                    <div class="card-body">
-                       <div class="row mb-1">
-                            <div class="col" id="summary_edition_btn" style="display:none;">
-                                    <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="editor.insertSnippet('**${1:$SELECTION}**');editor.focus();"><i class="fa-solid fa-bold"></i></div>
-                                    <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="editor.insertSnippet('*${1:$SELECTION}*');editor.focus();"><i class="fa-solid fa-italic"></i></div>
-                                    <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="editor.insertSnippet('# ${1:$SELECTION}');editor.focus();">H1</div>
-                                    <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="editor.insertSnippet('## ${1:$SELECTION}');editor.focus();">H2</div>
-                                    <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="editor.insertSnippet('### ${1:$SELECTION}');editor.focus();">H3</div>
-                                    <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="editor.insertSnippet('#### ${1:$SELECTION}');editor.focus();">H4</div>
-                                    <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="editor.insertSnippet('```${1:$SELECTION}```');editor.focus();"><i class="fa-solid fa-code"></i></div>
-                                    <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="editor.insertSnippet('[New link](${1:$SELECTION})');editor.focus();"><i class="fa-solid fa-link"></i></div>
-                                    <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');editor.focus();"><i class="fa-solid fa-table"></i></div>
-                                    <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="editor.insertSnippet('\n- \n- \n- ');editor.focus();"><i class="fa-solid fa-list"></i></div>
-                                    <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6" id="container_editor_summary">
-                                <div style="display: none" id="fetched_crc"></div>
-                                <div id="editor_summary" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
-                                <textarea id="case_summary" rows="10" cols="82" style="display: none"></textarea>
-                            </div>
-                            <div class="col-md-6" id="ctrd_casesum">
-                                <div id="targetDiv"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div>
+            <div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional" data-backdrop="true">
             </div>
         </div>
     </div>
 </div>
-<div class="modal " tabindex="-1" role="dialog" id="modal_select_report" data-backdrop="true">
-    <div class="modal-lg modal-dialog" role="document">
-      <div class="modal-content">
-          <div class="modal-header">
-          <h5>Select report template</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                aria-hidden="true">&times;</span></button>
-          </div>
-          <div class="modal-body">
-              <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report">
-                    {% for report in reports %}
-                          <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
-                    {% endfor %}
-              </select>
-          </div>
-          <div class="modal-footer">
-              <a href="#" class="btn btn-light float-right mt-2 ml-2" id="generate_report_button">
-                  <span class="btn-label">
-                    <i class="fa fa-file-download"></i>
-                  </span>
-                  Generate
-                </a>
-          </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div>
-<div class="modal " tabindex="-1" role="dialog" id="modal_select_report_act" data-backdrop="true">
-    <div class="modal-lg modal-dialog" role="document">
-      <div class="modal-content">
-          <div class="modal-header">
-          <h5>Select activity report template</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                aria-hidden="true">&times;</span></button>
-          </div>
-          <div class="modal-body">
-              <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report_act">
-                    {% for report in reports_act %}
-                          <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
-                    {% endfor %}
-              </select>
-          </div>
-          <div class="modal-footer">
-              <a href="#" class="btn btn-light float-right mt-2 ml-2" id="generate_report_act_button">
-                  <span class="btn-label">
-                    <i class="fa fa-file-download"></i>
-                  </span>
-                  Generate
-                </a>
-          </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div>
-<div class="modal" tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
-    <div class="modal-xl modal-dialog" role="document">
-        <div class="modal-content" id="info_case_modal_content">
-
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div>
+{% include 'includes/footer.html' %}
 {% endif %} {% endblock content %} {% block javascripts %}
 
 <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/assets/js/core/socket.io.js"></script>
+<script src="/static/assets/js/plugin/select/select2.js"></script>
 
 <script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
 <script src="/static/assets/js/iris/crc32.js"></script>
+<script src="/static/assets/js/iris/datatablesUtils.js"></script>
 <script src="/static/assets/js/iris/case.js"></script>
+<script src="/static/assets/js/iris/manage.cases.common.js"></script>
 <script src="/static/assets/js/iris/case.summary.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 
 <script>
     var is_db_linked = {{ 1 if case.name else 0 }};

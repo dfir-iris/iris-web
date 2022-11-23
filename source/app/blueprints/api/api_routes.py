@@ -21,6 +21,8 @@
 from flask import Blueprint
 
 from app import app
+from app.util import ac_api_case_requires
+from app.util import ac_api_requires
 from app.util import api_login_required
 from app.util import response_success
 
@@ -33,13 +35,13 @@ api_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @api_blueprint.route('/api/ping', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def api_ping(caseid):
     return response_success("pong")
 
 
 @api_blueprint.route('/api/versions', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def api_version(caseid):
     versions = {
         "iris_current": app.config.get('IRIS_VERSION'),

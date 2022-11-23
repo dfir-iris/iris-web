@@ -3,7 +3,7 @@
 <head>
 
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<title>IRIS - {% block title %}Investigation{% endblock %} | CSIRT </title>
+	<title>IRIS - {% block title %}Investigation{% endblock %} {% if session['current_case'].case_id %}| {{ session['current_case'].case_name }}  {% endif %} </title>
 	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
 	<link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
 
@@ -23,6 +23,7 @@
 	<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
 	<link rel="stylesheet" href="/static/assets/css/atlantis.css">
 	<link rel="stylesheet" href="/static/assets/css/suggestags.css">
+	<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 
     <!-- Specific CSS goes HERE -->
     {% block stylesheets %}{% endblock stylesheets %}
@@ -86,6 +87,8 @@
 
 	<script src="/static/assets/js/core/crypto.core.js"></script>
 	<script src="/static/assets/js/core/crypto.md5.js"></script>
+	<script src="/static/assets/js/plugin/xss/xss.js"></script>
+
 
 	<!-- Specific JS goes HERE -->
     {% block javascripts %}{% endblock javascripts %}

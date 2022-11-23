@@ -51,6 +51,7 @@ RUN apt update
 RUN apt install -y p7zip-full pgp rsync postgresql-client
 
 RUN mkdir /iriswebapp/
+RUN mkdir -p /home/iris/certificates
 RUN mkdir -p /home/iris/user_templates
 RUN mkdir -p /home/iris/server_data
 RUN mkdir -p /home/iris/server_data/backup
@@ -62,7 +63,7 @@ WORKDIR /iriswebapp
 
 COPY docker/webApp/iris-entrypoint.sh .
 COPY docker/webApp/wait-for-iriswebapp.sh .
-COPY ./source /iriswebapp
+COPY ./source .
 
 # Add execution right to binaries needed by evtx2splunk for iris_evtx module
 RUN chmod +x /iriswebapp/dependencies/evtxdump_binaries/linux/x64/fd
