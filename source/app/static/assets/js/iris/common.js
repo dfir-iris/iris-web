@@ -380,10 +380,8 @@ function case_param() {
 var last_state = null;
 var need_check = true;
 function update_last_resfresh() {
-    var dt = new Date();
-    var time = ('0'+dt.getHours()).slice(-2) + ":" +  ('0'+dt.getMinutes()).slice(-2) + ":" + ('0'+dt.getSeconds()).slice(-2);
     need_check = true;
-    $('#last_resfresh').text("Last refresh "+ time).removeClass("text-warning");
+    $('#last_resfresh').text("").removeClass("text-warning");
 }
 
 function check_update(url) {
