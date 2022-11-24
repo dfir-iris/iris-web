@@ -1,4 +1,9 @@
 /* Defines the kanban board */
+const preventFormDefaultBehaviourOnSubmit = (event) => {
+    event.preventDefault();
+    return false;
+};
+
 var boardNotes = {
     init: function init() {
         this.bindUIActions();
@@ -311,6 +316,7 @@ function note_detail(id, cid) {
 
     url = '/case/notes/' + id + "/modal" + cid;
     $('#info_note_modal_content').load(url, function (response, status, xhr) {
+        $('#form_note').on("submit", preventFormDefaultBehaviourOnSubmit);
         hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
