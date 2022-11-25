@@ -337,6 +337,10 @@ def update_user_api(cur_id, caseid):
         if not user:
             return response_error("Invalid user ID for this case")
 
+        if app.config.get('DEMO_MODE_ENABLED') == 'True':
+            if current_user.id != 1 and user.id == 1:
+                return ac_api_return_access_denied(caseid=cur_id)
+
         # validate before saving
         user_schema = UserSchema()
         jsdata = request.get_json()
