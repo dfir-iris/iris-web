@@ -25,6 +25,7 @@ from app import app
 from app import db
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
+from app.datamgmt.manage.manage_users_db import user_exists
 from app.models.authorization import User
 
 
@@ -43,34 +44,34 @@ def create_demo_users(def_org, gadm, ganalystes, seed_user, seed_adm):
 
     for i in range(0, 10):
         # Create default admin user
-        user = User(
-            user=f'user_std_{i}',
-            password=f'{user_pwd}_{i}',
-            email=f'user_std_{i}@iris.local',
-            name=f'User Std {i}',
-            active=True)
-        user.api_key = api_key + f'_{i}'
-        db.session.add(user)
-        db.session.commit()
-        add_user_to_group(user_id=user.id, group_id=ganalystes.group_id)
-        add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
-        db.session.commit()
-        log.info(f'Created demo user: {user.user}')
+        if not user_exists(f'user_std_{i}', f'user_std_{i}@iris.local'):
+            user = User(
+                user=f'user_std_{i}',
+                password=f'{user_pwd}_{i}',
+                email=f'user_std_{i}@iris.local',
+                name=f'User Std {i}',
+                active=True)
+            user.api_key = api_key + f'_{i}'
+            db.session.add(user)
+            db.session.commit()
+            add_user_to_group(user_id=user.id, group_id=ganalystes.group_id)
+            add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
+            db.session.commit()
+            log.info(f'Created demo user: {user.user} -  {user_pwd}_{i}')
 
     for i in range(0, 4):
         # Create default admin user
-        user = User(
-            user=f'user_adm_{i}',
-            password=f'{adm_pwd}_{i}',
-            email=f'user_adm_{i}',
-            name=f'Adm {i}',
-            active=True)
-        user.api_key = api_key_adm + f'_{i}'
-        db.session.add(user)
-        db.session.commit()
-        add_user_to_group(user_id=user.id, group_id=gadm.group_id)
-        add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
-        log.info(f'Created demo admin: {user.user}')
-
-        db.session.commit()
-
+        if not user_exists(f'user_adm_{i}', f'user_adm_{i}@iris.local'):
+            user = User(
+                user=f'user_adm_{i}',
+                password=f'{adm_pwd}_{i}',
+                email=f'user_adm_{i}@iris.local',
+                name=f'Adm {i}',
+                active=True)
+            user.api_key = api_key_adm + f'_{i}'
+            db.session.add(user)
+            db.session.commit()
+            add_user_to_group(user_id=user.id, group_id=gadm.group_id)
+            add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
+            db.session.commit()
+            log.info(f'Created demo admin: {user.user} - {adm_pwd}_{i}')

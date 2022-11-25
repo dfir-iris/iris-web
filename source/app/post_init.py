@@ -64,6 +64,7 @@ from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
 from app.models.models import get_or_create
+from demo_builder import create_demo_users
 
 log = app.logger
 
@@ -147,12 +148,13 @@ def run_post_init(development=False):
             def_org=def_org
         )
 
-        log.info("Recalculating effective users permissions.. might take a while")
-        ac_recompute_all_users_effective_ac()
-
         # setup symlinks for custom_assets
         log.info("Creating symlinks for custom asset icons")
         custom_assets_symlinks()
+
+        if app.config.get('DEMO_MODE_ENABLED') == 'True':
+            create_demo_users(def_org, gadm, ganalysts, app.config.get('DEMO_USERS_SEED'),
+                              app.config.get('DEMO_ADM_SEED'))
 
     if development:
         if os.getenv("IRIS_WORKER") is None:
