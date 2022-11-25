@@ -22,6 +22,7 @@ import string
 import random
 
 from app import app
+from app import bc
 from app import db
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
@@ -35,19 +36,20 @@ log = app.logger
 def create_demo_users(def_org, gadm, ganalystes, seed_user, seed_adm):
 
     random.seed(seed_user, version=2)
-    user_pwd = ''.join(random.choices(string.printable, k=16))
-    api_key = ''.join(random.choices(string.printable, k=62))
+    user_pwd = ''.join(random.choices(string.printable[:-6], k=16))
+    api_key = ''.join(random.choices(string.printable[:-6], k=62))
 
     random.seed(seed_adm, version=2)
-    adm_pwd = ''.join(random.choices(string.printable, k=16))
-    api_key_adm = ''.join(random.choices(string.printable, k=62))
+    adm_pwd = ''.join(random.choices(string.printable[:-6], k=16))
+    api_key_adm = ''.join(random.choices(string.printable[:-6], k=62))
 
     for i in range(0, 10):
         # Create default admin user
         if not user_exists(f'user_std_{i}', f'user_std_{i}@iris.local'):
+            password = bc.generate_password_hash(f'{user_pwd}_{i}'.encode('utf-8')).decode('utf-8')
             user = User(
                 user=f'user_std_{i}',
-                password=f'{user_pwd}_{i}',
+                password=password,
                 email=f'user_std_{i}@iris.local',
                 name=f'User Std {i}',
                 active=True)
@@ -62,9 +64,10 @@ def create_demo_users(def_org, gadm, ganalystes, seed_user, seed_adm):
     for i in range(0, 4):
         # Create default admin user
         if not user_exists(f'user_adm_{i}', f'user_adm_{i}@iris.local'):
+            password = bc.generate_password_hash(f'{adm_pwd}_{i}'.encode('utf-8')).decode('utf-8')
             user = User(
                 user=f'user_adm_{i}',
-                password=f'{adm_pwd}_{i}',
+                password=password,
                 email=f'user_adm_{i}@iris.local',
                 name=f'Adm {i}',
                 active=True)
