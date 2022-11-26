@@ -305,8 +305,8 @@ class Config():
     PG_PORT = PG_PORT_
 
     DEMO_MODE_ENABLED = config.load('IRIS_DEMO', 'ENABLED', fallback=False)
-    if DEMO_MODE_ENABLED:
-        DEMO_DOMAIN = config.load('IRIS_DEMO', 'DOMAIN', fallback='')
+    if DEMO_MODE_ENABLED == 'True':
+        DEMO_DOMAIN = config.load('IRIS_DEMO', 'DOMAIN', fallback=None)
         DEMO_USERS_SEED = config.load('IRIS_DEMO', 'USERS_SEED', fallback=0)
         DEMO_ADM_SEED = config.load('IRIS_DEMO', 'ADM_SEED', fallback=0)
 

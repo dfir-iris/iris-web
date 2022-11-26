@@ -18,29 +18,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-import os
 
 from flask import Blueprint
-from flask import redirect
 from flask import render_template
-from flask import request
-from flask import session
-from flask import url_for
-from flask_login import current_user
-from flask_login import login_user
 
 from app import app
-from app import bc
-from app import db
-from app.datamgmt.case.case_db import case_exists
-
-from app.forms import LoginForm
-from app.iris_engine.access_control.ldap_handler import ldap_authenticate
-from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
-from app.iris_engine.utils.tracker import track_activity
-from app.models.cases import Cases
-from app.models.authorization import User
-from app.util import is_authentication_ldap
 from demo_builder import gen_demo_admins
 from demo_builder import gen_demo_users
 

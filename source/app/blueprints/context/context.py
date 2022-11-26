@@ -77,18 +77,18 @@ def iris_version():
     return dict(iris_version=app.config.get('IRIS_VERSION'),
                 organisation_name=app.config.get('ORGANISATION_NAME'),
                 std_permissions=Permissions,
-                demo_domain=app.config.get('IRIS_DEMO_DOMAIN', None))
+                demo_domain=app.config.get('DEMO_DOMAIN', None))
 
 
 @app.context_processor
 @cache.cached(timeout=3600, key_prefix='iris_has_updates')
 def has_updates():
-    if not current_user.is_authenticated:
-        return dict(has_updates=False)
+    # if not current_user.is_authenticated:
+    #     return dict(has_updates=False)
+    #
+    # server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
 
-    server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
-
-    return dict(has_updates=server_settings[0])
+    return dict(has_updates=False)
 
 
 @ctx_blueprint.route('/context/get-cases', methods=['GET'])
