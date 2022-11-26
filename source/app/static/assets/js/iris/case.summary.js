@@ -141,9 +141,11 @@ function edit_case_summary() {
     if ($('#container_editor_summary').is(':visible')) {
         $('#ctrd_casesum').removeClass('col-md-12').addClass('col-md-6');
         $('#summary_edition_btn').show(100);
+        $("#refreshbtn").html('Save');
     } else {
         $('#ctrd_casesum').removeClass('col-md-6').addClass('col-md-12');
         $('#summary_edition_btn').hide();
+        $("#refreshbtn").html('Refresh');
     }
 }
 
@@ -489,6 +491,16 @@ $(document).ready(function() {
         event.preventDefault();
         handle_ed_paste(event);
     });
+
+    var timer;
+    var timeout = 10000;
+    $('#editor_summary').keyup(function(){
+        if(timer) {
+             clearTimeout(timer);
+        }
+        timer = setTimeout(sync_editor, timeout);
+    });
+
 
     var textarea = $('#case_summary');
     editor.getSession().on("change", function () {
