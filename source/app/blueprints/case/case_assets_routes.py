@@ -164,6 +164,7 @@ def add_asset_modal(caseid, url_redir):
 
     form.asset_type_id.choices = get_assets_types()
     form.analysis_status_id.choices = get_analysis_status_list()
+    form.asset_compromise_status_id = get_compromise_status_list()
 
     # Get IoCs from the case
     ioc = get_iocs(caseid)

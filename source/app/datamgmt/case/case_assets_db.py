@@ -32,6 +32,7 @@ from app.models import CaseAssets
 from app.models import CaseEventsAssets
 from app.models import Cases
 from app.models import Comments
+from app.models import CompromiseStatus
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
@@ -164,6 +165,10 @@ def get_analysis_status_list():
     )]
 
     return analysis_status
+
+
+def get_compromise_status_list():
+    return [(e.value, e.name.replace('_', ' ').capitalize()) for e in CompromiseStatus]
 
 
 def get_asset_type_id(asset_type_name):

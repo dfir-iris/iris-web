@@ -65,6 +65,10 @@ class CompromiseStatus(enum.Enum):
     not_compromised = 0x2
     unknown = 0x3
 
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
 
 def create_safe(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).first()
