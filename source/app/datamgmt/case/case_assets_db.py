@@ -171,6 +171,10 @@ def get_compromise_status_list():
     return [(e.value, e.name.replace('_', ' ').capitalize()) for e in CompromiseStatus]
 
 
+def get_compromise_status_dict():
+    return [{'value': e.value, 'name': e.name.replace('_', ' ').capitalize()} for e in CompromiseStatus]
+
+
 def get_asset_type_id(asset_type_name):
     assets_type_id = AssetsType.query.with_entities(
         AssetsType.asset_id
