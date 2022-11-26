@@ -497,7 +497,7 @@ def case_filter_timeline(caseid):
         AssetsType.asset_name.label('type'),
         CaseAssets.asset_ip,
         CaseAssets.asset_description,
-        CaseAssets.asset_compromised
+        CaseAssets.asset_compromise_status_id
     ).filter(
         CaseEventsAssets.case_id == caseid,
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()

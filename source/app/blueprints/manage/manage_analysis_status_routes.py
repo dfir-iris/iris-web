@@ -47,7 +47,7 @@ def list_anastatus(caseid):
 
 @manage_anastatus_blueprint.route('/manage/compromise-status/list', methods=['GET'])
 @api_login_required
-def list_anastatus(caseid):
+def list_compr_status(caseid):
     compro_status = get_compromise_status_dict()
 
     return response_success("", data=compro_status)

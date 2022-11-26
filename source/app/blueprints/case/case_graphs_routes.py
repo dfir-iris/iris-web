@@ -68,15 +68,12 @@ def case_graph_get_data(caseid):
 
     tmp = {}
     for event in events:
-        if hasattr(event, 'asset_compromised'):
-            if event.asset_compromised:
+        if hasattr(event, 'asset_compromise_status_id'):
+            if event.asset_compromise_status_id == 1:
                 img = event.asset_icon_compromised
 
-            elif not event.asset_compromised:
-                img = event.asset_icon_not_compromised
-
             else:
-                img = 'question-mark.png'
+                img = event.asset_icon_not_compromised
 
             if event.asset_ip:
                 title = "{} -{}".format(event.asset_ip, event.asset_description)
