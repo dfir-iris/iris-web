@@ -157,7 +157,10 @@ function delete_user(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-        get_request_api('/manage/users/delete/' + id)
+        var data_sent = {
+            'csrf_token': $('#csrf_token').val()
+        }
+        post_request_api('/manage/users/delete/' + id, JSON.stringify(data_sent))
         .done((data) => {
             if(notify_auto_api(data)) {
                 refresh_users();

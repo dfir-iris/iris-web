@@ -138,7 +138,10 @@ function delete_group(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-        get_request_api('/manage/groups/delete/' + id)
+        var data_sent = {
+            "csrf_token": $('#csrf_token').val()
+        }
+        post_request_api('/manage/groups/delete/' + id, JSON.stringify(data_sent))
         .done((data) => {
             if(notify_auto_api(data)) {
                 refresh_groups();
@@ -164,8 +167,10 @@ function remove_members_from_group(group_id, user_id, on_finish) {
     .then((willDelete) => {
         if (willDelete) {
             url = '/manage/groups/' + group_id + '/members/delete/' + user_id;
-
-            get_request_api(url)
+             var data_sent = {
+                "csrf_token": $('#csrf_token').val()
+             }
+            post_request_api(url, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();

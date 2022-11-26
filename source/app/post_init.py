@@ -64,6 +64,7 @@ from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
 from app.models.models import get_or_create
+from demo_builder import create_demo_users
 
 log = app.logger
 
@@ -147,12 +148,16 @@ def run_post_init(development=False):
             def_org=def_org
         )
 
-        log.info("Recalculating effective users permissions.. might take a while")
-        ac_recompute_all_users_effective_ac()
-
         # setup symlinks for custom_assets
         log.info("Creating symlinks for custom asset icons")
         custom_assets_symlinks()
+
+        if app.config.get('DEMO_MODE_ENABLED') == 'True':
+            create_demo_users(def_org, gadm, ganalysts,
+                              int(app.config.get('DEMO_USERS_COUNT', 10)),
+                              app.config.get('DEMO_USERS_SEED'),
+                              int(app.config.get('DEMO_ADM_COUNT', 4)),
+                              app.config.get('DEMO_ADM_SEED'))
 
     if development:
         if os.getenv("IRIS_WORKER") is None:
@@ -493,7 +498,7 @@ def create_safe_admin(def_org, gadm):
         User.user == "administrator"
     ).first()
     if not user:
-        password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choice(string.printable[:-6]) for i in range(16)))
+        password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
         api_key = os.environ.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
         user = User(
             user="administrator",
@@ -517,7 +522,10 @@ def create_safe_admin(def_org, gadm):
 
         db.session.commit()
     else:
-        log.warning(">>> Administrator already exists")
+        if not os.environ.get('IRIS_ADM_PASSWORD'):
+            # Prevent leak of user set password in logs
+            log.warning(">>> Administrator already exists")
+
         adm_email = app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local")
         if user.email != adm_email:
             log.warning(f'Email of administrator will be updated via config to {adm_email}')

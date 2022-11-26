@@ -189,6 +189,7 @@ PG_PORT_ = config.load('POSTGRES', 'PORT')
 CELERY_BROKER_ = config.load('CELERY', 'BROKER',
                              fallback=f"amqp://{config.load('CELERY', 'HOST', fallback='rabbitmq')}")
 
+
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -302,6 +303,12 @@ class Config():
     PGA_PASSWD = PGA_PASSWD_
     PG_SERVER = PG_SERVER_
     PG_PORT = PG_PORT_
+
+    DEMO_MODE_ENABLED = config.load('IRIS_DEMO', 'ENABLED', fallback=False)
+    if DEMO_MODE_ENABLED == 'True':
+        DEMO_DOMAIN = config.load('IRIS_DEMO', 'DOMAIN', fallback=None)
+        DEMO_USERS_SEED = config.load('IRIS_DEMO', 'USERS_SEED', fallback=0)
+        DEMO_ADM_SEED = config.load('IRIS_DEMO', 'ADM_SEED', fallback=0)
 
     WTF_CSRF_TIME_LIMIT = None
 

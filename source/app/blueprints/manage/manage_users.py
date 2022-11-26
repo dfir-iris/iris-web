@@ -65,6 +65,7 @@ from app.util import ac_return_access_denied
 from app.util import is_authentication_local
 from app.util import response_error
 from app.util import response_success
+from demo_builder import protect_demo_mode_user
 
 manage_users_blueprint = Blueprint(
     'manage_users',
@@ -337,6 +338,9 @@ def update_user_api(cur_id, caseid):
         if not user:
             return response_error("Invalid user ID for this case")
 
+        if protect_demo_mode_user(user):
+            return ac_api_return_access_denied(caseid=caseid)
+
         # validate before saving
         user_schema = UserSchema()
         jsdata = request.get_json()
@@ -364,6 +368,9 @@ def deactivate_user_api(cur_id, caseid):
     if not user:
         return response_error("Invalid user ID for this case")
 
+    if protect_demo_mode_user(user):
+        return ac_api_return_access_denied(caseid=caseid)
+
     user.active = False
     db.session.commit()
     user_schema = UserSchema()
@@ -379,6 +386,9 @@ def activate_user_api(cur_id, caseid):
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID for this case")
+
+    if protect_demo_mode_user(user):
+        return ac_api_return_access_denied(caseid=caseid)
 
     user.active = True
     db.session.commit()
@@ -397,6 +407,9 @@ if is_authentication_local():
             user = get_user(cur_id)
             if not user:
                 return response_error("Invalid user ID")
+
+            if protect_demo_mode_user(user):
+                return ac_api_return_access_denied(caseid=caseid)
 
             if user.active is True:
                 response_error("Cannot delete active user")
