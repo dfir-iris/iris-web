@@ -138,7 +138,10 @@ function delete_group(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-        get_request_api('/manage/groups/delete/' + id)
+        var data_sent = {
+            "csrf_token": $('#csrf_token').val()
+        }
+        post_request_api('/manage/groups/delete/' + id, JSON.stringify(data_sent))
         .done((data) => {
             if(notify_auto_api(data)) {
                 refresh_groups();

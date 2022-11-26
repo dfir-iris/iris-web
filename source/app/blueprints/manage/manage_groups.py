@@ -48,9 +48,11 @@ from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.util import ac_api_requires
+from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from demo_builder import protect_demo_mode_group
 
 manage_groups_blueprint = Blueprint(
         'manage_groups',
@@ -144,6 +146,9 @@ def manage_groups_update(cur_id, caseid):
     if not group:
         return response_error("Invalid group ID")
 
+    if protect_demo_mode_group(group):
+        return ac_api_return_access_denied(caseid=caseid)
+
     ags = AuthorizationGroupSchema()
 
     try:
@@ -159,13 +164,16 @@ def manage_groups_update(cur_id, caseid):
     return response_success('', data=ags.dump(ags_c))
 
 
-@manage_groups_blueprint.route('/manage/groups/delete/<int:cur_id>', methods=['GET'])
+@manage_groups_blueprint.route('/manage/groups/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def manage_groups_delete(cur_id, caseid):
 
     group = get_group(cur_id)
     if not group:
         return response_error("Invalid group ID")
+
+    if protect_demo_mode_group(group):
+        return ac_api_return_access_denied(caseid=caseid)
 
     delete_group(group)
 

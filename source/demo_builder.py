@@ -34,7 +34,7 @@ from app.models.authorization import User
 log = app.logger
 
 
-def protect_demo_mode(user):
+def protect_demo_mode_user(user):
     if app.config.get('DEMO_MODE_ENABLED') != 'True':
         return False
 
@@ -43,8 +43,18 @@ def protect_demo_mode(user):
 
     if current_user.id != 1 and user.id == 1:
         return True
-    print(user.user)
+
     if user.user in users_p:
+        return True
+
+    return False
+
+
+def protect_demo_mode_group(group):
+    if app.config.get('DEMO_MODE_ENABLED') != 'True':
+        return False
+
+    if current_user.id != 1 and group.group_id in [1, 2]:
         return True
 
     return False
