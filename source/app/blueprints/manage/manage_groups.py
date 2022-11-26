@@ -214,6 +214,9 @@ def manage_groups_members_update(cur_id, caseid):
     if not group:
         return response_error("Invalid group ID")
 
+    if protect_demo_mode_group(group):
+        return ac_api_return_access_denied(caseid=caseid)
+
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
 
@@ -230,13 +233,16 @@ def manage_groups_members_update(cur_id, caseid):
     return response_success('', data=group)
 
 
-@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['GET'])
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
     group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
+
+    if protect_demo_mode_group(group):
+        return ac_api_return_access_denied(caseid=caseid)
 
     user = get_user(cur_id_2)
     if not user:
@@ -288,6 +294,9 @@ def manage_groups_cac_add_case(cur_id, caseid):
     if not group:
         return response_error("Invalid group ID")
 
+    if protect_demo_mode_group(group):
+        return ac_api_return_access_denied(caseid=caseid)
+
     if not isinstance(data.get('access_level'), int):
         try:
             data['access_level'] = int(data.get('access_level'))
@@ -324,6 +333,9 @@ def manage_groups_cac_delete_case(cur_id, caseid):
     group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
+
+    if protect_demo_mode_group(group):
+        return ac_api_return_access_denied(caseid=caseid)
 
     if not request.is_json:
         return response_error("Invalid request")
