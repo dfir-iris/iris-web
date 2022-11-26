@@ -498,7 +498,7 @@ def create_safe_admin(def_org, gadm):
         User.user == "administrator"
     ).first()
     if not user:
-        password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choice(string.printable[:-6]) for i in range(16)))
+        password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
         api_key = os.environ.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
         user = User(
             user="administrator",
@@ -522,7 +522,10 @@ def create_safe_admin(def_org, gadm):
 
         db.session.commit()
     else:
-        log.warning(">>> Administrator already exists")
+        if not os.environ.get('IRIS_ADM_PASSWORD'):
+            # Prevent leak of user set password in logs
+            log.warning(">>> Administrator already exists")
+
         adm_email = app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local")
         if user.email != adm_email:
             log.warning(f'Email of administrator will be updated via config to {adm_email}')

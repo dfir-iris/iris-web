@@ -457,7 +457,7 @@ def ac_return_access_denied(caseid: int = None):
 
 def ac_api_return_access_denied(caseid: int = None):
     error_uuid = uuid.uuid4()
-    log.warning(f"EID {error_uuid} - Access denied to case #{caseid} for user ID {current_user.id} "
+    log.warning(f"EID {error_uuid} - Access denied with case #{caseid} for user ID {current_user.id} "
                 f"accessing URI {request.full_path}")
     data = {
         'user_id': current_user.id,
