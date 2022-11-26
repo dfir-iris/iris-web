@@ -76,7 +76,8 @@ def set_ctx():
 def iris_version():
     return dict(iris_version=app.config.get('IRIS_VERSION'),
                 organisation_name=app.config.get('ORGANISATION_NAME'),
-                std_permissions=Permissions)
+                std_permissions=Permissions,
+                demo_domain=app.config.get('IRIS_DEMO_DOMAIN', None))
 
 
 @app.context_processor

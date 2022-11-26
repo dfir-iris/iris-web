@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="/static/assets/css/atlantis.css">
   <link rel="stylesheet" href="/static/assets/css/demo.css">
   <link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
+  <script defer data-domain="v200.beta.dfir-iris.org" src="https://analytics.dfir-iris.org/js/plausible.js"></script>
+
 </head>
   <body class="landing-demo">
   	<div class="container">
@@ -53,6 +55,7 @@
                     You can report anything you find at <a href="mailto:contact@dfir-iris.org">contact@dfir-iris.org</a>.</p>
                 <p class=""><b>The scope of the security tests</b> is limited to the Web Application IRIS hosted on <a class="" target="_blank" rel="noopener" href="{{ demo_domain }}">{{ demo_domain }}</a>.<br/>
                     <span class="text-danger">Subdomains, SSH, scanning of the IP, BF, and other flavors are <b>out of scope.</b></span></p>
+                <p><i>By accessing this instance you confirm you read, understand and agree with all the information on this page.</i></p>
             </div>
             <div class="col-md-1 col-lg-2"></div>
         </div>
@@ -69,13 +72,19 @@
               <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseAccounts" aria-expanded="false" aria-controls="collapseAccounts">
                 Accounts
               </button>
+              <a class="btn btn-outline-success float-right" target="_blank" rel="noopener" type="button" href="/login">
+                Access IRIS
+              </a>
             </p>
             <div class="collapse" id="collapseLiability">
                 <div class="card card-body">
                     <h3 class="mt-2">Disclaimer</h3>
                     DFIR-IRIS is a non-profit organization. It is not responsible for any damage caused by the use of this site and any material contained in it, or from any action or decision taken as a result of using this site.<br/>
                     It is not responsible for the content of any external sites linked to this site.<br/> By using this site, you acknowledge that content posted on this site is public and DFIR-IRIS cannot guarantee the security of any information disclose on it; you make such disclosures at your own risk.
-                    <br/>
+
+                    <h4 class="mt-2">Privacy</h4><br/>
+                    <p>This demonstration instance is shared and we cannot guarantee the privacy of data you might upload on it. We are not responsible for any data loss or data leak. </p>
+                    <p>To better understand the use of this instance, we use a privacy-friendly cookie-less analytics. We do not collect any personal data. We do not use any third-party analytics and use a self-hosted <a target="_blank" rel="noopener" href="https://plausible.io/">Plausible</a> instance.</p>
                 </div>
             </div>
             <div class="collapse" id="collapseSecRules">
@@ -83,7 +92,7 @@
                 <h3 class="mt-2">Rules of engagement</h3>
                   We are mostly interested in the following:
                 <ul>
-                    <li><b>authentication bypass</b>: achieve any action requiring an authentication without being authenticated. <b class="text-danger">Brute-force is not what we are looking for.</b></li>
+                    <li><b>authentication bypass</b>: achieve any action requiring an authentication without being authenticated. <span class="text-danger">Brute-force is not what we are looking for</span></li>
                     <li><b>privilege escalations within the application</b>: from a standard user (<code>user_std_XX</code>) to administrative rights (<code>adm_XX</code>) on IRIS</li>
                     <li><b>privilege escalations on the host server</b>: from a standard user (<code>user_std_XX</code>) to code execution on the server</li>
                     <li><b>data leakage</b>: from a standard user (<code>user_std_XX</code>) read data of non-accessible cases (titled <code>Restricted Case XXX</code>)</li>
@@ -99,6 +108,7 @@
                   <ul>
                       <li>The <code>administrator</code> account cannot be updated nor deleted.</li>
                       <li>The accounts available on this page cannot be updated nor deleted.</li>
+                      <li>The app is behind CloudFlare, however the WAF feature is disabled.</li>
                   </ul>
                 <h3>Resources</h3>
                   <p>You can read more about IRIS on the <a href="https://docs.dfir-iris.org">official documentation website</a>.</p>
