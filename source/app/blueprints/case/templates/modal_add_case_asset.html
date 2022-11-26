@@ -169,6 +169,12 @@
 </script>
 {% endif %}
 
+{% if asset.asset_compromise_status_id %}
+<script>
+        $('#asset_compromise_status_id').selectpicker('val', '{{ asset.asset_compromise_status_id }}');
+</script>
+{% endif %}
+
 {% if ioc %}
     <script>
         var data = [

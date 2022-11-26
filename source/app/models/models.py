@@ -156,7 +156,7 @@ class CaseAssets(db.Model):
     asset_domain = Column(Text)
     asset_ip = Column(Text)
     asset_info = Column(Text)
-    asset_compromised = Column(Boolean)
+    asset_compromise_status_id = Column(Integer, nullable=True)
     asset_type_id = Column(ForeignKey('assets_type.asset_id'))
     asset_tags = Column(Text)
     case_id = Column(ForeignKey('cases.case_id'))
