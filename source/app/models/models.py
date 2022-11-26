@@ -59,6 +59,13 @@ class CaseStatus(enum.Enum):
     not_applicable = 0x3
 
 
+class CompromiseStatus(enum.Enum):
+    other = 0x0
+    compromised = 0x1
+    not_compromised = 0x2
+    unknown = 0x3
+
+
 def create_safe(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).first()
     if instance:
