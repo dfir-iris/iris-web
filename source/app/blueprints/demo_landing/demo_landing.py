@@ -41,6 +41,8 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.models.authorization import User
 from app.util import is_authentication_ldap
+from demo_builder import gen_demo_admins
+from demo_builder import gen_demo_users
 
 demo_blueprint = Blueprint(
     'demo-landing',
@@ -55,6 +57,21 @@ if app.config.get('DEMO_MODE_ENABLED') == 'True':
     def demo_landing():
         iris_version = app.config.get('IRIS_VERSION')
         demo_domain = app.config.get('DEMO_DOMAIN')
+        seed_user = app.config.get('DEMO_USERS_SEED')
+        seed_adm = app.config.get('DEMO_ADM_SEED')
+        adm_count = int(app.config.get('DEMO_ADM_COUNT', 4))
+        users_count = int(app.config.get('DEMO_USERS_COUNT', 10))
 
-        return render_template('demo-landing.html', iris_version=iris_version, demo_domain=demo_domain)
+        demo_users = [
+            {'username': username, 'password': pwd, 'role': 'Admin'} for _, username, pwd, _ in gen_demo_admins(adm_count, seed_adm)
+        ]
+        demo_users += [
+            {'username': username, 'password': pwd, 'role': 'User'} for _, username, pwd, _ in gen_demo_users(users_count, seed_user)
+        ]
 
+        return render_template(
+            'demo-landing.html',
+            iris_version=iris_version,
+            demo_domain=demo_domain,
+            demo_users=demo_users
+        )

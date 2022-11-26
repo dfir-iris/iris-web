@@ -8,10 +8,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
   <link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
   <link rel="stylesheet" href="/static/assets/css/atlantis.css">
-    <link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
-
+  <link rel="stylesheet" href="/static/assets/css/demo.css">
+  <link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
 </head>
-  <body>
+  <body class="landing-demo">
   	<div class="container">
         <div class="mt-4">
             <div class="col d-flex justify-content-center">
@@ -57,14 +57,17 @@
             <div class="col-md-1 col-lg-2"></div>
         </div>
         <div class="row mt-4">
-            <div class="col-md-1 col-lg-2"></div>
-            <div class="col-md-10 col-lg-8 ml-4">
+            <div class="col-xs-0 col-md-1 col-lg-2"></div>
+            <div class="col-xs-12 col-md-10 col-lg-8 ml-4">
             <p class="">
               <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseSecRules" aria-expanded="false" aria-controls="collapseSecRules">
                 Security tests insights
               </button>
                 <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseLiability" aria-expanded="false" aria-controls="collapseLiability">
                 Disclaimer
+              </button>
+              <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseAccounts" aria-expanded="false" aria-controls="collapseAccounts">
+                Accounts
               </button>
             </p>
             <div class="collapse" id="collapseLiability">
@@ -95,8 +98,32 @@
                   <p>You can read more about IRIS on the <a href="https://docs.dfir-iris.org">official documentation website</a>.</p>
               </div>
             </div>
+            <div class="collapse" id="collapseAccounts">
+              <div class="card card-body">
+                <h3 class="mt-2">Available accounts</h3>
+                  The following accounts are available on the instance:
+                  <table>
+                      <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Password</th>
+                                <th>Role</th>
+                            </tr>
+                      </thead>
+                      <tbody>
+                        {% for user in demo_users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.password }}</td>
+                                <td>{{ user.role }}</td>
+                            </tr>
+                        {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
             </div>
-                <div class="col-md-1 col-lg-2"></div>
+            </div>
+                <div class="col-xs-0 col-md-1 col-lg-2"></div>
         </div>
     </div>
   </body>

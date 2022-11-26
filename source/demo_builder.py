@@ -33,48 +33,60 @@ from app.models.authorization import User
 log = app.logger
 
 
-def create_demo_users(def_org, gadm, ganalystes, seed_user, seed_adm):
-
-    random.seed(seed_user, version=2)
-    user_pwd = ''.join(random.choices(string.printable[:-6], k=16))
-    api_key = ''.join(random.choices(string.printable[:-6], k=62))
-
+def gen_demo_admins(count, seed_adm):
     random.seed(seed_adm, version=2)
-    adm_pwd = ''.join(random.choices(string.printable[:-6], k=16))
-    api_key_adm = ''.join(random.choices(string.printable[:-6], k=62))
+    for i in range(1, count):
+        yield f'Adm {i}',\
+              f'adm_{i}', \
+              f"{''.join(random.choices(string.printable[:-6], k=16))}_{i}", \
+              f"{''.join(random.choices(string.ascii_letters, k=62))}_{i}"
 
-    for i in range(0, 10):
-        # Create default admin user
-        if not user_exists(f'user_std_{i}', f'user_std_{i}@iris.local'):
-            password = bc.generate_password_hash(f'{user_pwd}_{i}'.encode('utf-8')).decode('utf-8')
+
+def gen_demo_users(count, seed_user):
+    random.seed(seed_user, version=2)
+    for i in range(1, count):
+        yield f'User Std {i}',\
+              f'user_std_{i}', \
+              f"{''.join(random.choices(string.printable[:-6], k=16))}_{i}", \
+              f"{''.join(random.choices(string.ascii_letters, k=62))}_{i}"
+
+
+def create_demo_users(def_org, gadm, ganalystes, users_count, seed_user, adm_count, seed_adm):
+
+    for name, username, pwd, api_key in gen_demo_users(users_count, seed_user):
+
+        # Create default users
+        if not user_exists(username, f'{username}@iris.local'):
+            pwd = bc.generate_password_hash(pwd.encode('utf-8')).decode('utf-8')
             user = User(
-                user=f'user_std_{i}',
-                password=password,
-                email=f'user_std_{i}@iris.local',
-                name=f'User Std {i}',
+                user=username,
+                password=pwd,
+                email=f'{username}@iris.local',
+                name=name,
                 active=True)
-            user.api_key = api_key + f'_{i}'
+
+            user.api_key = api_key
             db.session.add(user)
             db.session.commit()
             add_user_to_group(user_id=user.id, group_id=ganalystes.group_id)
             add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
             db.session.commit()
-            log.info(f'Created demo user: {user.user} -  {user_pwd}_{i}')
+            log.info(f'Created demo user: {user.user} -  {pwd}')
 
-    for i in range(0, 4):
-        # Create default admin user
-        if not user_exists(f'user_adm_{i}', f'user_adm_{i}@iris.local'):
-            password = bc.generate_password_hash(f'{adm_pwd}_{i}'.encode('utf-8')).decode('utf-8')
+    for name, username, pwd, api_key in gen_demo_admins(adm_count, seed_adm):
+        if not user_exists(username, f'{username}@iris.local'):
+            password = bc.generate_password_hash(pwd.encode('utf-8')).decode('utf-8')
             user = User(
-                user=f'user_adm_{i}',
+                user=username,
                 password=password,
-                email=f'user_adm_{i}@iris.local',
-                name=f'Adm {i}',
+                email=f'{username}@iris.local',
+                name=name,
                 active=True)
-            user.api_key = api_key_adm + f'_{i}'
+
+            user.api_key = api_key
             db.session.add(user)
             db.session.commit()
             add_user_to_group(user_id=user.id, group_id=gadm.group_id)
             add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
             db.session.commit()
-            log.info(f'Created demo admin: {user.user} - {adm_pwd}_{i}')
+            log.info(f'Created demo admin: {user.user} - {pwd}')

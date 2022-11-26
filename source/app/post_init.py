@@ -153,7 +153,10 @@ def run_post_init(development=False):
         custom_assets_symlinks()
 
         if app.config.get('DEMO_MODE_ENABLED') == 'True':
-            create_demo_users(def_org, gadm, ganalysts, app.config.get('DEMO_USERS_SEED'),
+            create_demo_users(def_org, gadm, ganalysts,
+                              int(app.config.get('DEMO_USERS_COUNT', 10)),
+                              app.config.get('DEMO_USERS_SEED'),
+                              int(app.config.get('DEMO_ADM_COUNT', 4)),
                               app.config.get('DEMO_ADM_SEED'))
 
     if development:
