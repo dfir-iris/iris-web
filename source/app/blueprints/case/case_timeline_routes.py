@@ -60,6 +60,7 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Comments
+from app.models import CompromiseStatus
 from app.models import EventComments
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
@@ -565,7 +566,7 @@ def case_filter_timeline(caseid):
                         "name": "{} ({})".format(asset.asset_name, asset.type),
                         "ip": asset.asset_ip,
                         "description": asset.asset_description,
-                        "compromised": asset.asset_compromised
+                        "compromised": asset.asset_compromise_status_id == CompromiseStatus.compromised.value
                     }
                 )
 

@@ -345,8 +345,7 @@ def asset_view_modal(cur_id, caseid, url_redir):
     form.asset_info.data = asset.asset_info
     form.asset_ip.render_kw = {'value': asset.asset_ip}
     form.asset_domain.render_kw = {'value': asset.asset_domain}
-    form.asset_compromise_status_id = asset.asset_compromised_status_id
-    #form.asset_compromised.data = True if asset.asset_compromised else False
+    form.asset_compromise_status_id.choices = get_compromise_status_list()
     form.asset_type_id.choices = get_assets_types()
     form.analysis_status_id.choices = get_analysis_status_list()
     form.asset_tags.render_kw = {'value': asset.asset_tags}

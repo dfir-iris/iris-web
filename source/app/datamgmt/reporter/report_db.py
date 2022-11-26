@@ -400,7 +400,7 @@ def export_case_assets_json(case_id):
         CaseAssets.asset_uuid,
         CaseAssets.asset_name,
         CaseAssets.asset_description,
-        CaseAssets.asset_compromised.label('compromised'),
+        CaseAssets.asset_compromise_status_id.label('asset_compromise_status'),
         AssetsType.asset_name.label("type"),
         AnalysisStatus.name.label('analysis_status'),
         CaseAssets.date_added,
@@ -413,7 +413,7 @@ def export_case_assets_json(case_id):
         CaseAssets.case_id == case_id
     ).join(
         CaseAssets.asset_type, CaseAssets.analysis_status
-    ).order_by(desc(CaseAssets.asset_compromised)).all()
+    ).order_by(desc(CaseAssets.asset_compromise_status_id)).all()
 
     for row in res:
         row = row._asdict()

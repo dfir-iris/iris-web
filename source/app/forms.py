@@ -140,7 +140,6 @@ class AssetBasicForm(FlaskForm):
     asset_domain = StringField(u'Domain')
     asset_ip = StringField(u'Domain')
     asset_info = TextAreaField(u'Asset Info')
-    #asset_compromised = BooleanField(u'Is Compromised')
     asset_compromise_status_id = SelectField(u'Compromise Status')
     asset_type_id = SelectField(u'Asset Type', validators=[DataRequired()])
     analysis_status_id = SelectField(u'Analysis Status', validators=[DataRequired()])

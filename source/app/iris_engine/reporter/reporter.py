@@ -252,7 +252,7 @@ class IrisMakeDocReport(object):
             CaseAssets.case_id == caseid
         ).join(
             CaseAssets.asset_type
-        ).order_by(desc(CaseAssets.asset_compromised)).all()
+        ).order_by(desc(CaseAssets.asset_compromise_status_id)).all()
 
         for row in res:
             row = row._asdict()

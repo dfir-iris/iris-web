@@ -71,11 +71,9 @@ def case_graph_get_data(caseid):
         if hasattr(event, 'asset_compromised'):
             if event.asset_compromised:
                 img = event.asset_icon_compromised
-                #is_master_atype = True
 
             elif not event.asset_compromised:
                 img = event.asset_icon_not_compromised
-                #is_master_atype = False
 
             else:
                 img = 'question-mark.png'
