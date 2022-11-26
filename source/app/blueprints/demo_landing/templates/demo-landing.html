@@ -61,7 +61,7 @@
             <div class="col-xs-12 col-md-10 col-lg-8 ml-4">
             <p class="">
               <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseSecRules" aria-expanded="false" aria-controls="collapseSecRules">
-                Security tests insights
+                Rules of engagement
               </button>
                 <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseLiability" aria-expanded="false" aria-controls="collapseLiability">
                 Disclaimer
@@ -80,10 +80,10 @@
             </div>
             <div class="collapse" id="collapseSecRules">
               <div class="card card-body">
-                <h3 class="mt-2">Security tests insights</h3>
+                <h3 class="mt-2">Rules of engagement</h3>
                   We are mostly interested in the following:
                 <ul>
-                    <li><b>authentication bypass</b>: achieve any action requiring an authentication without being authenticated</li>
+                    <li><b>authentication bypass</b>: achieve any action requiring an authentication without being authenticated. <b class="text-danger">Brute-force is not what we are looking for.</b></li>
                     <li><b>privilege escalations within the application</b>: from a standard user (<code>user_std_XX</code>) to administrative rights (<code>adm_XX</code>) on IRIS</li>
                     <li><b>privilege escalations on the host server</b>: from a standard user (<code>user_std_XX</code>) to code execution on the server</li>
                     <li><b>data leakage</b>: from a standard user (<code>user_std_XX</code>) read data of non-accessible cases (titled <code>Restricted Case XXX</code>)</li>
@@ -92,15 +92,21 @@
                   <ul>
                       <li>If you can, use a local instance of IRIS instead of this one. It only takes a few minutes to <a  target="_blank" rel="noopener" href="https://docs.dfir-iris.org/getting_started/">get it on docker.</a></li>
                       <li>The administrators account can publish stored XSS on the platform via <a  target="_blank" rel="noopener" href="https://docs.dfir-iris.org/operations/custom_attributes/">Custom Attributes</a>. This is an operational requirement and not recognized as a vulnerability.</li>
+                      <li><b>Try not to be destructive.</b> If you manage to run code on the host server, do not try to go further.</li>
                   </ul>
-
+                <h3>Restrictions</h3>
+                  To keep this demo instance alive, there are some restrictions put in place.
+                  <ul>
+                      <li>The <code>administrator</code> account cannot be updated nor deleted.</li>
+                      <li>The accounts available on this page cannot be updated nor deleted.</li>
+                  </ul>
                 <h3>Resources</h3>
                   <p>You can read more about IRIS on the <a href="https://docs.dfir-iris.org">official documentation website</a>.</p>
               </div>
             </div>
             <div class="collapse" id="collapseAccounts">
               <div class="card card-body">
-                <h3 class="mt-2">Available accounts</h3>
+                <h3 class="mt-2">Accounts</h3>
                   The following accounts are available on the instance:
                   <table class="table table-striped table-hover responsive">
                       <thead>
@@ -114,7 +120,7 @@
                         {% for user in demo_users %}
                             <tr>
                                 <td>{{ user.username }}</td>
-                                <td>{{ user.password }}</td>
+                                <td><code>{{ user.password }}</code></td>
                                 <td>{{ user.role }}</td>
                             </tr>
                         {% endfor %}
