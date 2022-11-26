@@ -45,6 +45,7 @@ from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_assets_db import get_case_asset_comment
 from app.datamgmt.case.case_assets_db import get_case_asset_comments
 from app.datamgmt.case.case_assets_db import get_case_assets_comments_count
+from app.datamgmt.case.case_assets_db import get_compromise_status_list
 from app.datamgmt.case.case_assets_db import get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import get_linked_iocs_id_from_asset
 from app.datamgmt.case.case_assets_db import get_similar_assets
@@ -164,7 +165,7 @@ def add_asset_modal(caseid, url_redir):
 
     form.asset_type_id.choices = get_assets_types()
     form.analysis_status_id.choices = get_analysis_status_list()
-    form.asset_compromise_status_id = get_compromise_status_list()
+    form.asset_compromise_status_id.choices = get_compromise_status_list()
 
     # Get IoCs from the case
     ioc = get_iocs(caseid)
@@ -344,7 +345,8 @@ def asset_view_modal(cur_id, caseid, url_redir):
     form.asset_info.data = asset.asset_info
     form.asset_ip.render_kw = {'value': asset.asset_ip}
     form.asset_domain.render_kw = {'value': asset.asset_domain}
-    form.asset_compromised.data = True if asset.asset_compromised else False
+    form.asset_compromise_status_id = asset.asset_compromised_status_id
+    #form.asset_compromised.data = True if asset.asset_compromised else False
     form.asset_type_id.choices = get_assets_types()
     form.analysis_status_id.choices = get_analysis_status_list()
     form.asset_tags.render_kw = {'value': asset.asset_tags}
