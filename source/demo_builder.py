@@ -38,8 +38,8 @@ def gen_demo_admins(count, seed_adm):
     for i in range(1, count):
         yield f'Adm {i}',\
               f'adm_{i}', \
-              f"{''.join(random.choices(string.printable[:-6], k=16))}_{i}", \
-              f"{''.join(random.choices(string.ascii_letters, k=62))}_{i}"
+              ''.join(random.choices(string.printable[:-6], k=16)), \
+              ''.join(random.choices(string.ascii_letters, k=64))
 
 
 def gen_demo_users(count, seed_user):
@@ -47,8 +47,8 @@ def gen_demo_users(count, seed_user):
     for i in range(1, count):
         yield f'User Std {i}',\
               f'user_std_{i}', \
-              f"{''.join(random.choices(string.printable[:-6], k=16))}_{i}", \
-              f"{''.join(random.choices(string.ascii_letters, k=62))}_{i}"
+              ''.join(random.choices(string.printable[:-6], k=16)), \
+              ''.join(random.choices(string.ascii_letters, k=64))
 
 
 def create_demo_users(def_org, gadm, ganalystes, users_count, seed_user, adm_count, seed_adm):
