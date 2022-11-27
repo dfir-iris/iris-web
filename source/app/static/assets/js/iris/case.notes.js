@@ -323,6 +323,14 @@ function note_detail(id, cid) {
              return false;
         }
 
+        var timer;
+        var timeout = 10000;
+        $('#form_note').keyup(function(){
+            if(timer) {
+                 clearTimeout(timer);
+            }
+            timer = setTimeout(save_note, timeout);
+        });
         note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function() {
             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
