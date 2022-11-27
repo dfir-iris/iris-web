@@ -32,6 +32,7 @@ from app.models import CaseAssets
 from app.models import CaseEventsAssets
 from app.models import Cases
 from app.models import Comments
+from app.models import CompromiseStatus
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
@@ -64,7 +65,7 @@ def get_assets(caseid):
         AssetsType.asset_icon_not_compromised,
         CaseAssets.asset_description,
         CaseAssets.asset_domain,
-        CaseAssets.asset_compromised,
+        CaseAssets.asset_compromise_status_id,
         CaseAssets.asset_ip,
         CaseAssets.asset_type_id,
         AnalysisStatus.name.label('analysis_status'),
@@ -99,14 +100,14 @@ def get_asset(asset_id, caseid):
 
 
 def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_domain,
-                 asset_compromised, asset_type, asset_id, caseid, analysis_status, asset_tags):
+                 asset_compromise_status_id, asset_type, asset_id, caseid, analysis_status, asset_tags):
     asset = get_asset(asset_id, caseid)
     asset.asset_name = asset_name
     asset.asset_description = asset_description
     asset.asset_ip = asset_ip
     asset.asset_info = asset_info
     asset.asset_domain = asset_domain
-    asset.asset_compromised = asset_compromised
+    asset.asset_compromise_status_id = asset_compromise_status_id
     asset.asset_type_id = asset_type
     asset.analysis_status_id = analysis_status
     asset.asset_tags = asset_tags
@@ -166,6 +167,14 @@ def get_analysis_status_list():
     return analysis_status
 
 
+def get_compromise_status_list():
+    return [(e.value, e.name.replace('_', ' ').capitalize()) for e in CompromiseStatus]
+
+
+def get_compromise_status_dict():
+    return [{'value': e.value, 'name': e.name.replace('_', ' ').capitalize()} for e in CompromiseStatus]
+
+
 def get_asset_type_id(asset_type_name):
     assets_type_id = AssetsType.query.with_entities(
         AssetsType.asset_id
@@ -197,7 +206,7 @@ def get_similar_assets(asset_name, asset_type_id, caseid, customer_id, cases_lim
         Cases.name.label('case_name'),
         Cases.open_date.label('case_open_date'),
         CaseAssets.asset_description,
-        CaseAssets.asset_compromised
+        CaseAssets.asset_compromise_status_id
     ).filter(
         and_(
             CaseAssets.asset_name == asset_name,

@@ -249,9 +249,6 @@ function update_asset(do_close){
         data["ioc_links"] = [];
     }
     data['asset_tags'] = $('#asset_tags').val();
-    if (!data.hasOwnProperty('asset_compromised')) {
-        data['asset_compromised'] = 'false';
-    }
     data['asset_description'] = g_asset_desc_editor.getValue();
 
     ret = get_custom_attributes_fields();
@@ -362,7 +359,7 @@ $(document).ready(function(){
                     datak = '#' + row['asset_id'];
                 }
                 share_link = buildShareLink(row['asset_id']);
-                if (row['asset_compromised']) {
+                if (row['asset_compromise_status_id'] == 1) {
                     src_icon = row['asset_icon_compromised'];
                 } else {
                     src_icon = row['asset_icon_not_compromised'];
@@ -375,7 +372,7 @@ $(document).ready(function(){
                     var has_compro = false;
                     var datacontent = 'data-content="';
                     for (idx in row.link) {
-                        if (row.link[idx]['asset_compromised']) {
+                        if (row.link[idx]['asset_compromise_status_id'] == 1) {
                             has_compro = true;
                             datacontent += `Observed as <b class=\'text-danger\'>compromised</b><br/>on investigation <b>`+ sanitizeHTML(row.link[idx]['case_name']) + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.<br/><b>Asset description</b> :` + sanitizeHTML(row.link[idx]['asset_description']) + "<br/><br/>";
                         } else {
@@ -428,9 +425,12 @@ $(document).ready(function(){
                 return data;
               }
           },
-          { "data": "asset_compromised",
+          { "data": "asset_compromise_status_id",
            "render": function(data, type, row) {
-                if (data == true) { ret = '<span class="badge badge-danger">Yes</span>';} else { ret = '<span class="badge badge-success">No</span>'}
+                if (data == 0) { ret = '<span class="badge badge-muted">TBD</span>';}
+                else if (data == 1) { ret = '<span class="badge badge-danger">Yes</span>';}
+                else if (data == 2) { ret = '<span class="badge badge-success">No</span>';}
+                else { ret = '<span class="badge badge-warning">Unknown</span>';}
                 return ret;
             }
           },

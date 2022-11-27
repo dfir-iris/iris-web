@@ -47,7 +47,7 @@ def get_case_events_assets_graph(caseid):
         AssetsType.asset_icon_not_compromised,
         AssetsType.asset_icon_compromised,
         CasesEvent.event_color,
-        CaseAssets.asset_compromised,
+        CaseAssets.asset_compromise_status_id,
         CaseAssets.asset_description,
         CaseAssets.asset_ip,
         CasesEvent.event_date,

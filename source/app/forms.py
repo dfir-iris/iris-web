@@ -140,26 +140,10 @@ class AssetBasicForm(FlaskForm):
     asset_domain = StringField(u'Domain')
     asset_ip = StringField(u'Domain')
     asset_info = TextAreaField(u'Asset Info')
-    asset_compromised = BooleanField(u'Is Compromised')
+    asset_compromise_status_id = SelectField(u'Compromise Status')
     asset_type_id = SelectField(u'Asset Type', validators=[DataRequired()])
     analysis_status_id = SelectField(u'Analysis Status', validators=[DataRequired()])
     asset_tags = StringField(u'Asset Tags')
-
-
-class AssetComputerForm(AssetBasicForm):
-    computer_ip = StringField(u'Computer IP')
-    computer_os = StringField(u'Computer OS')
-    computer_domain = StringField(u'Computer domain')
-    is_compromised = BooleanField(u'Is Compromised')
-
-
-class AssetWinAccountForm(AssetBasicForm):
-    account_sid = StringField(u'Account SID')
-    account_domain = StringField(u'Account Domain')
-
-
-class AssetLinAccountForm(AssetBasicForm):
-    account_domain = StringField(u'Account Domain')
 
 
 class CaseEventForm(FlaskForm):

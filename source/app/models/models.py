@@ -59,6 +59,17 @@ class CaseStatus(enum.Enum):
     not_applicable = 0x3
 
 
+class CompromiseStatus(enum.Enum):
+    to_be_determined = 0x0
+    compromised = 0x1
+    not_compromised = 0x2
+    unknown = 0x3
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
 def create_safe(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).first()
     if instance:
@@ -145,7 +156,7 @@ class CaseAssets(db.Model):
     asset_domain = Column(Text)
     asset_ip = Column(Text)
     asset_info = Column(Text)
-    asset_compromised = Column(Boolean)
+    asset_compromise_status_id = Column(Integer, nullable=True)
     asset_type_id = Column(ForeignKey('assets_type.asset_id'))
     asset_tags = Column(Text)
     case_id = Column(ForeignKey('cases.case_id'))
