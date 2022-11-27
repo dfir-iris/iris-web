@@ -427,7 +427,10 @@ $(document).ready(function(){
           },
           { "data": "asset_compromise_status_id",
            "render": function(data, type, row) {
-                if (data == 1) { ret = '<span class="badge badge-danger">Yes</span>';} else { ret = '<span class="badge badge-success">No</span>'}
+                if (data == 0) { ret = '<span class="badge badge-muted">TBD</span>';}
+                else if (data == 1) { ret = '<span class="badge badge-danger">Yes</span>';}
+                else if (data == 2) { ret = '<span class="badge badge-success">No</span>';}
+                else { ret = '<span class="badge badge-warning">Unknown</span>';}
                 return ret;
             }
           },
