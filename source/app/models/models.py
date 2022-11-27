@@ -60,7 +60,7 @@ class CaseStatus(enum.Enum):
 
 
 class CompromiseStatus(enum.Enum):
-    other = 0x0
+    to_be_determined = 0x0
     compromised = 0x1
     not_compromised = 0x2
     unknown = 0x3
