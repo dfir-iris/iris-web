@@ -42,6 +42,7 @@ from app.models.cases import Cases
 from app.models.authorization import User
 from app.util import is_authentication_ldap
 
+
 login_blueprint = Blueprint(
     'login',
     __name__,
@@ -86,7 +87,7 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
                 if is_authentication_ldap():
 
                     try:
-                        if ldap_authenticate(username, password):
+                        if ldap_authenticate(username, password) is True:
                             return wrap_login_user(user)
 
                         else:
