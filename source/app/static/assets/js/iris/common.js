@@ -464,15 +464,7 @@ function list_to_badges(wordlist, style, limit, type) {
 }
 
 var sanitizeHTML = function (str) {
-    if (typeof str === 'string') {
-        return str.replace(/[^\w. ]/gi, function (c) {
-            return '&#' + c.charCodeAt(0) + ';';
-        });
-    } else if (str == null) {
-        return '';
-    } else {
-        return str;
-    }
+    return filterXSS(str);
 };
 
 function isWhiteSpace(s) {
