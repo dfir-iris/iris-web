@@ -50,7 +50,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
                       user=ldap_user,
                       password=ldap_user_pwd,
                       auto_referrals=False,
-                      authentication="SIMPLE")
+                      authentication=app.config.get('LDAP_AUTHENTICATION_TYPE'))
 
     try:
 

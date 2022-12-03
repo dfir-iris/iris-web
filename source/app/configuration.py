@@ -403,6 +403,8 @@ class Config():
         if LDAP_USER_SUFFIX is None:
             raise Exception('LDAP enabled and no user suffix configured')
 
+        LDAP_AUTHENTICATION_TYPE = config.load('LDAP', 'AUTHENTICATION_TYPE')
+
         LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
         LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
 
