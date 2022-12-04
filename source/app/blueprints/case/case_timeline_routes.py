@@ -36,6 +36,7 @@ from app import db
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.case.case_events_db import add_comment_to_event
+from app.datamgmt.case.case_events_db import delete_event
 from app.datamgmt.case.case_events_db import delete_event_category
 from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
@@ -633,33 +634,7 @@ def case_delete_event(cur_id, caseid):
     if not event:
         return response_error('Not a valid event ID for this case')
 
-    delete_event_category(cur_id)
-
-    CaseEventsAssets.query.filter(
-        CaseEventsAssets.event_id == cur_id,
-        CaseEventsAssets.case_id == caseid
-    ).delete()
-
-    CaseEventsIoc.query.filter(
-        CaseEventsIoc.event_id == cur_id,
-        CaseEventsIoc.case_id == caseid
-    ).delete()
-
-    EventComments.query.filter(
-        EventComments.comment_event_id == cur_id
-    ).delete(synchronize_session='fetch')
-
-    Comments.query.filter(and_(
-        Comments.comment_id == EventComments.comment_id,
-        EventComments.comment_event_id == cur_id
-    )).delete(synchronize_session='fetch')
-
-    db.session.commit()
-
-    db.session.delete(event)
-    update_timeline_state(caseid=caseid)
-
-    db.session.commit()
+    delete_event(event=event, caseid=caseid)
 
     call_modules_hook('on_postload_event_delete', data=cur_id, caseid=caseid)
 

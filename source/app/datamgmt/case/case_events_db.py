@@ -21,6 +21,7 @@ from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.states import update_timeline_state
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventCategory
@@ -329,3 +330,35 @@ def get_case_iocs_for_tm(caseid):
         })
 
     return iocs
+
+
+def delete_event(event, caseid):
+    delete_event_category(event.event_id)
+
+    CaseEventsAssets.query.filter(
+        CaseEventsAssets.event_id == event.event_id,
+        CaseEventsAssets.case_id == caseid
+    ).delete()
+
+    CaseEventsIoc.query.filter(
+        CaseEventsIoc.event_id == event.event_id,
+        CaseEventsIoc.case_id == caseid
+    ).delete()
+
+    com_ids = EventComments.query.with_entities(
+        EventComments.comment_id
+    ).filter(
+        EventComments.comment_event_id == event.event_id
+    ).all()
+
+    com_ids = [c.comment_id for c in com_ids]
+    EventComments.query.filter(EventComments.comment_id.in_(com_ids)).delete()
+
+    Comments.query.filter(Comments.comment_id.in_(com_ids)).delete()
+
+    db.session.commit()
+
+    db.session.delete(event)
+    update_timeline_state(caseid=caseid)
+
+    db.session.commit()
