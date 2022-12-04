@@ -276,22 +276,25 @@ def get_case_task_comment(task_id, comment_id):
 
 
 def delete_task(task_id):
-    TaskAssignee.query.filter(
-        TaskAssignee.task_id == task_id
-    ).delete()
+    with db.session.begin_nested():
+        TaskAssignee.query.filter(
+            TaskAssignee.task_id == task_id
+        ).delete()
 
-    TaskComments.query.filter(
-        TaskComments.comment_task_id == task_id
-    ).delete(synchronize_session='fetch')
+        com_ids = TaskComments.query.with_entities(
+            TaskComments.comment_id
+        ).filter(
+            TaskComments.comment_task_id == task_id
+        ).all()
 
-    Comments.query.filter(and_(
-        Comments.comment_id == TaskComments.comment_id,
-        TaskComments.comment_task_id == task_id
-    )).delete(synchronize_session='fetch')
+        com_ids = [c.comment_id for c in com_ids]
+        TaskComments.query.filter(TaskComments.comment_id.in_(com_ids)).delete()
 
-    CaseTasks.query.filter(
-        CaseTasks.id == task_id
-    ).delete()
+        Comments.query.filter(Comments.comment_id.in_(com_ids)).delete()
+
+        CaseTasks.query.filter(
+            CaseTasks.id == task_id
+        ).delete()
 
 
 def delete_task_comment(task_id, comment_id):
