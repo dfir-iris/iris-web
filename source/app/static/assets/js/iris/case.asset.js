@@ -379,18 +379,18 @@ $(document).ready(function(){
                     for (idx in row.link) {
                         if (row.link[idx]['asset_compromise_status_id'] == 1) {
                             has_compro = true;
-                            datacontent += `Observed as <b class=\'text-danger\'>compromised</b><br/>on investigation <b>`+ sanitizeHTML(row.link[idx]['case_name']) + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.<br/><b>Asset description</b> :` + sanitizeHTML(row.link[idx]['asset_description']) + "<br/><br/>";
+                            datacontent += `Observed as <b class='text-danger'>compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']}</a></b> (opened on ${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
                         } else {
 
-                            datacontent += `Observed as <b class=\'text-success\'>not compromised</b><br/> on investigation <b>`+ sanitizeHTML(row.link[idx]['case_name']) + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.<br/><b>Asset description</b> :` + sanitizeHTML(row.link[idx]['asset_description']) + "<br/><br/>";
+                            datacontent += `Observed as <b class='text-success'>not compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']}</a></b> (opened on ${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
                         }
                     }
                     if (has_compro) {
                        ret += `<i class="fas fa-meteor ml-2 text-danger" style="cursor: pointer;" data-html="true"
-                            data-toggle="popover" data-trigger="hover" title="Observed on previous case" `;
+                            data-toggle="popover" data-trigger="click" title="Observed on previous case" `;
                     } else {
                         ret += `<i class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
-                        data-toggle="popover" data-trigger="hover" title="Observed on previous case" `;
+                        data-toggle="popover" data-trigger="click" title="Observed on previous case" `;
                     }
 
                     ret += datacontent;
