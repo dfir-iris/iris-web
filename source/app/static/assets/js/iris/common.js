@@ -144,6 +144,26 @@ function notify_success(message) {
     });
 }
 
+function notify_warning(message) {
+    message = '<p>' + sanitizeHTML(message) + '</p>';
+    $.notify({
+        icon: 'fas fa-exclamation',
+        message: message
+    }, {
+        type: 'warning',
+        placement: {
+            from: 'bottom',
+            align: 'left'
+        },
+        z_index: 2000,
+        timer: 2500,
+        animate: {
+            enter: 'animated fadeIn',
+            exit: 'animated fadeOut'
+        }
+    });
+}
+
 function notify_auto_api(data, silent_success) {
     if (data.status == 'success') {
         if (silent_success === undefined || silent_success === false) {
@@ -194,6 +214,10 @@ function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
             }
         }
     });
+}
+
+function set_page_warning(msg) {
+    $('#page_warning').text(msg);
 }
 
 function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {

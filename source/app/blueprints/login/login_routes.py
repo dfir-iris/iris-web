@@ -84,17 +84,16 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
             ).first()
 
             if user:
-                if is_authentication_ldap():
-
+                if is_authentication_ldap() is True:
                     try:
                         if ldap_authenticate(username, password) is True:
                             return wrap_login_user(user)
 
                         else:
-                            track_activity("someone tried to log with user '{}', which does not exist".format(username),
+                            track_activity("wrong login password for user '{}' using LDAP auth".format(username),
                                            ctx_less=True, display_in_ui=False)
 
-                            msg = "Invalid credentials"
+                            msg = "Wrong credentials. Please try again."
                             return render_template('login.html', form=form, msg=msg)
 
                     except Exception as e:
@@ -106,12 +105,12 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
                     return wrap_login_user(user)
 
                 else:
-                    track_activity("wrong login password for user '{}'".format(username), ctx_less=True,
+                    track_activity("wrong login password for user '{}' using local auth".format(username), ctx_less=True,
                                    display_in_ui=False)
                     msg = "Wrong credentials. Please try again."
 
             else:
-                track_activity("someone tried to log with user '{}', which does not exist".format(username),
+                track_activity("someone tried to log in with user '{}', which does not exist".format(username),
                                ctx_less=True, display_in_ui=False)
                 msg = "Wrong credentials. Please try again."
 

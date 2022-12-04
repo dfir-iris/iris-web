@@ -22,6 +22,8 @@ import datetime
 from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from app import db
 from app.datamgmt.states import update_assets_state
@@ -199,25 +201,29 @@ def get_assets_ioc_links(caseid):
 
     return ioc_links_req
 
-
 def get_similar_assets(asset_name, asset_type_id, caseid, customer_id, cases_limitation):
 
-    linked_assets = CaseAssets.query.with_entities(
+    linked_assets = CaseAssets.query.options(joinedload('case')).with_entities(
         Cases.name.label('case_name'),
         Cases.open_date.label('case_open_date'),
         CaseAssets.asset_description,
         CaseAssets.asset_compromise_status_id
     ).filter(
-        and_(
-            CaseAssets.asset_name == asset_name,
-            CaseAssets.case_id != caseid,
-            CaseAssets.case_id.notin_(cases_limitation),
-            CaseAssets.asset_type_id == asset_type_id,
-            Cases.client_id == customer_id
+        Cases.client_id == customer_id,
+        CaseAssets.case_id != caseid
+    ).filter(
+        CaseAssets.case_id.in_(
+            select(Cases.case_id).where(
+                and_(
+                    CaseAssets.asset_name == asset_name,
+                    CaseAssets.asset_type_id == asset_type_id,
+                    Cases.case_id.notin_(cases_limitation)
+                )
+            ).join(CaseAssets.case)
         )
     ).join(CaseAssets.case).all()
 
-    return linked_assets
+    return (lasset._asdict() for lasset in linked_assets)
 
 
 def delete_ioc_asset_link(asset_id):

@@ -123,16 +123,15 @@ def case_list_assets(caseid):
         else:
             cache_ioc_link[ioc.asset_id].append(ioc._asdict())
 
-    cases_limitation = get_user_cases_fast(current_user.id)
+    cases_access = get_user_cases_fast(current_user.id)
 
     for asset in assets:
         asset = asset._asdict()
 
-        # Find linked IoC
         if len(assets) < 300:
             # Find similar assets from other cases with the same customer
-            asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
-                            asset['asset_name'], asset['asset_type_id'], caseid, customer_id, cases_limitation)]
+            asset['link'] = list(get_similar_assets(
+                asset['asset_name'], asset['asset_type_id'], caseid, customer_id, cases_access))
         else:
             asset['link'] = []
 

@@ -308,7 +308,7 @@ def get_user_cases_fast(user_id):
         UserCaseAccess.case_id
     ).where(
         UserCaseAccess.user_id == user_id,
-        UserCaseAccess.access_level != 1
+        UserCaseAccess.access_level != CaseAccessLevel.deny_all.value
     ).all()
 
     return [c.case_id for c  in user_cases]

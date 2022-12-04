@@ -113,6 +113,11 @@ function get_case_assets() {
         if (response.status == 'success') {
             if (response.data != null) {
                 jsdata = response.data;
+                if (jsdata.assets.length > 299) {
+                    set_page_warning("Backref disabled due to too many assets in the case.");
+                } else {
+                    set_page_warning("");
+                }
                 Table.clear();
                 Table.rows.add(jsdata.assets);
                 Table.columns.adjust().draw();

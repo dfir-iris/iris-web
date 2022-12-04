@@ -88,7 +88,7 @@ class IrisConfig(configparser.ConfigParser):
         Load variable from different sources. Uses the following order
         1. Azure Key Vault
         2. Environment Variable
-        3. Environment Variable deprectated
+        3. Environment Variable deprecated
         3. Configuration File
         """
 
@@ -395,11 +395,11 @@ class Config():
         if LDAP_PORT is None:
             raise Exception('LDAP enabled and no server configured')
 
-        LDAP_USER_PREFIX = config.load('LDAP', 'USER_PREFIX')
+        LDAP_USER_PREFIX = config.load('LDAP', 'USER_PREFIX', '')
         if LDAP_USER_PREFIX is None:
             raise Exception('LDAP enabled and no user prefix configured')
 
-        LDAP_USER_SUFFIX = config.load('LDAP', 'USER_SUFFIX')
+        LDAP_USER_SUFFIX = config.load('LDAP', 'USER_SUFFIX', '')
         if LDAP_USER_SUFFIX is None:
             raise Exception('LDAP enabled and no user suffix configured')
 
