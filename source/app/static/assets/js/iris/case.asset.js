@@ -127,11 +127,7 @@ function get_case_assets() {
                 hide_loader();
                 Table.responsive.recalc();
 
-                $('#assets_table').on('click', function(e){
-                    if($('.popover-link').length>1)
-                        $('.popover-link').popover('hide');
-                        $(e.target).popover('toggle');
-                    });
+                $('[data-toggle="popover"]').popover({html: true, container: 'body'});
 
             } else {
                 Table.clear().draw();
@@ -386,11 +382,11 @@ $(document).ready(function(){
                         }
                     }
                     if (has_compro) {
-                       ret += `<i class="fas fa-meteor ml-2 text-danger" style="cursor: pointer;" data-html="true"
-                            data-toggle="popover" data-trigger="click" title="Observed on previous case" `;
+                       ret += `<a tabindex="0" class="fas fa-meteor ml-2 text-danger" style="cursor: pointer;" data-html="true"
+                            data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
                     } else {
-                        ret += `<i class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
-                        data-toggle="popover" data-trigger="click" title="Observed on previous case" `;
+                        ret += `<a tabindex="0" class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
+                        data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
                     }
 
                     ret += datacontent;
@@ -412,7 +408,7 @@ $(document).ready(function(){
            "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
                 data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+                datas = '<span data-toggle="popover-click-close" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
                 if (data.length > 70) {
                     datas += ' (..)</span>';
