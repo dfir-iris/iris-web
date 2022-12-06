@@ -487,8 +487,8 @@ function list_to_badges(wordlist, style, limit, type) {
     return badges;
 }
 
-var sanitizeHTML = function (str) {
-    return filterXSS(str);
+var sanitizeHTML = function (str, options) {
+    return filterXSS(str, options);
 };
 
 function isWhiteSpace(s) {
@@ -666,6 +666,9 @@ function get_row_id(row) {
     return null;
 }
 
+var iClassWhiteList = ['fa-solid fa-tags', 'fa-solid fa-virus-covid text-danger mr-1',
+'fa-solid fa-file-shield text-success mr-1', 'fa-regular fa-file mr-1', 'fa-solid fa-lock text-success mr-1']
+
 function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_callback, do_save, readonly, live_preview) {
     var editor = ace.edit(anchor_id);
     if ($("#"+anchor_id).attr("data-theme") != "dark") {
@@ -756,7 +759,25 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
                 parseImgDimensions: true
             });
             html = converter.makeHtml(editor.getSession().getValue());
-            target.innerHTML = filterXSS(html);
+            target.innerHTML = filterXSS(html, {
+                stripIgnoreTag: false,
+                whiteList: {
+                        i: ['class'],
+                        a: ['href', 'title', 'target'],
+                        img: ['src', 'alt', 'title', 'width', 'height'],
+                        p: []
+                    },
+                onTagAttr: function (tag, name, value, isWhiteAttr) {
+                    if (tag === "i" && name === "class") {
+                        if (iClassWhiteList.indexOf(value) === -1) {
+                            return false;
+                        } else {
+                            return name + '="' + value + '"';
+                        }
+                    }
+                  }
+                });
+
         });
 
         textarea.val(editor.getSession().getValue());
@@ -766,7 +787,24 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
             parseImgDimensions: true
         });
         html = converter.makeHtml(editor.getSession().getValue());
-        target.innerHTML = filterXSS(html);
+        target.innerHTML = filterXSS(html,  {
+                stripIgnoreTag: false,
+                whiteList: {
+                        i: ['class', 'title'],
+                        a: ['href', 'title', 'target'],
+                        img: ['src', 'alt', 'title', 'width', 'height'],
+                        p: []
+                    },
+                onTagAttr: function (tag, name, value, isWhiteAttr) {
+                    if (tag === "i" && name === "class") {
+                        if (iClassWhiteList.indexOf(value) === -1) {
+                            return false;
+                        } else {
+                            return name + '="' + value + '"';
+                        }
+                    }
+                  }
+                });
     }
 
     return editor;
