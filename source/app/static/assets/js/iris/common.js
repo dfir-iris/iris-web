@@ -1086,11 +1086,12 @@ function load_context_switcher() {
             ocs = data.data;
 
             for (index in ocs) {
-                console.log(ocs[index]);
+                case_name = sanitizeHTML(ocs[index].name);
+                cs_name = sanitizeHTML(ocs[index].customer_name);
                 if (ocs[index].close_date != null) {
-                    $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name}) ${ocs[index].access}</option>`);
+                    $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${case_name} (cs_name) ${ocs[index].access}</option>`);
                 } else {
-                    $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name}) ${ocs[index].access}</option>`)
+                    $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${case_name} (cs_name) ${ocs[index].access}</option>`)
                 }
             }
 

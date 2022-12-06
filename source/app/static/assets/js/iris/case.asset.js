@@ -114,7 +114,7 @@ function get_case_assets() {
             if (response.data != null) {
                 jsdata = response.data;
                 if (jsdata.assets.length > 299) {
-                    set_page_warning("Backref disabled due to too many assets in the case.");
+                    set_page_warning("Backref disabled due to too many assets in the case");
                 } else {
                     set_page_warning("");
                 }
