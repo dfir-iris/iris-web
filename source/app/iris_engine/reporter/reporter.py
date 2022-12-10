@@ -88,7 +88,7 @@ class IrisMakeDocReport(object):
 
         try:
             image_handler = ImageHandler(template=None, base_path='/')
-            generator = DocxGenerator(image_handler=image_handler, app_logger=app.logger)
+            generator = DocxGenerator(image_handler=image_handler)
             generator.generate_docx("/",
                                     os.path.join(app.config['TEMPLATES_PATH'], report.internal_reference),
                                     case_info,
