@@ -26,6 +26,7 @@
 import tempfile
 from flask import Blueprint
 from flask import redirect
+from flask import request
 from flask import send_file
 from flask import url_for
 from flask_login import current_user
@@ -58,7 +59,12 @@ def download_case_activity(report_id, caseid):
         if report:
             tmp_dir = tempfile.mkdtemp()
 
-            mreport = IrisMakeDocReport(tmp_dir, report_id, caseid)
+            safe_mode = False
+
+            if request.args.get('safe-mode') == 'true':
+                safe_mode = True
+
+            mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode=safe_mode)
             fpath = mreport.generate_doc_report(type="Activities")
 
             if fpath is None:
@@ -82,13 +88,18 @@ def _gen_report(report_id, caseid):
     if not current_user.is_authenticated:
         return redirect(not_authenticated_redirection_url())
 
+    safe_mode = False
+
     call_modules_hook('on_preload_report_create', data=report_id, caseid=caseid)
     if report_id:
         report = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
         if report:
             tmp_dir = tempfile.mkdtemp()
 
-            mreport = IrisMakeDocReport(tmp_dir, report_id, caseid)
+            if request.args.get('safe-mode') == 'true':
+                safe_mode = True
+
+            mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
             fpath = mreport.generate_doc_report(type="Investigation")
 
             if fpath is None:

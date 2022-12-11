@@ -58,11 +58,12 @@ class IrisMakeDocReport(object):
     Generates a DOCX report for the case
     """
 
-    def __init__(self, tmp_dir, report_id, caseid):
+    def __init__(self, tmp_dir, report_id, caseid, safe_mode=False):
         self._tmp = tmp_dir
         self._report_id = report_id
         self._case_info = {}
         self._caseid = caseid
+        self._safe_mode = safe_mode
 
     def generate_doc_report(self, type):
         """
@@ -87,7 +88,12 @@ class IrisMakeDocReport(object):
         output_file_path = os.path.join(self._tmp, name)
 
         try:
-            image_handler = ImageHandler(template=None, base_path='/')
+
+            if not self._safe_mode:
+                image_handler = ImageHandler(template=None, base_path='/')
+            else:
+                image_handler = None
+
             generator = DocxGenerator(image_handler=image_handler)
             generator.generate_docx("/",
                                     os.path.join(app.config['TEMPLATES_PATH'], report.internal_reference),
