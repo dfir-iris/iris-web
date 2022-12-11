@@ -1114,31 +1114,58 @@ function hide_table_search_input(columns) {
   }
 
 function load_context_switcher() {
-    get_request_api('/context/get-cases')
+
+    var options = {
+            ajax: {
+            url: '/context/search-cases'+ case_param(),
+            type: 'GET',
+            dataType: 'json'
+        },
+        locale: {
+                emptyTitle: 'Select and Begin Typing'
+        },
+        preprocessData: function (data) {
+            return context_data_parser(data);
+        },
+        preserveSelected: false
+    };
+
+
+    get_request_api('/context/get-cases/100')
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-            $('#user_context').empty();
-
-            $('#user_context').append('<optgroup label="Opened" id="switch_case_opened_opt"></optgroup>');
-            $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
-            ocs = data.data;
-
-            for (index in ocs) {
-                case_name = sanitizeHTML(ocs[index].name);
-                cs_name = sanitizeHTML(ocs[index].customer_name);
-                if (ocs[index].close_date != null) {
-                    $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`);
-                } else {
-                    $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`)
-                }
-            }
-
-            $('#modal_switch_context').modal("show");
-            $('#user_context').selectpicker('refresh');
-            $('#user_context').selectpicker('val', get_caseid());
-
-        }
+        context_data_parser(data);
+        $('#user_context').ajaxSelectPicker(options);
     });
+}
+
+function context_data_parser(data) {
+    if(notify_auto_api(data, true)) {
+        $('#user_context').empty();
+
+        $('#user_context').append('<optgroup label="Opened" id="switch_case_opened_opt"></optgroup>');
+        $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
+        ocs = data.data;
+        ret_data = [];
+        for (index in ocs) {
+            case_name = sanitizeHTML(ocs[index].name);
+            cs_name = sanitizeHTML(ocs[index].customer_name);
+            ret_data.push({
+                        'value': ocs[index].case_id,
+                        'text': `${case_name} (${cs_name}) ${ocs[index].access}`
+                    });
+            if (ocs[index].close_date != null) {
+                $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`);
+            } else {
+                $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`)
+            }
+        }
+
+        $('#modal_switch_context').modal("show");
+        $('#user_context').selectpicker('refresh');
+        $('#user_context').selectpicker('val', get_caseid());
+        return ret_data;
+
+    }
 }
 
 function focus_on_input_chg_case(){

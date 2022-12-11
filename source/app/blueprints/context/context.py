@@ -30,6 +30,7 @@ from app import app
 from app import cache
 from app import db
 from app.datamgmt.context.context_db import ctx_get_user_cases
+from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.models.authorization import Permissions
 from app.models.cases import Cases
@@ -91,13 +92,26 @@ def has_updates():
     return dict(has_updates=False)
 
 
-@ctx_blueprint.route('/context/get-cases', methods=['GET'])
+@ctx_blueprint.route('/context/get-cases/<int:max_results>', methods=['GET'])
 @ac_api_requires()
-def cases_context(caseid):
+def cases_context(max_results,  caseid):
     # Get all investigations not closed
-    datao = ctx_get_user_cases(current_user.id)
+    datao = ctx_get_user_cases(current_user.id, max_results=max_results)
 
     return response_success(data=datao)
+
+@ctx_blueprint.route('/context/search-cases', methods=['GET'])
+@ac_api_requires()
+def cases_context_search(caseid):
+    search = request.args.get('q')
+    if not search:
+        return response_success(data=[])
+
+    # Get all investigations not closed
+    datao = ctx_search_user_cases(search, current_user.id, max_results=100)
+
+    return response_success(data=datao)
+
 
 
 def update_user_case_ctx():
