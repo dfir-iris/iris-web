@@ -249,7 +249,10 @@
                 },
                 {
                     "data": "case_name",
-                    "className": "dt-center"
+                    "className": "dt-center",
+                    "render": function (data, type, row) {
+                        return `<a target="_blank" rel="noopener" href="/case?cid=${row.case_id}">${sanitizeHTML(data)}</a>`;
+                    }
                 },
                 {
                     "data": "access_level_list",
