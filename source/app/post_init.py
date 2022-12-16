@@ -35,6 +35,7 @@ from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
+from app.demo_builder import create_demo_cases
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
@@ -152,11 +153,15 @@ def run_post_init(development=False):
         custom_assets_symlinks()
 
         if app.config.get('DEMO_MODE_ENABLED') == 'True':
-            create_demo_users(def_org, gadm, ganalysts,
+            users_data = create_demo_users(def_org, gadm, ganalysts,
                               int(app.config.get('DEMO_USERS_COUNT', 10)),
                               app.config.get('DEMO_USERS_SEED'),
                               int(app.config.get('DEMO_ADM_COUNT', 4)),
                               app.config.get('DEMO_ADM_SEED'))
+
+            create_demo_cases(users_data=users_data,
+                              cases_count=int(app.config.get('DEMO_CASES_COUNT', 20)),
+                              clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
 
     if development:
         if os.getenv("IRIS_WORKER") is None:

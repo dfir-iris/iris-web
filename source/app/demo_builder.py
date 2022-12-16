@@ -25,9 +25,14 @@ from flask_login import current_user
 from app import app
 from app import bc
 from app import db
+from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.datamgmt.manage.manage_users_db import user_exists
+from app.models import Cases
+from app.models import Client
+from app.models import get_or_create
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 
 
@@ -79,11 +84,18 @@ def gen_demo_users(count, seed_user):
 
 
 def create_demo_users(def_org, gadm, ganalystes, users_count, seed_user, adm_count, seed_adm):
+    users = {
+        'admins': [],
+        'users': [],
+        'gadm': gadm,
+        'ganalystes': ganalystes
+    }
 
     for name, username, pwd, api_key in gen_demo_users(users_count, seed_user):
 
         # Create default users
-        if not user_exists(username, f'{username}@iris.local'):
+        user = user_exists(username, f'{username}@iris.local')
+        if not user:
             pwd = bc.generate_password_hash(pwd.encode('utf-8')).decode('utf-8')
             user = User(
                 user=username,
@@ -100,8 +112,11 @@ def create_demo_users(def_org, gadm, ganalystes, users_count, seed_user, adm_cou
             db.session.commit()
             log.info(f'Created demo user: {user.user} -  {pwd}')
 
+        users['users'].append(user)
+
     for name, username, pwd, api_key in gen_demo_admins(adm_count, seed_adm):
-        if not user_exists(username, f'{username}@iris.local'):
+        user = user_exists(username, f'{username}@iris.local')
+        if not user:
             password = bc.generate_password_hash(pwd.encode('utf-8')).decode('utf-8')
             user = User(
                 user=username,
@@ -117,3 +132,68 @@ def create_demo_users(def_org, gadm, ganalystes, users_count, seed_user, adm_cou
             add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
             db.session.commit()
             log.info(f'Created demo admin: {user.user} - {pwd}')
+
+        users['admins'].append(user)
+
+    return users
+
+def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_count: int = 0):
+
+    clients = []
+    for client_index in range(0, clients_count):
+        client = get_or_create(db.session,
+                      Client,
+                      name=f'Client {client_index}',
+                      description=f'Description for client {client_index}')
+        clients.append(client.client_id)
+
+    cases_list = []
+    for case_index in range(0, cases_count):
+        case = Cases(
+            name=f"Unrestricted Case {case_index}",
+            description="This is a demonstration of an unrestricted case",
+            soc_id=f"SOC-{case_index}",
+            gen_report=False,
+            user=random.choice(users_data['users']),
+            client_id=random.choice(clients)
+        )
+
+        case.validate_on_build()
+        case.save()
+
+        db.session.commit()
+        cases_list.append(case.case_id)
+        log.info('Added unrestricted case {}'.format(case.name))
+
+    log.info('Setting permissions for unrestricted cases')
+    add_case_access_to_group(group=users_data['ganalystes'],
+                             cases_list=cases_list,
+                             access_level=CaseAccessLevel.full_access.value)
+    add_case_access_to_group(group=users_data['gadm'],
+                             cases_list=cases_list,
+                             access_level=CaseAccessLevel.full_access.value)
+
+    cases_list = []
+    for case_index in range(0, int(cases_count/2)):
+        case = Cases(
+            name=f"Restricted Case {case_index}",
+            description="This is a demonstration of a restricted case that shouldn't be visible to analyst",
+            soc_id=f"SOC-{case_index}",
+            gen_report=False,
+            user=random.choice(users_data['admins']),
+            client_id=random.choice(clients)
+        )
+        case.validate_on_build()
+        case.save()
+
+        db.session.commit()
+        cases_list.append(case.case_id)
+        log.info('Added restricted case {}'.format(case.name))
+
+    add_case_access_to_group(group=users_data['ganalystes'],
+                             cases_list=cases_list,
+                             access_level=CaseAccessLevel.deny_all.value)
+
+    add_case_access_to_group(group=users_data['gadm'],
+                             cases_list=cases_list,
+                             access_level=CaseAccessLevel.full_access.value)
