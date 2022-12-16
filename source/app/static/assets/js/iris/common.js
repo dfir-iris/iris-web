@@ -765,7 +765,13 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
                         i: ['class'],
                         a: ['href', 'title', 'target'],
                         img: ['src', 'alt', 'title', 'width', 'height'],
-                        p: []
+                        p: [],
+                        hr: [],
+                        h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+                        ul: [], ol: [], li: [],
+                        code: [], pre: [],
+                        blockquote: [],
+                        table: [], thead: [], tbody: [], tr: [], th: [], td: []
                     },
                 onTagAttr: function (tag, name, value, isWhiteAttr) {
                     if (tag === "i" && name === "class") {
@@ -793,7 +799,14 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
                         i: ['class', 'title'],
                         a: ['href', 'title', 'target'],
                         img: ['src', 'alt', 'title', 'width', 'height'],
-                        p: []
+                        p: [],
+                        hr: [],
+                        h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+                        ul: [], ol: [], li: [],
+                        code: [], pre: [],
+                        blockquote: [],
+                        table: [], thead: [], tbody: [], tr: [], th: [], td: []
+
                     },
                 onTagAttr: function (tag, name, value, isWhiteAttr) {
                     if (tag === "i" && name === "class") {

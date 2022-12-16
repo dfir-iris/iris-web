@@ -35,7 +35,6 @@ from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_details
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
-from app.datamgmt.manage.manage_groups_db import remove_case_access_from_group
 from app.datamgmt.manage.manage_groups_db import remove_cases_access_from_group
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
@@ -52,7 +51,7 @@ from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
-from demo_builder import protect_demo_mode_group
+from app.demo_builder import protect_demo_mode_group
 
 manage_groups_blueprint = Blueprint(
         'manage_groups',

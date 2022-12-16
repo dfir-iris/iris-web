@@ -23,8 +23,8 @@ from flask import Blueprint
 from flask import render_template
 
 from app import app
-from demo_builder import gen_demo_admins
-from demo_builder import gen_demo_users
+from app.demo_builder import gen_demo_admins
+from app.demo_builder import gen_demo_users
 
 demo_blueprint = Blueprint(
     'demo-landing',

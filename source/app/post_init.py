@@ -37,7 +37,6 @@ from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
-from app.iris_engine.access_control.utils import ac_recompute_all_users_effective_ac
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
@@ -64,7 +63,7 @@ from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
 from app.models.models import get_or_create
-from demo_builder import create_demo_users
+from app.demo_builder import create_demo_users
 
 log = app.logger
 
