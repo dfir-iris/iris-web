@@ -149,6 +149,10 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
 
     cases_list = []
     for case_index in range(0, cases_count):
+        if demo_case_exists(f"Unrestricted Case {case_index}", f"SOC-{case_index}") is not None:
+            log.info(f'Restricted case {case_index} already exists')
+            continue
+
         case = Cases(
             name=f"Unrestricted Case {case_index}",
             description="This is a demonstration of an unrestricted case",
@@ -175,10 +179,14 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
 
     cases_list = []
     for case_index in range(0, int(cases_count/2)):
+        if demo_case_exists(f"Restricted Case {case_index}", f"SOC-RSTRCT-{case_index}") is not None:
+            log.info(f'Restricted case {case_index} already exists')
+            continue
+
         case = Cases(
             name=f"Restricted Case {case_index}",
             description="This is a demonstration of a restricted case that shouldn't be visible to analyst",
-            soc_id=f"SOC-{case_index}",
+            soc_id=f"SOC-RSTRCT-{case_index}",
             gen_report=False,
             user=random.choice(users_data['admins']),
             client_id=random.choice(clients)
@@ -197,3 +205,7 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
     add_case_access_to_group(group=users_data['gadm'],
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.full_access.value)
+
+def demo_case_exists(name, soc_id):
+    return db.session.query(Cases).filter(Cases.name.like(f'%{name}'),
+                                          Cases.soc_id == soc_id).first()
