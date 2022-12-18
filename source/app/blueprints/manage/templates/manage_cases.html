@@ -4,6 +4,7 @@
 
 {% block stylesheets %}
 <link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -147,6 +148,8 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div>
+<div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional" data-backdrop="true">
+            </div>
 {% endif %}
 
 {% endblock content %}
@@ -161,6 +164,7 @@
 <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
 
 <script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 
 <script src="/static/assets/js/iris/datatablesUtils.js"></script>
 <script src="/static/assets/js/iris/manage.cases.common.js"></script>
