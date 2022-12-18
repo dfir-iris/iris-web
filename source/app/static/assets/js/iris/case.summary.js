@@ -325,11 +325,19 @@ function access_case_info_reload(case_id) {
                     },
                     {
                         "data": "user_name",
-                        "className": "dt-center"
+                        "className": "dt-center",
+                        "render": function (data, type, row, meta) {
+                            if (type === 'display') { data = sanitizeHTML(data);}
+                            return data;
+                        }
                     },
                     {
                         "data": "user_login",
-                        "className": "dt-center"
+                        "className": "dt-center",
+                        "render": function (data, type, row, meta) {
+                            if (type === 'display') { data = sanitizeHTML(data);}
+                            return data;
+                        }
                     },
                     {
                         "data": "user_access_level",
