@@ -532,7 +532,7 @@ function capitalizeFirstLetter(string) {
 }
 
 function copy_object_link_md(data_type, node_id){
-    link = `[<i class="fa-solid fa-tag"></i> ${capitalizeFirstLetter(data_type)} #${node_id}](${buildShareLink(node_id)})`
+    link = `[<i class="fa-solid fa-tag></i> ${capitalizeFirstLetter(data_type)} #${node_id}](${buildShareLink(node_id)})`
     navigator.clipboard.writeText(link).then(function() {
         notify_success('MD link copied');
     }, function(err) {
@@ -666,7 +666,7 @@ function get_row_id(row) {
     return null;
 }
 
-var iClassWhiteList = ['fa-solid fa-tags', 'fa-solid fa-virus-covid text-danger mr-1',
+var iClassWhiteList = ['fa-solid fa-tags','fa-solid fa-tag', 'fa-solid fa-virus-covid text-danger mr-1',
 'fa-solid fa-file-shield text-success mr-1', 'fa-regular fa-file mr-1', 'fa-solid fa-lock text-success mr-1']
 
 function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_callback, do_save, readonly, live_preview) {
@@ -762,7 +762,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
             target.innerHTML = filterXSS(html, {
                 stripIgnoreTag: false,
                 whiteList: {
-                        i: ['class'],
+                        i: ['class', "title"],
                         a: ['href', 'title', 'target'],
                         img: ['src', 'alt', 'title', 'width', 'height'],
                         p: [],

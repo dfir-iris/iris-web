@@ -207,6 +207,114 @@ function remove_case_access_from_user(user_id, case_id, on_finish) {
     });
 }
 
+var access_levels = [
+    { "id": 1, "name": "Deny all" },
+    { "id": 2, "name": "Read only" },
+    { "id": 4, "name": "Full access" }
+]
+
+function get_access_level_options(data) {
+    var options = "";
+
+    for (var i = 0; i < access_levels.length; i++) {
+        options += `<option value="${access_levels[i].id}" ${data == access_levels[i].id ? 'selected' : ''}>${access_levels[i].name}</option>`;
+    }
+    return options;
+}
+
+function update_user_case_access_level(user_id, case_id, access_level) {
+    var data = {
+        "case_id": parseInt(case_id),
+        "user_id": parseInt(user_id),
+        "access_level": parseInt(access_level),
+        "csrf_token": $('#csrf_token').val()
+    };
+
+    post_request_api('/case/access/set-user', JSON.stringify(data), false, null, case_id)
+    .done((data) => {
+        notify_auto_api(data);
+    });
+}
+
+
+function access_case_info_reload(case_id) {
+    var req_users = [];
+
+    get_request_api('/case/users/list')
+    .done((data) => {
+         has_table = $.fn.dataTable.isDataTable( '#case_access_users_list_table' );
+        if (!notify_auto_api(data, !has_table)) {
+            return;
+        }
+
+        req_users = data.data;
+        if ( has_table ) {
+            table = $('#case_access_users_list_table').DataTable();
+            table.clear();
+            table.rows.add(req_users);
+            table.draw();
+        } else {
+            $.each($.find("table"), function(index, element){
+                addFilterFields($(element).attr("id"));
+            });
+            $("#case_access_users_list_table").DataTable({
+                    dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
+                    aaData: req_users,
+                    aoColumns: [
+                      {
+                        "data": "user_id",
+                        "className": "dt-center"
+                    },
+                    {
+                        "data": "user_name",
+                        "className": "dt-center",
+                        "render": function (data, type, row, meta) {
+                            if (type === 'display') { data = sanitizeHTML(data);}
+                            return data;
+                        }
+                    },
+                    {
+                        "data": "user_login",
+                        "className": "dt-center",
+                        "render": function (data, type, row, meta) {
+                            if (type === 'display') { data = sanitizeHTML(data);}
+                            return data;
+                        }
+                    },
+                    {
+                        "data": "user_access_level",
+                        "className": "dt-center",
+                        "render": function ( data, type, row ) {
+                            return `<select class="form-control" onchange="update_user_case_access_level('${row.user_id}',${case_id},this.value)">${get_access_level_options(data)}</select>`;
+                        }
+                    }
+                    ],
+                    filter: true,
+                    info: true,
+                    ordering: true,
+                    processing: true,
+                    initComplete: function () {
+                        tableFiltering(this.api(), 'case_access_users_list_table');
+                    }
+            });
+        }
+        for (var i = 0; i < req_users.length; i++) {
+            $('#username-list').append($('<option>', {
+                value: req_users[i].user_name
+            }));
+            $('#emails-list').append($('<option>', {
+                value: req_users[i].user_email
+            }));
+        }
+    });
+
+    $('#case_tags').amsifySuggestags({
+        printValues: false,
+        suggestions: []
+    });
+}
+
+
 function remove_cases_access_user(user_id, cases, on_finish) {
 
     swal({
