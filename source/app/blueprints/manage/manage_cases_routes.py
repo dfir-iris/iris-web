@@ -156,12 +156,7 @@ def api_delete_case(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
-    if cur_id == caseid:
-        track_activity("tried to delete case {}, but case was the context".format(cur_id),
-                       caseid=caseid, ctx_less=True)
-
-        return response_error("Cannot delete a case which is the current context")
-    elif cur_id == 1:
+    if cur_id == 1:
         track_activity("tried to delete case {}, but case is the primary case".format(cur_id),
                        caseid=caseid, ctx_less=True)
 
@@ -174,7 +169,7 @@ def api_delete_case(cur_id, caseid):
 
                 call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
 
-                track_activity("case {} deleted successfully".format(cur_id), caseid=caseid, ctx_less=True)
+                track_activity("case {} deleted successfully".format(cur_id), caseid=1, ctx_less=True)
                 return response_success("Case successfully deleted")
 
             else:

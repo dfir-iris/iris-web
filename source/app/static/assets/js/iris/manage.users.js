@@ -67,7 +67,6 @@ manage_users_table = $('#users_table').dataTable( {
         { "data": "user_active",
         "render": function (data, type, row, meta) {
             if (type === 'display') {
-                data = sanitizeHTML(data);
                 if (data == true) {
                     data = '<span class="badge ml-2 badge-success">Active</span>';
                 } else {

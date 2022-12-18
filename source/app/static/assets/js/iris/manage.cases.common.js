@@ -34,7 +34,7 @@ function remove_case(id) {
 
     swal({
         title: "Are you sure?",
-        text: "You won't be able to revert this !\nAll associated data will be deleted",
+        text: "You are about to delete this case forever. This cannot be reverted.\nAll associated data will be deleted",
         icon: "warning",
         buttons: true,
         dangerMode: true,
@@ -44,11 +44,24 @@ function remove_case(id) {
     })
         .then((willDelete) => {
             if (willDelete) {
-                get_request_api('/manage/cases/delete/' + id)
+                post_request_api('/manage/cases/delete/' + id)
                 .done((data) => {
                     if (notify_auto_api(data)) {
-                        refresh_case_table();
-                        $('#modal_case_detail').modal('hide');
+                        if (!refresh_case_table()) {
+                            swal({
+                                title: "Done!",
+                                text: "You will be redirected in 5 seconds",
+                                icon: "success",
+                                buttons: false,
+                                dangerMode: false
+                            })
+                            setTimeout(function () {
+                                window.location.href = '/dashboard?cid=1';
+                            }, 4500);
+                        } else {
+                            refresh_case_table();
+                            $('#modal_case_detail').modal('hide');
+                        }
                     }
                 });
             } else {
