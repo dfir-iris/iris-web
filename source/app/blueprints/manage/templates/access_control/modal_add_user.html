@@ -227,7 +227,7 @@
                     "title": "Group name",
                     "render": function ( data, type, row, meta ) {
                         if (type === 'display' ) {
-                            return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_member_from_group_wrap('${row[1]}','{{ user.user_id }}')"></i>${data}`;
+                            return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_member_from_group_wrap('${row[1]}','{{ user.user_id }}')"></i>${sanitizeHTML(data)}`;
                         }
                         return data;
                     }},
