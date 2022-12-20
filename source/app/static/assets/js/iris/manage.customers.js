@@ -61,6 +61,7 @@ $(document).ready(function() {
                             data = sanitizeHTML(data);
                             return '<a href="/manage/customers/' + row['customer_id'] + '/view'+ cid +'">' + data + '</a>';
                         }
+                        return data;
                     }
                 },
                 {
@@ -69,6 +70,7 @@ $(document).ready(function() {
                         if (type === 'display') {
                             return sanitizeHTML(data);
                         }
+                        return data;
                     }
                 }
             ]
