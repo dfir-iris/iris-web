@@ -57,12 +57,19 @@ $(document).ready(function() {
                 {
                     "data": "customer_name",
                     "render": function (data, type, row) {
-                        data = sanitizeHTML(data);
-                        return '<a href="/manage/customers/' + row['customer_id'] + '/view'+ cid +'">' + data + '</a>';
+                        if (type === 'display') {
+                            data = sanitizeHTML(data);
+                            return '<a href="/manage/customers/' + row['customer_id'] + '/view'+ cid +'">' + data + '</a>';
+                        }
                     }
                 },
                 {
-                    "data": "customer_description"
+                    "data": "customer_description",
+                    "render": function (data, type, row) {
+                        if (type === 'display') {
+                            return sanitizeHTML(data);
+                        }
+                    }
                 }
             ]
         }
