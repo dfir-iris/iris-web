@@ -172,25 +172,21 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
                     <div class="row mb-2 mr-1" >
                         <div class="col-12" id="comment_${data['data'][i].comment_id}">
                             <div class="row mt-2">
-                                <div class="col-5">
-                                    <div class="ml-2 row">
-                                        ${avatar}
-                                         <div class="ml-3 mt-1">
-                                            <h6 class="text-uppercase fw-bold mb-1">${data['data'][i].name}</h6>
+                                <div class="col">
+                                    <div class="row mr-2">
+                                        <div class="col">
+                                            <div class="ml-2 row">
+                                                ${avatar}
+                                                <h6 class="text-uppercase fw-bold mb-1 ml-1 mt-2">${filterXSS(data['data'][i].name)}</h6>
+                                                <div class="ml-auto">
+                                                    ${can_edit} <small class="text-muted text-wrap">${data['data'][i].comment_date}</small>
+                                                </div>
+                                            </div>
+                                            <div class="row" style="border-left: 3px solid #eaeaea;margin-left:30px;">
+                                                <span class="text-muted ml-2">${comment_html}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-7">
-                                    <div class="float-right">
-                                        ${can_edit} <small class="text-muted text-wrap">${data['data'][i].comment_date}</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-1">
-                                </div>
-                                <div class="col-10">
-                                    <span class="text-muted">${comment_html}</span>
                                 </div>
                             </div>
                         </div>
@@ -208,9 +204,11 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
                     $('#comments_list').animate({ scrollTop: offset});
                 }
             } else {
-                offset = document.getElementById('#comment_'+comment_id).offsetTop;
-                if (offset > 20) {
-                    $('#comments_list').animate({ scrollTop: offset});
+                if (document.getElementById('#comment_'+comment_id) !== null) {
+                    offset = document.getElementById('#comment_'+comment_id).offsetTop;
+                    if (offset > 20) {
+                        $('#comments_list').animate({ scrollTop: offset});
+                    }
                 }
             }
         }
