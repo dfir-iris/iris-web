@@ -216,7 +216,7 @@ def get_similar_assets(asset_name, asset_type_id, caseid, customer_id, cases_lim
     ).filter(
         CaseAssets.asset_name == asset_name,
         CaseAssets.asset_type_id == asset_type_id,
-        Cases.case_id.notin_(cases_limitation)
+        Cases.case_id.in_(cases_limitation)
     ).join(CaseAssets.case).all()
 
     return (lasset._asdict() for lasset in linked_assets)

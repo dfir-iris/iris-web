@@ -304,11 +304,11 @@ def get_user_cases_access(user_id):
 
 def get_user_cases_fast(user_id):
 
-    user_cases = UserCaseAccess.query.with_entities(
-        UserCaseAccess.case_id
+    user_cases = UserCaseEffectiveAccess.query.with_entities(
+        UserCaseEffectiveAccess.case_id
     ).where(
-        UserCaseAccess.user_id == user_id,
-        UserCaseAccess.access_level != CaseAccessLevel.deny_all.value
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value
     ).all()
 
     return [c.case_id for c  in user_cases]

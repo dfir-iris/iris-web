@@ -323,7 +323,7 @@ def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
-        return response_error("Invalid IOC ID for this case".format(cur_id))
+        return response_error("Invalid IOC ID for this case")
 
     return response_success(data=ioc_schema.dump(ioc))
 
@@ -353,8 +353,8 @@ def case_update_ioc(cur_id, caseid):
         ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=caseid)
 
         if ioc_sc:
-            track_activity("updated ioc \"{ioc_sc.ioc_value}\"", caseid=caseid)
-            return response_success("Updated ioc \"{ioc_sc.ioc_value}\"", data=ioc_schema.dump(ioc))
+            track_activity(f"updated ioc \"{ioc_sc.ioc_value}\"", caseid=caseid)
+            return response_success(f"Updated ioc \"{ioc_sc.ioc_value}\"", data=ioc_schema.dump(ioc))
 
         return response_error("Unable to update ioc for internal reasons")
 
