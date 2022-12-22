@@ -282,7 +282,9 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid IOC ID",
                                                              field_name="event_assets")
-
+        if data.get('event_color') and data.get('event_color') not in ['#fff', '#1572E899', '#6861CE99', '#48ABF799',
+                                                                       '#31CE3699',  '#F2596199', '#FFAD4699']:
+            data['event_color'] = ''
         return data
 
     @post_load
