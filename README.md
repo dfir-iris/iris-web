@@ -16,6 +16,19 @@ IRIS is a web collaborative platform aiming to help incident responders sharing 
 
 ![demo_timeline](img/timeline_speed.gif)
 
+## Table of contents
+- [Getting Started](#getting-started)
+  - [Run IrisWeb](#run-irisweb)
+  - [Configuration](#configuration)
+- [Showcase](#showcase)
+- [Documentation](#documentation)
+  - [Upgrades](#upgrades)
+  - [API](#api)
+- [Help](#help)
+- [Considerations](#considerations)
+- [License](#license)
+
+
 ## Getting started
 It is divided in two main parts, IrisWeb and IrisModules.   
  - IrisWeb is the web application which contains the core of
@@ -42,6 +55,9 @@ Each service can be built independently, which can be useful when developing.
 git clone https://github.com/dfir-iris/iris-web.git
 cd iris-web
 
+# Checkout to the last tagged version 
+git checkout v2.0.0
+
 # Copy the environment file 
 cp .env.model .env
 # [... optionally, do some configuration as specified below ...]
@@ -53,42 +69,31 @@ docker-compose build
 docker-compose up
 ```
 
-Iris will be available on the host interface, port 4433, protocol HTTPS - ``https://<your_instance_ip>:4433``.  
+Iris shall be available on the host interface, port 443, protocol HTTPS - ``https://<your_instance_ip>:443``.  
 By default, an ``administrator`` account is created. The password is printed in stdout the very first time Iris is started. It won't be printed anymore after that.  
-You can search for ``WARNING :: post_init :: create_safe_admin :: >>>`` in the logs to find the password.  
+You can search for ``WARNING :: post_init :: create_safe_admin :: >>>`` in the logs of the `webapp` docker to find the password.  
 
-If you want to define an admin password at the first start, you can also create and define the environment variable **IRIS_ADM_PASSWORD** in the `app` docker instance (see the webApp Dockerfile). This has no effects once the administrator account is created.   
-
-## Optional configuration
-
-You can skip this part if you just want to try or develop. If used in production, please configure the .env file at the root of the project:
-
-- Nginx: you might want to specify your own certificate as specified above
-- Database credentials: **POSTGRES_PASSWORD** and **POSTGRES_ADMIN_PASSWORD** (you can also customise the usernames)
-- IRIS secrets: **IRIS_SECRET_KEY** and **IRIS_SECURITY_PASSWORD_SALT**
-
-## Configuration
+### Configuration
 There are three different options for configuring the settings and credentials: Azure Key Vault, Environment Variables and Configuration Files. This is also the order of priority, if a settings is not set it will fallback on the next option.
-
-For all available configuration options see [CONFIGURATION.md](CONFIGURATION.md)
-
+For all available configuration options see [CONFIGURATION.md](CONFIGURATION.md). 
 
 ## Showcase
 For a more comprehensive overview of the case features, 
 you can head to [tutorials](https://docs.dfir-iris.org/operations/tutorials/), we've put some videos there.  
 
-## Upgrades
-Please read the release notes when upgrading versions. Most of the time the migrations are handled automatically, but some
-changes might require manual labor depending on the version. 
-
 ## Documentation
 A comprehensive documentation is available on [docs.dfir-iris.org](https://docs.dfir-iris.org).
 
-## API
+### Upgrades
+Please read the release notes when upgrading versions. Most of the time the migrations are handled automatically, but some
+changes might require manual labor depending on the version. 
+
+### API
 The API reference is available in the [documentation](https://docs.dfir-iris.org/operations/api/#references) or [documentation repository](https://github.com/dfir-iris/iris-doc-src).
 
 ## Help
-You can reach us on [Discord](https://discord.gg/76tM6QUJza) or by [mail](mailto:contact@dfir-iris.org) if you have any question, issue or idea !
+You can reach us on [Discord](https://discord.gg/76tM6QUJza) or by [mail](mailto:contact@dfir-iris.org) if you have any question, issue or idea!   
+We are also on [Twitter](https://twitter.com/dfir_iris) and [Matrix](https://matrix.to/#/#dfir-iris:matrix.org).  
 
 ## Considerations
 Iris is in its early stage. It can already be used in production, but please set backups of the database and DO NOT expose the interface on the Internet. We highly recommend using a private dedicated and secured network.
