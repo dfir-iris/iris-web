@@ -668,7 +668,7 @@ function build_timeline(data) {
                                         ${flag}
                                     </span>
                                 </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="comment_event(${evt.event_id}, 'timeline/events'))" title="Comments">
+                                <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
                                     <span class="btn-label">
                                         <i class="fa-solid fa-comments"></i><span class="notification">${nb_comments}</span>
                                     </span>
