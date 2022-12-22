@@ -218,7 +218,7 @@ function preview_event_description(no_btn_update) {
 }
 
 function is_timeline_compact_view() {
-    var x = getCookie('iris_tm_compact');
+    var x = localStorage.getItem('iris-tm-compact');
     if (typeof x !== 'undefined') {
         if (x === 'true') {
             return true;
