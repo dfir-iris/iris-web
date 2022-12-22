@@ -40,7 +40,7 @@
                 <ul>
                     <li><b>Do not upload any illegal or confidential materials</b></li>
                     <li><b>Do not download and open files from other users blindly</b></li>
-                    <li><b>Respect a <a class="text-muted" target="_blank" rel="noopener noreferrer" href="https://cheatsheetseries.owasp.org/cheatsheets/Vulnerability_Disclosure_Cheat_Sheet.html#responsible-or-coordinated-disclosure">responsible disclosure</a> of 30 days</b></li>
+                    <li><b>Respect a <a class="text-muted" target="_blank" rel="noopener noreferrer" href="https://cheatsheetseries.owasp.org/cheatsheets/Vulnerability_Disclosure_Cheat_Sheet.html#responsible-or-coordinated-disclosure">responsible disclosure</a> of 30 days if you find a vulnerability</b></li>
                 </ul>
             </div>
             <div class="col-md-1 col-lg-2"></div>
@@ -48,13 +48,13 @@
         <div class="row mt-4">
             <div class="col-md-1 col-lg-2"></div>
             <div class="col-md-10 col-lg-8 ml-4">
-                <p class=""><b>The instance is completely reset every week</b>, on Sunday at 11:59:59 PM UTC.</p>
+                <p class=""><b>The instance is reset every week</b>, on Sunday at 11:59:59 PM UTC.</p>
                 <p class=""><b>If you notice anything suspicious</b>, please <a href="mailto:contact@dfir-iris.org">contact us</a> immediately.</p>
                 <p class=""><b>If you find a vulnerability</b>, <a href="mailto:contact@dfir-iris.org">contact us</a> before going public as it may impact systems already in production.<br/>
-                    In other words, please respect a responsible disclosure of 30 days. We will patch and then publish the vulnerability. Depending on the finding a CVE might be requested, and will hold your name - except if you don't want to.<br/>
+                    In other words, please respect a responsible disclosure of 30 days. We will patch and then publish the vulnerability. Depending on the finding a CVE might be requested, and will have your name - except if you don't want to.<br/>
                     You can report anything you find at <a href="mailto:contact@dfir-iris.org">contact@dfir-iris.org</a>.</p>
                 <p class=""><b>The scope of the security tests</b> is limited to the Web Application IRIS hosted on <a class="" target="_blank" rel="noopener" href="{{ demo_domain }}">{{ demo_domain }}</a>.<br/>
-                    <span class="text-danger">Subdomains, SSH, scanning of the IP, BF, and other flavors are <b>out of scope.</b></span></p>
+                    Please read the rules of engagements below. <span class="text-danger">Subdomains, SSH, scanning of the IP, BF, and other flavors are <b>out of scope.</b></span></p>
                 <p><i>By accessing this instance you confirm you read, understand and agree with all the information on this page.</i></p>
             </div>
             <div class="col-md-1 col-lg-2"></div>
@@ -84,7 +84,7 @@
 
                     <h4 class="mt-2">Privacy</h4><br/>
                     <p>This demonstration instance is shared and we cannot guarantee the privacy of data you might upload on it. We are not responsible for any data loss or data leak. </p>
-                    <p>To better understand the use of this instance, we use a privacy-friendly cookie-less analytics. We do not collect any personal data. We do not use any third-party analytics and use a self-hosted <a target="_blank" rel="noopener" href="https://plausible.io/">Plausible</a> instance.</p>
+                    <p>To better understand the use of this instance, DFIR-IRIS uses a privacy-friendly cookie-less analytics. DFIR-IRIS does not collect any personal data. DFIR-IRIS does not use any third-party analytics and uses a self-hosted <a target="_blank" rel="noopener" href="https://plausible.io/">Plausible</a> instance.</p>
                 </div>
             </div>
             <div class="collapse" id="collapseSecRules">
@@ -111,13 +111,14 @@
                       <li>The app is behind CloudFlare, however the WAF feature is disabled.</li>
                   </ul>
                 <h3>Resources</h3>
-                  <p>You can read more about IRIS on the <a href="https://docs.dfir-iris.org">official documentation website</a>.</p>
+                  <p>You can read more about IRIS on the <a target="_blank" rel="noopener" href="https://docs.dfir-iris.org">official documentation website</a>.<br/>
+                  IRIS is an open source app, so you can directly access the code on <a target="_blank" rel="noopener" href="https://github.com">GitHub</a>.</p>
               </div>
             </div>
             <div class="collapse" id="collapseAccounts">
               <div class="card card-body">
                 <h3 class="mt-2">Accounts</h3>
-                  The following accounts are available on the instance:
+                  The following accounts are available on the instance. These users cannot be updated or deleted. However new users and groups can be created.
                   <table class="table table-striped table-hover responsive">
                       <thead>
                             <tr>
