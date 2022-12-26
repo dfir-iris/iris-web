@@ -71,14 +71,13 @@ function send_update_case_data() {
         if (notify_auto_api(data, true)) {
             $('#submit_update_case').text('Saved');
             swal("That's done !",
-                "Additional files are being imported in background.\nYou can follow the progress on the dashboard.",
+                "Files are being processed in background.\nYou can follow the progress in DIM Tasks",
                 "success",
                 {
                     buttons: {
                         again: {
                             text: "Import files again",
-                            value: "again",
-                            dangerMode: true
+                            value: "again"
                         },
                         dash: {
                             text: "Go to dashboard",
@@ -94,11 +93,11 @@ function send_update_case_data() {
                         break;
 
                     case "again":
-                        window.location.replace("/manage/cases" + case_param());
+                        window.location.replace("/case" + case_param());
                         break;
 
                     default:
-                        window.location.replace("/dashboard" + case_param());
+                        window.location.replace("/case" + case_param());
                 }
             });
         } else {
