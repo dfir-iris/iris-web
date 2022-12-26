@@ -181,11 +181,11 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.full_access.value)
 
-    ac_add_users_multi_effective_access(users_list=users_data['ganalystes'],
+    ac_add_users_multi_effective_access(users_list=[u.id for u in users_data['users']],
                                         cases_list=cases_list,
                                         access_level=CaseAccessLevel.full_access.value)
 
-    ac_add_users_multi_effective_access(users_list=users_data['gadm'],
+    ac_add_users_multi_effective_access(users_list=[u.id for u in users_data['admins']],
                                         cases_list=cases_list,
                                         access_level=CaseAccessLevel.full_access.value)
 
@@ -214,7 +214,7 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.deny_all.value)
 
-    ac_add_users_multi_effective_access(users_list=users_data['ganalystes'],
+    ac_add_users_multi_effective_access(users_list=[u.id for u in users_data['users']],
                                         cases_list=cases_list,
                                         access_level=CaseAccessLevel.deny_all.value)
 
@@ -223,7 +223,7 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.full_access.value)
 
-    ac_add_users_multi_effective_access(users_list=users_data['gadm'],
+    ac_add_users_multi_effective_access(users_list=[u.id for u in users_data['admins']],
                                         cases_list=cases_list,
                                         access_level=CaseAccessLevel.full_access.value)
 

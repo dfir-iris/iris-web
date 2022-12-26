@@ -51,7 +51,7 @@ from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
-from app.demo_builder import protect_demo_mode_group
+from app.iris_engine.demo_builder import protect_demo_mode_group
 
 manage_groups_blueprint = Blueprint(
         'manage_groups',

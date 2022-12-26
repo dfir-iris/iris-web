@@ -35,7 +35,7 @@ from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
-from app.demo_builder import create_demo_cases
+from app.iris_engine.demo_builder import create_demo_cases
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
@@ -64,7 +64,7 @@ from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
 from app.models.models import get_or_create
-from app.demo_builder import create_demo_users
+from app.iris_engine.demo_builder import create_demo_users
 
 log = app.logger
 

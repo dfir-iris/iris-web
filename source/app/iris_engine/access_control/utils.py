@@ -151,6 +151,7 @@ def ac_get_effective_permissions_of_user(user):
     """
     Return a permission mask from a user
     """
+
     groups_perms = UserGroup.query.with_entities(
         Group.group_permissions,
     ).filter(
@@ -328,8 +329,8 @@ def ac_add_users_multi_effective_access(users_list, cases_list, access_level):
     """
     Add multiple users to multiple cases with a specific access level
     """
-    for case in cases_list:
-        ac_add_user_effective_access(users_list, case_id=case['id'], access_level=access_level)
+    for case_id in cases_list:
+        ac_add_user_effective_access(users_list, case_id=case_id, access_level=access_level)
 
     return
 
