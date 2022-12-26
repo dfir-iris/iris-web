@@ -309,6 +309,7 @@ class Config():
         DEMO_DOMAIN = config.load('IRIS_DEMO', 'DOMAIN', fallback=None)
         DEMO_USERS_SEED = config.load('IRIS_DEMO', 'USERS_SEED', fallback=0)
         DEMO_ADM_SEED = config.load('IRIS_DEMO', 'ADM_SEED', fallback=0)
+        MAX_CONTENT_LENGTH = 20000
 
     WTF_CSRF_TIME_LIMIT = None
 
