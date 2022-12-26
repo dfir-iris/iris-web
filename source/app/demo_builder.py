@@ -29,6 +29,9 @@ from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.datamgmt.manage.manage_users_db import user_exists
+from app.iris_engine.access_control.utils import ac_add_user_effective_access
+from app.iris_engine.access_control.utils import ac_add_users_multi_effective_access
+from app.iris_engine.access_control.utils import ac_set_case_access_for_users
 from app.models import Cases
 from app.models import Client
 from app.models import get_or_create
@@ -96,10 +99,10 @@ def create_demo_users(def_org, gadm, ganalystes, users_count, seed_user, adm_cou
         # Create default users
         user = user_exists(username, f'{username}@iris.local')
         if not user:
-            pwd = bc.generate_password_hash(pwd.encode('utf-8')).decode('utf-8')
+            password = bc.generate_password_hash(pwd.encode('utf-8')).decode('utf-8')
             user = User(
                 user=username,
-                password=pwd,
+                password=password,
                 email=f'{username}@iris.local',
                 name=name,
                 active=True)
@@ -173,9 +176,18 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
     add_case_access_to_group(group=users_data['ganalystes'],
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.full_access.value)
+
     add_case_access_to_group(group=users_data['gadm'],
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.full_access.value)
+
+    ac_add_users_multi_effective_access(users_list=users_data['ganalystes'],
+                                        cases_list=cases_list,
+                                        access_level=CaseAccessLevel.full_access.value)
+
+    ac_add_users_multi_effective_access(users_list=users_data['gadm'],
+                                        cases_list=cases_list,
+                                        access_level=CaseAccessLevel.full_access.value)
 
     cases_list = []
     for case_index in range(0, int(cases_count/2)):
@@ -202,9 +214,20 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.deny_all.value)
 
+    ac_add_users_multi_effective_access(users_list=users_data['ganalystes'],
+                                        cases_list=cases_list,
+                                        access_level=CaseAccessLevel.deny_all.value)
+
+
     add_case_access_to_group(group=users_data['gadm'],
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.full_access.value)
+
+    ac_add_users_multi_effective_access(users_list=users_data['gadm'],
+                                        cases_list=cases_list,
+                                        access_level=CaseAccessLevel.full_access.value)
+
+    log.info('Demo data created successfully')
 
 def demo_case_exists(name, soc_id):
     return db.session.query(Cases).filter(Cases.name.like(f'%{name}'),

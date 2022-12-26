@@ -138,7 +138,7 @@ def run_post_init(development=False):
         log.info("Registering default modules")
         register_default_modules()
 
-        log.info("Creating initian client")
+        log.info("Creating initial customer")
         client = create_safe_client()
 
         log.info("Creating initial case")
@@ -153,6 +153,10 @@ def run_post_init(development=False):
         custom_assets_symlinks()
 
         if app.config.get('DEMO_MODE_ENABLED') == 'True':
+            log.warning("============================")
+            log.warning("|  THIS IS DEMO INSTANCE   |")
+            log.warning("| DO NOT USE IN PRODUCTION |")
+            log.warning("============================")
             users_data = create_demo_users(def_org, gadm, ganalysts,
                               int(app.config.get('DEMO_USERS_COUNT', 10)),
                               app.config.get('DEMO_USERS_SEED'),
@@ -163,14 +167,8 @@ def run_post_init(development=False):
                               cases_count=int(app.config.get('DEMO_CASES_COUNT', 20)),
                               clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
 
-    if development:
-        if os.getenv("IRIS_WORKER") is None:
-            log.warning("=================================")
-            log.warning("| THIS IS DEVELOPMENT INSTANCE  |")
-            log.warning("|    DO NOT USE IN PRODUCTION    |")
-            log.warning("=================================")
-
-            # Do "dev" stuff here
+        log.info("Post-init steps completed")
+        log.info('IRIS ready')
 
 
 def create_safe_db(db_name):

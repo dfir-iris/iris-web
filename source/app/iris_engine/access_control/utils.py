@@ -324,6 +324,14 @@ def ac_recompute_effective_ac(user_id):
 
     return ac_auto_update_user_effective_access(user_id)
 
+def ac_add_users_multi_effective_access(users_list, cases_list, access_level):
+    """
+    Add multiple users to multiple cases with a specific access level
+    """
+    for case in cases_list:
+        ac_add_user_effective_access(users_list, case_id=case['id'], access_level=access_level)
+
+    return
 
 def ac_add_user_effective_access(users_list, case_id, access_level):
     """
