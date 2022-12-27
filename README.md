@@ -6,7 +6,7 @@
 <p align="center">
   Incident Response Investigation System
   <br>
-  <i>Current Version v1.4.5</i>
+  <i>Current Version v2.0.0-beta-1</i>
   <br>
 </p>
 
@@ -51,7 +51,7 @@ git clone https://github.com/dfir-iris/iris-web.git
 cd iris-web
 
 # Checkout to the last tagged version 
-git checkout v1.4.5
+git checkout v2.0.0-beta-1
 
 # Copy the environment file 
 cp .env.model .env
