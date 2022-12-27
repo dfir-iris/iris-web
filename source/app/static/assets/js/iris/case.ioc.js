@@ -1,6 +1,24 @@
 /* reload the ioc table */
+var g_ioc_id = null;
+var g_ioc_desc_editor = null;
+
+
 function reload_iocs() {
     get_case_ioc();
+}
+
+function edit_in_ioc_desc() {
+    if($('#container_ioc_desc_content').is(':visible')) {
+        $('#container_ioc_description').show(100);
+        $('#container_ioc_desc_content').hide(100);
+        $('#ioc_edition_btn').hide(100);
+        $('#ioc_preview_button').hide(100);
+    } else {
+        $('#ioc_preview_button').show(100);
+        $('#ioc_edition_btn').show(100);
+        $('#container_ioc_desc_content').show(100);
+        $('#container_ioc_description').hide(100);
+    }
 }
 
 /* Fetch a modal that is compatible with the requested ioc type */ 
@@ -14,6 +32,20 @@ function add_ioc() {
              return false;
         }
 
+        g_ioc_desc_editor = get_new_ace_editor('ioc_description', 'ioc_desc_content', 'target_ioc_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, null);
+
+        g_ioc_desc_editor.setOption("minLines", "10");
+        edit_in_ioc_desc();
+
+        headers = get_editor_headers('g_ioc_desc_editor', null, 'ioc_edition_btn');
+        $('#ioc_edition_btn').append(headers);
+
+
         $('#submit_new_ioc').on("click", function () {
             if(!$('form#form_new_ioc').valid()) {
                 return false;
@@ -21,6 +53,8 @@ function add_ioc() {
 
             var data = $('#form_new_ioc').serializeObject();
             data['ioc_tags'] = $('#ioc_tags').val();
+            data['ioc_description'] = g_ioc_desc_editor.getValue();
+
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
             attributes = ret[1];
@@ -57,9 +91,17 @@ function add_ioc() {
 
             return false;
         });
+
+        $('#modal_add_ioc').modal({ show: true });
+        $('#ioc_value').focus();
+
     });
-    $('#modal_add_ioc').modal({ show: true });
+
     return false;
+}
+
+function save_ioc() {
+    $('#submit_new_ioc').click();
 }
 
 /* Retrieve the list of iocs and build a datatable for each type of ioc */
@@ -81,13 +123,10 @@ function get_case_ioc() {
                         $(e.target).popover('toggle');
                     });
 
-
-                $('#ioc_table_filter').addClass('mt--4');
-
                 $('#ioc_table_wrapper').show();
                 $('[data-toggle="popover"]').popover();
                 Table.columns.adjust().draw();
-                load_menu_mod_options('ioc', Table);
+                load_menu_mod_options('ioc', Table, delete_ioc);
                 hide_loader();
                 Table.responsive.recalc();
 
@@ -101,6 +140,7 @@ function get_case_ioc() {
     })
 }
 
+
 /* Edit an ioc */
 function edit_ioc(ioc_id) {
     url = 'ioc/' + ioc_id + '/modal' + case_param();
@@ -110,6 +150,19 @@ function edit_ioc(ioc_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
+        
+        g_ioc_id = ioc_id;
+        g_ioc_desc_editor = get_new_ace_editor('ioc_description', 'ioc_desc_content', 'target_ioc_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, null, false, false);
+
+        g_ioc_desc_editor.setOption("minLines", "10");
+        preview_ioc_description(true);
+        headers = get_editor_headers('g_ioc_desc_editor', null, 'ioc_edition_btn');
+        $('#ioc_edition_btn').append(headers);
 
         load_menu_mod_options_modal(ioc_id, 'ioc', $("#ioc_modal_quick_actions"));
         $('.dtr-modal').hide();
@@ -117,10 +170,45 @@ function edit_ioc(ioc_id) {
     $('#modal_add_ioc').modal({ show: true });
 }
 
-/* Update an ioc */
+function preview_ioc_description(no_btn_update) {
+    if(!$('#container_ioc_description').is(':visible')) {
+        ioc_desc = g_ioc_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(ioc_desc);
+        ioc_desc_html = filterXSS(html);
+        $('#target_ioc_desc').html(ioc_desc_html);
+        $('#container_ioc_description').show();
+        if (!no_btn_update) {
+            $('#ioc_preview_button').html('<i class="fa-solid fa-eye-slash"></i>');
+        }
+        $('#container_ioc_desc_content').hide();
+    }
+    else {
+        $('#container_ioc_description').hide();
+         if (!no_btn_update) {
+            $('#ioc_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        }
+
+        $('#ioc_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        $('#container_ioc_desc_content').show();
+    }
+}
+
 function update_ioc(ioc_id) {
+    update_ioc_ext(ioc_id, true);
+}
+
+/* Update an ioc */
+function update_ioc_ext(ioc_id, do_close) {
     if(!$('form#form_new_ioc').valid()) {
         return false;
+    }
+
+    if (ioc_id === undefined || ioc_id === null) {
+        ioc_id = g_ioc_id;
     }
 
     var data = $('#form_new_ioc').serializeObject();
@@ -130,14 +218,22 @@ function update_ioc(ioc_id) {
     attributes = ret[1];
 
     if (has_error){return false;}
-
+    data['ioc_description'] = g_ioc_desc_editor.getValue();
     data['custom_attributes'] = attributes;
 
     post_request_api('ioc/update/' + ioc_id, JSON.stringify(data), true)
     .done((data) => {
         if (data.status == 'success') {
             reload_iocs();
-            $('#modal_add_ioc').modal('hide');
+
+            $('#submit_new_ioc').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
+            if (do_close !== undefined && do_close === true) {
+                $('#modal_add_ioc').modal('hide');
+            }
+
             notify_success(data.message);
 
         } else {
@@ -150,17 +246,22 @@ function update_ioc(ioc_id) {
 
 /* Delete an ioc */
 function delete_ioc(ioc_id) {
-    get_request_api('ioc/delete/' + ioc_id)
-    .done((data) => {
-        if (data.status == 'success') {
-            reload_iocs();
-            notify_success(data.message);
-            $('#modal_add_ioc').modal('hide');
+    do_deletion_prompt("You are about to delete IOC #" + ioc_id)
+    .then((doDelete) => {
+        if (doDelete) {
+            post_request_api('ioc/delete/' + ioc_id)
+            .done((data) => {
+                if (data.status == 'success') {
+                    reload_iocs();
+                    notify_success(data.message);
+                    $('#modal_add_ioc').modal('hide');
 
-        } else {
-            swal("Oh no !", data.message, "error")
+                } else {
+                    swal("Oh no !", data.message, "error")
+                }
+            })
         }
-    })
+    });
 }
 
 function fire_upload_iocs() {
@@ -221,7 +322,7 @@ $(document).ready(function(){
     });
 
     Table = $("#ioc_table").DataTable({
-        dom: 'Blfrtip',
+        dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
         fixedHeader: true,
         aaData: [],
         aoColumns: [
@@ -229,10 +330,7 @@ $(document).ready(function(){
             "data": "ioc_value",
             "render": function (data, type, row, meta) {
               if (type === 'display') {
-                datak= sanitizeHTML(data);
-                if (data.length > 60) {
-                    datak = data.slice(0, 60) + " (..)";
-                }
+                datak= ellipsis_field(data, 64);
 
                 if (isWhiteSpace(data)) {
                     datak = '#' + row['ioc_id'];
@@ -240,12 +338,8 @@ $(document).ready(function(){
 
                 share_link = buildShareLink(row['ioc_id']);
                 data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
-                if (row['ioc_misp'] != null) {
-                    jse = JSON.parse(row['ioc_misp']);
-                    data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
-                       data-toggle="popover" data-trigger="hover" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
-                }
               }
+
               return data;
             }
           },
@@ -317,19 +411,14 @@ $(document).ready(function(){
         retrieve: true,
         responsive: {
             details: {
-                display: $.fn.dataTable.Responsive.display.modal( {
-                    header: function ( row ) {
-                        var data = row.data();
-                        return 'Details for '+ sanitizeHTML(data.ioc_value) +'('+ sanitizeHTML(data.ioc_type) + ')';
-                    }
-                } ),
+                display: $.fn.dataTable.Responsive.display.childRow,
                 renderer: $.fn.dataTable.Responsive.renderer.tableAll()
             }
         },
         buttons: [],
         orderCellsTop: true,
         initComplete: function () {
-            tableFiltering(this.api());
+            tableFiltering(this.api(), 'ioc_table');
         },
         select: true
     });
@@ -342,9 +431,11 @@ $(document).ready(function(){
     var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
         { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Download as CSV' },
+        , "titleAttr": 'Download as CSV', "exportOptions": { "columns": ':visible', 'orthogonal':  'export' } } ,
         { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
-        , "titleAttr": 'Copy' },
+        , "titleAttr": 'Copy', "exportOptions": { "columns": ':visible', 'orthogonal':  'export' } },
+        { "extend": 'colvis', "text":'<i class="fas fa-eye-slash"></i>',"className": 'btn btn-link text-white'
+        , "titleAttr": 'Toggle columns' }
     ]
 }).container().appendTo($('#tables_button'));
 

@@ -1,7 +1,7 @@
 function renew_api() {
     swal({
         title: "Are you sure?",
-        text: "The actual key will be revoked and cannot be used anymore",
+        text: "The current key will be revoked and cannot be used anymore",
         icon: "warning",
         buttons: true,
         dangerMode: true,
@@ -56,6 +56,17 @@ function update_password(user_id) {
     $('#modal_pwd_user').modal({ show: true });
 }
 
+function refresh_user_permissions() {
+    var ori_txt = $('#user_refresh_perms_btn').text();
+    $('#user_refresh_perms_btn').text('Refreshing..');
+     get_request_api('refresh-permissions')
+    .done((data) => {
+        notify_auto_api(data);
+    }).always(() => {
+        $('#user_refresh_perms_btn').text(ori_txt);
+
+    });
+}
 
 $('input[type=radio][name=iris-theme]').change(function() {
     if (this.value == 'false') {
@@ -71,5 +82,20 @@ $('input[type=radio][name=iris-theme]').change(function() {
         if (notify_auto_api(data, true)) {
             location.reload(true);
         }
+    });
+});
+
+$('input[type=radio][name=user-has-deletion-prompt]').change(function() {
+    if (this.value == 'false') {
+        do_prompt = false;
+    }
+    else if (this.value == 'true') {
+       do_prompt = true;
+    } else {
+        return;
+    }
+    get_request_api('deletion-prompt/set/'+ do_prompt)
+    .done((data) => {
+        notify_auto_api(data);
     });
 });

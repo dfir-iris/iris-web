@@ -187,7 +187,10 @@ function delete_ds_folder(node) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            get_request_api('/datastore/folder/delete/' + node)
+           var data_sent = {
+                "csrf_token": $('#csrf_token').val()
+            }
+            post_request_api('/datastore/folder/delete/' + node, JSON.stringify(data_sent))
             .done((data) => {
                 if (notify_auto_api(data)) {
                     reset_ds_file_view();
@@ -441,7 +444,10 @@ function delete_ds_file(file_id) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            get_request_api('/datastore/file/delete/' + file_id)
+            var data_sent = {
+                "csrf_token": $('#csrf_token').val()
+            }
+            post_request_api('/datastore/file/delete/' + file_id, JSON.stringify(data_sent))
             .done((data) => {
                 if (notify_auto_api(data)) {
                     reset_ds_file_view();
@@ -471,7 +477,10 @@ function delete_bulk_ds_file() {
         if (willDelete) {
             selected_files.each((index) => {
                 file_id = $(selected_files[index]).data('file-id').replace('f-', '');
-                get_request_api('/datastore/file/delete/' + file_id)
+                var data_sent = {
+                    "csrf_token": $('#csrf_token').val()
+                }
+                post_request_api('/datastore/file/delete/' + file_id, JSON.stringify(data_sent))
                 .done((data) => {
                     if (notify_auto_api(data)) {
                         if (index == $(".file-selected").length - 1) {
@@ -507,7 +516,7 @@ function get_link_ds_file(file_id) {
 function build_dsfile_view_link(file_id) {
    file_id = file_id.replace('f-', '');
 
-   link = location.protocol + '//' + location.host + '/datastore/file/view/' + file_id;
+   link = '/datastore/file/view/' + file_id;
    link = link + case_param();
 
    return link;
@@ -517,8 +526,8 @@ function get_mk_link_ds_file(file_id, filename, file_icon, has_password) {
 
    link = build_dsfile_view_link(file_id);
 
-   if (!has_password && ['png', 'svg', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'].includes(filename.split('.').pop())) {
-        mk_link = `![${filename}](${link})`;
+   if (has_password == 'false' && ['png', 'svg', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'].includes(filename.split('.').pop())) {
+        mk_link = `![${filename}](${link} =40%x40%)`;
     } else {
         file_icon = atob(file_icon);
         mk_link = `[${file_icon} [DS] ${filename}](${link})`;
@@ -528,7 +537,7 @@ function get_mk_link_ds_file(file_id, filename, file_icon, has_password) {
           notify_success('Markdown file link copied')
     }, function(err) {
         notify_error('Unable to copy link. Error ' + err);
-        console.error('Markdown file link  link', err);
+        console.error(`Markdown file link ${md_link}`, err);
     });
 
 }

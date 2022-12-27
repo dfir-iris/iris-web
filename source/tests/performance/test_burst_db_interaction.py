@@ -35,7 +35,7 @@ from app.models.cases import Cases
 from app.models.cases import CasesEvent
 from app.models.cases import Client
 from app.models.models import CaseEventsAssets
-from app.models.models import User
+from app.models.authorization import User
 from app.post_init import run_post_init
 from tests.clean_database import clean_db
 

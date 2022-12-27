@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import re
 
 import datetime
 from sqlalchemy import desc
@@ -28,10 +29,12 @@ from app.models import CaseAssets
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
 from app.models import CaseReceivedFile
+from app.models import CaseStatus
 from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
 from app.models import Client
+from app.models import Comments
 from app.models import EventCategory
 from app.models import Ioc
 from app.models import IocAssetLink
@@ -42,7 +45,7 @@ from app.models import NotesGroup
 from app.models import NotesGroupLink
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models import User
+from app.models.authorization import User
 
 
 def export_case_json(case_id):
@@ -56,6 +59,34 @@ def export_case_json(case_id):
         export['errors'] = ["Invalid case number"]
         return export
 
+    case['description'] = process_md_images_links_for_report(case['description'])
+
+    export['case'] = case
+    export['evidences'] = export_case_evidences_json(case_id)
+    export['timeline'] = export_case_tm_json(case_id)
+    export['iocs'] = export_case_iocs_json(case_id)
+    export['assets'] = export_case_assets_json(case_id)
+    export['tasks'] = export_case_tasks_json(case_id)
+    export['comments'] = export_case_comments_json(case_id)
+    export['notes'] = export_case_notes_json(case_id)
+    export['export_date'] = datetime.datetime.utcnow()
+
+    return export
+
+
+def export_case_json_for_report(case_id):
+    """
+    Fully export of a case for report generation
+    """
+    export = {}
+    case = export_caseinfo_json(case_id)
+
+    if not case:
+        export['errors'] = ["Invalid case number"]
+        return export
+
+    case['description'] = process_md_images_links_for_report(case['description'])
+
     export['case'] = case
     export['evidences'] = export_case_evidences_json(case_id)
     export['timeline'] = export_case_tm_json(case_id)
@@ -63,6 +94,7 @@ def export_case_json(case_id):
     export['assets'] = export_case_assets_json(case_id)
     export['tasks'] = export_case_tasks_json(case_id)
     export['notes'] = export_case_notes_json(case_id)
+    export['comments'] = export_case_comments_json(case_id)
     export['export_date'] = datetime.datetime.utcnow()
 
     return export
@@ -89,6 +121,15 @@ def export_case_json_extended(case_id):
     export['export_date'] = datetime.datetime.utcnow()
 
     return export
+
+
+def process_md_images_links_for_report(markdown_text):
+    """Process images links in markdown for better processing on the generator side
+        Creates proper links with FQDN and removal of scale
+    """
+    markdown = re.sub(r'(/datastore\/file\/view\/\d+\?cid=\d+)( =[\dA-z%]*)\)',
+                      r"http://127.0.0.1:8000:/\1)", markdown_text)
+    return markdown
 
 
 def export_caseinfo_json_extended(case_id):
@@ -147,7 +188,6 @@ def export_case_notes_json_extended(case_id):
 
     for notes_group in notes_groups:
         notes_group = notes_group.__dict__
-        print(notes_group)
         notes_group['notes'] = get_notes_from_group(notes_group['group_id'], case_id)
 
     return notes_groups
@@ -165,15 +205,22 @@ def export_caseinfo_json(case_id):
         User.name.label('opened_by'),
         Client.name.label('for_customer'),
         Cases.close_date,
-        Cases.custom_attributes
+        Cases.custom_attributes,
+        Cases.case_id,
+        Cases.case_uuid,
+        Cases.status_id
     ).join(
         Cases.user, Cases.client
-    ).all()
+    ).first()
 
     if not case:
         return None
 
-    return [row._asdict() for row in case][0]
+    case = case._asdict()
+
+    case['status_name'] = CaseStatus(case['status_id']).name
+
+    return case
 
 
 def export_case_evidences_json(case_id):
@@ -184,7 +231,10 @@ def export_case_evidences_json(case_id):
         CaseReceivedFile.date_added,
         CaseReceivedFile.file_hash,
         User.name.label('added_by'),
-        CaseReceivedFile.custom_attributes
+        CaseReceivedFile.custom_attributes,
+        CaseReceivedFile.file_uuid,
+        CaseReceivedFile.id,
+        CaseReceivedFile.file_size,
     ).order_by(
         CaseReceivedFile.date_added
     ).join(
@@ -205,21 +255,28 @@ def export_case_notes_json(case_id):
         Notes.note_content,
         Notes.note_creationdate,
         Notes.note_lastupdate,
-        Notes.custom_attributes
+        Notes.custom_attributes,
+        Notes.note_id,
+        Notes.note_uuid
     ).filter(
         Notes.note_case_id == case_id
     ).all()
 
+    return_notes = []
     if res:
-        return [row._asdict() for row in res]
+        for note in res:
+            note = note._asdict()
+            note["note_content"] = process_md_images_links_for_report(note["note_content"])
+            return_notes.append(note)
 
-    return []
+    return return_notes
 
 
 def export_case_tm_json(case_id):
     timeline = CasesEvent.query.with_entities(
         CasesEvent.event_id,
         CasesEvent.event_title,
+        CasesEvent.event_in_summary,
         CasesEvent.event_date,
         CasesEvent.event_tz,
         CasesEvent.event_date_wtz,
@@ -229,7 +286,12 @@ def export_case_tm_json(case_id):
         CasesEvent.event_raw,
         CasesEvent.custom_attributes,
         EventCategory.name.label('category'),
-        User.name.label('last_edited_by')
+        User.name.label('last_edited_by'),
+        CasesEvent.event_uuid,
+        CasesEvent.event_in_graph,
+        CasesEvent.event_in_summary,
+        CasesEvent.event_color,
+        CasesEvent.event_is_flagged
     ).filter(
         CasesEvent.case_id == case_id
     ).order_by(
@@ -284,12 +346,18 @@ def export_case_iocs_json(case_id):
         IocType.type_name,
         Ioc.ioc_tags,
         Ioc.ioc_description,
-        Ioc.custom_attributes
+        Ioc.custom_attributes,
+        Ioc.ioc_id,
+        Ioc.ioc_uuid,
+        Tlp.tlp_name,
+        User.name.label('added_by'),
     ).filter(
         IocLink.case_id == case_id
     ).join(
         IocLink.ioc,
-        Ioc.ioc_type
+        Ioc.ioc_type,
+        Ioc.tlp,
+        Ioc.user
     ).order_by(
         IocType.type_name
     ).all()
@@ -310,11 +378,12 @@ def export_case_tasks_json(case_id):
         CaseTasks.task_last_update,
         CaseTasks.task_description,
         CaseTasks.custom_attributes,
-        User.name.label('assigned_to')
+        CaseTasks.task_uuid,
+        CaseTasks.id
     ).filter(
         CaseTasks.task_case_id == case_id
     ).join(
-        CaseTasks.user_assigned, CaseTasks.status
+       CaseTasks.status
     ).all()
 
     if res:
@@ -328,9 +397,10 @@ def export_case_assets_json(case_id):
 
     res = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
+        CaseAssets.asset_uuid,
         CaseAssets.asset_name,
         CaseAssets.asset_description,
-        CaseAssets.asset_compromised.label('compromised'),
+        CaseAssets.asset_compromise_status_id.label('asset_compromise_status'),
         AssetsType.asset_name.label("type"),
         AnalysisStatus.name.label('analysis_status'),
         CaseAssets.date_added,
@@ -343,7 +413,7 @@ def export_case_assets_json(case_id):
         CaseAssets.case_id == case_id
     ).join(
         CaseAssets.asset_type, CaseAssets.analysis_status
-    ).order_by(desc(CaseAssets.asset_compromised)).all()
+    ).order_by(desc(CaseAssets.asset_compromise_status_id)).all()
 
     for row in res:
         row = row._asdict()
@@ -368,3 +438,21 @@ def export_case_assets_json(case_id):
         ret.append(row)
 
     return ret
+
+
+def export_case_comments_json(case_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date,
+    ).filter(
+        Comments.comment_case_id == case_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date
+    ).all()
+
+    return [row._asdict() for row in comments]

@@ -72,7 +72,7 @@ $(document).ready(function(){
         processing: true,
         retrieve: true,
         initComplete: function () {
-            tableFiltering(this.api());
+            tableFiltering(this.api(), 'activities_table');
         },
         buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },

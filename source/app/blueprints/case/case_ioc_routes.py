@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+from datetime import datetime
 
 import csv
 import logging as log
@@ -31,12 +32,18 @@ from flask import url_for
 from flask_login import current_user
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
 from app.datamgmt.case.case_iocs_db import delete_ioc
+from app.datamgmt.case.case_iocs_db import delete_ioc_comment
+from app.datamgmt.case.case_iocs_db import get_case_ioc_comment
+from app.datamgmt.case.case_iocs_db import get_case_ioc_comments
+from app.datamgmt.case.case_iocs_db import get_case_iocs_comments_count
 from app.datamgmt.case.case_iocs_db import get_detailed_iocs
 from app.datamgmt.case.case_iocs_db import get_ioc
 from app.datamgmt.case.case_iocs_db import get_ioc_links
@@ -51,21 +58,25 @@ from app.forms import ModalAddCaseAssetForm
 from app.forms import ModalAddCaseIOCForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import CaseAccessLevel
 from app.models.models import Ioc
+from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
-from app.util import api_login_required
-from app.util import login_required
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
 
-case_ioc_blueprint = Blueprint('case_ioc',
-                               __name__,
-                               template_folder='templates')
+case_ioc_blueprint = Blueprint(
+    'case_ioc',
+    __name__,
+    template_folder='templates'
+)
 
 
 # CONTENT ------------------------------------------------
-@case_ioc_blueprint.route('/case/ioc', methods=['GET', 'POST'])
-@login_required
+@case_ioc_blueprint.route('/case/ioc', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_ioc(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
@@ -80,7 +91,7 @@ def case_ioc(caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/list', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
 
@@ -105,7 +116,7 @@ def case_list_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/state', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_ioc_state(caseid):
     os = get_ioc_state(caseid=caseid)
     if os:
@@ -115,9 +126,8 @@ def case_ioc_state(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_ioc(caseid):
-
     try:
         # validate before saving
         add_ioc_schema = IocSchema()
@@ -142,7 +152,7 @@ def case_add_ioc(caseid):
             ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
 
         if ioc:
-            track_activity("added ioc {} via file upload".format(ioc.ioc_value), caseid=caseid)
+            track_activity("added ioc \"{}\"".format(ioc.ioc_value), caseid=caseid)
 
             msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
 
@@ -155,9 +165,8 @@ def case_add_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_upload_ioc(caseid):
-
     try:
         # validate before saving
         add_ioc_schema = IocSchema()
@@ -165,7 +174,7 @@ def case_upload_ioc(caseid):
 
         # get IOC list from request
         headers = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp"
-        csv_lines=jsdata["CSVData"].splitlines() # unavoidable since the file is passed as a string
+        csv_lines = jsdata["CSVData"].splitlines()  # unavoidable since the file is passed as a string
         if csv_lines[0].lower() != headers:
             csv_lines.insert(0, headers)
 
@@ -219,7 +228,7 @@ def case_upload_ioc(caseid):
             ioc, existed = add_ioc(ioc=ioc,
                                    user_id=current_user.id,
                                    caseid=caseid
-                                )
+                                   )
             link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
             if link_existed:
@@ -231,7 +240,7 @@ def case_upload_ioc(caseid):
             if ioc:
                 ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
                 ret.append(request_data)
-                track_activity(f"added ioc {ioc.ioc_value}", caseid=caseid)
+                track_activity(f"added ioc \"{ioc.ioc_value}\"", caseid=caseid)
 
             else:
                 errors.append(f"{ioc.ioc_value} (internal reasons)")
@@ -251,7 +260,7 @@ def case_upload_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/add/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.full_access)
 def case_add_ioc_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
@@ -265,29 +274,27 @@ def case_add_ioc_modal(caseid, url_redir):
     return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc(), attributes=attributes)
 
 
-@case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_ioc(cur_id, caseid):
-
     call_modules_hook('on_preload_ioc_delete', data=cur_id, caseid=caseid)
-
     ioc = get_ioc(cur_id, caseid)
 
     if not ioc:
         return response_error('Not a valid IOC for this case')
 
     if not delete_ioc(ioc, caseid):
-        track_activity("unlinked IOC ID {}".format(cur_id))
-        return response_success("IOC {} unlinked".format(cur_id))
+        track_activity(f"unlinked IOC ID {ioc.ioc_value}", caseid=caseid)
+        return response_success(f"IOC {cur_id} unlinked")
 
     call_modules_hook('on_postload_ioc_delete', data=cur_id, caseid=caseid)
 
-    track_activity("deleted IOC ID {}".format(cur_id))
-    return response_success("IOC {} deleted".format(cur_id))
+    track_activity(f"deleted IOC \"{ioc.ioc_value}\"", caseid=caseid)
+    return response_success(f"IOC {cur_id} deleted")
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_view_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
@@ -304,26 +311,26 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     form.ioc_tags.render_kw = {'value': ioc.ioc_tags}
     form.ioc_description.data = ioc.ioc_description
     form.ioc_value.data = ioc.ioc_value
+    comments_map = get_case_iocs_comments_count([cur_id])
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=ioc.custom_attributes)
+    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=ioc.custom_attributes,
+                           comments_map=comments_map)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_view_ioc(cur_id, caseid):
-
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
-        return response_error("Invalid IOC ID for this case".format(cur_id))
+        return response_error("Invalid IOC ID for this case")
 
     return response_success(data=ioc_schema.dump(ioc))
 
 
 @case_ioc_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_update_ioc(cur_id, caseid):
-
     try:
         ioc = get_ioc(cur_id, caseid)
         if not ioc:
@@ -346,11 +353,97 @@ def case_update_ioc(cur_id, caseid):
         ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=caseid)
 
         if ioc_sc:
-            track_activity("updated ioc {}".format(ioc_sc.ioc_value), caseid=caseid)
-            return response_success("Updated ioc {}".format(ioc_sc.ioc_value), data=ioc_schema.dump(ioc))
+            track_activity(f"updated ioc \"{ioc_sc.ioc_value}\"", caseid=caseid)
+            return response_success(f"Updated ioc \"{ioc_sc.ioc_value}\"", data=ioc_schema.dump(ioc))
 
         return response_error("Unable to update ioc for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_ioc_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
+
+    ioc = get_ioc(cur_id, caseid=caseid)
+    if not ioc:
+        return response_error('Invalid ioc ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='ioc',
+                           title=ioc.ioc_value)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_ioc_list(cur_id, caseid):
+
+    ioc_comments = get_case_ioc_comments(cur_id)
+    if ioc_comments is None:
+        return response_error('Invalid ioc ID')
+
+    res = [com._asdict() for com in ioc_comments]
+    return response_success(data=res)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_ioc_add(cur_id, caseid):
+
+    try:
+        ioc = get_ioc(cur_id, caseid=caseid)
+        if not ioc:
+            return response_error('Invalid ioc ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_ioc(ioc.ioc_id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity(f"ioc \"{ioc.ioc_value}\" commented", caseid=caseid)
+        return response_success("Event commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_ioc_get(cur_id, com_id, caseid):
+
+    comment = get_case_ioc_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_ioc_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'ioc', caseid)
+
+
+@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_ioc_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_ioc_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    track_activity(f"comment {com_id} on ioc {cur_id} deleted", caseid=caseid)
+    return response_success(msg)

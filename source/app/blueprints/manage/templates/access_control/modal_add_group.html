@@ -1,0 +1,292 @@
+<div class="modal-xl modal-dialog" role="document">
+    <div class="modal-content" id="modal_access_control_content">
+        <div class="modal-header">
+            <h4 class="modal-title mt-2 mr-4">{% if not group.group_id %}Add Group {% else %} Edit {{ group.group_name }} {% endif %}</h4>
+            <div class="row text-center mr-4">
+                {% if group.group_id %}
+                <ul class="nav nav-pills nav-default mr-4" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active show" data-toggle="pill" href="#group_details_tab" role="tab" aria-controls="group_details_tab" aria-selected="false">Info</a>
+                    </li>
+
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#group_members_tab" role="tab" aria-controls="group_members_tab" aria-selected="false">Members</a>
+                    </li>
+
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#group_cac_tab" role="tab" aria-controls="group_cac_tab" aria-selected="false">Cases access</a>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div role="tabpanel">
+                <div class="tab-content">
+                    <div class="tab-pane active" id="group_details_tab">
+                        <div class="container col-md-12" >
+                            <form method="post" action="" id="form_new_group">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    {{ form.hidden_tag() }}
+                                    {% if not group.group_id %}
+                                    <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Members can be added once the group is created.</p>
+                                    {% endif %}
+                                    <div class="form-group">
+                                        <label for="group_name" class="mr-4">Group name *
+                                        </label>
+                                        {{ form.group_name(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group mt-3">
+                                        <label for="group_description" class="placeholder">Description *</label>
+                                        {{ form.group_description(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group" data-select2-id="7">
+                                        <label>Permissions *</label>
+                                        <div class="select2-input ml-12" data-select2-id="6">
+                                            <select id="group_permissions" name="group_permissions" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="group_permissions" tabindex="-1" aria-hidden="true" style="width: 100%">
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if group.group_id %}
+                                    <button type="button" class="btn btn-danger mt-5"
+                                    onclick="delete_group('{{ group.group_id }}');">Delete</button>
+                                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                                    id="submit_new_group">Update</button>
+                                {% else %}
+
+                                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                                    id="submit_new_group">Save</button>
+
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="group_members_tab">
+                        <div class="container col-md-12" >
+                              <div class="row d-flex">
+                                <div class="col pull-right">
+                                    <button class="btn btn-dark btn-sm pull-right" onclick="refresh_group_members({{ group.group_id }});">
+                                        <span class="menu-title">Refresh</span>
+                                    </button>
+                                    <button class="btn btn-dark btn-sm pull-right mr-2" onclick="add_members_to_group({{ group.group_id }});">
+                                        <span class="menu-title">Manage</span>
+                                    </button>
+                                </div>
+                              </div>
+                            <div class="row">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="group_members_table" >
+                                <thead>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User login</th>
+                                      <th>User display name</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User login</th>
+                                      <th>User display name</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="group_cac_tab">
+                        <div class="container col-md-12" >
+                            <div class="row d-flex mb-2">
+                                <div class="col">
+                                    {% if group.group_auto_follow %}
+                                    <b><i class="fa fa-triangle-exclamation text-warning mr-2"></i>This group is set to automatically include all new cases.</b>
+                                    {% endif %}
+                                </div>
+                                <div class="col pull-right">
+                                    <button class="btn btn-dark btn-sm pull-right" onclick="refresh_group_cac({{ group.group_id }});">
+                                        <span class="menu-title">Refresh</span>
+                                    </button>
+                                    <button class="btn btn-dark btn-sm pull-right mr-2" onclick="manage_group_cac({{ group.group_id }});">
+                                        <span class="menu-title" id="manage_group_cac_button">Set case access</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="group_cac_table" >
+                                <thead>
+                                  <tr>
+                                      <th>Case ID</th>
+                                      <th>Case Name</th>
+                                      <th>Access</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                    <th>Case ID</th>
+                                    <th>Case Name</th>
+                                    <th>Access</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+<script>
+var data = [
+    {% for e in all_perms %}
+        {
+            value: {{ e.value }},
+            label: "{{ e.name }}"
+        }
+        {% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+
+$('#group_permissions').multiselect({
+    buttonWidth: 400,
+    nonSelectedText: 'Select permissions',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#group_permissions').multiselect('dataprovider', data );
+
+{% if group.group_permissions_list %}
+$('#group_permissions').multiselect('select', [
+    {% for perm in group.group_permissions_list %} {{ perm.value }}, {% endfor %}
+]);
+
+$('#org_members').multiselect('refresh')
+
+{% endif %}
+
+var modal_group_table = $("#group_members_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "id",
+            "render": function ( data, type, row ) {
+                return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove from group" href="javascript:void(0)" onclick="remove_members_from_group('{{ group.group_id }}',${data})"></i>${data}`;
+            },
+            "className": "dt-center"
+        },
+        {
+            "data": "user",
+            "className": "dt-center",
+            "render": function (data, type, row) {
+                return sanitizeHTML(data);
+            }
+        },
+        {
+            "data": "name",
+            "className": "dt-center",
+            "render": function (data, type, row) {
+                return sanitizeHTML(data);
+            }
+        }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true
+});
+
+{% if group.group_id %}
+    modal_group_table.rows.add({{ group.group_members|tojson }});
+    modal_group_table.columns.adjust().draw();
+{% endif %}
+
+
+var modal_group_cac_table = $("#group_cac_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "case_id",
+            "render": function ( data, type, row ) {
+                return `<i class="fa-solid fa-trash-can mr-2 text-danger" style="cursor:pointer;" title="Remove access to case" href="javascript:void(0)" onclick="remove_case_access_from_group('{{ group.group_id }}',${data})"></i>${data}`;
+            },
+            "className": "dt-center"
+        },
+        {
+            "data": "case_name",
+            "className": "dt-center",
+            "render": function (data, type, row) {
+                        return `<a target="_blank" rel="noopener" href="/case?cid=${row.case_id}">${sanitizeHTML(data)}</a>`;
+            }
+        },
+        {
+            "data": "access_level_list",
+            "render": function ( data, type, row ) {
+                ret_data = "";
+                for (acc in data) {
+                    ret_data += `<span class="badge ml-2 badge-light">${data[acc].name}</span>`
+                }
+                return ret_data;
+            },
+            "className": "dt-center"
+        }
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true,
+        select: true
+});
+
+var actionOptionsGroup = {
+    classes: [],
+    contextMenu: {
+        enabled: true,
+        isMulti: true,
+        xoffset: -10,
+        yoffset: -10,
+        headerRenderer: function (rows) {
+            if (rows.length > 1) {
+                return rows.length + ' items selected';
+            } else {
+                let row = rows[0];
+                return 'Quick action';
+            }
+        },
+    },
+    buttonList: {
+        enabled: false,
+    },
+    deselectAfterAction: true,
+    items: [],
+};
+
+
+{% if group.group_id %}
+    actionOptionsGroup.items.push({
+                type: 'option',
+                title: 'Remove access',
+                multi: true,
+                iconClass: 'fas fa-trash',
+                buttonClasses: ['btn', 'btn-outline-primary'],
+                action: function(rows){
+                    remove_group_cases_from_group_table({{ group.group_id }}, rows);
+                }
+            });
+    modal_group_cac_table.contextualActions(actionOptionsGroup);
+
+    current_group_cases_access_list = {{ group.group_cases_access|tojson }};
+    modal_group_cac_table.rows.add(current_group_cases_access_list);
+    modal_group_cac_table.columns.adjust().draw();
+{% endif %}
+</script>

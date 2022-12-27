@@ -1,0 +1,101 @@
+<div class="modal-header">
+    <div class="col md-12">
+        <div class="row">
+            <div class="col">
+                <h4 class="modal-title mt-2 mr-4">{% if contact.id %}Edit contact #{{ contact.id }}{% else %}Add contact{% endif %}</h4>
+                <small><a class="text-muted">{% if contact.contact_uuid %}#{{ contact.contact_uuid }}{% endif %}</a></small>
+            </div>
+            <div class="col ">
+                <div class="row float-right">
+                    <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div role="tabpanel">
+          <div class="tab-content">
+                <div class="tab-pane active" id="details">
+                    <div class="container col-md-12">
+                        <form method="post" action="" id="form_new_contact" enctype="multipart/form-data">
+                             {{ form.hidden_tag() }}
+                            <div class="form-group  row">
+                                <label for="contact_name" class="col-lg-3 col-md-3 col-sm-4 mt-sm-2 text-right">Contact name *</label>
+                                <div class="col-lg-8 col-md-9 col-sm-8">
+                                    {{ form.contact_name(class='form-control',  autocomplete="off") }}
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="contact_role" class="col-lg-3 col-md-3 col-sm-4 mt-sm-2 text-right">Contact Role</label>
+                                <div class="col-lg-8 col-md-9 col-sm-8">
+                                    {{ form.contact_role(class='form-control',  autocomplete="off", list="contact_roles_list") }}
+                                </div>
+                                <datalist id="contact_roles_list">
+                                    <option value="CISO">
+                                    <option value="CEO">
+                                    <option value="Manager">
+                                    <option value="Sales">
+                                    <option value="Support">
+                                    <option value="Billing">
+                                    <option value="Other">
+                                </datalist>
+                            </div>
+                            <div class="form-group row">
+                                <label for="email" class="col-lg-3 col-md-3 col-sm-4 mt-sm-2 text-right">Contact email</label>
+                                <div class="col-lg-8 col-md-9 col-sm-8">
+                                    {{ form.contact_email(class='form-control',  autocomplete="off") }}
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="work_phone" class="col-lg-3 col-md-3 col-sm-4 mt-sm-2 text-right">Contact work phone</label>
+                                <div class="col-lg-8 col-md-9 col-sm-8">
+                                    {{ form.contact_work_phone(class='form-control',  autocomplete="off") }}
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="mobile_phone" class="col-lg-3 col-md-3 col-sm-4 mt-sm-2 text-right">Contact mobile phone</label>
+                                <div class="col-lg-8 col-md-9 col-sm-8">
+                                    {{ form.contact_mobile_phone(class='form-control',  autocomplete="off") }}
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="notes" class="col-lg-3 col-md-3 col-sm-4 mt-sm-2 text-right">Additional notes</label>
+                                <div class="col-lg-8 col-md-9 col-sm-8">
+                                    {{ form.contact_note(class='form-control',  autocomplete="off") }}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+          </div>
+            {% if contact.id %}
+            <button
+                    type="button"
+                    class="btn btn-outline-danger mt-5"
+                     id="submit_delete_contact"
+            >
+                Delete
+            </button>
+            <button
+                    type="button"
+                    class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="submit_new_contact"
+            >
+                Update
+            </button>
+
+        {% else %}
+
+            <button
+                    type="button"
+                    class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="submit_new_contact"
+            >
+                Save
+            </button>
+
+        {% endif %}
+    </div>
+</div>

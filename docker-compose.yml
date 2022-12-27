@@ -1,6 +1,5 @@
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -31,15 +30,16 @@ services:
   db:
     build:
       context: docker/db
+    container_name: iriswebapp_db
     restart: always
     ports:
       - "127.0.0.1:5432:5432"
     environment:
-      - POSTGRES_PASSWORD
       - POSTGRES_USER
-      - POSTGRES_DB
-      - DB_USER
-      - DB_PASS
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_DB=iris_db
     networks:
       - iris_backend
     volumes:
@@ -50,8 +50,12 @@ services:
       context: .
       dockerfile: docker/webApp/Dockerfile
     image: iriswebapp_app:latest
+    container_name: iriswebapp_app
     command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
+      # RootCA necessary when dealing with an auth server without a trusted CA signed certificate
+      - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
+      - ./certificates/:/home/iris/certificates/:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -61,17 +65,18 @@ services:
       - "db"
     ports:
       - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
     environment:
-      - POSTGRES_PASSWORD
       - POSTGRES_USER
-      - POSTGRES_DB
-      - DB_USER
-      - DB_PASS
-      - DB_HOST
-      - DB_PORT
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_SERVER
+      - POSTGRES_PORT
       - DOCKERIZED
-      - SECRET_KEY
-      - SECURITY_PASSWORD_SALT
+      - IRIS_SECRET_KEY
+      - IRIS_SECURITY_PASSWORD_SALT
     networks:
       - iris_backend
       - iris_frontend
@@ -81,8 +86,11 @@ services:
       context: .
       dockerfile: docker/webApp/Dockerfile
     image: iriswebapp_app:latest
+    container_name: iriswebapp_worker
     command: ['./wait-for-iriswebapp.sh', 'app:8000', './iris-entrypoint.sh', 'iris-worker']
     volumes:
+      - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
+      - ./certificates/:/home/iris/certificates/:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -90,15 +98,18 @@ services:
       - "rabbitmq"
       - "db"
       - "app"
+    env_file:
+      - .env
     environment:
-      - POSTGRES_PASSWORD
       - POSTGRES_USER
-      - POSTGRES_DB
-      - DB_USER
-      - DB_PASS
-      - DB_HOST
-      - DB_PORT
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_SERVER
+      - POSTGRES_PORT
       - DOCKERIZED
+      - IRIS_SECRET_KEY
+      - IRIS_SECURITY_PASSWORD_SALT
       - IRIS_WORKER
     networks:
       - iris_frontend
@@ -109,19 +120,22 @@ services:
       context: ./docker/nginx
       args:
         NGINX_CONF_GID: 1234
+        NGINX_CONF_FILE: nginx.conf
     image: iriswebapp_nginx:latest
     container_name: iriswebapp_nginx
     environment:
-      - APP_HOST
-      - APP_PORT
+      - IRIS_UPSTREAM_SERVER
+      - IRIS_UPSTREAM_PORT
       - SERVER_NAME
       - CERT_FILENAME
       - KEY_FILENAME
+      - IRIS_AUTHENTICATION_TYPE
     networks:
       - iris_frontend
       - iris_backend
     ports:
-      - "4433:8443"
+      - "443:443"
+      - "80:80"
     volumes:
       - "./docker/dev_certs/:/www/certs/:ro"
     restart: on-failure:5

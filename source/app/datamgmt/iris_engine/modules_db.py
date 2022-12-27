@@ -25,7 +25,7 @@ from app import db
 from app.models import IrisHook
 from app.models import IrisModule
 from app.models import IrisModuleHook
-from app.models import User
+from app.models.authorization import User
 
 
 def iris_module_exists(module_name):

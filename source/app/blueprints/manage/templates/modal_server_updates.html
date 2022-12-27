@@ -15,7 +15,7 @@
     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
 
     {% if has_updates %}
-        <a type="button" class="btn btn-success" href="/manage/server/make-update?cid={{case_name[2]}}">Update server</a>
+        <a type="button" class="btn btn-success" href="/manage/server/make-update?cid={{session['current_case'].case_id}}">Update server</a>
     {% endif %}
 
 </div>

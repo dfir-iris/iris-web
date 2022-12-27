@@ -1,0 +1,62 @@
+<div class="modal-lg modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title mt-2 mr-4">Manage members of group {{ group.group_name }}</h4>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="container col-md-12" >
+                <div class="row">
+                    <div class="form-group" data-select2-id="7">
+                        <label>Members *</label>
+                        <div class="select2-input ml-12" data-select2-id="6">
+                            <select id="group_members" name="group_members" class="form-control select2-hidden-accessible ml-12" multiple=""
+                                    data-select2-id="group_members" tabindex="-1" aria-hidden="true" style="width: 100%">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="save_group_members">Save</button>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+<script>
+var data = [];
+if (current_users_list.length === 0) {
+    refresh_users();
+}
+
+for (user in current_users_list) {
+    data.push({
+        label: `${current_users_list[user].user_login} (${current_users_list[user].user_name} - ${current_users_list[user].user_email})`,
+        value: current_users_list[user].user_id
+    });
+}
+
+$('#group_members').multiselect({
+    buttonWidth: 400,
+    nonSelectedText: 'Select members',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#group_members').multiselect('dataprovider', data );
+
+{% if group.group_members %}
+
+$('#group_members').multiselect('select', [
+    {% for member in group.group_members %} {{ member.id }}, {% endfor %}
+]);
+$('#group_members').multiselect('refresh')
+
+{% endif %}
+</script>

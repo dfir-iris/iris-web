@@ -19,31 +19,41 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-import traceback
+import datetime
 
+import traceback
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask_wtf import FlaskForm
 from marshmallow import ValidationError
 
 from app.datamgmt.client.client_db import create_client
+from app.datamgmt.client.client_db import create_contact
 from app.datamgmt.client.client_db import delete_client
+from app.datamgmt.client.client_db import delete_contact
 from app.datamgmt.client.client_db import get_client
 from app.datamgmt.client.client_db import get_client_api
+from app.datamgmt.client.client_db import get_client_cases
+from app.datamgmt.client.client_db import get_client_contact
+from app.datamgmt.client.client_db import get_client_contacts
 from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.client.client_db import update_client
+from app.datamgmt.client.client_db import update_contact
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.forms import AddCustomerForm
+from app.forms import ContactForm
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import Permissions
+from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
-from app.util import admin_required
-from app.util import api_admin_required
-from app.util import api_login_required
-from app.util import login_required
+from app.util import ac_api_requires
+from app.util import ac_requires
+from app.util import page_not_found
 from app.util import response_error
 from app.util import response_success
 
@@ -56,7 +66,7 @@ manage_customers_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @manage_customers_blueprint.route('/manage/customers')
-@admin_required
+@ac_requires(Permissions.server_administrator)
 def manage_customers(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -68,7 +78,7 @@ def manage_customers(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/list')
-@api_login_required
+@ac_api_requires(Permissions.server_administrator)
 def list_customers(caseid):
     client_list = get_client_list()
 
@@ -76,18 +86,206 @@ def list_customers(caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(Permissions.server_administrator)
 def view_customer(cur_id, caseid):
 
     customer = get_client_api(cur_id)
     if not customer:
-        return response_error(f"Invalid Customer ID {cur_id}")
+        return page_not_found(None)
 
     return response_success(data=customer)
 
 
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/view', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def view_customer_page(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_customers.manage_customers', cid=caseid))
+
+    customer = get_client_api(cur_id)
+    if not customer:
+        return page_not_found(None)
+
+    form = FlaskForm()
+    contacts = get_client_contacts(cur_id)
+    contacts = ContactSchema().dump(contacts, many=True)
+
+    return render_template('manage_customer_view.html', customer=customer, form=form, contacts=contacts)
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/add/modal', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def customer_add_contact_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_customers.manage_customers', cid=caseid))
+
+    form = ContactForm()
+
+    return render_template('modal_customer_add_contact.html', form=form, contact=None)
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/modal', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def customer_edit_contact_modal(cur_id, contact_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_customers.manage_customers', cid=caseid))
+
+    contact = get_client_contact(cur_id, contact_id)
+    if not contact:
+        return response_error(f"Invalid Contact ID {contact_id}")
+
+    form = ContactForm()
+    form.contact_name.render_kw = {'value': contact.contact_name}
+    form.contact_email.render_kw = {'value':  contact.contact_email}
+    form.contact_mobile_phone.render_kw = {'value': contact.contact_mobile_phone}
+    form.contact_work_phone.render_kw = {'value': contact.contact_work_phone}
+    form.contact_note.data = contact.contact_note
+    form.contact_role.render_kw = {'value':  contact.contact_role}
+
+    return render_template('modal_customer_add_contact.html', form=form, contact=contact)
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/update', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def customer_update_contact(cur_id, contact_id, caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    if not get_client(cur_id):
+        return response_error(f"Invalid Customer ID {cur_id}")
+
+    try:
+
+        contact = update_contact(request.json, contact_id, cur_id)
+
+    except ValidationError as e:
+        return response_error(msg='Error update contact', data=e.messages, status=400)
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return response_error(f'An error occurred during contact update. {e}')
+
+    track_activity(f"Updated contact {contact.contact_name}", caseid=caseid, ctx_less=True)
+
+    # Return the customer
+    contact_schema = ContactSchema()
+    return response_success("Added successfully", data=contact_schema.dump(contact))
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/add', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def customer_add_contact(cur_id, caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    if not get_client(cur_id):
+        return response_error(f"Invalid Customer ID {cur_id}")
+
+    try:
+
+        contact = create_contact(request.json, cur_id)
+
+    except ValidationError as e:
+        return response_error(msg='Error adding contact', data=e.messages, status=400)
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return response_error(f'An error occurred during contact addition. {e}')
+
+    track_activity(f"Added contact {contact.contact_name}", caseid=caseid, ctx_less=True)
+
+    # Return the customer
+    contact_schema = ContactSchema()
+    return response_success("Added successfully", data=contact_schema.dump(contact))
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/cases', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def get_customer_case_stats(cur_id, caseid):
+
+    cases = get_client_cases(cur_id)
+    cases_list = []
+
+    now = datetime.date.today()
+    cases_stats = {
+        'cases_last_month': 0,
+        'cases_last_year': 0,
+        'open_cases': 0,
+        'last_year': now.year - 1,
+        'last_month': now.month - 1,
+        'cases_rolling_week': 0,
+        'cases_current_month': 0,
+        'cases_current_year': 0,
+        'ratio_year': 0,
+        'ratio_month': 0,
+        'average_case_duration': 0,
+        'cases_total': len(cases)
+    }
+
+    last_month_start = datetime.date(now.year, now.month-1, 1)
+    last_month_end = datetime.date(now.year, now.month, 1)
+
+    last_year_start = datetime.date(now.year - 1, 1, 1)
+    last_year_end = datetime.date(now.year - 1, 12, 31)
+    this_year_start = datetime.date(now.year, 1, 1)
+    this_month_start = datetime.date(now.year, now.month, 1)
+
+    for case in cases:
+        cases_list.append(case._asdict())
+        if now - datetime.timedelta(days=7) <= case.open_date <= now:
+            cases_stats['cases_rolling_week'] += 1
+
+        if this_month_start <= case.open_date <= now:
+            cases_stats['cases_current_month'] += 1
+
+        if this_year_start <= case.open_date <= now:
+            cases_stats['cases_current_year'] += 1
+
+        if last_month_start < case.open_date < last_month_end:
+            cases_stats['cases_last_month'] += 1
+
+        if last_year_start <= case.open_date <= last_year_end:
+            cases_stats['cases_last_year'] += 1
+
+        if case.close_date is None:
+            cases_stats['open_cases'] += 1
+
+        if cases_stats['cases_last_year'] == 0:
+            st = 1
+            et = cases_stats['cases_current_year'] + 1
+        else:
+            st = cases_stats['cases_last_year']
+            et = cases_stats['cases_current_year']
+
+        cases_stats['ratio_year'] = ((et - st)/(st)) * 100
+
+        if cases_stats['cases_last_month'] == 0:
+            st = 1
+            et = cases_stats['cases_current_month'] + 1
+        else:
+            st = cases_stats['cases_last_month']
+            et = cases_stats['cases_current_month']
+
+        cases_stats['ratio_month'] = ((et - st)/(st)) * 100
+
+        if (case.close_date is not None) and (case.open_date is not None):
+            cases_stats['average_case_duration'] += (case.close_date - case.open_date).days
+
+    if cases_stats['cases_total'] > 0 and cases_stats['open_cases'] > 0 and cases_stats['average_case_duration'] > 0:
+        cases_stats['average_case_duration'] = cases_stats['average_case_duration'] / (cases_stats['cases_total'] - cases_stats['open_cases'])
+
+    cases = {
+        'cases': cases_list,
+        'stats': cases_stats
+    }
+
+    return response_success(data=cases)
+
+
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_requires(Permissions.server_administrator)
 def view_customer_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -98,13 +296,15 @@ def view_customer_modal(cur_id, caseid, url_redir):
         return response_error("Invalid Customer ID")
 
     form.customer_name.render_kw = {'value': customer.name}
+    form.customer_description.data = customer.description
+    form.customer_sla.data = customer.sla
 
     return render_template("modal_add_customer.html", form=form, customer=customer,
                            attributes=customer.custom_attributes)
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def view_customers(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -127,7 +327,7 @@ def view_customers(cur_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/add/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.server_administrator)
 def add_customers_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -137,7 +337,7 @@ def add_customers_modal(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/add', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def add_customers(caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -157,8 +357,8 @@ def add_customers(caseid):
     return response_success("Added successfully", data=client_schema.dump(client))
 
 
-@manage_customers_blueprint.route('/manage/customers/delete/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@manage_customers_blueprint.route('/manage/customers/delete/<int:cur_id>', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
 def delete_customers(cur_id, caseid):
     try:
 
@@ -174,5 +374,26 @@ def delete_customers(cur_id, caseid):
         return response_error('An error occurred during customer deletion')
 
     track_activity("Deleted Customer with ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)
+
+    return response_success("Deleted successfully")
+
+
+@manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/delete', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def delete_contact_route(cur_id, contact_id, caseid):
+    try:
+
+        delete_contact(contact_id)
+
+    except ElementNotFoundException:
+        return response_error('Invalid contact ID')
+
+    except ElementInUseException:
+        return response_error('Cannot delete a referenced contact')
+
+    except Exception:
+        return response_error('An error occurred during contact deletion')
+
+    track_activity("Deleted Customer with ID {contact_id}".format(contact_id=cur_id), caseid=caseid, ctx_less=True)
 
     return response_success("Deleted successfully")

@@ -19,19 +19,27 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
+from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from app import db
 from app.datamgmt.states import update_assets_state
 from app.models import AnalysisStatus
+from app.models import AssetComments
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets
 from app.models import Cases
+from app.models import Comments
+from app.models import CompromiseStatus
 from app.models import Ioc
 from app.models import IocAssetLink
+from app.models import IocLink
 from app.models import IocType
+from app.models.authorization import User
 
 
 def create_asset(asset, caseid, user_id):
@@ -52,13 +60,14 @@ def create_asset(asset, caseid, user_id):
 def get_assets(caseid):
     assets = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
+        CaseAssets.asset_uuid,
         CaseAssets.asset_name,
         AssetsType.asset_name.label('asset_type'),
         AssetsType.asset_icon_compromised,
         AssetsType.asset_icon_not_compromised,
         CaseAssets.asset_description,
         CaseAssets.asset_domain,
-        CaseAssets.asset_compromised,
+        CaseAssets.asset_compromise_status_id,
         CaseAssets.asset_ip,
         CaseAssets.asset_type_id,
         AnalysisStatus.name.label('analysis_status'),
@@ -93,14 +102,14 @@ def get_asset(asset_id, caseid):
 
 
 def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_domain,
-                 asset_compromised, asset_type, asset_id, caseid, analysis_status, asset_tags):
+                 asset_compromise_status_id, asset_type, asset_id, caseid, analysis_status, asset_tags):
     asset = get_asset(asset_id, caseid)
     asset.asset_name = asset_name
     asset.asset_description = asset_description
     asset.asset_ip = asset_ip
     asset.asset_info = asset_info
     asset.asset_domain = asset_domain
-    asset.asset_compromised = asset_compromised
+    asset.asset_compromise_status_id = asset_compromise_status_id
     asset.asset_type_id = asset_type
     asset.analysis_status_id = analysis_status
     asset.asset_tags = asset_tags
@@ -111,26 +120,36 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
 
 
 def delete_asset(asset_id, caseid):
-    delete_ioc_asset_link(asset_id)
+    with db.session.begin_nested():
+        delete_ioc_asset_link(asset_id)
 
-    db.session.commit()
+        # Delete the relevant records from the CaseEventsAssets table
+        CaseEventsAssets.query.filter(
+            CaseEventsAssets.case_id == caseid,
+            CaseEventsAssets.asset_id == asset_id
+        ).delete()
 
-    CaseEventsAssets.query.filter(
-        CaseEventsAssets.case_id == caseid,
-        CaseEventsAssets.asset_id == asset_id
-    ).delete()
-    db.session.commit()
+        # Delete the relevant records from the AssetComments table
+        com_ids = AssetComments.query.with_entities(
+            AssetComments.comment_id
+        ).filter(
+            AssetComments.comment_asset_id == asset_id,
+        ).all()
 
-    # Directly delete
-    CaseAssets.query.filter(
-        CaseAssets.asset_id == asset_id,
-        CaseAssets.case_id == caseid
-    ).delete()
+        com_ids = [c.comment_id for c in com_ids]
+        AssetComments.query.filter(AssetComments.comment_id.in_(com_ids)).delete()
 
-    update_assets_state(caseid=caseid)
+        Comments.query.filter(
+            Comments.comment_id.in_(com_ids)
+        ).delete()
 
-    db.session.commit()
+        # Directly delete the relevant records from the CaseAssets table
+        CaseAssets.query.filter(
+            CaseAssets.asset_id == asset_id,
+            CaseAssets.case_id == caseid
+        ).delete()
 
+        update_assets_state(caseid=caseid)
 
 def get_assets_types():
     assets_types = [(c.asset_id, c.asset_name) for c
@@ -150,6 +169,14 @@ def get_analysis_status_list():
     return analysis_status
 
 
+def get_compromise_status_list():
+    return [(e.value, e.name.replace('_', ' ').capitalize()) for e in CompromiseStatus]
+
+
+def get_compromise_status_dict():
+    return [{'value': e.value, 'name': e.name.replace('_', ' ').capitalize()} for e in CompromiseStatus]
+
+
 def get_asset_type_id(asset_type_name):
     assets_type_id = AssetsType.query.with_entities(
         AssetsType.asset_id
@@ -160,23 +187,39 @@ def get_asset_type_id(asset_type_name):
     return assets_type_id
 
 
-def get_similar_assets(asset_name, asset_type_id, caseid, customer_id):
+def get_assets_ioc_links(caseid):
+
+    ioc_links_req = IocAssetLink.query.with_entities(
+        Ioc.ioc_id,
+        Ioc.ioc_value,
+        IocAssetLink.asset_id
+    ).filter(
+        Ioc.ioc_id == IocAssetLink.ioc_id,
+        IocLink.case_id == caseid,
+        IocLink.ioc_id == Ioc.ioc_id
+    ).all()
+
+    return ioc_links_req
+
+def get_similar_assets(asset_name, asset_type_id, caseid, customer_id, cases_limitation):
 
     linked_assets = CaseAssets.query.with_entities(
         Cases.name.label('case_name'),
         Cases.open_date.label('case_open_date'),
         CaseAssets.asset_description,
-        CaseAssets.asset_compromised,
+        CaseAssets.asset_compromise_status_id,
+        CaseAssets.asset_id,
+        CaseAssets.case_id
     ).filter(
-        and_(
-            CaseAssets.asset_name == asset_name,
-            CaseAssets.case_id != caseid,
-            CaseAssets.asset_type_id == asset_type_id,
-            Cases.client_id == customer_id
-        )
+        Cases.client_id == customer_id,
+        CaseAssets.case_id != caseid
+    ).filter(
+        CaseAssets.asset_name == asset_name,
+        CaseAssets.asset_type_id == asset_type_id,
+        Cases.case_id.in_(cases_limitation)
     ).join(CaseAssets.case).all()
 
-    return linked_assets
+    return (lasset._asdict() for lasset in linked_assets)
 
 
 def delete_ioc_asset_link(asset_id):
@@ -239,3 +282,80 @@ def get_linked_iocs_finfo_from_asset(asset_id):
     )).join(Ioc.ioc_type).all()
 
     return iocs
+
+
+def get_case_asset_comments(asset_id):
+    return AssetComments.query.filter(
+        AssetComments.comment_asset_id == asset_id
+    ).with_entities(
+        AssetComments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        AssetComments.comment,
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+
+def add_comment_to_asset(asset_id, comment_id):
+    ec = AssetComments()
+    ec.comment_asset_id = asset_id
+    ec.comment_id = comment_id
+
+    db.session.add(ec)
+    db.session.commit()
+
+
+def get_case_assets_comments_count(asset_id):
+    return AssetComments.query.filter(
+        AssetComments.comment_asset_id.in_(asset_id)
+    ).with_entities(
+        AssetComments.comment_asset_id,
+        AssetComments.comment_id
+    ).group_by(
+        AssetComments.comment_asset_id,
+        AssetComments.comment_id
+    ).all()
+
+
+def get_case_asset_comment(asset_id, comment_id):
+    return AssetComments.query.filter(
+        AssetComments.comment_asset_id == asset_id,
+        AssetComments.comment_id == comment_id
+    ).with_entities(
+        Comments.comment_id,
+        Comments.comment_text,
+        Comments.comment_date,
+        Comments.comment_update_date,
+        Comments.comment_uuid,
+        User.name,
+        User.user
+    ).join(
+        AssetComments.comment,
+        Comments.user
+    ).first()
+
+
+def delete_asset_comment(asset_id, comment_id):
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    AssetComments.query.filter(
+        AssetComments.comment_asset_id == asset_id,
+        AssetComments.comment_id == comment_id
+    ).delete()
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted"

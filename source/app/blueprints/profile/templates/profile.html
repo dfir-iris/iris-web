@@ -75,7 +75,19 @@
                                 <input class="form-control disable" value="{{ current_user.id }}" readonly>
                             </div>
                         </div>
+                        <div class="form-group col">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="icon-token"></i>
+                                        #UUID
+                                    </span>
+                                </div>
+                                <input class="form-control disable" value="{{ current_user.uuid }}" readonly>
+                            </div>
+                        </div>
                     </div>
+                    {% if config['AUTHENTICATION_TYPE'] == 'local' or config['AUTHENTICATION_TYPE'] == 'ldap' %}
                     <div class="row mb-4">
                         <div class="form-group col">
                             <div class="input-group">
@@ -92,21 +104,48 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label d-block">Iris Theme</label>
-                        <div class="selectgroup selectgroup-primary selectgroup-pills">
-                            <label class="selectgroup-item" title="Light mode">
-                                <input type="radio" name="iris-theme" value="false" class="selectgroup-input" {% if not current_user.in_dark_mode %}checked{% endif %}>
-                                <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-sun"></i></span>
-                            </label>
-                            <label class="selectgroup-item" title="Dark mode">
-                                <input type="radio" name="iris-theme" value="true" class="selectgroup-input" {% if current_user.in_dark_mode %}checked{% endif %}>
-                                <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-moon"></i></span>
-                            </label>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label class="form-label d-block">IRIS Theme</label>
+                                <div class="selectgroup selectgroup-primary selectgroup-pills">
+                                    <label class="selectgroup-item" title="Light mode">
+                                        <input type="radio" name="iris-theme" value="false" class="selectgroup-input" {% if not current_user.in_dark_mode %}checked{% endif %}>
+                                        <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-sun"></i></span>
+                                    </label>
+                                    <label class="selectgroup-item" title="Dark mode">
+                                        <input type="radio" name="iris-theme" value="true" class="selectgroup-input" {% if current_user.in_dark_mode %}checked{% endif %}>
+                                        <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-moon"></i></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label class="form-label d-block">Prompt a confirmation box before deleting objects</label>
+                                <div class="selectgroup selectgroup-primary selectgroup-pills">
+                                    <label class="selectgroup-item" title="Do not prompt a confirmation popup and delete objects directly">
+                                        <input type="radio" name="user-has-deletion-prompt" value="false" class="selectgroup-input" {% if not current_user.has_deletion_confirmation %}checked{% endif %}>
+                                        <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-comment-slash"></i></span>
+                                    </label>
+                                    <label class="selectgroup-item" title="Prompt a confirmation popup before deleting objects">
+                                        <input type="radio" name="user-has-deletion-prompt" value="true" class="selectgroup-input" {% if current_user.has_deletion_confirmation %}checked{% endif %}>
+                                        <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-comment"></i></span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="float-right mt-4">
-                        <button class="btn btn-primary" type="button" onclick="update_password()">Change password</button>
+                    <div class="row">
+                        <div class="col-6 float-left mt-4">
+                            <button class="btn btn-dark" type="button" onclick="refresh_user_permissions();" id="user_refresh_perms_btn">Refresh access</button>
+                        </div>
+                        <div class="col-6 float-right mt-4">
+                            {% if config['AUTHENTICATION_TYPE'] == 'local' %}
+                                <button class="btn btn-primary float-right" type="button" onclick="update_password();">Change password</button>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -126,5 +165,4 @@
 
 {% block javascripts %}
     <script src="/static/assets/js/iris/user.js"></script>
-
 {% endblock javascripts %}

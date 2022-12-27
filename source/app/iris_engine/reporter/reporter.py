@@ -26,6 +26,8 @@
 import logging as log
 import os
 from datetime import datetime
+
+from app.datamgmt.reporter.report_db import export_case_json_for_report
 from docx_generator.docx_generator import DocxGenerator
 from docx_generator.exceptions import rendering_error
 from flask_login import current_user
@@ -45,6 +47,7 @@ from app.models import CasesEvent
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
+from app.iris_engine.reporter.ImageHandler import ImageHandler
 
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)
@@ -55,11 +58,12 @@ class IrisMakeDocReport(object):
     Generates a DOCX report for the case
     """
 
-    def __init__(self, tmp_dir, report_id, caseid):
+    def __init__(self, tmp_dir, report_id, caseid, safe_mode=False):
         self._tmp = tmp_dir
         self._report_id = report_id
         self._case_info = {}
         self._caseid = caseid
+        self._safe_mode = safe_mode
 
     def generate_doc_report(self, type):
         """
@@ -84,7 +88,13 @@ class IrisMakeDocReport(object):
         output_file_path = os.path.join(self._tmp, name)
 
         try:
-            generator = DocxGenerator()
+
+            if not self._safe_mode:
+                image_handler = ImageHandler(template=None, base_path='/')
+            else:
+                image_handler = None
+
+            generator = DocxGenerator(image_handler=image_handler)
             generator.generate_docx("/",
                                     os.path.join(app.config['TEMPLATES_PATH'], report.internal_reference),
                                     case_info,
@@ -123,7 +133,7 @@ class IrisMakeDocReport(object):
         Retrieve information of the case
         :return:
         """
-        case_info = export_case_json(self._caseid)
+        case_info = export_case_json_for_report(self._caseid)
 
         # Get customer, user and case title
         case_info['doc_id'] = IrisMakeDocReport.get_docid()
@@ -240,7 +250,7 @@ class IrisMakeDocReport(object):
             CaseAssets.asset_id,
             CaseAssets.asset_name,
             CaseAssets.asset_description,
-            CaseAssets.asset_compromised.label('compromised'),
+            CaseAssets.asset_compromise_status_id.label('compromise_status'),
             AssetsType.asset_name.label("type"),
             CaseAssets.custom_attributes,
             CaseAssets.asset_tags
@@ -248,7 +258,7 @@ class IrisMakeDocReport(object):
             CaseAssets.case_id == caseid
         ).join(
             CaseAssets.asset_type
-        ).order_by(desc(CaseAssets.asset_compromised)).all()
+        ).order_by(desc(CaseAssets.asset_compromise_status_id)).all()
 
         for row in res:
             row = row._asdict()

@@ -41,6 +41,26 @@ function eraseCookie(name) {
     document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
 
+function ellipsis_field( data, cutoff, wordbreak ) {
+
+    data = data.toString();
+
+    if ( data.length <= cutoff ) {
+        return filterXSS( data );
+    }
+
+    var shortened = data.substr(0, cutoff-1);
+
+    // Find the last white space character in the string
+    if ( wordbreak ) {
+        shortened = shortened.replace(/\s([^\s]*)$/, '');
+    }
+
+    shortened = filterXSS( shortened );
+
+    return '<div class="ellipsis" title="'+filterXSS(data)+'">'+shortened+'&#8230;</div>';
+};
+
 function propagate_form_api_errors(data_error) {
     for (e in data_error) {
         if($("#" + e).length != 0) {
@@ -66,7 +86,11 @@ function propagate_form_api_errors(data_error) {
 }
 
 function ajax_notify_error(jqXHR, url) {
-    message = `We got error ${jqXHR.status} - ${jqXHR.statusText} requesting ${url}`;
+    if (jqXHR.status == 403) {
+        message = 'Permission denied';
+    } else {
+        message = `We got error ${jqXHR.status} - ${jqXHR.statusText} requesting ${url}`;
+    }
     notify_error(message);
 }
 
@@ -120,9 +144,29 @@ function notify_success(message) {
     });
 }
 
+function notify_warning(message) {
+    message = '<p>' + sanitizeHTML(message) + '</p>';
+    $.notify({
+        icon: 'fas fa-exclamation',
+        message: message
+    }, {
+        type: 'warning',
+        placement: {
+            from: 'bottom',
+            align: 'left'
+        },
+        z_index: 2000,
+        timer: 2500,
+        animate: {
+            enter: 'animated fadeIn',
+            exit: 'animated fadeOut'
+        }
+    });
+}
+
 function notify_auto_api(data, silent_success) {
     if (data.status == 'success') {
-        if (silent_success === undefined) {
+        if (silent_success === undefined || silent_success === false) {
             if (data.message.length === 0) {
                 data.message = 'Operation succeeded';
             }
@@ -150,7 +194,7 @@ function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
         type: 'GET',
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
-            if (beforeSend_fn !== undefined) {
+            if (beforeSend_fn !== undefined && beforeSend_fn !== null) {
                 beforeSend_fn(jqXHR, settings);
             }
         },
@@ -170,6 +214,10 @@ function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
             }
         }
     });
+}
+
+function set_page_warning(msg) {
+    $('#page_warning').text(msg);
 }
 
 function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
@@ -201,12 +249,19 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
     });
 }
 
-function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid) {
+function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, onError_fn) {
    if (cid === undefined ) {
      cid = case_param();
    } else {
      cid = '?cid=' + cid;
    }
+
+   if (data === undefined || data === null) {
+        data = JSON.stringify({
+            'csrf_token': $('#csrf_token').val()
+        });
+   }
+
    return $.ajax({
         url: uri + cid,
         type: 'POST',
@@ -214,7 +269,7 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid) {
         dataType: "json",
         contentType: "application/json;charset=UTF-8",
         beforeSend: function(jqXHR, settings) {
-            if (beforeSend_fn !== undefined) {
+            if (typeof beforeSend_fn === 'function') {
                 beforeSend_fn(jqXHR, settings);
             }
         },
@@ -349,10 +404,8 @@ function case_param() {
 var last_state = null;
 var need_check = true;
 function update_last_resfresh() {
-    var dt = new Date();
-    var time = ('0'+dt.getHours()).slice(-2) + ":" +  ('0'+dt.getMinutes()).slice(-2) + ":" + ('0'+dt.getSeconds()).slice(-2);
     need_check = true;
-    $('#last_resfresh').text("Last refresh "+ time).removeClass("text-warning");
+    $('#last_resfresh').text("").removeClass("text-warning");
 }
 
 function check_update(url) {
@@ -390,6 +443,10 @@ function check_update(url) {
                                 location.reload();
                         }
                     });
+                } else if (data.status == 403) {
+                    window.location.replace("/case" + case_param());
+                } else if (data.status == 400) {
+
                 } else {
                     notify_error('Connection with server lost');
                 }
@@ -416,16 +473,22 @@ function hide_loader() {
     update_last_resfresh();
 }
 
-var sanitizeHTML = function (str) {
-    if (typeof str === 'string') {
-        return str.replace(/[^\w. ]/gi, function (c) {
-            return '&#' + c.charCodeAt(0) + ';';
-        });
-    } else if (str == null) {
-        return '';
-    } else {
-        return str;
+function list_to_badges(wordlist, style, limit, type) {
+    badges = "";
+    if (wordlist.length > limit) {
+       badges = `<span class="badge badge-${style} ml-2">${wordlist.length} ${type}</span>`;
     }
+    else {
+        wordlist.forEach(function (item, index) {
+            badges += `<span class="badge badge-${style} ml-2">${sanitizeHTML(item)}</span>`;
+        });
+    }
+
+    return badges;
+}
+
+var sanitizeHTML = function (str, options) {
+    return filterXSS(str, options);
 };
 
 function isWhiteSpace(s) {
@@ -458,8 +521,22 @@ function downloadURI(uri, name) {
 function copy_object_link(node_id) {
     link = buildShareLink(node_id);
     navigator.clipboard.writeText(link).then(function() {
-          notify_success('Shared link copied')
+          notify_success('Shared link copied');
     }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error('Shared link', err);
+    });
+}
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function copy_object_link_md(data_type, node_id){
+    link = `[<i class="fa-solid fa-tag></i> ${capitalizeFirstLetter(data_type)} #${node_id}](${buildShareLink(node_id)})`
+    navigator.clipboard.writeText(link).then(function() {
+        notify_success('MD link copied');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
         console.error('Shared link', err);
     });
 }
@@ -562,6 +639,8 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
                 jsdata = data.data;
                 if (jsdata.length != 0) {
                     anchor.append('<div class="dropdown-divider"></div>');
+                } else {
+                    anchor.append('<div class="dropdown-item">No module available</div>');
                 }
                 for (option in jsdata) {
                     opt = jsdata[option];
@@ -569,6 +648,9 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
                                 `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
                     anchor.append(menu_opt);
                 }
+
+            } else {
+                anchor.append('<div>No module available</div>');
             }
         }
     })
@@ -584,7 +666,239 @@ function get_row_id(row) {
     return null;
 }
 
-function load_menu_mod_options(data_type, table) {
+var iClassWhiteList = ['fa-solid fa-tags','fa-solid fa-tag', 'fa-solid fa-virus-covid text-danger mr-1',
+'fa-solid fa-file-shield text-success mr-1', 'fa-regular fa-file mr-1', 'fa-solid fa-lock text-success mr-1']
+
+function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_callback, do_save, readonly, live_preview) {
+    var editor = ace.edit(anchor_id);
+    if ($("#"+anchor_id).attr("data-theme") != "dark") {
+        editor.setTheme("ace/theme/tomorrow");
+    } else {
+        editor.setTheme("ace/theme/tomorrow_night");
+    }
+    editor.session.setMode("ace/mode/markdown");
+    if (readonly !== undefined) {
+        editor.setReadOnly(readonly);
+    }
+    editor.renderer.setShowGutter(true);
+    editor.setOption("showLineNumbers", true);
+    editor.setOption("showPrintMargin", false);
+    editor.setOption("displayIndentGuides", true);
+    editor.setOption("maxLines", "Infinity");
+    editor.setOption("minLines", "2");
+    editor.setOption("autoScrollEditorIntoView", true);
+    editor.session.setUseWrapMode(true);
+    editor.setOption("indentedSoftWrap", false);
+    editor.renderer.setScrollMargin(8, 5)
+    editor.setOption("enableBasicAutocompletion", true);
+
+    editor.commands.addCommand({
+        name: 'save',
+        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+        exec: function(editor) {
+            if (do_save !== undefined || do_save !== null) {
+                do_save()
+            }
+        }
+    });
+
+    editor.commands.addCommand({
+        name: 'bold',
+        bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
+        exec: function(editor) {
+            editor.insertSnippet('**${1:$SELECTION}**');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'italic',
+        bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
+        exec: function(editor) {
+            editor.insertSnippet('*${1:$SELECTION}*');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_1',
+        bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
+        exec: function(editor) {
+            editor.insertSnippet('# ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_2',
+        bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
+        exec: function(editor) {
+            editor.insertSnippet('## ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_3',
+        bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
+        exec: function(editor) {
+            editor.insertSnippet('### ${1:$SELECTION}');
+        }
+    });
+    editor.commands.addCommand({
+        name: 'head_4',
+        bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
+        exec: function(editor) {
+            editor.insertSnippet('#### ${1:$SELECTION}');
+        }
+    });
+
+    if (live_preview === undefined || live_preview === true) {
+        var textarea = $('#'+content_anchor);
+        editor.getSession().on("change", function () {
+            if (onchange_callback !== undefined && onchange_callback !== null) {
+                onchange_callback();
+            }
+
+            textarea.val(editor.getSession().getValue());
+            target = document.getElementById(target_anchor);
+            converter = new showdown.Converter({
+                tables: true,
+                parseImgDimensions: true
+            });
+            html = converter.makeHtml(editor.getSession().getValue());
+            target.innerHTML = filterXSS(html, {
+                stripIgnoreTag: false,
+                whiteList: {
+                        i: ['class', "title"],
+                        a: ['href', 'title', 'target'],
+                        img: ['src', 'alt', 'title', 'width', 'height'],
+                        p: [],
+                        hr: [],
+                        h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+                        ul: [], ol: [], li: [],
+                        code: [], pre: [],
+                        blockquote: [],
+                        table: [], thead: [], tbody: [], tr: [], th: [], td: []
+                    },
+                onTagAttr: function (tag, name, value, isWhiteAttr) {
+                    if (tag === "i" && name === "class") {
+                        if (iClassWhiteList.indexOf(value) === -1) {
+                            return false;
+                        } else {
+                            return name + '="' + value + '"';
+                        }
+                    }
+                  }
+                });
+
+        });
+
+        textarea.val(editor.getSession().getValue());
+        target = document.getElementById(target_anchor);
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(editor.getSession().getValue());
+        target.innerHTML = filterXSS(html,  {
+                stripIgnoreTag: false,
+                whiteList: {
+                        i: ['class', 'title'],
+                        a: ['href', 'title', 'target'],
+                        img: ['src', 'alt', 'title', 'width', 'height'],
+                        p: [],
+                        hr: [],
+                        h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+                        ul: [], ol: [], li: [],
+                        code: [], pre: [],
+                        blockquote: [],
+                        table: [], thead: [], tbody: [], tr: [], th: [], td: []
+
+                    },
+                onTagAttr: function (tag, name, value, isWhiteAttr) {
+                    if (tag === "i" && name === "class") {
+                        if (iClassWhiteList.indexOf(value) === -1) {
+                            return false;
+                        } else {
+                            return name + '="' + value + '"';
+                        }
+                    }
+                  }
+                });
+    }
+
+    return editor;
+}
+
+function get_avatar_initials(name, small) {
+    initial = name.split(' ');
+    if (initial.length > 1) {
+        initial = initial[0][0] + initial[1][0];
+        snum = initial[0].charCodeAt(0) + initial[1].charCodeAt(0);
+    } else {
+        initial = initial[0][0];
+        snum = initial.charCodeAt(0);
+    }
+    initial = initial.toUpperCase();
+
+    bgs = ['bg-info', 'bg-default', 'bg-primary', 'bg-secondary', 'bg-success', 'bg-warning', 'bg-danger'];
+    bg = bgs[snum % bgs.length];
+    if (small === undefined || small === null || small === false) {
+        av_size = 'avatar';
+    } else {
+        av_size = 'avatar-sm';
+    }
+
+    return `<div class="${av_size}" title="${name}">
+        <span class="avatar-title rounded-circle border border-white ${bg}">${initial}</span>
+    </div>`;
+}
+
+function edit_inner_editor(btn_id, container_id, ctrd_id) {
+    $('#'+container_id).toggle();
+    if ($('#'+container_id).is(':visible')) {
+        $('#'+btn_id).show(100);
+        $('#'+ctrd_id).removeClass('col-md-12').addClass('col-md-6');
+    } else {
+        $('#'+btn_id).hide(100);
+        $('#'+ctrd_id).removeClass('col-md-6').addClass('col-md-12');
+    }
+    return false;
+}
+
+function get_editor_headers(editor_instance, save, edition_btn) {
+    var save_html = `<div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="${save}( this );"><i class="fa-solid fa-file-circle-check"></i></div>`;
+    if (save === undefined || save === null) {
+        save_html = '';
+    }
+    header = `
+                ${save_html}
+                <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="${editor_instance}.insertSnippet`+"('**${1:$SELECTION}**');"+`${editor_instance}.focus();"><i class="fa-solid fa-bold"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="${editor_instance}.insertSnippet`+"('*${1:$SELECTION}*');"+`${editor_instance}.focus();"><i class="fa-solid fa-italic"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="${editor_instance}.insertSnippet`+"('# ${1:$SELECTION}');"+`${editor_instance}.focus();">H1</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="${editor_instance}.insertSnippet`+"('## ${1:$SELECTION}')"+`;${editor_instance}.focus();">H2</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="${editor_instance}.insertSnippet`+"('### ${1:$SELECTION}');"+`${editor_instance}.focus();">H3</div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="${editor_instance}.insertSnippet`+"('#### ${1:$SELECTION}');"+`${editor_instance}.focus();">H4</div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="${editor_instance}.insertSnippet`+"('```${1:$SELECTION}```');"+`${editor_instance}.focus();"><i class="fa-solid fa-code"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="${editor_instance}.insertSnippet`+"('[New link](${1:$SELECTION})');"+`${editor_instance}.focus();"><i class="fa-solid fa-link"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="${editor_instance}.insertSnippet`+"('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');"+`${editor_instance}.focus();"><i class="fa-solid fa-table"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="${editor_instance}.insertSnippet`+"('\n- \n- \n- ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="${editor_instance}.insertSnippet`+"('\n1. a  \n2. b  \n3. c  ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list-ol"></i></div>
+    `
+    return header;
+}
+
+function goto_case_number() {
+    case_id = $('#goto_case_number_input').val();
+    if (case_id !== '' && isNaN(case_id) === false) {
+
+        get_request_api('/case/exists', true, null, case_id)
+        .done(function (data){
+            if(notify_auto_api(data, true)) {
+                var url = new window.URL(document.location);
+                url.searchParams.set("cid", case_id);
+                window.location.href = url.href;
+            }
+        });
+
+    }
+}
+
+
+function load_menu_mod_options(data_type, table, deletion_fn) {
     var actionOptions = {
         classes: [],
         contextMenu: {
@@ -608,6 +922,15 @@ function load_menu_mod_options(data_type, table) {
         items: [],
     };
 
+    datatype_map = {
+        'task': 'tasks',
+        'ioc': 'ioc',
+        'evidence': 'evidences',
+        'note': 'notes',
+        'asset': 'assets',
+        'event': 'timeline/events'
+    }
+
     get_request_api("/dim/hooks/options/"+ data_type +"/list")
     .done((data) => {
         if(notify_auto_api(data, true)) {
@@ -619,12 +942,36 @@ function load_menu_mod_options(data_type, table) {
                     title: 'Share',
                     multi: false,
                     iconClass: 'fas fa-share',
-                    buttonClasses: ['btn', 'btn-outline-primary'],
                     action: function(rows){
                         row = rows[0];
                         copy_object_link(get_row_id(row));
                     }
                 });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Comment',
+                    multi: false,
+                    iconClass: 'fas fa-comments',
+                    action: function(rows){
+                        row = rows[0];
+                        if (data_type in datatype_map) {
+                            comment_element(get_row_id(row), datatype_map[data_type]);
+                        }
+                    }
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Markdown Link',
+                    multi: false,
+                    iconClass: 'fa-brands fa-markdown',
+                    action: function(rows){
+                        row = rows[0];
+                        copy_object_link_md(data_type, get_row_id(row));
+                    }
+                });
+
                 actionOptions.items.push({
                     type: 'divider',
                 });
@@ -636,13 +983,31 @@ function load_menu_mod_options(data_type, table) {
                         multi: true,
                         multiTitle: opt.manual_hook_ui_name,
                         iconClass: 'fas fa-arrow-alt-circle-right',
-                        buttonClasses: ['btn', 'btn-outline-primary'],
                         contextMenuClasses: ['text-dark'],
                         action: function (rows) {
                             init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
                         },
                     })
                 }
+
+                if (deletion_fn !== undefined) {
+                    actionOptions.items.push({
+                        type: 'divider',
+                    });
+
+                    actionOptions.items.push({
+                        type: 'option',
+                        title: 'Delete',
+                        multi: false,
+                        iconClass: 'fas fa-trash',
+                        contextMenuClasses: ['text-danger'],
+                        action: function(rows){
+                            row = rows[0];
+                            deletion_fn(get_row_id(row));
+                        }
+                    });
+                }
+
                 table.contextualActions(actionOptions);
             }
         }
@@ -762,34 +1127,68 @@ function hide_table_search_input(columns) {
   }
 
 function load_context_switcher() {
-    $('#user_context').selectpicker({liveSearch: true,
-        title: "None",
-        style: "btn-outline-white"
-    });
 
-    get_request_api('/context/get-cases')
+    var options = {
+            ajax: {
+            url: '/context/search-cases'+ case_param(),
+            type: 'GET',
+            dataType: 'json'
+        },
+        locale: {
+                emptyTitle: 'Select and Begin Typing'
+        },
+        preprocessData: function (data) {
+            return context_data_parser(data);
+        },
+        preserveSelected: false
+    };
+
+
+    get_request_api('/context/get-cases/100')
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-            $('#user_context').empty();
-            $('#user_context').append('<optgroup label="Opened" id="switch_case_opened_opt">');
-            ocs = data.data.cases_context_selector;
-            for (index in ocs) {
-                $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`);
-            }
-            $('#user_context').append('</optgroup>');
-
-            $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt">');
-            ocs = data.data.cases_close_context_selector;
-            for (index in ocs) {
-                $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${ocs[index].name} (${ocs[index].customer_name})</option>`);
-            }
-            $('#user_context').append('</optgroup>');
-
-            $('#user_context').selectpicker("refresh");
-            $('#user_context').selectpicker('val', get_caseid());
-            $('#modal_switch_context').modal("show");
-        }
+        context_data_parser(data);
+        $('#user_context').ajaxSelectPicker(options);
     });
+}
+
+function context_data_parser(data) {
+    if(notify_auto_api(data, true)) {
+        $('#user_context').empty();
+
+        $('#user_context').append('<optgroup label="Opened" id="switch_case_opened_opt"></optgroup>');
+        $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
+        ocs = data.data;
+        ret_data = [];
+        for (index in ocs) {
+            case_name = sanitizeHTML(ocs[index].name);
+            cs_name = sanitizeHTML(ocs[index].customer_name);
+            ret_data.push({
+                        'value': ocs[index].case_id,
+                        'text': `${case_name} (${cs_name}) ${ocs[index].access}`
+                    });
+            if (ocs[index].close_date != null) {
+                $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`);
+            } else {
+                $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`)
+            }
+        }
+
+        $('#modal_switch_context').modal("show");
+        $('#user_context').selectpicker('refresh');
+        $('#user_context').selectpicker('val', get_caseid());
+        return ret_data;
+
+    }
+}
+
+function focus_on_input_chg_case(){
+    $('#goto_case_number_input').focus();
+    $('#goto_case_number_input').keydown(function(event) {
+        if (event.keyCode == 13) {
+             goto_case_number();
+             return false;
+        }
+  });
 }
 
 function split_bool(split_str) {
@@ -824,26 +1223,30 @@ $(document).ready(function(){
         if (btt !== 'manage') {
             btt = btt.split('?')[0];
         } else {
-            btt = current.split('?')[0];
+            csp = current.split('?')[0].split('/')
+            if (csp.length >= 3) {
+                csp = csp.splice(0, 3);
+            }
+            btt = csp.join('/');
         }
+
         $('#l_nav_tab .nav-item').each(function (k, al) {
             href = $(al).children().attr('href');
             try {
                 if (href == "#advanced-nav") {
                     $('#advanced-nav .nav-subitem').each(function (i, el) {
                         ktt = $(el).children().attr('href').split('?')[0];
-
                         if (ktt === btt) {
                             $(el).addClass('active');
                             $(al).addClass('active');
                             $(al).children().attr('aria-expanded', true);
                             $('#advanced-nav').show();
-                            return;
+                            return false;
                         }
-                    })
+                    });
                 } else if (href.startsWith(btt)){
                     $(this).addClass('active');
-                    return;
+                    return false;
                 }else{
                     att = "";
                     att = href.split('/')[1].split('?')[0];
@@ -851,7 +1254,7 @@ $(document).ready(function(){
             } catch {att=""}
             if (att === btt) {
                 $(al).addClass('active');
-                return;
+                return false;
             }
         })
     })
@@ -892,12 +1295,6 @@ $(document).ready(function(){
             html: true
         });
     });
-
-    $('#user_context').selectpicker({liveSearch: true,
-        title: "None",
-        style: "btn-outline-white"
-    });
-    $('#user_context').selectpicker('val', get_caseid());
 
     $('.modal-dialog').draggable({
         handle: ".modal-header"

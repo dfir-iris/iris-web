@@ -32,13 +32,12 @@ from app import app
 from app import db
 from app.forms import AddAssetForm
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import Permissions
 from app.models.models import AssetsType
 from app.models.models import CaseAssets
 from app.schema.marshables import AssetSchema
-from app.util import admin_required
-from app.util import api_admin_required
-from app.util import api_login_required
-from app.util import login_required
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -48,7 +47,7 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 @manage_assets_blueprint.route('/manage/asset-type/list')
-@api_login_required
+@ac_api_requires()
 def list_assets(caseid):
     # Get all assets
     assets = AssetsType.query.with_entities(
@@ -72,7 +71,7 @@ def list_assets(caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def view_asset_api(cur_id, caseid):
     # Get all assets
     asset_type = AssetsType.query.with_entities(
@@ -91,7 +90,7 @@ def view_asset_api(cur_id, caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_requires(Permissions.server_administrator)
 def view_assets_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_assets.manage_assets', cid=caseid))
@@ -112,7 +111,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def view_assets(cur_id, caseid):
     asset_type = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset_type:
@@ -143,7 +142,7 @@ def view_assets(cur_id, caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.server_administrator)
 def add_assets_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_assets.manage_assets', cid=caseid))
@@ -153,7 +152,7 @@ def add_assets_modal(caseid, url_redir):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def add_assets(caseid):
 
     asset_schema = AssetSchema()
@@ -183,8 +182,8 @@ def add_assets(caseid):
     return response_error("Unexpected error server-side. Nothing updated")
 
 
-@manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['GET'])
-@api_admin_required
+@manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
 def delete_assets(cur_id, caseid):
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset:

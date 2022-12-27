@@ -18,12 +18,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import traceback
-
 # IMPORTS ------------------------------------------------
 import base64
 import json
 import logging as log
+import traceback
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -48,9 +47,9 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.iris_engine.module_handler.module_handler import iris_update_hooks
 from app.iris_engine.module_handler.module_handler import register_module
 from app.iris_engine.utils.tracker import track_activity
-from app.util import admin_required
-from app.util import api_admin_required
-from app.util import login_required
+from app.models.authorization import Permissions
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -69,7 +68,7 @@ def has_no_empty_params(rule):
 
 # CONTENT ------------------------------------------------
 @manage_modules_blueprint.route("/sitemap")
-@login_required
+@ac_requires()
 def site_map(caseid, url_redir):
     links = []
     for rule in app.url_map.iter_rules():
@@ -79,11 +78,11 @@ def site_map(caseid, url_redir):
             url = url_for(rule.endpoint, **(rule.defaults or {}))
             links.append((url, rule.endpoint))
 
-    return response_error('', data=links)
+    return response_success('', data=links)
 
 
 @manage_modules_blueprint.route('/manage/modules', methods=['GET'])
-@admin_required
+@ac_requires(Permissions.server_administrator)
 def manage_modules_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_module.manage_modules_index', cid=caseid))
@@ -94,7 +93,7 @@ def manage_modules_index(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/list', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def manage_modules_list(caseid):
     output = iris_modules_list()
 
@@ -102,7 +101,7 @@ def manage_modules_list(caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/add', methods=['GET', 'POST'])
-@admin_required
+@ac_requires(Permissions.server_administrator)
 def add_module(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_modules.add_module', cid=caseid))
@@ -146,7 +145,7 @@ def add_module(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/update_param/<param_name>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def update_module_param(param_name, caseid):
     try:
 
@@ -189,13 +188,13 @@ def update_module_param(param_name, caseid):
         return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id, form=form)
 
 
-@manage_modules_blueprint.route('/manage/modules/update/<int:id>', methods=['GET', 'POST'])
-@api_admin_required
-def view_module(id, caseid):
+@manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>', methods=['GET', 'POST'])
+@ac_api_requires(Permissions.server_administrator)
+def view_module(mod_id, caseid):
     form = AddModuleForm()
 
-    if id:
-        module = get_module_from_id(id)
+    if mod_id:
+        module = get_module_from_id(mod_id)
         config = module.module_config
 
         is_configured = is_mod_configured(config)
@@ -206,7 +205,7 @@ def view_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/enable/<int:id>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def enable_module(id, caseid):
     if id:
         if iris_module_enable_by_id(id):
@@ -220,7 +219,7 @@ def enable_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/disable/<int:id>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def disable_module(id, caseid):
     if id:
         if iris_module_disable_by_id(id):
@@ -234,7 +233,7 @@ def disable_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/remove/<int:id>', methods=['GET', 'POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def view_delete_module(id, caseid):
     try:
 
@@ -249,7 +248,7 @@ def view_delete_module(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/export-config/<int:id>', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def export_mod_config(id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(id)
@@ -264,17 +263,20 @@ def export_mod_config(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/import-config/<int:id>', methods=['POST'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def import_mod_config(id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(id)
     logs = []
     parameters_data = request.get_json().get('module_configuration')
 
-    try:
-        parameters = json.loads(parameters_data)
-    except Exception as e:
-        return response_error('Invalid data', data="Not a JSON file")
+    if type(parameters_data) is not list:
+        try:
+            parameters = json.loads(parameters_data)
+        except Exception as e:
+            return response_error('Invalid data', data="Not a JSON file")
+    else:
+        parameters = parameters_data
 
     for param in parameters:
         param_name = param.get('param_name')
@@ -294,7 +296,7 @@ def import_mod_config(id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
-@api_admin_required
+@ac_api_requires(Permissions.server_administrator)
 def view_modules_hook(caseid):
     output = module_list_hooks_view()
     data = [item._asdict() for item in output]

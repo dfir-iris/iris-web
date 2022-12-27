@@ -141,9 +141,11 @@ function edit_case_summary() {
     if ($('#container_editor_summary').is(':visible')) {
         $('#ctrd_casesum').removeClass('col-md-12').addClass('col-md-6');
         $('#summary_edition_btn').show(100);
+        $("#refreshbtn").html('Save');
     } else {
         $('#ctrd_casesum').removeClass('col-md-6').addClass('col-md-12');
         $('#summary_edition_btn').hide();
+        $("#refreshbtn").html('Refresh');
     }
 }
 
@@ -254,6 +256,45 @@ function auto_remove_typing() {
     }
 }
 
+function case_pipeline_popup() {
+    url = '/case/pipelines-modal' + case_param();
+    $('#info_case_modal_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_case_detail').modal({ show: true });
+        $("#update_pipeline_selector").selectpicker({
+            liveSearch: true,
+            style: "btn-outline-white"
+            })
+        $('#update_pipeline_selector').selectpicker("refresh");
+        $(".control-update-pipeline-args ").hide();
+        $('.control-update-pipeline-'+ $('#update_pipeline_selector').val() ).show();
+        $('#update_pipeline_selector').on('change', function(e){
+          $(".control-update-pipeline-args ").hide();
+          $('.control-update-pipeline-'+this.value).show();
+        });
+        $('[data-toggle="popover"]').popover();
+    });
+}
+
+function case_detail(case_id) {
+    url = '/case/details/' + case_id + case_param();
+    $('#info_case_modal_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_case_detail').modal({ show: true });
+    });
+}
+
+function manage_case(case_id) {
+   window.location = '/manage/cases?cid='+ case_id +'#view';
+}
+
+
 $(document).ready(function() {
 
     if ($("#editor_summary").attr("data-theme") != "dark") {
@@ -325,6 +366,16 @@ $(document).ready(function() {
         handle_ed_paste(event);
     });
 
+    var timer;
+    var timeout = 10000;
+    $('#editor_summary').keyup(function(){
+        if(timer) {
+             clearTimeout(timer);
+        }
+        timer = setTimeout(sync_editor, timeout);
+    });
+
+
     var textarea = $('#case_summary');
     editor.getSession().on("change", function () {
         textarea.val(editor.getSession().getValue());
@@ -337,7 +388,7 @@ $(document).ready(function() {
         }),
         html = converter.makeHtml(editor.getSession().getValue());
 
-        target.innerHTML = html;
+        target.innerHTML = filterXSS(html);
 
     });
 
@@ -345,18 +396,29 @@ $(document).ready(function() {
     body_loaded();
     if (is_db_linked == 1) {
         sync_editor(true);
-        setInterval(auto_remove_typing, 3000);
+        setInterval(auto_remove_typing, 2000);
     }
 
-    $('#generate_report_button').attr("href", '/report/generate/case/' + $("#select_report option:selected").val() + case_param());
+    $('#generate_report_button').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param());
     $("#select_report").on("change", function(){
-        $('#generate_report_button').attr("href", '/report/generate/case/' + $("#select_report option:selected").val() + case_param());
+        $('#generate_report_button').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param());
     });
 
-    $('#generate_report_act_button').attr("href", '/report/generate/activities/' + $("#select_report_act option:selected").val() + case_param());
-    $("#select_report_act").on("change", function(){
-        $('#generate_report_act_button').attr("href", '/report/generate/activities/' + $("#select_report_act option:selected").val() + case_param());
+    $('#generate_report_button_safe').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param() + "&safe-mode=true");
+    $("#select_report").on("change", function(){
+        $('#generate_report_button_safe').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param() + "&safe-mode=true");
     });
+
+    $('#generate_report_act_button').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param());
+    $("#select_report_act").on("change", function(){
+        $('#generate_report_act_button').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param());
+    });
+
+    $('#generate_report_act_button_safe').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param() + "&safe-mode=true");
+    $("#select_report_act").on("change", function(){
+        $('#generate_report_act_button_safe').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param() + "&safe-mode=true");
+    });
+
 });
 
 

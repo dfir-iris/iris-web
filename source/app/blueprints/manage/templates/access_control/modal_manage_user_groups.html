@@ -1,0 +1,62 @@
+<div class="modal-lg modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title mt-2 mr-4">Manage user groups</h4>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="container col-md-12" >
+                <div class="row">
+                    <div class="form-group" data-select2-id="7">
+                        <label>Groups membership *</label>
+                        <div class="select2-input ml-12" data-select2-id="6">
+                            <select id="user_groups_membership" name="user_groups_membership" class="form-control select2-hidden-accessible ml-12" multiple=""
+                                    tabindex="-1" aria-hidden="true" style="width: 100%">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="save_user_groups_membership">Save</button>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+<script>
+var data = [];
+if (current_groups_list.length === 0) {
+    refresh_groups();
+}
+
+for (group in current_groups_list) {
+    data.push({
+        label: `${current_groups_list[group].group_name}`,
+        value: current_groups_list[group].group_id
+    });
+}
+
+$('#user_groups_membership').multiselect({
+    buttonWidth: 400,
+    nonSelectedText: 'Select groups',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#user_groups_membership').multiselect('dataprovider', data );
+
+{% if user.user_groups %}
+
+$('#user_groups_membership').multiselect('select', [
+    {% for group in  user.user_groups %} {{ group.group_id }}, {% endfor %}
+]);
+$('#user_groups_membership').multiselect('refresh')
+
+{% endif %}
+</script>

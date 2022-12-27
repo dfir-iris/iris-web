@@ -1,6 +1,25 @@
 /* reload the asset table */
+g_asset_id = null;
+g_asset_desc_editor = null;
+
+
 function reload_assets() {
     get_case_assets();
+}
+
+function edit_in_asset_desc() {
+
+    if($('#container_asset_desc_content').is(':visible')) {
+        $('#container_asset_description').show(100);
+        $('#container_asset_desc_content').hide(100);
+        $('#asset_edition_btn').hide(100);
+        $('#asset_preview_button').hide(100);
+    } else {
+        $('#asset_preview_button').show(100);
+        $('#asset_edition_btn').show(100);
+        $('#container_asset_desc_content').show(100);
+        $('#container_asset_description').hide(100);
+    }
 }
 
 /* Fetch a modal that is compatible with the requested asset type */
@@ -12,6 +31,18 @@ function add_asset() {
              ajax_notify_error(xhr, url);
              return false;
         }
+
+        g_asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, null);
+        g_asset_desc_editor.setOption("minLines", "10");
+        edit_in_asset_desc();
+
+        headers = get_editor_headers('g_asset_desc_editor', null, 'asset_edition_btn');
+        $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
 
@@ -26,6 +57,7 @@ function add_asset() {
                 data["ioc_links"] = [data["ioc_links"]]
             }
             data['asset_tags'] = $('#asset_tags').val();
+            data['asset_description'] = g_asset_desc_editor.getValue();
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
             attributes = ret[1];
@@ -63,8 +95,12 @@ function add_asset() {
 
             return false;
         })
+
+        $('#modal_add_asset').modal({ show: true });
+        $('#asset_name').focus();
+
     });
-    $('#modal_add_asset').modal({ show: true });
+
     $('.dtr-modal').hide();
 }
 
@@ -77,20 +113,21 @@ function get_case_assets() {
         if (response.status == 'success') {
             if (response.data != null) {
                 jsdata = response.data;
+                if (jsdata.assets.length > 299) {
+                    set_page_warning("Backref disabled due to too many assets in the case");
+                } else {
+                    set_page_warning("");
+                }
                 Table.clear();
                 Table.rows.add(jsdata.assets);
                 Table.columns.adjust().draw();
-                load_menu_mod_options('asset', Table);
+                load_menu_mod_options('asset', Table, delete_asset);
 
                 set_last_state(jsdata.state);
                 hide_loader();
                 Table.responsive.recalc();
 
-                $('#assets_table').on('click', function(e){
-                    if($('.popover-link').length>1)
-                        $('.popover-link').popover('hide');
-                        $(e.target).popover('toggle');
-                    });
+                $('[data-toggle="popover"]').popover({html: true, container: 'body'});
 
             } else {
                 Table.clear().draw();
@@ -104,21 +141,21 @@ function get_case_assets() {
 
 /* Delete an asset */
 function delete_asset(asset_id) {
-    get_request_api('assets/delete/' + asset_id)
-    .done((data) => {
-        if (data.status == 'success') {
-
-            reload_assets();
-            $('#modal_add_asset').modal('hide');
-            notify_success('Asset deleted');
-
-
-        } else {
-
-            swal("Oh no !", data.message, "error")
-
+    do_deletion_prompt("You are about to delete asset #" + asset_id)
+    .then((doDelete) => {
+        if (doDelete) {
+            post_request_api('assets/delete/' + asset_id)
+            .done((data) => {
+                if (data.status == 'success') {
+                    reload_assets();
+                    $('#modal_add_asset').modal('hide');
+                    notify_success('Asset deleted');
+                } else {
+                    swal("Oh no !", data.message, "error")
+                }
+            });
         }
-    })
+    });
 }
 
 /* Fetch the details of an asset and allow modification */
@@ -131,55 +168,24 @@ function asset_details(asset_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
+        g_asset_id = asset_id;
+        g_asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc',
+                            function() {
+                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                                $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
+                            }, null, false, false);
+
+        g_asset_desc_editor.setOption("minLines", "10");
+        preview_asset_description(true);
+        headers = get_editor_headers('g_asset_desc_editor', null, 'asset_edition_btn');
+        $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
 
 
         $('#submit_new_asset').on("click", function () {
-            if(!$('form#form_new_asset').valid()) {
-                return false;
-            }
-
-            var data = $('#form_new_asset').serializeObject();
-            if (typeof data["ioc_links"] === "string") {
-                data["ioc_links"] = [data["ioc_links"]]
-            } else if (typeof data["ioc_links"] === "object") {
-                tmp_data = [];
-                for (ioc_link in data["ioc_links"]) {
-                    if (typeof ioc_link === "string") {
-                        tmp_data.push(data["ioc_links"][ioc_link]);
-                    }
-                }
-                data["ioc_links"] = tmp_data;
-            }
-            else {
-                data["ioc_links"] = [];
-            }
-            data['asset_tags'] = $('#asset_tags').val();
-            if (!data.hasOwnProperty('asset_compromised')) {
-                data['asset_compromised'] = 'false';
-            }
-
-            ret = get_custom_attributes_fields();
-            has_error = ret[0].length > 0;
-            attributes = ret[1];
-
-            if (has_error){return false;}
-
-            data['custom_attributes'] = attributes;
-
-            post_request_api('assets/update/' + asset_id, JSON.stringify(data),  true)
-            .done((data) => {
-                if (data.status == 'success') {
-                    reload_assets();
-                    $('#modal_add_asset').modal('hide');
-                    notify_success('Asset updated');
-                } else {
-                    $('#submit_new_asset').text('Save again');
-                    swal("Oh no !", data.message, "error")
-                }
-            })
-
+            update_asset(true);
             return false;
         })
 
@@ -188,6 +194,89 @@ function asset_details(asset_id) {
     });
 
     $('#modal_add_asset').modal({ show: true });
+    return false;
+}
+
+function preview_asset_description(no_btn_update) {
+    if(!$('#container_asset_description').is(':visible')) {
+        asset_desc = g_asset_desc_editor.getValue();
+        converter = new showdown.Converter({
+            tables: true,
+            parseImgDimensions: true
+        });
+        html = converter.makeHtml(asset_desc);
+        asset_desc_html = filterXSS(html);
+        $('#target_asset_desc').html(asset_desc_html);
+        $('#container_asset_description').show();
+        if (!no_btn_update) {
+            $('#asset_preview_button').html('<i class="fa-solid fa-eye-slash"></i>');
+        }
+        $('#container_asset_desc_content').hide();
+    }
+    else {
+        $('#container_asset_description').hide();
+         if (!no_btn_update) {
+            $('#asset_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        }
+
+        $('#asset_preview_button').html('<i class="fa-solid fa-eye"></i>');
+        $('#container_asset_desc_content').show();
+    }
+}
+
+
+function save_asset(){
+    $('#submit_new_asset').click();
+}
+
+function update_asset(do_close){
+    if(!$('form#form_new_asset').valid()) {
+        return false;
+    }
+
+    var data = $('#form_new_asset').serializeObject();
+    if (typeof data["ioc_links"] === "string") {
+        data["ioc_links"] = [data["ioc_links"]]
+    } else if (typeof data["ioc_links"] === "object") {
+        tmp_data = [];
+        for (ioc_link in data["ioc_links"]) {
+            if (typeof ioc_link === "string") {
+                tmp_data.push(data["ioc_links"][ioc_link]);
+            }
+        }
+        data["ioc_links"] = tmp_data;
+    }
+    else {
+        data["ioc_links"] = [];
+    }
+    data['asset_tags'] = $('#asset_tags').val();
+    data['asset_description'] = g_asset_desc_editor.getValue();
+
+    ret = get_custom_attributes_fields();
+    has_error = ret[0].length > 0;
+    attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data['custom_attributes'] = attributes;
+
+    post_request_api('assets/update/' + g_asset_id, JSON.stringify(data),  true)
+    .done((data) => {
+        if (data.status == 'success') {
+            reload_assets();
+            $('#submit_new_asset').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+            if (do_close) {
+                $('#modal_add_asset').modal('hide');
+            }
+            notify_success('Asset updated');
+        } else {
+            $('#submit_new_asset').text('Save again');
+            swal("Oh no !", data.message, "error")
+        }
+    })
+
     return false;
 }
 
@@ -250,7 +339,7 @@ $(document).ready(function(){
     });
 
     Table = $("#assets_table").DataTable({
-        dom: 'Blfrtip',
+        dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
         aaData: [],
         aoColumns: [
           {
@@ -271,7 +360,7 @@ $(document).ready(function(){
                     datak = '#' + row['asset_id'];
                 }
                 share_link = buildShareLink(row['asset_id']);
-                if (row['asset_compromised']) {
+                if (row['asset_compromise_status_id'] == 1) {
                     src_icon = row['asset_icon_compromised'];
                 } else {
                     src_icon = row['asset_icon_not_compromised'];
@@ -284,20 +373,20 @@ $(document).ready(function(){
                     var has_compro = false;
                     var datacontent = 'data-content="';
                     for (idx in row.link) {
-                        if (row.link[idx]['asset_compromised']) {
+                        if (row.link[idx]['asset_compromise_status_id'] == 1) {
                             has_compro = true;
-                            datacontent += `Observed as <b class=\'text-danger\'>compromised</b><br/>on investigation <b>`+ sanitizeHTML(row.link[idx]['case_name']) + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.<br/><b>Asset description</b> :` + sanitizeHTML(row.link[idx]['asset_description']) + "<br/><br/>";
+                            datacontent += `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${row.link[idx]['case_id']}&shared=${row.link[idx]['asset_id']}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b> as <b class='text-danger'>compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></a></b> (${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
                         } else {
 
-                            datacontent += `Observed as <b class=\'text-success\'>not compromised</b><br/> on investigation <b>`+ sanitizeHTML(row.link[idx]['case_name']) + `</b> (open on `+ row.link[idx]['case_open_date'].replace('00:00:00 GMT', '') +`) for the same customer.<br/><b>Asset description</b> :` + sanitizeHTML(row.link[idx]['asset_description']) + "<br/><br/>";
+                            datacontent += `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${row.link[idx]['case_id']}&shared=${row.link[idx]['asset_id']}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b> as <b class='text-success'>not compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></a></b> (${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
                         }
                     }
                     if (has_compro) {
-                       ret += `<i class="fas fa-meteor ml-2 text-danger" style="cursor: pointer;" data-html="true"
-                            data-toggle="popover" data-trigger="hover" title="Observed on previous case" `;
+                       ret += `<a tabindex="0" class="fas fa-meteor ml-2 text-danger" style="cursor: pointer;" data-html="true"
+                            data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
                     } else {
-                        ret += `<i class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
-                        data-toggle="popover" data-trigger="hover" title="Observed on previous case" `;
+                        ret += `<a tabindex="0" class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
+                        data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
                     }
 
                     ret += datacontent;
@@ -319,7 +408,7 @@ $(document).ready(function(){
            "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
                 data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+                datas = '<span data-toggle="popover-click-close" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
 
                 if (data.length > 70) {
                     datas += ' (..)</span>';
@@ -337,9 +426,12 @@ $(document).ready(function(){
                 return data;
               }
           },
-          { "data": "asset_compromised",
+          { "data": "asset_compromise_status_id",
            "render": function(data, type, row) {
-                if (data == true) { ret = '<span class="badge badge-danger">Yes</span>';} else { ret = '<span class="badge badge-success">No</span>'}
+                if (data == 0) { ret = '<span class="badge badge-muted">TBD</span>';}
+                else if (data == 1) { ret = '<span class="badge badge-danger">Yes</span>';}
+                else if (data == 2) { ret = '<span class="badge badge-success">No</span>';}
+                else { ret = '<span class="badge badge-warning">Unknown</span>';}
                 return ret;
             }
           },
@@ -394,12 +486,7 @@ $(document).ready(function(){
         processing: true,
         responsive: {
                 details: {
-                    display: $.fn.dataTable.Responsive.display.modal( {
-                        header: function ( row ) {
-                            var data = row.data();
-                            return 'Details of '+ sanitizeHTML(data.asset_name) +' ('+ sanitizeHTML(data.asset_type)  + ')';
-                        }
-                    } ),
+                    display: $.fn.dataTable.Responsive.display.childRow,
                     renderer: $.fn.dataTable.Responsive.renderer.tableAll()
                 }
         },
@@ -410,7 +497,7 @@ $(document).ready(function(){
         buttons: [],
         orderCellsTop: true,
         initComplete: function () {
-            tableFiltering(this.api());
+            tableFiltering(this.api(), 'assets_table');
         },
         select: true
     });
@@ -422,10 +509,12 @@ $(document).ready(function(){
 
     var buttons = new $.fn.dataTable.Buttons(Table, {
      buttons: [
-        { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white pl--2'
-        , "titleAttr": 'Download as CSV' },
-        { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white pl--2'
-        , "titleAttr": 'Copy' },
+        { "extend": 'csvHtml5', "text":'<i class="fas fa-cloud-download-alt"></i>',"className": 'btn btn-link text-white'
+        , "titleAttr": 'Download as CSV', "exportOptions": { "columns": ':visible', 'orthogonal':  'export' } } ,
+        { "extend": 'copyHtml5', "text":'<i class="fas fa-copy"></i>',"className": 'btn btn-link text-white'
+        , "titleAttr": 'Copy', "exportOptions": { "columns": ':visible', 'orthogonal':  'export' } },
+        { "extend": 'colvis', "text":'<i class="fas fa-eye-slash"></i>',"className": 'btn btn-link text-white'
+        , "titleAttr": 'Toggle columns' }
     ]
     }).container().appendTo($('#tables_button'));
 

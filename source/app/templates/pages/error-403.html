@@ -1,0 +1,48 @@
+
+{% extends "layouts/default_centered.html" %}
+
+{% block title %} Access denied {% endblock title %}
+
+{% block stylesheets %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <br />
+    <br />
+
+    <div class="page-inner">
+         <div class="row d-flex justify-content-center mb-4">
+            <div class="col-12">
+                <h1 class="text-center mb-2"><i class="fa-solid fa-otter" style="font-size:60px;"></i></h1>
+                <h2 class="text-danger mt-2 mx-5 text-center">ACCESS DENIED</h2>
+                <h3 class="font-weight-light mx-5 text-center">Seems like you shouldn't be here</h3>
+            </div>
+         </div>
+        {% if caseid %}
+        <div class="mt-4 row d-flex text-center">
+            <div class="col-12">
+                <button class="btn btn-dark btn-sm" onclick="load_context_switcher();return false;">
+                    <span class="menu-title" id="manage_group_cac_button">Get back on track</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        <div class="mt-4 row d-flex justify-content-center">
+            <div class="col-12">
+                {% if caseid %}
+                <p class="text-muted mb-4 text-center"><small>Access denied while trying to access case #{{ caseid }}<br />
+                {% else %}
+                <p class="text-muted mb-4 text-center"><small>Access denied while trying to access the resource<br />
+                Error UUID {{ error_uuid }}</small></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block javascripts %}
+
+{% endblock javascripts %}

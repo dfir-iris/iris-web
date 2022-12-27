@@ -1,4 +1,9 @@
 /* Defines the kanban board */
+const preventFormDefaultBehaviourOnSubmit = (event) => {
+    event.preventDefault();
+    return false;
+};
+
 var boardNotes = {
     init: function init() {
         this.bindUIActions();
@@ -157,6 +162,7 @@ function add_remote_groupnote() {
     .done((data) => {
         if (data.status == 'success') {
             nextGroupNote(data.data.group_title, data.data.group_id);
+            draw_kanban();
         } else {
             if (data.message != "No data to load for dashboard") {
                 swal("Oh no !", data.message, "error");
@@ -184,7 +190,7 @@ function delete_remote_groupnote(group_id) {
         data['group_id'] = group_id;
         data['csrf_token'] = $('#csrf_token').val();
 
-        get_request_api('/case/notes/groups/delete/'+ group_id)
+        post_request_api('/case/notes/groups/delete/'+ group_id)
         .done((data) => {
             if (data.status == 'success') {
                 swal("Done !", data.message, "success");
@@ -227,15 +233,20 @@ function delete_note(_item, cid) {
 
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
-    get_request_api('/case/notes/delete/' + n_id, undefined, undefined, cid)
-    .done((data) => {
-       $('#modal_note_detail').modal('hide');
-       notify_auto_api(data);
-    })
-    .fail(function (error) {
-        draw_kanban();
-        swal( 'Oh no :(', error.message, 'error');
-    })
+    do_deletion_prompt("You are about to delete note #" + n_id)
+    .then((doDelete) => {
+        if (doDelete) {
+            post_request_api('/case/notes/delete/' + n_id, null, null, cid)
+            .done((data) => {
+               $('#modal_note_detail').modal('hide');
+               notify_auto_api(data);
+            })
+            .fail(function (error) {
+                draw_kanban();
+                swal( 'Oh no :(', error.message, 'error');
+            });
+        }
+    });
 }
 
 /* List all the notes on the dashboard */
@@ -305,117 +316,26 @@ function note_detail(id, cid) {
 
     url = '/case/notes/' + id + "/modal" + cid;
     $('#info_note_modal_content').load(url, function (response, status, xhr) {
+        $('#form_note').on("submit", preventFormDefaultBehaviourOnSubmit);
         hide_minimized_modal_box();
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
         }
 
-        note_editor = ace.edit("editor_detail",
-            {
-                autoScrollEditorIntoView: true,
-                minLines: 4
-            });
-
-        $('#editor_detail').on('paste', (event) => {
-            event.preventDefault();
-            handle_ed_paste(event);
-        });
-
-        if ($("#editor_detail").attr("data-theme") != "dark") {
-            note_editor.setTheme("ace/theme/tomorrow");
-        } else {
-            note_editor.setTheme("ace/theme/tomorrow_night");
-        }
-        note_editor.session.setMode("ace/mode/markdown");
-        note_editor.renderer.setShowGutter(true);
-        note_editor.setOption("showLineNumbers", true);
-        note_editor.setOption("showPrintMargin", false);
-        note_editor.setOption("displayIndentGuides", true);
-        note_editor.setOption("maxLines", "Infinity");
-        note_editor.session.setUseWrapMode(true);
-        note_editor.setOption("indentedSoftWrap", false);
-        note_editor.renderer.setScrollMargin(8, 5)
-        note_editor.setOption("enableBasicAutocompletion", true);
-        note_editor.commands.addCommand({
-            name: 'save',
-            bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-            exec: function(editor) {
-                save_note(this);
+        var timer;
+        var timeout = 10000;
+        $('#form_note').keyup(function(){
+            if(timer) {
+                 clearTimeout(timer);
             }
-        })
-        note_editor.commands.addCommand({
-            name: 'bold',
-            bindKey: {win: "Ctrl-B", "mac": "Cmd-B"},
-            exec: function(editor) {
-                editor.insertSnippet('**${1:$SELECTION}**');
-            }
+            timer = setTimeout(save_note, timeout);
         });
-        note_editor.commands.addCommand({
-            name: 'italic',
-            bindKey: {win: "Ctrl-I", "mac": "Cmd-I"},
-            exec: function(editor) {
-                editor.insertSnippet('*${1:$SELECTION}*');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'head_1',
-            bindKey: {win: "Ctrl-Shift-1", "mac": "Cmd-Shift-1"},
-            exec: function(editor) {
-                editor.insertSnippet('# ${1:$SELECTION}');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'head_2',
-            bindKey: {win: "Ctrl-Shift-2", "mac": "Cmd-Shift-2"},
-            exec: function(editor) {
-                editor.insertSnippet('## ${1:$SELECTION}');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'head_3',
-            bindKey: {win: "Ctrl-Shift-3", "mac": "Cmd-Shift-3"},
-            exec: function(editor) {
-                editor.insertSnippet('### ${1:$SELECTION}');
-            }
-        });
-        note_editor.commands.addCommand({
-            name: 'head_4',
-            bindKey: {win: "Ctrl-Shift-4", "mac": "Cmd-Shift-4"},
-            exec: function(editor) {
-                editor.insertSnippet('#### ${1:$SELECTION}');
-            }
-        });
-
-        var textarea = $('#note_content');
-        note_editor.getSession().on("change", function () {
+        note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function() {
             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
             $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
-
-            textarea.val(note_editor.getSession().getValue());
-            target = document.getElementById('targetDiv'),
-                converter = new showdown.Converter({
-                    tables: true,
-                    extensions: ['bootstrap-tables'],
-                    parseImgDimensions: true
-                }),
-
-                html = converter.makeHtml(note_editor.getSession().getValue());
-
-            target.innerHTML = html;
-        });
-
-        textarea.val(note_editor.getSession().getValue());
-        target = document.getElementById('targetDiv'),
-            converter = new showdown.Converter({
-                tables: true,
-                extensions: ['bootstrap-tables'],
-                parseImgDimensions: true
-            }),
-            html = converter.makeHtml(note_editor.getSession().getValue());
-
-        target.innerHTML = html;
+        }, save_note);
 
         edit_innote();
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
@@ -504,33 +424,23 @@ function save_note(this_item, cid) {
 
     data_sent['custom_attributes'] = attributes;
 
-    post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent), undefined, undefined, cid)
+    post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent), false, undefined, cid, function() {
+        $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
+        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-xmark");
+        $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+    })
     .done((data) => {
         if (data.status == 'success') {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
         }
-    })
-    .fail(function (error) {
-        $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
-        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-xmark");
-        $('#last_saved').addClass('btn-danger').removeClass('btn-success');
-        propagate_form_api_errors(error.responseJSON.data);
-    })
+    });
 }
 
 /* Span for note edition */
 function edit_innote() {
-    $('#container_note_content').toggle();
-    if ($('#container_note_content').is(':visible')) {
-        $('#notes_edition_btn').show(100);
-        $('#ctrd_notesum').removeClass('col-md-12').addClass('col-md-6');
-    } else {
-        $('#notes_edition_btn').hide();
-        $('#ctrd_notesum').removeClass('col-md-6').addClass('col-md-12');
-    }
-    return false;
+    return edit_inner_editor('notes_edition_btn', 'container_note_content', 'ctrd_notesum');
 }
 
 /* Load the kanban case data and build the board from it */
@@ -546,6 +456,11 @@ function draw_kanban() {
         success: function (data) {
             if (data.status == 'success') {
                 gidl = [];
+                if (data.data.groups.length > 0) {
+                    $('#empty-set-notes').hide();
+                } else {
+                    $('#empty-set-notes').show();
+                }
                 for (idx in data.data.groups) {
                     group = data.data.groups[idx];
                     if (!gidl.includes(group.group_id)) {

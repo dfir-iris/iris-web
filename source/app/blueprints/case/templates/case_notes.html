@@ -1,7 +1,8 @@
 {% extends "layouts/default_ext.html" %} {% block title %} Case notes {% endblock title %} {% block stylesheets %}
-<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css"> {% endblock stylesheets %}
+{% include 'includes/header_case.html' %}
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+{% endblock stylesheets %}
 {% block content %}
-
 {% include 'includes/navigation_ext.html' %}
 
 {% include 'includes/sidenav.html' %}
@@ -19,7 +20,7 @@
                      </div>
 					<ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
                         <li class="nav-item ml-2">
-                            <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
+                            <span class="text-white text-sm mr-2" id="last_resfresh">Loading</span>
                         </li>
                         <li class="nav-item">
                             <button class="btn btn-primary btn-sm" onclick="draw_kanban();">
@@ -38,6 +39,10 @@
 			</nav>
         <div class="page-inner">
             <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
+            <div id="empty-set-notes" style="display:none;">
+                <h4 class="text-dark text-sm text-center ml-mr-auto">It looks pretty empty <i class="fa-solid fa-mug-hot ml-2"></i></h4>
+                <h4 class="text-dark text-sm text-center ml-mr-auto"><a href="#" onclick="add_remote_groupnote();">Click here to add the first note group</a></h4>
+            </div>
             <div class="row" id="card_main_load" style="display:none;">
                     <div class="container-fluid">
                             <div class="float-right mt-2 col">
@@ -54,8 +59,8 @@
             </div>
         </div>
 
-        <div class="kanban-item" id="_subnote_" style="display: none;" onclick="edit_note(this);" title="">
-            <a href="#" class="kanban-title" draggable="false">New note</a><br />
+        <div class="kanban-item row" id="_subnote_" style="display: none;" onclick="edit_note(this);" title="">
+            <a href="#" class="kanban-title text-truncate w-100" draggable="false">New note</a><br />
             <em><small href="#" class="text-sm text-muted kanban-info" draggable="false"><i
                         class="flaticon-tool mr-1"></i>Hello</small></em>
             <iris_note style="display: none;" id="xqx00qxq">New note</iris_note>
@@ -72,7 +77,7 @@
         <div data-id="_todo" class="kanban-board" id="group_" title="" draggable="false" style="display: none;">
             <header class="kanban-board-header">
                 <div class="row">
-                    <div class="col">
+                    <div class="col-8">
                         <div contenteditable="true" maxlength="25" class="kanban-title-board" onclick="">Note group</div>
                     </div>
                     <div class="col">
@@ -113,16 +118,10 @@
 
     {% include 'includes/footer.html' %}
 </div>
-{% endblock content %} {% block javascripts %}
-
-<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
-    charset="utf-8"></script>
-
-<script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
-
+{% endblock content %}
+{% block javascripts %}
+{% include 'includes/footer_case.html' %}
 <script src="/static/assets/js/plugin/sortable/sortable.js "></script>
-<script src="/static/assets/js/iris/case.js "></script>
 <script src="/static/assets/js/iris/case.notes.js "></script>
 
 <script>
@@ -133,8 +132,7 @@
         setInterval(function() { check_update('notes/state'); }, 3000);
         draw_kanban();
     });
-
-
+    var has_deletion_prompt = {% if current_user.has_deletion_confirmation %}true{% else %}false{% endif %};
 </script>
 
 {% endblock javascripts %}

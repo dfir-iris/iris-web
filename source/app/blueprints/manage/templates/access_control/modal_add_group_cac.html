@@ -1,0 +1,90 @@
+<div class="modal-lg modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title mt-2 mr-4">Set case access</h4>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="container col-md-12" >
+                <div class="row">
+                    <div class="form-group" data-select2-id="7">
+                        <label>Set cases access of group <i>{{ group.group_name }}</i> *</label>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input class="form-check-input" type="checkbox" id="enable_auto_follow_cases" name="enable_auto_follow_cases" {% if group.group_auto_follow %}checked{% endif %}>
+                                        <span class="form-check-sign">Apply to currents and futures cases</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <select id="group_case_access_select" name="org_case_access_select" class="form-control select2-hidden-accessible ml-12" multiple="multiple"
+                                         tabindex="-1" aria-hidden="true" style="width: 100%">
+                                </select>
+                                <select id="group_case_ac_select" name="org_case_ac_select" class="form-control select2-hidden-accessible ml-12"
+                                         tabindex="-1" aria-hidden="true" style="width: 100%">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="grant_case_access_to_group">Set access</button>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+<script>
+var data = [];
+
+$('#group_case_access_select').multiselect({
+    buttonWidth: 400,
+    nonSelectedText: 'Select case',
+    emptyText: 'No case available to add',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#group_case_access_select').multiselect('dataprovider', [{% for ocs in outer_cases %}
+ { label: "{{ ocs.case_name }}", value: {{ ocs.case_id  }} }, {% endfor %}]);
+
+
+$('#group_case_access_select').multiselect('refresh')
+
+$('#group_case_ac_select').multiselect({
+    nonSelectedText: 'Select access level',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    filterBehavior: 'both',
+    widthSynchronizationMode: 'ifPopupIsSmaller'
+});
+
+$('#group_case_ac_select').multiselect('dataprovider', [{% for acc in access_levels %}
+ { label: "{{ acc.name }}", value: {{ acc.value  }} }, {% endfor %}]);
+
+$('#group_case_ac_select').multiselect('refresh');
+
+$('#enable_auto_follow_cases').on('change', function() {
+    if (this.checked) {
+        $('#group_case_access_select').multiselect('disable');
+    } else {
+        $('#group_case_access_select').multiselect('enable');
+    }
+});
+
+if ($('#enable_auto_follow_cases').is(':checked')) {
+    $('#group_case_access_select').multiselect('disable');
+}
+</script>

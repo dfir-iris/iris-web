@@ -20,6 +20,7 @@
 
 from flask import Blueprint
 
+from app.datamgmt.case.case_assets_db import get_compromise_status_dict
 from app.models.models import AnalysisStatus
 from app.util import api_login_required
 from app.util import response_error
@@ -42,6 +43,14 @@ def list_anastatus(caseid):
     data = [row._asdict() for row in lstatus]
 
     return response_success("", data=data)
+
+
+@manage_anastatus_blueprint.route('/manage/compromise-status/list', methods=['GET'])
+@api_login_required
+def list_compr_status(caseid):
+    compro_status = get_compromise_status_dict()
+
+    return response_success("", data=compro_status)
 
 
 @manage_anastatus_blueprint.route('/manage/analysis-status/<int:cur_id>', methods=['GET'])

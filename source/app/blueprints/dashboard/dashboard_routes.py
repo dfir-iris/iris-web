@@ -26,9 +26,11 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_login import logout_user
+from flask_wtf import FlaskForm
 from sqlalchemy import distinct
 
 from app import db
@@ -37,19 +39,19 @@ from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
 from app.forms import CaseGlobalTaskForm
-from app.forms import CustomerForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.models import CaseTasks
 from app.models.models import GlobalTasks
 from app.models.models import TaskStatus
-from app.models.models import User
 from app.models.models import UserActivity
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import GlobalTasksSchema
-from app.util import api_login_required
-from app.util import login_required
+from app.util import ac_api_requires
+from app.util import ac_requires
+from app.util import not_authenticated_redirection_url
 from app.util import response_error
 from app.util import response_success
 
@@ -68,14 +70,19 @@ def logout():
     Logout function. Erase its session and redirect to index i.e login
     :return: Page
     """
-    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True)
+    if session['current_case']:
+        current_user.ctx_case = session['current_case']['case_id']
+        current_user.ctx_human_case = session['current_case']['case_name']
+        db.session.commit()
+
+    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
     logout_user()
 
-    return redirect(url_for('index.index'))
+    return redirect(not_authenticated_redirection_url())
 
 
 @dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def get_cases_charts(caseid):
     """
     Get case charts
@@ -106,14 +113,11 @@ def get_cases_charts(caseid):
 
 @dashboard_blueprint.route('/')
 def root():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login.login'))
-    else:
-        return redirect(url_for('index.index'))
+    return redirect(url_for('index.index'))
 
 
 @dashboard_blueprint.route('/dashboard')
-@login_required
+@ac_requires()
 def index(caseid, url_redir):
     """
     Index page. Load the dashboard data, create the add customer form
@@ -142,13 +146,13 @@ def index(caseid, url_redir):
     }
 
     # Create the customer form to be able to quickly add a customer
-    form = CustomerForm(request.form)
+    form = FlaskForm()
 
     return render_template('index.html', data=data, form=form, msg=msg)
 
 
 @dashboard_blueprint.route('/global/tasks/list', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def get_gtasks(caseid):
 
     tasks_list = list_global_tasks()
@@ -167,7 +171,7 @@ def get_gtasks(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def view_gtask(cur_id, caseid):
 
     task = get_global_task(task_id=cur_id)
@@ -178,7 +182,7 @@ def view_gtask(cur_id, caseid):
 
 
 @dashboard_blueprint.route('/user/tasks/list', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def get_utasks(caseid):
 
     ct = list_user_tasks()
@@ -197,7 +201,7 @@ def get_utasks(caseid):
 
 
 @dashboard_blueprint.route('/user/tasks/status/update', methods=['POST'])
-@api_login_required
+@ac_api_requires()
 def utask_statusupdate(caseid):
     jsdata = request.get_json()
     if not jsdata:
@@ -231,7 +235,7 @@ def utask_statusupdate(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/add', methods=['GET', 'POST'])
-@api_login_required
+@ac_api_requires()
 def add_gtask(caseid):
     task = GlobalTasks()
 
@@ -276,7 +280,7 @@ def add_gtask(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/update/<int:cur_id>', methods=['GET', 'POST'])
-@api_login_required
+@ac_api_requires()
 def edit_gtask(cur_id, caseid):
 
     if cur_id:
@@ -322,8 +326,8 @@ def edit_gtask(cur_id, caseid):
     return response_error('Unknown task ID !')
 
 
-@dashboard_blueprint.route('/global/tasks/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@dashboard_blueprint.route('/global/tasks/delete/<int:cur_id>', methods=['POST'])
+@ac_api_requires()
 def gtask_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_global_task_delete', data=cur_id, caseid=caseid)

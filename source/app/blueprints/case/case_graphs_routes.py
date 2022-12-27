@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -30,8 +30,9 @@ from flask_wtf import FlaskForm
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_events_db import get_case_events_assets_graph
 from app.datamgmt.case.case_events_db import get_case_events_ioc_graph
-from app.util import api_login_required
-from app.util import login_required
+from app.models.authorization import CaseAccessLevel
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import response_success
 
 case_graph_blueprint = Blueprint('case_graph',
@@ -41,7 +42,7 @@ case_graph_blueprint = Blueprint('case_graph',
 
 # CONTENT ------------------------------------------------
 @case_graph_blueprint.route('/case/graph', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_graph(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_graph.case_graph', cid=caseid, redirect=True))
@@ -53,7 +54,7 @@ def case_graph(caseid, url_redir):
 
 
 @case_graph_blueprint.route('/case/graph/getdata', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_graph_get_data(caseid):
     events = get_case_events_assets_graph(caseid)
     events.extend(get_case_events_ioc_graph(caseid))
@@ -67,17 +68,12 @@ def case_graph_get_data(caseid):
 
     tmp = {}
     for event in events:
-        if hasattr(event, 'asset_compromised'):
-            if event.asset_compromised:
+        if hasattr(event, 'asset_compromise_status_id'):
+            if event.asset_compromise_status_id == 1:
                 img = event.asset_icon_compromised
-                #is_master_atype = True
-
-            elif not event.asset_compromised:
-                img = event.asset_icon_not_compromised
-                #is_master_atype = False
 
             else:
-                img = 'question-mark.png'
+                img = event.asset_icon_not_compromised
 
             if event.asset_ip:
                 title = "{} -{}".format(event.asset_ip, event.asset_description)

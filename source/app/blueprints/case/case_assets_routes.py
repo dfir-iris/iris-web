@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
+#  ir@cyberactionlab.net - contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+from datetime import datetime
+
 import csv
 import marshmallow
 from flask import Blueprint
@@ -29,13 +31,21 @@ from flask import url_for
 from flask_login import current_user
 
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
+from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset
+from app.datamgmt.case.case_assets_db import delete_asset_comment
 from app.datamgmt.case.case_assets_db import get_analysis_status_list
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import get_asset_type_id
 from app.datamgmt.case.case_assets_db import get_assets
+from app.datamgmt.case.case_assets_db import get_assets_ioc_links
 from app.datamgmt.case.case_assets_db import get_assets_types
+from app.datamgmt.case.case_assets_db import get_case_asset_comment
+from app.datamgmt.case.case_assets_db import get_case_asset_comments
+from app.datamgmt.case.case_assets_db import get_case_assets_comments_count
+from app.datamgmt.case.case_assets_db import get_compromise_status_list
 from app.datamgmt.case.case_assets_db import get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import get_linked_iocs_id_from_asset
 from app.datamgmt.case.case_assets_db import get_similar_assets
@@ -44,6 +54,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import get_case_client_id
 from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.datamgmt.states import get_assets_state
 from app.datamgmt.states import update_assets_state
 from app.forms import AssetBasicForm
@@ -54,9 +65,11 @@ from app.models import AnalysisStatus
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
+from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
-from app.util import api_login_required
-from app.util import login_required
+from app.schema.marshables import CommentSchema
+from app.util import ac_api_case_requires
+from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -65,8 +78,8 @@ case_assets_blueprint = Blueprint('case_assets',
                                   template_folder='templates')
 
 
-@case_assets_blueprint.route('/case/assets', methods=['GET', 'POST'])
-@login_required
+@case_assets_blueprint.route('/case/assets', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_assets(caseid, url_redir):
     """
     Returns the page of case assets, with the list of available assets types.
@@ -86,7 +99,7 @@ def case_assets(caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/list', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_assets(caseid):
     """
     Returns the list of assets from the case.
@@ -100,15 +113,7 @@ def case_list_assets(caseid):
     ret = {}
     ret['assets'] = []
 
-    ioc_links_req = IocAssetLink.query.with_entities(
-        Ioc.ioc_id,
-        Ioc.ioc_value,
-        IocAssetLink.asset_id
-    ).filter(
-        Ioc.ioc_id == IocAssetLink.ioc_id,
-        IocLink.case_id == caseid,
-        IocLink.ioc_id == Ioc.ioc_id
-    ).all()
+    ioc_links_req = get_assets_ioc_links(caseid)
 
     cache_ioc_link = {}
     for ioc in ioc_links_req:
@@ -118,14 +123,15 @@ def case_list_assets(caseid):
         else:
             cache_ioc_link[ioc.asset_id].append(ioc._asdict())
 
+    cases_access = get_user_cases_fast(current_user.id)
+
     for asset in assets:
         asset = asset._asdict()
 
-        # Find linked IoC
         if len(assets) < 300:
             # Find similar assets from other cases with the same customer
-            asset['link'] = [lasset._asdict() for lasset in get_similar_assets(
-                            asset['asset_name'], asset['asset_type_id'], caseid, customer_id)]
+            asset['link'] = list(get_similar_assets(
+                asset['asset_name'], asset['asset_type_id'], caseid, customer_id, cases_access))
         else:
             asset['link'] = []
 
@@ -139,7 +145,7 @@ def case_list_assets(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/state', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_assets_state(caseid):
     os = get_assets_state(caseid=caseid)
     if os:
@@ -148,20 +154,8 @@ def case_assets_state(caseid):
         return response_error('No assets state for this case.')
 
 
-@case_assets_blueprint.route('/case/assets/autoload', methods=['POST'])
-@api_login_required
-def autoload_asset(caseid):
-    """
-    Read the investigations database of the current user's case and extract the
-    available assets. For each assets, 
-    :return:
-    """
-
-    return response_error("Will only be available in the future")
-
-
 @case_assets_blueprint.route('/case/assets/add/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.full_access)
 def add_asset_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
@@ -170,6 +164,7 @@ def add_asset_modal(caseid, url_redir):
 
     form.asset_type_id.choices = get_assets_types()
     form.analysis_status_id.choices = get_analysis_status_list()
+    form.asset_compromise_status_id.choices = get_compromise_status_list()
 
     # Get IoCs from the case
     ioc = get_iocs(caseid)
@@ -179,7 +174,7 @@ def add_asset_modal(caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/add', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def add_asset(caseid):
 
     try:
@@ -200,7 +195,7 @@ def add_asset(caseid):
         asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
         if asset:
-            track_activity("added asset {}".format(asset.asset_name), caseid=caseid)
+            track_activity(f"added asset \"{asset.asset_name}\"", caseid=caseid)
             return response_success("Asset added", data=add_asset_schema.dump(asset))
 
         return response_error("Unable to create asset for internal reasons")
@@ -210,7 +205,7 @@ def add_asset(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/upload', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def case_upload_ioc(caseid):
 
     try:
@@ -266,7 +261,7 @@ def case_upload_ioc(caseid):
             type_id = get_asset_type_id(row['asset_type_name'].lower())
             if not type_id:
                 errors.append(f"{row.get('asset_name')} (invalid asset type: {row.get('asset_type_name')}) for row {index}")
-                track_activity(f"Attempted to upload unrecognized asset type {row.get('asset_type_name')}")
+                track_activity(f"Attempted to upload unrecognized asset type \"{row.get('asset_type_name')}\"")
                 index += 1
                 continue
 
@@ -307,7 +302,7 @@ def case_upload_ioc(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def asset_view(cur_id, caseid):
 
     # Get IoCs already linked to the asset
@@ -327,7 +322,7 @@ def asset_view(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/modal', methods=['GET'])
-@login_required
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def asset_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
@@ -349,17 +344,18 @@ def asset_view_modal(cur_id, caseid, url_redir):
     form.asset_info.data = asset.asset_info
     form.asset_ip.render_kw = {'value': asset.asset_ip}
     form.asset_domain.render_kw = {'value': asset.asset_domain}
-    form.asset_compromised.data = True if asset.asset_compromised else False
+    form.asset_compromise_status_id.choices = get_compromise_status_list()
     form.asset_type_id.choices = get_assets_types()
     form.analysis_status_id.choices = get_analysis_status_list()
     form.asset_tags.render_kw = {'value': asset.asset_tags}
+    comments_map = get_case_assets_comments_count([cur_id])
 
     return render_template("modal_add_case_asset.html", form=form, asset=asset, map={}, ioc=case_iocs,
-                           ioc_prefill=ioc_prefill, attributes=asset.custom_attributes)
+                           ioc_prefill=ioc_prefill, attributes=asset.custom_attributes, comments_map=comments_map)
 
 
 @case_assets_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
-@api_login_required
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def asset_update(cur_id, caseid):
 
     try:
@@ -384,8 +380,9 @@ def asset_update(cur_id, caseid):
         asset_schema = call_modules_hook('on_postload_asset_update', data=asset_schema, caseid=caseid)
 
         if asset_schema:
-            track_activity("updated asset {}".format(asset_schema.asset_name), caseid=caseid)
-            return response_success("Updated asset {}".format(asset_schema.asset_name), add_asset_schema.dump(asset_schema))
+            track_activity(f"updated asset \"{asset_schema.asset_name}\"", caseid=caseid)
+            return response_success("Updated asset {}".format(asset_schema.asset_name),
+                                    add_asset_schema.dump(asset_schema))
 
         return response_error("Unable to update asset for internal reasons")
 
@@ -393,8 +390,8 @@ def asset_update(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@case_assets_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['GET'])
-@api_login_required
+@case_assets_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
 def asset_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
@@ -408,6 +405,93 @@ def asset_delete(cur_id, caseid):
 
     call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
 
-    track_activity("removed asset ID {}".format(cur_id), caseid=caseid)
+    track_activity(f"removed asset ID {asset.asset_name}", caseid=caseid)
 
     return response_success("Deleted")
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_asset_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_task.case_task', cid=caseid, redirect=True))
+
+    asset = get_asset(cur_id, caseid=caseid)
+    if not asset:
+        return response_error('Invalid asset ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='assets',
+                           title=asset.asset_name)
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_asset_list(cur_id, caseid):
+
+    task_comments = get_case_asset_comments(cur_id)
+    if task_comments is None:
+        return response_error('Invalid asset ID')
+
+    res = [com._asdict() for com in task_comments]
+    return response_success(data=res)
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_asset_add(cur_id, caseid):
+
+    try:
+        asset = get_asset(cur_id, caseid=caseid)
+        if not asset:
+            return response_error('Invalid asset ID')
+
+        comment_schema = CommentSchema()
+        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_case_id = caseid
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_comment_to_asset(asset.asset_id, comment.comment_id)
+
+        db.session.commit()
+
+        track_activity(f"asset \"{asset.asset_name}\" commented", caseid=caseid)
+        return response_success("Asset commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_comment_asset_get(cur_id, com_id, caseid):
+
+    comment = get_case_asset_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=comment._asdict())
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_asset_edit(cur_id, com_id, caseid):
+
+    return case_comment_update(com_id, 'assets', caseid)
+
+
+@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_comment_asset_delete(cur_id, com_id, caseid):
+
+    success, msg = delete_asset_comment(cur_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    track_activity(f"comment {com_id} on asset {cur_id} deleted", caseid=caseid)
+    return response_success(msg)

@@ -1,5 +1,6 @@
 {% extends "layouts/default_ext.html" %} {% block title %} Case Assets {% endblock title %} {% block stylesheets %}
 {% include 'includes/header_case.html' %}
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
 {% endblock stylesheets %}
 {% block content %}
 {% include 'includes/navigation_ext.html' %}
@@ -17,7 +18,8 @@
                      </div>
 					<ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">
                         <li class="nav-item ml-2">
-                            <span class="text-white text-sm mr-2" id="last_resfresh">Never refreshed</span>
+                            <span class="text-white text-sm mr-2" id="last_resfresh">Loading</span>
+                            <span class="text-warning text-sm mr-2" id="page_warning"></span>
                         </li>
                         <li class="nav-item">
                             <button class="btn btn-primary btn-sm" onclick="reload_assets();">
@@ -52,7 +54,7 @@
                     <div class="card" id="card_main_load" style="display:none;">
                         <div class="card-body">
                             <div class="col" id="assets_table_wrapper">
-                              <table class="table display table-bordered table-striped table-hover responsive" width="100%" cellspacing="0" id="assets_table" >
+                              <table class="table display table-striped table-hover responsive" width="100%" cellspacing="0" id="assets_table" >
                                 <thead>
                                   <tr>
                                       <th>Name</th>
@@ -138,7 +140,7 @@
 {% endblock content %}
 {% block javascripts %}
 {% include 'includes/footer_case.html' %}
-
+<script src="/static/assets/js/plugin/sortable/sortable.js "></script>
 <script src="/static/assets/js/iris/case.asset.js"></script>
 
 

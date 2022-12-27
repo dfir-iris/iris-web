@@ -3,9 +3,12 @@
 <head>
 
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<title>IRIS - {% block title %}Investigation{% endblock %} | CSIRT </title>
+	<title>IRIS - {% block title %}Investigation{% endblock %} {% if session['current_case'].case_id %}| {{ session['current_case'].case_name }}  {% endif %}</title>
 	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
 	<link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
+	{% if demo_domain %}
+		<script defer data-domain="{{demo_domain}}" src="https://analytics.dfir-iris.org/js/plausible.js"></script>
+	{% endif %}
 
 	<!-- Fonts and icons -->
 	<script src="/static/assets/js/plugin/webfont/webfont.min.js"></script>
@@ -76,6 +79,7 @@
 	<script src="/static/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
 	<script src="/static/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
 	<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+	<script src="/static/assets/js/plugin/select/ajax-bootstrap-picker.js"></script>
 
 	<!-- HTML 2 Canvas -->
 	<script src="/static/assets/js/plugin/html2canvas/html2canvas.min.js"></script>
@@ -93,6 +97,8 @@
 
 	<script src="/static/assets/js/core/crypto.core.js"></script>
 	<script src="/static/assets/js/core/crypto.md5.js"></script>
+	<script src="/static/assets/js/plugin/xss/xss.js"></script>
+
 
 	<!-- Specific JS goes HERE -->
     {% block javascripts %}{% endblock javascripts %}

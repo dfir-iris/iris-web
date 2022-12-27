@@ -11,6 +11,8 @@ from alembic import op
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import reflection
 
+from app.alembic.alembic_utils import _table_has_column
+
 revision = '79a9a54e8f9d'
 down_revision = 'ff917e2ab02e'
 branch_labels = None
@@ -55,17 +57,3 @@ def upgrade():
 
 def downgrade():
     pass
-
-
-def _table_has_column(table, column):
-    config = op.get_context().config
-    engine = engine_from_config(
-        config.get_section(config.config_ini_section), prefix='sqlalchemy.')
-    insp = reflection.Inspector.from_engine(engine)
-    has_column = False
-
-    for col in insp.get_columns(table):
-        if column != col['name']:
-            continue
-        has_column = True
-    return has_column

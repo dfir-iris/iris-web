@@ -19,26 +19,36 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
+# IMPORTS ------------------------------------------------
 from flask import redirect
 from flask import request
-from flask import url_for
+from flask import session
 from flask_login import current_user
 from sqlalchemy import desc
 
 from app import app
 from app import cache
 from app import db
+from app.datamgmt.context.context_db import ctx_get_user_cases
+from app.datamgmt.context.context_db import ctx_search_user_cases
+from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
+from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import ServerSettings
+from app.util import ac_api_requires
+from app.util import ac_requires
 from app.util import api_login_required
 from app.util import get_urlcasename
+from app.util import not_authenticated_redirection_url
 from app.util import response_success
 
 # CONTENT ------------------------------------------------
-ctx_blueprint = Blueprint('context',
-                                __name__,
-                                template_folder='templates')
+ctx_blueprint = Blueprint(
+    'context',
+    __name__,
+    template_folder='templates'
+)
 
 
 @ctx_blueprint.route('/context/set', methods=['POST'])
@@ -48,7 +58,7 @@ def set_ctx():
     :return: Page
     """
     if not current_user.is_authenticated:
-        return redirect(url_for('login.login'))
+        return redirect(not_authenticated_redirection_url())
 
     ctx = request.form.get('ctx')
     ctx_h = request.form.get('ctx_h')
@@ -65,54 +75,43 @@ def set_ctx():
 
 @app.context_processor
 def iris_version():
-    return dict(iris_version=app.config.get('IRIS_VERSION'))
+    return dict(iris_version=app.config.get('IRIS_VERSION'),
+                organisation_name=app.config.get('ORGANISATION_NAME'),
+                std_permissions=Permissions,
+                demo_domain=app.config.get('DEMO_DOMAIN', None))
 
 
 @app.context_processor
 @cache.cached(timeout=3600, key_prefix='iris_has_updates')
 def has_updates():
-    if not current_user.is_authenticated or not current_user.is_admin():
-        return dict(has_updates=False)
+    # if not current_user.is_authenticated:
+    #     return dict(has_updates=False)
+    #
+    # server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
 
-    server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
-
-    return dict(has_updates=server_settings[0])
-
-
-@app.context_processor
-def case_name():
-    return dict(case_name=get_urlcasename())
+    return dict(has_updates=False)
 
 
-@ctx_blueprint.route('/context/get-cases', methods=['GET'])
-@api_login_required
-def cases_context(caseid):
+@ctx_blueprint.route('/context/get-cases/<int:max_results>', methods=['GET'])
+@ac_api_requires()
+def cases_context(max_results,  caseid):
     # Get all investigations not closed
-    res = Cases.query.with_entities(
-        Cases.name,
-        Client.name.label('customer_name'),
-        Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .filter(Cases.close_date == None)\
-        .order_by(desc(Cases.case_id))\
-        .all()
+    datao = ctx_get_user_cases(current_user.id, max_results=max_results)
 
-    datao = [row._asdict() for row in res]
+    return response_success(data=datao)
 
-    res = Cases.query.with_entities(
-        Cases.name,
-        Client.name.label('customer_name'),
-        Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .filter(Cases.close_date != None)\
-        .order_by(desc(Cases.case_id))\
-        .all()
+@ctx_blueprint.route('/context/search-cases', methods=['GET'])
+@ac_api_requires()
+def cases_context_search(caseid):
+    search = request.args.get('q')
+    if not search:
+        return response_success(data=[])
 
-    datac = [row._asdict() for row in res]
+    # Get all investigations not closed
+    datao = ctx_search_user_cases(search, current_user.id, max_results=100)
 
-    return response_success(data=dict(cases_context_selector=datao, cases_close_context_selector=datac))
+    return response_success(data=datao)
+
 
 
 def update_user_case_ctx():
@@ -125,9 +124,9 @@ def update_user_case_ctx():
         Cases.name,
         Client.name,
         Cases.case_id,
-        Cases.close_date)\
-        .join(Cases.client)\
-        .order_by(Cases.open_date)\
+        Cases.close_date) \
+        .join(Cases.client) \
+        .order_by(Cases.open_date) \
         .all()
 
     data = [row for row in res]
@@ -143,16 +142,15 @@ def update_user_case_ctx():
                 break
 
         if not is_found:
-            # The case do not exists,
+            # The case does not exist,
             # Removes it from the context
             current_user.ctx_case = None
             current_user.ctx_human_case = "Not set"
             db.session.commit()
-            #current_user.save()
+            # current_user.save()
 
     app.jinja_env.globals.update({
         'cases_context_selector': data
     })
 
     return data
-

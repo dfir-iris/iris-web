@@ -17,52 +17,257 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import configparser
-import os
 
 # --------- Configuration ---------
 # read the private configuration file
+from datetime import timedelta
 
+import ssl
+
+import sys
+from enum import Enum
+import logging as log
+
+import requests
+import configparser
+import logging
+import os
+from pathlib import Path
+
+# --------- Configuration ---------
+# read the private configuration file
+from azure.core.exceptions import ResourceNotFoundError
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
+
+
+class IrisConfigException(Exception):
+    pass
+
+
+class IrisConfig(configparser.ConfigParser):
+    """ From https://gist.github.com/jeffersfp/586c2570cd2bdb8385693a744aa13122 - @jeffersfp """
+
+    def __init__(self, config_file):
+        super(IrisConfig, self).__init__()
+        self.read(config_file)
+        self.validate_config()
+
+        # Azure Key Vault
+        self.key_vault_name = self.load('AZURE', 'KEY_VAULT_NAME')
+        if self.key_vault_name:
+            self.az_credential = DefaultAzureCredential()
+            self.az_client = SecretClient(vault_url=f"https://{self.key_vault_name}.vault.azure.net/",
+                                          credential=self.az_credential)
+            logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
+
+    def validate_config(self):
+        required_values = {
+            'POSTGRES': {
+            },
+            'IRIS': {
+            },
+            'CELERY': {
+            },
+            'DEVELOPMENT': {
+            }
+        }
+
+        for section, keys in required_values.items():
+            if section not in self:
+                raise IrisConfigException(
+                    'Missing section %s in the configuration file' % section)
+
+    def config_key_vault(self):
+        """
+        Load the settings to connect to Azure Key Vault
+        """
+
+    def load(self, section, option, fallback=None):
+        """
+        Load variable from different sources. Uses the following order
+        1. Azure Key Vault
+        2. Environment Variable
+        3. Environment Variable deprecated
+        3. Configuration File
+        """
+
+        loaders = [self._load_azure_key_vault,
+                   self._load_env, self._load_env_deprecated,
+                   self._load_file, self._load_file_deprecated]
+        for loader in loaders:
+            value = loader(section, option)
+            if value:
+                return value
+
+        return fallback
+
+    def _load_azure_key_vault(self, section, option):
+        if not (hasattr(self, 'key_vault_name') and self.key_vault_name):
+            return
+
+        key = f"{section}-{option}".replace('_', '-')
+
+        try:
+            return self.az_client.get_secret(key).value
+        except ResourceNotFoundError:
+            return None
+
+    def _load_env(self, section, option):
+        return os.environ.get(f"{section}_{option}")
+
+    def _load_env_deprecated(self, section, option):
+        # Specify new_value : old_value
+        mapping = {
+            'POSTGRES_USER': 'DB_USER',
+            'POSTGRES_PASSWORD': 'DB_PASS',
+            'POSTGRES_ADMIN_USER': 'POSTGRES_USER',
+            'POSTGRES_SERVER': 'DB_HOST',
+            'POSTGRES_PORT': 'DB_PORT',
+            'IRIS_SECRET_KEY': 'SECRET_KEY',
+            'IRIS_SECURITY_PASSWORD_SALT': 'SECURITY_PASSWORD_SALT',
+            'APP_HOST': 'IRIS_UPSTREAM_SERVER',
+            'APP_PORT': 'IRIS_UPSTREAM_PORT'
+        }
+
+        new_key = f"{section}_{option}"
+        old_key = mapping.get(new_key)
+        if not old_key:
+            return
+
+        value = os.environ.get(old_key)
+        if value:
+            logging.warning(f"Environment variable {old_key} used which is deprecated. Please use {new_key}.")
+
+        return value
+
+    def _load_file(self, section, option):
+        return self.get(section, option, fallback=None)
+
+    def _load_file_deprecated(self, section, option):
+        # Specify new_value : old_value
+        mapping = {
+            ('POSTGRES', 'USER'): ('POSTGRES', 'PG_ACCOUNT'),
+            ('POSTGRES', 'PASSWORD'): ('POSTGRES', 'PG_PASSWD'),
+            ('POSTGRES', 'ADMIN_USER'): ('POSTGRES', 'PGA_ACCOUNT'),
+            ('POSTGRES', 'ADMIN_PASSWORD'): ('POSTGRES', 'PGA_PASSWD'),
+            ('POSTGRES', 'SERVER'): ('POSTGRES', 'PG_SERVER'),
+            ('POSTGRES', 'PORT'): ('POSTGRES', 'PG_PORT')
+        }
+
+        new_key = (section, option)
+        old_key = mapping.get(new_key)
+        if not old_key:
+            return
+
+        value = self.get(old_key[0], old_key[1], fallback=None)
+        if value:
+            logging.warning(
+                f"Configuration {old_key[0]}.{old_key[1]} found in configuration file. "
+                f"This is a deprecated configuration. Please use {new_key[0]}.{new_key[1]}")
+
+        return value
+
+
+# --------- Configuration ---------
+# read the private configuration file
 config = configparser.ConfigParser()
 
 if os.getenv("DOCKERIZED"):
-    config.read(f'app{os.path.sep}config.docker.ini')
+    # The example config file has an invalid value so cfg will stay empty first
+    config = IrisConfig(f'app{os.path.sep}config.docker.ini')
 else:
-    config.read(f'app{os.path.sep}config.priv.ini')
+    config = IrisConfig(f'app{os.path.sep}config.priv.ini')
 
 # Fetch the values
-PG_ACCOUNT_ = os.environ.get('DB_USER', config.get('POSTGRES', 'PG_ACCOUNT'))
-PG_PASSWD_ = os.environ.get('DB_PASS', config.get('POSTGRES', 'PG_PASSWD'))
-PGA_ACCOUNT_ = os.environ.get('POSTGRES_USER', config.get('POSTGRES', 'PGA_ACCOUNT'))
-PGA_PASSWD_ = os.environ.get('POSTGRES_PASSWORD', config.get('POSTGRES', 'PGA_PASSWD'))
-PG_SERVER_ = os.environ.get('DB_HOST', config.get('POSTGRES', 'PG_SERVER'))
-PG_PORT_ = os.environ.get('DB_PORT', config.get('POSTGRES', 'PG_PORT'))
-
-if os.environ.get('IRIS_WORKER') is None:
-    # Flask needs it for CSRF token and stuff
-    SECRET_KEY_ = os.environ.get('SECRET_KEY', config.get('IRIS', 'SECRET_KEY'))
-    SECURITY_PASSWORD_SALT_ = os.environ.get('SECURITY_PASSWORD_SALT', config.get('IRIS', 'SECURITY_PASSWORD_SALT'))
+PG_ACCOUNT_ = config.load('POSTGRES', 'USER')
+PG_PASSWD_ = config.load('POSTGRES', 'PASSWORD')
+PGA_ACCOUNT_ = config.load('POSTGRES', 'ADMIN_USER')
+PGA_PASSWD_ = config.load('POSTGRES', 'ADMIN_PASSWORD')
+PG_SERVER_ = config.load('POSTGRES', 'SERVER')
+PG_PORT_ = config.load('POSTGRES', 'PORT')
+CELERY_BROKER_ = config.load('CELERY', 'BROKER',
+                             fallback=f"amqp://{config.load('CELERY', 'HOST', fallback='rabbitmq')}")
 
 
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Build of SQLAlchemy connectors. One is admin and the other is only for iris. Admin is needed to create new DB
-SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PG_ACCOUNT_,
-                                                                                      passwd=PG_PASSWD_,
-                                                                                      server=PG_SERVER_,
-                                                                                      port=PG_PORT_)
+SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
+    user=PG_ACCOUNT_,
+    passwd=PG_PASSWD_,
+    server=PG_SERVER_,
+    port=PG_PORT_
+)
 
-SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PGA_ACCOUNT_,
-                                                                                       passwd=PGA_PASSWD_,
-                                                                                       server=PG_SERVER_,
-                                                                                       port=PG_PORT_)
+SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
+    user=PGA_ACCOUNT_,
+    passwd=PGA_PASSWD_,
+    server=PG_SERVER_,
+    port=PG_PORT_
+)
+
+SQLALCHEMY_BASE_ADMIN_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PGA_ACCOUNT_,
+                                                                                            passwd=PGA_PASSWD_,
+                                                                                            server=PG_SERVER_,
+                                                                                            port=PG_PORT_)
+
+
+class AuthenticationType(Enum):
+    local = 1
+    oidc_proxy = 2
+
+
+authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
+                                     config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback="local"))
+
+authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST')
+
+tls_root_ca = os.environ.get('TLS_ROOT_CA',
+                             config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None))
+
+authentication_logout_url = None
+authentication_account_service_url = None
+authentication_token_introspection_url = None
+authentication_client_id = None
+authentication_client_secret = None
+authentication_app_admin_role_name = None
+
+
+if authentication_type == 'oidc_proxy':
+    oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
+
+    try:
+        oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
+
+        if oidc_discovery_response.status_code == 200:
+            response_json = oidc_discovery_response.json()
+            authentication_logout_url = response_json.get('end_session_endpoint')
+            authentication_account_service_url = f"{response_json.get('issuer')}/account"
+            authentication_token_introspection_url = response_json.get('introspection_endpoint')
+            authentication_jwks_url = response_json.get('jwks_uri')
+
+        else:
+            raise Exception("Unsuccessful authN server discovery")
+
+        authentication_client_id = config.load('OIDC', 'IRIS_CLIENT_ID', fallback="")
+
+        authentication_client_secret = config.load('OIDC', 'IRIS_CLIENT_SECRET', fallback="")
+
+        authentication_app_admin_role_name = config.load('OIDC', 'IRIS_ADMIN_ROLE_NAME', fallback="")
+    except Exception as e:
+        log.error(f"OIDC ERROR - {e}")
+        exit(0)
+        pass
+    else:
+        log.info("OIDC configuration properly parsed")
 
 
 # --------- CELERY ---------
 class CeleryConfig():
     result_backend = "db+" + SQLALCHEMY_BASE_URI + "iris_tasks"  # use database as storage
-    broker_url = "amqp://localhost" if not os.getenv('DOCKERIZED') else "amqp://rabbitmq"
+    broker_url = CELERY_BROKER_
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
@@ -70,9 +275,8 @@ class CeleryConfig():
 
 # --------- APP ---------
 class Config():
-
     # Handled by bumpversion
-    IRIS_VERSION = "v1.4.5"
+    IRIS_VERSION = "v2.0.0-beta-1"
 
     API_MIN_VERSION = "1.0.1"
     API_MAX_VERSION = "1.0.4"
@@ -83,11 +287,15 @@ class Config():
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True
 
-        SECRET_KEY = SECRET_KEY_
+        SECRET_KEY = config.load('IRIS', 'SECRET_KEY')
 
-        SECURITY_PASSWORD_SALT = SECURITY_PASSWORD_SALT_
+        SECURITY_PASSWORD_SALT = config.load('IRIS', 'SECURITY_PASSWORD_SALT')
 
         SECURITY_LOGIN_USER_TEMPLATE = 'login.html'
+
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = True
 
     PG_ACCOUNT = PG_ACCOUNT_
     PG_PASSWD = PG_PASSWD_
@@ -95,6 +303,15 @@ class Config():
     PGA_PASSWD = PGA_PASSWD_
     PG_SERVER = PG_SERVER_
     PG_PORT = PG_PORT_
+
+    DEMO_MODE_ENABLED = config.load('IRIS_DEMO', 'ENABLED', fallback=False)
+    if DEMO_MODE_ENABLED == 'True':
+        DEMO_DOMAIN = config.load('IRIS_DEMO', 'DOMAIN', fallback=None)
+        DEMO_USERS_SEED = config.load('IRIS_DEMO', 'USERS_SEED', fallback=0)
+        DEMO_ADM_SEED = config.load('IRIS_DEMO', 'ADM_SEED', fallback=0)
+        MAX_CONTENT_LENGTH = 20000
+
+    WTF_CSRF_TIME_LIMIT = None
 
     """ SqlAlchemy configuration
     """
@@ -112,27 +329,22 @@ class Config():
     """
     APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    UPLOADED_PATH = config.get('IRIS', 'UPLOADED_PATH') if config.get('IRIS', 'UPLOADED_PATH',
-                                                                      fallback=False) else "/home/iris/downloads"
-    TEMPLATES_PATH = config.get('IRIS', 'TEMPLATES_PATH') if config.get('IRIS', 'TEMPLATES_PATH',
-                                                                        fallback=False) else "/home/iris/user_templates"
-    BACKUP_PATH = config.get('IRIS', 'BACKUP_PATH') if config.get('IRIS', 'BACKUP_PATH',
-                                                                        fallback=False) else "/home/iris/server_data/backup"
+    UPLOADED_PATH = config.load('IRIS', 'UPLOADED_PATH', fallback="/home/iris/downloads")
+    TEMPLATES_PATH = config.load('IRIS', 'TEMPLATES_PATH', fallback="/home/iris/user_templates")
+    BACKUP_PATH = config.load('IRIS', 'BACKUP_PATH', fallback="/home/iris/server_data/backup")
     UPDATES_PATH = os.path.join(BACKUP_PATH, 'updates')
 
-    RELEASE_URL = config.get('IRIS', 'RELEASE_URL') if config.get('IRIS', 'RELEASE_URL',
-                                                                   fallback=False) else "https://api.github.com/repos/dfir-iris/iris-web/releases"
+    RELEASE_URL = config.load('IRIS', 'RELEASE_URL',
+                              fallback="https://api.github.com/repos/dfir-iris/iris-web/releases")
 
-    RELEASE_SIGNATURE_KEY = config.get('IRIS', 'RELEASE_SIGNATURE_KEY') if config.get('IRIS', 'RELEASE_SIGNATURE_KEY',
-                                                                  fallback=False) else "dependencies/DFIR-IRIS_pkey.asc"
+    RELEASE_SIGNATURE_KEY = config.load('IRIS', 'RELEASE_SIGNATURE_KEY', fallback="dependencies/DFIR-IRIS_pkey.asc")
 
-    PG_CLIENT_PATH = config.get('IRIS', 'PG_CLIENT_PATH') if config.get('IRIS', 'PG_CLIENT_PATH',
-                                                                        fallback=False) else "/usr/bin"
-    ASSET_STORE_PATH = config.get('IRIS', 'ASSET_STORE_PATH') if config.get('IRIS', 'ASSET_STORE_PATH',
-                                                                            fallback=False) else "/home/iris/server_data/custom_assets"
-    DATASTORE_PATH = config.get('IRIS', 'DATASTORE_PATH') if config.get('IRIS', 'DATASTORE_PATH',
-                                                                        fallback=False) else "/home/iris/server_data/datastore"
+    PG_CLIENT_PATH = config.load('IRIS', 'PG_CLIENT_PATH', fallback="/usr/bin")
+    ASSET_STORE_PATH = config.load('IRIS', 'ASSET_STORE_PATH', fallback="/home/iris/server_data/custom_assets")
+    DATASTORE_PATH = config.load('IRIS', 'DATASTORE_PATH', fallback="/home/iris/server_data/datastore")
     ASSET_SHOW_PATH = "/static/assets/img/graph"
+
+    ORGANISATION_NAME = config.load('IRIS', 'ORGANISATION_NAME', fallback='')
 
     UPDATE_DIR_NAME = '_updates_'
 
@@ -148,7 +360,84 @@ class Config():
     if os.getenv('IRIS_DEV'):
         DEVELOPMENT = True
     else:
-        DEVELOPMENT = config.get('DEVELOPMENT', 'IS_DEV_INSTANCE') == "True"
+        DEVELOPMENT = config.load('DEVELOPMENT', 'IS_DEV_INSTANCE') == "True"
+
+    """
+        Authentication configuration
+    """
+    TLS_ROOT_CA = tls_root_ca
+
+    AUTHENTICATION_TYPE = authentication_type
+    AUTHENTICATION_CREATE_USER_IF_NOT_EXIST = (authentication_create_user_if_not_exists == "True")
+
+    if authentication_type == 'oidc_proxy':
+        AUTHENTICATION_LOGOUT_URL = authentication_logout_url
+        AUTHENTICATION_ACCOUNT_SERVICE_URL = authentication_account_service_url
+        AUTHENTICATION_PROXY_LOGOUT_URL = f"/oauth2/sign_out?rd={AUTHENTICATION_LOGOUT_URL}?redirect_uri=/dashboard"
+        AUTHENTICATION_TOKEN_INTROSPECTION_URL = authentication_token_introspection_url
+        AUTHENTICATION_JWKS_URL = authentication_jwks_url
+        AUTHENTICATION_CLIENT_ID = authentication_client_id
+        AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
+        AUTHENTICATION_AUDIENCE = config.load('OIDC', 'IRIS_AUDIENCE', fallback="")
+        AUTHENTICATION_VERIFY_TOKEN_EXP = config.load('OIDC', 'IRIS_VERIFY_TOKEN_EXPIRATION',
+                                                      fallback=True)
+        AUTHENTICATION_TOKEN_VERIFY_MODE = config.load('OIDC', 'IRIS_TOKEN_VERIFY_MODE',
+                                                       fallback='signature')
+        AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = config.load('OIDC', 'IRIS_INIT_ADMINISTRATOR_EMAIL',
+                                                              fallback="")
+        AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name
+
+    elif authentication_type == 'ldap':
+        LDAP_SERVER = config.load('LDAP', 'SERVER')
+        if LDAP_SERVER is None:
+            raise Exception('LDAP enabled and no server configured')
+
+        LDAP_PORT = config.load('LDAP', 'PORT')
+        if LDAP_PORT is None:
+            raise Exception('LDAP enabled and no server configured')
+
+        LDAP_USER_PREFIX = config.load('LDAP', 'USER_PREFIX', '')
+        if LDAP_USER_PREFIX is None:
+            raise Exception('LDAP enabled and no user prefix configured')
+
+        LDAP_USER_SUFFIX = config.load('LDAP', 'USER_SUFFIX', '')
+        if LDAP_USER_SUFFIX is None:
+            raise Exception('LDAP enabled and no user suffix configured')
+
+        LDAP_AUTHENTICATION_TYPE = config.load('LDAP', 'AUTHENTICATION_TYPE')
+
+        LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
+        LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
+
+        LDAP_VALIDATE_CERTIFICATE = config.load('LDAP', 'VALIDATE_CERTIFICATE', fallback='True')
+        LDAP_VALIDATE_CERTIFICATE = (LDAP_VALIDATE_CERTIFICATE == 'True')
+
+        ldap_tls_v = config.load('LDAP', 'TLS_VERSION', '1.2')
+        if ldap_tls_v not in ['1.0', '1.1', '1.2']:
+            raise Exception(f'Unsupported LDAP TLS version {ldap_tls_v}')
+
+        if ldap_tls_v == '1.1':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_1
+        elif ldap_tls_v == '1.2':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2
+        elif ldap_tls_v == '1.0':
+            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1
+
+        proto = 'ldaps' if LDAP_USE_SSL else 'ldap'
+        LDAP_CONNECT_STRING = f'{proto}://{LDAP_SERVER}:{LDAP_PORT}'
+
+        if LDAP_USE_SSL:
+            LDAP_SERVER_CERTIFICATE = config.load('LDAP', 'SERVER_CERTIFICATE')
+            if not Path(f'certificates/ldap/{LDAP_SERVER_CERTIFICATE}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
+
+            LDAP_PRIVATE_KEY = config.load('LDAP', 'PRIVATE_KEY')
+            if not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
+
+            PRIVATE_KEY_PASSWORD = config.load('LDAP', 'PRIVATE_KEY_PASSWORD', fallback=None)
 
     """ Caching 
     """
