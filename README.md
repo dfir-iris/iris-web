@@ -64,7 +64,7 @@ docker-compose build
 docker-compose up
 ```
 
-Iris shall be available on the host interface, port 443, protocol HTTPS - ``https://<your_instance_ip>:443``.  
+Iris shall be available on the host interface, port 4433, protocol HTTPS - ``https://<your_instance_ip>:4433``.  
 By default, an ``administrator`` account is created. The password is printed in stdout the very first time Iris is started. It won't be printed anymore after that.  
 ``WARNING :: post_init :: create_safe_admin :: >>>`` can be searched in the logs of the `webapp` docker to find the password.  
 The initial password can be set via the [configuration](CONFIGURATION.md).   
