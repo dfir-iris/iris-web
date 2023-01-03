@@ -33,6 +33,7 @@ from flask_login import logout_user
 from flask_wtf import FlaskForm
 from sqlalchemy import distinct
 
+from app import app
 from app import db
 from app.datamgmt.dashboard.dashboard_db import get_global_task
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
@@ -113,6 +114,9 @@ def get_cases_charts(caseid):
 
 @dashboard_blueprint.route('/')
 def root():
+    if app.config['DEMO_MODE_ENABLED']:
+        return redirect(url_for('demo-landing.demo_landing'))
+
     return redirect(url_for('index.index'))
 
 

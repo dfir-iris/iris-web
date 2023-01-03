@@ -92,7 +92,7 @@ function load_customer_stats(customer_id) {
                 $('#ratio_year').html(`+${data.data.stats.ratio_year}% <i class="ml-1 fa fa-chevron-up"></i>`);
             } else if (data.data.stats.ratio_year < 0) {
                 $('#ratio_year').addClass('text-success');
-                $('#ratio_year').html(`-${data.data.stats.ratio_year}% <i class="ml-1 fa fa-chevron-down"></i>`);
+                $('#ratio_year').html(`${data.data.stats.ratio_year}% <i class="ml-1 fa fa-chevron-down"></i>`);
             }
 
             if (data.data.stats.ratio_month > 0) {
@@ -100,7 +100,7 @@ function load_customer_stats(customer_id) {
                 $('#ratio_month').html(`+${data.data.stats.ratio_month}% <i class="ml-1 fa fa-chevron-up"></i>`);
             } else if (data.data.stats.ratio_month < 0) {
                 $('#ratio_month').addClass('text-success');
-                $('#ratio_month').html(`-${data.data.stats.ratio_month}% <i class="ml-1 fa fa-chevron-down"></i>`);
+                $('#ratio_month').html(`${data.data.stats.ratio_month}% <i class="ml-1 fa fa-chevron-down"></i>`);
             }
 
             $('#last_year').text(data.data.stats.last_year);

@@ -224,7 +224,7 @@ def get_customer_case_stats(cur_id, caseid):
         'cases_total': len(cases)
     }
 
-    last_month_start = datetime.date(now.year, now.month-1, 1)
+    last_month_start = datetime.date.today() - datetime.timedelta(days=30)
     last_month_end = datetime.date(now.year, now.month, 1)
 
     last_year_start = datetime.date(now.year - 1, 1, 1)
