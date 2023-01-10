@@ -13,7 +13,7 @@
                 </button>
                 <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ note.note_id }}, 'notes')" title="Comments">
                     <span class="btn-label">
-                        <i class="fa-solid fa-comments"></i><span class="notification">{{ comments_map|length }}</span>
+                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">{{ comments_map|length }}</span>
                     </span>
                 </button>
                  <div class="dropdown">

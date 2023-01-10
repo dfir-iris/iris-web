@@ -618,7 +618,7 @@ function build_timeline(data) {
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
                                     <span class="btn-label">
-                                        <i class="fa-solid fa-comments"></i><span class="notification">${nb_comments}</span>
+                                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">${nb_comments}</span>
                                     </span>
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -670,7 +670,7 @@ function build_timeline(data) {
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
                                     <span class="btn-label">
-                                        <i class="fa-solid fa-comments"></i><span class="notification">${nb_comments}</span>
+                                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">${nb_comments}</span>
                                     </span>
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
