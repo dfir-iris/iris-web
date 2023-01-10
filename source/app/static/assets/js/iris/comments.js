@@ -7,8 +7,13 @@ function comment_element(element_id, element_type) {
                  ajax_notify_error(xhr, url);
                  return false;
             }
+//            if (!$(".modal.in").length) {
+//              $(".modal-dialog").css({
+//                top: 0,
+//                left: 0
+//              });
+//                }
             $('#modal_comment_content').resizable({
-                alsoResize: ".modal-dialog",
                 minHeight: 300,
                 minWidth: 300,
                 handles: "n, e, s, w, ne, se, sw, nw"
