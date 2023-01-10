@@ -15013,18 +15013,13 @@ table.dataTable.stripe tbody > tr.selected {
    position: absolute;
    bottom: 15px;
    right: 30px;
-   max-width: 100vh;
-   max-height: 80%;
-   min-width: 30%;
+   max-height: calc(100vh - 100px);
    min-height: 30%;
 }
 
 .modal .modal-comment .modal-body {
+    max-height: calc(100vh - 300px);
     overflow-y: auto;
-}
-
-.comments-listing
-  overflow-y: auto;
 }
 
 .comment-content {
