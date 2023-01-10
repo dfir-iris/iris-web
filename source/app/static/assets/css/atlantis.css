@@ -15011,16 +15011,19 @@ table.dataTable.stripe tbody > tr.selected {
 
 .modal .modal-comment {
    position: absolute;
-   bottom: 10px;
+   bottom: 15px;
    right: 30px;
    max-width: 100vh;
-   max-height: calc(100vh - 20px);
+   max-height: 80%;
    min-width: 30%;
    min-height: 30%;
 }
 
-.comments-listing {
-  max-height: calc(100vh - 350px);
+.modal .modal-comment .modal-body {
+    overflow-y: auto;
+}
+
+.comments-listing
   overflow-y: auto;
 }
 
