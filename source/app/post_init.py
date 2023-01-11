@@ -33,8 +33,10 @@ from app import bc
 from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
+from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.demo_builder import create_demo_cases
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
@@ -142,10 +144,11 @@ def run_post_init(development=False):
         client = create_safe_client()
 
         log.info("Creating initial case")
-        case = create_safe_case(
+        create_safe_case(
             user=admin,
             client=client,
-            def_org=def_org
+            def_org=def_org,
+            groups=[gadm, ganalysts]
         )
 
         # setup symlinks for custom_assets
@@ -537,7 +540,7 @@ def create_safe_admin(def_org, gadm):
     return user
 
 
-def create_safe_case(user, client, def_org):
+def create_safe_case(user, client, groups, def_org):
     case = Cases.query.filter(
         Cases.client_id == client.client_id
     ).first()
@@ -557,6 +560,13 @@ def create_safe_case(user, client, def_org):
 
         db.session.commit()
 
+    for group in groups:
+        add_case_access_to_group(group=group,
+                                 cases_list=[case.case_id],
+                                 access_level=CaseAccessLevel.full_access.value)
+        ac_add_user_effective_access(users_list=[user.id],
+                                     case_id=1,
+                                     access_level=CaseAccessLevel.full_access.value)
     return case
 
 
