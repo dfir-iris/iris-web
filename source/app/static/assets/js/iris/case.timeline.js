@@ -449,12 +449,8 @@ function build_timeline(data) {
     ioc_list = data.data.iocs;
     for (ioc in ioc_list) {
 
-        var capture_start = "(^|" + sanitizeHTML(";") + "|" + sanitizeHTML(":") + "|" + sanitizeHTML("|")
-            + "|" + sanitizeHTML(">") + "|" + sanitizeHTML("<") + "|" + sanitizeHTML("[") + "|"
-            + sanitizeHTML("]") + "|" + sanitizeHTML("(") + "|" + sanitizeHTML(")") + "| |\>)(";
-        var capture_end = ")(" + sanitizeHTML(";") + "|" + sanitizeHTML(":") + "|" + sanitizeHTML("|")
-            + "|" + sanitizeHTML(">") + "|" + sanitizeHTML("<") + "|" + sanitizeHTML("[") + "|"
-            + sanitizeHTML("]") + "|" + sanitizeHTML("(") + "|" + sanitizeHTML(")") + "| |>|$|<br/>)";
+        var capture_start = "(^|;|:|||>|<|[|]|(|)|\s|\>)(";
+        var capture_end = ")(;|:|||>|<|[|]|(|)|\s|>|$|<br/>)";
         // When an IOC contains another IOC in its description, we want to avoid to replace that particular pattern
         var avoid_inception_start = "(?!<span[^>]*?>)" + capture_start;
         var avoid_inception_end = "(?![^<]*?<\/span>)" + capture_end;
@@ -462,7 +458,7 @@ function build_timeline(data) {
                + escapeRegExp(sanitizeHTML(ioc_list[ioc]['ioc_value']))
                + avoid_inception_end
                ,"g");
-        replacement = `$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-trigger="hover" data-content="${sanitizeHTML(ioc_list[ioc]['ioc_description'])}" title="IOC">${sanitizeHTML(ioc_list[ioc]['ioc_value'])}</span> $3`;
+        replacement = `$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-trigger="hover" data-content="${sanitizeHTML(ioc_list[ioc]['ioc_description'])}" title="IOC">${sanitizeHTML(ioc_list[ioc]['ioc_value'])}</span>`;
         reap.push([re, replacement]);
     }
     idx = 0;
@@ -749,6 +745,7 @@ function escapeRegExp(text) {
 }
 
 function match_replace_ioc(entry, reap) {
+
     for (rak in reap) {
         entry = entry.replace(reap[rak][0], reap[rak][1]);
     }
