@@ -503,12 +503,12 @@ def create_safe_admin(def_org, gadm):
         User.user == "administrator"
     ).first()
     if not user:
-        password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
-        api_key = os.environ.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        password = app.config.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
+        api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
         user = User(
             user="administrator",
             name="administrator",
-            email=app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local"),
+            email=app.config.get('IRIS_ADM_EMAIL', "administrator@iris.local"),
             password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
             active=True
         )
