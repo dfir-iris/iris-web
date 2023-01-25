@@ -391,6 +391,12 @@ def case_comment_note_add(cur_id, caseid):
 
         db.session.commit()
 
+        hook_data = {
+            "comment": comment_schema.dump(comment),
+            "note": CaseNoteSchema().dump(note)
+        }
+        call_modules_hook('on_postload_note_commented', data=hook_data, caseid=caseid)
+
         track_activity("note \"{}\" commented".format(note.note_title), caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))
 
@@ -423,6 +429,8 @@ def case_comment_note_delete(cur_id, com_id, caseid):
     success, msg = delete_note_comment(cur_id, com_id)
     if not success:
         return response_error(msg)
+
+    call_modules_hook('on_postload_note_comment_delete', data=com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on note {cur_id} deleted", caseid=caseid)
     return response_success(msg)

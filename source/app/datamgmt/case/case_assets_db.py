@@ -27,6 +27,7 @@ from sqlalchemy.orm import joinedload
 
 from app import db
 from app.datamgmt.states import update_assets_state
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models import AnalysisStatus
 from app.models import AssetComments
 from app.models import AssetsType
@@ -342,7 +343,7 @@ def get_case_asset_comment(asset_id, comment_id):
     ).first()
 
 
-def delete_asset_comment(asset_id, comment_id):
+def delete_asset_comment(asset_id, comment_id, case_id):
     comment = Comments.query.filter(
         Comments.comment_id == comment_id,
         Comments.comment_user_id == current_user.id

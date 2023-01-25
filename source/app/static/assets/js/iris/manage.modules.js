@@ -33,8 +33,8 @@ function add_module() {
             post_request_api('modules/add', JSON.stringify($('#form_new_module').serializeObject()), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_modules();
-                    refresh_modules_hooks();
+                    refresh_modules(true);
+                    refresh_modules_hooks(true);
                     $('#modal_add_module').modal('hide');
                 } else {
                     $('#alert_mod_add').text(data.message);
@@ -148,12 +148,14 @@ $('#modules_table').dataTable( {
     }
 );
 
-function refresh_modules() {
+function refresh_modules(silent) {
   $('#modules_table').DataTable().ajax.reload();
   $(function () {
-  $('[data-toggle="tooltip"]').tooltip()
-})
-  notify_success("Modules refreshed");
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+  if (silent === undefined || silent !== true) {
+     notify_success("Modules refreshed");
+  }
 }
 
 $('#hooks_table').dataTable( {
@@ -212,9 +214,11 @@ $('#hooks_table').dataTable( {
     }
 );
 
-function refresh_modules_hooks() {
+function refresh_modules_hooks(silent) {
   $('#hooks_table').DataTable().ajax.reload();
-  notify_success("Hooks refreshed");
+  if (silent === undefined || silent !== true) {
+         notify_success("Hooks refreshed");
+  }
 }
 
 
@@ -279,6 +283,7 @@ function update_param(module_id, param_name) {
             .done((data) => {
                 if(notify_auto_api(data)) {
                     module_detail(module_id);
+                    refresh_modules(true);
                     $('#modal_update_param').modal('hide');
                 }
             })
@@ -331,8 +336,8 @@ function remove_module(id) {
         get_request_api('/manage/modules/remove/' + id)
         .done((data) => {
             if(notify_auto_api(data)) {
-              refresh_modules();
-              refresh_modules_hooks();
+              refresh_modules(true);
+              refresh_modules_hooks(true);
               $('#modal_add_module').modal('hide');
             }
         });
@@ -346,8 +351,8 @@ function enable_module(module_id) {
     get_request_api('modules/enable/' + module_id)
     .done((data) => {
         if(notify_auto_api(data)) {
-            refresh_modules();
-            refresh_modules_hooks();
+            refresh_modules(true);
+            refresh_modules_hooks(true);
             module_detail(module_id);
         }
     });
@@ -357,8 +362,8 @@ function disable_module(module_id) {
     get_request_api('modules/disable/' + module_id)
     .done((data) => {
         if(notify_auto_api(data)) {
-            refresh_modules();
-            refresh_modules_hooks();
+            refresh_modules(true);
+            refresh_modules_hooks(true);
             module_detail(module_id);
         }
     });

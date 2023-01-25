@@ -58,11 +58,12 @@ def iris_module_add(module_name, module_human_name, module_description,
 
 
 def is_mod_configured(mod_config):
+    missing_params = []
     for config in mod_config:
         if config['mandatory'] and ("value" not in config or config["value"] == ""):
-            return False
+            missing_params.append(config['param_name'])
 
-    return True
+    return len(missing_params) == 0, missing_params
 
 
 def iris_module_save_parameter(mod_id, mod_config, parameter, value, section=None):
@@ -116,7 +117,8 @@ def iris_modules_list():
     ret = []
     for element in data:
         dict_element = element._asdict()
-        if not is_mod_configured(element.module_config):
+        mod_configured, _ = is_mod_configured(element.module_config)
+        if not mod_configured:
             iris_module_disable_by_id(element.id)
             dict_element['configured'] = False
         else:

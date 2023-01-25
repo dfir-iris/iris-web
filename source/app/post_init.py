@@ -33,8 +33,10 @@ from app import bc
 from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
+from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.demo_builder import create_demo_cases
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
@@ -142,10 +144,11 @@ def run_post_init(development=False):
         client = create_safe_client()
 
         log.info("Creating initial case")
-        case = create_safe_case(
+        create_safe_case(
             user=admin,
             client=client,
-            def_org=def_org
+            def_org=def_org,
+            groups=[gadm, ganalysts]
         )
 
         # setup symlinks for custom_assets
@@ -341,6 +344,49 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_activities_report_create',
                 hook_description='Triggered on activities report creation, before download of the document')
 
+    # --- comments
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_commented',
+                hook_description='Triggered on event commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_comment_update',
+                hook_description='Triggered on event comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_comment_delete',
+                hook_description='Triggered on event comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_commented',
+                hook_description='Triggered on evidence commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_comment_update',
+                hook_description='Triggered on evidence comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_comment_delete',
+                hook_description='Triggered on evidence comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_commented',
+                hook_description='Triggered on task commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_comment_update',
+                hook_description='Triggered on task comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_comment_delete',
+                hook_description='Triggered on task comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_commented',
+                hook_description='Triggered on IOC commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_comment_update',
+                hook_description='Triggered on IOC comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_comment_delete',
+                hook_description='Triggered on IOC comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_commented',
+                hook_description='Triggered on event commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_comment_update',
+                hook_description='Triggered on event comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_comment_delete',
+                hook_description='Triggered on event comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_commented',
+                hook_description='Triggered on note commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_comment_update',
+                hook_description='Triggered on note comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_comment_delete',
+                hook_description='Triggered on note comment deletion, after commit in DB')
+
 
 def pg_add_pgcrypto_ext():
     # Open a cursor to perform database operations.
@@ -500,12 +546,12 @@ def create_safe_admin(def_org, gadm):
         User.user == "administrator"
     ).first()
     if not user:
-        password = os.environ.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
-        api_key = os.environ.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        password = app.config.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
+        api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
         user = User(
             user="administrator",
             name="administrator",
-            email=app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local"),
+            email=app.config.get('IRIS_ADM_EMAIL', "administrator@iris.local"),
             password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
             active=True
         )
@@ -537,7 +583,7 @@ def create_safe_admin(def_org, gadm):
     return user
 
 
-def create_safe_case(user, client, def_org):
+def create_safe_case(user, client, groups, def_org):
     case = Cases.query.filter(
         Cases.client_id == client.client_id
     ).first()
@@ -557,6 +603,13 @@ def create_safe_case(user, client, def_org):
 
         db.session.commit()
 
+    for group in groups:
+        add_case_access_to_group(group=group,
+                                 cases_list=[case.case_id],
+                                 access_level=CaseAccessLevel.full_access.value)
+        ac_add_user_effective_access(users_list=[user.id],
+                                     case_id=1,
+                                     access_level=CaseAccessLevel.full_access.value)
     return case
 
 

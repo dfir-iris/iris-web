@@ -276,7 +276,7 @@ class CeleryConfig():
 # --------- APP ---------
 class Config():
     # Handled by bumpversion
-    IRIS_VERSION = "v2.0.0-beta-1"
+    IRIS_VERSION = "v2.0.0-beta-2"
 
     API_MIN_VERSION = "1.0.1"
     API_MAX_VERSION = "1.0.4"
@@ -292,6 +292,10 @@ class Config():
         SECURITY_PASSWORD_SALT = config.load('IRIS', 'SECURITY_PASSWORD_SALT')
 
         SECURITY_LOGIN_USER_TEMPLATE = 'login.html'
+
+        IRIS_ADM_EMAIL = config.load('IRIS', 'ADM_EMAIL', fallback=None)
+        IRIS_ADM_PASSWORD = config.load('IRIS', 'ADM_PASSWORD', fallback=None)
+        IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY', fallback=None)
 
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     SESSION_COOKIE_SAMESITE = 'Lax'

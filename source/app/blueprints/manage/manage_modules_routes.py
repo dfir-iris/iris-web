@@ -197,9 +197,9 @@ def view_module(mod_id, caseid):
         module = get_module_from_id(mod_id)
         config = module.module_config
 
-        is_configured = is_mod_configured(config)
+        is_configured, missing_params = is_mod_configured(config)
         return render_template("modal_module_info.html", form=form, data=module,
-                               config=config, is_configured=is_configured)
+                               config=config, is_configured=is_configured, missing_params=missing_params)
 
     return response_error('Malformed request', status=400)
 
