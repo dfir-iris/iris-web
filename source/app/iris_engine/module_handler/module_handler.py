@@ -422,8 +422,8 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     deser_data = loads(base64.b64decode(data))
 
     _obj = None
-    # The receive object will most likely be cleared when handled by the task,
-    # so we need to attach it to a the session in the task
+    # The received object will most likely be cleared when handled by the task,
+    # so we need to attach it to the session in the task
     _obj = []
     if isinstance(deser_data, list):
         _obj = []

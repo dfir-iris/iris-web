@@ -398,7 +398,6 @@ def case_comment_ioc_add(cur_id, caseid):
             return response_error('Invalid ioc ID')
 
         comment_schema = CommentSchema()
-        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
@@ -411,6 +410,12 @@ def case_comment_ioc_add(cur_id, caseid):
         add_comment_to_ioc(ioc.ioc_id, comment.comment_id)
 
         db.session.commit()
+
+        hook_data = {
+            "comment": comment_schema.dump(comment),
+            "ioc": IocSchema().dump(ioc)
+        }
+        call_modules_hook('on_postload_ioc_commented', data=hook_data, caseid=caseid)
 
         track_activity(f"ioc \"{ioc.ioc_value}\" commented", caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))
@@ -444,6 +449,8 @@ def case_comment_ioc_delete(cur_id, com_id, caseid):
     success, msg = delete_ioc_comment(cur_id, com_id)
     if not success:
         return response_error(msg)
+
+    call_modules_hook('on_postload_ioc_comment_delete', data=com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on ioc {cur_id} deleted", caseid=caseid)
     return response_success(msg)

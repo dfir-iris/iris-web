@@ -446,7 +446,6 @@ def case_comment_asset_add(cur_id, caseid):
             return response_error('Invalid asset ID')
 
         comment_schema = CommentSchema()
-        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
@@ -459,6 +458,12 @@ def case_comment_asset_add(cur_id, caseid):
         add_comment_to_asset(asset.asset_id, comment.comment_id)
 
         db.session.commit()
+
+        hook_data = {
+            "comment": comment_schema.dump(comment),
+            "asset": CaseAssetsSchema().dump(asset)
+        }
+        call_modules_hook('on_postload_asset_commented', data=hook_data, caseid=caseid)
 
         track_activity(f"asset \"{asset.asset_name}\" commented", caseid=caseid)
         return response_success("Asset commented", data=comment_schema.dump(comment))
@@ -489,9 +494,11 @@ def case_comment_asset_edit(cur_id, com_id, caseid):
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_asset_delete(cur_id, com_id, caseid):
 
-    success, msg = delete_asset_comment(cur_id, com_id)
+    success, msg = delete_asset_comment(cur_id, com_id, caseid)
     if not success:
         return response_error(msg)
+
+    call_modules_hook('on_postload_asset_comment_delete', data=com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on asset {cur_id} deleted", caseid=caseid)
     return response_success(msg)

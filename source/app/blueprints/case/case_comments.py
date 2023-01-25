@@ -25,6 +25,7 @@ from flask import request
 
 from app import db
 from app.datamgmt.case.case_comments import get_case_comment
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CommentSchema
 from app.util import response_error
@@ -42,9 +43,14 @@ def case_comment_update(comment_id, object_type, caseid):
         comment.comment_text = comment_text
         comment.comment_update_date = datetime.utcnow()
         comment_schema = CommentSchema()
-        # request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
 
         db.session.commit()
+
+        hook = object_type
+        if hook.endswith('s'):
+            hook = hook[:-1]
+
+        call_modules_hook(f'on_postload_{hook}_comment_update', data=comment_schema.dump(comment), caseid=caseid)
 
         track_activity(f"comment {comment.comment_id} on {object_type} edited", caseid=caseid)
         return response_success("Comment edited", data=comment_schema.dump(comment))

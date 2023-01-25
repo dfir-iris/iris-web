@@ -145,6 +145,8 @@ def case_comment_delete(cur_id, com_id, caseid):
     if not success:
         return response_error(msg)
 
+    call_modules_hook('on_postload_event_comment_delete', data=com_id, caseid=caseid)
+
     track_activity(f"comment {com_id} on event {cur_id} deleted", caseid=caseid)
     return response_success(msg)
 
@@ -192,6 +194,12 @@ def case_comment_add(cur_id, caseid):
         add_obj_history_entry(event, 'commented')
 
         db.session.commit()
+
+        hook_data = {
+            "comment": comment_schema.dump(comment),
+            "event": EventSchema().dump(event)
+        }
+        call_modules_hook('on_postload_event_commented', data=hook_data, caseid=caseid)
 
         track_activity(f"event \"{event.event_title}\" commented", caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))

@@ -344,6 +344,49 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_activities_report_create',
                 hook_description='Triggered on activities report creation, before download of the document')
 
+    # --- comments
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_commented',
+                hook_description='Triggered on event commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_comment_update',
+                hook_description='Triggered on event comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_asset_comment_delete',
+                hook_description='Triggered on event comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_commented',
+                hook_description='Triggered on evidence commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_comment_update',
+                hook_description='Triggered on evidence comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_evidence_comment_delete',
+                hook_description='Triggered on evidence comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_commented',
+                hook_description='Triggered on task commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_comment_update',
+                hook_description='Triggered on task comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_task_comment_delete',
+                hook_description='Triggered on task comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_commented',
+                hook_description='Triggered on IOC commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_comment_update',
+                hook_description='Triggered on IOC comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_ioc_comment_delete',
+                hook_description='Triggered on IOC comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_commented',
+                hook_description='Triggered on event commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_comment_update',
+                hook_description='Triggered on event comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_event_comment_delete',
+                hook_description='Triggered on event comment deletion, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_commented',
+                hook_description='Triggered on note commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_comment_update',
+                hook_description='Triggered on note comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_note_comment_delete',
+                hook_description='Triggered on note comment deletion, after commit in DB')
+
 
 def pg_add_pgcrypto_ext():
     # Open a cursor to perform database operations.
