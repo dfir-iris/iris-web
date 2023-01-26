@@ -193,9 +193,13 @@ def update_module_param(param_name, caseid):
         return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id, form=form)
 
 
-@manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
-def view_module(mod_id, caseid):
+@manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>/modal', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def view_module(mod_id, caseid, url_redir):
+
+    if url_redir:
+        return redirect(url_for('manage_modules.view_module', cid=caseid, mod_id=mod_id))
+
     form = AddModuleForm()
 
     if mod_id:

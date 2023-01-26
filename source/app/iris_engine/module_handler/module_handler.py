@@ -461,7 +461,7 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     return task_status
 
 
-def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str = None) -> any:
+def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str = None, module_name: str = None) -> any:
     """
     Calls modules which have registered the specified hook
 
@@ -469,6 +469,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
     :param hook_name: Name of the hook to call
     :param hook_ui_name: UI name of the hook
     :param data: Data associated with the hook
+    :param module_name: Name of the module to call. If None, all modules matching the hook will be called
     :param caseid: Case ID
     :return: Any
     """
@@ -487,6 +488,13 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
         condition = and_(
             IrisModule.is_active == True,
             IrisModuleHook.hook_id == hook.id
+        )
+
+
+    if module_name:
+        condition = and_(
+            condition,
+            IrisModule.module_name == module_name
         )
 
     modules = IrisModuleHook.query.with_entities(

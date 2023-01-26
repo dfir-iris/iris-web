@@ -296,7 +296,7 @@ function update_param(module_id, param_name) {
 
 /* Fetch the details of an module and allow modification */
 function module_detail(module_id) {
-    url = 'modules/update/' + module_id + case_param();
+    url = 'modules/update/' + module_id + '/modal' + case_param();
     $('#modal_add_module_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -333,7 +333,7 @@ function remove_module(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-        get_request_api('/manage/modules/remove/' + id)
+        post_request_api('/manage/modules/remove/' + id)
         .done((data) => {
             if(notify_auto_api(data)) {
               refresh_modules(true);
@@ -348,7 +348,7 @@ function remove_module(id) {
 }
 
 function enable_module(module_id) {
-    get_request_api('modules/enable/' + module_id)
+    post_request_api('modules/enable/' + module_id)
     .done((data) => {
         if(notify_auto_api(data)) {
             refresh_modules(true);
@@ -359,7 +359,7 @@ function enable_module(module_id) {
 }
 
 function disable_module(module_id) {
-    get_request_api('modules/disable/' + module_id)
+    post_request_api('modules/disable/' + module_id)
     .done((data) => {
         if(notify_auto_api(data)) {
             refresh_modules(true);

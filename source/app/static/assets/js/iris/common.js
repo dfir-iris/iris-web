@@ -609,6 +609,8 @@ function init_module_processing(rows, hook_name, hook_ui_name, module_name, data
     data['type'] = data_type;
     data['targets'] = [];
 
+    console.log(data);
+
     type_map = {
         "ioc": "ioc_id",
         "asset": "asset_id",
@@ -973,16 +975,17 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                 });
 
                 actionOptions.items.push({
-                    type: 'divider',
+                    type: 'divider'
                 });
                 for (option in jsdata) {
                     opt = jsdata[option];
+
                     actionOptions.items.push({
                         type: 'option',
                         title: opt.manual_hook_ui_name,
                         multi: true,
                         multiTitle: opt.manual_hook_ui_name,
-                        iconClass: 'fas fa-arrow-alt-circle-right',
+                        iconClass: 'fas fa-rocket',
                         contextMenuClasses: ['text-dark'],
                         action: function (rows) {
                             init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
