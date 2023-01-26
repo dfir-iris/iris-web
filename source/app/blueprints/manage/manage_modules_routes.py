@@ -100,52 +100,56 @@ def manage_modules_list(caseid):
 
     return response_success('', data=output)
 
+@manage_modules_blueprint.route('/manage/modules/add', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def add_module(caseid):
+    if request.json is None:
+        return response_error('Invalid request')
 
-@manage_modules_blueprint.route('/manage/modules/add', methods=['GET', 'POST'])
+    module_name = request.json.get('module_name')
+
+    # Try to import the module
+    try:
+        # Try to instantiate the module
+        log.info('Trying to add module {}'.format(module_name))
+        class_, logs = instantiate_module_from_name(module_name)
+
+        if not class_:
+            return response_error(f"Cannot import module. {logs}")
+
+        # Check the health of the module
+        is_ready, logs = check_module_health(class_)
+
+        if is_ready:
+            # Registers into Iris DB for further calls
+            mod_id, logs = register_module(module_name)
+            if mod_id is not None:
+                track_activity("IRIS module {} was added".format(module_name), caseid=caseid, ctx_less=True)
+                return response_success("", data=logs)
+            else:
+                track_activity("addition of IRIS module {} was attempted".format(module_name),
+                               caseid=caseid, ctx_less=True)
+                return response_error("Unable to register module", data=logs)
+        else:
+            return response_error("Cannot import module. Health check didn't pass. Please check logs below", data=logs)
+
+    except Exception as e:
+        traceback.print_exc()
+        return response_error(e.__str__())
+
+@manage_modules_blueprint.route('/manage/modules/add/modal', methods=['GET'])
 @ac_requires(Permissions.server_administrator)
-def add_module(caseid, url_redir):
+def add_module_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_modules.add_module', cid=caseid))
 
     module = None
     form = AddModuleForm()
 
-    if form.is_submitted():
-        module_name = request.json.get('module_name')
-
-        # Try to import the module
-        try:
-            # Try to instantiate the module
-            log.info('Trying to add module {}'.format(module_name))
-            class_, logs = instantiate_module_from_name(module_name)
-
-            if not class_:
-                return response_error(f"Cannot import module. {logs}")
-
-            # Check the health of the module
-            is_ready, logs = check_module_health(class_)
-
-            if is_ready:
-                # Registers into Iris DB for further calls
-                mod_id, logs = register_module(module_name)
-                if mod_id is not None:
-                    track_activity("IRIS module {} was added".format(module_name), caseid=caseid, ctx_less=True)
-                    return response_success("", data=logs)
-                else:
-                    track_activity("addition of IRIS module {} was attempted".format(module_name),
-                                   caseid=caseid, ctx_less=True)
-                    return response_error("Unable to register module", data=logs)
-            else:
-                return response_error("Cannot import module. Health check didn't pass. Please check logs below", data=logs)
-
-        except Exception as e:
-            traceback.print_exc()
-            return response_error(e.__str__())
-
     return render_template("modal_add_module.html", form=form, module=module)
 
 
-@manage_modules_blueprint.route('/manage/modules/update_param/<param_name>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/update_param/<param_name>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def update_module_param(param_name, caseid):
     try:
@@ -189,7 +193,7 @@ def update_module_param(param_name, caseid):
         return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id, form=form)
 
 
-@manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def view_module(mod_id, caseid):
     form = AddModuleForm()
@@ -205,7 +209,7 @@ def view_module(mod_id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def enable_module(mod_id, caseid):
     if mod_id:
@@ -229,7 +233,7 @@ def enable_module(mod_id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/disable/<int:id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/disable/<int:id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def disable_module(id, caseid):
     if id:
@@ -243,7 +247,7 @@ def disable_module(id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/remove/<int:id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/remove/<int:id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def view_delete_module(id, caseid):
     try:

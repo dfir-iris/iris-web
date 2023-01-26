@@ -21,7 +21,7 @@ $('#form_new_module').submit(function () {
 
 
 function add_module() {
-    url = 'modules/add' + case_param();
+    url = 'modules/add/modal' + case_param();
     $('#modal_add_module_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
