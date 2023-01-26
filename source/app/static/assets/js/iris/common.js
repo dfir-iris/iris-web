@@ -14,6 +14,9 @@ $.fn.serializeObject = function() {
     return o;
 };
 
+
+var jdata_menu_options = [];
+
 function clear_api_error() {
    $(".invalid-feedback").hide();
 }
@@ -600,6 +603,25 @@ function dim_task_status(id) {
     });
 }
 
+function init_module_processing_wrap(rows, data_type, out_hook_name) {
+    console.log(out_hook_name);
+    hook_name = null;
+    for (opt in jdata_menu_options) {
+        console.log(jdata_menu_options[opt]);
+        if (jdata_menu_options[opt].manual_hook_ui_name == out_hook_name) {
+            hook_name = jdata_menu_options[opt].hook_name;
+            hook_ui_name = jdata_menu_options[opt].manual_hook_ui_name;
+            module_name = jdata_menu_options[opt].module_name;
+            break
+        }
+    }
+    if (hook_name == null) {
+        notify_error('Error: hook not found');
+        return false;
+    }
+    return init_module_processing(rows, hook_name, hook_ui_name, module_name, data_type);
+}
+
 function init_module_processing(rows, hook_name, hook_ui_name, module_name, data_type) {
     var data = Object();
     data['hook_name'] = hook_name;
@@ -608,8 +630,6 @@ function init_module_processing(rows, hook_name, hook_ui_name, module_name, data
     data['csrf_token'] = $('#csrf_token').val();
     data['type'] = data_type;
     data['targets'] = [];
-
-    console.log(data);
 
     type_map = {
         "ioc": "ioc_id",
@@ -977,9 +997,11 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                 actionOptions.items.push({
                     type: 'divider'
                 });
+                jdata_menu_options = jsdata;
+
                 for (option in jsdata) {
                     opt = jsdata[option];
-
+                    eval('var menuOpt' + option + '= ' + option + ';');
                     actionOptions.items.push({
                         type: 'option',
                         title: opt.manual_hook_ui_name,
@@ -987,8 +1009,8 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                         multiTitle: opt.manual_hook_ui_name,
                         iconClass: 'fas fa-rocket',
                         contextMenuClasses: ['text-dark'],
-                        action: function (rows) {
-                            init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
+                        action: function (rows, de, ke) {
+                            init_module_processing_wrap(rows, data_type, de[0].outerText);
                         },
                     })
                 }
@@ -1011,7 +1033,8 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                     });
                 }
 
-                table.contextualActions(actionOptions);
+                tableActions = table.contextualActions(actionOptions);
+                tableActions.update();
             }
         }
     })
