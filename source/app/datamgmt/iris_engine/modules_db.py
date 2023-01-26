@@ -31,6 +31,11 @@ from app.models.authorization import User
 def iris_module_exists(module_name):
     return IrisModule.query.filter(IrisModule.module_name == module_name).first() is not None
 
+def iris_module_name_from_id(module_id):
+    data = IrisModule.query.filter(IrisModule.id == module_id).first()
+    if data:
+        return data.module_name
+    return None
 
 def iris_module_add(module_name, module_human_name, module_description,
                     module_version, interface_version, has_pipeline, pipeline_args, module_config, module_type):

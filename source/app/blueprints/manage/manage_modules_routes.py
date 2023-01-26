@@ -36,6 +36,7 @@ from app.datamgmt.iris_engine.modules_db import get_module_config_from_id
 from app.datamgmt.iris_engine.modules_db import get_module_from_id
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.datamgmt.iris_engine.modules_db import iris_module_enable_by_id
+from app.datamgmt.iris_engine.modules_db import iris_module_name_from_id
 from app.datamgmt.iris_engine.modules_db import iris_module_save_parameter
 from app.datamgmt.iris_engine.modules_db import iris_modules_list
 from app.datamgmt.iris_engine.modules_db import is_mod_configured
@@ -204,14 +205,24 @@ def view_module(mod_id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/enable/<int:id>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['GET', 'POST'])
 @ac_api_requires(Permissions.server_administrator)
-def enable_module(id, caseid):
-    if id:
-        if iris_module_enable_by_id(id):
-            track_activity("IRIS module #{} enabled".format(id),
+def enable_module(mod_id, caseid):
+    if mod_id:
+        if iris_module_enable_by_id(mod_id):
+            module_name = iris_module_name_from_id(mod_id)
+            if module_name is None:
+                return response_error('Invalid module ID', status=400)
+
+            success, logs = iris_update_hooks(module_name, mod_id)
+            if not success:
+                return response_error("Unable to update hooks when enabling module", data=logs)
+
+            track_activity("IRIS module #{} enabled".format(mod_id),
                            caseid=caseid, ctx_less=True)
+
             return response_success('')
+
         else:
             return response_error('Unable to enable module')
 
