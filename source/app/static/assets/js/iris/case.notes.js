@@ -135,7 +135,7 @@ function add_remote_note(group_id) {
         caseid = get_caseid();
         var data = Object();
         data['note_title'] = "Untitled note";
-        data['note_content'] = "## Edit me with the right pencil button";
+        data['note_content'] = "";
 
         data['group_id'] = group_id;
         data['csrf_token'] = $('#csrf_token').val();
@@ -337,7 +337,9 @@ function note_detail(id, cid) {
             $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
         }, save_note);
 
-        edit_innote();
+        //edit_innote();
+        note_editor.focus();
+
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
         $('#modal_note_detail').modal({ show: true, backdrop: 'static', keyboard: false });
     });

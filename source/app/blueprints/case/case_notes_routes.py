@@ -377,7 +377,6 @@ def case_comment_note_add(cur_id, caseid):
             return response_error('Invalid note ID')
 
         comment_schema = CommentSchema()
-        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
