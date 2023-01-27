@@ -388,7 +388,30 @@ $(document).ready(function() {
         }),
         html = converter.makeHtml(editor.getSession().getValue());
 
-        target.innerHTML = filterXSS(html);
+        target.innerHTML = filterXSS(html, {
+        stripIgnoreTag: false,
+        whiteList: {
+                i: ['class', "title"],
+                a: ['href', 'title', 'target'],
+                img: ['src', 'alt', 'title', 'width', 'height'],
+                p: [],
+                hr: [],
+                h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+                ul: [], ol: [], li: [],
+                code: [], pre: [],
+                blockquote: [],
+                table: [], thead: [], tbody: [], tr: [], th: [], td: []
+            },
+        onTagAttr: function (tag, name, value, isWhiteAttr) {
+            if (tag === "i" && name === "class") {
+                if (iClassWhiteList.indexOf(value) === -1) {
+                    return false;
+                } else {
+                    return name + '="' + value + '"';
+                }
+            }
+          }
+        });
 
     });
 
