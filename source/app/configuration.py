@@ -278,8 +278,8 @@ class Config():
     # Handled by bumpversion
     IRIS_VERSION = "v2.0.0-beta-2"
 
-    API_MIN_VERSION = "1.0.5"
-    API_MAX_VERSION = "1.0.5"
+    API_MIN_VERSION = "2.0.0"
+    API_MAX_VERSION = "2.0.0"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.1'
