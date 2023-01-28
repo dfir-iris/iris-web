@@ -114,7 +114,7 @@ def get_cases_charts(caseid):
 
 @dashboard_blueprint.route('/')
 def root():
-    if app.config['DEMO_MODE_ENABLED']:
+    if app.config['DEMO_MODE_ENABLED'] == 'True':
         return redirect(url_for('demo-landing.demo_landing'))
 
     return redirect(url_for('index.index'))

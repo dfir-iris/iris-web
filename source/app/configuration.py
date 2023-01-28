@@ -293,9 +293,9 @@ class Config():
 
         SECURITY_LOGIN_USER_TEMPLATE = 'login.html'
 
-        IRIS_ADM_EMAIL = config.load('IRIS', 'ADM_EMAIL', fallback=None)
-        IRIS_ADM_PASSWORD = config.load('IRIS', 'ADM_PASSWORD', fallback=None)
-        IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY', fallback=None)
+        IRIS_ADM_EMAIL = config.load('IRIS', 'ADM_EMAIL')
+        IRIS_ADM_PASSWORD = config.load('IRIS', 'ADM_PASSWORD')
+        IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY')
 
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     SESSION_COOKIE_SAMESITE = 'Lax'

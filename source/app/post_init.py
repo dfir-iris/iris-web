@@ -172,7 +172,11 @@ def run_post_init(development=False):
 
         log.info("Post-init steps completed")
         log.info('IRIS ready')
-        log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<<')
+        if pwd is not None:
+            log.warning("==============================")
+            log.warning("|        IRIS IS READY       |")
+            log.warning("==============================")
+            log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<<')
 
 
 def create_safe_db(db_name):
@@ -546,21 +550,35 @@ def create_safe_admin(def_org, gadm):
     user = User.query.filter(
         User.user == "administrator"
     ).first()
+    password = None
+
     if not user:
         password = app.config.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
-        admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
+        if password is None:
+            password = ''.join(random.choices(string.printable[:-6], k=16))
 
-        log.info(f'Creating first admin user {admin_username}')
+        admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
+        if admin_username is None:
+            admin_username = 'administrator'
+
+        admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+        if admin_email is None:
+            admin_email = 'administrator@localhost'
+
+        log.info(f'Creating first admin user with username "{admin_username}"')
 
         user = User(
             user=admin_username,
             name=admin_username,
-            email=app.config.get('IRIS_ADM_EMAIL', "administrator@iris.local"),
+            email=admin_email,
             password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
             active=True
         )
 
         api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        if api_key is None:
+            api_key = secrets.token_urlsafe(nbytes=64)
+
         user.api_key = api_key
         db.session.add(user)
 
