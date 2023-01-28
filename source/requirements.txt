@@ -32,7 +32,7 @@ PyJWT==2.4.0
 cryptography==37.0.4
 ldap3==2.9.1
 
-dependencies/docx_generator-0.7.0-py3-none-any.whl
+dependencies/docx_generator-0.8.0-py3-none-any.whl
 dependencies/iris_interface-1.1-py3-none-any.whl
 dependencies/iris_check_module-0.1-py3-none-any.whl
 dependencies/evtx2splunk-2.0.1-py3-none-any.whl

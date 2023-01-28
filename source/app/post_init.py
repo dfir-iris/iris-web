@@ -135,7 +135,7 @@ def run_post_init(development=False):
         def_org, gadm, ganalysts = create_safe_auth_model()
 
         log.info("Creating first administrative user")
-        admin = create_safe_admin(def_org=def_org, gadm=gadm)
+        admin, pwd = create_safe_admin(def_org=def_org, gadm=gadm)
 
         log.info("Registering default modules")
         register_default_modules()
@@ -172,6 +172,7 @@ def run_post_init(development=False):
 
         log.info("Post-init steps completed")
         log.info('IRIS ready')
+        log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<<')
 
 
 def create_safe_db(db_name):
@@ -547,14 +548,19 @@ def create_safe_admin(def_org, gadm):
     ).first()
     if not user:
         password = app.config.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
-        api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
+
+        log.info(f'Creating first admin user {admin_username}')
+
         user = User(
-            user="administrator",
-            name="administrator",
+            user=admin_username,
+            name=admin_username,
             email=app.config.get('IRIS_ADM_EMAIL', "administrator@iris.local"),
             password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
             active=True
         )
+
+        api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
         user.api_key = api_key
         db.session.add(user)
 
@@ -566,9 +572,10 @@ def create_safe_admin(def_org, gadm):
         # Add user to organisation
         add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
 
-        log.warning(">>> Administrator password: {pwd}".format(pwd=password))
+        log.warning(">>> Administrator password: {password}")
 
         db.session.commit()
+
     else:
         if not os.environ.get('IRIS_ADM_PASSWORD'):
             # Prevent leak of user set password in logs
@@ -580,7 +587,7 @@ def create_safe_admin(def_org, gadm):
             user.email = adm_email
             db.session.commit()
 
-    return user
+    return user, password
 
 
 def create_safe_case(user, client, groups, def_org):
