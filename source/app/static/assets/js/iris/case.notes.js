@@ -411,6 +411,19 @@ function search_notes() {
     })
 }
 
+function toggle_max_editor() {
+    if ($('#container_note_content').hasClass('col-md-12')) {
+        $('#container_note_content').removeClass('col-md-12').addClass('col-md-6');
+        $('#ctrd_notesum').removeClass('d-none');
+        $('#btn_max_editor').html('<i class="fa-solid fa-minimize"></i>');
+    } else {
+        $('#container_note_content').removeClass('col-md-6').addClass('col-md-12');
+        $('#ctrd_notesum').addClass('d-none');
+        $('#btn_max_editor').html('<i class="fa-solid fa-maximize"></i>');
+    }
+
+}
+
 /* Save a note into db */
 function save_note(this_item, cid) {
     clear_api_error();
