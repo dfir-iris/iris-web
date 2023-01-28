@@ -192,8 +192,13 @@ function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
      cid = '?cid=' + cid;
     }
 
+    uri = uri + cid;
+    return get_raw_request_api(uri, propagate_api_error, beforeSend_fn)
+}
+
+function get_raw_request_api(uri, propagate_api_error, beforeSend_fn) {
     return $.ajax({
-        url: uri + cid,
+        url: uri,
         type: 'GET',
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
