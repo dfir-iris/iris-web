@@ -171,7 +171,7 @@ def download_template(report_id, caseid):
 @manage_templates_blueprint.route('/manage/templates/delete/<report_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def delete_template(report_id, caseid):
-    error = ""
+    error = None
 
     report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
 
@@ -180,10 +180,13 @@ def delete_template(report_id, caseid):
         os.unlink(os.path.join(app.config['TEMPLATES_PATH'], report_template.internal_reference))
 
     except Exception as e:
-        return response_error(f"Unable to delete {e}")
+        error = f"Template reference will be deleted but there has been some errors. {e}"
 
-    CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).delete()
+    finally:
+        CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).delete()
+        db.session.commit()
 
-    db.session.commit()
+    if error:
+        return response_error(error)
 
     return response_success("Deleted successfully", data=error)

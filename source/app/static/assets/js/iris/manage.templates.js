@@ -165,7 +165,7 @@ function delete_report(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-          get_request_api('/manage/templates/delete/' + id)
+          post_request_api('/manage/templates/delete/' + id)
           .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_template_table();
