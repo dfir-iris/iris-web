@@ -129,6 +129,9 @@
                             aria-hidden="true">&times;</span></button>
                       </div>
                       <div class="modal-body">
+                          <div class="col">
+                            <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might fail depending on the situation.<br/><code>Safe Mode</code> can be used to generate the report without them.</p>
+                          </div>
                           <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report">
                                 {% for report in reports %}
                                       <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
@@ -140,7 +143,7 @@
                               <span class="btn-label">
                                 <i class="fa fa-file-download"></i>
                               </span>
-                              Generate in SafeMode
+                              Generate in Safe Mode
                           </a>
                           <a href="#" class="btn btn-light float-right mt-2 ml-2" onclick="gen_report(false);">
                               <span class="btn-label">
@@ -161,18 +164,22 @@
                             aria-hidden="true">&times;</span></button>
                       </div>
                       <div class="modal-body">
-                          <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report_act">
+                          <div class="col">
+                            <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might fail depending on the situation.<br/><code>Safe Mode</code> can be used to generate the report without them.</p>
+                          </div>
+                          <select class="selectpicker form-control bg-outline-success dropdown-submenu mb-2" data-show-subtext="true" data-live-search="true" id="select_report_act">
                                 {% for report in reports_act %}
                                       <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
                                 {% endfor %}
                           </select>
                       </div>
+
                       <div class="modal-footer">
                           <a href="#" class="btn btn-light float-left mt-2 mr-auto" onclick="gen_act_report(false);">
                               <span class="btn-label">
                                 <i class="fa fa-file-download"></i>
                               </span>
-                              Generate in SafeMode
+                              Generate in Safe Mode
                           </a>
                           <a href="#" class="btn btn-light float-right mt-2 ml-2" onclick="gen_act_report(false);">
                               <span class="btn-label">
