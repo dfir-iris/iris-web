@@ -8199,6 +8199,7 @@ body .badge-danger {
 .activity-feed .feed-item .text {
     position: relative;
     top: -3px;
+    overflow-wrap: break-word;
 }
 
 
