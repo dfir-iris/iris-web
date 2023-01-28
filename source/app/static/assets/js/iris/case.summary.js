@@ -150,7 +150,13 @@ function gen_act_report(safe) {
     if (safe === true) {
         url += '&safe=true';
     }
-    window.open(url, '_blank');
+
+    get_raw_request_api(url)
+    .done(function(data){
+        if (notify_auto_api(data, true)) {
+            $('#modal_select_report_act').modal('hide');
+        }
+    });
 }
 
 function act_report_template_selector() {

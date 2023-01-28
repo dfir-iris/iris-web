@@ -101,10 +101,11 @@ class IrisMakeDocReport(object):
                                     output_file_path
                                     )
 
-            return output_file_path
+            return output_file_path, ""
 
-        except rendering_error.RenderingError:
-            return None
+        except rendering_error.RenderingError as e:
+
+            return None, e.__str__()
 
     def _get_activity_info(self):
         auto_activities = get_auto_activities(self._caseid)
