@@ -109,7 +109,7 @@ def add_user(caseid):
                            user_active=jsdata.get('active'))
 
         if cuser:
-            track_activity("created user {}".format(user.user), caseid=caseid)
+            track_activity("created user {}".format(user.user), caseid=caseid,  ctx_less=True)
             return response_success("user created", data=user_schema.dump(user))
 
         return response_error("Unable to create user for internal reasons")
@@ -189,7 +189,7 @@ def manage_user_group_(cur_id, caseid):
     update_user_groups(user_id=cur_id,
                        groups=request.json.get('groups_membership'))
 
-    track_activity(f"groups membership of user {user.user} updated", caseid=caseid)
+    track_activity(f"groups membership of user {user.user} updated", caseid=caseid,  ctx_less=True)
 
     return response_success("User groups updated", data=user)
 
@@ -250,7 +250,8 @@ def manage_user_cac_add_case(cur_id, caseid):
     if not user:
         return response_error(msg=logs)
 
-    track_activity(f"case access level {data.get('access_level')} for case(s) {data.get('cases_list')} set for user {user.user}", caseid=caseid)
+    track_activity(f"case access level {data.get('access_level')} for case(s) {data.get('cases_list')} "
+                   f"set for user {user.user}", caseid=caseid,  ctx_less=True)
 
     group = get_user_details(cur_id)
 
@@ -286,7 +287,8 @@ def manage_user_cac_delete_cases(cur_id,  caseid):
         return response_error(msg=str(e))
 
     if success:
-        track_activity(f"cases access for case(s) {data.get('cases')} deleted for user {user.user}", caseid=caseid)
+        track_activity(f"cases access for case(s) {data.get('cases')} deleted for user {user.user}", caseid=caseid,
+                       ctx_less=True)
         return response_success(msg="User removed from cases")
 
     return response_error(msg=logs)
@@ -321,7 +323,8 @@ def manage_user_cac_delete_case(cur_id,  caseid):
         return response_error(msg=str(e))
 
     if success:
-        track_activity(f"case access for case {data.get('case')} deleted for user {user.user}", caseid=caseid)
+        track_activity(f"case access for case {data.get('case')} deleted for user {user.user}", caseid=caseid,
+                       ctx_less=True)
         return response_success(msg="User removed from cases")
 
     return response_error(msg=logs)
@@ -349,7 +352,7 @@ def update_user_api(cur_id, caseid):
         db.session.commit()
 
         if cuser:
-            track_activity("updated user {}".format(user.user), caseid=caseid)
+            track_activity("updated user {}".format(user.user), caseid=caseid, ctx_less=True)
             return response_success("User updated", data=user_schema.dump(user))
 
         return response_error("Unable to update user for internal reasons")
@@ -373,7 +376,7 @@ def deactivate_user_api(cur_id, caseid):
     db.session.commit()
     user_schema = UserSchema()
 
-    track_activity(f"user {user.user} deactivated", caseid=caseid)
+    track_activity(f"user {user.user} deactivated", caseid=caseid,  ctx_less=True)
     return response_success("User deactivated", data=user_schema.dump(user))
 
 
@@ -392,7 +395,7 @@ def activate_user_api(cur_id, caseid):
     db.session.commit()
     user_schema = UserSchema()
 
-    track_activity(f"user {user.user} activated", caseid=caseid)
+    track_activity(f"user {user.user} activated", caseid=caseid, ctx_less=True)
     return response_success("User activated", data=user_schema.dump(user))
 
 
@@ -411,17 +414,17 @@ if is_authentication_local():
 
             if user.active is True:
                 response_error("Cannot delete active user")
-                track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid)
+                track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid, ctx_less=True)
                 return response_error("Cannot delete active user")
 
             delete_user(user.id)
 
-            track_activity(message="deleted user ID {}".format(cur_id), caseid=caseid)
+            track_activity(message="deleted user ID {}".format(cur_id), caseid=caseid, ctx_less=True)
             return response_success("Deleted user ID {}".format(cur_id))
 
         except Exception as e:
             db.session.rollback()
-            track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid)
+            track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid,  ctx_less=True)
             return response_error("Cannot delete active user")
 
 

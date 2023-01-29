@@ -238,7 +238,7 @@ def api_add_case(caseid):
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
-        track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
+        track_activity("new case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
@@ -288,7 +288,7 @@ def update_case_info(caseid):
         register_case_protagonists(case.case_id, request_data['protagonists'])
         save_case_tags(request_data['case_tags'], case_i.case_id)
 
-        track_activity("Case updated {case_name}".format(case_name=case.name), caseid=caseid)
+        track_activity("case updated {case_name}".format(case_name=case.name), caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)

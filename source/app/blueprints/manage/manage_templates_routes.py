@@ -35,6 +35,7 @@ from flask_login import current_user
 from app import app
 from app import db
 from app.forms import AddReportTemplateForm
+from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.models.authorization import User
 from app.models.models import CaseTemplateReport
@@ -143,6 +144,7 @@ def add_template(caseid):
             db.session.add(report_template)
             db.session.commit()
 
+            track_activity(f"report template '{report_template.name}' added", caseid=caseid, ctx_less=True)
             # Return the assets
             return response_success("Added successfully")
 
@@ -189,4 +191,5 @@ def delete_template(report_id, caseid):
     if error:
         return response_error(error)
 
+    track_activity(f"report template '{report_template.name}' deleted", caseid=caseid, ctx_less=True)
     return response_success("Deleted successfully", data=error)

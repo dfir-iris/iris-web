@@ -44,6 +44,7 @@ from app.forms import AddGroupForm
 from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_users_list
+from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.util import ac_api_requires
@@ -126,6 +127,8 @@ def manage_groups_add(caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+
+    track_activity(message=f"added group {ags_c.group_name}", caseid=caseid, ctx_less=True)
 
     return response_success('', data=ags.dump(ags_c))
 
