@@ -499,7 +499,7 @@ function build_timeline(data) {
         if (evt.event_tags != null && evt.event_tags.length > 0) {
             sp_tag = evt.event_tags.split(',');
             for (tag_i in sp_tag) {
-                    tags += `<span class="badge badge-light float-right mr-2 mb-1">${sanitizeHTML(sp_tag[tag_i])}</span>`;
+                    tags += `<span title="Tag" class="badge badge-light ml-1 float-right mt-2"><i class="fa-solid fa-tag mr-1"></i>${sanitizeHTML(sp_tag[tag_i])}</span>`;
                 }
         }
 
@@ -526,9 +526,9 @@ function build_timeline(data) {
                 cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                 cpn = sanitizeHTML(cpn)
                 if (evt.assets[ide]["compromised"]) {
-                    asset += `<span class="badge badge-warning-event mr-2 float-right link_asset mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
+                    asset += `<span class="badge badge-warning-event float-right ml-2 link_asset mt-2" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
                 } else {
-                    asset += `<span class="badge badge-light mr-2 float-right link_asset mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
+                    asset += `<span class="badge badge-light float-right ml-1 link_asset mt-2" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
                 }
             }
         }
