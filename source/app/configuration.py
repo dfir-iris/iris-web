@@ -282,7 +282,7 @@ class Config():
     API_MAX_VERSION = "2.0.0"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
-    MODULES_INTERFACE_MAX_VERSION = '1.1'
+    MODULES_INTERFACE_MAX_VERSION = '1.2.0'
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True

@@ -22,6 +22,7 @@ import traceback
 import base64
 import importlib
 from flask_login import current_user
+from packaging import version
 from pickle import dumps
 from pickle import loads
 from sqlalchemy import and_
@@ -100,9 +101,14 @@ def check_module_health(module_instance):
         dup_logs("Testing module")
         dup_logs("Module name : {}".format(module_instance.get_module_name()))
 
-        if not (float(app.config.get('MODULES_INTERFACE_MIN_VERSION'))
-                <= module_instance.get_interface_version()
-                <= float(app.config.get('MODULES_INTERFACE_MAX_VERSION'))):
+        if type(module_instance.get_interface_version()) != str:
+            mod_interface_version = str(module_instance.get_interface_version())
+        else:
+            mod_interface_version = module_instance.get_interface_version()
+
+        if not (version.parse(app.config.get('MODULES_INTERFACE_MIN_VERSION'))
+                <= version.parse(mod_interface_version)
+                <= version.parse(app.config.get('MODULES_INTERFACE_MAX_VERSION'))):
             log.critical("Module interface no compatible with server. Expected "
                          f"{app.config.get('MODULES_INTERFACE_MIN_VERSION')} <= module "
                          f"<= {app.config.get('MODULES_INTERFACE_MAX_VERSION')}")
@@ -141,6 +147,7 @@ def check_module_health(module_instance):
         return module_instance.is_ready(), logs
 
     except Exception as e:
+        log.exception("Error while checking module health")
         log.error(e.__str__())
         logs.append(e.__str__())
         return False, logs
@@ -269,7 +276,7 @@ def register_module(module_name):
                                   module_description=mod_inst.get_module_description(),
                                   module_config=mod_config,
                                   module_version=mod_inst.get_module_version(),
-                                  interface_version=mod_inst.get_module_version(),
+                                  interface_version=mod_inst.get_interface_version(),
                                   has_pipeline=mod_inst.is_providing_pipeline(),
                                   pipeline_args=mod_inst.pipeline_get_info(),
                                   module_type=mod_inst.get_module_type()

@@ -33,10 +33,10 @@ cryptography==38.0.3
 ldap3==2.9.1
 
 dependencies/docx_generator-0.8.0-py3-none-any.whl
-dependencies/iris_interface-1.1-py3-none-any.whl
-dependencies/iris_check_module-0.1-py3-none-any.whl
+dependencies/iris_interface-1.2.0-py3-none-any.whl
 dependencies/evtx2splunk-2.0.1-py3-none-any.whl
-dependencies/iris_evtx-1.1-py3-none-any.whl
-dependencies/iris_check_module-0.1-py3-none-any.whl
-dependencies/iris_vt_module-0.2-py3-none-any.whl
-dependencies/iris_misp_module-0.1-py3-none-any.whl
+dependencies/iris_evtx-1.2.0-py3-none-any.whl
+dependencies/iris_check_module-1.0.1-py3-none-any.whl
+dependencies/iris_vt_module-1.2.0-py3-none-any.whl
+dependencies/iris_misp_module-1.2.0-py3-none-any.whl
+dependencies/iris_webhooks_module-1.0.2-py3-none-any.whl
