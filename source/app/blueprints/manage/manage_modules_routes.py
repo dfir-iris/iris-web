@@ -149,7 +149,7 @@ def add_module_modal(caseid, url_redir):
     return render_template("modal_add_module.html", form=form, module=module)
 
 
-@manage_modules_blueprint.route('/manage/modules/update_param/<param_name>', methods=['POST'])
+@manage_modules_blueprint.route('/manage/modules/update_param/<param_name>', methods=['GET', 'POST'])
 @ac_api_requires(Permissions.server_administrator)
 def update_module_param(param_name, caseid):
     try:
