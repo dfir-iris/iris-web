@@ -189,6 +189,8 @@ def manage_user_group_(cur_id, caseid):
     update_user_groups(user_id=cur_id,
                        groups=request.json.get('groups_membership'))
 
+    track_activity(f"groups membership of user {user.user} updated", caseid=caseid)
+
     return response_success("User groups updated", data=user)
 
 
@@ -248,6 +250,8 @@ def manage_user_cac_add_case(cur_id, caseid):
     if not user:
         return response_error(msg=logs)
 
+    track_activity(f"case access level {data.get('access_level')} for case(s) {data.get('cases_list')} set for user {user.user}", caseid=caseid)
+
     group = get_user_details(cur_id)
 
     return response_success(data=group)
@@ -282,6 +286,7 @@ def manage_user_cac_delete_cases(cur_id,  caseid):
         return response_error(msg=str(e))
 
     if success:
+        track_activity(f"cases access for case(s) {data.get('cases')} deleted for user {user.user}", caseid=caseid)
         return response_success(msg="User removed from cases")
 
     return response_error(msg=logs)
@@ -316,6 +321,7 @@ def manage_user_cac_delete_case(cur_id,  caseid):
         return response_error(msg=str(e))
 
     if success:
+        track_activity(f"case access for case {data.get('case')} deleted for user {user.user}", caseid=caseid)
         return response_success(msg="User removed from cases")
 
     return response_error(msg=logs)
@@ -367,7 +373,7 @@ def deactivate_user_api(cur_id, caseid):
     db.session.commit()
     user_schema = UserSchema()
 
-    track_activity("user {} deactivated".format(user.user), caseid=caseid)
+    track_activity(f"user {user.user} deactivated", caseid=caseid)
     return response_success("User deactivated", data=user_schema.dump(user))
 
 
@@ -386,7 +392,7 @@ def activate_user_api(cur_id, caseid):
     db.session.commit()
     user_schema = UserSchema()
 
-    track_activity("user {} activated".format(user.user), caseid=caseid)
+    track_activity(f"user {user.user} activated", caseid=caseid)
     return response_success("User activated", data=user_schema.dump(user))
 
 

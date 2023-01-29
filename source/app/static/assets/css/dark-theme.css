@@ -34,6 +34,10 @@ body .row-card-no-pd [class*=col] .card:before {
     background: rgba(181, 181, 181, 0.1) !important;
 }
 
+.kanban-item {
+    box-shadow: 0 0 0 1px rgba(122, 128, 134, 0.2);
+}
+
 body .card .card-header,
 body .card .card-footer,
 body .card .card-action,
@@ -96,6 +100,12 @@ body .card-title a,
 body .card-title a:hover,
 body .card-title a:focus {
     color: #fff;
+}
+
+.bg-shadow-gradient {
+  background: #1572E8 !important;
+  background: -webkit-linear-gradient(legacy-direction(-45deg), #141515, #484848BD) !important;
+  background: linear-gradient(-45deg, #141515, #484848BD) !important;
 }
 
 body .card-category {
