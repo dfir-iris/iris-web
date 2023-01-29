@@ -18,16 +18,16 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
-import logging as log
 # IMPORTS ------------------------------------------------
 from datetime import datetime
 from flask import request
 from flask_login import current_user
 
+import app
 from app import db
 from app.models import UserActivity
 
+log = app.app.logger
 
 # CONTENT ------------------------------------------------
 def track_activity(message, caseid=None, ctx_less=False, user_input=False, display_in_ui=True):
@@ -53,7 +53,7 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
     ua.activity_date = datetime.utcnow()
     ua.activity_desc = message.capitalize() if not ctx_less else "[Unbound] {}".format(message.capitalize())
 
-    log.info(ua.activity_desc)
+    log.info(f"{current_user.user} [#{current_user.id}] :: Case {caseid} :: {ua.activity_desc}")
 
     ua.user_input = user_input
     ua.display_in_ui = display_in_ui

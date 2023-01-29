@@ -171,11 +171,11 @@ def run_post_init(development=False):
                               clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
 
         log.info("Post-init steps completed")
-        log.info('IRIS ready')
+        log.warning("==============================")
+        log.warning("|        IRIS IS READY       |")
+        log.warning("==============================")
+
         if pwd is not None:
-            log.warning("==============================")
-            log.warning("|        IRIS IS READY       |")
-            log.warning("==============================")
             log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<<')
 
 
