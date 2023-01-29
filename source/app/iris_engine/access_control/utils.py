@@ -17,7 +17,7 @@ from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 
-log = app.logger
+log = app.app.logger
 
 
 def ac_flag_match_mask(flag, mask):

@@ -32,7 +32,6 @@ from flask_login import login_user
 from app import app
 from app import bc
 from app import db
-from app.datamgmt.case.case_db import case_exists
 
 from app.forms import LoginForm
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate

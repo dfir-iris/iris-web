@@ -23,6 +23,7 @@ body .row-card-no-pd,
 body .list-group-item,
 body .timeline>li>.timeline-panel {
     background: #202940;
+    box-shadow: none;
 }
 
 body .card-pricing2 {
@@ -376,7 +377,7 @@ body .select2-container--default .select2-selection--single .select2-selection__
     background-size: auto;
   background-size: cover;
   background-position: center center;
-  box-shadow: -20px 0px 30px 0px rgba(30, 30, 30, 0.28);
+  box-shadow: none;
   transition: all .3s;
   z-index: 1101;
   padding: 20px 20px 0;
@@ -404,8 +405,8 @@ body .select2-container--default .select2-selection--single .select2-selection__
   background-size: auto;
   background-size: cover;
   background-position: center center;
-  box-shadow: -20px 0px 30px 0px rgba(30, 30, 30, 0.28);
   transition: all .3s;
+  box-shadow: none;
   z-index: 1001;
   padding: 20px 20px 0;
 }
