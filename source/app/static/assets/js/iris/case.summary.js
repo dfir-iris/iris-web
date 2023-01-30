@@ -399,9 +399,11 @@ $(document).ready(function() {
         setInterval(auto_remove_typing, 2000);
     }
 
-    if ($("#select_report_act option:selected").val() !== undefined) {
+    if ($("#select_report option:selected").val() !== undefined) {
+        console.log("Debug:1");
         $('#generate_report_button').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param());
         $("#select_report").on("change", function(){
+            console.log("Test");
             $('#generate_report_button').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param());
         });
 
@@ -410,6 +412,7 @@ $(document).ready(function() {
             $('#generate_report_button_safe').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param() + "&safe-mode=true");
         });
     } else {
+        console.log("Debug:0");
          $('#generate_report_button').attr("href", '#');
          $('#generate_report_button_safe').attr("href", '#');
     }
