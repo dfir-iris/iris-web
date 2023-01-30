@@ -46,7 +46,7 @@
                 {{ note.note_title(class='form-control input') }}
             </div>
             <div class="row mb-1 mt-3">
-                <div class="col" id="notes_edition_btn">
+                <div class="col-10" id="notes_edition_btn">
                         <div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="save_note( this );"><i class="fa-solid fa-file-circle-check"></i></div>
                         <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="note_editor.insertSnippet('**${1:$SELECTION}**');note_editor.focus();"><i class="fa-solid fa-bold"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="note_editor.insertSnippet('*${1:$SELECTION}*');note_editor.focus();"><i class="fa-solid fa-italic"></i></div>
