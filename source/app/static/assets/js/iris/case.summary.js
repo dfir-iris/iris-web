@@ -316,7 +316,7 @@ $(document).ready(function() {
     if ($("#editor_summary").attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");
     } else {
-        editor.setTheme("ace/theme/tomorrow_night");
+        editor.setTheme("ace/theme/iris_night");
     }
     editor.session.setMode("ace/mode/markdown");
     editor.renderer.setShowGutter(true);

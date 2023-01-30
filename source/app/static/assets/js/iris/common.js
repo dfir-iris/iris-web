@@ -701,7 +701,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     if ($("#"+anchor_id).attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");
     } else {
-        editor.setTheme("ace/theme/tomorrow_night");
+        editor.setTheme("ace/theme/iris_night");
     }
     editor.session.setMode("ace/mode/markdown");
     if (readonly !== undefined) {
