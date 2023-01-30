@@ -177,7 +177,7 @@ def update_module_param(param_name, caseid):
         parameter_value = request.json.get('param_value')
 
         if iris_module_save_parameter(mod_id, mod_config, param_name, parameter_value):
-            track_activity("parameter {} of mod #{} was updated".format(param_name, mod_id),
+            track_activity(f"parameter {param_name} of mod ({mod_name})  #{mod_id} was updated",
                            caseid=caseid, ctx_less=True)
 
             success, logs = iris_update_hooks(mod_iname, mod_id)
@@ -226,10 +226,10 @@ def enable_module(mod_id, caseid):
             if not success:
                 return response_error("Unable to update hooks when enabling module", data=logs)
 
-            track_activity("IRIS module #{} enabled".format(mod_id),
+            track_activity(f"IRIS module ({module_name}) #{mod_id} enabled",
                            caseid=caseid, ctx_less=True)
 
-            return response_success('')
+            return response_success('Module enabled', data=logs)
 
         else:
             return response_error('Unable to enable module')
@@ -244,7 +244,7 @@ def disable_module(id, caseid):
         if iris_module_disable_by_id(id):
             track_activity("IRIS module #{} disabled".format(id),
                            caseid=caseid, ctx_less=True)
-            return response_success('')
+            return response_success('Module disabled')
         else:
             return response_error('Unable to disable module')
 

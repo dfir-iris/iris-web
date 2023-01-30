@@ -14,7 +14,7 @@ gunicorn==20.1.0
 psycopg2-binary==2.9.1
 pyunpack==0.2.2
 packaging==21.3
-requests==2.26.0
+requests==2.28.0
 SQLAlchemy==1.4.31
 SQLAlchemy-ImageAttach==1.1.0
 SQLAlchemy-Utils==0.38.2
@@ -31,6 +31,7 @@ pyminizip~=0.2.6
 PyJWT==2.4.0
 cryptography==38.0.3
 ldap3==2.9.1
+pyintelowl>=4.4.0
 
 dependencies/docx_generator-0.8.0-py3-none-any.whl
 dependencies/iris_interface-1.2.0-py3-none-any.whl
@@ -40,3 +41,4 @@ dependencies/iris_check_module-1.0.1-py3-none-any.whl
 dependencies/iris_vt_module-1.2.0-py3-none-any.whl
 dependencies/iris_misp_module-1.2.0-py3-none-any.whl
 dependencies/iris_webhooks_module-1.0.2-py3-none-any.whl
+dependencies/iris_intelowl_module-0.1.0-py3-none-any.whl
