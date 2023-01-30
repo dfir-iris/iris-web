@@ -437,7 +437,6 @@ $(document).ready(function() {
         sync_editor(true);
         setInterval(auto_remove_typing, 2000);
     }
-
 });
 
 
