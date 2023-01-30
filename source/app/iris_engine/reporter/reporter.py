@@ -554,22 +554,26 @@ class IrisMakeMdReport(IrisReportMaker):
 
         # Build output file
         output_file_path = os.path.join(self._tmp, name)
-        
-        # Load the template
-        template_loader = jinja2.FileSystemLoader(searchpath="/")
-        template_env = jinja2.Environment(loader=template_loader)
-        template = template_env.get_template(os.path.join(
-            app.config['TEMPLATES_PATH'], report.internal_reference))
-        
-        # Render with a mapping between JSON (from db) and template tags
-        output_text = template.render(case_info)
 
-        # Write the result in the output file
-        html_file = open(output_file_path, 'w', encoding="utf-8")
-        html_file.write(output_text)
-        html_file.close()
+        try:
+            # Load the template
+            template_loader = jinja2.FileSystemLoader(searchpath="/")
+            template_env = jinja2.Environment(loader=template_loader)
+            template = template_env.get_template(os.path.join(
+                app.config['TEMPLATES_PATH'], report.internal_reference))
+
+            # Render with a mapping between JSON (from db) and template tags
+            output_text = template.render(case_info)
+
+            # Write the result in the output file
+            with open(output_file_path, 'w', encoding="utf-8") as html_file:
+                html_file.write(output_text)
+
+        except Exception as e:
+            log.exception("Error while generating report: {}".format(e))
+            return None, e.__str__()
         
-        return output_file_path
+        return output_file_path, 'Report generated'
     
 class QueuingHandler(log.Handler):
     """A thread safe logging.Handler that writes messages into a queue object.

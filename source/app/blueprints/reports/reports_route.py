@@ -115,19 +115,14 @@ def _gen_report(report_id, caseid):
 
             _, report_format = os.path.splitext(report.internal_reference)
             
-            if report_format == ".docx":
-                mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
-                fpath, logs = mreport.generate_doc_report(type="Investigation")
-
-            elif report_format == ".md" or report_format == ".html":
+            if report_format == ".md" or report_format == ".html":
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Investigation")
 
             else:
                 mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_doc_report(type="Investigation")
-                # return response_error("Report error", "Unknown report format.")
-            
+
             if fpath is None:
                 track_activity("failed to generate the report")
                 return response_error(logs, "Failed to generate the report")
