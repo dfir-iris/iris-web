@@ -162,8 +162,8 @@ def download_template(report_id, caseid):
         report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
 
         fpath = os.path.join(app.config['TEMPLATES_PATH'], report_template.internal_reference)
-
-        resp = send_file(fpath, as_attachment=True, attachment_filename="{}.docx".format(report_template.name))
+        _, extension = os.path.splitext(report_template.internal_reference)
+        resp = send_file(fpath, as_attachment=True, attachment_filename=f"{report_template.name}.{extension}")
 
         return resp
 
