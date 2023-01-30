@@ -83,7 +83,7 @@ def download_case_activity(report_id, caseid):
 
             if fpath is None:
                 track_activity("failed to generate a report")
-                return response_error(logs, "Failed to generate the report")
+                return response_error(msg="Failed to generate the report", data=logs)
 
             call_modules_hook('on_postload_activities_report_create', data=report_id, caseid=caseid)
             resp = send_file(fpath, as_attachment=True)
@@ -119,13 +119,16 @@ def _gen_report(report_id, caseid):
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Investigation")
 
-            else:
+            elif report_format == ".docx":
                 mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_doc_report(type="Investigation")
 
+            else:
+                return response_error("Report error", "Unknown report format.")
+
             if fpath is None:
                 track_activity("failed to generate the report")
-                return response_error(logs, "Failed to generate the report")
+                return response_error(msg="Failed to generate the report", data=logs)
 
             call_modules_hook('on_postload_report_create', data=fpath, caseid=caseid)
 
