@@ -31,6 +31,8 @@ from flask import send_file
 from flask import url_for
 from flask_login import current_user
 
+import os
+
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.reporter.reporter import IrisMakeDocReport
 from app.iris_engine.utils.tracker import track_activity
@@ -64,9 +66,18 @@ def download_case_activity(report_id, caseid):
             if request.args.get('safe-mode') == 'true':
                 safe_mode = True
 
-            mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode=safe_mode)
-            fpath = mreport.generate_doc_report(type="Activities")
-
+            # Get file extension
+            _, report_format = os.path.splitext(report.internal_reference)
+            
+            # Depending on the template format, the generation process is different
+            if (report_format == ".docx"):
+                mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
+                fpath = mreport.generate_doc_report(type="Activities")
+            elif (report_format == ".md" or report_format == ".html") :
+                mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
+                fpath = mreport.generate_md_report(doc_type="Activities")
+            else:
+                return response_error("Report error", "Unknown report format.")
             if fpath is None:
                 track_activity("failed to generate a report")
                 return response_error("Report error", "Failed to generate a report.")
@@ -99,9 +110,17 @@ def _gen_report(report_id, caseid):
             if request.args.get('safe-mode') == 'true':
                 safe_mode = True
 
-            mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
-            fpath = mreport.generate_doc_report(type="Investigation")
-
+            _, report_format = os.path.splitext(report.internal_reference)
+            
+            if (report_format == ".docx"):
+                mreport = IrisMakeDocReport(tmp_dir, report_id, caseid)
+                fpath = mreport.generate_doc_report(type="Investigation")
+            elif (report_format == ".md" or report_format == ".html") :
+                mreport = IrisMakeMdReport(tmp_dir, report_id, caseid)
+                fpath = mreport.generate_md_report(doc_type="Investigation")
+            else:
+                return response_error("Report error", "Unknown report format.")
+            
             if fpath is None:
                 track_activity("failed to generate a report")
                 return response_error("Report error", "Failed to generate a report.")

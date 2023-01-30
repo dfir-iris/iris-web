@@ -51,7 +51,7 @@ manage_templates_blueprint = Blueprint(
     template_folder='templates'
 )
 
-ALLOWED_EXTENSIONS = {'doc', 'docx'}
+ALLOWED_EXTENSIONS = {'md', 'html', 'doc', 'docx'}
 
 
 def allowed_file(filename):
@@ -129,7 +129,8 @@ def add_template(caseid):
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
-            filename = get_random_string(18)
+            _, extension = os.path.splitext(file.filename)
+            filename = get_random_string(18) + extension
 
             try:
 
