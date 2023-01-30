@@ -15758,3 +15758,7 @@ td.dt-nowrap { white-space: nowrap }
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.ace_editor {
+    border-radius: .3rem !important;
+}
