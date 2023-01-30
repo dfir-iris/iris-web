@@ -32,7 +32,10 @@ var OverviewTable = $("#overview_table").DataTable({
         "render": function(data, type, row, meta) {
            if (type === 'display') {
               title = "You\'re not forgetting me, are you?";
-              if (data <= 7) {
+              if (data <= 1) {
+                data = `<i title="Sounds good" class="text-success fw-bold fa-solid fa-stopwatch mr-1"></i>${data} day`;
+              }
+              else if (data <= 7) {
                 data = `<i title="Sounds good" class="text-success fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days`;
               } else if (7 < data && data < 14) {
                 data = `<i title="${title}" class="text-warning fw-bold fa-solid fa-stopwatch mr-1"></i>${data} days</div>`;
