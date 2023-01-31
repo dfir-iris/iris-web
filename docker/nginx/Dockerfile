@@ -46,7 +46,7 @@ RUN mkdir -p /www/certs/
 
 USER www-data
 
-HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail -k https://127.0.0.1:8443 || exit 1
+HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail -k https://127.0.0.1 || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 
