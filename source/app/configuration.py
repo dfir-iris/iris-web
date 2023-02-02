@@ -186,6 +186,7 @@ PGA_ACCOUNT_ = config.load('POSTGRES', 'ADMIN_USER')
 PGA_PASSWD_ = config.load('POSTGRES', 'ADMIN_PASSWORD')
 PG_SERVER_ = config.load('POSTGRES', 'SERVER')
 PG_PORT_ = config.load('POSTGRES', 'PORT')
+PG_DB_ = config.load('POSTGRES', 'DB')
 CELERY_BROKER_ = config.load('CELERY', 'BROKER',
                              fallback=f"amqp://{config.load('CELERY', 'HOST', fallback='rabbitmq')}")
 
@@ -307,6 +308,7 @@ class Config():
     PGA_PASSWD = PGA_PASSWD_
     PG_SERVER = PG_SERVER_
     PG_PORT = PG_PORT_
+    PG_DB = PG_DB_
 
     DEMO_MODE_ENABLED = config.load('IRIS_DEMO', 'ENABLED', fallback=False)
     if DEMO_MODE_ENABLED == 'True':
@@ -321,7 +323,7 @@ class Config():
     """
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    SQLALCHEMY_DATABASE_URI = SQLALCHEMY_BASE_URI + 'iris_db'
+    SQLALCHEMY_DATABASE_URI = SQLALCHEMY_BASE_URI + PG_DB_
     SQLALCHEMY_BINDS = {
         'iris_tasks': SQLALCHEMY_BASE_URI + 'iris_tasks'
     }

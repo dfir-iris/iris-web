@@ -50,7 +50,7 @@ def backup_iris_db():
                  app.config.get('PG_SERVER'), '-p',
                  app.config.get('PG_PORT'),
                  '-U', app.config.get('PGA_ACCOUNT'),
-                 '--compress=9', '-c', '-O', '--if-exists', 'iris_db'],
+                 '--compress=9', '-c', '-O', '--if-exists', app.config.get('PG_DB')],
                 stdout=backup,
                 env={'PGPASSWORD': app.config.get('PGA_PASSWD')})
 

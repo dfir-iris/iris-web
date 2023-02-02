@@ -39,7 +39,7 @@ services:
       - POSTGRES_PASSWORD
       - POSTGRES_ADMIN_USER
       - POSTGRES_ADMIN_PASSWORD
-      - POSTGRES_DB=iris_db
+      - POSTGRES_DB
     networks:
       - iris_backend
     volumes:
