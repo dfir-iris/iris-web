@@ -177,6 +177,9 @@ def manage_groups_delete(cur_id, caseid):
     if protect_demo_mode_group(group):
         return ac_api_return_access_denied(caseid=caseid)
 
+    if ac_ldp_group_removal(current_user.id, group_id=group.group_id):
+        return response_error("I can't let you do that Dave", data="Removing this group will lock you out")
+
     delete_group(group)
 
     return response_success('Group deleted')
