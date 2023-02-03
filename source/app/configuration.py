@@ -186,7 +186,7 @@ PGA_ACCOUNT_ = config.load('POSTGRES', 'ADMIN_USER')
 PGA_PASSWD_ = config.load('POSTGRES', 'ADMIN_PASSWORD')
 PG_SERVER_ = config.load('POSTGRES', 'SERVER')
 PG_PORT_ = config.load('POSTGRES', 'PORT')
-PG_DB_ = config.load('POSTGRES', 'DB')
+PG_DB_ = config.load('POSTGRES', 'DB', fallback='iris_db')
 CELERY_BROKER_ = config.load('CELERY', 'BROKER',
                              fallback=f"amqp://{config.load('CELERY', 'HOST', fallback='rabbitmq')}")
 
