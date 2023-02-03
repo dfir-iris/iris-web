@@ -233,8 +233,8 @@ def init_server_update(release_config):
     update_log('Backing up database')
     has_error, logs = backup_iris_db()
     if has_error:
-        for log in logs:
-            update_log_error(log)
+        for log_entry in logs:
+            update_log_error(log_entry)
 
         update_log_error('Aborting upgrades - see previous errors')
         notify_update_failed()

@@ -193,8 +193,8 @@ class FileRemover(object):
     def __init__(self):
         self.weak_references = dict()  # weak_ref -> filepath to remove
 
-    def cleanup_once_done(self, response, filepath):
-        wr = weakref.ref(response, self._do_cleanup)
+    def cleanup_once_done(self, response_d, filepath):
+        wr = weakref.ref(response_d, self._do_cleanup)
         self.weak_references[wr] = filepath
 
     def _do_cleanup(self, wr):
@@ -202,16 +202,16 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_case_access(request, access_level, from_api=False):
-    caseid = request.args.get('cid', default=None, type=int)
+def get_case_access(request_data, access_level, from_api=False):
+    caseid = request_data.args.get('cid', default=None, type=int)
     redir = False
     if not caseid:
         try:
 
-            js_d = request.get_json()
+            js_d = request_data.get_json()
             if js_d:
                 caseid = js_d.get('cid')
-                request.json.pop('cid')
+                request_data.json.pop('cid')
             else:
                 if current_user.ctx_case is None:
                     current_user.ctx_case = 1
@@ -220,7 +220,7 @@ def get_case_access(request, access_level, from_api=False):
                 redir = True
 
         except Exception as e:
-            cookie_session = request.cookies.get('session')
+            cookie_session = request_data.cookies.get('session')
             if not cookie_session:
                 # API, so just use the current_user context
                 if current_user.ctx_case is None:
