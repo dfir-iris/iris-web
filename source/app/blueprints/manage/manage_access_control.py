@@ -24,7 +24,6 @@ from werkzeug.utils import redirect
 
 from app.iris_engine.access_control.utils import ac_recompute_all_users_effective_ac
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
-from app.iris_engine.access_control.utils import ac_trace_case_access
 from app.iris_engine.access_control.utils import ac_trace_effective_user_permissions
 from app.iris_engine.access_control.utils import ac_trace_user_effective_cases_access_2
 from app.models.authorization import Permissions

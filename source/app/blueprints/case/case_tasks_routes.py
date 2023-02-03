@@ -18,9 +18,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import marshmallow
 # IMPORTS ------------------------------------------------
 from datetime import datetime
+
+import marshmallow
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -31,7 +32,6 @@ from flask_wtf import FlaskForm
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
@@ -40,11 +40,11 @@ from app.datamgmt.case.case_tasks_db import delete_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comments
 from app.datamgmt.case.case_tasks_db import get_case_tasks_comments_count
-from app.datamgmt.case.case_tasks_db import get_task_with_assignees
-from app.datamgmt.case.case_tasks_db import update_task_assignees
-from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.datamgmt.case.case_tasks_db import get_task
+from app.datamgmt.case.case_tasks_db import get_task_with_assignees
 from app.datamgmt.case.case_tasks_db import get_tasks_status
+from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
+from app.datamgmt.case.case_tasks_db import update_task_assignees
 from app.datamgmt.case.case_tasks_db import update_task_status
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_tasks_state
@@ -52,11 +52,9 @@ from app.datamgmt.states import update_tasks_state
 from app.forms import CaseTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Comments
-from app.models import TaskComments
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
-from app.models.models import CaseTasks, TaskAssignee
+from app.models.models import CaseTasks
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires

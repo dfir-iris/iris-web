@@ -5,15 +5,13 @@ Revises: 7cc588444b79
 Create Date: 2022-06-14 17:01:29.205520
 
 """
-import sqlalchemy as sa
 import uuid
+
+import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import BigInteger
-from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.alembic.alembic_utils import _has_table
-
 # revision identifiers, used by Alembic.
 from app.alembic.alembic_utils import _table_has_column
 from app.iris_engine.access_control.utils import ac_get_mask_analyst

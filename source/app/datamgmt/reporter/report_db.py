@@ -17,9 +17,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
 import re
 
-import datetime
 from sqlalchemy import desc
 
 from app.datamgmt.case.case_notes_db import get_notes_from_group
@@ -42,7 +42,6 @@ from app.models import IocLink
 from app.models import IocType
 from app.models import Notes
 from app.models import NotesGroup
-from app.models import NotesGroupLink
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models.authorization import User

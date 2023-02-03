@@ -573,7 +573,6 @@ def pipeline_dispatcher(self, module_name, hook_name, pipeline_type, pipeline_da
     """
     Dispatch the pipelines according to their types
     :param pipeline_type: Type of pipeline
-    :param form: form contained
     :return: IrisInterfaceStatus
     """
 

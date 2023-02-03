@@ -5,15 +5,12 @@ Revises: ca93d4b54571
 Create Date: 2022-05-25 18:09:08.741619
 
 """
-from alembic import op
 import sqlalchemy as sa
-
-
-# revision identifiers, used by Alembic.
-from sqlalchemy import engine_from_config
-from sqlalchemy.engine import reflection
+from alembic import op
 
 from app.alembic.alembic_utils import _table_has_column
+
+# revision identifiers, used by Alembic.
 
 revision = 'cd519d2d24df'
 down_revision = 'ca93d4b54571'

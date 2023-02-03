@@ -22,8 +22,10 @@
 
 # VARS ---------------------------------------------------
 
+import os
 # CONTENT ------------------------------------------------
 import tempfile
+
 from flask import Blueprint
 from flask import redirect
 from flask import request
@@ -31,18 +33,13 @@ from flask import send_file
 from flask import url_for
 from flask_login import current_user
 
-import os
-
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.reporter.reporter import IrisMakeDocReport, IrisMakeMdReport
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseTemplateReport
-
 from app.util import FileRemover, ac_api_requires
-from app.util import api_login_required
 from app.util import not_authenticated_redirection_url
 from app.util import response_error
-
 
 reports_blueprint = Blueprint('reports',
                               __name__,

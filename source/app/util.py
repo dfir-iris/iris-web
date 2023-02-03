@@ -17,21 +17,23 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from collections import OrderedDict
 
 import datetime
 import decimal
 import hashlib
-import jwt
 import logging as log
 import pickle
 import random
-import requests
 import shutil
 import string
 import traceback
 import uuid
 import weakref
+from functools import wraps
+from pathlib import Path
+
+import jwt
+import requests
 from flask import Request
 from flask import json
 from flask import render_template
@@ -41,9 +43,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
 from flask_wtf import FlaskForm
-from functools import wraps
 from jwt import PyJWKClient
-from pathlib import Path
 from pyunpack import Archive
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.ext.declarative import DeclarativeMeta

@@ -20,9 +20,10 @@
 
 # IMPORTS ------------------------------------------------
 import json
-import marshmallow
 import urllib.parse
 from datetime import datetime
+
+import marshmallow
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -34,10 +35,8 @@ from sqlalchemy import and_
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import delete_event
-from app.datamgmt.case.case_events_db import delete_event_category
 from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
@@ -60,9 +59,7 @@ from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Comments
 from app.models import CompromiseStatus
-from app.models import EventComments
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.cases import Cases

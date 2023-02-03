@@ -25,7 +25,7 @@ import uuid
 import re
 
 from pathlib import Path
-from docxtpl import DocxTemplate, Subdoc
+from docxtpl import DocxTemplate
 
 from docx_generator.globals.picture_globals import PictureGlobals
 

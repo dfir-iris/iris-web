@@ -18,26 +18,26 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
-import dateutil.parser
-import marshmallow
 import os
-import pyminizip
 import random
 import re
 import string
+from pathlib import Path
+
+import dateutil.parser
+import marshmallow
+import pyminizip
 from flask_login import current_user
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
-from pathlib import Path
 from sqlalchemy import func
 
 from app import app
 from app import db
 from app import ma
-from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list

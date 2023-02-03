@@ -23,18 +23,13 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
-from flask import session
 from flask import url_for
-from flask_login import current_user
 from sqlalchemy import and_
 
 from app.forms import SearchForm
-from app.iris_engine.access_control.utils import ac_flag_match_mask
-from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Comments
 from app.models.authorization import Permissions
-from app.models.authorization import UserCaseAccess
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import Ioc

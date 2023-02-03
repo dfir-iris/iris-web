@@ -18,22 +18,18 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import configparser
+import logging
+import logging as log
+import os
+import ssl
 # --------- Configuration ---------
 # read the private configuration file
 from datetime import timedelta
-
-import ssl
-
-import sys
 from enum import Enum
-import logging as log
-
-import requests
-import configparser
-import logging
-import os
 from pathlib import Path
 
+import requests
 # --------- Configuration ---------
 # read the private configuration file
 from azure.core.exceptions import ResourceNotFoundError

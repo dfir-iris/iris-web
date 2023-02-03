@@ -17,13 +17,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask_login import current_user
 from sqlalchemy import and_
 
 from app import bc
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
@@ -33,7 +31,6 @@ from app.iris_engine.access_control.utils import ac_set_case_access_for_user
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
-from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess

@@ -17,9 +17,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import random
 import string
 
-import random
 from flask_login import current_user
 
 from app import app
@@ -29,15 +29,12 @@ from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.datamgmt.manage.manage_users_db import user_exists
-from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.access_control.utils import ac_add_users_multi_effective_access
-from app.iris_engine.access_control.utils import ac_set_case_access_for_users
 from app.models import Cases
 from app.models import Client
 from app.models import get_or_create
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
-
 
 log = app.logger
 
