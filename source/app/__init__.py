@@ -84,7 +84,7 @@ def ac_current_user_has_manage_perms():
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
 app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
 app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
-app.jinja_env.filters['escape_domain'] = lambda u: u.replace('.', '[.]')
+app.jinja_env.filters['escape_dots'] = lambda u: u.replace('.', '[.]')
 app.jinja_env.globals.update(user_has_perm=ac_current_user_has_permission)
 app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_perms)
 

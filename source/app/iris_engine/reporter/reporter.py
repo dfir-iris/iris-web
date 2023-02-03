@@ -577,7 +577,7 @@ class IrisMakeMdReport(IrisReportMaker):
         
         return output_file_path, 'Report generated'
 
-    
+
 class QueuingHandler(log.Handler):
     """A thread safe logging.Handler that writes messages into a queue object.
 
