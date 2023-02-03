@@ -440,7 +440,7 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
-    def load_store_icon(self, file_storage, type):
+    def load_store_icon(self, file_storage, field_type):
         if not file_storage.filename:
             return None
 
@@ -449,10 +449,10 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
         if fpath is None:
             raise marshmallow.exceptions.ValidationError(
                 message,
-                field_name=type
+                field_name=field_type
             )
 
-        setattr(self, type, fpath)
+        setattr(self, field_type, fpath)
 
         return fpath
 

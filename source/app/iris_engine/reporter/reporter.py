@@ -286,14 +286,14 @@ class IrisMakeDocReport(IrisReportMaker):
         self._caseid = caseid
         self._safe_mode = safe_mode
 
-    def generate_doc_report(self, type):
+    def generate_doc_report(self, doc_type):
         """
         Actually generates the report
         :return:
         """
-        if type == 'Investigation':
+        if doc_type == 'Investigation':
             case_info = self._get_case_info()
-        elif type == 'Activities':
+        elif doc_type == 'Activities':
             case_info = self._get_activity_info()
         else:
             log.error("Unknown report type")

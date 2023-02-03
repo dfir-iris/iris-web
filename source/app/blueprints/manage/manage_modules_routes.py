@@ -237,12 +237,12 @@ def enable_module(mod_id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/disable/<int:id>', methods=['POST'])
+@manage_modules_blueprint.route('/manage/modules/disable/<int:module_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
-def disable_module(id, caseid):
-    if id:
-        if iris_module_disable_by_id(id):
-            track_activity("IRIS module #{} disabled".format(id),
+def disable_module(module_id, caseid):
+    if module_id:
+        if iris_module_disable_by_id(module_id):
+            track_activity("IRIS module #{} disabled".format(module_id),
                            caseid=caseid, ctx_less=True)
             return response_success('Module disabled')
         else:
@@ -251,13 +251,13 @@ def disable_module(id, caseid):
     return response_error('Malformed request', status=400)
 
 
-@manage_modules_blueprint.route('/manage/modules/remove/<int:id>', methods=['POST'])
+@manage_modules_blueprint.route('/manage/modules/remove/<int:module_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
-def view_delete_module(id, caseid):
+def view_delete_module(module_id, caseid):
     try:
 
-        delete_module_from_id(module_id=id)
-        track_activity("IRIS module #{} deleted".format(id),
+        delete_module_from_id(module_id=module_id)
+        track_activity("IRIS module #{} deleted".format(module_id),
                        caseid=caseid, ctx_less=True)
         return response_success("Deleted")
 
@@ -266,11 +266,11 @@ def view_delete_module(id, caseid):
         return response_error("Cannot delete module. Error {}".format(e.__str__()))
 
 
-@manage_modules_blueprint.route('/manage/modules/export-config/<int:id>', methods=['GET'])
+@manage_modules_blueprint.route('/manage/modules/export-config/<int:module_id>', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
-def export_mod_config(id, caseid):
+def export_mod_config(module_id, caseid):
 
-    mod_config, mod_name, _ = get_module_config_from_id(id)
+    mod_config, mod_name, _ = get_module_config_from_id(module_id)
     if mod_name:
         data = {
             "module_name": mod_name,
@@ -278,14 +278,14 @@ def export_mod_config(id, caseid):
         }
         return response_success(data=data)
 
-    return response_error(f"Module ID {id} not found")
+    return response_error(f"Module ID {module_id} not found")
 
 
-@manage_modules_blueprint.route('/manage/modules/import-config/<int:id>', methods=['POST'])
+@manage_modules_blueprint.route('/manage/modules/import-config/<int:module_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
-def import_mod_config(id, caseid):
+def import_mod_config(module_id, caseid):
 
-    mod_config, mod_name, _ = get_module_config_from_id(id)
+    mod_config, mod_name, _ = get_module_config_from_id(module_id)
     logs = []
     parameters_data = request.get_json().get('module_configuration')
 
@@ -300,10 +300,10 @@ def import_mod_config(id, caseid):
     for param in parameters:
         param_name = param.get('param_name')
         parameter_value = param.get('value')
-        if not iris_module_save_parameter(id, mod_config, param_name, parameter_value):
+        if not iris_module_save_parameter(module_id, mod_config, param_name, parameter_value):
             logs.append(f'Unable to save parameter {param_name}')
 
-    track_activity(f"parameters of mod #{id} were updated from config file",
+    track_activity(f"parameters of mod #{module_id} were updated from config file",
                    caseid=caseid, ctx_less=True)
 
     if len(logs) == 0:

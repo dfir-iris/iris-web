@@ -69,7 +69,7 @@ def download_case_activity(report_id, caseid):
             # Depending on the template format, the generation process is different
             if report_format == ".docx":
                 mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
-                fpath, logs = mreport.generate_doc_report(type="Activities")
+                fpath, logs = mreport.generate_doc_report(doc_type="Activities")
 
             elif report_format == ".md" or report_format == ".html" :
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
@@ -118,7 +118,7 @@ def _gen_report(report_id, caseid):
 
             elif report_format == ".docx":
                 mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
-                fpath, logs = mreport.generate_doc_report(type="Investigation")
+                fpath, logs = mreport.generate_doc_report(doc_type="Investigation")
 
             else:
                 return response_error("Report error", "Unknown report format.")
