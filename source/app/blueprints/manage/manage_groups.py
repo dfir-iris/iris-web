@@ -41,7 +41,7 @@ from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.forms import AddGroupForm
-from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_ldp_group_removal
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_users_list
 from app.iris_engine.utils.tracker import track_activity
@@ -249,6 +249,10 @@ def manage_groups_members_delete(cur_id, cur_id_2, caseid):
     user = get_user(cur_id_2)
     if not user:
         return response_error("Invalid user ID")
+
+    if ac_ldp_group_removal(user_id=user.id, group_id=group.group_id):
+        return response_error('I cannot let you do that Dave', data="Removing you from the group will make you "
+                                                                    "loose your access rights")
 
     remove_user_from_group(group, user)
     group = get_group_with_members(cur_id)

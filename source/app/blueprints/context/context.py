@@ -77,10 +77,6 @@ def iris_version():
 @app.context_processor
 @cache.cached(timeout=3600, key_prefix='iris_has_updates')
 def has_updates():
-    # if not current_user.is_authenticated:
-    #     return dict(has_updates=False)
-    #
-    # server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
 
     return dict(has_updates=False)
 
@@ -93,6 +89,7 @@ def cases_context(max_results,  caseid):
 
     return response_success(data=datao)
 
+
 @ctx_blueprint.route('/context/search-cases', methods=['GET'])
 @ac_api_requires()
 def cases_context_search(caseid):
@@ -104,7 +101,6 @@ def cases_context_search(caseid):
     datao = ctx_search_user_cases(search, current_user.id, max_results=100)
 
     return response_success(data=datao)
-
 
 
 def update_user_case_ctx():

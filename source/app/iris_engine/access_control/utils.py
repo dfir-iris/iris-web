@@ -167,6 +167,38 @@ def ac_get_effective_permissions_of_user(user):
     return final_perm
 
 
+def ac_ldp_group_removal(user_id, group_id):
+    """
+    Access control lockdown prevention on group removal
+    """
+    if current_user.id != user_id:
+        return False
+
+    groups_perms = UserGroup.query.with_entities(
+        Group.group_permissions,
+        Group.group_name,
+        Group.group_id,
+        Group.group_uuid
+    ).filter(
+        UserGroup.user_id == user_id
+    ).join(
+        UserGroup.group
+    ).all()
+
+    adm_access_count = []
+
+    for group in groups_perms:
+        perm = group.group_permissions
+        if ac_flag_match_mask(perm,
+                              Permissions.server_administrator.value):
+            adm_access_count.append(group.group_id)
+
+    if len(adm_access_count) == 1 and adm_access_count[0] == group_id:
+        return True
+
+    return False
+
+
 def ac_trace_effective_user_permissions(user_id):
     """
     Returns a detailed permission list from a user
