@@ -147,7 +147,6 @@ def run_post_init(development=False):
         create_safe_case(
             user=admin,
             client=client,
-            def_org=def_org,
             groups=[gadm, ganalysts]
         )
 
@@ -608,7 +607,7 @@ def create_safe_admin(def_org, gadm):
     return user, password
 
 
-def create_safe_case(user, client, groups, def_org):
+def create_safe_case(user, client, groups):
     case = Cases.query.filter(
         Cases.client_id == client.client_id
     ).first()
