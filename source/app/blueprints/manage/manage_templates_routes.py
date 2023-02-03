@@ -177,6 +177,10 @@ def delete_template(report_id, caseid):
     error = None
 
     report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
+    if report_template is None:
+        return response_error('Template not found')
+
+    report_name = report_template.name
 
     try:
 
@@ -192,5 +196,5 @@ def delete_template(report_id, caseid):
     if error:
         return response_error(error)
 
-    track_activity(f"report template '{report_template.name}' deleted", caseid=caseid, ctx_less=True)
+    track_activity(f"report template '{report_name}' deleted", caseid=caseid, ctx_less=True)
     return response_success("Deleted successfully", data=error)

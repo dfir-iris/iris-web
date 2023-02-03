@@ -38,7 +38,7 @@ from app.iris_engine.reporter.reporter import IrisMakeDocReport, IrisMakeMdRepor
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseTemplateReport
 
-from app.util import FileRemover
+from app.util import FileRemover, ac_api_requires
 from app.util import api_login_required
 from app.util import not_authenticated_redirection_url
 from app.util import response_error
@@ -52,7 +52,7 @@ file_remover = FileRemover()
 
 
 @reports_blueprint.route('/case/report/generate-activities/<report_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def download_case_activity(report_id, caseid):
 
     call_modules_hook('on_preload_activities_report_create', data=report_id, caseid=caseid)
@@ -93,11 +93,11 @@ def download_case_activity(report_id, caseid):
 
             return resp
 
-    return redirect(url_for('index.index'))
+    return redirect(url_for('index.index', cid=caseid))
 
 
 @reports_blueprint.route("/case/report/generate-investigation/<report_id>", methods=['GET'])
-@api_login_required
+@ac_api_requires()
 def _gen_report(report_id, caseid):
     if not current_user.is_authenticated:
         return redirect(not_authenticated_redirection_url())
@@ -139,5 +139,5 @@ def _gen_report(report_id, caseid):
 
             return resp
 
-    return redirect(url_for('index.index'))
+    return redirect(url_for('index.index', cid=caseid))
 

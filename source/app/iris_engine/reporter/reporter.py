@@ -518,6 +518,7 @@ class IrisMakeDocReport(IrisReportMaker):
         return markdown_string.replace('\n', '</w:t></w:r><w:r/></w:p><w:p><w:r><w:t xml:space="preserve">').replace(
             '#', '')
 
+
 class IrisMakeMdReport(IrisReportMaker):
     """
     Generates a MD report for the case
@@ -559,6 +560,7 @@ class IrisMakeMdReport(IrisReportMaker):
             # Load the template
             template_loader = jinja2.FileSystemLoader(searchpath="/")
             template_env = jinja2.Environment(loader=template_loader)
+            template_env.filters = app.jinja_env.filters
             template = template_env.get_template(os.path.join(
                 app.config['TEMPLATES_PATH'], report.internal_reference))
 
@@ -574,6 +576,7 @@ class IrisMakeMdReport(IrisReportMaker):
             return None, e.__str__()
         
         return output_file_path, 'Report generated'
+
     
 class QueuingHandler(log.Handler):
     """A thread safe logging.Handler that writes messages into a queue object.
