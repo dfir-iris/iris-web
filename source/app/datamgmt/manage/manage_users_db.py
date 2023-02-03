@@ -224,6 +224,7 @@ def get_user_primary_org(user_id):
     if not uo:
         return None
 
+    uoe = None
     index = 0
     if len(uo) > 1:
         # Fix potential duplication
