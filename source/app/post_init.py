@@ -24,7 +24,7 @@ import secrets
 import string
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exc
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
@@ -514,9 +514,19 @@ def create_safe_auth_model():
     def_org = get_or_create(db.session, Organisation, org_name="Default Org",
                             org_description="Default Organisation")
 
-    gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators",
-                         group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
-                         group_permissions=ac_get_mask_full_permissions())
+    try:
+
+        gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators",
+                             group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                             group_permissions=ac_get_mask_full_permissions())
+
+    except exc.IntegrityError:
+        db.session.rollback()
+        log.warning('Administrator group integrity error. Group permissions were probably changed. Updating.')
+        gadm = Group.query.filter(
+            Group.group_name == "Administrators"
+        ).first()
+
     if gadm.group_permissions != ac_get_mask_full_permissions():
         gadm.group_permissions = ac_get_mask_full_permissions()
 
@@ -528,9 +538,19 @@ def create_safe_auth_model():
 
     db.session.commit()
 
-    ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
-                              group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
-                              group_permissions=ac_get_mask_analyst())
+    try:
+
+        ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
+                                  group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                                  group_permissions=ac_get_mask_analyst())
+
+    except exc.IntegrityError:
+        db.session.rollback()
+        log.warning('Analysts group integrity error. Group permissions were probably changed. Updating.')
+        ganalysts = Group.query.filter(
+            Group.group_name == "ganalysts"
+        ).first()
+
     if ganalysts.group_permissions != ac_get_mask_analyst():
         ganalysts.group_permissions = ac_get_mask_analyst()
 
