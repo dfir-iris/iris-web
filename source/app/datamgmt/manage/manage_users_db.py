@@ -17,12 +17,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from flask_login import current_user
 from sqlalchemy import and_
 
 from app import bc
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
+from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list, ac_ldp_group_removal
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
@@ -99,10 +100,13 @@ def update_user_groups(user_id, groups):
         user_group.group_id = group_id
         db.session.add(user_group)
 
-    for group in groups_to_remove:
+    for group_id in groups_to_remove:
+        if current_user.id == user_id and ac_ldp_group_removal(user_id=user_id, group_id=group_id):
+            continue
+
         UserGroup.query.filter(
             UserGroup.user_id == user_id,
-            UserGroup.group_id == group
+            UserGroup.group_id == group_id
         ).delete()
 
     db.session.commit()

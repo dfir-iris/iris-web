@@ -372,6 +372,9 @@ def deactivate_user_api(cur_id, caseid):
     if protect_demo_mode_user(user):
         return ac_api_return_access_denied(caseid=caseid)
 
+    if current_user.id == cur_id:
+        return response_error('We do not recommend deactivating yourself for obvious reasons')
+
     user.active = False
     db.session.commit()
     user_schema = UserSchema()
@@ -405,6 +408,7 @@ if is_authentication_local():
     def view_delete_user(cur_id, caseid):
 
         try:
+
             user = get_user(cur_id)
             if not user:
                 return response_error("Invalid user ID")
@@ -413,7 +417,6 @@ if is_authentication_local():
                 return ac_api_return_access_denied(caseid=caseid)
 
             if user.active is True:
-                response_error("Cannot delete active user")
                 track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid, ctx_less=True)
                 return response_error("Cannot delete active user")
 
@@ -422,7 +425,7 @@ if is_authentication_local():
             track_activity(message="deleted user ID {}".format(cur_id), caseid=caseid, ctx_less=True)
             return response_success("Deleted user ID {}".format(cur_id))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid,  ctx_less=True)
             return response_error("Cannot delete active user")

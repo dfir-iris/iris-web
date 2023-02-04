@@ -193,7 +193,6 @@ def ac_ldp_group_removal(user_id, group_id):
                               Permissions.server_administrator.value):
             adm_access_count.append(group.group_id)
 
-    print(adm_access_count)
     if len(adm_access_count) == 1 and adm_access_count[0] == group_id:
         return True
 
