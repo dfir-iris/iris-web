@@ -29,6 +29,7 @@ from app.models import UserActivity
 
 log = app.app.logger
 
+
 # CONTENT ------------------------------------------------
 def track_activity(message, caseid=None, ctx_less=False, user_input=False, display_in_ui=True):
     """
@@ -39,7 +40,9 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
     ua = UserActivity()
 
     try:
+
         ua.user_id = current_user.id
+
     except:
         pass
 
@@ -47,13 +50,16 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
         if caseid is None:
             caseid = current_user.ctx_case
         ua.case_id = caseid
-    except Exception as e:
+    except Exception:
         pass
 
     ua.activity_date = datetime.utcnow()
     ua.activity_desc = message.capitalize() if not ctx_less else "[Unbound] {}".format(message.capitalize())
 
-    log.info(f"{current_user.user} [#{current_user.id}] :: Case {caseid} :: {ua.activity_desc}")
+    if current_user.is_authenticated:
+        log.info(f"{current_user.user} [#{current_user.id}] :: Case {caseid} :: {ua.activity_desc}")
+    else:
+        log.info(f"Anonymous :: Case {caseid} :: {ua.activity_desc}")
 
     ua.user_input = user_input
     ua.display_in_ui = display_in_ui
