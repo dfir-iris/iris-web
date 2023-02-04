@@ -1,0 +1,15 @@
+version = 1
+
+test_patterns = ["source/tests/**"]
+
+exclude_patterns = [
+  "source/dependencies/**",
+  "source/app/templates/**",
+  "source/static/assets/**"
+]
+
+[[analyzers]]
+name = "python"
+
+  [analyzers.meta]
+  runtime_version = "3.x.x"
