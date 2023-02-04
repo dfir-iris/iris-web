@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
+#  Copyright (C) 2022 - DFIR IRIS Team
+#  contact@dfir-iris.org
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
 #
@@ -54,6 +56,7 @@ from app.iris_engine.reporter.ImageHandler import ImageHandler
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)
 
+
 class IrisReportMaker(object):
     """
     IRIS generical report maker
@@ -65,7 +68,7 @@ class IrisReportMaker(object):
         self._case_info = {}
         self._caseid = caseid
         self.safe_mode = safe_mode
-        
+
     def get_case_info(self, doc_type):
         """Returns case information
 
@@ -273,6 +276,7 @@ class IrisReportMaker(object):
         """
         return markdown_string.replace('\n', '</w:t></w:r><w:r/></w:p><w:p><w:r><w:t xml:space="preserve">').replace(
             '#', '')
+
 
 class IrisMakeDocReport(IrisReportMaker):
     """
@@ -542,11 +546,11 @@ class IrisMakeMdReport(IrisReportMaker):
         # Get file extension
         report = CaseTemplateReport.query.filter(
             CaseTemplateReport.id == self._report_id).first()
-        
+
         _, report_format = os.path.splitext(report.internal_reference)
-        
+
         # Prepare report name
-        name = "{}".format(("{}"+str(report_format)).format(report.naming_format))
+        name = "{}".format(("{}" + str(report_format)).format(report.naming_format))
         name = name.replace("%code_name%", case_info['doc_id'])
         name = name.replace(
             '%customer%', case_info['case'].get('for_customer'))
@@ -559,7 +563,7 @@ class IrisMakeMdReport(IrisReportMaker):
         try:
             # Load the template
             template_loader = jinja2.FileSystemLoader(searchpath="/")
-            template_env = jinja2.Environment(loader=template_loader)
+            template_env = jinja2.Environment(loader=template_loader, autoescape=True)
             template_env.filters = app.jinja_env.filters
             template = template_env.get_template(os.path.join(
                 app.config['TEMPLATES_PATH'], report.internal_reference))
@@ -574,7 +578,7 @@ class IrisMakeMdReport(IrisReportMaker):
         except Exception as e:
             log.exception("Error while generating report: {}".format(e))
             return None, e.__str__()
-        
+
         return output_file_path, 'Report generated'
 
 
