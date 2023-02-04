@@ -752,7 +752,8 @@ def case_edit_event(cur_id, caseid):
 
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
-                                           assets_list=request_data.get('event_assets'))
+                                           assets_list=request_data.get('event_assets'),
+                                           iocs_list=request_data.get('event_iocs'))
         if not success:
             return response_error('Error while saving linked assets', data=log)
 
@@ -831,7 +832,8 @@ def case_add_event(caseid):
 
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
-                                           assets_list=request_data.get('event_assets'))
+                                           assets_list=request_data.get('event_assets'),
+                                           iocs_list=request_data.get('event_iocs'))
         if not success:
             return response_error('Error while saving linked assets', data=log)
 
@@ -893,7 +895,8 @@ def case_duplicate_event(cur_id, caseid):
         assets_list = get_event_assets_ids(old_event.event_id, caseid)
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
-                                           assets_list=assets_list)
+                                           assets_list=assets_list,
+                                           iocs_list=iocs_list)
         if not success:
             return response_error('Error while saving linked assets', data=log)
 
