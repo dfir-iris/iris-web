@@ -18,10 +18,13 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
+import logging
 import os
 import random
 import re
+import shutil
 import string
+import tempfile
 from pathlib import Path
 
 import dateutil.parser
@@ -68,6 +71,8 @@ from app.util import file_sha256sum
 from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
+
+log = app.logger
 
 
 def allowed_file_icon(filename):
@@ -373,21 +378,20 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
             if passwd is not None:
                 try:
+                    with tempfile.NamedTemporaryFile() as tmp:
+                        file_storage.save(tmp)
+                        file_hash = file_sha256sum(tmp.name)
+                        file_size = os.stat(tmp.name).st_size
 
-                    temp_location = Path('/tmp/') / location.name
-                    file_storage.save(temp_location)
-                    file_hash = file_sha256sum(temp_location)
-                    file_size = temp_location.stat().st_size
+                        file_path = location.as_posix() + '.zip'
 
-                    temp_location = temp_location.rename(Path('/tmp/') / file_hash)
+                        shutil.copyfile(tmp.name, Path(tmp.name).parent / file_hash)
 
-                    pyminizip.compress(temp_location.as_posix(), None, location.as_posix() + '.zip', passwd, 0)
-
-                    Path(temp_location).unlink()
-
-                    file_path = location.as_posix() + '.zip'
+                        pyminizip.compress((Path(tmp.name).parent / file_hash).as_posix(), None, file_path, passwd, 0)
+                        os.unlink(Path(tmp.name).parent / file_hash)
 
                 except Exception as e:
+                    log.exception(e)
                     raise marshmallow.exceptions.ValidationError(
                         str(e),
                         field_name='file_password'
