@@ -46,6 +46,7 @@ function add_event() {
             data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
             data_sent['event_in_summary'] = $('#event_in_summary').is(':checked');
             data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
+            data_sent['event_sync_iocs_assets'] = $('#event_sync_iocs_assets').is(':checked');
             data_sent['event_tags'] = $('#event_tags').val();
             data_sent['event_assets'] = $('#event_assets').val();
             data_sent['event_iocs'] = $('#event_iocs').val();
@@ -115,6 +116,7 @@ function update_event_ext(event_id, do_close) {
     data_sent['event_date'] = `${$('#event_date').val()}T${$('#event_time').val()}`;
     data_sent['event_in_summary'] = $('#event_in_summary').is(':checked');
     data_sent['event_in_graph'] = $('#event_in_graph').is(':checked');
+    data_sent['event_sync_iocs_assets'] = $('#event_sync_iocs_assets').is(':checked');
     data_sent['event_tags'] = $('#event_tags').val();
     data_sent['event_assets'] = $('#event_assets').val();
     data_sent['event_iocs'] = $('#event_iocs').val();

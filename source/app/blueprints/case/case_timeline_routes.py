@@ -176,7 +176,6 @@ def case_comment_add(cur_id, caseid):
             return response_error('Invalid event ID')
 
         comment_schema = CommentSchema()
-        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
@@ -270,7 +269,6 @@ def case_getgraph(caseid):
     tim = []
     for row in timeline:
         tmp = {}
-        ras = row
 
         tmp['date'] = row.event_date
         tmp['group'] = row.category[0].name
@@ -753,7 +751,8 @@ def case_edit_event(cur_id, caseid):
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
                                            assets_list=request_data.get('event_assets'),
-                                           iocs_list=request_data.get('event_iocs'))
+                                           iocs_list=request_data.get('event_iocs'),
+                                           sync_iocs_assets=request_data.get('event_sync_iocs_assets'))
         if not success:
             return response_error('Error while saving linked assets', data=log)
 
@@ -829,11 +828,13 @@ def case_add_event(caseid):
         save_event_category(event.event_id, request_data.get('event_category_id'))
 
         setattr(event, 'event_category_id', request_data.get('event_category_id'))
+        sync_iocs_assets = request_data.get('event_sync_iocs_assets') if request_data.get('event_sync_iocs_assets') else False
 
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
                                            assets_list=request_data.get('event_assets'),
-                                           iocs_list=request_data.get('event_iocs'))
+                                           iocs_list=request_data.get('event_iocs'),
+                                           sync_iocs_assets=sync_iocs_assets)
         if not success:
             return response_error('Error while saving linked assets', data=log)
 

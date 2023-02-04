@@ -239,6 +239,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
     event_date_wtz = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
     modification_history = auto_field('modification_history', required=False, readonly=True)
     event_comments_map = fields.List(fields.Integer, required=False, allow_none=True)
+    event_sync_iocs_assets = fields.Boolean(required=False)
 
     class Meta:
         model = CasesEvent

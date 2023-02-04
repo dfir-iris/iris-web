@@ -238,7 +238,7 @@ def get_event_iocs_ids(event_id, caseid):
     return [x[0] for x in iocs_list]
 
 
-def update_event_assets(event_id, caseid, assets_list, iocs_list):
+def update_event_assets(event_id, caseid, assets_list, iocs_list, sync_iocs_assets):
 
     CaseEventsAssets.query.filter(
         CaseEventsAssets.event_id == event_id,
@@ -255,17 +255,20 @@ def update_event_assets(event_id, caseid, assets_list, iocs_list):
 
             db.session.add(cea)
 
-            for ioc in iocs_list:
-                link = IocAssetLink.query.filter(
-                    IocAssetLink.asset_id == int(asset),
-                    IocAssetLink.ioc_id == int(ioc)
-                ).first()
-                if link == None:
-                    ial = IocAssetLink()
-                    ial.asset_id = int(asset)
-                    ial.ioc_id = int(ioc)
+            if sync_iocs_assets:
+                for ioc in iocs_list:
+                    link = IocAssetLink.query.filter(
+                        IocAssetLink.asset_id == int(asset),
+                        IocAssetLink.ioc_id == int(ioc)
+                    ).first()
 
-                    db.session.add(ial)
+                    if link is None:
+
+                        ial = IocAssetLink()
+                        ial.asset_id = int(asset)
+                        ial.ioc_id = int(ioc)
+
+                        db.session.add(ial)
 
         except Exception as e:
             return False, str(e)
