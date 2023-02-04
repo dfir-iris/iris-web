@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
+#  Copyright (C) 2022 - DFIR IRIS Team
+#  contact@dfir-iris.org
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
 #
@@ -37,6 +39,8 @@ from app.datamgmt.iris_engine.modules_db import modules_list_pipelines
 from app.models import IrisHook
 from app.models import IrisModule
 from app.models import IrisModuleHook
+from app.util import hmac_sign
+from app.util import hmac_verify
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = app.logger
@@ -426,7 +430,13 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     :return: A task status JSON task_success or task_failure
     """
     # Data is serialized, so deserialized
-    deser_data = loads(base64.b64decode(data))
+    signature, pdata = data.encode("utf-8").split(b" ")
+    is_verified = hmac_verify(signature, pdata)
+    if is_verified is False:
+        log.warning("data argument has not been correctly serialised")
+        raise Exception('Unable to instantiate target module')
+
+    deser_data = loads(base64.b64decode(pdata))
 
     _obj = None
     # The received object will most likely be cleared when handled by the task,
@@ -518,9 +528,10 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
             log.info(f'Calling module {module.module_name} asynchronously for hook {hook_name} :: {hook_ui_name}')
             # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
             # So pass a dumped instance and then rebuild on the task side
-            ser_data = base64.b64encode(dumps(data)).decode('utf8')
+            ser_data = base64.b64encode(dumps(data))
+            ser_data_auth = hmac_sign(ser_data) + b" " + ser_data
             task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
-                                    hook_ui_name=module.manual_hook_ui_name, data=ser_data,
+                                    hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
                                     init_user=current_user.name, caseid=caseid)
 
         else:

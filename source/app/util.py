@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
+#  Copyright (C) 2022 - DFIR IRIS Team
+#  contact@dfir-iris.org
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
 #
@@ -17,7 +19,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import base64
 import datetime
 import decimal
 import hashlib
@@ -31,6 +33,9 @@ import uuid
 import weakref
 from functools import wraps
 from pathlib import Path
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hmac
+from cryptography.exceptions import InvalidSignature
 
 import jwt
 import requests
@@ -698,3 +703,25 @@ def stream_sha256sum(stream):
 @app.template_filter()
 def format_datetime(value, frmt):
     return datetime.datetime.fromtimestamp(float(value)).strftime(frmt)
+
+
+def hmac_sign(data):
+    key = bytes(app.config.get("SECRET_KEY"), "utf-8")
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(data)
+    signature = base64.b64encode(h.finalize())
+
+    return signature
+
+
+def hmac_verify(signature_enc, data):
+    signature = base64.b64decode(signature_enc)
+    key = bytes(app.config.get("SECRET_KEY"), "utf-8")
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(data)
+
+    try:
+        h.verify(signature)
+        return True
+    except InvalidSignature:
+        return False
