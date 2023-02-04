@@ -1006,7 +1006,7 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
 
                 for (option in jsdata) {
                     opt = jsdata[option];
-                    eval('var menuOpt' + option + '= ' + option + ';');
+
                     actionOptions.items.push({
                         type: 'option',
                         title: opt.manual_hook_ui_name,
