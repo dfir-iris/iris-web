@@ -51,11 +51,6 @@ class IrisUpgrade200:
             port = input()
             content += f"\n\n#IRIS Ports\nINTERFACE_HTTPS_PORT={port}"
 
-        if 'INTERFACE_HTTP_PORT' not in content:
-            log.info('What port do you want to use for HTTP?')
-            port = input()
-            content += f"\nINTERFACE_HTTP_PORT={port}"
-
         return content
 
     def handle_env(self, dry_run=False):
@@ -76,8 +71,8 @@ class IrisUpgrade200:
             log.info('Adding IRIS_AUTHENTICATION_METHOD to .env file')
             content += f"\n\n#IRIS Authentication\nIRIS_AUTHENTICATION_METHOD=local"
 
-        log.warning('IRIS v2.0.0 changed the default listening ports from 8000 to 80 and 4433 to 443.')
-        log.info('Do you want to change the ports? (y/n)')
+        log.warning('IRIS v2.0.0 changed the default listening port from 4433 to 443.')
+        log.info('Do you want to change the port? (y/n)')
         answer = input()
         if answer.lower() == "y":
             content = self.handle_ports(content)

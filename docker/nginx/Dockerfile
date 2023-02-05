@@ -19,8 +19,6 @@
 
 FROM nginx:1.21.3
 
-EXPOSE 8443
-
 RUN apt-get update && apt-get install -y curl
 
 # Used to pass protected files to the container through volumes
