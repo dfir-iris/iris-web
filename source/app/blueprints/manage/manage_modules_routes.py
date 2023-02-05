@@ -218,39 +218,34 @@ def view_module(mod_id, caseid, url_redir):
 @manage_modules_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def enable_module(mod_id, caseid):
-    if mod_id:
-        if iris_module_enable_by_id(mod_id):
-            module_name = iris_module_name_from_id(mod_id)
-            if module_name is None:
-                return response_error('Invalid module ID', status=400)
 
-            success, logs = iris_update_hooks(module_name, mod_id)
-            if not success:
-                return response_error("Unable to update hooks when enabling module", data=logs)
+    module_name = iris_module_name_from_id(mod_id)
+    if module_name is None:
+        return response_error('Invalid module ID', status=400)
 
-            track_activity(f"IRIS module ({module_name}) #{mod_id} enabled",
-                           caseid=caseid, ctx_less=True)
+    if not iris_module_enable_by_id(mod_id):
+        return response_error('Unable to enable module')
 
-            return response_success('Module enabled', data=logs)
+    success, logs = iris_update_hooks(module_name, mod_id)
+    if not success:
+        return response_error("Unable to update hooks when enabling module", data=logs)
 
-        else:
-            return response_error('Unable to enable module')
+    track_activity(f"IRIS module ({module_name}) #{mod_id} enabled",
+                   caseid=caseid, ctx_less=True)
 
-    return response_error('Malformed request', status=400)
+    return response_success('Module enabled', data=logs)
 
 
 @manage_modules_blueprint.route('/manage/modules/disable/<int:module_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def disable_module(module_id, caseid):
-    if module_id:
-        if iris_module_disable_by_id(module_id):
-            track_activity("IRIS module #{} disabled".format(module_id),
-                           caseid=caseid, ctx_less=True)
-            return response_success('Module disabled')
-        else:
-            return response_error('Unable to disable module')
+    if iris_module_disable_by_id(module_id):
 
-    return response_error('Malformed request', status=400)
+        track_activity("IRIS module #{} disabled".format(module_id),
+                       caseid=caseid, ctx_less=True)
+        return response_success('Module disabled')
+
+    return response_error('Unable to disable module')
 
 
 @manage_modules_blueprint.route('/manage/modules/remove/<int:module_id>', methods=['POST'])
