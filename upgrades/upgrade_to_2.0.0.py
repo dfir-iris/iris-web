@@ -122,7 +122,8 @@ class IrisUpgrade200:
         self.handle_env(dry_run=dry_run)
 
         log.info('Upgrade done. Please check the changes. ')
-        log.info('You can now start IRIS with docker-compose up -d')
+        log.info('You can now rebuild the dockers with `docker compose build --no-cache`')
+        log.info('And start them with `docker compose up`')
 
     @staticmethod
     def check(silent=False):

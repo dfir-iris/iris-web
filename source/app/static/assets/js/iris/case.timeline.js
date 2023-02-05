@@ -486,15 +486,15 @@ function build_timeline(data) {
         }
 
         if(evt.category_name && evt.category_name != 'Unspecified') {
-            tags += `<span class="badge badge-light float-right mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
+            tags += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
             if (evt.category_name != 'Unspecified') {
-                cats += `<span class="badge badge-light float-right mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
+                cats += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
             }
         }
         
         if (evt.iocs != null && evt.iocs.length > 0) {
             for (ioc in evt.iocs) {
-                tags += `<span class="badge badge-warning-event float-right mr-2 mb-1" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="IOC - ${sanitizeHTML(evt.iocs[ioc].description)}"><i class="fa-solid fa-virus-covid"></i> ${sanitizeHTML(evt.iocs[ioc].name)}</span>`;
+                tags += `<span class="badge badge-warning-event float-right ml-1 mt-2" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="IOC - ${sanitizeHTML(evt.iocs[ioc].description)}"><i class="fa-solid fa-virus-covid"></i> ${sanitizeHTML(evt.iocs[ioc].name)}</span>`;
             }
         }
 
