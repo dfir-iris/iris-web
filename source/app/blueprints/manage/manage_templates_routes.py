@@ -105,54 +105,58 @@ def report_templates_list(caseid):
     return response_success("", data=data)
 
 
-@manage_templates_blueprint.route('/manage/templates/add', methods=['GET', 'POST'])
+@manage_templates_blueprint.route('/manage/templates/add/modal', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
-def add_template(caseid):
-    template = None
+def add_template_modal(caseid):
+    report_template = CaseTemplateReport()
     form = AddReportTemplateForm()
     form.report_language.choices = [(c.id, c.name.capitalize()) for c in Languages.query.all()]
     form.report_type.choices = [(c.id, c.name) for c in ReportType.query.all()]
 
-    report_template = CaseTemplateReport()
-    if form.is_submitted():
-        report_template.name = request.form.get('report_name', '', type=str)
-        report_template.description = request.form.get('report_description', '', type=str)
-        report_template.naming_format = request.form.get('report_name_format', '', type=str)
-        report_template.language_id = request.form.get('report_language', '', type=int)
-        report_template.report_type_id = request.form.get('report_type', '', type=int)
-
-        report_template.created_by_user_id = current_user.id
-        report_template.date_created = datetime.utcnow()
-
-        file = request.files['file']
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-
-        if file and allowed_file(file.filename):
-            _, extension = os.path.splitext(file.filename)
-            filename = get_random_string(18) + extension
-
-            try:
-
-                file.save(os.path.join(app.config['TEMPLATES_PATH'], filename))
-
-            except Exception as e:
-                return response_error(f"Unable to add template {e}")
-
-            report_template.internal_reference = filename
-
-            db.session.add(report_template)
-            db.session.commit()
-
-            track_activity(f"report template '{report_template.name}' added", caseid=caseid, ctx_less=True)
-            # Return the assets
-            return response_success("Added successfully")
-
-        else:
-            return response_error("Unable to add a file")
-
     return render_template("modal_add_report_template.html", form=form, report_template=report_template)
+
+
+@manage_templates_blueprint.route('/manage/templates/add', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def add_template(caseid):
+
+    report_template = CaseTemplateReport()
+
+    report_template.name = request.form.get('report_name', '', type=str)
+    report_template.description = request.form.get('report_description', '', type=str)
+    report_template.naming_format = request.form.get('report_name_format', '', type=str)
+    report_template.language_id = request.form.get('report_language', '', type=int)
+    report_template.report_type_id = request.form.get('report_type', '', type=int)
+
+    report_template.created_by_user_id = current_user.id
+    report_template.date_created = datetime.utcnow()
+
+    template_file = request.files['file']
+    if template_file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+
+    if template_file and allowed_file(template_file.filename):
+        _, extension = os.path.splitext(template_file.filename)
+        filename = get_random_string(18) + extension
+
+        try:
+
+            template_file.save(os.path.join(app.config['TEMPLATES_PATH'], filename))
+
+        except Exception as e:
+            return response_error(f"Unable to add template {e}")
+
+        report_template.internal_reference = filename
+
+        db.session.add(report_template)
+        db.session.commit()
+
+        track_activity(f"report template '{report_template.name}' added", caseid=caseid, ctx_less=True)
+        # Return the assets
+        return response_success("Added successfully")
+
+    return response_error("Unable to add a file")
 
 
 @manage_templates_blueprint.route('/manage/templates/download/<report_id>', methods=['GET'])
