@@ -19,7 +19,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import configparser
-import logging
 import logging as log
 import os
 import ssl
@@ -55,7 +54,7 @@ class IrisConfig(configparser.ConfigParser):
             self.az_credential = DefaultAzureCredential()
             self.az_client = SecretClient(vault_url=f"https://{self.key_vault_name}.vault.azure.net/",
                                           credential=self.az_credential)
-            logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
+            log.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(log.WARNING)
 
     def validate_config(self):
         required_values = {
@@ -133,7 +132,7 @@ class IrisConfig(configparser.ConfigParser):
 
         value = os.environ.get(old_key)
         if value:
-            logging.warning(f"Environment variable {old_key} used which is deprecated. Please use {new_key}.")
+            log.warning(f"Environment variable {old_key} used which is deprecated. Please use {new_key}.")
 
         return value
 
@@ -158,7 +157,7 @@ class IrisConfig(configparser.ConfigParser):
 
         value = self.get(old_key[0], old_key[1], fallback=None)
         if value:
-            logging.warning(
+            log.warning(
                 f"Configuration {old_key[0]}.{old_key[1]} found in configuration file. "
                 f"This is a deprecated configuration. Please use {new_key[0]}.{new_key[1]}")
 
@@ -236,6 +235,7 @@ if authentication_type == 'oidc_proxy':
     oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
 
     try:
+
         oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
 
         if oidc_discovery_response.status_code == 200:
@@ -246,13 +246,14 @@ if authentication_type == 'oidc_proxy':
             authentication_jwks_url = response_json.get('jwks_uri')
 
         else:
-            raise Exception("Unsuccessful authN server discovery")
+            raise IrisConfigException("Unsuccessful authN server discovery")
 
         authentication_client_id = config.load('OIDC', 'IRIS_CLIENT_ID', fallback="")
 
         authentication_client_secret = config.load('OIDC', 'IRIS_CLIENT_SECRET', fallback="")
 
         authentication_app_admin_role_name = config.load('OIDC', 'IRIS_ADMIN_ROLE_NAME', fallback="")
+
     except Exception as e:
         log.error(f"OIDC ERROR - {e}")
         exit(0)
@@ -262,7 +263,7 @@ if authentication_type == 'oidc_proxy':
 
 
 # --------- CELERY ---------
-class CeleryConfig():
+class CeleryConfig:
     result_backend = "db+" + SQLALCHEMY_BASE_URI + "iris_tasks"  # use database as storage
     broker_url = CELERY_BROKER_
     result_extended = True
@@ -271,7 +272,7 @@ class CeleryConfig():
 
 
 # --------- APP ---------
-class Config():
+class Config:
     # Handled by bumpversion
     IRIS_VERSION = "v2.0.0-beta-2"
 
