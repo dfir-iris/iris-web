@@ -31,7 +31,7 @@ from flask import url_for
 from flask_wtf import FlaskForm
 
 from app import app
-from app.datamgmt.iris_engine.modules_db import delete_module_from_id
+from app.datamgmt.iris_engine.modules_db import delete_module_from_id, parse_module_parameter
 from app.datamgmt.iris_engine.modules_db import get_module_config_from_id
 from app.datamgmt.iris_engine.modules_db import get_module_from_id
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
@@ -100,6 +100,7 @@ def manage_modules_list(caseid):
 
     return response_success('', data=output)
 
+
 @manage_modules_blueprint.route('/manage/modules/add', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def add_module(caseid):
@@ -137,6 +138,7 @@ def add_module(caseid):
         traceback.print_exc()
         return response_error(e.__str__())
 
+
 @manage_modules_blueprint.route('/manage/modules/add/modal', methods=['GET'])
 @ac_requires(Permissions.server_administrator)
 def add_module_modal(caseid, url_redir):
@@ -149,48 +151,48 @@ def add_module_modal(caseid, url_redir):
     return render_template("modal_add_module.html", form=form, module=module)
 
 
-@manage_modules_blueprint.route('/manage/modules/update_param/<param_name>', methods=['GET', 'POST'])
+@manage_modules_blueprint.route('/manage/modules/get-parameter/<param_name>', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def getmodule_param(param_name, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_modules.add_module', cid=caseid))
+
+    form = UpdateModuleParameterForm()
+
+    mod_config, mod_id, mod_name, mod_iname, parameter = parse_module_parameter(param_name)
+
+    if mod_config is None:
+        return response_error('Invalid parameter')
+
+    return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id,
+                           form=form)
+
+
+@manage_modules_blueprint.route('/manage/modules/set-parameter/<param_name>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def update_module_param(param_name, caseid):
-    try:
 
-        param = base64.b64decode(param_name).decode('utf-8')
-        mod_id = param.split('##')[0]
-        param_name = param.split('##')[1]
+    if request.json is None:
+        return response_error('Invalid request')
 
-    except Exception as e:
-        log.error(e.__str__())
-        return response_error('Malformed request', status=400)
+    mod_config, mod_id, mod_name, mod_iname, parameter = parse_module_parameter(param_name)
 
-    mod_config, mod_name, mod_iname = get_module_config_from_id(mod_id)
-    form = UpdateModuleParameterForm()
-    parameter = None
-    for param in mod_config:
-        if param_name == param['param_name']:
-            parameter = param
-            break
+    if mod_config is None:
+        return response_error('Invalid parameter')
 
-    if not parameter:
-        return response_error('Malformed request', status=400)
+    parameter_value = request.json.get('parameter_value')
 
-    if request.method == 'POST':
-        parameter_value = request.json.get('param_value')
+    if iris_module_save_parameter(mod_id, mod_config, parameter['param_name'], parameter_value):
+        track_activity(f"parameter {parameter['param_name']} of mod ({mod_name})  #{mod_id} was updated",
+                       caseid=caseid, ctx_less=True)
 
-        if iris_module_save_parameter(mod_id, mod_config, param_name, parameter_value):
-            track_activity(f"parameter {param_name} of mod ({mod_name})  #{mod_id} was updated",
-                           caseid=caseid, ctx_less=True)
+        success, logs = iris_update_hooks(mod_iname, mod_id)
+        if not success:
+            return response_error("Unable to update hooks", data=logs)
 
-            success, logs = iris_update_hooks(mod_iname, mod_id)
-            if not success:
-                return response_error("Unable to update hooks", data=logs)
+        return response_success("Saved", logs)
 
-            return response_success("Saved", logs)
-
-        else:
-            return response_error('Malformed request', status=400)
-
-    else:
-        return render_template("modal_update_parameter.html", parameter=parameter, mod_name=mod_name, mod_id=mod_id, form=form)
+    return response_error('Malformed request', status=400)
 
 
 @manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>/modal', methods=['GET'])

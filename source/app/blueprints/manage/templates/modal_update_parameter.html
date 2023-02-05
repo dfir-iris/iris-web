@@ -24,7 +24,7 @@
                     {% elif parameter["type"] == 'bool' %}
                         <div class="form-check">
                             <label class="form-check-label">
-                                <input type="checkbox" id="param_value"
+                                <input type="checkbox" id="parameter_value"
                                            class="form-control"
                                            {% if parameter["value"] == True %} checked {% endif %}
                                 />
@@ -33,7 +33,7 @@
                         </div>
                     {% else %}
                         <label class="placeholder"><b>Value</b></label>
-                        <input class="form-control required" name="param_value" type="text" value="{{ parameter["value"] }}">
+                        <input class="form-control required" name="parameter_value" type="text" value="{{ parameter["value"] }}">
                     {% endif %}
                 </div>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"

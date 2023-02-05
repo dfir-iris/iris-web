@@ -260,7 +260,7 @@ function import_mod_config(module_id){
 
 /* Update the param of a module */
 function update_param(module_id, param_name) {
-    url = 'modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();
+    url = 'modules/get-parameter/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();
     $('#modal_update_param_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -270,16 +270,16 @@ function update_param(module_id, param_name) {
             var data = Object();
             if ($('#editor_detail').length != 0) {
                 editor = ace.edit("editor_detail");
-                data['param_value'] = editor.getSession().getValue();
+                data['parameter_value'] = editor.getSession().getValue();
                 data['csrf_token'] = $('#csrf_token').val();
             } else {
                 data = $('#form_update_param').serializeObject();
-                if ($('#param_value').attr('type') == "checkbox") {
-                    data['param_value'] = $('#param_value').prop('checked');
+                if ($('#parameter_value').attr('type') == "checkbox") {
+                    data['parameter_value'] = $('#parameter_value').prop('checked');
                 }
             }
 
-            post_request_api('modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))), JSON.stringify(data))
+            post_request_api('modules/set-parameter/' + decodeURIComponent(escape(window.btoa(param_name))), JSON.stringify(data))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     module_detail(module_id);
