@@ -121,18 +121,18 @@ def add_module(caseid):
         # Check the health of the module
         is_ready, logs = check_module_health(class_)
 
-        if is_ready:
-            # Registers into Iris DB for further calls
-            mod_id, logs = register_module(module_name)
-            if mod_id is not None:
-                track_activity("IRIS module {} was added".format(module_name), caseid=caseid, ctx_less=True)
-                return response_success("", data=logs)
-            else:
-                track_activity("addition of IRIS module {} was attempted".format(module_name),
-                               caseid=caseid, ctx_less=True)
-                return response_error("Unable to register module", data=logs)
-        else:
+        if not is_ready:
             return response_error("Cannot import module. Health check didn't pass. Please check logs below", data=logs)
+
+        # Registers into Iris DB for further calls
+        mod_id, logs = register_module(module_name)
+        if mod_id is None:
+            track_activity("addition of IRIS module {} was attempted".format(module_name),
+                           caseid=caseid, ctx_less=True)
+            return response_error("Unable to register module", data=logs)
+
+        track_activity("IRIS module {} was added".format(module_name), caseid=caseid, ctx_less=True)
+        return response_success("", data=logs)
 
     except Exception as e:
         traceback.print_exc()
