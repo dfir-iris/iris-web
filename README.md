@@ -92,6 +92,35 @@ Do not use the ``master`` branch in production.
 For a more comprehensive overview of the case features, 
 you can head to [tutorials](https://docs.dfir-iris.org/operations/tutorials/), we've put some videos there.  
 
+## Build iris-web
+
+To build iris-web wheel package:
+
+````bash
+git clone https://github.com/dfir-iris/iris-web.git
+python3 -m venv ./irisbuild
+source ./irisbuild/bin/activate #Linux
+pip install wheel
+
+cd ./iris-web
+cd source
+pip wheel . 
+
+# Then to install
+pip install -r requirements
+pip install iris_web-<versions>.whl
+````
+
+
+To use in Python once installed, import ``irisweb``. Example:
+
+````python
+>>> from irisweb.app.datamgmt.iris_engine.evidence_storage import EvidenceStorage
+>>> EvidenceStorage
+<class 'irisweb.app.datamgmt.iris_engine.evidence_storage.EvidenceStorage'>
+````
+
+
 ## Documentation
 A comprehensive documentation is available on [docs.dfir-iris.org](https://docs.dfir-iris.org).
 
