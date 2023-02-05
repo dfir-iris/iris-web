@@ -159,7 +159,7 @@ def getmodule_param(param_name, caseid, url_redir):
 
     form = UpdateModuleParameterForm()
 
-    mod_config, mod_id, mod_name, mod_iname, parameter = parse_module_parameter(param_name)
+    mod_config, mod_id, mod_name, _, parameter = parse_module_parameter(param_name)
 
     if mod_config is None:
         return response_error('Invalid parameter')
