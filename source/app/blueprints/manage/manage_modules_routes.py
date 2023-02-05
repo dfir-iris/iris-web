@@ -19,7 +19,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-import base64
 import json
 import logging as log
 import traceback
@@ -112,7 +111,7 @@ def add_module(caseid):
     # Try to import the module
     try:
         # Try to instantiate the module
-        log.info('Trying to add module {}'.format(module_name))
+        log.info(f'Trying to add module {module_name}')
         class_, logs = instantiate_module_from_name(module_name)
 
         if not class_:
@@ -127,11 +126,11 @@ def add_module(caseid):
         # Registers into Iris DB for further calls
         mod_id, logs = register_module(module_name)
         if mod_id is None:
-            track_activity("addition of IRIS module {} was attempted".format(module_name),
+            track_activity(f"addition of IRIS module {module_name} was attempted and failed",
                            caseid=caseid, ctx_less=True)
             return response_error("Unable to register module", data=logs)
 
-        track_activity("IRIS module {} was added".format(module_name), caseid=caseid, ctx_less=True)
+        track_activity(f"IRIS module {module_name} was added", caseid=caseid, ctx_less=True)
         return response_success("", data=logs)
 
     except Exception as e:
@@ -241,7 +240,7 @@ def enable_module(mod_id, caseid):
 def disable_module(module_id, caseid):
     if iris_module_disable_by_id(module_id):
 
-        track_activity("IRIS module #{} disabled".format(module_id),
+        track_activity(f"IRIS module #{module_id} disabled",
                        caseid=caseid, ctx_less=True)
         return response_success('Module disabled')
 
@@ -254,13 +253,13 @@ def view_delete_module(module_id, caseid):
     try:
 
         delete_module_from_id(module_id=module_id)
-        track_activity("IRIS module #{} deleted".format(module_id),
+        track_activity(f"IRIS module #{module_id} deleted",
                        caseid=caseid, ctx_less=True)
         return response_success("Deleted")
 
     except Exception as e:
         log.error(e.__str__())
-        return response_error("Cannot delete module. Error {}".format(e.__str__()))
+        return response_error(f"Cannot delete module. Error {e.__str__()}")
 
 
 @manage_modules_blueprint.route('/manage/modules/export-config/<int:module_id>', methods=['GET'])
