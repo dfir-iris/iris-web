@@ -120,9 +120,7 @@ class IrisConfig(configparser.ConfigParser):
             'POSTGRES_SERVER': 'DB_HOST',
             'POSTGRES_PORT': 'DB_PORT',
             'IRIS_SECRET_KEY': 'SECRET_KEY',
-            'IRIS_SECURITY_PASSWORD_SALT': 'SECURITY_PASSWORD_SALT',
-            'APP_HOST': 'IRIS_UPSTREAM_SERVER',
-            'APP_PORT': 'IRIS_UPSTREAM_PORT'
+            'IRIS_SECURITY_PASSWORD_SALT': 'SECURITY_PASSWORD_SALT'
         }
 
         new_key = f"{section}_{option}"
