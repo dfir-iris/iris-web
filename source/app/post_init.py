@@ -170,12 +170,13 @@ def run_post_init(development=False):
                               clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
 
         log.info("Post-init steps completed")
-        log.warning("==============================")
-        log.warning("|        IRIS IS READY       |")
-        log.warning("==============================")
+        log.warning("====================================")
+        log.warning(f"| IRIS IS READY on port  {os.getenv('INTERFACE_HTTPS_PORT')} |")
+        log.warning("====================================")
 
         if pwd is not None:
-            log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<<')
+            log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<< '
+                     f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
 
 
 def create_safe_db(db_name):

@@ -36,11 +36,27 @@ env_upgrade_map = {
     "DB_HOST": "POSTGRES_SERVER",
     "DB_PORT": "POSTGRES_PORT",
     "SECRET_KEY": "IRIS_SECRET_KEY",
-    "SECURITY_PASSWORD_SALT": "IRIS_SECURITY_PASSWORD_SALT"
+    "SECURITY_PASSWORD_SALT": "IRIS_SECURITY_PASSWORD_SALT",
+    "APP_HOST": "IRIS_UPSTREAM_SERVER",
+    "APP_PORT": "IRIS_UPSTREAM_PORT"
 }
 
 
 class IrisUpgrade200:
+
+    @staticmethod
+    def handle_ports(content):
+        if 'INTERFACE_HTTPS_PORT' not in content:
+            log.info('What port do you want to use for HTTPS?')
+            port = input()
+            content += f"\n\n#IRIS Ports\nINTERFACE_HTTPS_PORT={port}"
+
+        if 'INTERFACE_HTTP_PORT' not in content:
+            log.info('What port do you want to use for HTTP?')
+            port = input()
+            content += f"\nINTERFACE_HTTP_PORT={port}"
+
+        return content
 
     def handle_env(self, dry_run=False):
         with open(root_dir / '.env', "r") as f:
@@ -59,6 +75,12 @@ class IrisUpgrade200:
         if "IRIS_AUTHENTICATION_METHOD=" not in content:
             log.info('Adding IRIS_AUTHENTICATION_METHOD to .env file')
             content += f"\n\n#IRIS Authentication\nIRIS_AUTHENTICATION_METHOD=local"
+
+        log.warning('IRIS v2.0.0 changed the default listening ports from 8000 to 80 and 4433 to 443.')
+        log.info('Do you want to change the ports? (y/n)')
+        answer = input()
+        if answer.lower() == "y":
+            content = self.handle_ports(content)
 
         log.info("IRIS v2.0.0 comes with new features. The following is optional.")
         log.info("Do you want to set the organization name? (y/n)")
