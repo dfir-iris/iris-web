@@ -62,14 +62,24 @@ class IrisUpgrade200:
                     continue
 
                 if dry_run:
-                    log.info(f'Dry run: would have replaced {old} with {new}')
+                    log.info(f'Would have replaced {old} with {new}')
                 else:
                     log.info(f'Replacing {old} with {new}')
                     content = content.replace(f"{old}=", f"{new}=")
 
+        if "IRIS_WORKER=1" in content:
+            if dry_run:
+                log.info('Would have disabled old IRIS_WORKER')
+            else:
+                log.info('Old IRIS_WORKER is set. Disabling')
+                content = content.replace("IRIS_WORKER=1", "#IRIS_WORKER=0")
+
         if "IRIS_AUTHENTICATION_METHOD=" not in content:
-            log.info('Adding IRIS_AUTHENTICATION_METHOD to .env file')
-            content += f"\n\n#IRIS Authentication\nIRIS_AUTHENTICATION_METHOD=local"
+            if dry_run:
+                log.info('Would have added IRIS_AUTHENTICATION_METHOD to .env file')
+            else:
+                log.info('Adding IRIS_AUTHENTICATION_METHOD to .env file')
+                content += f"\n\n#IRIS Authentication\nIRIS_AUTHENTICATION_METHOD=local"
 
         log.warning('IRIS v2.0.0 changed the default listening port from 4433 to 443.')
         log.info('Do you want to change the port? (y/n)')
