@@ -42,15 +42,7 @@ env_upgrade_map = {
 
 class IrisUpgrade200:
 
-    def upgrade(self, dry_run=False):
-        """
-        Upgrade IRIS to 2.0.0
-        """
-        if not self.check():
-            log.info('Upgrade aborted')
-            return False
-
-        content = None
+    def handle_env(self, dry_run=False):
         with open(root_dir / '.env', "r") as f:
             content = f.read()
 
@@ -64,16 +56,49 @@ class IrisUpgrade200:
                     log.info(f'Replacing {old} with {new}')
                     content = content.replace(f"{old}=", f"{new}=")
 
+        if "IRIS_AUTHENTICATION_METHOD=" not in content:
+            log.info('Adding IRIS_AUTHENTICATION_METHOD to .env file')
+            content += f"\n\n#IRIS Authentication\nIRIS_AUTHENTICATION_METHOD=local"
+
+        log.info("IRIS v2.0.0 comes with new features. The following is optional.")
+        log.info("Do you want to set the organization name? (y/n)")
+        answer = input()
+        if answer.lower() == "y":
+            log.info("Please enter the organization name:")
+            organization_name = input()
+            if "IRIS_ORGANIZATION_NAME=" in content:
+                log.info("IRIS_ORGANIZATION_NAME already set. Replacing it.")
+                content = content.replace(f"IRIS_ORGANIZATION_NAME=", "#IRIS_ORGANIZATION_NAME=")
+
+            content += f"\n\n#IRIS Organization\nIRIS_ORGANIZATION_NAME={organization_name}"
+
         if not dry_run:
             log.info('Writing new .env file')
             with open(root_dir / '.env', "w") as f:
                 f.write(content)
 
-            log.info('Upgrade done. Please check the changes. ')
-            log.info('You can now start IRIS with docker-compose up -d')
+        else:
+            log.info('Dry run: would have written new .env file')
+            print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n')
+            print(content)
+            print('\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+
+    def upgrade(self, dry_run=False):
+        """
+        Upgrade IRIS to 2.0.0
+        """
+        if not self.check(silent=True):
+            log.info('Upgrade aborted')
+            return False
+
+        log.info('Checking .env file')
+        self.handle_env(dry_run=dry_run)
+
+        log.info('Upgrade done. Please check the changes. ')
+        log.info('You can now start IRIS with docker-compose up -d')
 
     @staticmethod
-    def check():
+    def check(silent=False):
         """
         Check if upgrade looks doable
         """
@@ -93,14 +118,15 @@ class IrisUpgrade200:
                 return False
 
             log.info('It looks like you are coming from a previous version of IRIS')
-            log.info('You can run this script to upgrade to 2.0.0')
+            if not silent:
+                log.info('You can run this script to upgrade to 2.0.0')
             return True
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="IRIS 2.0.0 upgrade script")
     parser.add_argument("-i", "--install", help="Install upgrade", action="store_true", required=False)
-    parser.add_argument("-d", "--dry-run", help="Dry run upgrade and see changes", action="store_true",
+    parser.add_argument("-r", "--dry-run", help="Dry run upgrade and see changes", action="store_true",
                         required=False)
     parser.add_argument("-c", "--check", help="Check if upgrade looks doable",
                         action="store_true", required=False)
