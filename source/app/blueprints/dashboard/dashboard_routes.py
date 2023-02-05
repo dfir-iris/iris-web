@@ -238,96 +238,103 @@ def utask_statusupdate(caseid):
     return response_success("Updated", data=task_schema.dump(task))
 
 
-@dashboard_blueprint.route('/global/tasks/add', methods=['GET', 'POST'])
+@dashboard_blueprint.route('/global/tasks/add/modal', methods=['GET'])
 @ac_api_requires()
-def add_gtask(caseid):
+def add_gtask_modal(caseid):
     task = GlobalTasks()
 
     form = CaseGlobalTaskForm()
 
-    if form.is_submitted():
+    form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
+    form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
-        try:
-
-            gtask_schema = GlobalTasksSchema()
-
-            request_data = call_modules_hook('on_preload_global_task_create', data=request.get_json(), caseid=caseid)
-
-            gtask = gtask_schema.load(request_data)
-
-        except marshmallow.exceptions.ValidationError as e:
-            return response_error(msg="Data error", data=e.messages, status=400)
-
-        gtask.task_userid_update = current_user.id
-        gtask.task_open_date = datetime.utcnow()
-        gtask.task_last_update = datetime.utcnow()
-        gtask.task_last_update = datetime.utcnow()
-
-        try:
-
-            db.session.add(gtask)
-            db.session.commit()
-
-        except Exception as e:
-            return response_error(msg="Data error", data=e.__str__(), status=400)
-
-        gtask = call_modules_hook('on_postload_global_task_create', data=gtask, caseid=caseid)
-        track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
-
-        return response_success('Saved !', data=gtask_schema.dump(gtask))
-
-    else:
-        form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
-        form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
-
-        return render_template("modal_add_global_task.html", form=form, task=task, uid=current_user.id, user_name=None)
+    return render_template("modal_add_global_task.html", form=form, task=task, uid=current_user.id, user_name=None)
 
 
-@dashboard_blueprint.route('/global/tasks/update/<int:cur_id>', methods=['GET', 'POST'])
+@dashboard_blueprint.route('/global/tasks/add', methods=['POST'])
+@ac_api_requires()
+def add_gtask(caseid):
+
+    try:
+
+        gtask_schema = GlobalTasksSchema()
+
+        request_data = call_modules_hook('on_preload_global_task_create', data=request.get_json(), caseid=caseid)
+
+        gtask = gtask_schema.load(request_data)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    gtask.task_userid_update = current_user.id
+    gtask.task_open_date = datetime.utcnow()
+    gtask.task_last_update = datetime.utcnow()
+    gtask.task_last_update = datetime.utcnow()
+
+    try:
+
+        db.session.add(gtask)
+        db.session.commit()
+
+    except Exception as e:
+        return response_error(msg="Data error", data=e.__str__(), status=400)
+
+    gtask = call_modules_hook('on_postload_global_task_create', data=gtask, caseid=caseid)
+    track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
+
+    return response_success('Task added', data=gtask_schema.dump(gtask))
+
+
+@dashboard_blueprint.route('/global/tasks/update/<int:cur_id>/modal', methods=['GET'])
+@ac_api_requires()
+def edit_gtask_modal(cur_id, caseid):
+    form = CaseGlobalTaskForm()
+    task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
+    form.task_assignee_id.choices = [(user.id, user.name) for user in
+                                     User.query.filter(User.active == True).order_by(User.name).all()]
+    form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+
+    # Render the task
+    form.task_title.render_kw = {'value': task.task_title}
+    form.task_description.data = task.task_description
+    user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
+
+    return render_template("modal_add_global_task.html", form=form, task=task,
+                           uid=task.task_assignee_id, user_name=user_name)
+
+
+@dashboard_blueprint.route('/global/tasks/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires()
 def edit_gtask(cur_id, caseid):
 
-    if cur_id:
-        form = CaseGlobalTaskForm()
-        task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
-        form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
-        form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+    form = CaseGlobalTaskForm()
+    task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
+    form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
+    form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
-        if task:
+    if not task:
+        return response_error(msg="Data error", data="Invalid task ID", status=400)
 
-            if form.is_submitted():
+    try:
+        gtask_schema = GlobalTasksSchema()
 
-                try:
-                    gtask_schema = GlobalTasksSchema()
+        request_data = call_modules_hook('on_preload_global_task_update', data=request.get_json(),
+                                         caseid=caseid)
 
-                    request_data = call_modules_hook('on_preload_global_task_update', data=request.get_json(),
-                                                     caseid=caseid)
+        gtask = gtask_schema.load(request_data, instance=task)
+        gtask.task_userid_update = current_user.id
+        gtask.task_last_update = datetime.utcnow()
 
-                    gtask = gtask_schema.load(request_data, instance=task)
-                    gtask.task_userid_update = current_user.id
-                    gtask.task_last_update = datetime.utcnow()
+        db.session.commit()
 
-                    db.session.commit()
+        gtask = call_modules_hook('on_postload_global_task_update', data=gtask, caseid=caseid)
 
-                    gtask = call_modules_hook('on_postload_global_task_update', data=gtask, caseid=caseid)
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
 
-                except marshmallow.exceptions.ValidationError as e:
-                    return response_error(msg="Data error", data=e.messages, status=400)
+    track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
 
-                track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
-
-                return response_success('Updated !', data=gtask_schema.dump(gtask))
-
-            else:
-                # Render the IOC
-                form.task_title.render_kw = {'value': task.task_title}
-                form.task_description.data = task.task_description
-                user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
-
-                return render_template("modal_add_global_task.html", form=form, task=task,
-                                       uid=task.task_assignee_id, user_name=user_name)
-
-    return response_error('Unknown task ID !')
+    return response_success('Task updated', data=gtask_schema.dump(gtask))
 
 
 @dashboard_blueprint.route('/global/tasks/delete/<int:cur_id>', methods=['POST'])

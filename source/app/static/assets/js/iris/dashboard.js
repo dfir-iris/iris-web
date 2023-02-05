@@ -85,7 +85,7 @@ function callBackEditUserTaskStatus(updatedCell, updatedRow, oldValue) {
 
 /* Fetch a modal that allows to add an event */
 function add_gtask() {
-    url = '/global/tasks/add' + case_param();
+    url = '/global/tasks/add/modal' + case_param();
     $('#modal_add_gtask_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -144,7 +144,7 @@ function delete_gtask(id) {
 
 /* Edit and event from the timeline thanks to its ID */
 function edit_gtask(id) {
-  url = '/global/tasks/update/'+ id + case_param();
+  url = '/global/tasks/update/'+ id + "/modal" + case_param();
   $('#modal_add_gtask_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
