@@ -6345,7 +6345,11 @@ label.error {
 }
 
 .navbar .navbar-nav .nav-item .nav-link:hover {
-    background: #eee !important;
+    background: #3d9afd !important;
+}
+
+#dropdown-top-overflow .nav-link {
+    margin-left: 4px;
 }
 
 .navbar .navbar-nav .nav-item .nav-link i {
