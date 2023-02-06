@@ -6,7 +6,7 @@
 <p align="center">
   Incident Response Investigation System
   <br>
-  <i>Current Version v2.0.0-beta-2</i>
+  <i>Current Version v2.0.0-beta-3</i>
   <br>
 </p>
 

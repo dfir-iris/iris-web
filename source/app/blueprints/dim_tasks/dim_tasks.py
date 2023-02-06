@@ -76,15 +76,15 @@ def dim_index(caseid: int, url_redir):
     return render_template('dim_tasks.html', form=form)
 
 
-@dim_tasks_blueprint.route('/dim/hooks/options/<type>/list', methods=['GET'])
+@dim_tasks_blueprint.route('/dim/hooks/options/<hook_type>/list', methods=['GET'])
 @ac_api_requires()
-def list_dim_hook_options_ioc(type, caseid):
+def list_dim_hook_options_ioc(hook_type, caseid):
     mods_options = IrisModuleHook.query.with_entities(
         IrisModuleHook.manual_hook_ui_name,
         IrisHook.hook_name,
         IrisModule.module_name
     ).filter(
-        IrisHook.hook_name == f"on_manual_trigger_{type}",
+        IrisHook.hook_name == f"on_manual_trigger_{hook_type}",
         IrisModule.is_active == True
     ).join(
         IrisModuleHook.module,
@@ -101,6 +101,9 @@ def list_dim_hook_options_ioc(type, caseid):
 def dim_hooks_call(caseid):
     logs = []
     js_data = request.json
+
+    print(js_data)
+
     if not js_data:
         return response_error('Invalid data')
 
@@ -109,8 +112,6 @@ def dim_hooks_call(caseid):
         return response_error('Missing hook_name')
 
     hook_ui_name = js_data.get('hook_ui_name')
-    if not hook_ui_name:
-        return response_error('Missing hook_ui_name')
 
     targets = js_data.get('targets')
     if not targets:
@@ -119,6 +120,8 @@ def dim_hooks_call(caseid):
     data_type = js_data.get('type')
     if not data_type:
         return response_error('Missing data type')
+
+    module_name = js_data.get('module_name')
 
     index = 0
     obj_targets = []
@@ -178,7 +181,8 @@ def dim_hooks_call(caseid):
         index += 1
 
     if len(obj_targets) > 0:
-        call_modules_hook(hook_name=hook_name, hook_ui_name=hook_ui_name, data=obj_targets, caseid=caseid)
+        call_modules_hook(hook_name=hook_name, hook_ui_name=hook_ui_name, data=obj_targets,
+                          caseid=caseid, module_name=module_name)
 
     if len(logs) > 0:
         return response_error(f"Errors encountered during processing of data. Queued task with {index} objects",

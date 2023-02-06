@@ -35,6 +35,7 @@ from flask_login import current_user
 from app import app
 from app import db
 from app.forms import AddReportTemplateForm
+from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.models.authorization import User
 from app.models.models import CaseTemplateReport
@@ -51,7 +52,7 @@ manage_templates_blueprint = Blueprint(
     template_folder='templates'
 )
 
-ALLOWED_EXTENSIONS = {'doc', 'docx'}
+ALLOWED_EXTENSIONS = {'md', 'html', 'doc', 'docx'}
 
 
 def allowed_file(filename):
@@ -104,52 +105,58 @@ def report_templates_list(caseid):
     return response_success("", data=data)
 
 
-@manage_templates_blueprint.route('/manage/templates/add', methods=['GET', 'POST'])
+@manage_templates_blueprint.route('/manage/templates/add/modal', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
-def add_template(caseid):
-    template = None
+def add_template_modal(caseid):
+    report_template = CaseTemplateReport()
     form = AddReportTemplateForm()
     form.report_language.choices = [(c.id, c.name.capitalize()) for c in Languages.query.all()]
     form.report_type.choices = [(c.id, c.name) for c in ReportType.query.all()]
 
-    report_template = CaseTemplateReport()
-    if form.is_submitted():
-        report_template.name = request.form.get('report_name', '', type=str)
-        report_template.description = request.form.get('report_description', '', type=str)
-        report_template.naming_format = request.form.get('report_name_format', '', type=str)
-        report_template.language_id = request.form.get('report_language', '', type=int)
-        report_template.report_type_id = request.form.get('report_type', '', type=int)
-
-        report_template.created_by_user_id = current_user.id
-        report_template.date_created = datetime.utcnow()
-
-        file = request.files['file']
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-
-        if file and allowed_file(file.filename):
-            filename = get_random_string(18)
-
-            try:
-
-                file.save(os.path.join(app.config['TEMPLATES_PATH'], filename))
-
-            except Exception as e:
-                return response_error(f"Unable to add template {e}")
-
-            report_template.internal_reference = filename
-
-            db.session.add(report_template)
-            db.session.commit()
-
-            # Return the assets
-            return response_success("Added successfully")
-
-        else:
-            return response_error("Unable to add a file")
-
     return render_template("modal_add_report_template.html", form=form, report_template=report_template)
+
+
+@manage_templates_blueprint.route('/manage/templates/add', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def add_template(caseid):
+
+    report_template = CaseTemplateReport()
+
+    report_template.name = request.form.get('report_name', '', type=str)
+    report_template.description = request.form.get('report_description', '', type=str)
+    report_template.naming_format = request.form.get('report_name_format', '', type=str)
+    report_template.language_id = request.form.get('report_language', '', type=int)
+    report_template.report_type_id = request.form.get('report_type', '', type=int)
+
+    report_template.created_by_user_id = current_user.id
+    report_template.date_created = datetime.utcnow()
+
+    template_file = request.files['file']
+    if template_file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+
+    if template_file and allowed_file(template_file.filename):
+        _, extension = os.path.splitext(template_file.filename)
+        filename = get_random_string(18) + extension
+
+        try:
+
+            template_file.save(os.path.join(app.config['TEMPLATES_PATH'], filename))
+
+        except Exception as e:
+            return response_error(f"Unable to add template {e}")
+
+        report_template.internal_reference = filename
+
+        db.session.add(report_template)
+        db.session.commit()
+
+        track_activity(f"report template '{report_template.name}' added", caseid=caseid, ctx_less=True)
+        # Return the assets
+        return response_success("Added successfully")
+
+    return response_error("Unable to add a file")
 
 
 @manage_templates_blueprint.route('/manage/templates/download/<report_id>', methods=['GET'])
@@ -159,8 +166,8 @@ def download_template(report_id, caseid):
         report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
 
         fpath = os.path.join(app.config['TEMPLATES_PATH'], report_template.internal_reference)
-
-        resp = send_file(fpath, as_attachment=True, attachment_filename="{}.docx".format(report_template.name))
+        _, extension = os.path.splitext(report_template.internal_reference)
+        resp = send_file(fpath, as_attachment=True, attachment_filename=f"{report_template.name}.{extension}")
 
         return resp
 
@@ -171,19 +178,27 @@ def download_template(report_id, caseid):
 @manage_templates_blueprint.route('/manage/templates/delete/<report_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def delete_template(report_id, caseid):
-    error = ""
+    error = None
 
     report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
+    if report_template is None:
+        return response_error('Template not found')
+
+    report_name = report_template.name
 
     try:
 
         os.unlink(os.path.join(app.config['TEMPLATES_PATH'], report_template.internal_reference))
 
     except Exception as e:
-        return response_error(f"Unable to delete {e}")
+        error = f"Template reference will be deleted but there has been some errors. {e}"
 
-    CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).delete()
+    finally:
+        CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).delete()
+        db.session.commit()
 
-    db.session.commit()
+    if error:
+        return response_error(error)
 
+    track_activity(f"report template '{report_name}' deleted", caseid=caseid, ctx_less=True)
     return response_success("Deleted successfully", data=error)

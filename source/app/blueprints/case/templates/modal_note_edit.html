@@ -45,12 +45,8 @@
                 <label>Note title *</label>
                 {{ note.note_title(class='form-control input') }}
             </div>
-            <div class="form-group mt-3">
-                    <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();">
-                    </button>
-            </div>
-            <div class="row mb-1">
-                <div class="col mb--2" id="notes_edition_btn" style="display:none;">
+            <div class="row mb-1 mt-3">
+                <div class="col-10" id="notes_edition_btn">
                         <div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="save_note( this );"><i class="fa-solid fa-file-circle-check"></i></div>
                         <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="note_editor.insertSnippet('**${1:$SELECTION}**');note_editor.focus();"><i class="fa-solid fa-bold"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="note_editor.insertSnippet('*${1:$SELECTION}*');note_editor.focus();"><i class="fa-solid fa-italic"></i></div>
@@ -63,6 +59,10 @@
                         <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="note_editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');note_editor.focus();"><i class="fa-solid fa-table"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="note_editor.insertSnippet('\n- \n- \n- ');note_editor.focus();"><i class="fa-solid fa-list"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="note_editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');note_editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" id="btn_max_editor" title="Toggle editor expansion" onclick="toggle_max_editor();"><i class="fa-solid fa-maximize"></i></div>
+                </div>
+                <div class="col">
+                    <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();"></button>
                 </div>
             </div>
             <div class="row">

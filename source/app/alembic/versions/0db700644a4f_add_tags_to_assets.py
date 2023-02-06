@@ -7,8 +7,6 @@ Create Date: 2022-01-06 13:47:12.648707
 """
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import engine_from_config
-from sqlalchemy.engine import reflection
 
 # revision identifiers, used by Alembic.
 from app.alembic.alembic_utils import _table_has_column

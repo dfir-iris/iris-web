@@ -22,24 +22,17 @@ from flask import Blueprint
 # IMPORTS ------------------------------------------------
 from flask import redirect
 from flask import request
-from flask import session
 from flask_login import current_user
-from sqlalchemy import desc
 
 from app import app
 from app import cache
 from app import db
 from app.datamgmt.context.context_db import ctx_get_user_cases
 from app.datamgmt.context.context_db import ctx_search_user_cases
-from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
-from app.models.models import ServerSettings
 from app.util import ac_api_requires
-from app.util import ac_requires
-from app.util import api_login_required
-from app.util import get_urlcasename
 from app.util import not_authenticated_redirection_url
 from app.util import response_success
 
@@ -84,10 +77,6 @@ def iris_version():
 @app.context_processor
 @cache.cached(timeout=3600, key_prefix='iris_has_updates')
 def has_updates():
-    # if not current_user.is_authenticated:
-    #     return dict(has_updates=False)
-    #
-    # server_settings = ServerSettings.query.with_entities(ServerSettings.has_updates_available).first()
 
     return dict(has_updates=False)
 
@@ -100,6 +89,7 @@ def cases_context(max_results,  caseid):
 
     return response_success(data=datao)
 
+
 @ctx_blueprint.route('/context/search-cases', methods=['GET'])
 @ac_api_requires()
 def cases_context_search(caseid):
@@ -111,7 +101,6 @@ def cases_context_search(caseid):
     datao = ctx_search_user_cases(search, current_user.id, max_results=100)
 
     return response_success(data=datao)
-
 
 
 def update_user_case_ctx():

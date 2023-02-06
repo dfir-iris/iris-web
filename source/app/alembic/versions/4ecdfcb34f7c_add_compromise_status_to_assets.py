@@ -5,13 +5,11 @@ Revises: a929ef458490
 Create Date: 2022-11-26 17:06:33.061363
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 from app.alembic.alembic_utils import _table_has_column
-from app.datamgmt.case.case_assets_db import get_compromise_status_list
 from app.models import CompromiseStatus
 
 revision = '4ecdfcb34f7c'

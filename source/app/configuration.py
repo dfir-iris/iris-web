@@ -18,22 +18,17 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import configparser
+import logging as log
+import os
+import ssl
 # --------- Configuration ---------
 # read the private configuration file
 from datetime import timedelta
-
-import ssl
-
-import sys
 from enum import Enum
-import logging as log
-
-import requests
-import configparser
-import logging
-import os
 from pathlib import Path
 
+import requests
 # --------- Configuration ---------
 # read the private configuration file
 from azure.core.exceptions import ResourceNotFoundError
@@ -48,10 +43,8 @@ class IrisConfigException(Exception):
 class IrisConfig(configparser.ConfigParser):
     """ From https://gist.github.com/jeffersfp/586c2570cd2bdb8385693a744aa13122 - @jeffersfp """
 
-    def __init__(self, config_file):
+    def __init__(self):
         super(IrisConfig, self).__init__()
-        self.read(config_file)
-        self.validate_config()
 
         # Azure Key Vault
         self.key_vault_name = self.load('AZURE', 'KEY_VAULT_NAME')
@@ -59,7 +52,7 @@ class IrisConfig(configparser.ConfigParser):
             self.az_credential = DefaultAzureCredential()
             self.az_client = SecretClient(vault_url=f"https://{self.key_vault_name}.vault.azure.net/",
                                           credential=self.az_credential)
-            logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
+            log.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(log.WARNING)
 
     def validate_config(self):
         required_values = {
@@ -119,15 +112,14 @@ class IrisConfig(configparser.ConfigParser):
     def _load_env_deprecated(self, section, option):
         # Specify new_value : old_value
         mapping = {
-            'POSTGRES_USER': 'DB_USER',
-            'POSTGRES_PASSWORD': 'DB_PASS',
-            'POSTGRES_ADMIN_USER': 'POSTGRES_USER',
+            'POSTGRES_ADMIN_USER': 'DB_USER',
+            'POSTGRES_ADMIN_PASSWORD': 'DB_PASS',
             'POSTGRES_SERVER': 'DB_HOST',
             'POSTGRES_PORT': 'DB_PORT',
             'IRIS_SECRET_KEY': 'SECRET_KEY',
             'IRIS_SECURITY_PASSWORD_SALT': 'SECURITY_PASSWORD_SALT',
-            'APP_HOST': 'IRIS_UPSTREAM_SERVER',
-            'APP_PORT': 'IRIS_UPSTREAM_PORT'
+            'IRIS_UPSTREAM_SERVER': 'APP_HOST',
+            'IRIS_UPSTREAM_PORT': 'APP_PORT'
         }
 
         new_key = f"{section}_{option}"
@@ -137,7 +129,7 @@ class IrisConfig(configparser.ConfigParser):
 
         value = os.environ.get(old_key)
         if value:
-            logging.warning(f"Environment variable {old_key} used which is deprecated. Please use {new_key}.")
+            log.warning(f"Environment variable {old_key} used which is deprecated. Please use {new_key}.")
 
         return value
 
@@ -162,7 +154,7 @@ class IrisConfig(configparser.ConfigParser):
 
         value = self.get(old_key[0], old_key[1], fallback=None)
         if value:
-            logging.warning(
+            log.warning(
                 f"Configuration {old_key[0]}.{old_key[1]} found in configuration file. "
                 f"This is a deprecated configuration. Please use {new_key[0]}.{new_key[1]}")
 
@@ -171,13 +163,9 @@ class IrisConfig(configparser.ConfigParser):
 
 # --------- Configuration ---------
 # read the private configuration file
-config = configparser.ConfigParser()
+#config = configparser.ConfigParser()
 
-if os.getenv("DOCKERIZED"):
-    # The example config file has an invalid value so cfg will stay empty first
-    config = IrisConfig(f'app{os.path.sep}config.docker.ini')
-else:
-    config = IrisConfig(f'app{os.path.sep}config.priv.ini')
+config = IrisConfig()
 
 # Fetch the values
 PG_ACCOUNT_ = config.load('POSTGRES', 'USER')
@@ -186,6 +174,7 @@ PGA_ACCOUNT_ = config.load('POSTGRES', 'ADMIN_USER')
 PGA_PASSWD_ = config.load('POSTGRES', 'ADMIN_PASSWORD')
 PG_SERVER_ = config.load('POSTGRES', 'SERVER')
 PG_PORT_ = config.load('POSTGRES', 'PORT')
+PG_DB_ = config.load('POSTGRES', 'DB', fallback='iris_db')
 CELERY_BROKER_ = config.load('CELERY', 'BROKER',
                              fallback=f"amqp://{config.load('CELERY', 'HOST', fallback='rabbitmq')}")
 
@@ -239,6 +228,7 @@ if authentication_type == 'oidc_proxy':
     oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
 
     try:
+
         oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
 
         if oidc_discovery_response.status_code == 200:
@@ -249,13 +239,14 @@ if authentication_type == 'oidc_proxy':
             authentication_jwks_url = response_json.get('jwks_uri')
 
         else:
-            raise Exception("Unsuccessful authN server discovery")
+            raise IrisConfigException("Unsuccessful authN server discovery")
 
         authentication_client_id = config.load('OIDC', 'IRIS_CLIENT_ID', fallback="")
 
         authentication_client_secret = config.load('OIDC', 'IRIS_CLIENT_SECRET', fallback="")
 
         authentication_app_admin_role_name = config.load('OIDC', 'IRIS_ADMIN_ROLE_NAME', fallback="")
+
     except Exception as e:
         log.error(f"OIDC ERROR - {e}")
         exit(0)
@@ -265,7 +256,7 @@ if authentication_type == 'oidc_proxy':
 
 
 # --------- CELERY ---------
-class CeleryConfig():
+class CeleryConfig:
     result_backend = "db+" + SQLALCHEMY_BASE_URI + "iris_tasks"  # use database as storage
     broker_url = CELERY_BROKER_
     result_extended = True
@@ -274,15 +265,15 @@ class CeleryConfig():
 
 
 # --------- APP ---------
-class Config():
+class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.0.0-beta-2"
+    IRIS_VERSION = "v2.0.0-beta-3"
 
-    API_MIN_VERSION = "1.0.1"
-    API_MAX_VERSION = "1.0.4"
+    API_MIN_VERSION = "2.0.0"
+    API_MAX_VERSION = "2.0.0"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
-    MODULES_INTERFACE_MAX_VERSION = '1.1'
+    MODULES_INTERFACE_MAX_VERSION = '1.2.0'
 
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True
@@ -293,9 +284,9 @@ class Config():
 
         SECURITY_LOGIN_USER_TEMPLATE = 'login.html'
 
-        IRIS_ADM_EMAIL = config.load('IRIS', 'ADM_EMAIL', fallback=None)
-        IRIS_ADM_PASSWORD = config.load('IRIS', 'ADM_PASSWORD', fallback=None)
-        IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY', fallback=None)
+        IRIS_ADM_EMAIL = config.load('IRIS', 'ADM_EMAIL')
+        IRIS_ADM_PASSWORD = config.load('IRIS', 'ADM_PASSWORD')
+        IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY')
 
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     SESSION_COOKIE_SAMESITE = 'Lax'
@@ -307,6 +298,7 @@ class Config():
     PGA_PASSWD = PGA_PASSWD_
     PG_SERVER = PG_SERVER_
     PG_PORT = PG_PORT_
+    PG_DB = PG_DB_
 
     DEMO_MODE_ENABLED = config.load('IRIS_DEMO', 'ENABLED', fallback=False)
     if DEMO_MODE_ENABLED == 'True':
@@ -321,7 +313,7 @@ class Config():
     """
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    SQLALCHEMY_DATABASE_URI = SQLALCHEMY_BASE_URI + 'iris_db'
+    SQLALCHEMY_DATABASE_URI = SQLALCHEMY_BASE_URI + PG_DB_
     SQLALCHEMY_BINDS = {
         'iris_tasks': SQLALCHEMY_BASE_URI + 'iris_tasks'
     }

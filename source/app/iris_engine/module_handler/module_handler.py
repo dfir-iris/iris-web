@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
+#  Copyright (C) 2022 - DFIR IRIS Team
+#  contact@dfir-iris.org
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
 #
@@ -22,6 +24,7 @@ import traceback
 import base64
 import importlib
 from flask_login import current_user
+from packaging import version
 from pickle import dumps
 from pickle import loads
 from sqlalchemy import and_
@@ -36,6 +39,8 @@ from app.datamgmt.iris_engine.modules_db import modules_list_pipelines
 from app.models import IrisHook
 from app.models import IrisModule
 from app.models import IrisModuleHook
+from app.util import hmac_sign
+from app.util import hmac_verify
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = app.logger
@@ -100,9 +105,14 @@ def check_module_health(module_instance):
         dup_logs("Testing module")
         dup_logs("Module name : {}".format(module_instance.get_module_name()))
 
-        if not (float(app.config.get('MODULES_INTERFACE_MIN_VERSION'))
-                <= module_instance.get_interface_version()
-                <= float(app.config.get('MODULES_INTERFACE_MAX_VERSION'))):
+        if type(module_instance.get_interface_version()) != str:
+            mod_interface_version = str(module_instance.get_interface_version())
+        else:
+            mod_interface_version = module_instance.get_interface_version()
+
+        if not (version.parse(app.config.get('MODULES_INTERFACE_MIN_VERSION'))
+                <= version.parse(mod_interface_version)
+                <= version.parse(app.config.get('MODULES_INTERFACE_MAX_VERSION'))):
             log.critical("Module interface no compatible with server. Expected "
                          f"{app.config.get('MODULES_INTERFACE_MIN_VERSION')} <= module "
                          f"<= {app.config.get('MODULES_INTERFACE_MAX_VERSION')}")
@@ -141,6 +151,7 @@ def check_module_health(module_instance):
         return module_instance.is_ready(), logs
 
     except Exception as e:
+        log.exception("Error while checking module health")
         log.error(e.__str__())
         logs.append(e.__str__())
         return False, logs
@@ -269,7 +280,7 @@ def register_module(module_name):
                                   module_description=mod_inst.get_module_description(),
                                   module_config=mod_config,
                                   module_version=mod_inst.get_module_version(),
-                                  interface_version=mod_inst.get_module_version(),
+                                  interface_version=mod_inst.get_interface_version(),
                                   has_pipeline=mod_inst.is_providing_pipeline(),
                                   pipeline_args=mod_inst.pipeline_get_info(),
                                   module_type=mod_inst.get_module_type()
@@ -418,25 +429,47 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     :param caseid: Case associated
     :return: A task status JSON task_success or task_failure
     """
-    # Data is serialized, so deserialized
-    deser_data = loads(base64.b64decode(data))
+    try:
+        # Data is serialized, so deserialized
+        signature, pdata = data.encode("utf-8").split(b" ")
+        is_verified = hmac_verify(signature, pdata)
+        if is_verified is False:
+            log.warning("data argument has not been correctly serialised")
+            raise Exception('Unable to instantiate target module. Data has not been correctly serialised')
 
-    _obj = None
-    # The received object will most likely be cleared when handled by the task,
-    # so we need to attach it to the session in the task
-    _obj = []
-    if isinstance(deser_data, list):
+        deser_data = loads(base64.b64decode(pdata))
+
+    except Exception as e:
+        log.exception(e)
+        raise Exception(e)
+
+    try:
+
+        _obj = None
+        # The received object will most likely be cleared when handled by the task,
+        # so we need to attach it to the session in the task
         _obj = []
-        for dse_data in deser_data:
-            obj = db.session.merge(dse_data)
+        if isinstance(deser_data, list):
+            _obj = []
+            for dse_data in deser_data:
+                obj = db.session.merge(dse_data)
+                db.session.commit()
+                _obj.append(obj)
+
+        elif isinstance(deser_data, str) or isinstance(deser_data, int):
+            _obj = [deser_data]
+
+        elif isinstance(deser_data, dict):
+            _obj = [deser_data]
+
+        else:
+            _obj_a = db.session.merge(deser_data)
             db.session.commit()
-            _obj.append(obj)
-    elif isinstance(deser_data, str):
-        _obj = deser_data
-    else:
-        _obj_a = db.session.merge(deser_data)
-        db.session.commit()
-        _obj.append(_obj_a)
+            _obj.append(_obj_a)
+
+    except Exception as e:
+        log.exception(e)
+        raise Exception(e)
 
     log.info(f'Calling module {module_name} for hook {hook_name}')
 
@@ -455,13 +488,13 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     except Exception as e:
         msg = f"Failed to run hook {hook_name} with module {module_name}. Error {str(e)}"
         log.critical(msg)
-        print(traceback.format_exc())
-        task_status = IStatus.I2Error(message=msg)
+        log.exception(e)
+        task_status = IStatus.I2Error(message=msg, logs=[traceback.format_exc()], user=init_user, caseid=caseid)
 
     return task_status
 
 
-def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str = None) -> any:
+def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str = None, module_name: str = None) -> any:
     """
     Calls modules which have registered the specified hook
 
@@ -469,6 +502,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
     :param hook_name: Name of the hook to call
     :param hook_ui_name: UI name of the hook
     :param data: Data associated with the hook
+    :param module_name: Name of the module to call. If None, all modules matching the hook will be called
     :param caseid: Case ID
     :return: Any
     """
@@ -489,6 +523,13 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
             IrisModuleHook.hook_id == hook.id
         )
 
+
+    if module_name:
+        condition = and_(
+            condition,
+            IrisModule.module_name == module_name
+        )
+
     modules = IrisModuleHook.query.with_entities(
         IrisModuleHook.run_asynchronously,
         IrisModule.module_name,
@@ -503,9 +544,10 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
             log.info(f'Calling module {module.module_name} asynchronously for hook {hook_name} :: {hook_ui_name}')
             # We cannot directly pass the sqlalchemy in data, as it needs to be serializable
             # So pass a dumped instance and then rebuild on the task side
-            ser_data = base64.b64encode(dumps(data)).decode('utf8')
+            ser_data = base64.b64encode(dumps(data))
+            ser_data_auth = hmac_sign(ser_data) + b" " + ser_data
             task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
-                                    hook_ui_name=module.manual_hook_ui_name, data=ser_data,
+                                    hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
                                     init_user=current_user.name, caseid=caseid)
 
         else:
@@ -533,7 +575,8 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
                 data_result = status.get_data()
                 if not was_list:
                     if not isinstance(data_result, list):
-                        log.critical(f"Error getting data result from hook {hook_name}: A list is expected, instead got a {type(data_result)}")
+                        log.critical(f"Error getting data result from hook {hook_name}: "
+                                     f"A list is expected, instead got a {type(data_result)}")
                         continue
                     else:
                         # We fetch the first elt here because we want to get back to the old type
@@ -558,7 +601,6 @@ def pipeline_dispatcher(self, module_name, hook_name, pipeline_type, pipeline_da
     """
     Dispatch the pipelines according to their types
     :param pipeline_type: Type of pipeline
-    :param form: form contained
     :return: IrisInterfaceStatus
     """
 

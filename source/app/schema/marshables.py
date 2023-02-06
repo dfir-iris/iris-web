@@ -18,26 +18,29 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
-import dateutil.parser
-import marshmallow
+import logging
 import os
-import pyminizip
 import random
 import re
+import shutil
 import string
+import tempfile
+from pathlib import Path
+
+import dateutil.parser
+import marshmallow
+import pyminizip
 from flask_login import current_user
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
-from pathlib import Path
 from sqlalchemy import func
 
 from app import app
 from app import db
 from app import ma
-from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
@@ -68,6 +71,8 @@ from app.util import file_sha256sum
 from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
+
+log = app.logger
 
 
 def allowed_file_icon(filename):
@@ -119,7 +124,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 class CaseAddNoteSchema(ma.Schema):
     note_id = fields.Integer(required=False)
     note_title = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
-    note_content = fields.String(required=False, validate=Length(min=1))
+    note_content = fields.String(required=False)
     group_id = fields.Integer(required=True)
     csrf_token = fields.String(required=False)
     custom_attributes = fields.Dict(required=False)
@@ -239,6 +244,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
     event_date_wtz = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
     modification_history = auto_field('modification_history', required=False, readonly=True)
     event_comments_map = fields.List(fields.Integer, required=False, allow_none=True)
+    event_sync_iocs_assets = fields.Boolean(required=False)
 
     class Meta:
         model = CasesEvent
@@ -372,21 +378,20 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
             if passwd is not None:
                 try:
+                    with tempfile.NamedTemporaryFile() as tmp:
+                        file_storage.save(tmp)
+                        file_hash = file_sha256sum(tmp.name)
+                        file_size = os.stat(tmp.name).st_size
 
-                    temp_location = Path('/tmp/') / location.name
-                    file_storage.save(temp_location)
-                    file_hash = file_sha256sum(temp_location)
-                    file_size = temp_location.stat().st_size
+                        file_path = location.as_posix() + '.zip'
 
-                    temp_location = temp_location.rename(Path('/tmp/') / file_hash)
+                        shutil.copyfile(tmp.name, Path(tmp.name).parent / file_hash)
 
-                    pyminizip.compress(temp_location.as_posix(), None, location.as_posix() + '.zip', passwd, 0)
-
-                    Path(temp_location).unlink()
-
-                    file_path = location.as_posix() + '.zip'
+                        pyminizip.compress((Path(tmp.name).parent / file_hash).as_posix(), None, file_path, passwd, 0)
+                        os.unlink(Path(tmp.name).parent / file_hash)
 
                 except Exception as e:
+                    log.exception(e)
                     raise marshmallow.exceptions.ValidationError(
                         str(e),
                         field_name='file_password'
@@ -440,7 +445,7 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
-    def load_store_icon(self, file_storage, type):
+    def load_store_icon(self, file_storage, field_type):
         if not file_storage.filename:
             return None
 
@@ -449,10 +454,10 @@ class AssetSchema(ma.SQLAlchemyAutoSchema):
         if fpath is None:
             raise marshmallow.exceptions.ValidationError(
                 message,
-                field_name=type
+                field_name=field_type
             )
 
-        setattr(self, type, fpath)
+        setattr(self, field_type, fpath)
 
         return fpath
 

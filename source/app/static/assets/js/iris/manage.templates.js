@@ -1,5 +1,5 @@
 function add_report_template() {
-    url = 'templates/add' + case_param();
+    url = 'templates/add/modal' + case_param();
     $('#modal_report_template_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -23,7 +23,7 @@ function add_report_template() {
             var formData = new FormData(this);
 
             $.ajax({
-                url: url,
+                url: 'templates/add' + case_param(),
                 type: "POST",
                 data: formData,
                 cache: false,
@@ -165,7 +165,7 @@ function delete_report(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-          get_request_api('/manage/templates/delete/' + id)
+          post_request_api('/manage/templates/delete/' + id)
           .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_template_table();

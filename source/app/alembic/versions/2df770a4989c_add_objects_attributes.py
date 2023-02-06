@@ -7,11 +7,10 @@ Create Date: 2022-02-11 20:13:14.365469
 """
 import sqlalchemy as sa
 from alembic import op
-# revision identifiers, used by Alembic.
-from sqlalchemy import engine_from_config
-from sqlalchemy.engine import reflection
 
 from app.alembic.alembic_utils import _table_has_column
+
+# revision identifiers, used by Alembic.
 
 revision = '2df770a4989c'
 down_revision = '10a7616f3cc7'

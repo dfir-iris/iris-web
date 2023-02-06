@@ -14,6 +14,9 @@ $.fn.serializeObject = function() {
     return o;
 };
 
+
+var jdata_menu_options = [];
+
 function clear_api_error() {
    $(".invalid-feedback").hide();
 }
@@ -189,8 +192,13 @@ function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
      cid = '?cid=' + cid;
     }
 
+    uri = uri + cid;
+    return get_raw_request_api(uri, propagate_api_error, beforeSend_fn)
+}
+
+function get_raw_request_api(uri, propagate_api_error, beforeSend_fn) {
     return $.ajax({
-        url: uri + cid,
+        url: uri,
         type: 'GET',
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
@@ -600,6 +608,25 @@ function dim_task_status(id) {
     });
 }
 
+function init_module_processing_wrap(rows, data_type, out_hook_name) {
+    console.log(out_hook_name);
+    hook_name = null;
+    for (opt in jdata_menu_options) {
+        console.log(jdata_menu_options[opt]);
+        if (jdata_menu_options[opt].manual_hook_ui_name == out_hook_name) {
+            hook_name = jdata_menu_options[opt].hook_name;
+            hook_ui_name = jdata_menu_options[opt].manual_hook_ui_name;
+            module_name = jdata_menu_options[opt].module_name;
+            break
+        }
+    }
+    if (hook_name == null) {
+        notify_error('Error: hook not found');
+        return false;
+    }
+    return init_module_processing(rows, hook_name, hook_ui_name, module_name, data_type);
+}
+
 function init_module_processing(rows, hook_name, hook_ui_name, module_name, data_type) {
     var data = Object();
     data['hook_name'] = hook_name;
@@ -674,7 +701,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     if ($("#"+anchor_id).attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");
     } else {
-        editor.setTheme("ace/theme/tomorrow_night");
+        editor.setTheme("ace/theme/iris_night");
     }
     editor.session.setMode("ace/mode/markdown");
     if (readonly !== undefined) {
@@ -973,19 +1000,22 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                 });
 
                 actionOptions.items.push({
-                    type: 'divider',
+                    type: 'divider'
                 });
+                jdata_menu_options = jsdata;
+
                 for (option in jsdata) {
                     opt = jsdata[option];
+
                     actionOptions.items.push({
                         type: 'option',
                         title: opt.manual_hook_ui_name,
                         multi: true,
                         multiTitle: opt.manual_hook_ui_name,
-                        iconClass: 'fas fa-arrow-alt-circle-right',
+                        iconClass: 'fas fa-rocket',
                         contextMenuClasses: ['text-dark'],
-                        action: function (rows) {
-                            init_module_processing(rows, opt.hook_name, opt.manual_hook_ui_name, opt.module_name, data_type);
+                        action: function (rows, de, ke) {
+                            init_module_processing_wrap(rows, data_type, de[0].outerText);
                         },
                     })
                 }
@@ -1008,11 +1038,46 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                     });
                 }
 
-                table.contextualActions(actionOptions);
+                tableActions = table.contextualActions(actionOptions);
+                tableActions.update();
             }
         }
     })
 }
+
+function autocollapse (menu,maxHeight) {
+
+    var nav = $(menu);
+    var navHeight = nav.innerHeight();
+
+    if (navHeight > maxHeight) {
+        while (navHeight > maxHeight) {
+            $(menu + ' .dropdown').removeClass('d-none');
+            var children = nav.children(menu + ' li:not(:last-child)');
+            var count = children.length;
+            $(children[count - 1]).prependTo(menu + ' .dropdown-menu');
+
+            navHeight = nav.innerHeight();
+        }
+    } else {
+
+        var collapsed = $(menu + ' .dropdown-menu').children(menu + ' li');
+
+        if (collapsed.length===0) {
+          $(menu + ' .dropdown').addClass('d-none');
+        }
+
+        while ($('#h_nav_tab').width() < $('#nav_top_wrapper').width() &&  collapsed.length > 0) {
+            collapsed = $(menu + ' .dropdown-menu').children('li');
+
+            $(collapsed[0]).insertBefore(nav.children(menu + ' li:last-child'));
+
+            navHeight = nav.innerHeight();
+        }
+
+    }
+}
+
 
 function get_custom_attributes_fields() {
     values = Object();
@@ -1215,6 +1280,12 @@ $(document).ready(function(){
     notify_redirect();
     update_time();
     setInterval(function() { update_time(); }, 30000);
+
+    autocollapse('#h_nav_tab',41);
+
+    $(window).on('resize', function () {
+        autocollapse('#h_nav_tab',41);
+    });
 
     $(function () {
         var current = location.pathname;

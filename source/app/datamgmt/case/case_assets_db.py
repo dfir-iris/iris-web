@@ -19,15 +19,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
+
 from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 
 from app import db
 from app.datamgmt.states import update_assets_state
-from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models import AnalysisStatus
 from app.models import AssetComments
 from app.models import AssetsType

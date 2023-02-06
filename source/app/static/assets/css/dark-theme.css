@@ -1,5 +1,5 @@
 body {
-    background: #161a29;
+    background: #111420;
 }
 
 body .main-header {
@@ -23,6 +23,7 @@ body .row-card-no-pd,
 body .list-group-item,
 body .timeline>li>.timeline-panel {
     background: #202940;
+    box-shadow: none;
 }
 
 body .card-pricing2 {
@@ -31,6 +32,10 @@ body .card-pricing2 {
 
 body .row-card-no-pd [class*=col] .card:before {
     background: rgba(181, 181, 181, 0.1) !important;
+}
+
+.kanban-item {
+    box-shadow: 0 0 0 1px rgba(122, 128, 134, 0.2);
 }
 
 body .card .card-header,
@@ -95,6 +100,12 @@ body .card-title a,
 body .card-title a:hover,
 body .card-title a:focus {
     color: #fff;
+}
+
+.bg-shadow-gradient {
+  background: #1572E8 !important;
+  background: -webkit-linear-gradient(legacy-direction(-45deg), #141515, #484848BD) !important;
+  background: linear-gradient(-45deg, #141515, #484848BD) !important;
 }
 
 body .card-category {
@@ -332,8 +343,12 @@ body input,
 body select,
 body .select2-selection,
 body .select2-container--default {
-    background: rgba(185, 185, 185, 0.18) !important;
+    background: rgb(26, 32, 53) !important;
     color: #cac7c7;
+}
+
+.select2-container--default .select2-selection--multiple {
+    border: 1px solid #2f374b;
 }
 
 body .secondary-header .nav-bottom .page-navigation > .nav-item > .nav-link .menu-title {
@@ -376,7 +391,7 @@ body .select2-container--default .select2-selection--single .select2-selection__
     background-size: auto;
   background-size: cover;
   background-position: center center;
-  box-shadow: -20px 0px 30px 0px rgba(30, 30, 30, 0.28);
+  box-shadow: none;
   transition: all .3s;
   z-index: 1101;
   padding: 20px 20px 0;
@@ -404,8 +419,8 @@ body .select2-container--default .select2-selection--single .select2-selection__
   background-size: auto;
   background-size: cover;
   background-position: center center;
-  box-shadow: -20px 0px 30px 0px rgba(30, 30, 30, 0.28);
   transition: all .3s;
+  box-shadow: none;
   z-index: 1001;
   padding: 20px 20px 0;
 }

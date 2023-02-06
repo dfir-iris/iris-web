@@ -17,19 +17,28 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import base64
 import datetime
 from flask_login import current_user
 
-from app import db
+from app import db, app
 from app.models import IrisHook
 from app.models import IrisModule
 from app.models import IrisModuleHook
 from app.models.authorization import User
 
+log = app.logger
+
 
 def iris_module_exists(module_name):
     return IrisModule.query.filter(IrisModule.module_name == module_name).first() is not None
+
+
+def iris_module_name_from_id(module_id):
+    data = IrisModule.query.filter(IrisModule.id == module_id).first()
+    if data:
+        return data.module_name
+    return None
 
 
 def iris_module_add(module_name, module_human_name, module_description,
@@ -68,24 +77,27 @@ def is_mod_configured(mod_config):
 
 def iris_module_save_parameter(mod_id, mod_config, parameter, value, section=None):
     data = IrisModule.query.filter(IrisModule.id == mod_id).first()
-    if data:
-        index = 0
-        for config in mod_config:
-            if config['param_name'] == parameter:
-                if config['type'] == "bool":
-                    if isinstance(value, str):
-                        value = bool(value.lower() == "true")
-                    elif isinstance(value, bool):
-                        value = bool(value)
-                    else:
-                        value = False
+    if data is None:
+        return False
 
-                mod_config[index]["value"] = value
-                data.module_config = mod_config
-                db.session.commit()
-                return True
+    index = 0
+    for config in mod_config:
 
-            index += 1
+        if config['param_name'] == parameter:
+            if config['type'] == "bool":
+                if isinstance(value, str):
+                    value = bool(value.lower() == "true")
+                elif isinstance(value, bool):
+                    value = bool(value)
+                else:
+                    value = False
+
+            mod_config[index]["value"] = value
+            data.module_config = mod_config
+            db.session.commit()
+            return True
+
+        index += 1
 
     return False
 
@@ -223,3 +235,27 @@ def module_list_available_hooks():
         IrisHook.hook_description
     ).all()
 
+
+def parse_module_parameter(module_parameter):
+    try:
+
+        param = base64.b64decode(module_parameter).decode('utf-8')
+        mod_id = param.split('##')[0]
+        param_name = param.split('##')[1]
+
+    except Exception as e:
+        log.exception(e)
+        return None, None, None, None
+
+    mod_config, mod_name, mod_iname = get_module_config_from_id(mod_id)
+
+    parameter = None
+    for param in mod_config:
+        if param_name == param['param_name']:
+            parameter = param
+            break
+
+    if not parameter:
+        return None, None, None, None
+
+    return mod_config, mod_id, mod_name, mod_iname, parameter

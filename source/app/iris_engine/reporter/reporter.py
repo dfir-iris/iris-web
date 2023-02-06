@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
+#  Copyright (C) 2022 - DFIR IRIS Team
+#  contact@dfir-iris.org
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
 #
@@ -26,6 +28,8 @@
 import logging as log
 import os
 from datetime import datetime
+
+import jinja2
 
 from app.datamgmt.reporter.report_db import export_case_json_for_report
 from docx_generator.docx_generator import DocxGenerator
@@ -53,7 +57,228 @@ LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(me
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)
 
 
-class IrisMakeDocReport(object):
+class IrisReportMaker(object):
+    """
+    IRIS generical report maker
+    """
+
+    def __init__(self, tmp_dir, report_id, caseid, safe_mode=False):
+        self._tmp = tmp_dir
+        self._report_id = report_id
+        self._case_info = {}
+        self._caseid = caseid
+        self.safe_mode = safe_mode
+
+    def get_case_info(self, doc_type):
+        """Returns case information
+
+        Args:
+            doc_type (_type_): Investigation or Activities report
+
+        Returns:
+            _type_: case info
+        """
+        if doc_type == 'Investigation':
+            case_info = self._get_case_info()
+        elif doc_type == 'Activities':
+            case_info = self._get_activity_info()
+        else:
+            log.error("Unknown report type")
+            return None
+        return case_info
+
+    def _get_activity_info(self):
+        auto_activities = get_auto_activities(self._caseid)
+        manual_activities = get_manual_activities(self._caseid)
+        case_info_in = self._get_case_info()
+
+        # Format information and generate the activity report #
+        doc_id = "{}".format(datetime.utcnow().strftime("%y%m%d_%H%M"))
+
+        case_info = {
+            'auto_activities': auto_activities,
+            'manual_activities': manual_activities,
+            'date': datetime.utcnow(),
+            'gen_user': current_user.name,
+            'case': {'name': case_info_in['case'].get('name'),
+                     'open_date': case_info_in['case'].get('open_date'),
+                     'for_customer': case_info_in['case'].get('for_customer')
+                     },
+            'doc_id': doc_id
+        }
+
+        return case_info
+
+    def _get_case_info(self):
+        """
+        Retrieve information of the case
+        :return:
+        """
+        case_info = export_case_json(self._caseid)
+
+        # Get customer, user and case title
+        case_info['doc_id'] = IrisReportMaker.get_docid()
+        case_info['user'] = current_user.name
+
+        # Set date
+        case_info['date'] = datetime.utcnow().strftime("%Y-%m-%d")
+
+        return case_info
+
+    @staticmethod
+    def get_case_summary(caseid):
+        """
+        Retrieve the case summary from thehive
+        :return:
+        """
+
+        _crc32, descr = case_get_desc_crc(caseid)
+
+        # return IrisMakeDocReport.markdown_to_text(descr)
+        return descr
+
+    @staticmethod
+    def get_case_files(caseid):
+        """
+        Retrieve the list of files with their hashes
+        :return:
+        """
+        files = CaseReceivedFile.query.filter(
+            CaseReceivedFile.case_id == caseid
+        ).with_entities(
+            CaseReceivedFile.filename,
+            CaseReceivedFile.date_added,
+            CaseReceivedFile.file_hash,
+            CaseReceivedFile.custom_attributes
+        ).order_by(
+            CaseReceivedFile.date_added
+        ).all()
+
+        if files:
+            return [row._asdict() for row in files]
+
+        else:
+            return []
+
+    @staticmethod
+    def get_case_timeline(caseid):
+        """
+        Retrieve the case timeline
+        :return:
+        """
+        timeline = CasesEvent.query.filter(
+            CasesEvent.case_id == caseid
+        ).order_by(
+            CasesEvent.event_date
+        ).all()
+
+        cache_id = {}
+        ras = {}
+        tim = []
+        for row in timeline:
+            ras = row
+            setattr(ras, 'asset', None)
+
+            as_list = CaseEventsAssets.query.with_entities(
+                CaseAssets.asset_id,
+                CaseAssets.asset_name,
+                AssetsType.asset_name.label('type')
+            ).filter(
+                CaseEventsAssets.event_id == row.event_id
+            ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+
+            alki = []
+            for asset in as_list:
+                alki.append("{} ({})".format(asset.asset_name, asset.type))
+
+            setattr(ras, 'asset', "\r\n".join(alki))
+
+            tim.append(ras)
+
+        return tim
+
+    @staticmethod
+    def get_case_ioc(caseid):
+        """
+        Retrieve the list of IOC linked to the case
+        :return:
+        """
+        res = IocLink.query.distinct().with_entities(
+            Ioc.ioc_value,
+            Ioc.ioc_type,
+            Ioc.ioc_description,
+            Ioc.ioc_tags,
+            Ioc.custom_attributes
+        ).filter(
+            IocLink.case_id == caseid
+        ).join(IocLink.ioc).order_by(Ioc.ioc_type).all()
+
+        if res:
+            return [row._asdict() for row in res]
+
+        else:
+            return []
+
+    @staticmethod
+    def get_case_assets(caseid):
+        """
+        Retrieve the assets linked ot the case
+        :return:
+        """
+        ret = []
+
+        res = CaseAssets.query.distinct().with_entities(
+            CaseAssets.asset_id,
+            CaseAssets.asset_name,
+            CaseAssets.asset_description,
+            CaseAssets.asset_compromised.label('compromised'),
+            AssetsType.asset_name.label("type"),
+            CaseAssets.custom_attributes,
+            CaseAssets.asset_tags
+        ).filter(
+            CaseAssets.case_id == caseid
+        ).join(
+            CaseAssets.asset_type
+        ).order_by(desc(CaseAssets.asset_compromised)).all()
+
+        for row in res:
+            row = row._asdict()
+            row['light_asset_description'] = row['asset_description']
+
+            ial = IocAssetLink.query.with_entities(
+                Ioc.ioc_value,
+                Ioc.ioc_type,
+                Ioc.ioc_description
+            ).filter(
+                IocAssetLink.asset_id == row['asset_id']
+            ).join(
+                IocAssetLink.ioc
+            ).all()
+
+            if ial:
+                row['asset_ioc'] = [row._asdict() for row in ial]
+            else:
+                row['asset_ioc'] = []
+
+            ret.append(row)
+
+        return ret
+
+    @staticmethod
+    def get_docid():
+        return "{}".format(
+            datetime.utcnow().strftime("%y%m%d_%H%M"))
+
+    @staticmethod
+    def markdown_to_text(markdown_string):
+        """
+        Converts a markdown string to plaintext
+        """
+        return markdown_string.replace('\n', '</w:t></w:r><w:r/></w:p><w:p><w:r><w:t xml:space="preserve">').replace(
+            '#', '')
+
+
+class IrisMakeDocReport(IrisReportMaker):
     """
     Generates a DOCX report for the case
     """
@@ -65,14 +290,14 @@ class IrisMakeDocReport(object):
         self._caseid = caseid
         self._safe_mode = safe_mode
 
-    def generate_doc_report(self, type):
+    def generate_doc_report(self, doc_type):
         """
         Actually generates the report
         :return:
         """
-        if type == 'Investigation':
+        if doc_type == 'Investigation':
             case_info = self._get_case_info()
-        elif type == 'Activities':
+        elif doc_type == 'Activities':
             case_info = self._get_activity_info()
         else:
             log.error("Unknown report type")
@@ -101,10 +326,11 @@ class IrisMakeDocReport(object):
                                     output_file_path
                                     )
 
-            return output_file_path
+            return output_file_path, ""
 
-        except rendering_error.RenderingError:
-            return None
+        except rendering_error.RenderingError as e:
+
+            return None, e.__str__()
 
     def _get_activity_info(self):
         auto_activities = get_auto_activities(self._caseid)
@@ -295,6 +521,65 @@ class IrisMakeDocReport(object):
         """
         return markdown_string.replace('\n', '</w:t></w:r><w:r/></w:p><w:p><w:r><w:t xml:space="preserve">').replace(
             '#', '')
+
+
+class IrisMakeMdReport(IrisReportMaker):
+    """
+    Generates a MD report for the case
+    """
+
+    def __init__(self, tmp_dir, report_id, caseid, safe_mode=False):
+        self._tmp = tmp_dir
+        self._report_id = report_id
+        self._case_info = {}
+        self._caseid = caseid
+        self.safe_mode = safe_mode
+
+    def generate_md_report(self, doc_type):
+        """
+        Generate report file
+        """
+        case_info = self.get_case_info(doc_type)
+        if case_info is None:
+            return None
+
+        # Get file extension
+        report = CaseTemplateReport.query.filter(
+            CaseTemplateReport.id == self._report_id).first()
+
+        _, report_format = os.path.splitext(report.internal_reference)
+
+        # Prepare report name
+        name = "{}".format(("{}" + str(report_format)).format(report.naming_format))
+        name = name.replace("%code_name%", case_info['doc_id'])
+        name = name.replace(
+            '%customer%', case_info['case'].get('for_customer'))
+        name = name.replace('%case_name%', case_info['case'].get('name'))
+        name = name.replace('%date%', datetime.utcnow().strftime("%Y-%m-%d"))
+
+        # Build output file
+        output_file_path = os.path.join(self._tmp, name)
+
+        try:
+            # Load the template
+            template_loader = jinja2.FileSystemLoader(searchpath="/")
+            template_env = jinja2.Environment(loader=template_loader, autoescape=True)
+            template_env.filters = app.jinja_env.filters
+            template = template_env.get_template(os.path.join(
+                app.config['TEMPLATES_PATH'], report.internal_reference))
+
+            # Render with a mapping between JSON (from db) and template tags
+            output_text = template.render(case_info)
+
+            # Write the result in the output file
+            with open(output_file_path, 'w', encoding="utf-8") as html_file:
+                html_file.write(output_text)
+
+        except Exception as e:
+            log.exception("Error while generating report: {}".format(e))
+            return None, e.__str__()
+
+        return output_file_path, 'Report generated'
 
 
 class QueuingHandler(log.Handler):

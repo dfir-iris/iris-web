@@ -6345,7 +6345,11 @@ label.error {
 }
 
 .navbar .navbar-nav .nav-item .nav-link:hover {
-    background: #eee !important;
+    background: #3d9afd !important;
+}
+
+#dropdown-top-overflow .nav-link {
+    margin-left: 4px;
 }
 
 .navbar .navbar-nav .nav-item .nav-link i {
@@ -8199,6 +8203,7 @@ body .badge-danger {
 .activity-feed .feed-item .text {
     position: relative;
     top: -3px;
+    overflow-wrap: break-word;
 }
 
 
@@ -14140,8 +14145,8 @@ table.dataTable.stripe tbody > tr.selected {
 
 .bg-info-gradient {
     background: #48ABF7 !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #0003964, #3E81AA) !important;
-    background:linear-gradient(-45deg, #003964, #3E81AA) !important;
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #023053, #076ebb) !important;
+    background:linear-gradient(-45deg, #023053, #076ebb) !important;
 }
 
 .bg-success-gradient {
@@ -15756,4 +15761,8 @@ td.dt-nowrap { white-space: nowrap }
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.ace_editor {
+    border-radius: .3rem !important;
 }

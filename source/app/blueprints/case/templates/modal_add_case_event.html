@@ -92,7 +92,7 @@
                                             </div>
                                             <div class="row" style="margin-left:0px;">
                                                 <div class="col-12" id="container_event_desc_content">
-                                                    <div id="event_description" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event.event_content %}{{ event.event_content  }}{% endif %}</div>
+                                                    <div id="event_description" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event.event_content %}{{ event.event_content  }}{% endif %}</div>
                                                     <textarea id="event_desc_content" rows="10" cols="82" style="display: none"></textarea>
                                                 </div>
                                                 <div class="col-12" id="container_event_description" style="display:none">
@@ -136,13 +136,23 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="form-group col-12">
+                                    <div class="form-group col-10">
                                         <label for="event_assets">Link to IOCs
                                         </label>
                                         <div class="select2-input ml-12" data-select2-id="6">
                                             <select id="event_iocs" name="event_iocs" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="event_iocs" tabindex="-1" aria-hidden="true" style="width: 100%">
                                             </select>
                                         </div>
+                                    </div>
+                                    <div class="form-group col-2">
+                                       <div class="form-check">
+                                            <label class="form-check-label mt-3">
+                                                <input class="form-check-input" type="checkbox" id="event_sync_iocs_assets" checked>
+                                                    <span class="form-check-sign"> Push IOCs to assets
+                                                        <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the IOCs related to this event will be associated with the specified assets" style="cursor:pointer;"></i>
+                                                    </span>
+                                            </label>
+                                       </div>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -157,6 +167,7 @@
                                             <label class="form-check-label mt-3">
                                                 {{ form.event_in_summary(class="form-check-input", type="checkbox") }}
                                                 <span class="form-check-sign"> Add to summary
+                                                    <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the event will be integrated in the Timeline Visualization" style="cursor:pointer;"></i>
                                                 </span>
                                             </label>
                                         </div>
@@ -166,6 +177,7 @@
                                             <label class="form-check-label mt-3">
                                                 {{ form.event_in_graph(class="form-check-input", type="checkbox") }}
                                                 <span class="form-check-sign"> Display in graph
+                                                    <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the event will be integrated in the Graph section of the case" style="cursor:pointer;"></i>
                                                 </span>
                                             </label>
                                         </div>

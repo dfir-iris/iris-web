@@ -20,9 +20,10 @@
 
 # IMPORTS ------------------------------------------------
 import json
-import marshmallow
 import urllib.parse
 from datetime import datetime
+
+import marshmallow
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -34,10 +35,8 @@ from sqlalchemy import and_
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import delete_event
-from app.datamgmt.case.case_events_db import delete_event_category
 from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
@@ -60,9 +59,7 @@ from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Comments
 from app.models import CompromiseStatus
-from app.models import EventComments
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.cases import Cases
@@ -179,7 +176,6 @@ def case_comment_add(cur_id, caseid):
             return response_error('Invalid event ID')
 
         comment_schema = CommentSchema()
-        #request_data = call_modules_hook('on_preload_event_commented', data=request.get_json(), caseid=caseid)
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
@@ -273,7 +269,6 @@ def case_getgraph(caseid):
     tim = []
     for row in timeline:
         tmp = {}
-        ras = row
 
         tmp['date'] = row.event_date
         tmp['group'] = row.category[0].name
@@ -755,7 +750,9 @@ def case_edit_event(cur_id, caseid):
 
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
-                                           assets_list=request_data.get('event_assets'))
+                                           assets_list=request_data.get('event_assets'),
+                                           iocs_list=request_data.get('event_iocs'),
+                                           sync_iocs_assets=request_data.get('event_sync_iocs_assets'))
         if not success:
             return response_error('Error while saving linked assets', data=log)
 
@@ -831,10 +828,13 @@ def case_add_event(caseid):
         save_event_category(event.event_id, request_data.get('event_category_id'))
 
         setattr(event, 'event_category_id', request_data.get('event_category_id'))
+        sync_iocs_assets = request_data.get('event_sync_iocs_assets') if request_data.get('event_sync_iocs_assets') else False
 
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
-                                           assets_list=request_data.get('event_assets'))
+                                           assets_list=request_data.get('event_assets'),
+                                           iocs_list=request_data.get('event_iocs'),
+                                           sync_iocs_assets=sync_iocs_assets)
         if not success:
             return response_error('Error while saving linked assets', data=log)
 
@@ -892,16 +892,18 @@ def case_duplicate_event(cur_id, caseid):
         if old_event_category is not None:
             save_event_category(event.event_id, old_event_category.category_id)
 
+        iocs_list = get_event_iocs_ids(old_event.event_id, caseid)
         # Update assets mapping
         assets_list = get_event_assets_ids(old_event.event_id, caseid)
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
-                                           assets_list=assets_list)
+                                           assets_list=assets_list,
+                                           iocs_list=iocs_list,
+                                           sync_iocs_assets=False)
         if not success:
             return response_error('Error while saving linked assets', data=log)
 
         # Update iocs mapping
-        iocs_list = get_event_iocs_ids(old_event.event_id, caseid)
         success, log = update_event_iocs(event_id=event.event_id,
                                          caseid=caseid,
                                          iocs_list=iocs_list)

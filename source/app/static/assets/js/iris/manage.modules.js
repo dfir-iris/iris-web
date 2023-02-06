@@ -21,7 +21,7 @@ $('#form_new_module').submit(function () {
 
 
 function add_module() {
-    url = 'modules/add' + case_param();
+    url = 'modules/add/modal' + case_param();
     $('#modal_add_module_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -260,7 +260,7 @@ function import_mod_config(module_id){
 
 /* Update the param of a module */
 function update_param(module_id, param_name) {
-    url = 'modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();
+    url = 'modules/get-parameter/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();
     $('#modal_update_param_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -270,16 +270,16 @@ function update_param(module_id, param_name) {
             var data = Object();
             if ($('#editor_detail').length != 0) {
                 editor = ace.edit("editor_detail");
-                data['param_value'] = editor.getSession().getValue();
+                data['parameter_value'] = editor.getSession().getValue();
                 data['csrf_token'] = $('#csrf_token').val();
             } else {
                 data = $('#form_update_param').serializeObject();
-                if ($('#param_value').attr('type') == "checkbox") {
-                    data['param_value'] = $('#param_value').prop('checked');
+                if ($('#parameter_value').attr('type') == "checkbox") {
+                    data['parameter_value'] = $('#parameter_value').prop('checked');
                 }
             }
 
-            post_request_api('modules/update_param/' + decodeURIComponent(escape(window.btoa(param_name))), JSON.stringify(data))
+            post_request_api('modules/set-parameter/' + decodeURIComponent(escape(window.btoa(param_name))), JSON.stringify(data))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     module_detail(module_id);
@@ -296,7 +296,7 @@ function update_param(module_id, param_name) {
 
 /* Fetch the details of an module and allow modification */
 function module_detail(module_id) {
-    url = 'modules/update/' + module_id + case_param();
+    url = 'modules/update/' + module_id + '/modal' + case_param();
     $('#modal_add_module_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -333,7 +333,7 @@ function remove_module(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-        get_request_api('/manage/modules/remove/' + id)
+        post_request_api('/manage/modules/remove/' + id)
         .done((data) => {
             if(notify_auto_api(data)) {
               refresh_modules(true);
@@ -348,7 +348,7 @@ function remove_module(id) {
 }
 
 function enable_module(module_id) {
-    get_request_api('modules/enable/' + module_id)
+    post_request_api('modules/enable/' + module_id)
     .done((data) => {
         if(notify_auto_api(data)) {
             refresh_modules(true);
@@ -359,7 +359,7 @@ function enable_module(module_id) {
 }
 
 function disable_module(module_id) {
-    get_request_api('modules/disable/' + module_id)
+    post_request_api('modules/disable/' + module_id)
     .done((data) => {
         if(notify_auto_api(data)) {
             refresh_modules(true);

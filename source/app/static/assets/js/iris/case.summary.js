@@ -132,6 +132,22 @@ function report_template_selector() {
     $('#modal_select_report').modal({ show: true });
 }
 
+function gen_report(safe) {
+    url = '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param();
+    if (safe === true) {
+        url += '&safe=true';
+    }
+    window.open(url, '_blank');
+}
+
+function gen_act_report(safe) {
+    url = '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param();
+    if (safe === true) {
+        url += '&safe=true';
+    }
+    window.open(url, '_blank');
+}
+
 function act_report_template_selector() {
     $('#modal_select_report_act').modal({ show: true });
 }
@@ -300,7 +316,7 @@ $(document).ready(function() {
     if ($("#editor_summary").attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");
     } else {
-        editor.setTheme("ace/theme/tomorrow_night");
+        editor.setTheme("ace/theme/iris_night");
     }
     editor.session.setMode("ace/mode/markdown");
     editor.renderer.setShowGutter(true);
@@ -388,7 +404,30 @@ $(document).ready(function() {
         }),
         html = converter.makeHtml(editor.getSession().getValue());
 
-        target.innerHTML = filterXSS(html);
+        target.innerHTML = filterXSS(html, {
+        stripIgnoreTag: false,
+        whiteList: {
+                i: ['class', "title"],
+                a: ['href', 'title', 'target'],
+                img: ['src', 'alt', 'title', 'width', 'height'],
+                p: [],
+                hr: [],
+                h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+                ul: [], ol: [], li: [],
+                code: [], pre: [],
+                blockquote: [],
+                table: [], thead: [], tbody: [], tr: [], th: [], td: []
+            },
+        onTagAttr: function (tag, name, value, isWhiteAttr) {
+            if (tag === "i" && name === "class") {
+                if (iClassWhiteList.indexOf(value) === -1) {
+                    return false;
+                } else {
+                    return name + '="' + value + '"';
+                }
+            }
+          }
+        });
 
     });
 
@@ -398,39 +437,6 @@ $(document).ready(function() {
         sync_editor(true);
         setInterval(auto_remove_typing, 2000);
     }
-
-    if ($("#select_report_act option:selected").val() !== undefined) {
-        $('#generate_report_button').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param());
-        $("#select_report").on("change", function(){
-            $('#generate_report_button').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param());
-        });
-
-        $('#generate_report_button_safe').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param() + "&safe-mode=true");
-        $("#select_report").on("change", function(){
-            $('#generate_report_button_safe').attr("href", '/case/report/generate-investigation/' + $("#select_report option:selected").val() + case_param() + "&safe-mode=true");
-        });
-    } else {
-         $('#generate_report_button').attr("href", '#');
-         $('#generate_report_button_safe').attr("href", '#');
-    }
-
-    if ($("#select_report_act option:selected").val() !== undefined) {
-        $('#generate_report_act_button').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param());
-        $("#select_report_act").on("change", function(){
-            $('#generate_report_act_button').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param());
-        });
-
-        $('#generate_report_act_button_safe').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param() + "&safe-mode=true");
-        $("#select_report_act").on("change", function(){
-            $('#generate_report_act_button_safe').attr("href", '/case/report/generate-activities/' + $("#select_report_act option:selected").val() + case_param() + "&safe-mode=true");
-        });
-
-    } else {
-        $('#generate_report_act_button').attr("href", '#');
-        $('#generate_report_act_button_safe').attr("href", '#');
-    }
-
-
 });
 
 

@@ -24,7 +24,7 @@ import secrets
 import string
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exc
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
@@ -135,7 +135,7 @@ def run_post_init(development=False):
         def_org, gadm, ganalysts = create_safe_auth_model()
 
         log.info("Creating first administrative user")
-        admin = create_safe_admin(def_org=def_org, gadm=gadm)
+        admin, pwd = create_safe_admin(def_org=def_org, gadm=gadm)
 
         log.info("Registering default modules")
         register_default_modules()
@@ -147,7 +147,6 @@ def run_post_init(development=False):
         create_safe_case(
             user=admin,
             client=client,
-            def_org=def_org,
             groups=[gadm, ganalysts]
         )
 
@@ -171,7 +170,13 @@ def run_post_init(development=False):
                               clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
 
         log.info("Post-init steps completed")
-        log.info('IRIS ready')
+        log.warning("===============================")
+        log.warning(f"| IRIS IS READY on port  {os.getenv('INTERFACE_HTTPS_PORT')} |")
+        log.warning("===============================")
+
+        if pwd is not None:
+            log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<< '
+                     f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
 
 
 def create_safe_db(db_name):
@@ -510,9 +515,19 @@ def create_safe_auth_model():
     def_org = get_or_create(db.session, Organisation, org_name="Default Org",
                             org_description="Default Organisation")
 
-    gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators",
-                         group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
-                         group_permissions=ac_get_mask_full_permissions())
+    try:
+
+        gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators",
+                             group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                             group_permissions=ac_get_mask_full_permissions())
+
+    except exc.IntegrityError:
+        db.session.rollback()
+        log.warning('Administrator group integrity error. Group permissions were probably changed. Updating.')
+        gadm = Group.query.filter(
+            Group.group_name == "Administrators"
+        ).first()
+
     if gadm.group_permissions != ac_get_mask_full_permissions():
         gadm.group_permissions = ac_get_mask_full_permissions()
 
@@ -524,9 +539,19 @@ def create_safe_auth_model():
 
     db.session.commit()
 
-    ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
-                              group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
-                              group_permissions=ac_get_mask_analyst())
+    try:
+
+        ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
+                                  group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                                  group_permissions=ac_get_mask_analyst())
+
+    except exc.IntegrityError:
+        db.session.rollback()
+        log.warning('Analysts group integrity error. Group permissions were probably changed. Updating.')
+        ganalysts = Group.query.filter(
+            Group.group_name == "ganalysts"
+        ).first()
+
     if ganalysts.group_permissions != ac_get_mask_analyst():
         ganalysts.group_permissions = ac_get_mask_analyst()
 
@@ -545,16 +570,35 @@ def create_safe_admin(def_org, gadm):
     user = User.query.filter(
         User.user == "administrator"
     ).first()
+    password = None
+
     if not user:
         password = app.config.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
-        api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        if password is None:
+            password = ''.join(random.choices(string.printable[:-6], k=16))
+
+        admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
+        if admin_username is None:
+            admin_username = 'administrator'
+
+        admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+        if admin_email is None:
+            admin_email = 'administrator@localhost'
+
+        log.info(f'Creating first admin user with username "{admin_username}"')
+
         user = User(
-            user="administrator",
-            name="administrator",
-            email=app.config.get('IRIS_ADM_EMAIL', "administrator@iris.local"),
+            user=admin_username,
+            name=admin_username,
+            email=admin_email,
             password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
             active=True
         )
+
+        api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        if api_key is None:
+            api_key = secrets.token_urlsafe(nbytes=64)
+
         user.api_key = api_key
         db.session.add(user)
 
@@ -566,9 +610,10 @@ def create_safe_admin(def_org, gadm):
         # Add user to organisation
         add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
 
-        log.warning(">>> Administrator password: {pwd}".format(pwd=password))
+        log.warning(f">>> Administrator password: {password}")
 
         db.session.commit()
+
     else:
         if not os.environ.get('IRIS_ADM_PASSWORD'):
             # Prevent leak of user set password in logs
@@ -580,10 +625,10 @@ def create_safe_admin(def_org, gadm):
             user.email = adm_email
             db.session.commit()
 
-    return user
+    return user, password
 
 
-def create_safe_case(user, client, groups, def_org):
+def create_safe_case(user, client, groups):
     case = Cases.query.filter(
         Cases.client_id == client.client_id
     ).first()
@@ -1065,7 +1110,9 @@ def register_default_modules():
         log.info('Post init modules repush disabled')
         return
 
-    modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module']
+    modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module',
+               'iris_webhooks_module', 'iris_intelowl_module']
+
     for module in modules:
         class_, _ = instantiate_module_from_name(module)
         is_ready, logs = check_module_health(class_)

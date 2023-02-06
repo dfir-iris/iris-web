@@ -19,11 +19,12 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging as log
-import marshmallow
 # IMPORTS ------------------------------------------------
 import os
 import traceback
 import urllib.parse
+
+import marshmallow
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -45,7 +46,6 @@ from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
-from app.datamgmt.manage.manage_users_db import add_case_access_to_user
 from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
@@ -238,7 +238,7 @@ def api_add_case(caseid):
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
-        track_activity("New case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
+        track_activity("new case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
@@ -288,7 +288,7 @@ def update_case_info(caseid):
         register_case_protagonists(case.case_id, request_data['protagonists'])
         save_case_tags(request_data['case_tags'], case_i.case_id)
 
-        track_activity("Case updated {case_name}".format(case_name=case.name), caseid=caseid)
+        track_activity("case updated {case_name}".format(case_name=case.name), caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)

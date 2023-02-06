@@ -19,8 +19,6 @@
 
 FROM nginx:1.21.3
 
-EXPOSE 8443
-
 RUN apt-get update && apt-get install -y curl
 
 # Used to pass protected files to the container through volumes
@@ -46,7 +44,7 @@ RUN mkdir -p /www/certs/
 
 USER www-data
 
-HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail -k https://127.0.0.1:8443 || exit 1
+HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail -k https://127.0.0.1:${INTERFACE_HTTPS_PORT:-443} || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 

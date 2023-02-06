@@ -39,7 +39,7 @@ services:
       - POSTGRES_PASSWORD
       - POSTGRES_ADMIN_USER
       - POSTGRES_ADMIN_PASSWORD
-      - POSTGRES_DB=iris_db
+      - POSTGRES_DB
     networks:
       - iris_backend
     volumes:
@@ -126,6 +126,7 @@ services:
     environment:
       - IRIS_UPSTREAM_SERVER
       - IRIS_UPSTREAM_PORT
+      - INTERFACE_HTTPS_PORT
       - SERVER_NAME
       - CERT_FILENAME
       - KEY_FILENAME
@@ -134,8 +135,7 @@ services:
       - iris_frontend
       - iris_backend
     ports:
-      - "443:443"
-      - "80:80"
+      - "${INTERFACE_HTTPS_PORT:-443}:443"
     volumes:
       - "./docker/dev_certs/:/www/certs/:ro"
     restart: on-failure:5

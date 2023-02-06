@@ -23,8 +23,7 @@ from sqlalchemy import and_
 from app import bc
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
-from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
+from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list, ac_ldp_group_removal
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
@@ -33,7 +32,6 @@ from app.iris_engine.access_control.utils import ac_set_case_access_for_user
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
-from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
@@ -102,10 +100,13 @@ def update_user_groups(user_id, groups):
         user_group.group_id = group_id
         db.session.add(user_group)
 
-    for group in groups_to_remove:
+    for group_id in groups_to_remove:
+        if current_user.id == user_id and ac_ldp_group_removal(user_id=user_id, group_id=group_id):
+            continue
+
         UserGroup.query.filter(
             UserGroup.user_id == user_id,
-            UserGroup.group_id == group
+            UserGroup.group_id == group_id
         ).delete()
 
     db.session.commit()
@@ -227,6 +228,7 @@ def get_user_primary_org(user_id):
     if not uo:
         return None
 
+    uoe = None
     index = 0
     if len(uo) > 1:
         # Fix potential duplication

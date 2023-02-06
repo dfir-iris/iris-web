@@ -18,10 +18,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import csv
 # IMPORTS ------------------------------------------------
 from datetime import datetime
 
-import csv
 import marshmallow
 from flask import Blueprint
 from flask import redirect
@@ -62,9 +62,6 @@ from app.forms import ModalAddCaseAssetForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import AnalysisStatus
-from app.models import Ioc
-from app.models import IocAssetLink
-from app.models import IocLink
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
 from app.schema.marshables import CommentSchema

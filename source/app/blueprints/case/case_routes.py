@@ -112,9 +112,9 @@ def case_r(caseid, url_redir):
     if not case:
         return render_template('select_case.html')
 
-    desc_crc32, desc = case_get_desc_crc(caseid)
+    desc_crc32, description = case_get_desc_crc(caseid)
 
-    return render_template('case.html', case=case, desc=desc, crc=desc_crc32,
+    return render_template('case.html', case=case, desc=description, crc=desc_crc32,
                            reports=reports, reports_act=reports_act, form=form)
 
 
@@ -218,9 +218,9 @@ def desc_fetch(caseid):
 @case_blueprint.route('/case/summary/fetch', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def summary_fetch(caseid):
-    desc_crc32, desc = case_get_desc_crc(caseid)
+    desc_crc32, description = case_get_desc_crc(caseid)
 
-    return response_success("Summary fetch", data={'case_description': desc, 'crc32': desc_crc32})
+    return response_success("Summary fetch", data={'case_description': description, 'crc32': desc_crc32})
 
 
 @case_blueprint.route('/case/activities/list', methods=['GET'])
@@ -259,9 +259,9 @@ def case_add_tasklog(caseid):
 
     try:
 
-        log = log_schema.load(request.get_json())
+        log_data = log_schema.load(request.get_json())
 
-        ua = track_activity(log.get('log_content'), caseid, user_input=True)
+        ua = track_activity(log_data.get('log_content'), caseid, user_input=True)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)

@@ -32,8 +32,8 @@ from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.context.context import ctx_blueprint
 # Blueprints
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
-from app.blueprints.overview.overview_routes import overview_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
+from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_access_control import manage_ac_blueprint
@@ -52,10 +52,10 @@ from app.blueprints.manage.manage_task_status_routes import manage_task_status_b
 from app.blueprints.manage.manage_templates_routes import manage_templates_blueprint
 from app.blueprints.manage.manage_tlps_routes import manage_tlp_type_blueprint
 from app.blueprints.manage.manage_users import manage_users_blueprint
+from app.blueprints.overview.overview_routes import overview_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
 from app.blueprints.reports.reports_route import reports_blueprint
 from app.blueprints.search.search_routes import search_blueprint
-from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.models.authorization import User
 from app.post_init import run_post_init
 
@@ -91,7 +91,13 @@ app.register_blueprint(datastore_blueprint)
 app.register_blueprint(api_blueprint)
 app.register_blueprint(demo_blueprint)
 
-run_post_init(development=app.config["DEVELOPMENT"])
+try:
+
+    run_post_init(development=app.config["DEVELOPMENT"])
+
+except Exception as e:
+    app.logger.exception(f"Post init failed. IRIS not started")
+    raise e
 
 
 # provide login manager with load_user callback

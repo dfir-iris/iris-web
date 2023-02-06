@@ -20,11 +20,8 @@
 
 # IMPORTS ------------------------------------------------
 import enum
-
-import secrets
 import uuid
 
-from flask_login import UserMixin
 from sqlalchemy import BigInteger, UniqueConstraint
 from sqlalchemy import Boolean
 from sqlalchemy import Column
@@ -37,7 +34,6 @@ from sqlalchemy import String
 from sqlalchemy import TIMESTAMP
 from sqlalchemy import Text
 from sqlalchemy import create_engine
-from sqlalchemy import or_
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import UUID

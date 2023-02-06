@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
+#  Copyright (C) 2022 - DFIR IRIS Team
+#  contact@dfir-iris.org
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
 #
@@ -17,21 +19,26 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from collections import OrderedDict
-
+import base64
 import datetime
 import decimal
 import hashlib
-import jwt
 import logging as log
 import pickle
 import random
-import requests
 import shutil
 import string
 import traceback
 import uuid
 import weakref
+from functools import wraps
+from pathlib import Path
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hmac
+from cryptography.exceptions import InvalidSignature
+
+import jwt
+import requests
 from flask import Request
 from flask import json
 from flask import render_template
@@ -41,9 +48,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
 from flask_wtf import FlaskForm
-from functools import wraps
 from jwt import PyJWKClient
-from pathlib import Path
 from pyunpack import Archive
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.ext.declarative import DeclarativeMeta
@@ -193,8 +198,8 @@ class FileRemover(object):
     def __init__(self):
         self.weak_references = dict()  # weak_ref -> filepath to remove
 
-    def cleanup_once_done(self, response, filepath):
-        wr = weakref.ref(response, self._do_cleanup)
+    def cleanup_once_done(self, response_d, filepath):
+        wr = weakref.ref(response_d, self._do_cleanup)
         self.weak_references[wr] = filepath
 
     def _do_cleanup(self, wr):
@@ -202,16 +207,16 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_case_access(request, access_level, from_api=False):
-    caseid = request.args.get('cid', default=None, type=int)
+def get_case_access(request_data, access_level, from_api=False):
+    caseid = request_data.args.get('cid', default=None, type=int)
     redir = False
     if not caseid:
         try:
 
-            js_d = request.get_json()
+            js_d = request_data.get_json()
             if js_d:
                 caseid = js_d.get('cid')
-                request.json.pop('cid')
+                request_data.json.pop('cid')
             else:
                 if current_user.ctx_case is None:
                     current_user.ctx_case = 1
@@ -220,7 +225,7 @@ def get_case_access(request, access_level, from_api=False):
                 redir = True
 
         except Exception as e:
-            cookie_session = request.cookies.get('session')
+            cookie_session = request_data.cookies.get('session')
             if not cookie_session:
                 # API, so just use the current_user context
                 if current_user.ctx_case is None:
@@ -698,3 +703,25 @@ def stream_sha256sum(stream):
 @app.template_filter()
 def format_datetime(value, frmt):
     return datetime.datetime.fromtimestamp(float(value)).strftime(frmt)
+
+
+def hmac_sign(data):
+    key = bytes(app.config.get("SECRET_KEY"), "utf-8")
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(data)
+    signature = base64.b64encode(h.finalize())
+
+    return signature
+
+
+def hmac_verify(signature_enc, data):
+    signature = base64.b64decode(signature_enc)
+    key = bytes(app.config.get("SECRET_KEY"), "utf-8")
+    h = hmac.HMAC(key, hashes.SHA256())
+    h.update(data)
+
+    try:
+        h.verify(signature)
+        return True
+    except InvalidSignature:
+        return False

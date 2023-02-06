@@ -41,9 +41,11 @@ from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.forms import AddGroupForm
-from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_ldp_group_removal, ac_flag_match_mask, \
+    ac_ldp_group_update
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_users_list
+from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.util import ac_api_requires
@@ -127,6 +129,8 @@ def manage_groups_add(caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
+    track_activity(message=f"added group {ags_c.group_name}", caseid=caseid, ctx_less=True)
+
     return response_success('', data=ags.dump(ags_c))
 
 
@@ -155,6 +159,14 @@ def manage_groups_update(cur_id, caseid):
         data['group_id'] = cur_id
         ags_c = ags.load(data, instance=group, partial=True)
 
+        if not ac_flag_match_mask(data['group_permissions'],
+                                  Permissions.server_administrator.value):
+
+            if ac_ldp_group_update(current_user.id):
+                db.session.rollback()
+                return response_error(msg="That might not be a good idea Dave",
+                                      data="Update the group permissions will lock you out")
+
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
@@ -173,6 +185,9 @@ def manage_groups_delete(cur_id, caseid):
 
     if protect_demo_mode_group(group):
         return ac_api_return_access_denied(caseid=caseid)
+
+    if ac_ldp_group_removal(current_user.id, group_id=group.group_id):
+        return response_error("I can't let you do that Dave", data="Removing this group will lock you out")
 
     delete_group(group)
 
@@ -246,6 +261,10 @@ def manage_groups_members_delete(cur_id, cur_id_2, caseid):
     user = get_user(cur_id_2)
     if not user:
         return response_error("Invalid user ID")
+
+    if ac_ldp_group_removal(user_id=user.id, group_id=group.group_id):
+        return response_error('I cannot let you do that Dave', data="Removing you from the group will make you "
+                                                                    "loose your access rights")
 
     remove_user_from_group(group, user)
     group = get_group_with_members(cur_id)
