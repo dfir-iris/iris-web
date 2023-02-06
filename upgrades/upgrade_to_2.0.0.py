@@ -30,9 +30,8 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 env_upgrade_map = {
-    "POSTGRES_USER": "POSTGRES_ADMIN_USER",  # Need to stay up there
-    "DB_USER": "POSTGRES_USER",
-    "DB_PASS": "POSTGRES_PASSWORD",
+    "DB_USER": "POSTGRES_ADMIN_USER",
+    "DB_PASS": "POSTGRES_ADMIN_PASSWORD",
     "DB_HOST": "POSTGRES_SERVER",
     "DB_PORT": "POSTGRES_PORT",
     "SECRET_KEY": "IRIS_SECRET_KEY",

@@ -114,9 +114,8 @@ class IrisConfig(configparser.ConfigParser):
     def _load_env_deprecated(self, section, option):
         # Specify new_value : old_value
         mapping = {
-            'POSTGRES_USER': 'DB_USER',
-            'POSTGRES_PASSWORD': 'DB_PASS',
-            'POSTGRES_ADMIN_USER': 'POSTGRES_USER',
+            'POSTGRES_ADMIN_USER': 'DB_USER',
+            'POSTGRES_ADMIN_PASSWORD': 'DB_PASS',
             'POSTGRES_SERVER': 'DB_HOST',
             'POSTGRES_PORT': 'DB_PORT',
             'IRIS_SECRET_KEY': 'SECRET_KEY',
