@@ -455,10 +455,13 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
                 obj = db.session.merge(dse_data)
                 db.session.commit()
                 _obj.append(obj)
-        elif isinstance(deser_data, str):
-            _obj = deser_data
+
+        elif isinstance(deser_data, str) or isinstance(deser_data, int):
+            _obj = [deser_data]
+
         elif isinstance(deser_data, dict):
-            _obj = deser_data
+            _obj = [deser_data]
+
         else:
             _obj_a = db.session.merge(deser_data)
             db.session.commit()
@@ -485,8 +488,8 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     except Exception as e:
         msg = f"Failed to run hook {hook_name} with module {module_name}. Error {str(e)}"
         log.critical(msg)
-        print(traceback.format_exc())
-        task_status = IStatus.I2Error(message=msg)
+        log.exception(e)
+        task_status = IStatus.I2Error(message=msg, logs=[traceback.format_exc()], user=init_user, caseid=caseid)
 
     return task_status
 

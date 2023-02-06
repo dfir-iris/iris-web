@@ -397,10 +397,12 @@ def asset_delete(cur_id, caseid):
     if not asset:
         return response_error("Invalid asset ID for this case")
 
+    cas = CaseAssetsSchema().dump(asset)
+
     # Deletes an asset and the potential links with the IoCs from the database
     delete_asset(cur_id, caseid)
 
-    call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
+    call_modules_hook('on_postload_asset_delete', data=cas, caseid=caseid)
 
     track_activity(f"removed asset ID {asset.asset_name}", caseid=caseid)
 
