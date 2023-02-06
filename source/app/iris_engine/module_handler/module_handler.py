@@ -575,7 +575,8 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
                 data_result = status.get_data()
                 if not was_list:
                     if not isinstance(data_result, list):
-                        log.critical(f"Error getting data result from hook {hook_name}: A list is expected, instead got a {type(data_result)}")
+                        log.critical(f"Error getting data result from hook {hook_name}: "
+                                     f"A list is expected, instead got a {type(data_result)}")
                         continue
                     else:
                         # We fetch the first elt here because we want to get back to the old type
