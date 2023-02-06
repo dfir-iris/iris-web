@@ -429,31 +429,44 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     :param caseid: Case associated
     :return: A task status JSON task_success or task_failure
     """
-    # Data is serialized, so deserialized
-    signature, pdata = data.encode("utf-8").split(b" ")
-    is_verified = hmac_verify(signature, pdata)
-    if is_verified is False:
-        log.warning("data argument has not been correctly serialised")
-        raise Exception('Unable to instantiate target module')
+    try:
+        # Data is serialized, so deserialized
+        signature, pdata = data.encode("utf-8").split(b" ")
+        is_verified = hmac_verify(signature, pdata)
+        if is_verified is False:
+            log.warning("data argument has not been correctly serialised")
+            raise Exception('Unable to instantiate target module. Data has not been correctly serialised')
 
-    deser_data = loads(base64.b64decode(pdata))
+        deser_data = loads(base64.b64decode(pdata))
 
-    _obj = None
-    # The received object will most likely be cleared when handled by the task,
-    # so we need to attach it to the session in the task
-    _obj = []
-    if isinstance(deser_data, list):
+    except Exception as e:
+        log.exception(e)
+        raise Exception(e)
+
+    try:
+
+        _obj = None
+        # The received object will most likely be cleared when handled by the task,
+        # so we need to attach it to the session in the task
         _obj = []
-        for dse_data in deser_data:
-            obj = db.session.merge(dse_data)
+        if isinstance(deser_data, list):
+            _obj = []
+            for dse_data in deser_data:
+                obj = db.session.merge(dse_data)
+                db.session.commit()
+                _obj.append(obj)
+        elif isinstance(deser_data, str):
+            _obj = deser_data
+        elif isinstance(deser_data, dict):
+            _obj = deser_data
+        else:
+            _obj_a = db.session.merge(deser_data)
             db.session.commit()
-            _obj.append(obj)
-    elif isinstance(deser_data, str):
-        _obj = deser_data
-    else:
-        _obj_a = db.session.merge(deser_data)
-        db.session.commit()
-        _obj.append(_obj_a)
+            _obj.append(_obj_a)
+
+    except Exception as e:
+        log.exception(e)
+        raise Exception(e)
 
     log.info(f'Calling module {module_name} for hook {hook_name}')
 
