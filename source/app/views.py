@@ -99,6 +99,7 @@ except Exception as e:
     app.logger.exception(f"Post init failed. IRIS not started")
     raise e
 
+
 # provide login manager with load_user callback
 @lm.user_loader
 def load_user(user_id):

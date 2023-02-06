@@ -43,10 +43,8 @@ class IrisConfigException(Exception):
 class IrisConfig(configparser.ConfigParser):
     """ From https://gist.github.com/jeffersfp/586c2570cd2bdb8385693a744aa13122 - @jeffersfp """
 
-    def __init__(self, config_file):
+    def __init__(self):
         super(IrisConfig, self).__init__()
-        self.read(config_file)
-        self.validate_config()
 
         # Azure Key Vault
         self.key_vault_name = self.load('AZURE', 'KEY_VAULT_NAME')
@@ -165,13 +163,9 @@ class IrisConfig(configparser.ConfigParser):
 
 # --------- Configuration ---------
 # read the private configuration file
-config = configparser.ConfigParser()
+#config = configparser.ConfigParser()
 
-if os.getenv("DOCKERIZED"):
-    # The example config file has an invalid value so cfg will stay empty first
-    config = IrisConfig(f'app{os.path.sep}config.docker.ini')
-else:
-    config = IrisConfig(f'app{os.path.sep}config.priv.ini')
+config = IrisConfig()
 
 # Fetch the values
 PG_ACCOUNT_ = config.load('POSTGRES', 'USER')
