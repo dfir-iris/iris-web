@@ -892,17 +892,18 @@ def case_duplicate_event(cur_id, caseid):
         if old_event_category is not None:
             save_event_category(event.event_id, old_event_category.category_id)
 
+        iocs_list = get_event_iocs_ids(old_event.event_id, caseid)
         # Update assets mapping
         assets_list = get_event_assets_ids(old_event.event_id, caseid)
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
                                            assets_list=assets_list,
-                                           iocs_list=iocs_list)
+                                           iocs_list=iocs_list,
+                                           sync_iocs_assets=False)
         if not success:
             return response_error('Error while saving linked assets', data=log)
 
         # Update iocs mapping
-        iocs_list = get_event_iocs_ids(old_event.event_id, caseid)
         success, log = update_event_iocs(event_id=event.event_id,
                                          caseid=caseid,
                                          iocs_list=iocs_list)
