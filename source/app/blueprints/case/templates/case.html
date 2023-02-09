@@ -129,9 +129,16 @@
                             aria-hidden="true">&times;</span></button>
                       </div>
                       <div class="modal-body">
+                          {% if reports| length == 0 %}
+                              <div class="alert alert-warning" role="alert">
+                                  <h4 class="alert-heading">No report template found</h4>
+                                  <p>Report templates are configured in <a href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
+                              </div>
+                          {% else %}
                           <div class="col">
                             <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might fail depending on the situation.<br/><code>Safe Mode</code> can be used to generate the report without them.</p>
                           </div>
+
                           <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report">
                                 {% for report in reports %}
                                       <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
@@ -151,6 +158,7 @@
                               </span>
                               Generate
                             </a>
+                          {% endif %}
                       </div>
                   </div><!-- /.modal-content -->
                 </div><!-- /.modal-dialog -->

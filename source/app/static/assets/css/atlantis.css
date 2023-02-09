@@ -7207,12 +7207,11 @@ body .badge-danger {
 .alert {
     border: 0px;
     position: relative;
-    border-radius: 0.5rem;
     color: inherit;
     background-color: #ffffff;
-    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
-    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
-    box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
+    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
 }
 
 
@@ -7220,6 +7219,14 @@ body .badge-danger {
 .alert[data-notify] {
   min-width: 100px;
   max-width: 270px;
+    border: 0px;
+    position: relative;
+    border-radius: 0.6rem;
+    color: inherit;
+    background-color: #ffffff;
+    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
 }
 
 .alert.alert-success {
