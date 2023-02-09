@@ -283,9 +283,7 @@ function access_case_info_reload(case_id) {
             table.rows.add(req_users);
             table.draw();
         } else {
-            $.each($.find("table"), function(index, element){
-                addFilterFields($(element).attr("id"));
-            });
+            addFilterFields($('#case_access_users_list_table').attr("id"));
             $("#case_access_users_list_table").DataTable({
                     dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
                     aaData: req_users,
