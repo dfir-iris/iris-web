@@ -60,9 +60,14 @@ var OverviewTable = $("#overview_table").DataTable({
         "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
               now = (data.closed_tasks / (data.closed_tasks + data.open_tasks))*100;
+              if (data.closed_tasks + data.open_tasks > 1) {
+                 tasks_text = `tasks`;
+              } else {
+                tasks_text = `task`;
+              }
               data = `<div class="progress progress-sm">
                     <div class="progress-bar bg-success" style="width:${now}%" role="progressbar" aria-valuenow="${now}" aria-valuemin="0" aria-valuemax="100"></div>
-               </div><small>${data.open_tasks} open / ${data.closed_tasks} done</small>`;
+               </div><small class="float-right">${data.closed_tasks} / ${data.closed_tasks + data.open_tasks} ${tasks_text} done</small>`;
 		  }
           return data;
         }
