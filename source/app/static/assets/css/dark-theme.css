@@ -18,6 +18,10 @@ body .main-panel {
   background: #1f283e  !important;
 }
 
+.main-header {
+    background: #1f283e;
+}
+
 body .card,
 body .row-card-no-pd,
 body .list-group-item,
