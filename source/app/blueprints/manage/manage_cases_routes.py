@@ -144,7 +144,7 @@ def get_case_api(cur_id, caseid):
 
     res = get_case_details_rt(cur_id)
     if res:
-        return response_success(data=res._asdict())
+        return response_success(data=res)
 
     return response_error(f'Case ID {cur_id} not found')
 
