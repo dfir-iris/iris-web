@@ -1,62 +1,49 @@
-                    <div class="nav-bottom ml-auto mr-auto bg-primary rounded" id="nav_top_wrapper">
-                        <div class="container-fluid">
-                            <div class="row">
-                                <div class="col col-md-ml-12 col-sm-12">
-                                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#h_nav_tab" aria-controls="h_nav_tab" aria-expanded="false" aria-label="Toggle navigation">
-                                        <span class="navbar-toggler-icon"></span>
-                                    </button>
-                                    <ul class="nav navbar-nav page-navigation page-navigation-style-2 page-navigation-secondary" id="h_nav_tab">
-                                        <li class="nav-item {{ active if page == 'case' }}">
-                                            <a class="nav-link" href="/case?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Summary</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/notes?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Notes</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/assets?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Assets</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/ioc?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">IOC</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/timeline?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Timeline</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/graph?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Graph</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/tasks?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Tasks</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="/case/evidences?cid={{session['current_case'].case_id}}">
-                                                <span class="menu-title">Evidences</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item dropdown d-none">
-                                            <a class="nav-link" href="#" id="navbarDropdownMenu" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                              <span class="navbar-toggler-icon"></span>
-                                            </a>
-                                            <ul class="dropdown-menu dropdown-menu-right bg-primary rounded" aria-labelledby="navbarDropdownMenu" id="dropdown-top-overflow">
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <nav class="nav-bottom ml-auto mr-auto rounded" id="h_nav_tab">
+          <div class="container-fluid" >
+              <ul class="navbar-nav rounded" style="background-color:#4c72a130;">
+            <li class="nav-item {{ active if page == 'case' }}">
+                <a class="nav-link" href="/case?cid={{session['current_case'].case_id}}">
+                    <span class="menu-title">Summary</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/case/notes?cid={{session['current_case'].case_id}}">
+                    <span class="menu-title">Notes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/case/assets?cid={{session['current_case'].case_id}}">
+                    <span class="menu-title">Assets</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/case/ioc?cid={{session['current_case'].case_id}}">
+                    <span class="menu-title">IOC</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/case/timeline?cid={{session['current_case'].case_id}}">
+                    <span class="menu-title">Timeline</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/case/graph?cid={{session['current_case'].case_id}}">
+                    <span class="menu-title">Graph</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/case/tasks?cid={{session['current_case'].case_id}}">
+                    <span class="menu-title">Tasks</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/case/evidences?cid={{session['current_case'].case_id}}">
+                    <span class="menu-title">Evidences</span>
+                </a>
+            </li>
+              </ul>
+          </div>
+</nav>
+
 
 

@@ -437,6 +437,12 @@ body {
     height: 100vh;
 }
 
+@media screen and (min-width: 1600px) {
+    #h_nav_tab {
+        padding-right: 246px;
+    }
+}
+
 .main-header {
     background: #0963d5;
     min-height: 60px;
@@ -13801,9 +13807,7 @@ table.dataTable.stripe tbody > tr.selected {
     .topbar_open .navbar-header .navbar-nav>.nav-item .nav-link i {
         font-size: 19px;
     }
-    .topbar_open .navbar-header .navbar-nav>.nav-item:last-child .nav-link {
-        padding: 0px !important;
-    }
+
     .topbar_open .navbar-header .navbar-nav>.nav-item:last-child .quick-sidebar-toggler {
         padding-left: 5px !important;
     }
