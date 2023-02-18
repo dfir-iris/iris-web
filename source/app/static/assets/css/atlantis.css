@@ -553,10 +553,6 @@ body {
     opacity: 1;
 }
 
-#search-nav {
-    max-width: 400px;
-}
-
 #search-nav-ext {
     flex: 1;
     max-width: 800px;
