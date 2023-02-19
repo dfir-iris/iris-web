@@ -128,10 +128,9 @@ def index(caseid, url_redir):
     :return: Page
     """
     if url_redir:
-        return redirect(url_for('index.index', cid=caseid, redirect=True))
+        return redirect(url_for('index.index', cid=caseid if caseid is not None else 1, redirect=True))
 
     msg = None
-    now = datetime.utcnow()
 
     # Retrieve the dashboard data from multiple sources.
     # Quite fast as it is only counts.
