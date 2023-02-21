@@ -606,9 +606,10 @@ def ac_api_requires(*permissions):
                     return response_error("Invalid case ID", status=404)
                 kwargs.update({"caseid": caseid})
 
+                if 'permissions' not in session:
+                    session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+
                 if permissions:
-                    if 'permissions' not in session:
-                        session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
                     for permission in permissions:
                         if session['permissions'] & permission.value:
