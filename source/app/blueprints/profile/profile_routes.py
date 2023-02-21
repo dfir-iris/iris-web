@@ -81,7 +81,7 @@ def user_is_admin(caseid):
 
 
 @profile_blueprint.route('/user/has-permission', methods=['POST'])
-@ac_requires()
+@ac_api_requires()
 def user_has_permission(caseid):
 
     req_js = request.json
