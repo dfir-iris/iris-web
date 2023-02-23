@@ -61,6 +61,10 @@ class IrisUpgrade200:
                 if f"{old}=" not in content:
                     continue
 
+                if f"{new}=" in content:
+                    log.info(f'{new} already set. Skipping')
+                    continue
+
                 if dry_run:
                     log.info(f'Would have replaced {old} with {new}')
                 else:
