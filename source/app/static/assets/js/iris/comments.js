@@ -39,7 +39,7 @@ function preview_comment() {
         comment_text = g_comment_desc_editor.getValue();
         converter = get_showdown_convert();
         html = converter.makeHtml(comment_text);
-        comment_html = filterXSS(html);
+        comment_html = do_md_filter_xss(html);
         $('#target_comment_content').html(comment_html);
         $('#container_comment_preview').show();
         $('#comment_preview_button').html('<i class="fa-solid fa-eye-slash"></i> Edit');
@@ -160,7 +160,7 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
                 comment_text = data['data'][i].comment_text;
                 converter = get_showdown_convert();
                 html = converter.makeHtml(comment_text);
-                comment_html = filterXSS(html);
+                comment_html = do_md_filter_xss(html);
                 if (names.hasOwnProperty(data['data'][i].name)) {
                     avatar = names[data['data'][i].name];
                 } else {

@@ -211,7 +211,7 @@ function preview_evidence_description(no_btn_update) {
         evidence_desc = g_evidence_desc_editor.getValue();
         converter = get_showdown_convert();
         html = converter.makeHtml(evidence_desc);
-        evidence_desc_html = filterXSS(html);
+        evidence_desc_html = do_md_filter_xss(html);
         $('#target_evidence_desc').html(evidence_desc_html);
         $('#container_evidence_description').show();
         if (!no_btn_update) {

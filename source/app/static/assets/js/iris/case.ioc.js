@@ -175,7 +175,7 @@ function preview_ioc_description(no_btn_update) {
         ioc_desc = g_ioc_desc_editor.getValue();
         converter = get_showdown_convert();
         html = converter.makeHtml(ioc_desc);
-        ioc_desc_html = filterXSS(html);
+        ioc_desc_html = do_md_filter_xss(html);
         $('#target_ioc_desc').html(ioc_desc_html);
         $('#container_ioc_description').show();
         if (!no_btn_update) {

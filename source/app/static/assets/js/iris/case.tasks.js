@@ -180,7 +180,7 @@ function preview_task_description(no_btn_update) {
         task_desc = g_task_desc_editor.getValue();
         converter = get_showdown_convert();
         html = converter.makeHtml(task_desc);
-        task_desc_html = filterXSS(html);
+        task_desc_html = do_md_filter_xss(html);
         $('#target_task_desc').html(task_desc_html);
         $('#container_task_description').show();
         if (!no_btn_update) {
