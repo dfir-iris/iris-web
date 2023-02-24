@@ -108,9 +108,13 @@ def add_user(caseid):
                            user_password=cuser.password,
                            user_active=jsdata.get('active'))
 
+        udata = user_schema.dump(user)
+        udata['user_api_key'] = user.api_key
+        del udata['user_password']
+
         if cuser:
             track_activity("created user {}".format(user.user), caseid=caseid,  ctx_less=True)
-            return response_success("user created", data=user_schema.dump(user))
+            return response_success("user created", data=udata)
 
         return response_error("Unable to create user for internal reasons")
 
