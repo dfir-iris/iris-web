@@ -222,7 +222,7 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
                            access_levels=access_levels)
 
 
-@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/add', methods=['POST'])
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/update', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def manage_user_cac_add_case(cur_id, caseid):
 
