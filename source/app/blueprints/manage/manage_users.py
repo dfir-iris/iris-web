@@ -293,7 +293,7 @@ def manage_user_cac_delete_cases(cur_id,  caseid):
     if success:
         track_activity(f"cases access for case(s) {data.get('cases')} deleted for user {user.user}", caseid=caseid,
                        ctx_less=True)
-        return response_success(msg="User removed from cases")
+        return response_success(msg="User case access updated")
 
     return response_error(msg=logs)
 
@@ -329,7 +329,7 @@ def manage_user_cac_delete_case(cur_id,  caseid):
     if success:
         track_activity(f"case access for case {data.get('case')} deleted for user {user.user}", caseid=caseid,
                        ctx_less=True)
-        return response_success(msg="User removed from cases")
+        return response_success(msg="User case access updated")
 
     return response_error(msg=logs)
 
