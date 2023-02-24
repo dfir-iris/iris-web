@@ -271,7 +271,7 @@ function manage_group_cac(group_id) {
                   allowOutsideClick: false
             });
 
-            post_request_api('groups/' + group_id + '/cases-access/add', JSON.stringify(data_sent))
+            post_request_api('groups/' + group_id + '/cases-access/update', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_group_cac(group_id);
