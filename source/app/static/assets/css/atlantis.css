@@ -439,7 +439,9 @@ body {
 
 @media screen and (min-width: 1600px) {
     #h_nav_tab {
-        padding-right: 246px;
+        margin-right: auto;
+        margin-left: auto;
+        padding-right: 120px;
     }
 }
 
