@@ -804,6 +804,9 @@ function get_showdown_convert() {
         tables: true,
         parseImgDimensions: true,
         emoji: true,
+        smoothLivePreview: true,
+        strikethrough: true,
+        tasklists: true,
         extensions: ['bootstrap-tables']
     });
     return converter;
@@ -822,7 +825,8 @@ function do_md_filter_xss(html) {
                 h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
                 ul: [], ol: [], li: [],
                 code: [], pre: [], em: [], strong: [],
-                blockquote: [],
+                blockquote: [], del: [],
+                input: ['type', 'checked', 'disabled', 'class'],
                 table: ['class'], thead: [], tbody: [], tr: [], th: [], td: []
             },
         onTagAttr: function (tag, name, value, isWhiteAttr) {
