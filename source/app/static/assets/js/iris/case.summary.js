@@ -414,7 +414,7 @@ $(document).ready(function() {
                 hr: [],
                 h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
                 ul: [], ol: [], li: [],
-                code: [], pre: [],
+                code: [], pre: [], em: [], strong: [],
                 blockquote: [],
                 table: [], thead: [], tbody: [], tr: [], th: [], td: []
             },
