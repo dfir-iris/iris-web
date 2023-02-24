@@ -110,24 +110,6 @@ function handle_ed_paste(event) {
     }
 }
 
-var sh_ext = showdown.extension('bootstrap-tables', function () {
-  return [{
-    type: "output",
-    filter: function (html, converter, options) {
-      // parse the html string
-      var liveHtml = $('<div></div>').html(html);
-      $('table', liveHtml).each(function(){
-      	var table = $(this);
-        // table bootstrap classes
-        table.addClass('table table-striped table-bordered table-hover table-sm')
-        // make table responsive
-        .wrap('<div class="class table-responsive"></div>');
-      });
-      return liveHtml.html();
-    }
-  }];
-});
-
 function report_template_selector() {
     $('#modal_select_report').modal({ show: true });
 }
@@ -397,37 +379,10 @@ $(document).ready(function() {
         textarea.val(editor.getSession().getValue());
         $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
         target = document.getElementById('targetDiv'),
-        converter = new showdown.Converter({
-            tables: true,
-            extensions: ['bootstrap-tables'],
-            parseImgDimensions: true
-        }),
+        converter = get_showdown_convert();
         html = converter.makeHtml(editor.getSession().getValue());
 
-        target.innerHTML = filterXSS(html, {
-        stripIgnoreTag: false,
-        whiteList: {
-                i: ['class', "title"],
-                a: ['href', 'title', 'target'],
-                img: ['src', 'alt', 'title', 'width', 'height'],
-                p: [],
-                hr: [],
-                h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
-                ul: [], ol: [], li: [],
-                code: [], pre: [], em: [], strong: [],
-                blockquote: [],
-                table: [], thead: [], tbody: [], tr: [], th: [], td: []
-            },
-        onTagAttr: function (tag, name, value, isWhiteAttr) {
-            if (tag === "i" && name === "class") {
-                if (iClassWhiteList.indexOf(value) === -1) {
-                    return false;
-                } else {
-                    return name + '="' + value + '"';
-                }
-            }
-          }
-        });
+        target.innerHTML = do_md_filter_xss(html);
 
     });
 

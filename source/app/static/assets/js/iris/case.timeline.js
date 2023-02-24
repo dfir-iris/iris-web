@@ -195,10 +195,7 @@ function edit_event(id) {
 function preview_event_description(no_btn_update) {
     if(!$('#container_event_description').is(':visible')) {
         event_desc = g_event_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(event_desc);
         event_desc_html = filterXSS(html);
         $('#target_event_desc').html(event_desc_html);
@@ -465,10 +462,7 @@ function build_timeline(data) {
     }
     idx = 0;
 
-    converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+    converter = get_showdown_convert();
 
     for (index in data.data.tim) {
         evt = data.data.tim[index];

@@ -37,10 +37,7 @@ function comment_element(element_id, element_type) {
 function preview_comment() {
     if(!$('#container_comment_preview').is(':visible')) {
         comment_text = g_comment_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(comment_text);
         comment_html = filterXSS(html);
         $('#target_comment_content').html(comment_html);
@@ -161,10 +158,7 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
             for (var i = 0; i < data['data'].length; i++) {
 
                 comment_text = data['data'][i].comment_text;
-                converter = new showdown.Converter({
-                    tables: true,
-                    parseImgDimensions: true
-                });
+                converter = get_showdown_convert();
                 html = converter.makeHtml(comment_text);
                 comment_html = filterXSS(html);
                 if (names.hasOwnProperty(data['data'][i].name)) {

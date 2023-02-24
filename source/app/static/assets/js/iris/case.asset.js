@@ -200,10 +200,7 @@ function asset_details(asset_id) {
 function preview_asset_description(no_btn_update) {
     if(!$('#container_asset_description').is(':visible')) {
         asset_desc = g_asset_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(asset_desc);
         asset_desc_html = filterXSS(html);
         $('#target_asset_desc').html(asset_desc_html);

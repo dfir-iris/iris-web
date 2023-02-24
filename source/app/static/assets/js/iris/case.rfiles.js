@@ -209,10 +209,7 @@ function edit_rfiles(rfiles_id) {
 function preview_evidence_description(no_btn_update) {
     if(!$('#container_evidence_description').is(':visible')) {
         evidence_desc = g_evidence_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(evidence_desc);
         evidence_desc_html = filterXSS(html);
         $('#target_evidence_desc').html(evidence_desc_html);

@@ -178,10 +178,7 @@ function edit_task(id) {
 function preview_task_description(no_btn_update) {
     if(!$('#container_task_description').is(':visible')) {
         task_desc = g_task_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(task_desc);
         task_desc_html = filterXSS(html);
         $('#target_task_desc').html(task_desc_html);

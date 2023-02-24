@@ -781,73 +781,60 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
 
             textarea.val(editor.getSession().getValue());
             target = document.getElementById(target_anchor);
-            converter = new showdown.Converter({
-                tables: true,
-                parseImgDimensions: true
-            });
+            converter = get_showdown_convert();
             html = converter.makeHtml(editor.getSession().getValue());
-            target.innerHTML = filterXSS(html, {
-                stripIgnoreTag: false,
-                whiteList: {
-                        i: ['class', "title"],
-                        a: ['href', 'title', 'target'],
-                        img: ['src', 'alt', 'title', 'width', 'height'],
-                        p: [],
-                        hr: [],
-                        h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
-                        ul: [], ol: [], li: [],
-                        code: [], pre: [], em: [], strong: [],
-                        blockquote: [],
-                        table: [], thead: [], tbody: [], tr: [], th: [], td: []
-                    },
-                onTagAttr: function (tag, name, value, isWhiteAttr) {
-                    if (tag === "i" && name === "class") {
-                        if (iClassWhiteList.indexOf(value) === -1) {
-                            return false;
-                        } else {
-                            return name + '="' + value + '"';
-                        }
-                    }
-                  }
-                });
+            target.innerHTML = do_md_filter_xss(html);
 
         });
 
         textarea.val(editor.getSession().getValue());
         target = document.getElementById(target_anchor);
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(editor.getSession().getValue());
-        target.innerHTML = filterXSS(html,  {
-                stripIgnoreTag: false,
-                whiteList: {
-                        i: ['class', 'title'],
-                        a: ['href', 'title', 'target'],
-                        img: ['src', 'alt', 'title', 'width', 'height'],
-                        p: [],
-                        hr: [],
-                        h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
-                        ul: [], ol: [], li: [],
-                        code: [], pre: [],
-                        blockquote: [],
-                        table: [], thead: [], tbody: [], tr: [], th: [], td: []
+        target.innerHTML = do_md_filter_xss(html);
 
-                    },
-                onTagAttr: function (tag, name, value, isWhiteAttr) {
-                    if (tag === "i" && name === "class") {
-                        if (iClassWhiteList.indexOf(value) === -1) {
-                            return false;
-                        } else {
-                            return name + '="' + value + '"';
-                        }
-                    }
-                  }
-                });
     }
 
     return editor;
+}
+
+
+function get_showdown_convert() {
+    converter = new showdown.Converter({
+        tables: true,
+        parseImgDimensions: true,
+        emoji: true,
+        extensions: ['bootstrap-tables']
+    });
+    return converter;
+}
+
+function do_md_filter_xss(html) {
+    return filterXSS(html, {
+        stripIgnoreTag: false,
+        whiteList: {
+                i: ['class', "title"],
+                a: ['href', 'title', 'target'],
+                img: ['src', 'alt', 'title', 'width', 'height'],
+                div: ['class'],
+                p: [],
+                hr: [],
+                h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+                ul: [], ol: [], li: [],
+                code: [], pre: [], em: [], strong: [],
+                blockquote: [],
+                table: ['class'], thead: [], tbody: [], tr: [], th: [], td: []
+            },
+        onTagAttr: function (tag, name, value, isWhiteAttr) {
+            if (tag === "i" && name === "class") {
+                if (iClassWhiteList.indexOf(value) === -1) {
+                    return false;
+                } else {
+                    return name + '="' + value + '"';
+                }
+            }
+          }
+        });
 }
 
 function get_avatar_initials(name, small) {
@@ -1297,23 +1284,23 @@ $(document).ready(function(){
     data_sent.ctx_h = $("#user_context option:selected").text();
     post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-            $('#modal_switch_context').modal('hide');
-            swal({
-                title: 'Context changed successfully',
-                text: 'Reloading...',
-                icon: 'success',
-                timer: 500,
-                buttons: false,
-            })
-            .then(() => {
-                var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
-                window.history.replaceState('', '', newURL);
-                location.reload();
-            })
-        }
+            if(notify_auto_api(data, true)) {
+                $('#modal_switch_context').modal('hide');
+                swal({
+                    title: 'Context changed successfully',
+                    text: 'Reloading...',
+                    icon: 'success',
+                    timer: 500,
+                    buttons: false,
+                })
+                .then(() => {
+                    var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
+                    window.history.replaceState('', '', newURL);
+                    location.reload();
+                })
+            }
+        });
     });
-});
 
     $(".rotate").click(function () {
         $(this).toggleClass("down");
@@ -1346,6 +1333,27 @@ $(document).ready(function(){
         });
         return false;
     });
+
+
+    var sh_ext = showdown.extension('bootstrap-tables', function () {
+      return [{
+        type: "output",
+        filter: function (html, converter, options) {
+          // parse the html string
+          var liveHtml = $('<div></div>').html(html);
+          $('table', liveHtml).each(function(){
+            var table = $(this);
+
+            // table bootstrap classes
+            table.addClass('table table-striped table-bordered table-hover table-sm')
+            // make table responsive
+            .wrap('<div class="table-responsive"></div>');
+          });
+          console.log(liveHtml.html());
+          return liveHtml.html();
+        }
+      }];
+});
 
 });
 
