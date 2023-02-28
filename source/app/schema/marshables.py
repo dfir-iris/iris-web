@@ -361,7 +361,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
     def ds_store_file(self, file_storage, location, is_ioc, password):
         if file_storage is None:
             raise marshmallow.exceptions.ValidationError(
-                "Not file provided",
+                "No file provided",
                 field_name='file_content'
             )
 
