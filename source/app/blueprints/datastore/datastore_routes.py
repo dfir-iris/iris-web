@@ -378,10 +378,13 @@ def datastore_add_folder(caseid: int):
     if not parent_node or not folder_name:
         return response_error('Invalid data')
 
-    has_error, logs = datastore_add_child_node(parent_node, folder_name, caseid)
+    has_error, logs, node = datastore_add_child_node(parent_node, folder_name, caseid)
 
-    track_activity(f"Folder \"{folder_name}\" added to DS", caseid=caseid)
-    return response_success(logs) if not has_error else response_error(logs)
+    if not has_error:
+        track_activity(f"Folder \"{folder_name}\" added to DS", caseid=caseid)
+        return response_success(msg=logs, data=node)
+
+    return response_error(msg=logs)
 
 
 @datastore_blueprint.route('/datastore/folder/rename/<int:cur_id>', methods=['POST'])
