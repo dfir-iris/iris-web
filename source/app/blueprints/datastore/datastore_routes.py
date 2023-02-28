@@ -403,13 +403,13 @@ def datastore_rename_folder(cur_id: int, caseid: int):
     if int(parent_node) != cur_id:
         return response_error('Invalid data')
 
-    has_error, logs = datastore_rename_node(parent_node, folder_name, caseid)
+    has_error, logs, dsp_base = datastore_rename_node(parent_node, folder_name, caseid)
 
     if has_error:
         return response_error(logs)
 
     track_activity(f"Folder \"{parent_node}\" renamed to \"{folder_name}\" in DS", caseid=caseid)
-    return response_success(logs)
+    return response_success(logs, data=dsp_base)
 
 
 @datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['POST'])
