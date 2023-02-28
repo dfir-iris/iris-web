@@ -265,7 +265,7 @@ def datastore_move_folder(cur_id: int, caseid: int):
 def datastore_view_file(cur_id: int, caseid: int):
     has_error, dsf = datastore_get_local_file_path(cur_id, caseid)
     if has_error:
-        return response_error('Unable to get request file ID', data=dsf)
+        return response_error('Unable to get requested file ID', data=dsf)
 
     if dsf.file_is_ioc or dsf.file_password:
         dsf.file_original_name += ".zip"
