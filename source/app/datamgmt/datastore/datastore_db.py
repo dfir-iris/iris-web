@@ -231,6 +231,9 @@ def datastore_delete_node(node_id, cid):
     except Exception as e:
         return True, f'Unable to request datastore for parent node : {node_id}'
 
+    if dsp_base is None:
+        return True, 'Parent node is invalid for this case'
+
     datastore_iter_deletion(dsp_base, cid)
 
     return False, 'Folder and children deleted'
