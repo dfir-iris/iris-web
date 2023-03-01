@@ -164,6 +164,21 @@ def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
     return render_template("modal_ds_file_info.html", file=file, dsp=dsp)
 
 
+@datastore_blueprint.route('/datastore/file/info/<int:cur_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def datastore_info_file(cur_id: int, caseid: int):
+
+    file = datastore_get_file(cur_id, caseid)
+    if not file:
+        return response_error('Invalid file ID for this case')
+
+    file_schema = DSFileSchema()
+    file = file_schema.dump(file)
+    del file['file_local_name']
+
+    return response_success("", data=file)
+
+
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_update_file(cur_id: int, caseid: int):
