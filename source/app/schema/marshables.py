@@ -268,7 +268,18 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
-        if not isinstance(int(data.get('event_category_id')), int):
+        if data is None:
+            raise marshmallow.exceptions.ValidationError("Received empty data")
+
+        for field in ['event_title', 'event_date', 'event_tz', 'event_category_id', 'event_assets', 'event_iocs']:
+            if field not in data:
+                raise marshmallow.exceptions.ValidationError(f"Missing field {field}", field_name=field)
+
+        if data.get('event_category_id') is None or not isinstance(int(data.get('event_category_id')), int):
+            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
+                                                         field_name="event_category_id")
+
+        if data.get('event_category_id') is None or not isinstance(int(data.get('event_category_id')), int):
             raise marshmallow.exceptions.ValidationError("Invalid event category ID",
                                                          field_name="event_category_id")
 
