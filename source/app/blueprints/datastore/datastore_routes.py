@@ -221,7 +221,7 @@ def datastore_update_file(cur_id: int, caseid: int):
             msg_added_as += ' and evidence' if len(msg_added_as) > 0 else 'and added in evidence'
 
         track_activity(f'File \"{dsf.file_original_name}\" updated in DS', caseid=caseid)
-        return response_success('File updated in datastore')
+        return response_success('File updated in datastore', data=dsf_schema.dump(dsf_sc))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
@@ -272,7 +272,7 @@ def datastore_move_folder(cur_id: int, caseid: int):
 
     msg = f"Folder \"{dsp.path_name}\" successfully moved to \"{dsp_dst.path_name}\""
     track_activity(msg, caseid=caseid)
-    return response_success(msg)
+    return response_success(msg, data=dsp)
 
 
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
