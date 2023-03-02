@@ -278,15 +278,15 @@ def update_case_info(caseid):
 
         request_data = request.get_json()
 
-        request_data['case_name'] = f"#{case_i.case_id} - {request_data['case_name']}"
+        request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name')}"
         request_data['case_customer'] = case_i.client_id
 
         case = case_schema.load(request_data, instance=case_i, partial=True)
 
         db.session.commit()
 
-        register_case_protagonists(case.case_id, request_data['protagonists'])
-        save_case_tags(request_data['case_tags'], case_i.case_id)
+        register_case_protagonists(case.case_id, request_data.get('protagonists'))
+        save_case_tags(request_data.get('case_tags'), case_i.case_id)
 
         track_activity("case updated {case_name}".format(case_name=case.name), caseid=caseid)
 
