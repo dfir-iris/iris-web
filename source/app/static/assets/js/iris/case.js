@@ -109,7 +109,7 @@ function remove_case(id) {
 
 /* Reopen case function */
 function reopen_case(id) {
-    get_request_api('/manage/cases/reopen/' + id)
+    post_request_api('/manage/cases/reopen/' + id)
     .done((data) => {
         window.location.reload();
         $('#modal_case_detail').modal('hide');
@@ -130,7 +130,7 @@ function close_case(id) {
     })
     .then((willClose) => {
         if (willClose) {
-            get_request_api('/manage/cases/close/' + id)
+            post_request_api('/manage/cases/close/' + id)
             .done((data) => {
                 window.location.reload();
                 $('#modal_case_detail').modal('hide');

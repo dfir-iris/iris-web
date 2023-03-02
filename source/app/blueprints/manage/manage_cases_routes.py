@@ -182,7 +182,7 @@ def api_delete_case(cur_id, caseid):
             return response_error("Cannot delete a non empty case. {}".format(e))
 
 
-@manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['GET'])
+@manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def api_reopen_case(cur_id, caseid):
 
@@ -202,7 +202,7 @@ def api_reopen_case(cur_id, caseid):
     return response_success("Case reopened successfully", data=case_schema.dump(res))
 
 
-@manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['GET'])
+@manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def api_case_close(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):

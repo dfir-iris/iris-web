@@ -72,7 +72,7 @@ function remove_case(id) {
 
 /* Reopen case function */
 function reopen_case(id) {
-    get_request_api('/manage/cases/reopen/' + id)
+    post_request_api('/manage/cases/reopen/' + id)
     .done((data) => {
         if (!refresh_case_table()) {
             window.location.reload();
@@ -95,7 +95,7 @@ function close_case(id) {
     })
     .then((willClose) => {
         if (willClose) {
-            get_request_api('/manage/cases/close/' + id)
+            post_request_api('/manage/cases/close/' + id)
             .done((data) => {
                 if (!refresh_case_table()) {
                     window.location.reload();
