@@ -39,3 +39,15 @@ def get_case_classifications_list() -> List[dict]:
     return c_cl
 
 
+def get_case_classification_by_id(cur_id: int) -> CaseClassification:
+    """Get a case classification
+
+    Args:
+        cur_id (int): case classification id
+
+    Returns:
+        CaseClassification: Case classification
+    """
+    case_classification = CaseClassification.query.filter_by(id=cur_id).first()
+    return case_classification
+
