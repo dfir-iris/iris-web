@@ -646,7 +646,7 @@ def get_random_suffix(length):
     return result_str
 
 
-def add_obj_history_entry(obj, action):
+def add_obj_history_entry(obj, action, commit=False):
     if hasattr(obj, 'modification_history'):
 
         if isinstance(obj.modification_history, dict):
@@ -669,6 +669,9 @@ def add_obj_history_entry(obj, action):
                 }
             }
     flag_modified(obj, "modification_history")
+    if commit:
+        db.session.commit()
+
     return obj
 
 

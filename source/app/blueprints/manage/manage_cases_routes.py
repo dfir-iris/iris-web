@@ -200,7 +200,7 @@ def api_reopen_case(cur_id, caseid):
     if not res:
         return response_error("Tried to reopen an non-existing case")
 
-    add_obj_history_entry(case, 'reopened case')
+    add_obj_history_entry(case, 'case reopened')
     track_activity("reopened case ID {}".format(cur_id), caseid=caseid, ctx_less=True)
     case_schema = CaseSchema()
 
@@ -224,7 +224,7 @@ def api_case_close(cur_id, caseid):
     if not res:
         return response_error("Tried to close an non-existing case")
 
-    add_obj_history_entry(case, 'closed case')
+    add_obj_history_entry(case, 'case closed')
     track_activity("closed case ID {}".format(cur_id), caseid=caseid, ctx_less=True)
     case_schema = CaseSchema()
 

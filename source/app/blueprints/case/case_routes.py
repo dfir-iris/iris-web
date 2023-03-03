@@ -67,7 +67,7 @@ from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, add_obj_history_entry
 from app.util import ac_case_requires
 from app.util import ac_socket_requires
 from app.util import response_error
@@ -301,6 +301,10 @@ def group_cac_set_case(caseid):
     if data.get('case_id') != caseid:
         return response_error("Inconsistent case ID")
 
+    case = get_case(caseid)
+    if not case:
+        return response_error("Invalid case ID")
+
     group_id = data.get('group_id')
     access_level = data.get('access_level')
 
@@ -319,6 +323,10 @@ def group_cac_set_case(caseid):
         return response_error(msg=str(e))
 
     if success:
+        track_activity("case access set to {} for group {}".format(data.get('access_level'), group_id), caseid)
+        add_obj_history_entry(case, "access changed to {} for group {}".format(data.get('access_level'), group_id),
+                              commit=True)
+
         return response_success(msg=logs)
 
     return response_error(msg=logs)
@@ -342,9 +350,16 @@ def user_cac_set_case(caseid):
     if data.get('case_id') != caseid:
         return response_error("Inconsistent case ID")
 
+    case = get_case(caseid)
+    if not case:
+        return response_error('Invalid case ID')
+
     try:
 
         success, logs = set_user_case_access(user.id, data.get('case_id'), data.get('access_level'))
+        track_activity("case access set to {} for user {}".format(data.get('access_level'), user.name), caseid)
+        add_obj_history_entry(case, "access changed to {} for user {}".format(data.get('access_level'), user.name))
+
         db.session.commit()
 
     except Exception as e:
@@ -378,6 +393,8 @@ def case_update_status(caseid):
         return response_error('Invalid status')
 
     case.status_id = status
+    add_obj_history_entry(case, f'status updated to {CaseStatus(status).name}')
+
     db.session.commit()
 
     return response_success("Case status updated", data=case.status_id)
