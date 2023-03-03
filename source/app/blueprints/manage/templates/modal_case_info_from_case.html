@@ -3,7 +3,14 @@
     <div class="col md-12">
         <div class="row">
             <div class="col align-self-center">
-                <h4 class="modal-title mr-4">{{ data.case_name|unquote }}</h4>
+                <h4 class="modal-title mr-4">{{ data.case_name|unquote }}
+                    {% if data.modification_history %}
+                        <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
+                                title="Modifications history"
+                                data-content="<small>{% for mod in data.modification_history %}<code>{{ mod|format_datetime('%Y-%m-%d %H:%M') }}</code> -  {{ data.modification_history[mod].action }} by {{ data.modification_history[mod].user }}<br/>{% endfor %}</small>">
+                        </i>
+                    {% endif %}
+                </h4>
             </div>
 
             <div class="row text-center">
@@ -283,5 +290,6 @@
 </div>
 
 <script>
+    $('[data-toggle="popover"]').popover();
     access_case_info_reload('{{ data.case_id }}');
 </script>
