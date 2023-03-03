@@ -556,6 +556,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     protagonists = fields.List(fields.Dict, required=False)
     case_tags = fields.String(required=False)
     csrf_token = fields.String(required=False)
+    initial_date = auto_field('initial_date', required=False)
 
     class Meta:
         model = Cases
