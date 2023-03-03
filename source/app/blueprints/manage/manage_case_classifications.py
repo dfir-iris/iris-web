@@ -194,3 +194,27 @@ def add_case_classification(caseid: int) -> Response:
         return response_error(msg="Data error", data=e.messages, status=400)
 
     return response_error("Unexpected error server-side. Nothing added", data=None)
+
+
+@manage_case_classification_blueprint.route('/manage/case-classifications/delete/<int:classification_id>',
+                                            methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def delete_case_classification(classification_id: int, caseid: int) -> Response:
+    """Delete a case classification
+
+    Args:
+        classification_id (int): case classification id
+        caseid (int): case id
+
+    Returns:
+        Flask Response object
+    """
+    case_classification = get_case_classification_by_id(classification_id)
+    if not case_classification:
+        return response_error(f"Invalid case classification ID {classification_id}")
+
+    db.session.delete(case_classification)
+    db.session.commit()
+
+    track_activity(f"deleted case classification {case_classification.name}", caseid=caseid)
+    return response_success("Case classification deleted", case_classification.dump())
