@@ -294,7 +294,7 @@ function delete_ioc_type(id) {
     });
 }
 
-/***    IOC Type     ***/
+/***    Classification    ***/
 
 function add_classification() {
     url = '/manage/case-classifications/add/modal' + case_param();
