@@ -20,6 +20,17 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
+
+    cases_table = sa.Table(
+        'cases',
+        sa.MetaData(),
+        sa.Column('case_id', sa.Integer, primary_key=True),
+        sa.Column('open_date', sa.DateTime, nullable=False),
+        sa.Column('initial_date', sa.DateTime, nullable=False)
+    )
+    res = conn.execute(f"select case_id, open_date from \"cases\";")
+    results = res.fetchall()
+
     if not _table_has_column('cases', 'modification_history'):
         op.add_column('cases',
                       sa.Column('modification_history', sa.JSON)
@@ -30,15 +41,6 @@ def upgrade():
                       sa.Column('initial_date', sa.DateTime, nullable=False, server_default=sa.text("now()"))
                       )
 
-        cases_table = sa.Table(
-            'cases',
-            sa.MetaData(),
-            sa.Column('case_id', sa.Integer, primary_key=True),
-            sa.Column('open_date', sa.DateTime, nullable=False),
-            sa.Column('initial_date', sa.DateTime, nullable=False)
-        )
-        res = conn.execute(f"select case_id, open_date from \"cases\";")
-        results = res.fetchall()
         for case in results:
             conn.execute(cases_table.update().where(cases_table.c.case_id == case[0]).values(
                 initial_date=case[1]
@@ -61,10 +63,17 @@ def upgrade():
         other_classification = sa.select([classification_table.c.id]).where(
             classification_table.c.name == 'other:other')
 
+        other_classification_id = conn.execute(other_classification).fetchone()[0]
+
         op.add_column('cases',
                       sa.Column('classification_id', sa.Integer, sa.ForeignKey('case_classification.id'),
-                                server_default=other_classification),
+                                server_default=text("0")),
                       )
+
+        for case in results:
+            conn.execute(cases_table.update().where(cases_table.c.case_id == case[0]).values(
+                classification_id=other_classification_id
+            ))
 
     pass
 
