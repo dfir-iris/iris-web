@@ -23,7 +23,7 @@ import re
 from sqlalchemy import desc
 
 from app.datamgmt.case.case_notes_db import get_notes_from_group
-from app.models import AnalysisStatus
+from app.models import AnalysisStatus, CompromiseStatus
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets
@@ -399,7 +399,7 @@ def export_case_assets_json(case_id):
         CaseAssets.asset_uuid,
         CaseAssets.asset_name,
         CaseAssets.asset_description,
-        CaseAssets.asset_compromise_status_id.label('asset_compromise_status'),
+        CaseAssets.asset_compromise_status_id,
         AssetsType.asset_name.label("type"),
         AnalysisStatus.name.label('analysis_status'),
         CaseAssets.date_added,
@@ -433,6 +433,14 @@ def export_case_assets_json(case_id):
             row['asset_ioc'] = [row._asdict() for row in ial]
         else:
             row['asset_ioc'] = []
+
+        if row['asset_compromise_status_id'] is None:
+            row['asset_compromise_status_id'] = CompromiseStatus.unknown.value
+            status_text = CompromiseStatus.unknown.name.replace('_', ' ').title()
+        else:
+            status_text = CompromiseStatus(row['asset_compromise_status_id']).name.replace('_', ' ').title()
+
+        row['asset_compromise_status'] = status_text
 
         ret.append(row)
 
