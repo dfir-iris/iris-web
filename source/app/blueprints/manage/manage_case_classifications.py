@@ -22,6 +22,7 @@ from typing import Union
 from flask import Blueprint, Response, url_for, render_template, request
 from werkzeug.utils import redirect
 
+from app import db
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list, \
     get_case_classification_by_id
 from app.forms import CaseClassificationForm
@@ -139,3 +140,57 @@ def update_case_classification(classification_id: int, caseid: int) -> Response:
         return response_error(msg="Data error", data=e.messages, status=400)
 
     return response_error("Unexpected error server-side. Nothing updated", data=case_classification)
+
+
+@manage_case_classification_blueprint.route('/manage/case-classifications/add/modal', methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def add_case_classification_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
+    """Add a case classification
+
+    Args:
+        caseid (int): case id
+        url_redir (bool): redirect to url
+
+    Returns:
+        Flask Response object or str
+    """
+    if url_redir:
+        return redirect(url_for('manage_case_classification_blueprint.add_case_classification_modal',
+                                caseid=caseid))
+
+    classification_form = CaseClassificationForm()
+
+    return render_template("modal_case_classification.html", form=classification_form)
+
+
+@manage_case_classification_blueprint.route('/manage/case-classifications/add', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def add_case_classification(caseid: int) -> Response:
+    """Add a case classification
+
+    Args:
+        caseid (int): case id
+
+    Returns:
+        Flask Response object
+    """
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    ccl = CaseClassificationSchema()
+
+    try:
+
+        ccls = ccl.load(request.get_json())
+
+        if ccls:
+            db.session.add(ccls)
+            db.session.commit()
+
+            track_activity(f"added case classification {ccls.name}", caseid=caseid)
+            return response_success("Case classification added", ccls.dump())
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    return response_error("Unexpected error server-side. Nothing added", data=None)
