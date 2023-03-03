@@ -134,7 +134,7 @@ def update_case_classification(classification_id: int, caseid: int) -> Response:
 
         if ccls:
             track_activity(f"updated case classification {ccls.id}", caseid=caseid)
-            return response_success("IOC type updated", ccls.dump())
+            return response_success("IOC type updated", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
@@ -160,7 +160,7 @@ def add_case_classification_modal(caseid: int, url_redir: bool) -> Union[str, Re
 
     classification_form = CaseClassificationForm()
 
-    return render_template("modal_case_classification.html", form=classification_form)
+    return render_template("modal_case_classification.html", form=classification_form, case_classification=None)
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/add', methods=['POST'])
@@ -188,7 +188,7 @@ def add_case_classification(caseid: int) -> Response:
             db.session.commit()
 
             track_activity(f"added case classification {ccls.name}", caseid=caseid)
-            return response_success("Case classification added", ccls.dump())
+            return response_success("Case classification added", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
@@ -217,4 +217,4 @@ def delete_case_classification(classification_id: int, caseid: int) -> Response:
     db.session.commit()
 
     track_activity(f"deleted case classification {case_classification.name}", caseid=caseid)
-    return response_success("Case classification deleted", case_classification.dump())
+    return response_success("Case classification deleted")

@@ -535,7 +535,7 @@ class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
     @post_load
     def verify_unique(self, data, **kwargs):
         client = CaseClassification.query.filter(
-            func.lower(CaseClassification.name) == func.lower(data.classification_name),
+            func.lower(CaseClassification.name) == func.lower(data.name),
             CaseClassification.id != data.id
         ).first()
         if client:
