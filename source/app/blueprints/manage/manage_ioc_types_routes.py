@@ -161,4 +161,4 @@ def update_ioc(cur_id, caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
 
-    return response_success("Unexpected error server-side. Nothing updated", data=ioc_type)
+    return response_error("Unexpected error server-side. Nothing updated", data=ioc_type)

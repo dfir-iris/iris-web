@@ -16,11 +16,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask import Blueprint, Response
+import marshmallow
+from typing import Union
+
+from flask import Blueprint, Response, url_for, render_template, request
+from werkzeug.utils import redirect
 
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list, \
     get_case_classification_by_id
-from app.util import ac_api_requires, response_error
+from app.forms import CaseClassificationForm
+from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import Permissions
+from app.schema.marshables import CaseClassificationSchema
+from app.util import ac_api_requires, response_error, ac_requires
 from app.util import response_success
 
 manage_case_classification_blueprint = Blueprint('manage_case_classifications',
@@ -65,3 +73,69 @@ def get_case_classification(classification_id: int, caseid: int) -> Response:
 
     return response_success("", data=case_classification)
 
+
+@manage_case_classification_blueprint.route('/manage/case-classifications/update/<int:classification_id>/modal',
+                                            methods=['GET'])
+@ac_requires(Permissions.server_administrator)
+def update_case_classification_modal(classification_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
+    """Update a case classification
+
+    Args:
+        classification_id (int): case classification id
+        caseid (int): case id
+        url_redir (bool): redirect to url
+
+    Returns:
+        Flask Response object or str
+    """
+    if url_redir:
+        return redirect(url_for('manage_case_classification_blueprint.update_case_classification_modal',
+                                classification_id=classification_id, caseid=caseid))
+
+    classification_form = CaseClassificationForm()
+    case_classification = get_case_classification_by_id(classification_id)
+    if not case_classification:
+        return response_error(f"Invalid case classification ID {classification_id}")
+
+    classification_form.name.render_kw = {'value': case_classification.name}
+    classification_form.name_expanded.render_kw = {'value': case_classification.name_expanded}
+    classification_form.description.render_kw = {'value': case_classification.description}
+
+    return render_template("modal_case_classification.html", form=classification_form,
+                           case_classification=case_classification)
+
+
+@manage_case_classification_blueprint.route('/manage/case-classifications/update/<int:classification_id>',
+                                            methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def update_case_classification(classification_id: int, caseid: int) -> Response:
+    """Update a case classification
+
+    Args:
+        classification_id (int): case classification id
+        caseid (int): case id
+
+    Returns:
+        Flask Response object
+    """
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    case_classification = get_case_classification_by_id(classification_id)
+    if not case_classification:
+        return response_error(f"Invalid case classification ID {classification_id}")
+
+    ccl = CaseClassificationSchema()
+
+    try:
+
+        ccls = ccl.load(request.get_json(), instance=case_classification)
+
+        if ccls:
+            track_activity(f"updated case classification {ccls.id}", caseid=caseid)
+            return response_success("IOC type updated", ccls.dump())
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    return response_error("Unexpected error server-side. Nothing updated", data=case_classification)

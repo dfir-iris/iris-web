@@ -44,7 +44,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus
+from app.models import AnalysisStatus, CaseClassification
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -518,6 +518,30 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
             raise marshmallow.exceptions.ValidationError(
                 "IOC type name already exists",
                 field_name="type_name"
+            )
+
+        return data
+
+
+class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
+    name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    name_expanded = auto_field('name_expanded', required=True, validate=Length(min=2), allow_none=False)
+    description = auto_field('description', required=True, validate=Length(min=2), allow_none=False)
+
+    class Meta:
+        model = CaseClassification
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        client = CaseClassification.query.filter(
+            func.lower(CaseClassification.name) == func.lower(data.classification_name),
+            CaseClassification.id != data.id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "Case classification name already exists",
+                field_name="name"
             )
 
         return data
