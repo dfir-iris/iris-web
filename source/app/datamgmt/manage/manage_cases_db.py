@@ -25,7 +25,7 @@ from sqlalchemy import and_
 from app import db
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets
+from app.models import CaseAssets, CaseClassification
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
@@ -188,7 +188,10 @@ def get_case_details_rt(case_id):
             Client.name.label('customer_name'),
             User.user.label('open_by_user'),
             Cases.status_id,
-            Cases.custom_attributes
+            Cases.custom_attributes,
+            Cases.modification_history,
+            Cases.initial_date,
+            Cases.classification_id
         ).filter(and_(
             Cases.case_id == case_id,
             Cases.user_id == User.id,

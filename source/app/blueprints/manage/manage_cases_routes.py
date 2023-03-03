@@ -61,7 +61,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.models.models import Client
 from app.schema.marshables import CaseSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, add_obj_history_entry
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import ac_case_requires
@@ -192,10 +192,15 @@ def api_reopen_case(cur_id, caseid):
     if not cur_id:
         return response_error("No case ID provided")
 
+    case = get_case(cur_id)
+    if not case:
+        return response_error("Tried to reopen an non-existing case")
+
     res = reopen_case(cur_id)
     if not res:
         return response_error("Tried to reopen an non-existing case")
 
+    add_obj_history_entry(case, 'reopened case')
     track_activity("reopened case ID {}".format(cur_id), caseid=caseid, ctx_less=True)
     case_schema = CaseSchema()
 
@@ -211,10 +216,15 @@ def api_case_close(cur_id, caseid):
     if not cur_id:
         return response_error("No case ID provided")
 
+    case = get_case(cur_id)
+    if not case:
+        return response_error("Tried to close an non-existing case")
+
     res = close_case(cur_id)
     if not res:
         return response_error("Tried to close an non-existing case")
 
+    add_obj_history_entry(case, 'closed case')
     track_activity("closed case ID {}".format(cur_id), caseid=caseid, ctx_less=True)
     case_schema = CaseSchema()
 
@@ -238,6 +248,7 @@ def api_add_case(caseid):
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
+        add_obj_history_entry(case, 'created')
         track_activity("new case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
@@ -288,6 +299,7 @@ def update_case_info(caseid):
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
         save_case_tags(request_data.get('case_tags'), case_i.case_id)
 
+        add_obj_history_entry(case_i, 'updated info')
         track_activity("case updated {case_name}".format(case_name=case.name), caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
