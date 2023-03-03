@@ -440,7 +440,7 @@ def create_safe_classifications():
             for entry in entries:
                 create_safe(db.session, CaseClassification,
                             name=f"{predicate}:{entry.get('value')}",
-                            name_expanded=entry.get('name_expanded'),
+                            name_expanded=f"{predicate.upper()}:{entry.get('expanded')}",
                             description=entry['description'])
 
 

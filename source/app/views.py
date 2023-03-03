@@ -40,6 +40,7 @@ from app.blueprints.manage.manage_access_control import manage_ac_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
+from app.blueprints.manage.manage_case_classifications import manage_case_classification_blueprint
 from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.manage.manage_customers_routes import manage_customers_blueprint
 from app.blueprints.manage.manage_event_categories_routes import manage_event_cat_blueprint
@@ -80,6 +81,7 @@ app.register_blueprint(manage_task_status_blueprint)
 app.register_blueprint(manage_attributes_blueprint)
 app.register_blueprint(manage_ac_blueprint)
 app.register_blueprint(manage_groups_blueprint)
+app.register_blueprint(manage_case_classification_blueprint)
 
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)

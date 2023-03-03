@@ -187,6 +187,7 @@ class CaseClassification(db.Model):
 
     created_by = relationship('User')
 
+
 class Contact(db.Model):
     __tablename__ = 'contact'
 
