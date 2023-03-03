@@ -17,6 +17,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
+
+from pathlib import Path
+
 import glob
 import os
 import random
@@ -50,7 +54,7 @@ from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import Client
-from app.models.models import AnalysisStatus
+from app.models.models import AnalysisStatus, CaseClassification
 from app.models.models import AssetsType
 from app.models.models import EventCategory
 from app.models.models import IocType
@@ -121,6 +125,9 @@ def run_post_init(development=False):
 
         log.info("Creating base analysis status")
         create_safe_analysis_status()
+
+        log.info("Creating base case classification")
+        create_safe_classifications()
 
         log.info("Creating base tasks status")
         create_safe_task_status()
@@ -421,6 +428,20 @@ def create_safe_events_cats():
     create_safe(db.session, EventCategory, name="Command and Control")
     create_safe(db.session, EventCategory, name="Exfiltration")
     create_safe(db.session, EventCategory, name="Impact")
+
+
+def create_safe_classifications():
+    log.info("Reading MISP classification taxonomy from resources/misp.classification.taxonomy.json")
+    with open(Path(__file__).parent / 'resources' / 'misp.classification.taxonomy.json') as data_file:
+        data = json.load(data_file)
+        for c in data.get('values'):
+            predicate = c.get('predicate')
+            entries = c.get('entry')
+            for entry in entries:
+                create_safe(db.session, CaseClassification,
+                            name=f"{predicate}:{entry.get('value')}",
+                            name_expanded=entry.get('name_expanded'),
+                            description=entry['description'])
 
 
 def create_safe_analysis_status():
