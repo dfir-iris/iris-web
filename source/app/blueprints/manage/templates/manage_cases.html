@@ -40,7 +40,7 @@
                                 <div class="row">
                                     <div class="col-md-12 col-lg-6 col-sm-12">
                                         <h4 class="border-bottom pb-3">General info</h4>
-                                        Fields with an asterix are mandatory.
+                                        Fields with an asterix are required.
                                         <form method="post" action='' id="form_new_case" autocomplete="off">
                                             {{ form.hidden_tag() }}
 
@@ -51,6 +51,10 @@
                                                             {{ form.case_customer(class="selectpicker w-100 pl--6 btn-outline-white") }}
                                                         </div>
                                                     </div>
+                                                </div>
+                                                <div class="input-group mb-4">
+
+                                                    {{ form.case_classification(class="selectpicker form-control") }}
                                                 </div>
                                                 <div class="input-group mb-4">
                                                     <div class="input-group-prepend">

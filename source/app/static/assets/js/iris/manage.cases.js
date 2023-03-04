@@ -8,6 +8,11 @@ $('#case_customer').selectpicker({
     title: "Select customer *",
     style: "btn-outline-white"
 });
+$('#case_classification').selectpicker({
+    liveSearch: true,
+    title: "Select classification",
+    style: "btn-outline-white"
+});
 $('#case_organisations').selectpicker({
     liveSearch: true,
     title: "Select organisation(s)",

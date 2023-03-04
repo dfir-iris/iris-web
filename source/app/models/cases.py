@@ -80,7 +80,8 @@ class Cases(db.Model):
                  client_id=None,
                  description=None,
                  user=None,
-                 custom_attributes=None
+                 custom_attributes=None,
+                 classification_id=None
                  ):
         self.name = name,
         self.soc_id = soc_id,
@@ -95,6 +96,7 @@ class Cases(db.Model):
         self.custom_attributes = custom_attributes
         self.case_uuid = uuid.uuid4()
         self.status_id = 0
+        self.classification_id = classification_id
 
     def save(self):
         """

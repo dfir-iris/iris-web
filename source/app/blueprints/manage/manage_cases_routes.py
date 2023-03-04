@@ -90,6 +90,7 @@ def manage_index_cases(caseid, url_redir):
                                   Client.query.order_by(Client.name)]
 
     form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
+    form.case_classification.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
 
     attributes = get_default_custom_attributes('case')
 
@@ -285,7 +286,7 @@ def api_add_case(caseid):
     except Exception as e:
         log.error(e.__str__())
         log.error(traceback.format_exc())
-        return response_error(msg="Error creating case", data=e.__str__(), status=400)
+        return response_error(msg="Error creating case", data=[e.__str__()], status=400)
 
     return response_success(msg='Case created', data=case_schema.dump(case))
 
