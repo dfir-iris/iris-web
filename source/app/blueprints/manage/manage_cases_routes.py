@@ -298,7 +298,7 @@ def update_case_info(caseid):
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
         save_case_tags(request_data.get('case_tags'), case_i.case_id)
 
-        add_obj_history_entry(case_i, 'updated info')
+        add_obj_history_entry(case_i, 'case info updated')
         track_activity("case updated {case_name}".format(case_name=case.name), caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:

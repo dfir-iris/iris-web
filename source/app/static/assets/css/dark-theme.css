@@ -827,3 +827,8 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 .contact-list-detail:hover {
   background: #f6f5f512;
 }
+
+#protagonists_form_group {
+    background-color: #f5f5f50d;
+    border-radius: 14px;
+}
