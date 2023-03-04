@@ -147,20 +147,19 @@
                                 <div class="row">
                                     <div class="col-xs-12 col-6">
                                         <div class="input-group mb-4">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text">Case classification</span>
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Classification</span>
                                             </div>
-                                            <select class="btn btn-sm dropdown-toggle btn-outline-white"
-                                                  id="case_quick_classification" aria-labelledby="dropdownMenuButton" name="classification_id">
-                                              <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
-                                              <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
-                                              <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
-                                              <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_classification" name="classification_id">
+                                                {% for clc in case_classifications %}
+                                                    <option value="{{ clc.id }}" {% if data.classification_id == clc.id %}selected{% endif %} class="badge-text">{{ clc.name_expanded }}</option>
+                                                {% endfor %}
                                           </select>
                                         </div>
                                     </div>
                                     <div class="col-xs-12 col-6">
-                                        <div class="input-group mb-4">
+                                        <div class="input-group mb-2">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">Case outcome</span>
                                             </div>
@@ -312,7 +311,7 @@
             id="delete_case_info">Delete case</button>
 
     {% if not data.close_date %}
-        <button type="button" class="btn btn-warning text-dark" onclick="close_case('{{ data.case_id }}');"
+        <button type="button" class="btn btn-outline-warning" onclick="close_case('{{ data.case_id }}');"
                 id="close_case_info">Close case</button>
     {% else %}
         <button type="button" class="btn btn-success" onclick="reopen_case('{{ data.case_id }}');"
@@ -324,5 +323,10 @@
 
 <script>
     $('[data-toggle="popover"]').popover();
+    $('#case_quick_classification').selectpicker({
+        liveSearch: true,
+        title: "Classification",
+        style: "btn-outline-white",
+    });
     access_case_info_reload('{{ data.case_id }}');
 </script>

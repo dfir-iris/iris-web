@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from typing import Union
 
 import logging as log
 # IMPORTS ------------------------------------------------
@@ -32,6 +33,7 @@ from flask import request
 from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
+from werkzeug import Response
 
 from app import db
 from app.datamgmt.case.case_db import get_case
@@ -40,6 +42,7 @@ from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
@@ -95,7 +98,18 @@ def manage_index_cases(caseid, url_redir):
 
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
 @ac_case_requires()
-def details_case(cur_id, caseid, url_redir):
+def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, str]:
+    """
+    Get case details
+
+    Args:
+        cur_id (int): case id
+        caseid (int): case id
+        url_redir (bool): url redirection
+
+    Returns:
+        Union[str, Response]: The case details
+    """
     if url_redir:
         return response_error("Invalid request")
 
@@ -104,10 +118,12 @@ def details_case(cur_id, caseid, url_redir):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
+    case_classifications = get_case_classifications_list()
     form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form, protagnists=None)
+        return render_template("modal_case_info_from_case.html", data=res, form=form, protagnists=None,
+                               case_classifications=case_classifications)
 
     else:
         return response_error("Unknown case")
@@ -115,7 +131,17 @@ def details_case(cur_id, caseid, url_redir):
 
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
 @ac_case_requires()
-def details_case_from_case(cur_id, caseid, url_redir):
+def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
+    """ Returns the case details modal for a case from a case
+
+    Args:
+        cur_id (int): The case id
+        caseid (int): The case id
+        url_redir (bool): If the request is a url redirect
+
+    Returns:
+        Union[str, Response]: The case details modal
+    """
     if url_redir:
         return response_error("Invalid request")
 
@@ -123,13 +149,15 @@ def details_case_from_case(cur_id, caseid, url_redir):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
+    case_classifications = get_case_classifications_list()
 
     protagonists = get_case_protagonists(cur_id)
 
     form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists)
+        return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
+                               case_classifications=case_classifications)
 
     else:
         return response_error("Unknown case")

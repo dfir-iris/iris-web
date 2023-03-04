@@ -15780,3 +15780,11 @@ td.dt-nowrap { white-space: nowrap }
     background-color: #f5f5f5bf;
     border-radius: 14px;
 }
+
+.fix-label-group {
+  align-items: center;
+}
+
+.fix-label-item {
+  height: calc(2.25rem + 6px);
+}
