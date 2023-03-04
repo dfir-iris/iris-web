@@ -28,6 +28,15 @@ var OverviewTable = $("#overview_table").DataTable({
         }
       },
       {
+        "data": "classification",
+        "render": function (data, type, row, meta) {
+            if (type === 'display' && data != null) {
+                data = sanitizeHTML(data);
+            }
+            return data;
+        }
+      },
+      {
         "data": "case_open_since_days",
         "render": function(data, type, row, meta) {
            if (type === 'display') {
@@ -73,11 +82,11 @@ var OverviewTable = $("#overview_table").DataTable({
         }
       },
       {
-        "data": "opened_by",
+        "data": "owner",
         "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
               sdata = sanitizeHTML(data);
-              data = `<div class="row">${get_avatar_initials(sanitizeHTML(data), true)} <span class="mt-2 ml-1">${sdata}</span></div>`;
+              data = `<div class="row">${get_avatar_initials(sdata, true)} <span class="mt-2 ml-1">${sdata}</span></div>`;
           }
           return data;
         }
@@ -90,7 +99,7 @@ var OverviewTable = $("#overview_table").DataTable({
     retrieve: true,
     lengthChange: false,
     pageLength: 25,
-    order: [[ 2, "asc" ]],
+    order: [[ 1, "asc" ]],
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },

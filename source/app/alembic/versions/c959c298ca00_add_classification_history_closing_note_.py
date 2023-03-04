@@ -26,9 +26,11 @@ def upgrade():
         sa.MetaData(),
         sa.Column('case_id', sa.Integer, primary_key=True),
         sa.Column('open_date', sa.DateTime, nullable=False),
-        sa.Column('initial_date', sa.DateTime, nullable=False)
+        sa.Column('initial_date', sa.DateTime, nullable=False),
+        sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id'), nullable=False),
+        sa.Column('owner_id', sa.Integer, sa.ForeignKey('user.id'), nullable=False)
     )
-    res = conn.execute(f"select case_id, open_date from \"cases\";")
+    res = conn.execute(f"select case_id, open_date, user_id from \"cases\";")
     results = res.fetchall()
 
     if not _table_has_column('cases', 'modification_history'):
@@ -75,7 +77,15 @@ def upgrade():
                 classification_id=other_classification_id
             ))
 
-    pass
+    if not _table_has_column('cases', 'owner_id'):
+        op.add_column('cases',
+                      sa.Column('owner_id', sa.Integer, sa.ForeignKey('user.id'),
+                                server_default=text("1")),
+                      )
+        for case in results:
+            conn.execute(cases_table.update().where(cases_table.c.case_id == case[0]).values(
+                owner_id=case[2]
+            ))
 
 
 def downgrade():

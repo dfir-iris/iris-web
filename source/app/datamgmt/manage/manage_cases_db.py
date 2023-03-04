@@ -21,6 +21,7 @@ from pathlib import Path
 
 from datetime import datetime
 from sqlalchemy import and_
+from sqlalchemy.orm import aliased
 
 from app import db
 from app.datamgmt.case.case_db import get_case_tags
@@ -61,6 +62,10 @@ def list_cases_id():
 
 
 def list_cases_dict_unrestricted():
+
+    owner_alias = aliased(User)
+    user_alias = aliased(User)
+
     res = Cases.query.with_entities(
         Cases.name.label('case_name'),
         Cases.description.label('case_description'),
@@ -68,11 +73,17 @@ def list_cases_dict_unrestricted():
         Cases.open_date.label('case_open_date'),
         Cases.close_date.label('case_close_date'),
         Cases.soc_id.label('case_soc_id'),
-        User.name.label('opened_by'),
+        Cases.user_id.label('opened_by_user_id'),
+        user_alias.user.label('opened_by'),
+        Cases.owner_id,
+        owner_alias.name.label('owner'),
         Cases.case_id
     ).join(
-        Cases.client,
-        Cases.user
+        Cases.client
+    ).join(
+        user_alias, and_(Cases.user_id == user_alias.id)
+    ).join(
+        owner_alias, and_(Cases.owner_id == owner_alias.id)
     ).order_by(
         Cases.open_date
     ).all()
@@ -88,6 +99,9 @@ def list_cases_dict_unrestricted():
 
 
 def list_cases_dict(user_id):
+    owner_alias = aliased(User)
+    user_alias = aliased(User)
+
     res = UserCaseEffectiveAccess.query.with_entities(
         Cases.name.label('case_name'),
         Cases.description.label('case_description'),
@@ -95,7 +109,10 @@ def list_cases_dict(user_id):
         Cases.open_date.label('case_open_date'),
         Cases.close_date.label('case_close_date'),
         Cases.soc_id.label('case_soc_id'),
-        User.name.label('opened_by'),
+        Cases.user_id.label('opened_by_user_id'),
+        user_alias.user.label('opened_by'),
+        Cases.owner_id,
+        owner_alias.name.label('owner'),
         Cases.case_id,
         Cases.case_uuid,
         UserCaseEffectiveAccess.access_level
@@ -103,6 +120,10 @@ def list_cases_dict(user_id):
         UserCaseEffectiveAccess.case,
         Cases.client,
         Cases.user
+    ).join(
+        user_alias, and_(Cases.user_id == user_alias.id)
+    ).join(
+        owner_alias, and_(Cases.owner_id == owner_alias.id)
     ).filter(
         UserCaseEffectiveAccess.user_id == user_id
     ).order_by(
@@ -179,7 +200,10 @@ def get_case_protagonists(case_id):
 
 def get_case_details_rt(case_id):
     if Cases.query.filter(Cases.case_id == case_id).first():
-        res = db.session.query(Cases, Client, User).with_entities(
+        owner_alias = aliased(User)
+        user_alias = aliased(User)
+
+        res = db.session.query(Cases, Client, user_alias, owner_alias).with_entities(
             Cases.name.label('case_name'),
             Cases.description.label('case_description'),
             Cases.open_date, Cases.close_date,
@@ -187,26 +211,30 @@ def get_case_details_rt(case_id):
             Cases.case_id,
             Cases.case_uuid,
             Client.name.label('customer_name'),
-            User.user.label('open_by_user'),
+            Cases.user_id.label('open_by_user_id'),
+            user_alias.user.label('open_by_user'),
+            Cases.owner_id,
+            owner_alias.name.label('owner'),
             Cases.status_id,
             Cases.custom_attributes,
             Cases.modification_history,
             Cases.initial_date,
-            Cases.classification_id
+            Cases.classification_id,
+            CaseClassification.name.label('classification')
         ).filter(and_(
-            Cases.case_id == case_id,
-            Cases.user_id == User.id,
-            Client.client_id == Cases.client_id
-        )).first()
+            Cases.case_id == case_id
+        )).join(
+            user_alias, and_(Cases.user_id == user_alias.id)
+        ).join(
+            owner_alias, and_(Cases.owner_id == owner_alias.id)
+        ).join(
+            Cases.client
+        ).outerjoin(
+            Cases.classification
+        ).first()
 
         res = res._asdict()
         res['case_tags'] = ",".join(get_case_tags(case_id))
-
-        classification = get_case_classification_by_id(res['classification_id'])
-        if classification:
-            res['classification'] = classification.name
-        else:
-            res['classification'] = "Unknown"
 
         res['protagonists'] = [r._asdict() for r in get_case_protagonists(case_id)]
 

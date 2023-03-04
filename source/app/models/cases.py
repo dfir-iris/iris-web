@@ -61,6 +61,7 @@ class Cases(db.Model):
     initial_date = Column(DateTime, nullable=False, server_default=text("now()"))
     closing_note = Column(Text)
     user_id = Column(ForeignKey('user.id'))
+    owner_id = Column(ForeignKey('user.id'))
     status_id = Column(Integer, nullable=False, server_default=text("0"))
     custom_attributes = Column(JSON)
     case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
@@ -69,7 +70,8 @@ class Cases(db.Model):
     modification_history = Column(JSON)
 
     client = relationship('Client')
-    user = relationship('User')
+    user = relationship('User', foreign_keys=[user_id])
+    owner = relationship('User', foreign_keys=[owner_id])
     classification = relationship('CaseClassification')
 
     def __init__(self,
