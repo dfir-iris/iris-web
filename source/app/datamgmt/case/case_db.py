@@ -207,7 +207,7 @@ def case_name_exists(case_name, client_name):
 
 def register_case_protagonists(case_id, protagonists):
 
-    if not protagonists:
+    if protagonists is None:
         return
 
     CaseProtagonist.query.filter(

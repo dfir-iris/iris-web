@@ -278,7 +278,6 @@ def update_case_info(caseid):
     if not ac_fast_check_current_user_has_case_access(caseid, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=caseid)
 
-    # case update request. The files should have already arrived with the request upload_files
     case_schema = CaseSchema()
 
     case_i = get_case(caseid)
