@@ -266,7 +266,7 @@ function set_case_access_via_group(case_id) {
 }
 
 
-function access_case_info_reload(case_id) {
+function access_case_info_reload(case_id, owner_id) {
     var req_users = [];
 
     get_request_api('/case/users/list')
@@ -332,6 +332,14 @@ function access_case_info_reload(case_id) {
             $('#emails-list').append($('<option>', {
                 value: req_users[i].user_email
             }));
+            $('#case_quick_owner').append($('<option>', {
+                value: req_users[i].user_id,
+                text: req_users[i].user_name
+            }));
+            if (req_users[i].user_id == owner_id) {
+                $('#case_quick_owner').val(req_users[i].user_id);
+            }
+            $('#case_quick_owner').selectpicker('refresh');
         }
     });
 

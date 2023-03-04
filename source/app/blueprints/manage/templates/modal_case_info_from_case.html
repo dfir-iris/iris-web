@@ -163,11 +163,23 @@
                                         </div>
                                     </div>
                                     <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Owner</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_owner" name="owner_id">
+                                           </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                 <div class="row">
+                                    <div class="col-xs-12 col-6">
                                         <div class="input-group mb-2">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">Case outcome</span>
                                             </div>
-                                            <select class="btn btn-sm dropdown-toggle btn-outline-white"
+                                            <select class="btn dropdown-toggle btn-outline-white"
                                                   id="case_quick_status" aria-labelledby="dropdownMenuButton" name="status_id">
                                               <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
                                               <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
@@ -176,7 +188,7 @@
                                           </select>
                                         </div>
                                     </div>
-                                </div>
+                                 </div>
                                 <div class="form-group px-0">
                                     <label for="asset_tags">Case tags
                                     </label>
@@ -330,7 +342,13 @@
     $('#case_quick_classification').selectpicker({
         liveSearch: true,
         title: "Classification",
-        style: "btn-outline-white",
+        style: "btn-outline-white"
     });
-    access_case_info_reload('{{ data.case_id }}');
+    $('#case_quick_owner').selectpicker({
+        liveSearch: true,
+        title: "Owner",
+        style: "btn-outline-white"
+    });
+
+    access_case_info_reload('{{ data.case_id }}', '{{ data.owner_id }}');
 </script>
