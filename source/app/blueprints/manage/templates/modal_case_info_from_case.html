@@ -80,6 +80,14 @@
                         </div>
                         <div class="col-6 col-xs-12 col-md-6">
                             <div class="form-group mt--3">
+                                <label>Classification :</label>
+                                {% if data.classification %}
+                                    <span type="text" class="text-faded">{{ data.classification }}</span>
+                                    {% else %}
+                                    <span type="text" class="text-faded">Unknown</span>
+                                {% endif %}
+                            </div>
+                            <div class="form-group mt--3">
                                 <label>Status :</label>
                                 {% if data.close_date %}
                                     <span type="text" class="text-faded text-danger">Closed</span>
@@ -136,17 +144,35 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="input-group mb-4">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">Case outcome</span>
+                                <div class="row">
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">Case classification</span>
+                                            </div>
+                                            <select class="btn btn-sm dropdown-toggle btn-outline-white"
+                                                  id="case_quick_classification" aria-labelledby="dropdownMenuButton" name="classification_id">
+                                              <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
+                                              <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
+                                              <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
+                                              <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
+                                          </select>
+                                        </div>
                                     </div>
-                                    <select class="btn btn-sm dropdown-toggle btn-outline-white"
-                                          id="case_quick_status" aria-labelledby="dropdownMenuButton" name="status_id">
-                                      <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
-                                      <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
-                                      <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
-                                      <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
-                                  </select>
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">Case outcome</span>
+                                            </div>
+                                            <select class="btn btn-sm dropdown-toggle btn-outline-white"
+                                                  id="case_quick_status" aria-labelledby="dropdownMenuButton" name="status_id">
+                                              <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
+                                              <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
+                                              <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
+                                              <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
+                                          </select>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="form-group px-0">
                                     <label for="asset_tags">Case tags
