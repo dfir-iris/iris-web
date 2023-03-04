@@ -90,7 +90,7 @@ def manage_index_cases(caseid, url_redir):
                                   Client.query.order_by(Client.name)]
 
     form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
-    form.case_classification.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
+    form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
 
     attributes = get_default_custom_attributes('case')
 
@@ -270,6 +270,7 @@ def api_add_case(caseid):
 
         request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
         case = case_schema.load(request_data)
+        case.owner_id = current_user.id
 
         case.save()
 

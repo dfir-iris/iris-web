@@ -557,13 +557,20 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     case_tags = fields.String(required=False)
     csrf_token = fields.String(required=False)
     initial_date = auto_field('initial_date', required=False)
-    case_classification = auto_field('classification_id', required=False, allow_none=True)
+    classification_id = auto_field('classification_id', required=False, allow_none=True)
 
     class Meta:
         model = Cases
         include_fk = True
         load_instance = True
-        exclude = ['name', 'description', 'soc_id', 'client_id', 'classification_id', 'initial_date']
+        exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date']
+
+    @pre_load
+    def classification_filter(self, data, **kwargs):
+        if data.get('classification_id') == "":
+            del data['classification_id']
+
+        return data
 
     @pre_load
     def verify_customer(self, data, **kwargs):

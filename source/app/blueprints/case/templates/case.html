@@ -45,7 +45,7 @@
                             <div class="row">
                                   <div class=" ml-auto">
                                     <h5 class="text-white op-7 mb-2 float-right"><b>Customer</b> : {{ case.client.name }}</h5>
-                                    <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5>
+                                    {% if case.soc_id %} <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
 
                                 </div>
                             </div>
@@ -54,7 +54,7 @@
                     <div class="row mt-2 mb--2">
 
                         <div class="col ml-2">
-                            <h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>
+                            {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>{% endif %}
                         </div>
                         <div class="col mr-2">
                             {% if case.case_tags %}

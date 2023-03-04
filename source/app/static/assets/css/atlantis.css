@@ -15788,3 +15788,7 @@ td.dt-nowrap { white-space: nowrap }
 .fix-label-item {
   height: calc(2.25rem + 8px);
 }
+
+.swal-button {
+  background-color: #053c80e8;
+  }
