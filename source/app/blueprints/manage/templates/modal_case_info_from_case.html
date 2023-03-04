@@ -147,48 +147,52 @@
                                       <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
                                   </select>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group px-0">
                                     <label for="asset_tags">Case tags
                                     </label>
                                     <input type="text" id="case_tags"
                                         class="form-control col-md-12" {% if data.case_tags %} value="{{ data.case_tags }}" {% endif %}/>
                                 </div>
-                                {% if protagonists %}
-                                {% for iprota in protagonists %}
-                                    <div class="input-group mb-2 mt-2" id="protagonist_{{loop.index}}">
-                                        <div class="col-6">
-                                                <h5>Protagonist</h5>
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="ingrole_{{loop.index}}">Role</span>
+                                <div class="form-group px-4 py-4 mt-3" id="protagonists_form_group">
+                                    {% if protagonists %}
+                                    <label>Protagonists
+                                    </label>
+                                    {% for iprota in protagonists %}
+                                        <div class="input-group mb-2 mt-2" id="protagonist_{{loop.index}}">
+                                            <div class="col-6">
+                                                    <h6># {{loop.index}}</h6>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="ingrole_{{loop.index}}">Role</span>
+                                                        </div>
+                                                        <input type="text" aria-describedby="ingrole_{{loop.index}}" list="roles-list"  class="form-control" name="protagonist_role_{{loop.index}}" value="{{ iprota.role }}" placeholder="Role">
                                                     </div>
-                                                    <input type="text" aria-describedby="ingrole_{{loop.index}}" list="roles-list"  class="form-control" name="protagonist_role_{{loop.index}}" value="{{ iprota.role }}" placeholder="Role">
-                                                </div>
 
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="ingname_{{loop.index}}">Name</span>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="ingname_{{loop.index}}">Name</span>
+                                                        </div>
+                                                        <input type="text" aria-describedby="ingname_{{loop.index}}" class="form-control" name="protagonist_name_{{loop.index}}" placeholder="Name" list="username-list" value="{{ iprota.name }}">
                                                     </div>
-                                                    <input type="text" aria-describedby="ingname_{{loop.index}}" class="form-control" name="protagonist_name_{{loop.index}}" placeholder="Name" list="username-list" value="{{ iprota.name }}">
-                                                </div>
 
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="ingp_{{loop.index}}">Contact</span>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="ingp_{{loop.index}}">Contact</span>
+                                                        </div>
+                                                        <input type="text" aria-describedby="ingp_{{loop.index}}" class="form-control" name="protagonist_contact_{{loop.index}}" value="{{ iprota.contact }}" placeholder="Contact" list="emails-list">
                                                     </div>
-                                                    <input type="text" aria-describedby="ingp_{{loop.index}}" class="form-control" name="protagonist_contact_{{loop.index}}" value="{{ iprota.contact }}" placeholder="Contact" list="emails-list">
-                                                </div>
-                                                <button type="button" class="btn btn-sm  btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('{{loop.index}}');">
-                                                    Remove
-                                                </button>
-                                                <hr/>
+                                                    <button type="button" class="btn btn-sm  btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('{{loop.index}}');">
+                                                        Remove
+                                                    </button>
+                                                    <hr/>
+                                            </div>
                                         </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                    <div id="protagonist_list_edit">
                                     </div>
-                                {% endfor %}
-                                {% endif %}
-                                <div id="protagonist_list_edit">
+                                    <button type="button" class="btn btn-sm btn-outline-dark mt-2 mr-2" id="add_protagonist_btn"  onclick="add_protagonist();">Add protagonist</button>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-dark mt-2 mr-2" id="add_protagonist_btn"  onclick="add_protagonist();">Add protagonist</button>
                             </div>
                         </form>
                     </div>
@@ -277,16 +281,18 @@
 </datalist>
 
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-danger mr-auto" onclick="remove_case('{{ data.case_id }}');">Delete case</button>
-    <button type="button" class="btn btn-default mr-2" data-dismiss="modal">Dismiss</button>
-    {% if not data.close_date %}
-        <button type="button" class="btn btn-outline-warning" onclick="close_case('{{ data.case_id }}');">Close case</button>
-    {% else %}
-        <button type="button" class="btn btn-success" onclick="reopen_case('{{ data.case_id }}');">Reopen case</button>
-    {% endif %}
+    <button type="button" class="btn btn-outline-danger mr-auto" onclick="remove_case('{{ data.case_id }}');"
+            id="delete_case_info">Delete case</button>
 
-    <button type="button" class="btn btn-outline-danger mr-2" style="display:none;" id="cancel_case_info"  onclick="cancel_case_edit();">Cancel edit</button>
-    <button type="button" class="btn btn-outline-success mr-2" style="display:none;" id="save_case_info" onclick="save_case_edit({{ data.case_id }});">Save edit</button>
+    {% if not data.close_date %}
+        <button type="button" class="btn btn-warning" onclick="close_case('{{ data.case_id }}');"
+                id="close_case_info">Close case</button>
+    {% else %}
+        <button type="button" class="btn btn-success" onclick="reopen_case('{{ data.case_id }}');"
+                id="reopen_case_info">Reopen case</button>
+    {% endif %}
+    <button type="button" class="btn btn-outline-dark mr-2" style="display:none;" id="cancel_case_info"  onclick="cancel_case_edit();">Cancel</button>
+    <button type="button" class="btn btn-outline-success mr-2" style="display:none;" id="save_case_info" onclick="save_case_edit({{ data.case_id }});">Save</button>
 </div>
 
 <script>
