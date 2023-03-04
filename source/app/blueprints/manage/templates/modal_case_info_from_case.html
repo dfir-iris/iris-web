@@ -48,68 +48,68 @@
                     <h4>General info <button class="ml-2 btn btn-sm float-right" onclick="edit_case_info();">Edit</button></h4>
                     <div class="row">
                         <div class="col-6 col-xs-12 col-md-6">
-                        <div class="form-group">
-                            <label>Case name :</label>
-                            <span type="text" class="">{{ data.case_name|unquote }}</span>
+                            <div class="form-group">
+                                <label>Case name :</label>
+                                <span type="text" class="">{{ data.case_name|unquote }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Case description :</label>
+                                <span type="text" class="">{{ data.case_description[0:50] }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Customer :</label>
+                                <span type="text" class="text-faded">{{ data.customer_name }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Case tags :</label>
+                                <span type="text" class="text-faded">{% if data.case_tags %} {% for tag in data.case_tags.split(',') %}
+                                    <span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>{{ tag }}</span> {% endfor %}{% endif %}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>SOC ID :</label>
+                                <span type="text" class="text-faded">{{ data.case_soc_id }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Case ID :</label>
+                                <span type="text" class="text-faded">{{ data.case_id }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Case UUID :</label>
+                                <span type="text" class="text-faded">{{ data.case_uuid }}</span>
+                            </div>
                         </div>
-                        <div class="form-group mt--3">
-                            <label>Case description :</label>
-                            <span type="text" class="">{{ data.case_description[0:50] }}</span>
-                        </div>
-                        <div class="form-group mt--3">
-                            <label>Customer :</label>
-                            <span type="text" class="text-faded">{{ data.customer_name }}</span>
-                        </div>
-                        <div class="form-group mt--3">
-                            <label>Status :</label>
+                        <div class="col-6 col-xs-12 col-md-6">
+                            <div class="form-group mt--3">
+                                <label>Status :</label>
+                                {% if data.close_date %}
+                                    <span type="text" class="text-faded text-danger">Closed</span>
+                                    {% else %}
+                                    <span type="text" class="text-faded text-success">Open</span>
+                                {% endif %}
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Open date :</label>
+                                <span type="text" class="">{{ data.open_date }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Opening user :</label>
+                                <span type="text" class="">{{ data.open_by_user }}</span>
+                            </div>
                             {% if data.close_date %}
-                                <span type="text" class="text-faded text-danger">Closed</span>
-                                {% else %}
-                                <span type="text" class="text-faded text-success">Open</span>
+                                <div class="form-group mt--3">
+                                    <label>Close date :</label>
+                                    <span type="text" class="">{{ data.close_date }}</span>
+                                </div>
+                            {% endif %}
+                            {% if protagonists %}
+                                {% for protagonist in protagonists %}
+                                    <div class="form-group mt--3">
+                                        <label>{{ protagonist.role }}: </label>
+                                        <span type="text" class="">{{ protagonist.name }} ({{protagonist.contact}})</span>
+                                    </div>
+                                {% endfor %}
                             {% endif %}
                         </div>
-                        <div class="form-group mt--3">
-                            <label>Open date :</label>
-                            <span type="text" class="">{{ data.open_date }}</span>
-                        </div>
-                        {% if data.close_date %}
-                            <div class="form-group mt--3">
-                                <label>Close date :</label>
-                                <span type="text" class="">{{ data.close_date }}</span>
-                            </div>
-                        {% endif %}
-                        <div class="form-group mt--3">
-                            <label>SOC ID :</label>
-                            <span type="text" class="text-faded">{{ data.case_soc_id }}</span>
-                        </div>
-                        <div class="form-group mt--3">
-                            <label>Case ID :</label>
-                            <span type="text" class="text-faded">{{ data.case_id }}</span>
-                        </div>
-                        <div class="form-group mt--3">
-                            <label>Case UUID :</label>
-                            <span type="text" class="text-faded">{{ data.case_uuid }}</span>
-                        </div>
-                        <div class="form-group mt--3">
-                            <label>Case tags :</label>
-                            <span type="text" class="text-faded">{% if data.case_tags %} {% for tag in data.case_tags.split(',') %}
-                                <span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>{{ tag }}</span> {% endfor %}{% endif %}</span>
-                        </div>
-                    </div>
-                    <div class="col-6 col-xs-12 col-md-6">
-                        <div class="form-group mt--3">
-                            <label>Opening user :</label>
-                            <span type="text" class="">{{ data.open_by_user }}</span>
-                        </div>
-                        {% if protagonists %}
-                            {% for protagonist in protagonists %}
-                                <div class="form-group mt--3">
-                                    <label>{{ protagonist.role }}: </label>
-                                    <span type="text" class="">{{ protagonist.name }} ({{protagonist.contact}})</span>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
                     </div>
                 </div>
                 <div id="case_gen_info_edit" style="display:none;">
