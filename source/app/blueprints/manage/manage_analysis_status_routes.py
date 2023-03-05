@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
+from werkzeug import Response
 
 from app.datamgmt.case.case_assets_db import get_compromise_status_dict
 from app.models.models import AnalysisStatus
@@ -51,6 +52,23 @@ def list_compr_status(caseid):
     compro_status = get_compromise_status_dict()
 
     return response_success("", data=compro_status)
+
+
+@manage_anastatus_blueprint.route('/manage/outcome-status/list', methods=['GET'])
+@api_login_required
+def list_outcome_status(caseid) -> Response:
+    """ Returns a list of outcome status
+
+    Args:
+        caseid (int): Case ID
+
+    Returns:
+        Response: Flask response object
+
+    """
+    outcome_status = get_compromise_status_dict()
+
+    return response_success("", data=outcome_status)
 
 
 @manage_anastatus_blueprint.route('/manage/analysis-status/<int:cur_id>', methods=['GET'])

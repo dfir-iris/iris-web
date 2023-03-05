@@ -26,7 +26,7 @@ from sqlalchemy import func
 
 from app import db
 from app.datamgmt.states import update_assets_state
-from app.models import AnalysisStatus
+from app.models import AnalysisStatus, CaseStatus
 from app.models import AssetComments
 from app.models import AssetsType
 from app.models import CaseAssets
@@ -174,6 +174,10 @@ def get_compromise_status_list():
 
 def get_compromise_status_dict():
     return [{'value': e.value, 'name': e.name.replace('_', ' ').capitalize()} for e in CompromiseStatus]
+
+
+def get_case_outcome_status_dict():
+    return [{'value': e.value, 'name': e.name.replace('_', ' ').capitalize()} for e in CaseStatus]
 
 
 def get_asset_type_id(asset_type_name):
