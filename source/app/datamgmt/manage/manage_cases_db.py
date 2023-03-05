@@ -115,11 +115,15 @@ def list_cases_dict(user_id):
         owner_alias.name.label('owner'),
         Cases.case_id,
         Cases.case_uuid,
+        Cases.classification_id,
+        CaseClassification.name.label('classification_name'),
         UserCaseEffectiveAccess.access_level
     ).join(
         UserCaseEffectiveAccess.case,
         Cases.client,
         Cases.user
+    ).outerjoin(
+        Cases.classification
     ).join(
         user_alias, and_(Cases.user_id == user_alias.id)
     ).join(
