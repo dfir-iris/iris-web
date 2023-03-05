@@ -388,6 +388,8 @@ def case_update_status(caseid):
         status = int(status)
     except ValueError:
         return response_error('Invalid status')
+    except TypeError:
+        return response_error('Invalid status. Expected int')
 
     if status not in case_status:
         return response_error('Invalid status')

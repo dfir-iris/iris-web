@@ -21,7 +21,7 @@
 from flask import Blueprint
 from werkzeug import Response
 
-from app.datamgmt.case.case_assets_db import get_compromise_status_dict
+from app.datamgmt.case.case_assets_db import get_compromise_status_dict, get_case_outcome_status_dict
 from app.models.models import AnalysisStatus
 from app.util import api_login_required
 from app.util import response_error
@@ -66,7 +66,7 @@ def list_outcome_status(caseid) -> Response:
         Response: Flask response object
 
     """
-    outcome_status = get_compromise_status_dict()
+    outcome_status = get_case_outcome_status_dict()
 
     return response_success("", data=outcome_status)
 
