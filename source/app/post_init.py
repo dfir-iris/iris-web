@@ -659,7 +659,6 @@ def create_safe_case(user, client, groups):
             name="Initial Demo",
             description="This is a demonstration.",
             soc_id="soc_id_demo",
-            gen_report=False,
             user=user,
             client_id=client.client_id
         )
