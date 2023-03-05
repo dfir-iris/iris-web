@@ -1353,7 +1353,6 @@ $(document).ready(function(){
             // make table responsive
             .wrap('<div class="table-responsive"></div>');
           });
-          console.log(liveHtml.html());
           return liveHtml.html();
         }
       }];
