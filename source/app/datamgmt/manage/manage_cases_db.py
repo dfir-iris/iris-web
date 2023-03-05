@@ -116,7 +116,7 @@ def list_cases_dict(user_id):
         Cases.case_id,
         Cases.case_uuid,
         Cases.classification_id,
-        CaseClassification.name.label('classification_name'),
+        CaseClassification.name.label('classification'),
         UserCaseEffectiveAccess.access_level
     ).join(
         UserCaseEffectiveAccess.case,
