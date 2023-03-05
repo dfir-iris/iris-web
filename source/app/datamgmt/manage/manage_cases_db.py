@@ -229,13 +229,16 @@ def get_case_details_rt(case_id):
             Cases.case_id == case_id
         )).join(
             user_alias, and_(Cases.user_id == user_alias.id)
-        ).join(
+        ).outerjoin(
             owner_alias, and_(Cases.owner_id == owner_alias.id)
         ).join(
             Cases.client
         ).outerjoin(
             Cases.classification
         ).first()
+
+        if res is None:
+            return None
 
         res = res._asdict()
         res['case_tags'] = ",".join(get_case_tags(case_id))

@@ -88,6 +88,7 @@ class Cases(db.Model):
         self.client_id = client_id,
         self.description = description,
         self.user_id = current_user.id if current_user else user.id
+        self.owner_id = self.user_id
         self.author = current_user.user if current_user else user.user
         self.description = description
         self.open_date = datetime.utcnow()
