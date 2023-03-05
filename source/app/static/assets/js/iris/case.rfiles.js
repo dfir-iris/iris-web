@@ -54,7 +54,6 @@ function add_modal_rfile() {
                     function() {
                         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                         $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                        $('#submit_new_evidence').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                     }, null);
         g_evidence_desc_editor.setOption("minLines", "10");
         edit_in_evidence_desc();

@@ -15789,6 +15789,7 @@ td.dt-nowrap { white-space: nowrap }
   height: calc(2.25rem + 8px);
 }
 
-.swal-button {
+.swal-button.swal-button--confirm:not(.swal-button--danger),
+.swal-button:not(.swal-button--confirm, .swal-button--cancel) {
   background-color: #053c80e8;
-  }
+}
