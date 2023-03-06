@@ -247,25 +247,26 @@ def get_linked_iocs_from_asset(asset_id):
 
 def set_ioc_links(ioc_list, asset_id):
     if ioc_list is None:
-        return True, "Empty IOC list"
+        return False, "Empty IOC list"
 
     # Reset IOC list
     delete_ioc_asset_link(asset_id)
 
     for ioc in ioc_list:
-        try:
-            ial = IocAssetLink()
-            ial.asset_id = asset_id
-            ial.ioc_id = ioc
+        ial = IocAssetLink()
+        ial.asset_id = asset_id
+        ial.ioc_id = ioc
 
-            db.session.add(ial)
+        db.session.add(ial)
 
-        except Exception as e:
-            log.exception(e)
-            return False, e.__str__()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        log.exception(e)
+        return True, e.__str__()
 
-    db.session.commit()
-    return True, ""
+    return False, ""
 
 
 def get_linked_iocs_id_from_asset(asset_id):
