@@ -157,7 +157,7 @@ class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
 
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
-    ioc_links = fields.List(fields.String, required=False)
+    ioc_links = fields.List(fields.Integer, required=False)
 
     class Meta:
         model = CaseAssets
