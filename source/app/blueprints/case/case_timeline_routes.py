@@ -676,7 +676,7 @@ def event_view(cur_id, caseid):
     output['event_assets'] = linked_assets
     output['event_iocs'] = linked_iocs
     output['event_category_id'] = event.category[0].id
-    output['event_comments_map'] = get_case_events_comments_count([cur_id])
+    output['event_comments_map'] = [c._asdict() for c in get_case_events_comments_count([cur_id])]
 
     return response_success(data=output)
 
