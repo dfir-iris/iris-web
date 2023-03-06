@@ -90,7 +90,7 @@ def download_case_activity(report_id, caseid):
 
             return resp
 
-    return redirect(url_for('index.index', cid=caseid))
+    return response_error("Unknown report", status=404)
 
 
 @reports_blueprint.route("/case/report/generate-investigation/<int:report_id>", methods=['GET'])
@@ -136,5 +136,5 @@ def _gen_report(report_id, caseid):
 
             return resp
 
-    return redirect(url_for('index.index', cid=caseid))
+    return response_error("Unknown report", status=404)
 
