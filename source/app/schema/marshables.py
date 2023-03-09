@@ -660,6 +660,8 @@ class TaskLogSchema(ma.Schema):
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     task_status_id = auto_field('task_status_id', required=True)
+    task_assignees_id = fields.List(fields.Integer, required=False, allow_none=True)
+    task_assignees = fields.List(fields.Dict, required=False, allow_none=True)
 
     class Meta:
         model = CaseTasks

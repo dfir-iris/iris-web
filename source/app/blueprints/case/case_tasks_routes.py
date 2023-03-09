@@ -185,7 +185,9 @@ def case_task_view(cur_id, caseid):
     if not task:
         return response_error("Invalid task ID for this case")
 
-    return response_success(data=task)
+    task_schema = CaseTaskSchema()
+
+    return response_success(data=task_schema.dump(task))
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/modal', methods=['GET'])
