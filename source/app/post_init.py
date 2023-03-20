@@ -609,7 +609,7 @@ def create_safe_auth_model():
         db.session.rollback()
         log.warning('Analysts group integrity error. Group permissions were probably changed. Updating.')
         ganalysts = Group.query.filter(
-            Group.group_name == "ganalysts"
+            Group.group_name == "Analysts"
         ).first()
 
     if ganalysts.group_permissions != ac_get_mask_analyst():

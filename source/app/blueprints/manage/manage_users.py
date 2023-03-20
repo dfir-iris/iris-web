@@ -186,14 +186,14 @@ def manage_user_group_(cur_id, caseid):
     if type(request.json.get('groups_membership')) is not list:
         return response_error("Expected list of groups ID", status=400)
 
-    user = get_user(cur_id)
+    user = get_user_details(cur_id)
     if not user:
         return response_error("Invalid user ID")
 
     update_user_groups(user_id=cur_id,
                        groups=request.json.get('groups_membership'))
 
-    track_activity(f"groups membership of user {user.user} updated", caseid=caseid,  ctx_less=True)
+    track_activity(f"groups membership of user {user.get('user')} updated", caseid=caseid,  ctx_less=True)
 
     return response_success("User groups updated", data=user)
 
@@ -293,7 +293,10 @@ def manage_user_cac_delete_cases(cur_id,  caseid):
     if success:
         track_activity(f"cases access for case(s) {data.get('cases')} deleted for user {user.user}", caseid=caseid,
                        ctx_less=True)
-        return response_success(msg="User case access updated")
+
+        user = get_user_details(cur_id)
+
+        return response_success(msg="User case access updated", data=user)
 
     return response_error(msg=logs)
 
@@ -329,7 +332,10 @@ def manage_user_cac_delete_case(cur_id,  caseid):
     if success:
         track_activity(f"case access for case {data.get('case')} deleted for user {user.user}", caseid=caseid,
                        ctx_less=True)
-        return response_success(msg="User case access updated")
+
+        user = get_user_details(cur_id)
+
+        return response_success(msg="User case access updated", data=user)
 
     return response_error(msg=logs)
 
