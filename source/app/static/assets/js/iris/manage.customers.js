@@ -135,11 +135,10 @@ function delete_customer(id) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            get_request_api('/manage/customers/delete/' + id)
+            post_request_api('/manage/customers/delete/' + id)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_customer_table();
-                    $('#modal_add_customer').modal('hide');
+                    window.location.href = '/manage/customers' + case_param();
                 }
             });
         } else {
