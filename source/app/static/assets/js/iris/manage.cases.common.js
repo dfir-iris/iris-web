@@ -163,7 +163,7 @@ function save_case_edit(case_id) {
 
     data_sent['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('/manage/cases/update', JSON.stringify(data_sent), true, undefined, case_id)
+    post_request_api('/manage/cases/update/' + case_id, JSON.stringify(data_sent), true, undefined, case_id)
     .done((data) => {
         if(notify_auto_api(data)) {
             case_detail(case_id);

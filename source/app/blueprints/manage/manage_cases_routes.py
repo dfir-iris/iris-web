@@ -301,16 +301,16 @@ def api_list_case(caseid):
     return response_success("", data=data)
 
 
-@manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
+@manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
-def update_case_info(caseid):
+def update_case_info(cur_id, caseid):
 
-    if not ac_fast_check_current_user_has_case_access(caseid, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=caseid)
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=cur_id)
 
     case_schema = CaseSchema()
 
-    case_i = get_case(caseid)
+    case_i = get_case(cur_id)
     if not case_i:
         return response_error("Case not found")
 
@@ -329,7 +329,7 @@ def update_case_info(caseid):
         save_case_tags(request_data.get('case_tags'), case_i.case_id)
 
         add_obj_history_entry(case_i, 'case info updated')
-        track_activity("case updated {case_name}".format(case_name=case.name), caseid=caseid)
+        track_activity("case updated {case_name}".format(case_name=case.name), caseid=cur_id)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
