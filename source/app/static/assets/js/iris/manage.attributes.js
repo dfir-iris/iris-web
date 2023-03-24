@@ -162,7 +162,7 @@ function update_attribute(attr_id, editor, partial, complete){
         });
     })
     .done((data) => {
-        notify_auto_api(data, true)
+        notify_auto_api(data);
     })
     .fail((error) => {
         data = error.responseJSON;
