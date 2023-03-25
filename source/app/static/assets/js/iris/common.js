@@ -1158,7 +1158,8 @@ function load_context_switcher() {
             dataType: 'json'
         },
         locale: {
-                emptyTitle: 'Select and Begin Typing'
+                emptyTitle: 'Select and Begin Typing',
+                statusInitialized: '',
         },
         preprocessData: function (data) {
             return context_data_parser(data);
