@@ -326,19 +326,17 @@ function events_set_attribute(attribute, color) {
             original_event = data.data;
             if(notify_auto_api(data, true)) {
                 //change attribute to selected value
-                if(attribute == 'event_in_graph' || attribute == 'event_in_summary'){
+                if(attribute === 'event_in_graph' || attribute === 'event_in_summary'){
                     attribute_value = original_event[attribute];
                     original_event[attribute] = !attribute_value;
-                } else if(attribute == 'event_color') {
+                } else if(attribute === 'event_color') {
                     // attribute value already set to color L240
                     original_event[attribute] = attribute_value;
                 }
 
-                //get csrf token
-                var csrf_token = $("#csrf_token").val();
-
                 //add csrf token to request
-                original_event['csrf_token'] = csrf_token;
+                original_event['csrf_token'] = $("#csrf_token").val();
+                delete original_event['event_comments_map'];
 
                 //send updated event to API
                 post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
