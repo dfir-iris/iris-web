@@ -478,10 +478,13 @@ function build_timeline(data) {
         }
 
         if(evt.category_name && evt.category_name != 'Unspecified') {
-            tags += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
-            if (evt.category_name != 'Unspecified') {
-                cats += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
-            }
+             if (!compact) {
+                 tags += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
+             } else {
+                 if (evt.category_name != 'Unspecified') {
+                     cats += `<span class="badge badge-light float-right ml-1 mt-1 mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
+                 }
+             }
         }
         
         if (evt.iocs != null && evt.iocs.length > 0) {
