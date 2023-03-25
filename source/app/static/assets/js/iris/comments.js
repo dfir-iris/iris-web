@@ -71,28 +71,36 @@ function save_comment_ext(element_id, element_type, do_close){
 
 function decrease_modal_comments_count(element_type, element_id) {
 
-    if (element_type === undefined || element_type !== 'timeline/events') {
-        curr_count = $('#object_comments_number').text();
-        if (curr_count > 0) {
-            $('#object_comments_number').text(curr_count - 1);
-        }
-    } else {
-        curr_count = $('#object_comments_number_' + element_id).text();
-        if (curr_count > 0) {
-            $('#object_comments_number_' + element_id).text(curr_count - 1);
+    let tid = '#object_comments_number';
+    if (element_type === 'timeline/events') {
+        tid = '#object_comments_number_' + element_id;
+    }
+
+    let curr_count = $(tid).text();
+
+    if (curr_count > 0) {
+        $(tid).text(curr_count - 1);
+        if (element_type === 'timeline/events') {
+            $('#object_comments_number').text(parseInt(curr_count) - 1);
         }
     }
 
 }
 
 function increase_modal_comments_count(element_type, element_id) {
+    let tid = '#object_comments_number';
+    if (element_type === 'timeline/events') {
+        tid = '#object_comments_number_' + element_id;
+    }
 
-    if (element_type === undefined || element_type !== 'timeline/events') {
-        curr_count = $('#object_comments_number').text();
+    let curr_count = $(tid).text();
+    if (curr_count === '') {
+        curr_count = 0;
+    }
+
+    $(tid).text(parseInt(curr_count) + 1);
+    if (element_type === 'timeline/events') {
         $('#object_comments_number').text(parseInt(curr_count) + 1);
-    } else {
-        curr_count = $('#object_comments_number_' + element_id).text();
-        $('#object_comments_number_' + element_id).text(parseInt(curr_count) + 1);
     }
 }
 
