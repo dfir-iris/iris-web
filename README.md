@@ -65,10 +65,10 @@ docker-compose build
 docker-compose up
 ```
 
-Iris shall be available on the host interface, port 4433, protocol HTTPS - ``https://<your_instance_ip>:4433``.  
+Iris shall be available on the host interface, port 443, protocol HTTPS - ``https://<your_instance_ip>``.  
 By default, an ``administrator`` account is created. The password is printed in stdout the very first time Iris is started. It won't be printed anymore after that.  
 ``WARNING :: post_init :: create_safe_admin :: >>>`` can be searched in the logs of the `webapp` docker to find the password.  
-The initial password can be set via the [configuration](CONFIGURATION.md).   
+The initial password can be set via the [configuration](https://docs.dfir-iris.org/operations/configuration/).   
 
 Iris is split on 5 Docker services, each with a different role.
 
@@ -80,7 +80,7 @@ Iris is split on 5 Docker services, each with a different role.
 
 ### Configuration
 There are three different options for configuring the settings and credentials: Azure Key Vault, Environment Variables and Configuration Files. This is also the order of priority, if a settings is not set it will fall back on the next option.
-For all available configuration options see [CONFIGURATION.md](CONFIGURATION.md). 
+For all available configuration options see [configuration](https://docs.dfir-iris.org/operations/configuration/).
 
 ## Versioning
 Starting from version 2.0.0, Iris is following the [Semantic Versioning 2.0](https://semver.org/) guidelines.   
