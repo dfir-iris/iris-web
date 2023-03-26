@@ -31,7 +31,6 @@ function add_task() {
                             function() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                                $('#submit_new_task').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, null);
         g_task_desc_editor.setOption("minLines", "10");
         edit_in_task_desc();
@@ -161,7 +160,6 @@ function edit_task(id) {
                             function() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                                $('#submit_new_task').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, null);
 
         g_task_desc_editor.setOption("minLines", "6");
@@ -178,12 +176,9 @@ function edit_task(id) {
 function preview_task_description(no_btn_update) {
     if(!$('#container_task_description').is(':visible')) {
         task_desc = g_task_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(task_desc);
-        task_desc_html = filterXSS(html);
+        task_desc_html = do_md_filter_xss(html);
         $('#target_task_desc').html(task_desc_html);
         $('#container_task_description').show();
         if (!no_btn_update) {

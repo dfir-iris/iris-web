@@ -148,7 +148,7 @@ function delete_asset_type(id) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            get_request_api('/manage/asset-type/delete/' + id)
+            post_request_api('/manage/asset-type/delete/' + id)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_asset_table();
@@ -166,6 +166,10 @@ function delete_asset_type(id) {
 function add_ioc_type() {
     url = '/manage/ioc-types/add/modal' + case_param();
     $('#modal_add_type_content').load(url, function () {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
 
         $('#submit_new_ioc_type').on("click", function () {
             var form = $('form#form_new_ioc_type').serializeObject();
@@ -277,10 +281,132 @@ function delete_ioc_type(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-            get_request_api('/manage/ioc-types/delete/' + id)
+            post_request_api('/manage/ioc-types/delete/' + id)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_ioc_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+      } else {
+        swal("Pfew, that was close");
+      }
+    });
+}
+
+/***    Classification    ***/
+
+function add_classification() {
+    url = '/manage/case-classifications/add/modal' + case_param();
+    $('#modal_add_type_content').load(url, function () {
+
+        $('#submit_new_case_classification').on("click", function () {
+            var form = $('form#form_new_case_classification').serializeObject();
+
+            post_request_api('/manage/case-classifications/add', JSON.stringify(form), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_classification_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+
+            return false;
+        })
+    });
+    $('#modal_add_type').modal({ show: true });
+}
+
+$('#classification_table').dataTable({
+    "ajax": {
+      "url": "/manage/case-classifications/list" + case_param(),
+      "contentType": "application/json",
+      "type": "GET",
+      "data": function ( d ) {
+        if (d.status == 'success') {
+          return JSON.stringify( d.data );
+        } else {
+          return [];
+        }
+      }
+    },
+    "order": [[ 0, "asc" ]],
+    "autoWidth": false,
+    "columns": [
+        {
+            "data": "name",
+            "render": function ( data, type, row ) {
+                return '<a href="#" onclick="classification_detail(\'' + row['id'] + '\');">' + sanitizeHTML(data) +'</a>';
+            }
+        },
+        {
+            "data": "name_expanded",
+            "render": function ( data, type, row ) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+            }
+        },
+        {
+            "data": "description",
+            "render": function ( data, type, row ) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+            }
+        }
+    ]
+ });
+
+function refresh_classification_table() {
+  $('#classification_table').DataTable().ajax.reload();
+  notify_success("Refreshed");
+}
+
+
+/* Fetch the details of an classification and allow modification */
+function classification_detail(ioc_id) {
+    url = '/manage/case-classifications/update/' + ioc_id + '/modal' + case_param();
+    $('#modal_add_type_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
+        $('#submit_new_case_classification').on("click", function () {
+            var form = $('form#form_new_case_classification').serializeObject();
+
+            post_request_api('/manage/case-classifications/update/' + ioc_id, JSON.stringify(form), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_classification_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+
+            return false;
+        })
+
+
+    });
+    $('#modal_add_type').modal({ show: true });
+}
+function delete_case_classification(id) {
+
+    swal({
+      title: "Are you sure?",
+      text: "You won't be able to revert this !",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    })
+    .then((willDelete) => {
+      if (willDelete) {
+            post_request_api('/manage/case-classifications/delete/' + id)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_classification_table();
                     $('#modal_add_type').modal('hide');
                 }
             });

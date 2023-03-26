@@ -145,7 +145,7 @@ def add_template(caseid):
             template_file.save(os.path.join(app.config['TEMPLATES_PATH'], filename))
 
         except Exception as e:
-            return response_error(f"Unable to add template {e}")
+            return response_error(f"Unable to add template. {e}")
 
         report_template.internal_reference = filename
 
@@ -153,10 +153,19 @@ def add_template(caseid):
         db.session.commit()
 
         track_activity(f"report template '{report_template.name}' added", caseid=caseid, ctx_less=True)
-        # Return the assets
-        return response_success("Added successfully")
 
-    return response_error("Unable to add a file")
+        ret = {
+            "report_id": report_template.id,
+            "report_name": report_template.name,
+            "report_description": report_template.description,
+            "report_language_id": report_template.language_id,
+            "report_name_format": report_template.naming_format,
+            "report_type_id": report_template.report_type_id
+        }
+
+        return response_success("Added successfully", data=ret)
+
+    return response_error(f"File is invalid")
 
 
 @manage_templates_blueprint.route('/manage/templates/download/<report_id>', methods=['GET'])

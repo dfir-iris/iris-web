@@ -26,8 +26,8 @@ function cancel_case_edit() {
     $('#case_gen_info_content').show();
     $('#case_gen_info_edit').hide();
     $('#cancel_case_info').hide();
-    $('#case_info').show();
     $('#save_case_info').hide();
+    $('#case_info').show();
 }
 
 function save_case_edit(case_id) {
@@ -72,7 +72,7 @@ function save_case_edit(case_id) {
 
     data_sent['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('/manage/cases/update', JSON.stringify(data_sent), true)
+    post_request_api('/manage/cases/update/' + case_id, JSON.stringify(data_sent), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             case_detail(case_id);
@@ -109,7 +109,7 @@ function remove_case(id) {
 
 /* Reopen case function */
 function reopen_case(id) {
-    get_request_api('/manage/cases/reopen/' + id)
+    post_request_api('/manage/cases/reopen/' + id)
     .done((data) => {
         window.location.reload();
         $('#modal_case_detail').modal('hide');
@@ -130,7 +130,7 @@ function close_case(id) {
     })
     .then((willClose) => {
         if (willClose) {
-            get_request_api('/manage/cases/close/' + id)
+            post_request_api('/manage/cases/close/' + id)
             .done((data) => {
                 window.location.reload();
                 $('#modal_case_detail').modal('hide');

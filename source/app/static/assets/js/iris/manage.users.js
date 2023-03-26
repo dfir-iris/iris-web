@@ -292,7 +292,7 @@ function manage_user_cac(user_id) {
             data_sent['access_level'] = parseInt($('#user_case_ac_select').val());
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('users/' + user_id + '/cases-access/add', JSON.stringify(data_sent))
+            post_request_api('users/' + user_id + '/cases-access/update', JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_user_cac(user_id);

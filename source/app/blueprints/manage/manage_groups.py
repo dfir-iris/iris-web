@@ -298,7 +298,7 @@ def manage_groups_cac_modal(cur_id, caseid, url_redir):
                            access_levels=access_levels)
 
 
-@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/add', methods=['POST'])
+@manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/update', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def manage_groups_cac_add_case(cur_id, caseid):
     if not request.is_json:

@@ -1,9 +1,9 @@
 azure-identity==1.10.0
 azure-keyvault-secrets==4.5.1
-celery==5.2.3
+celery==5.2.7
 Flask==2.0.3
-Flask-Bcrypt==0.7.1
-Flask-Login==0.5.0
+Flask-Bcrypt==1.0.1
+Flask-Login==0.6.2
 Flask-SQLAlchemy==2.5.1
 Flask-WTF==0.15.1
 flask-marshmallow==0.14.0
@@ -19,17 +19,17 @@ SQLAlchemy==1.4.31
 SQLAlchemy-ImageAttach==1.1.0
 SQLAlchemy-Utils==0.38.2
 urllib3==1.26.5
-Werkzeug==2.0.3
+Werkzeug>=2.2.3
 WTForms==2.2.1
 flask-socketio==5.1.1
 eventlet==0.30.2
 alembic==1.7.5
-setuptools==59.6.0
+setuptools>=65.5.1
 python-dateutil==2.8.2
 python-gnupg==0.4.8
 pyminizip~=0.2.6
 PyJWT==2.4.0
-cryptography==38.0.3
+cryptography>=39.0.1
 ldap3==2.9.1
 pyintelowl>=4.4.0
 

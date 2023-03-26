@@ -23,7 +23,6 @@ function comment_element(element_id, element_type) {
                         function() {
                             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                            $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                         }, null, false, false);
 
             headers = get_editor_headers('g_comment_desc_editor', null, 'comment_edition_btn');
@@ -37,12 +36,9 @@ function comment_element(element_id, element_type) {
 function preview_comment() {
     if(!$('#container_comment_preview').is(':visible')) {
         comment_text = g_comment_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(comment_text);
-        comment_html = filterXSS(html);
+        comment_html = do_md_filter_xss(html);
         $('#target_comment_content').html(comment_html);
         $('#container_comment_preview').show();
         $('#comment_preview_button').html('<i class="fa-solid fa-eye-slash"></i> Edit');
@@ -68,21 +64,44 @@ function save_comment_ext(element_id, element_type, do_close){
         if(notify_auto_api(data)) {
             load_comments(element_id, element_type);
             g_comment_desc_editor.setValue('');
-            increase_modal_comments_count();
+            increase_modal_comments_count(element_type, element_id);
         }
     });
 }
 
-function decrease_modal_comments_count() {
-    curr_count = $('#object_comments_number').text();
-    if (curr_count > 0) {
-        $('#object_comments_number').text(curr_count - 1);
+function decrease_modal_comments_count(element_type, element_id) {
+
+    let tid = '#object_comments_number';
+    if (element_type === 'timeline/events') {
+        tid = '#object_comments_number_' + element_id;
     }
+
+    let curr_count = $(tid).text();
+
+    if (curr_count > 0) {
+        $(tid).text(curr_count - 1);
+        if (element_type === 'timeline/events') {
+            $('#object_comments_number').text(parseInt(curr_count) - 1);
+        }
+    }
+
 }
 
-function increase_modal_comments_count() {
-    curr_count = $('#object_comments_number').text();
-    $('#object_comments_number').text(parseInt(curr_count) + 1);
+function increase_modal_comments_count(element_type, element_id) {
+    let tid = '#object_comments_number';
+    if (element_type === 'timeline/events') {
+        tid = '#object_comments_number_' + element_id;
+    }
+
+    let curr_count = $(tid).text();
+    if (curr_count === '') {
+        curr_count = 0;
+    }
+
+    $(tid).text(parseInt(curr_count) + 1);
+    if (element_type === 'timeline/events') {
+        $('#object_comments_number').text(parseInt(curr_count) + 1);
+    }
 }
 
 function delete_comment(comment_id, element_id, element_type) {
@@ -95,7 +114,7 @@ function delete_comment(comment_id, element_id, element_type) {
             .done((data) => {
                 if(notify_auto_api(data)) {
                     load_comments(element_id, element_type);
-                    decrease_modal_comments_count();
+                    decrease_modal_comments_count(element_type, element_id);
                 }
             });
         }
@@ -161,12 +180,9 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
             for (var i = 0; i < data['data'].length; i++) {
 
                 comment_text = data['data'][i].comment_text;
-                converter = new showdown.Converter({
-                    tables: true,
-                    parseImgDimensions: true
-                });
+                converter = get_showdown_convert();
                 html = converter.makeHtml(comment_text);
-                comment_html = filterXSS(html);
+                comment_html = do_md_filter_xss(html);
                 if (names.hasOwnProperty(data['data'][i].name)) {
                     avatar = names[data['data'][i].name];
                 } else {

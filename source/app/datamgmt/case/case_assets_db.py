@@ -24,9 +24,9 @@ from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
 
-from app import db
+from app import db, app
 from app.datamgmt.states import update_assets_state
-from app.models import AnalysisStatus
+from app.models import AnalysisStatus, CaseStatus
 from app.models import AssetComments
 from app.models import AssetsType
 from app.models import CaseAssets
@@ -40,6 +40,8 @@ from app.models import IocLink
 from app.models import IocType
 from app.models.authorization import User
 
+
+log = app.logger
 
 def create_asset(asset, caseid, user_id):
 
@@ -176,6 +178,10 @@ def get_compromise_status_dict():
     return [{'value': e.value, 'name': e.name.replace('_', ' ').capitalize()} for e in CompromiseStatus]
 
 
+def get_case_outcome_status_dict():
+    return [{'value': e.value, 'name': e.name.replace('_', ' ').capitalize()} for e in CaseStatus]
+
+
 def get_asset_type_id(asset_type_name):
     assets_type_id = AssetsType.query.with_entities(
         AssetsType.asset_id
@@ -241,7 +247,7 @@ def get_linked_iocs_from_asset(asset_id):
 
 def set_ioc_links(ioc_list, asset_id):
     if ioc_list is None:
-        return
+        return False, "Empty IOC list"
 
     # Reset IOC list
     delete_ioc_asset_link(asset_id)
@@ -253,7 +259,14 @@ def set_ioc_links(ioc_list, asset_id):
 
         db.session.add(ial)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        log.exception(e)
+        return True, e.__str__()
+
+    return False, ""
 
 
 def get_linked_iocs_id_from_asset(asset_id):

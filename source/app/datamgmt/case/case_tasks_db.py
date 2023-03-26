@@ -104,8 +104,22 @@ def get_task(task_id, caseid):
     return CaseTasks.query.filter(CaseTasks.id == task_id, CaseTasks.task_case_id == caseid).first()
 
 
-def get_task_with_assignees(task_id, case_id):
-    task = get_task(task_id, case_id)
+def get_task_with_assignees(task_id: int, case_id: int):
+    """
+    Returns a task with its assignees
+
+    Args:
+        task_id (int): Task ID
+        case_id (int): Case ID
+
+    Returns:
+        dict: Task with its assignees
+    """
+    task = get_task(
+        task_id=task_id,
+        caseid=case_id
+    )
+
     if not task:
         return None
 

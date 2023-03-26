@@ -1,0 +1,42 @@
+<div class="modal-header">
+    <h4>Case classification</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+
+        <div class="container col-md-12">
+        <form method="post" action="" id="form_new_case_classification" enctype="multipart/form-data">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    <label for="name" class="mr-4">Classification name
+                    </label>
+                    {{ form.name(class='form-control',  autocomplete="off") }}
+                </div>
+                <div class="form-group mt-3">
+                    <label for="name_expanded" class="placeholder">Classification expanded name</label>
+                    {{ form.name_expanded(class='form-control',  autocomplete="off") }}
+                </div>
+                <div class="form-group mt-3">
+                    <label for="description" class="placeholder">Classification description</label>
+                    {{ form.description(class='form-control',  autocomplete="off") }}
+                </div>
+
+            {% if case_classification.id %}
+                <button type="button" class="btn btn-outline-danger mt-5"
+                onclick="delete_case_classification('{{ case_classification.id }}');">Delete</button>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                id="submit_new_case_classification">Update</button>
+
+            {% else %}
+
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                id="submit_new_case_classification">Save</button>
+
+            {% endif %}
+            </div>
+        </form>
+    </div>
+
+</div>

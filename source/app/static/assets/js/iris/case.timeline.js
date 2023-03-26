@@ -32,7 +32,6 @@ function add_event() {
                             function() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                                $('#submit_new_event').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, null);
 
         g_event_desc_editor.setOption("minLines", "10");
@@ -180,7 +179,6 @@ function edit_event(id) {
                             function() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                                $('#submit_new_event').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, null);
         g_event_desc_editor.setOption("minLines", "6");
         preview_event_description(true);
@@ -195,12 +193,9 @@ function edit_event(id) {
 function preview_event_description(no_btn_update) {
     if(!$('#container_event_description').is(':visible')) {
         event_desc = g_event_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(event_desc);
-        event_desc_html = filterXSS(html);
+        event_desc_html = do_md_filter_xss(html);
         $('#target_event_desc').html(event_desc_html);
         $('#container_event_description').show();
         if (!no_btn_update) {
@@ -331,19 +326,17 @@ function events_set_attribute(attribute, color) {
             original_event = data.data;
             if(notify_auto_api(data, true)) {
                 //change attribute to selected value
-                if(attribute == 'event_in_graph' || attribute == 'event_in_summary'){
+                if(attribute === 'event_in_graph' || attribute === 'event_in_summary'){
                     attribute_value = original_event[attribute];
                     original_event[attribute] = !attribute_value;
-                } else if(attribute == 'event_color') {
+                } else if(attribute === 'event_color') {
                     // attribute value already set to color L240
                     original_event[attribute] = attribute_value;
                 }
 
-                //get csrf token
-                var csrf_token = $("#csrf_token").val();
-
                 //add csrf token to request
-                original_event['csrf_token'] = csrf_token;
+                original_event['csrf_token'] = $("#csrf_token").val();
+                delete original_event['event_comments_map'];
 
                 //send updated event to API
                 post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
@@ -465,10 +458,7 @@ function build_timeline(data) {
     }
     idx = 0;
 
-    converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+    converter = get_showdown_convert();
 
     for (index in data.data.tim) {
         evt = data.data.tim[index];
@@ -486,10 +476,13 @@ function build_timeline(data) {
         }
 
         if(evt.category_name && evt.category_name != 'Unspecified') {
-            tags += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
-            if (evt.category_name != 'Unspecified') {
-                cats += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
-            }
+             if (!compact) {
+                 tags += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
+             } else {
+                 if (evt.category_name != 'Unspecified') {
+                     cats += `<span class="badge badge-light float-right ml-1 mt-1 mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
+                 }
+             }
         }
         
         if (evt.iocs != null && evt.iocs.length > 0) {
@@ -616,7 +609,7 @@ function build_timeline(data) {
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
                                     <span class="btn-label">
-                                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">${nb_comments}</span>
+                                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${evt.event_id}">${nb_comments}</span>
                                     </span>
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -668,7 +661,7 @@ function build_timeline(data) {
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
                                     <span class="btn-label">
-                                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">${nb_comments}</span>
+                                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${evt.event_id}">${nb_comments}</span>
                                     </span>
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -678,6 +671,7 @@ function build_timeline(data) {
                                 </button>
                                 <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                                         <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                        <a href= "#" class="dropdown-item" onclick="copy_object_link_md('event', ${evt.event_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                                         <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
                                         <div class="dropdown-divider"></div>
                                         <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>

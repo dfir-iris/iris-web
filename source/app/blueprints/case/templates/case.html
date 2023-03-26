@@ -26,9 +26,10 @@
                                 <h2 class="text-white pb-2 fw-bold case-name"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
                                 </h2>
                             </div>
-                            <h5 class="text-white op-7 mb-3">Opened on {{ case.open_date }} by {{ case.user.name }}.</h5>
+                            <h5 class="text-white op-7 mb-1"><b>Opened on</b> {{ case.open_date }} by {{ case.user.name }}</h5>
+                            <h5 class="text-white op-7 mb-3"><b>Owned by</b> {{ case.owner.name }}</h5>
                             {% if case.close_date %}
-                            <h5 class="text-warning  mb-3">Closed on {{ case.close_date }}</h5>
+                            <h5 class="text-warning  mb-1">Closed on {{ case.close_date }}</h5>
                             {% endif %}
                         </div>
                         <div class="col">
@@ -44,7 +45,7 @@
                             <div class="row">
                                   <div class=" ml-auto">
                                     <h5 class="text-white op-7 mb-2 float-right"><b>Customer</b> : {{ case.client.name }}</h5>
-                                    <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5>
+                                    {% if case.soc_id %} <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
 
                                 </div>
                             </div>
@@ -52,7 +53,10 @@
                     </div>
                     <div class="row mt-2 mb--2">
 
-                        <div class="col">
+                        <div class="col ml-2">
+                            {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>{% endif %}
+                        </div>
+                        <div class="col mr-2">
                             {% if case.case_tags %}
                             {% for tag in case.case_tags %}
                             <span class="badge badge-pill badge-light ml-1 pull-right"><i class="fa fa-tag mr-1"></i> {{ tag }}</span>
@@ -80,8 +84,8 @@
                                         <small id="content_last_saved_by" class="mr-3 mt-1"></small>
                                         <span id="last_saved" class="badge mr-3 ml-2"></span>
                                         <small id="content_last_sync"></small>
-                                        <button class="btn btn-sm mr-2 ml-3" onclick="edit_case_summary();">Edit</button>
-                                        <button type="button" id="refreshbtn" class="btn btn-sm btn-outline-default mr-3" onclick="sync_editor();">
+                                        <button class="btn btn-sm mr-2 ml-3" onclick="edit_case_summary();" id="sum_edit_btn" >Edit</button>
+                                        <button type="button" id="sum_refresh_btn" class="btn btn-sm btn-outline-default mr-3" onclick="sync_editor();">
                                             Refresh
                                         </button>
                                     </div>
@@ -129,9 +133,16 @@
                             aria-hidden="true">&times;</span></button>
                       </div>
                       <div class="modal-body">
+                          {% if reports| length == 0 %}
+                              <div class="alert alert-warning" role="alert">
+                                  <h4 class="alert-heading">No report template found</h4>
+                                  <p>Report templates are configured in <a href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
+                              </div>
+                          {% else %}
                           <div class="col">
                             <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might fail depending on the situation.<br/><code>Safe Mode</code> can be used to generate the report without them.</p>
                           </div>
+
                           <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report">
                                 {% for report in reports %}
                                       <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
@@ -151,6 +162,7 @@
                               </span>
                               Generate
                             </a>
+                          {% endif %}
                       </div>
                   </div><!-- /.modal-content -->
                 </div><!-- /.modal-dialog -->
@@ -164,18 +176,25 @@
                             aria-hidden="true">&times;</span></button>
                       </div>
                       <div class="modal-body">
-                          <div class="col">
-                            <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might fail depending on the situation.<br/><code>Safe Mode</code> can be used to generate the report without them.</p>
-                          </div>
-                          <select class="selectpicker form-control bg-outline-success dropdown-submenu mb-2" data-show-subtext="true" data-live-search="true" id="select_report_act">
-                                {% for report in reports_act %}
-                                      <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
-                                {% endfor %}
-                          </select>
+                          {% if reports| length == 0 %}
+                              <div class="alert alert-warning" role="alert">
+                                  <h4 class="alert-heading">No report template found</h4>
+                                  <p>Report templates are configured in <a href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
+                              </div>
+                          {% else %}
+                              <div class="col">
+                                <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might fail depending on the situation.<br/><code>Safe Mode</code> can be used to generate the report without them.</p>
+                              </div>
+                              <select class="selectpicker form-control bg-outline-success dropdown-submenu mb-2" data-show-subtext="true" data-live-search="true" id="select_report_act">
+                                    {% for report in reports_act %}
+                                          <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
+                                    {% endfor %}
+                              </select>
+
                       </div>
 
                       <div class="modal-footer">
-                          <a href="#" class="btn btn-light float-left mt-2 mr-auto" onclick="gen_act_report(false);">
+                          <a href="#" class="btn btn-light float-left mt-2 mr-auto" onclick="gen_act_report(true);">
                               <span class="btn-label">
                                 <i class="fa fa-file-download"></i>
                               </span>
@@ -187,6 +206,7 @@
                               </span>
                               Generate
                             </a>
+                          {% endif %}
                       </div>
                   </div><!-- /.modal-content -->
                 </div><!-- /.modal-dialog -->

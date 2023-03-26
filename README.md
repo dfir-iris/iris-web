@@ -8,6 +8,7 @@
   <br>
   <i>Current Version v2.0.0-beta-3</i>
   <br>
+  <a href="https://v200.beta.dfir-iris.org">Online Demonstration</a>
 </p>
 
 # IRIS
@@ -89,8 +90,8 @@ The code ready for production is always tagged with a version number.
 Do not use the ``master`` branch in production. 
 
 ## Showcase
-For a more comprehensive overview of the case features, 
-you can head to [tutorials](https://docs.dfir-iris.org/operations/tutorials/), we've put some videos there.  
+You can directly try Iris on our [demo instance](https://v200.beta.dfir-iris.org).  
+One can also head to [tutorials](https://docs.dfir-iris.org/operations/tutorials/), we've put some videos there.  
 
 ## Documentation
 A comprehensive documentation is available on [docs.dfir-iris.org](https://docs.dfir-iris.org).

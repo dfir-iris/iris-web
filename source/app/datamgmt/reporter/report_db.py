@@ -23,7 +23,8 @@ import re
 from sqlalchemy import desc
 
 from app.datamgmt.case.case_notes_db import get_notes_from_group
-from app.models import AnalysisStatus
+from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
+from app.models import AnalysisStatus, CompromiseStatus, TaskAssignee
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets
@@ -385,10 +386,41 @@ def export_case_tasks_json(case_id):
        CaseTasks.status
     ).all()
 
-    if res:
-        return [row._asdict() for row in res]
+    tasks = [c._asdict() for c in res]
 
-    return []
+    task_with_assignees = []
+    for task in tasks:
+        task_id = task['id']
+        get_assignee_list = TaskAssignee.query.with_entities(
+            TaskAssignee.task_id,
+            User.user,
+            User.id,
+            User.name
+        ).join(
+            TaskAssignee.user
+        ).filter(
+            TaskAssignee.task_id == task_id
+        ).all()
+
+        assignee_list = {}
+        for member in get_assignee_list:
+            if member.task_id not in assignee_list:
+
+                assignee_list[member.task_id] = [{
+                    'user': member.user,
+                    'name': member.name,
+                    'id': member.id
+                }]
+            else:
+                assignee_list[member.task_id].append({
+                    'user': member.user,
+                    'name': member.name,
+                    'id': member.id
+                })
+        task['task_assignees'] = assignee_list.get(task['id'], [])
+        task_with_assignees.append(task)
+
+    return task_with_assignees
 
 
 def export_case_assets_json(case_id):
@@ -399,7 +431,7 @@ def export_case_assets_json(case_id):
         CaseAssets.asset_uuid,
         CaseAssets.asset_name,
         CaseAssets.asset_description,
-        CaseAssets.asset_compromise_status_id.label('asset_compromise_status'),
+        CaseAssets.asset_compromise_status_id,
         AssetsType.asset_name.label("type"),
         AnalysisStatus.name.label('analysis_status'),
         CaseAssets.date_added,
@@ -433,6 +465,14 @@ def export_case_assets_json(case_id):
             row['asset_ioc'] = [row._asdict() for row in ial]
         else:
             row['asset_ioc'] = []
+
+        if row['asset_compromise_status_id'] is None:
+            row['asset_compromise_status_id'] = CompromiseStatus.unknown.value
+            status_text = CompromiseStatus.unknown.name.replace('_', ' ').title()
+        else:
+            status_text = CompromiseStatus(row['asset_compromise_status_id']).name.replace('_', ' ').title()
+
+        row['asset_compromise_status'] = status_text
 
         ret.append(row)
 

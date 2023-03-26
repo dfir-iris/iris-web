@@ -126,8 +126,10 @@
         {% if asset.asset_id %}
             <button type="button" class="btn btn-outline-danger ml-4 mt-5"
             onclick="delete_asset({{ asset.asset_id }});">Delete</button>
-        {% endif %}
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  id="submit_new_asset">Update</button>
+        {% else %}
         <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  id="submit_new_asset">Save</button>
+        {% endif %}
     </div>
 </div>
     <script>

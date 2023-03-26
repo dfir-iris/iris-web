@@ -3,7 +3,7 @@
 <head>
 
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<title>IRIS - {% block title %}Investigation{% endblock %} {% if session['current_case'].case_id %}| {{ session['current_case'].case_name }}  {% endif %}</title>
+	<title>IRIS - {% block title %}Case{% endblock %} {% if session['current_case'].case_id %}| {{ session['current_case'].case_name }}  {% endif %}</title>
 	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
 	<link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
 	{% if demo_domain %}
@@ -98,6 +98,8 @@
 	<script src="/static/assets/js/core/crypto.core.js"></script>
 	<script src="/static/assets/js/core/crypto.md5.js"></script>
 	<script src="/static/assets/js/plugin/xss/xss.js"></script>
+	<script src="/static/assets/js/plugin/showdown/showdown.min.js" type="text/javascript" charset="utf-8"></script>
+
 
 
 	<!-- Specific JS goes HERE -->

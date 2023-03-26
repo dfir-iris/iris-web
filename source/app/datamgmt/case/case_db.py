@@ -122,7 +122,10 @@ def get_case_report_template():
 
 
 def save_case_tags(tags, case_id):
-    case = get_case(case_id)
+
+    if tags is None:
+        return
+
     to_add = []
 
     existing_tags = CaseTags.query.filter(
@@ -203,6 +206,9 @@ def case_name_exists(case_name, client_name):
 
 
 def register_case_protagonists(case_id, protagonists):
+
+    if protagonists is None:
+        return
 
     CaseProtagonist.query.filter(
         CaseProtagonist.case_id == case_id

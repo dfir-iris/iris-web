@@ -93,6 +93,11 @@ def view_customer(cur_id, caseid):
     if not customer:
         return page_not_found(None)
 
+    contacts = get_client_contacts(cur_id)
+    contacts = ContactSchema().dump(contacts, many=True)
+
+    customer['contacts'] = contacts
+
     return response_success(data=customer)
 
 

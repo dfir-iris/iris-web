@@ -58,36 +58,46 @@ class Cases(db.Model):
     description = Column(Text)
     open_date = Column(Date)
     close_date = Column(Date)
+    initial_date = Column(DateTime, nullable=False, server_default=text("now()"))
+    closing_note = Column(Text)
     user_id = Column(ForeignKey('user.id'))
+    owner_id = Column(ForeignKey('user.id'))
     status_id = Column(Integer, nullable=False, server_default=text("0"))
     custom_attributes = Column(JSON)
     case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
                        nullable=False)
+    classification_id = Column(ForeignKey('case_classification.id'))
+    modification_history = Column(JSON)
 
     client = relationship('Client')
-    user = relationship('User')
+    user = relationship('User', foreign_keys=[user_id])
+    owner = relationship('User', foreign_keys=[owner_id])
+    classification = relationship('CaseClassification')
 
     def __init__(self,
                  name=None,
                  soc_id=None,
                  client_id=None,
                  description=None,
-                 gen_report=False,
                  user=None,
-                 custom_attributes=None
+                 custom_attributes=None,
+                 classification_id=None
                  ):
         self.name = name,
         self.soc_id = soc_id,
         self.client_id = client_id,
         self.description = description,
         self.user_id = current_user.id if current_user else user.id
+        self.owner_id = self.user_id
         self.author = current_user.user if current_user else user.user
         self.description = description
         self.open_date = datetime.utcnow()
-        self.gen_report = gen_report
+        self.close_date = None
+        self.initial_date = datetime.utcnow()
         self.custom_attributes = custom_attributes
         self.case_uuid = uuid.uuid4()
         self.status_id = 0
+        self.classification_id = classification_id
 
     def save(self):
         """

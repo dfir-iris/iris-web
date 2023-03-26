@@ -175,6 +175,19 @@ class AnalysisStatus(db.Model):
     name = Column(Text)
 
 
+class CaseClassification(db.Model):
+    __tablename__ = 'case_classification'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    name_expanded = Column(Text)
+    description = Column(Text)
+    creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    created_by_id = Column(ForeignKey('user.id'), nullable=True)
+
+    created_by = relationship('User')
+
+
 class Contact(db.Model):
     __tablename__ = 'contact'
 

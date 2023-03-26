@@ -78,6 +78,12 @@ class AddIocTypeForm(FlaskForm):
     type_validation_expect = StringField(u'Type validation expectation')
 
 
+class CaseClassificationForm(FlaskForm):
+    name = StringField(u'Case classification name', validators=[DataRequired()])
+    name_expanded = StringField(u'Case classification name expanded', validators=[DataRequired()])
+    description = StringField(u'Case classification description', validators=[DataRequired()])
+
+
 class AddReportTemplateForm(FlaskForm):
     report_name = StringField(u'Report name', validators=[DataRequired()])
     report_description = StringField(u'Report description', validators=[DataRequired()])
@@ -119,6 +125,7 @@ class AddCaseForm(FlaskForm):
     case_soc_id = StringField(u'SOC Ticket')
     case_customer = SelectField(u'Customer', validators=[InputRequired()])
     case_organisations = SelectMultipleField(u'Organisations')
+    classification_id = SelectField(u'Classification')
 
 
 class ContactForm(FlaskForm):

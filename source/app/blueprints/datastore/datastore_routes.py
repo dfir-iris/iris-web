@@ -164,6 +164,21 @@ def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
     return render_template("modal_ds_file_info.html", file=file, dsp=dsp)
 
 
+@datastore_blueprint.route('/datastore/file/info/<int:cur_id>', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def datastore_info_file(cur_id: int, caseid: int):
+
+    file = datastore_get_file(cur_id, caseid)
+    if not file:
+        return response_error('Invalid file ID for this case')
+
+    file_schema = DSFileSchema()
+    file = file_schema.dump(file)
+    del file['file_local_name']
+
+    return response_success("", data=file)
+
+
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def datastore_update_file(cur_id: int, caseid: int):
@@ -206,7 +221,7 @@ def datastore_update_file(cur_id: int, caseid: int):
             msg_added_as += ' and evidence' if len(msg_added_as) > 0 else 'and added in evidence'
 
         track_activity(f'File \"{dsf.file_original_name}\" updated in DS', caseid=caseid)
-        return response_success('File updated in datastore')
+        return response_success('File updated in datastore', data=dsf_schema.dump(dsf_sc))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
@@ -257,7 +272,7 @@ def datastore_move_folder(cur_id: int, caseid: int):
 
     msg = f"Folder \"{dsp.path_name}\" successfully moved to \"{dsp_dst.path_name}\""
     track_activity(msg, caseid=caseid)
-    return response_success(msg)
+    return response_success(msg, data=dsp)
 
 
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
@@ -265,7 +280,7 @@ def datastore_move_folder(cur_id: int, caseid: int):
 def datastore_view_file(cur_id: int, caseid: int):
     has_error, dsf = datastore_get_local_file_path(cur_id, caseid)
     if has_error:
-        return response_error('Unable to get request file ID', data=dsf)
+        return response_error('Unable to get requested file ID', data=dsf)
 
     if dsf.file_is_ioc or dsf.file_password:
         dsf.file_original_name += ".zip"
@@ -326,7 +341,7 @@ def datastore_add_file(cur_id: int, caseid: int):
             msg_added_as += ' and evidence' if len(msg_added_as) > 0 else 'and added in evidence'
 
         track_activity(f"File \"{dsf_sc.file_original_name}\" added to DS", caseid=caseid)
-        return response_success(f'File saved in datastore {msg_added_as}')
+        return response_success(f'File saved in datastore {msg_added_as}', data=dsf_schema.dump(dsf_sc))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
@@ -378,10 +393,13 @@ def datastore_add_folder(caseid: int):
     if not parent_node or not folder_name:
         return response_error('Invalid data')
 
-    has_error, logs = datastore_add_child_node(parent_node, folder_name, caseid)
+    has_error, logs, node = datastore_add_child_node(parent_node, folder_name, caseid)
 
-    track_activity(f"Folder \"{folder_name}\" added to DS", caseid=caseid)
-    return response_success(logs) if not has_error else response_error(logs)
+    if not has_error:
+        track_activity(f"Folder \"{folder_name}\" added to DS", caseid=caseid)
+        return response_success(msg=logs, data=node)
+
+    return response_error(msg=logs)
 
 
 @datastore_blueprint.route('/datastore/folder/rename/<int:cur_id>', methods=['POST'])
@@ -400,13 +418,13 @@ def datastore_rename_folder(cur_id: int, caseid: int):
     if int(parent_node) != cur_id:
         return response_error('Invalid data')
 
-    has_error, logs = datastore_rename_node(parent_node, folder_name, caseid)
+    has_error, logs, dsp_base = datastore_rename_node(parent_node, folder_name, caseid)
 
     if has_error:
         return response_error(logs)
 
     track_activity(f"Folder \"{parent_node}\" renamed to \"{folder_name}\" in DS", caseid=caseid)
-    return response_success(logs)
+    return response_success(logs, data=dsp_base)
 
 
 @datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['POST'])

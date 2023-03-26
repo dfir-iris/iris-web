@@ -36,7 +36,6 @@ function add_ioc() {
                             function() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                                $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, null);
 
         g_ioc_desc_editor.setOption("minLines", "10");
@@ -156,7 +155,6 @@ function edit_ioc(ioc_id) {
                             function() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                                $('#submit_new_ioc').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, null, false, false);
 
         g_ioc_desc_editor.setOption("minLines", "10");
@@ -173,12 +171,9 @@ function edit_ioc(ioc_id) {
 function preview_ioc_description(no_btn_update) {
     if(!$('#container_ioc_description').is(':visible')) {
         ioc_desc = g_ioc_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(ioc_desc);
-        ioc_desc_html = filterXSS(html);
+        ioc_desc_html = do_md_filter_xss(html);
         $('#target_ioc_desc').html(ioc_desc_html);
         $('#container_ioc_description').show();
         if (!no_btn_update) {

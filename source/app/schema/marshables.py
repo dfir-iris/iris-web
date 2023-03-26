@@ -44,7 +44,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus
+from app.models import AnalysisStatus, CaseClassification
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -157,7 +157,7 @@ class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
 
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
-    ioc_links = fields.List(fields.String, required=False)
+    ioc_links = fields.List(fields.Integer, required=False)
 
     class Meta:
         model = CaseAssets
@@ -268,6 +268,17 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def verify_data(self, data, **kwargs):
+        if data is None:
+            raise marshmallow.exceptions.ValidationError("Received empty data")
+
+        for field in ['event_title', 'event_date', 'event_tz', 'event_category_id', 'event_assets', 'event_iocs']:
+            if field not in data:
+                raise marshmallow.exceptions.ValidationError(f"Missing field {field}", field_name=field)
+
+        if not isinstance(int(data.get('event_category_id')), int):
+            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
+                                                         field_name="event_category_id")
+
         if not isinstance(int(data.get('event_category_id')), int):
             raise marshmallow.exceptions.ValidationError("Invalid event category ID",
                                                          field_name="event_category_id")
@@ -361,7 +372,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
     def ds_store_file(self, file_storage, location, is_ioc, password):
         if file_storage is None:
             raise marshmallow.exceptions.ValidationError(
-                "Not file provided",
+                "No file provided",
                 field_name='file_content'
             )
 
@@ -512,6 +523,30 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
+    name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    name_expanded = auto_field('name_expanded', required=True, validate=Length(min=2), allow_none=False)
+    description = auto_field('description', required=True, validate=Length(min=2), allow_none=False)
+
+    class Meta:
+        model = CaseClassification
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        client = CaseClassification.query.filter(
+            func.lower(CaseClassification.name) == func.lower(data.name),
+            CaseClassification.id != data.id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "Case classification name already exists",
+                field_name="name"
+            )
+
+        return data
+
+
 class CaseSchema(ma.SQLAlchemyAutoSchema):
     case_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
     case_description = auto_field('description', required=True, validate=Length(min=2))
@@ -521,12 +556,21 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     protagonists = fields.List(fields.Dict, required=False)
     case_tags = fields.String(required=False)
     csrf_token = fields.String(required=False)
+    initial_date = auto_field('initial_date', required=False)
+    classification_id = auto_field('classification_id', required=False, allow_none=True)
 
     class Meta:
         model = Cases
         include_fk = True
         load_instance = True
-        exclude = ['name', 'description', 'soc_id', 'client_id']
+        exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date']
+
+    @pre_load
+    def classification_filter(self, data, **kwargs):
+        if data.get('classification_id') == "":
+            del data['classification_id']
+
+        return data
 
     @pre_load
     def verify_customer(self, data, **kwargs):
@@ -616,6 +660,8 @@ class TaskLogSchema(ma.Schema):
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     task_status_id = auto_field('task_status_id', required=True)
+    task_assignees_id = fields.List(fields.Integer, required=False, allow_none=True)
+    task_assignees = fields.List(fields.Dict, required=False, allow_none=True)
 
     class Meta:
         model = CaseTasks

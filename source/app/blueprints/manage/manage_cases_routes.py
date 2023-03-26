@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from typing import Union
 
 import logging as log
 # IMPORTS ------------------------------------------------
@@ -32,6 +33,7 @@ from flask import request
 from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
+from werkzeug import Response
 
 from app import db
 from app.datamgmt.case.case_db import get_case
@@ -40,6 +42,7 @@ from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
@@ -61,7 +64,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.models.models import Client
 from app.schema.marshables import CaseSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, add_obj_history_entry
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import ac_case_requires
@@ -87,6 +90,7 @@ def manage_index_cases(caseid, url_redir):
                                   Client.query.order_by(Client.name)]
 
     form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
+    form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
 
     attributes = get_default_custom_attributes('case')
 
@@ -95,7 +99,18 @@ def manage_index_cases(caseid, url_redir):
 
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
 @ac_case_requires()
-def details_case(cur_id, caseid, url_redir):
+def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, str]:
+    """
+    Get case details
+
+    Args:
+        cur_id (int): case id
+        caseid (int): case id
+        url_redir (bool): url redirection
+
+    Returns:
+        Union[str, Response]: The case details
+    """
     if url_redir:
         return response_error("Invalid request")
 
@@ -104,10 +119,12 @@ def details_case(cur_id, caseid, url_redir):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
+    case_classifications = get_case_classifications_list()
     form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form, protagnists=None)
+        return render_template("modal_case_info_from_case.html", data=res, form=form, protagnists=None,
+                               case_classifications=case_classifications)
 
     else:
         return response_error("Unknown case")
@@ -115,7 +132,17 @@ def details_case(cur_id, caseid, url_redir):
 
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
 @ac_case_requires()
-def details_case_from_case(cur_id, caseid, url_redir):
+def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
+    """ Returns the case details modal for a case from a case
+
+    Args:
+        cur_id (int): The case id
+        caseid (int): The case id
+        url_redir (bool): If the request is a url redirect
+
+    Returns:
+        Union[str, Response]: The case details modal
+    """
     if url_redir:
         return response_error("Invalid request")
 
@@ -123,13 +150,15 @@ def details_case_from_case(cur_id, caseid, url_redir):
         return ac_api_return_access_denied(caseid=cur_id)
 
     res = get_case_details_rt(cur_id)
+    case_classifications = get_case_classifications_list()
 
     protagonists = get_case_protagonists(cur_id)
 
     form = FlaskForm()
 
     if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists)
+        return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
+                               case_classifications=case_classifications)
 
     else:
         return response_error("Unknown case")
@@ -144,7 +173,7 @@ def get_case_api(cur_id, caseid):
 
     res = get_case_details_rt(cur_id)
     if res:
-        return response_success(data=res._asdict())
+        return response_success(data=res)
 
     return response_error(f'Case ID {cur_id} not found')
 
@@ -182,7 +211,7 @@ def api_delete_case(cur_id, caseid):
             return response_error("Cannot delete a non empty case. {}".format(e))
 
 
-@manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['GET'])
+@manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def api_reopen_case(cur_id, caseid):
 
@@ -192,17 +221,22 @@ def api_reopen_case(cur_id, caseid):
     if not cur_id:
         return response_error("No case ID provided")
 
+    case = get_case(cur_id)
+    if not case:
+        return response_error("Tried to reopen an non-existing case")
+
     res = reopen_case(cur_id)
     if not res:
         return response_error("Tried to reopen an non-existing case")
 
+    add_obj_history_entry(case, 'case reopened')
     track_activity("reopened case ID {}".format(cur_id), caseid=caseid, ctx_less=True)
     case_schema = CaseSchema()
 
     return response_success("Case reopened successfully", data=case_schema.dump(res))
 
 
-@manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['GET'])
+@manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def api_case_close(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
@@ -211,10 +245,15 @@ def api_case_close(cur_id, caseid):
     if not cur_id:
         return response_error("No case ID provided")
 
+    case = get_case(cur_id)
+    if not case:
+        return response_error("Tried to close an non-existing case")
+
     res = close_case(cur_id)
     if not res:
         return response_error("Tried to close an non-existing case")
 
+    add_obj_history_entry(case, 'case closed')
     track_activity("closed case ID {}".format(cur_id), caseid=caseid, ctx_less=True)
     case_schema = CaseSchema()
 
@@ -231,6 +270,7 @@ def api_add_case(caseid):
 
         request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
         case = case_schema.load(request_data)
+        case.owner_id = current_user.id
 
         case.save()
 
@@ -238,6 +278,7 @@ def api_add_case(caseid):
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
+        add_obj_history_entry(case, 'created')
         track_activity("new case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
 
     except marshmallow.exceptions.ValidationError as e:
@@ -246,7 +287,7 @@ def api_add_case(caseid):
     except Exception as e:
         log.error(e.__str__())
         log.error(traceback.format_exc())
-        return response_error(msg="Error creating case", data=e.__str__(), status=400)
+        return response_error(msg="Error creating case", data=[e.__str__()], status=400)
 
     return response_success(msg='Case created', data=case_schema.dump(case))
 
@@ -260,17 +301,16 @@ def api_list_case(caseid):
     return response_success("", data=data)
 
 
-@manage_cases_blueprint.route('/manage/cases/update', methods=['POST'])
+@manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
-def update_case_info(caseid):
+def update_case_info(cur_id, caseid):
 
-    if not ac_fast_check_current_user_has_case_access(caseid, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=caseid)
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=cur_id)
 
-    # case update request. The files should have already arrived with the request upload_files
     case_schema = CaseSchema()
 
-    case_i = get_case(caseid)
+    case_i = get_case(cur_id)
     if not case_i:
         return response_error("Case not found")
 
@@ -278,17 +318,18 @@ def update_case_info(caseid):
 
         request_data = request.get_json()
 
-        request_data['case_name'] = f"#{case_i.case_id} - {request_data['case_name']}"
+        request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name')}"
         request_data['case_customer'] = case_i.client_id
 
         case = case_schema.load(request_data, instance=case_i, partial=True)
 
         db.session.commit()
 
-        register_case_protagonists(case.case_id, request_data['protagonists'])
-        save_case_tags(request_data['case_tags'], case_i.case_id)
+        register_case_protagonists(case.case_id, request_data.get('protagonists'))
+        save_case_tags(request_data.get('case_tags'), case_i.case_id)
 
-        track_activity("case updated {case_name}".format(case_name=case.name), caseid=caseid)
+        add_obj_history_entry(case_i, 'case info updated')
+        track_activity("case updated {case_name}".format(case_name=case.name), caseid=cur_id)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)

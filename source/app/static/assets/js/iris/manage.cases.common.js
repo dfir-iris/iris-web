@@ -72,7 +72,7 @@ function remove_case(id) {
 
 /* Reopen case function */
 function reopen_case(id) {
-    get_request_api('/manage/cases/reopen/' + id)
+    post_request_api('/manage/cases/reopen/' + id)
     .done((data) => {
         if (!refresh_case_table()) {
             window.location.reload();
@@ -95,7 +95,7 @@ function close_case(id) {
     })
     .then((willClose) => {
         if (willClose) {
-            get_request_api('/manage/cases/close/' + id)
+            post_request_api('/manage/cases/close/' + id)
             .done((data) => {
                 if (!refresh_case_table()) {
                     window.location.reload();
@@ -163,7 +163,7 @@ function save_case_edit(case_id) {
 
     data_sent['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('/manage/cases/update', JSON.stringify(data_sent), true, undefined, case_id)
+    post_request_api('/manage/cases/update/' + case_id, JSON.stringify(data_sent), true, undefined, case_id)
     .done((data) => {
         if(notify_auto_api(data)) {
             case_detail(case_id);
@@ -266,7 +266,7 @@ function set_case_access_via_group(case_id) {
 }
 
 
-function access_case_info_reload(case_id) {
+function access_case_info_reload(case_id, owner_id) {
     var req_users = [];
 
     get_request_api('/case/users/list')
@@ -283,9 +283,7 @@ function access_case_info_reload(case_id) {
             table.rows.add(req_users);
             table.draw();
         } else {
-            $.each($.find("table"), function(index, element){
-                addFilterFields($(element).attr("id"));
-            });
+            addFilterFields($('#case_access_users_list_table').attr("id"));
             $("#case_access_users_list_table").DataTable({
                     dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
                     aaData: req_users,
@@ -334,6 +332,14 @@ function access_case_info_reload(case_id) {
             $('#emails-list').append($('<option>', {
                 value: req_users[i].user_email
             }));
+            $('#case_quick_owner').append($('<option>', {
+                value: req_users[i].user_id,
+                text: req_users[i].user_name
+            }));
+            if (req_users[i].user_id == owner_id) {
+                $('#case_quick_owner').val(req_users[i].user_id);
+            }
+            $('#case_quick_owner').selectpicker('refresh');
         }
     });
 

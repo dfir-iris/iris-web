@@ -21,7 +21,7 @@ import datetime
 
 from app.datamgmt.case.case_tasks_db import get_tasks_cases_mapping
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
-from app.models import Cases
+from app.models import Cases, CaseClassification
 from app.models import Client
 from app.models.authorization import User
 
@@ -36,13 +36,16 @@ def get_overview_db(user_id):
         Cases.name.label('case_title'),
         Client.name.label('customer_name'),
         Cases.open_date.label('case_open_date'),
-        User.name.label('opened_by')
+        User.name.label('owner'),
+        CaseClassification.name.label('classification')
     ).filter(
         Cases.close_date == None,
         Cases.case_id.in_(user_list_cases_view(user_id))
     ).join(
-        Cases.user,
+        Cases.owner,
         Cases.client
+    ).outerjoin(
+        Cases.classification
     ).all()
 
     tasks_map = get_tasks_cases_mapping()

@@ -17,6 +17,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
+
+from pathlib import Path
+
 import glob
 import os
 import random
@@ -50,7 +54,7 @@ from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import Client
-from app.models.models import AnalysisStatus
+from app.models.models import AnalysisStatus, CaseClassification
 from app.models.models import AssetsType
 from app.models.models import EventCategory
 from app.models.models import IocType
@@ -121,6 +125,9 @@ def run_post_init(development=False):
 
         log.info("Creating base analysis status")
         create_safe_analysis_status()
+
+        log.info("Creating base case classification")
+        create_safe_classifications()
 
         log.info("Creating base tasks status")
         create_safe_task_status()
@@ -403,6 +410,45 @@ def create_safe_languages():
     create_safe(db.session, Languages, name="french", code="FR")
     create_safe(db.session, Languages, name="english", code="EN")
     create_safe(db.session, Languages, name="german", code="DE")
+    create_safe(db.session, Languages, name="bulgarian", code="BG")
+    create_safe(db.session, Languages, name="croatian", code="HR")
+    create_safe(db.session, Languages, name="danish", code="DK")
+    create_safe(db.session, Languages, name="dutch", code="NL")
+    create_safe(db.session, Languages, name="estonian", code="EE")
+    create_safe(db.session, Languages, name="finnish", code="FI")
+    create_safe(db.session, Languages, name="greek", code="GR")
+    create_safe(db.session, Languages, name="hungarian", code="HU")
+    create_safe(db.session, Languages, name="irish", code="IE")
+    create_safe(db.session, Languages, name="italian", code="IT")
+    create_safe(db.session, Languages, name="latvian", code="LV")
+    create_safe(db.session, Languages, name="lithuanian", code="LT")
+    create_safe(db.session, Languages, name="maltese", code="MT")
+    create_safe(db.session, Languages, name="polish", code="PL")
+    create_safe(db.session, Languages, name="portuguese", code="PT")
+    create_safe(db.session, Languages, name="romanian", code="RO")
+    create_safe(db.session, Languages, name="slovak", code="SK")
+    create_safe(db.session, Languages, name="slovenian", code="SI")
+    create_safe(db.session, Languages, name="spanish", code="ES")
+    create_safe(db.session, Languages, name="swedish", code="SE")
+    create_safe(db.session, Languages, name="indian", code="IN")
+    create_safe(db.session, Languages, name="chinese", code="CN")
+    create_safe(db.session, Languages, name="korean", code="KR")
+    create_safe(db.session, Languages, name="arabic", code="AR")
+    create_safe(db.session, Languages, name="japanese", code="JP")
+    create_safe(db.session, Languages, name="turkish", code="TR")
+    create_safe(db.session, Languages, name="vietnamese", code="VN")
+    create_safe(db.session, Languages, name="thai", code="TH")
+    create_safe(db.session, Languages, name="hebrew", code="IL")
+    create_safe(db.session, Languages, name="czech", code="CZ")
+    create_safe(db.session, Languages, name="norwegian", code="NO")
+    create_safe(db.session, Languages, name="brazilian", code="BR")
+    create_safe(db.session, Languages, name="ukrainian", code="UA")
+    create_safe(db.session, Languages, name="catalan", code="CA")
+    create_safe(db.session, Languages, name="serbian", code="RS")
+    create_safe(db.session, Languages, name="persian", code="IR")
+    create_safe(db.session, Languages, name="afrikaans", code="ZA")
+    create_safe(db.session, Languages, name="albanian", code="AL")
+    create_safe(db.session, Languages, name="armenian", code="AM")
 
 
 def create_safe_events_cats():
@@ -421,6 +467,20 @@ def create_safe_events_cats():
     create_safe(db.session, EventCategory, name="Command and Control")
     create_safe(db.session, EventCategory, name="Exfiltration")
     create_safe(db.session, EventCategory, name="Impact")
+
+
+def create_safe_classifications():
+    log.info("Reading MISP classification taxonomy from resources/misp.classification.taxonomy.json")
+    with open(Path(__file__).parent / 'resources' / 'misp.classification.taxonomy.json') as data_file:
+        data = json.load(data_file)
+        for c in data.get('values'):
+            predicate = c.get('predicate')
+            entries = c.get('entry')
+            for entry in entries:
+                create_safe(db.session, CaseClassification,
+                            name=f"{predicate}:{entry.get('value')}",
+                            name_expanded=f"{predicate.title()}: {entry.get('expanded')}",
+                            description=entry['description'])
 
 
 def create_safe_analysis_status():
@@ -549,7 +609,7 @@ def create_safe_auth_model():
         db.session.rollback()
         log.warning('Analysts group integrity error. Group permissions were probably changed. Updating.')
         ganalysts = Group.query.filter(
-            Group.group_name == "ganalysts"
+            Group.group_name == "Analysts"
         ).first()
 
     if ganalysts.group_permissions != ac_get_mask_analyst():
@@ -638,7 +698,6 @@ def create_safe_case(user, client, groups):
             name="Initial Demo",
             description="This is a demonstration.",
             soc_id="soc_id_demo",
-            gen_report=False,
             user=user,
             client_id=client.client_id
         )

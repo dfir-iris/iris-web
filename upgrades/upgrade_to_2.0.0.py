@@ -37,7 +37,8 @@ env_upgrade_map = {
     "SECRET_KEY": "IRIS_SECRET_KEY",
     "SECURITY_PASSWORD_SALT": "IRIS_SECURITY_PASSWORD_SALT",
     "APP_HOST": "IRIS_UPSTREAM_SERVER",
-    "APP_PORT": "IRIS_UPSTREAM_PORT"
+    "APP_PORT": "IRIS_UPSTREAM_PORT",
+    "IRIS_WORKER": "#IRIS_WORKER"
 }
 
 
@@ -58,6 +59,10 @@ class IrisUpgrade200:
 
             for old, new in env_upgrade_map.items():
                 if f"{old}=" not in content:
+                    continue
+
+                if f"{new}=" in content:
+                    log.info(f'{new} already set. Skipping')
                     continue
 
                 if dry_run:

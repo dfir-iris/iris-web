@@ -48,7 +48,7 @@ reports_blueprint = Blueprint('reports',
 file_remover = FileRemover()
 
 
-@reports_blueprint.route('/case/report/generate-activities/<report_id>', methods=['GET'])
+@reports_blueprint.route('/case/report/generate-activities/<int:report_id>', methods=['GET'])
 @ac_api_requires()
 def download_case_activity(report_id, caseid):
 
@@ -90,10 +90,10 @@ def download_case_activity(report_id, caseid):
 
             return resp
 
-    return redirect(url_for('index.index', cid=caseid))
+    return response_error("Unknown report", status=404)
 
 
-@reports_blueprint.route("/case/report/generate-investigation/<report_id>", methods=['GET'])
+@reports_blueprint.route("/case/report/generate-investigation/<int:report_id>", methods=['GET'])
 @ac_api_requires()
 def _gen_report(report_id, caseid):
     if not current_user.is_authenticated:
@@ -136,5 +136,5 @@ def _gen_report(report_id, caseid):
 
             return resp
 
-    return redirect(url_for('index.index', cid=caseid))
+    return response_error("Unknown report", status=404)
 

@@ -53,6 +53,9 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
     except Exception:
         pass
 
+    if ctx_less:
+        ua.case_id = 1
+
     ua.activity_date = datetime.utcnow()
     ua.activity_desc = message.capitalize() if not ctx_less else "[Unbound] {}".format(message.capitalize())
 

@@ -437,8 +437,16 @@ body {
     height: 100vh;
 }
 
+@media screen and (min-width: 1600px) {
+    #h_nav_tab {
+        margin-right: auto;
+        margin-left: auto;
+        padding-right: 120px;
+    }
+}
+
 .main-header {
-    background: #ffffff;
+    background: #0963d5;
     min-height: 60px;
     width: 100%;
     position: fixed;
@@ -545,10 +553,6 @@ body {
 .btn-toggle:hover,
 .btn-toggle:focus {
     opacity: 1;
-}
-
-#search-nav {
-    max-width: 400px;
 }
 
 #search-nav-ext {
@@ -7207,12 +7211,11 @@ body .badge-danger {
 .alert {
     border: 0px;
     position: relative;
-    border-radius: 0.5rem;
     color: inherit;
     background-color: #ffffff;
-    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
-    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
-    box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
+    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
 }
 
 
@@ -7220,6 +7223,14 @@ body .badge-danger {
 .alert[data-notify] {
   min-width: 100px;
   max-width: 270px;
+    border: 0px;
+    position: relative;
+    border-radius: 0.6rem;
+    color: inherit;
+    background-color: #ffffff;
+    -webkit-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+    -moz-box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.3) !important;
 }
 
 .alert.alert-success {
@@ -13794,9 +13805,7 @@ table.dataTable.stripe tbody > tr.selected {
     .topbar_open .navbar-header .navbar-nav>.nav-item .nav-link i {
         font-size: 19px;
     }
-    .topbar_open .navbar-header .navbar-nav>.nav-item:last-child .nav-link {
-        padding: 0px !important;
-    }
+
     .topbar_open .navbar-header .navbar-nav>.nav-item:last-child .quick-sidebar-toggler {
         padding-left: 5px !important;
     }
@@ -14119,8 +14128,8 @@ table.dataTable.stripe tbody > tr.selected {
 
 .bg-close-gradient {
     background: #1f283e !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #203C51, #5A7F9B) !important;
-    background: linear-gradient(-45deg, #203C51, #5A7F9B) !important;
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #1C2E3C, #041B39B8) !important;
+    background: linear-gradient(-45deg, #1C2E3C, #041B39B8) !important;
 }
 
 .bg-shadow-gradient {
@@ -15765,4 +15774,22 @@ td.dt-nowrap { white-space: nowrap }
 
 .ace_editor {
     border-radius: .3rem !important;
+}
+
+#protagonists_form_group {
+    background-color: #f5f5f5bf;
+    border-radius: 14px;
+}
+
+.fix-label-group {
+  align-items: center;
+}
+
+.fix-label-item {
+  height: calc(2.25rem + 8px);
+}
+
+.swal-button.swal-button--confirm:not(.swal-button--danger),
+.swal-button:not(.swal-button--confirm, .swal-button--cancel) {
+  background-color: #053c80e8;
 }

@@ -606,9 +606,10 @@ def ac_api_requires(*permissions):
                     return response_error("Invalid case ID", status=404)
                 kwargs.update({"caseid": caseid})
 
+                if 'permissions' not in session:
+                    session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+
                 if permissions:
-                    if 'permissions' not in session:
-                        session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
                     for permission in permissions:
                         if session['permissions'] & permission.value:
@@ -645,7 +646,7 @@ def get_random_suffix(length):
     return result_str
 
 
-def add_obj_history_entry(obj, action):
+def add_obj_history_entry(obj, action, commit=False):
     if hasattr(obj, 'modification_history'):
 
         if isinstance(obj.modification_history, dict):
@@ -668,6 +669,9 @@ def add_obj_history_entry(obj, action):
                 }
             }
     flag_modified(obj, "modification_history")
+    if commit:
+        db.session.commit()
+
     return obj
 
 

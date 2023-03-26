@@ -18,6 +18,10 @@ body .main-panel {
   background: #1f283e  !important;
 }
 
+.main-header {
+    background: #1f283e;
+}
+
 body .card,
 body .row-card-no-pd,
 body .list-group-item,
@@ -822,4 +826,24 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 
 .contact-list-detail:hover {
   background: #f6f5f512;
+}
+
+#protagonists_form_group {
+    background-color: #f5f5f50d;
+    border-radius: 14px;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+	color: #fff;
+	background: #343a40;
+	border-color: #343a40 #343a40 #fff;
+}
+
+.nav-tabs .nav-link:focus, .nav-tabs .nav-link:hover {
+  border-color: #343a40 #343a40 #fff;
+}
+
+.alert-warning {
+    border-left: 4px solid #FFAD46;
+    background-color: #343a40;
 }

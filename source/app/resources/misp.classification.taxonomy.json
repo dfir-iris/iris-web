@@ -1,0 +1,304 @@
+{
+  "version": 2,
+  "namespace": "CERT-XLM",
+  "description": "CERT-XLM Security Incident Classification.",
+  "values": [
+    {
+      "predicate": "abusive-content",
+      "entry": [
+        {
+          "value": "spam",
+          "expanded": "spam",
+          "description": "Spam or ‘unsolicited bulk e-mail’, meaning that the recipient has not granted verifiable permission for the message to be sent and that the message is sent as part of a larger collection of messages, all having identical content."
+        },
+        {
+          "value": "harmful-speech",
+          "expanded": "Harmful Speech",
+          "description": "Discretization or discrimination of somebody (e.g. cyber stalking, racism and threats against one or more individuals) May be found on a forum, email, tweet etc…"
+        },
+        {
+          "value": "violence",
+          "expanded": "Child/Sexual/Violence/...",
+          "description": "Any Child pornography, glorification of violence, may be found on a website, forum, email, tweet etc…"
+        }
+      ]
+    },
+    {
+      "predicate": "malicious-code",
+      "entry": [
+        {
+          "value": "virus",
+          "expanded": "Virus",
+          "description": "Malicious code that replicate itself and infects the computer and files;"
+        },
+        {
+          "value": "worm",
+          "expanded": "Worm",
+          "description": "Malware that self-replicates and spread itself to other computers in the network without any user interaction;"
+        },
+        {
+          "value": "ransomware",
+          "expanded": "Ransomware",
+          "description": "Ransomware is a type of malicious software from cryptovirology that blocks access to the victim's data or threatens to publish it until a ransom is paid."
+        },
+        {
+          "value": "trojan-malware",
+          "expanded": "Trojan/Malware",
+          "description": "This category regroups many common malware types (Banking, POS, Mining malware)."
+        },
+        {
+          "value": "spyware-rat",
+          "expanded": "Spyware/Rat",
+          "description": "This category regroups malware types and tools that may have a bigger impact on the breached infrastructure and usually need further investigations (Common Spyware/Rat, State sponsored malwares, StealersHacking tool)."
+        },
+        {
+          "value": "dialer",
+          "expanded": "Dialer",
+          "description": "Computer program used to identify the phone numbers that can successfully make a connection with a computer modem. Use this category to classify overpriced SMS sent by malicious mobile application. "
+        },
+        {
+          "value": "rootkit",
+          "expanded": "Rootkit",
+          "description": "Malware, which alter the standard functionality of an operating system in order to do its malicious actions in a stealthy way. In practice, Rootkits hijacks systems functions in order to alter the returning values to hide themselves from simple analysis tools."
+        }
+      ]
+    },
+    {
+      "predicate": "information-gathering",
+      "entry": [
+        {
+          "value": "scanner",
+          "expanded": "Scanning",
+          "description": "Attacks that send requests to a system to discover weak points. This also includes some kinds of testing processes to gather information about hosts, services and accounts. Examples: fingerd, DNS querying, ICMP, SMTP (EXPN, RCPT,)."
+        },
+        {
+          "value": "sniffing",
+          "expanded": "Sniffing",
+          "description": "Observing and recording network traffic (wiretapping)."
+        },
+        {
+          "value": "social-engineering",
+          "expanded": "Social Engineering",
+          "description": "Gathering information from a human being in a non-technical way (eg, lies, tricks, bribes, or threats)."
+        }
+      ]
+    },
+    {
+      "predicate": "intrusion-attempts",
+      "entry": [
+        {
+          "value": "exploit-known-vuln",
+          "expanded": "Exploiting known vulnerabilities",
+          "description": "An attempt to compromise a system or to disrupt any service by exploiting vulnerabilities with a standardised identifier such as CVE name (eg, buffer overflow, backdoors, cross side scripting, etc)."
+        },
+        {
+          "value": "login-attempts",
+          "expanded": "Login attempts",
+          "description": "Multiple login attempts (guessing / cracking of passwords, brute force)."
+        },
+        {
+          "value": "new-attack-signature",
+          "expanded": "New attack signature",
+          "description": "An attempt using an unknown exploit."
+        }
+      ]
+    },
+    {
+      "predicate": "intrusion",
+      "entry": [
+        {
+          "value": "privileged-account-compromise",
+          "expanded": "Privileged Account Compromise",
+          "description": "A successful full compromise of a system or application (service). This can have been caused remotely by a known or new vulnerability, but also by an unauthorized local access."
+        },
+        {
+          "value": "unprivileged-account-compromise",
+          "expanded": "Unprivileged Account Compromise",
+          "description": "A successful compromise of a system or application (service). This can have been caused remotely by a known or new vulnerability, but also by an unauthorized local access. The intruded did not achieve to escale his privileges locally. "
+        },
+        {
+          "value": "botnet-member",
+          "expanded": "Botnet member",
+          "description": "The compromised asset is also being part of a botnet. This is reserved mainly for public web servers. See malicious code in priority for workstations or internal server’s compromise. For example, phpmailer, etc…"
+        },
+        {
+          "value": "domain-compromise",
+          "expanded": "Domain Compromise",
+          "description": "The whole domain is compromised; this is commonly used for active directory and detected by a “pass the ticket” attack or a discovery of “ad dumps” files."
+        },
+        {
+          "value": "application-compromise",
+          "expanded": "Application Compromise",
+          "description": "An application is compromised; the attacker possess an uncontrolled access to data, server, and assets used by this application (CMDB, DB, Backend services, etc.)."
+        }
+      ]
+    },
+    {
+      "predicate": "availability",
+      "entry": [
+        {
+          "value": "dos",
+          "expanded": "DoS",
+          "description": "An attacker attempts to prevent legitimate users from accessing information or services."
+        },
+        {
+          "value": "ddos",
+          "expanded": "DDoS",
+          "description": "Form of electronic attack involving multiple computers, which send repeated requests (HTTP requests, pings, TCP or UDP Flood) to a server to load it down and render the service inaccessible for a period of time. "
+        },
+        {
+          "value": "sabotage",
+          "expanded": "Sabotage",
+          "description": "Deliberate and malicious acts that result in the disruption of the normal processes and functions or the destruction or damage of equipment or information."
+        },
+        {
+          "value": "outage",
+          "expanded": "Outage (no malice)",
+          "description": "Unavailability of the system but done with no malice."
+        }
+      ]
+    },
+    {
+      "predicate": "information-content-security",
+      "entry": [
+        {
+          "value": "Unauthorised-information-access",
+          "expanded": "Unauthorised access to information",
+          "description": "Any access to unauthorized data. It may be access of data on improperly restricted server share or database exfiltered by using a SQLi."
+        },
+        {
+          "value": "Unauthorised-information-modification",
+          "expanded": "Unauthorised modification of information",
+          "description": "Unauthorized tampering of data on files, documents or database."
+        }
+      ]
+    },
+    {
+      "predicate": "fraud",
+      "entry": [
+        {
+          "value": "copyright",
+          "expanded": "Copyright",
+          "description": "Selling or installing copies of unlicensed commercial software or other copyright protected materials (Warez)."
+        },
+        {
+          "value": "masquerade",
+          "expanded": "Masquerade",
+          "description": "Types of attacks in which one entity illegitimately assumes the identity of another in order to benefit from it. This attack may be used for president fraud requesting transactions."
+        },
+        {
+          "value": "phishing",
+          "expanded": "Phishing",
+          "description": "Masquerading as another entity in order to persuade the user to reveal a private credential."
+        }
+      ]
+    },
+    {
+      "predicate": "vulnerable",
+      "entry": [
+        {
+          "value": "vulnerable-service",
+          "expanded": "Open for abuse",
+          "description": "Open resolvers, world readable printers, vulnerability apparent from Nessus etc scans, virus, signatures not up to date, etc. This includes for example default SNMP community or default password on any application."
+        }
+      ]
+    },
+    {
+      "predicate": "conformity",
+      "entry": [
+        {
+          "value": "regulator",
+          "expanded": "Regulator",
+          "description": "All lack about regulator rules (CSSF, GDPR, etc.)."
+        },
+        {
+          "value": "standard",
+          "expanded": "Standard",
+          "description": "All lack about standards certification of the company (ISO27000, NIS, ISAE3402, etc.)."
+        },
+        {
+          "value": "security-policy",
+          "expanded": "Security policy",
+          "description": "All lack about the internal security policy of the company."
+        },
+        {
+          "value": "other-conformity",
+          "expanded": "Other",
+          "description": "All lack that do not fit in one of previous categories should be put on this class."
+        }
+      ]
+    },
+    {
+      "predicate": "other",
+      "entry": [
+        {
+          "value": "other",
+          "expanded": "other",
+          "description": "All incidents that do not fit in one of the given categories should be put into this class. If the number of incidents in this category increases, it is an indicator that the classification scheme must be revised."
+        }
+      ]
+    }
+  ],
+  "predicates": [
+    {
+      "value": "abusive-content",
+      "expanded": "Abusive Content",
+      "description": "Abusive Content."
+    },
+    {
+      "value": "malicious-code",
+      "expanded": "Malicious Code",
+      "description": "Software that is intentionally included or inserted in a system for a harmful purpose. A user interaction is normally necessary to activate the code."
+    },
+    {
+      "value": "information-gathering",
+      "expanded": "Information Gathering",
+      "description": "This group is for the reconnaissance; generally, it is the step before attacking."
+    },
+    {
+      "value": "intrusion-attempts",
+      "expanded": "Intrusion Attempts",
+      "description": "This group is for attack detected/tried but without success."
+    },
+    {
+      "value": "intrusion",
+      "expanded": "Intrusion",
+      "description": "This group is for successful unauthorized access to a system."
+    },
+    {
+      "value": "availability",
+      "expanded": "Availability",
+      "description": "By this kind of an attack a system is bombarded with so many packets that the operations are delayed or the system crashes."
+    },
+    {
+      "value": "information-content-security",
+      "expanded": "Information Content Security",
+      "description": "This group is dealing with non-legitimate access or modification to data."
+    },
+    {
+      "value": "fraud",
+      "expanded": "Fraud",
+      "description": "This group is for unauthorized use of resources using resources for unauthorized purposes including profit-making ventures (eg, the use of e-mail to participate in illegal profit chain letters or pyramid schemes)."
+    },
+    {
+      "value": "vulnerable",
+      "expanded": "Vulnerable",
+      "description": "Vulnerable"
+    },
+    {
+      "value": "conformity",
+      "expanded": "Conformity",
+      "description": "This group is for catching breach about controls given by the company or externals entities."
+    },
+    {
+      "value": "other",
+      "expanded": "Other",
+      "description": "Other"
+    },
+    {
+      "value": "test",
+      "expanded": "Test",
+      "description": "Meant for testing."
+    }
+  ]
+}

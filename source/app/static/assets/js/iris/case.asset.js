@@ -36,7 +36,6 @@ function add_asset() {
                             function() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                                $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, null);
         g_asset_desc_editor.setOption("minLines", "10");
         edit_in_asset_desc();
@@ -173,7 +172,6 @@ function asset_details(asset_id) {
                             function() {
                                 $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                                 $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                                $('#submit_new_asset').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                             }, null, false, false);
 
         g_asset_desc_editor.setOption("minLines", "10");
@@ -200,12 +198,9 @@ function asset_details(asset_id) {
 function preview_asset_description(no_btn_update) {
     if(!$('#container_asset_description').is(':visible')) {
         asset_desc = g_asset_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(asset_desc);
-        asset_desc_html = filterXSS(html);
+        asset_desc_html = do_md_filter_xss(html);
         $('#target_asset_desc').html(asset_desc_html);
         $('#container_asset_description').show();
         if (!no_btn_update) {

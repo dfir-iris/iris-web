@@ -54,7 +54,6 @@ function add_modal_rfile() {
                     function() {
                         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
                         $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                        $('#submit_new_evidence').text("Unsaved").removeClass('btn-success').addClass('btn-outline-warning').removeClass('btn-outline-danger');
                     }, null);
         g_evidence_desc_editor.setOption("minLines", "10");
         edit_in_evidence_desc();
@@ -209,12 +208,9 @@ function edit_rfiles(rfiles_id) {
 function preview_evidence_description(no_btn_update) {
     if(!$('#container_evidence_description').is(':visible')) {
         evidence_desc = g_evidence_desc_editor.getValue();
-        converter = new showdown.Converter({
-            tables: true,
-            parseImgDimensions: true
-        });
+        converter = get_showdown_convert();
         html = converter.makeHtml(evidence_desc);
-        evidence_desc_html = filterXSS(html);
+        evidence_desc_html = do_md_filter_xss(html);
         $('#target_evidence_desc').html(evidence_desc_html);
         $('#container_evidence_description').show();
         if (!no_btn_update) {

@@ -128,10 +128,9 @@ def index(caseid, url_redir):
     :return: Page
     """
     if url_redir:
-        return redirect(url_for('index.index', cid=caseid, redirect=True))
+        return redirect(url_for('index.index', cid=caseid if caseid is not None else 1, redirect=True))
 
     msg = None
-    now = datetime.utcnow()
 
     # Retrieve the dashboard data from multiple sources.
     # Quite fast as it is only counts.
@@ -145,8 +144,8 @@ def index(caseid, url_redir):
 
     data = {
         "user_open_count": user_open_case,
-        "cases_open_count": db.session.query(Cases).filter(Cases.close_date == None).count(),
-        "cases_count": db.session.query(Cases).count(),
+        "cases_open_count": Cases.query.filter(Cases.close_date == None).count(),
+        "cases_count": Cases.query.with_entities(distinct(Cases.case_id)).count(),
     }
 
     # Create the customer form to be able to quickly add a customer
