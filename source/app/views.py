@@ -27,6 +27,7 @@
 from app import app
 from app import lm
 from app.blueprints.activities.activities_routes import activities_blueprint
+from app.blueprints.alerts.alerts_routes import alerts_blueprint
 from app.blueprints.api.api_routes import api_blueprint
 from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.context.context import ctx_blueprint
@@ -89,6 +90,7 @@ app.register_blueprint(reports_blueprint)
 app.register_blueprint(activities_blueprint)
 app.register_blueprint(dim_tasks_blueprint)
 app.register_blueprint(datastore_blueprint)
+app.register_blueprint(alerts_blueprint)
 
 app.register_blueprint(api_blueprint)
 app.register_blueprint(demo_blueprint)

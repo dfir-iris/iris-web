@@ -1,6 +1,6 @@
 import uuid
-from psycopg2.extensions import JSON
-from sqlalchemy import BigInteger, Table
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy import BigInteger, Table, Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
@@ -8,15 +8,21 @@ from sqlalchemy import Integer
 from sqlalchemy import Text
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from app import db
 from app.models import Base
+from app.models.cases import Cases
 
-alert_case_association = Table('alert_case_association', Base.metadata,
-                               Column('alert_id', BigInteger, ForeignKey('alerts.alert_id'), primary_key=True),
-                               Column('case_id', BigInteger, ForeignKey('cases.case_id'), primary_key=True)
-                               )
+
+class AlertCaseAssociation(db.Model):
+    __tablename__ = 'alert_case_association'
+
+    alert_id = Column(ForeignKey('alerts.alert_id'), primary_key=True, nullable=False)
+    case_id = Column(ForeignKey('cases.case_id'), primary_key=True, nullable=False, index=True)
+
+    alert = relationship('Alert', backref=backref("alert_case_association", cascade="all, delete-orphan"))
+    case = relationship('Cases', backref=backref("alert_case_association", cascade="all, delete-orphan"))
 
 
 class Alert(db.Model):
@@ -39,6 +45,7 @@ class Alert(db.Model):
     alert_creation_time = Column(DateTime, nullable=False, server_default=text("now()"))
     alert_note = Column(Text)
     alert_tags = Column(Text)
+    alert_is_read = Column(Boolean, nullable=False, server_default=text("false"))
     alert_owner_id = Column(ForeignKey('user.id'))
     modification_history = Column(JSON)
     alert_iocs = Column(JSON)
@@ -48,7 +55,7 @@ class Alert(db.Model):
     severity = relationship('AlertSeverity')
     status = relationship('AlertStatus')
 
-    cases = relationship('Cases', secondary=alert_case_association, back_populates='alerts')
+    cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')
 
 
 class AlertSeverity(db.Model):
@@ -65,6 +72,7 @@ class AlertStatus(db.Model):
     status_id = Column(Integer, primary_key=True)
     status_name = Column(Text, nullable=False, unique=True)
     status_description = Column(Text)
+
 
 
 
