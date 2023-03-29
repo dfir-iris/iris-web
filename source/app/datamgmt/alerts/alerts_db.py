@@ -75,8 +75,13 @@ def get_filtered_alerts(
     if owner:
         conditions.append(Alert.alert_owner_id == owner)
 
+    if conditions:
+        conditions = [and_(*conditions)]
+    else:
+        conditions = []
+
     # Query the alerts using the filter conditions
-    filtered_alerts = db.session.query(Alert).filter(and_(*conditions)).all()
+    filtered_alerts = db.session.query(Alert).filter(*conditions).all()
 
     # Convert the alerts to a JSON-friendly format
     alerts_json = [
