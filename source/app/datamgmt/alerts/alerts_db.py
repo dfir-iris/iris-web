@@ -98,3 +98,42 @@ def get_filtered_alerts(
     ]
 
     return alerts_json
+
+
+def add_alert(
+        title,
+        description,
+        source,
+        status,
+        severity,
+        owner
+):
+    """
+    Add an alert to the database
+
+    args:
+        title (str): The title of the alert
+        description (str): The description of the alert
+        source (str): The source of the alert
+        status (str): The status of the alert
+        severity (str): The severity of the alert
+        owner (str): The owner of the alert
+
+    returns:
+        Alert: The alert that was added to the database
+    """
+    # Create the alert
+    alert = Alert()
+    alert.alert_title = title
+    alert.alert_description = description
+    alert.alert_source = source
+    alert.alert_status = status
+    alert.alert_severity = severity
+    alert.alert_owner_id = owner
+
+    # Add the alert to the database
+    db.session.add(alert)
+    db.session.commit()
+
+    return alert
+

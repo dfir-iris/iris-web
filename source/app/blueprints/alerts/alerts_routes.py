@@ -17,11 +17,16 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from datetime import datetime
 
 from flask import Blueprint, request
+from flask_login import current_user
+from werkzeug import Response
 
+from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.models.authorization import Permissions
+from app.schema.marshables import AlertSchema
 from app.util import ac_api_requires, response_error
 from app.util import response_success
 
@@ -35,7 +40,16 @@ alerts_blueprint = Blueprint(
 # CONTENT ------------------------------------------------
 @alerts_blueprint.route('/alerts/filter', methods=['GET'])
 @ac_api_requires(Permissions.alerts_reader)
-def alerts_list_route(caseid):
+def alerts_list_route(caseid) -> Response:
+    """
+    Get a list of alerts from the database
+
+    args:
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
 
     filtered_data = get_filtered_alerts(
         start_date=request.args.get('start_date'),
@@ -48,3 +62,43 @@ def alerts_list_route(caseid):
     )
 
     return response_success(data=filtered_data)
+
+
+@alerts_blueprint.route('/alerts/add', methods=['POST'])
+@ac_api_requires(Permissions.alerts_writer)
+def alerts_add_route(caseid) -> Response:
+    """
+    Add a new alert to the database
+
+    args:
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+
+    if not request.json:
+        return response_error('No JSON data provided')
+
+    alert_schema = AlertSchema()
+
+    try:
+        # Load the JSON data from the request
+        data = request.get_json()
+
+        # Deserialize the JSON data into an Alert object
+        new_alert = alert_schema.load(data)
+
+        new_alert.alert_owner_id = current_user.id
+        new_alert.alert_creation_time = datetime.utcnow()
+
+        # Add the new alert to the session and commit it
+        db.session.add(new_alert)
+        db.session.commit()
+
+        # Return the newly created alert as JSON
+        return response_success(data=alert_schema.dump(new_alert))
+
+    except Exception as e:
+        # Handle any errors during deserialization or DB operations
+        return response_error(str(e))

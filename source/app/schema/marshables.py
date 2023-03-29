@@ -64,6 +64,7 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
+from app.models.alerts import Alert
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -844,3 +845,12 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
                                                              field_name="user_password")
 
         return data
+
+
+class AlertSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Alert
+        include_relationships = True
+        load_instance = True
+        exclude = ['alert_id', 'alert_creation_time', 'alert_updated',
+                   'alert_owner_id', 'modification_history']
