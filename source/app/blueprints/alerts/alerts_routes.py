@@ -24,7 +24,7 @@ from flask_login import current_user
 from werkzeug import Response
 
 from app import db
-from app.datamgmt.alerts.alerts_db import get_filtered_alerts
+from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema
 from app.util import ac_api_requires, response_error, str_to_bool
@@ -110,3 +110,30 @@ def alerts_add_route(caseid) -> Response:
     except Exception as e:
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
+
+
+@alerts_blueprint.route('/alerts/<int:alert_id>', methods=['GET'])
+@ac_api_requires(Permissions.alerts_reader)
+def alerts_get_route(caseid, alert_id) -> Response:
+    """
+    Get an alert from the database
+
+    args:
+        caseid (str): The case id
+        alert_id (int): The alert id
+
+    returns:
+        Response: The response
+    """
+
+    alert_schema = AlertSchema()
+
+    # Get the alert from the database
+    alert = get_alert_by_id(alert_id)
+
+    # Return the alert as JSON
+    if alert is None:
+        return response_error('Alert not found')
+
+    return response_success(data=alert_schema.dump(alert))
+

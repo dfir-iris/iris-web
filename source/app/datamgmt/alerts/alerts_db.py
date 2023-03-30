@@ -138,3 +138,15 @@ def add_alert(
 
     return alert
 
+
+def get_alert_by_id(alert_id: int) -> Alert:
+    """
+    Get an alert from the database
+
+    args:
+        alert_id (int): The ID of the alert
+
+    returns:
+        Alert: The alert that was retrieved from the database
+    """
+    return db.session.query(Alert).filter(Alert.alert_id == alert_id).first()
