@@ -48,6 +48,7 @@ from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
 from app.models import create_safe_limited
+from app.models.alerts import AlertSeverity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
@@ -131,6 +132,9 @@ def run_post_init(development=False):
 
         log.info("Creating base tasks status")
         create_safe_task_status()
+
+        log.info("Creating base alert severities")
+        create_safe_alert_severities()
 
         log.info("Creating base hooks")
         create_safe_hooks()
@@ -499,6 +503,15 @@ def create_safe_task_status():
     create_safe(db.session, TaskStatus, status_name='Done', status_description="", status_bscolor="success")
     create_safe(db.session, TaskStatus, status_name='Canceled', status_description="", status_bscolor="muted")
 
+
+def create_safe_alert_severities():
+    create_safe(db.session, AlertSeverity, name='Unspecified', description="Unspecified")
+    create_safe(db.session, AlertSeverity, name='Informational', description="Informational")
+    create_safe(db.session, AlertSeverity, name='Low', description="Low")
+    create_safe(db.session, AlertSeverity, name='Medium', description="Medium")
+    create_safe(db.session, AlertSeverity, name='High', description="High")
+    create_safe(db.session, AlertSeverity, name='Critical', description="Critical")
+    
 
 def create_safe_assets():
 
