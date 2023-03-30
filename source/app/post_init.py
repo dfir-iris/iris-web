@@ -136,6 +136,9 @@ def run_post_init(development=False):
         log.info("Creating base alert severities")
         create_safe_alert_severities()
 
+        log.info("Creating base alert status")
+        create_safe_alert_status()
+
         log.info("Creating base hooks")
         create_safe_hooks()
 
