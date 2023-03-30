@@ -25,10 +25,13 @@ from werkzeug import Response
 
 from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert
+from app.iris_engine.access_control.utils import ac_set_new_case_access
+from app.iris_engine.module_handler.module_handler import call_modules_hook
+from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema, CaseSchema
-from app.util import ac_api_requires, response_error, str_to_bool
+from app.util import ac_api_requires, response_error, str_to_bool, add_obj_history_entry
 from app.util import response_success
 
 alerts_blueprint = Blueprint(
@@ -241,9 +244,18 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
         if not case:
             return response_error('Failed to create case from alert')
 
+        ac_set_new_case_access(None, case.case_id)
+
+        case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
+
+        add_obj_history_entry(case, 'created')
+        track_activity("new case {case_name} created from alert".format(case_name=case.name),
+                       caseid=caseid, ctx_less=True)
+
         # Return the updated alert as JSON
         return response_success(data=CaseSchema().dump(case))
 
     except Exception as e:
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
+
