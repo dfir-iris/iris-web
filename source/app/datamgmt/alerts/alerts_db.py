@@ -83,21 +83,7 @@ def get_filtered_alerts(
     # Query the alerts using the filter conditions
     filtered_alerts = db.session.query(Alert).filter(*conditions).all()
 
-    # Convert the alerts to a JSON-friendly format
-    alerts_json = [
-        {
-            'id': alert.alert_id,
-            'title': alert.alert_title,
-            'description': alert.alert_description,
-            'source': alert.alert_source,
-            'status': alert.status.status_name,
-            'severity': alert.severity.severity_name,
-            'owner': alert.user.username if alert.user else None
-        }
-        for alert in filtered_alerts
-    ]
-
-    return alerts_json
+    return filtered_alerts
 
 
 def add_alert(

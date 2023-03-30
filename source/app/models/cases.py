@@ -189,7 +189,6 @@ class CasesEvent(db.Model):
                             viewonly=True)
 
 
-
 class CaseProtagonist(db.Model):
     __tablename__ = "case_protagonist"
 

@@ -51,6 +51,8 @@ def alerts_list_route(caseid) -> Response:
         Response: The response
     """
 
+    alert_schema = AlertSchema()
+
     filtered_data = get_filtered_alerts(
         start_date=request.args.get('start_date'),
         end_date=request.args.get('end_date'),
@@ -61,7 +63,7 @@ def alerts_list_route(caseid) -> Response:
         owner=request.args.get('alert_owner')
     )
 
-    return response_success(data=filtered_data)
+    return response_success(data=alert_schema.dump(filtered_data, many=True))
 
 
 @alerts_blueprint.route('/alerts/add', methods=['POST'])
