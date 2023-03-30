@@ -137,3 +137,43 @@ def alerts_get_route(caseid, alert_id) -> Response:
 
     return response_success(data=alert_schema.dump(alert))
 
+
+@alerts_blueprint.route('/alerts/update/<int:alert_id>', methods=['POST'])
+@ac_api_requires(Permissions.alerts_writer)
+def alerts_update_route(alert_id, caseid) -> Response:
+    """
+    Update an alert in the database
+
+    args:
+        caseid (str): The case id
+        alert_id (int): The alert id
+
+    returns:
+        Response: The response
+    """
+    if not request.json:
+        return response_error('No JSON data provided')
+
+    alert = get_alert_by_id(alert_id)
+    if not alert:
+        return response_error('Alert not found')
+
+    alert_schema = AlertSchema()
+
+    try:
+        # Load the JSON data from the request
+        data = request.get_json()
+
+        # Deserialize the JSON data into an Alert object
+        updated_alert = alert_schema.load(data, instance=alert, partial=True)
+
+        # Save the changes
+        db.session.commit()
+
+        # Return the updated alert as JSON
+        return response_success(data=alert_schema.dump(updated_alert))
+
+    except Exception as e:
+        # Handle any errors during deserialization or DB operations
+        return response_error(str(e))
+
