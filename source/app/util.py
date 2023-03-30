@@ -729,3 +729,7 @@ def hmac_verify(signature_enc, data):
         return True
     except InvalidSignature:
         return False
+
+
+def str_to_bool(value):
+    return value.lower() in ['true', '1', 'yes']

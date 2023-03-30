@@ -31,13 +31,16 @@ def db_list_all_alerts():
 
 
 def get_filtered_alerts(
-        start_date=None,
-        end_date=None,
-        title=None,
-        description=None,
-        status=None,
-        severity=None,
-        owner=None
+        start_date: str = None,
+        end_date: str = None,
+        title: str = None,
+        description: str = None,
+        status: str = None,
+        severity: str = None,
+        owner: str = None,
+        source: str = None,
+        tags: str = None,
+        read: bool = None
 ):
     """
     Get a list of alerts that match the given filter conditions
@@ -50,6 +53,9 @@ def get_filtered_alerts(
         status (str): The status of the alert
         severity (str): The severity of the alert
         owner (str): The owner of the alert
+        source (str): The source of the alert
+        tags (str): The tags of the alert
+        read (bool): The read status of the alert
 
     returns:
         list: A list of alerts that match the given filter conditions
@@ -67,13 +73,22 @@ def get_filtered_alerts(
         conditions.append(Alert.alert_description.ilike(f'%{description}%'))
 
     if status:
-        conditions.append(Alert.alert_status == status)
+        conditions.append(Alert.alert_status_id == status)
 
     if severity:
-        conditions.append(Alert.alert_severity == severity)
+        conditions.append(Alert.alert_severity_id == severity)
 
     if owner:
         conditions.append(Alert.alert_owner_id == owner)
+
+    if source:
+        conditions.append(Alert.alert_source == source)
+
+    if tags:
+        conditions.append(Alert.alert_tags.ilike(f"%{tags}%"))
+
+    if read is not None:
+        conditions.append(Alert.alert_is_read == read)
 
     if conditions:
         conditions = [and_(*conditions)] if len(conditions) > 1 else conditions

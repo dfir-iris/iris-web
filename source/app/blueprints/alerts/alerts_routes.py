@@ -27,7 +27,7 @@ from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema
-from app.util import ac_api_requires, response_error
+from app.util import ac_api_requires, response_error, str_to_bool
 from app.util import response_success
 
 alerts_blueprint = Blueprint(
@@ -53,14 +53,20 @@ def alerts_list_route(caseid) -> Response:
 
     alert_schema = AlertSchema()
 
+    alert_is_read_str = request.args.get('alert_is_read')
+    alert_is_read = str_to_bool(alert_is_read_str) if alert_is_read_str is not None else None
+
     filtered_data = get_filtered_alerts(
-        start_date=request.args.get('start_date'),
-        end_date=request.args.get('end_date'),
+        start_date=request.args.get('source_start_date'),
+        end_date=request.args.get('source_end_date'),
         title=request.args.get('alert_title'),
         description=request.args.get('alert_description'),
-        status=request.args.get('alert_status'),
-        severity=request.args.get('alert_severity'),
-        owner=request.args.get('alert_owner_id')
+        status=request.args.get('alert_status_id'),
+        severity=request.args.get('alert_severity_id'),
+        owner=request.args.get('alert_owner_id'),
+        source=request.args.get('alert_source'),
+        tags=request.args.get('alert_tags'),
+        read=alert_is_read
     )
 
     return response_success(data=alert_schema.dump(filtered_data, many=True))
