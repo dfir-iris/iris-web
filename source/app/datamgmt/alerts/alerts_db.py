@@ -179,9 +179,9 @@ def create_case_from_alert(alert: Alert) -> Cases:
         name=f"[ALERT] {alert.alert_title}",
         description=f"*Alert escalated*\n{alert.alert_description}",
         soc_id=alert.alert_id,
-        client_id=alert.client_id,
+        client_id=alert.alert_client_id,
         user=current_user,
-        classification_id=alert.classification_id
+        classification_id=alert.alert_classification_id
     )
 
     case.save()

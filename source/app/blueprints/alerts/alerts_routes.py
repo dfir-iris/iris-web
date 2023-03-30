@@ -27,7 +27,7 @@ from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
-from app.schema.marshables import AlertSchema
+from app.schema.marshables import AlertSchema, CaseSchema
 from app.util import ac_api_requires, response_error, str_to_bool
 from app.util import response_success
 
@@ -232,14 +232,17 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
 
     try:
         # Escalate the alert to a case
-        alert.alert_status_id = AlertStatus.query.filter_by(status_name='Escalated').first().id
+        alert.alert_status_id = AlertStatus.query.filter_by(status_name='Escalated').first().status_id
         db.session.commit()
 
         # Create a new case from the alert
-        create_case_from_alert(alert)
+        case = create_case_from_alert(alert)
+
+        if not case:
+            return response_error('Failed to create case from alert')
 
         # Return the updated alert as JSON
-        return response_success(data={'alert_id': alert_id})
+        return response_success(data=CaseSchema().dump(case))
 
     except Exception as e:
         # Handle any errors during deserialization or DB operations
