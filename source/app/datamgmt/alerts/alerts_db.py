@@ -76,7 +76,7 @@ def get_filtered_alerts(
         conditions.append(Alert.alert_owner_id == owner)
 
     if conditions:
-        conditions = [and_(*conditions)]
+        conditions = [and_(*conditions)] if len(conditions) > 1 else conditions
     else:
         conditions = []
 

@@ -60,7 +60,7 @@ def alerts_list_route(caseid) -> Response:
         description=request.args.get('alert_description'),
         status=request.args.get('alert_status'),
         severity=request.args.get('alert_severity'),
-        owner=request.args.get('alert_owner')
+        owner=request.args.get('alert_owner_id')
     )
 
     return response_success(data=alert_schema.dump(filtered_data, many=True))
