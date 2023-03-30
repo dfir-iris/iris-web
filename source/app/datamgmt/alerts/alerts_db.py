@@ -185,6 +185,8 @@ def create_case_from_alert(alert: Alert) -> Cases:
     )
 
     case.save()
+
+    # Link the alert to the case
     alert.cases.append(case)
 
     db.session.commit()

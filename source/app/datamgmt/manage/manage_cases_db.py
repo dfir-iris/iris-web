@@ -224,7 +224,8 @@ def get_case_details_rt(case_id):
             Cases.modification_history,
             Cases.initial_date,
             Cases.classification_id,
-            CaseClassification.name.label('classification')
+            CaseClassification.name.label('classification'),
+            Cases.alerts
         ).filter(and_(
             Cases.case_id == case_id
         )).join(

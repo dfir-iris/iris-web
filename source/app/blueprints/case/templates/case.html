@@ -66,10 +66,40 @@
                     </div>
                 </div>
             </div>
+
             <div class="page-inner mt--5">
                 <div class="row row-card-no-pd" style="padding-top: 0px;padding-bottom: 3px;">
                     {% include 'case-nav_landing.html' %}
                 </div>
+
+                {% if case.alerts %}
+
+                <div class="card full-height">
+
+                    <div class="card-body">
+                        {% for alert in case.alerts %}
+                        <div class="d-flex">
+                            <div class="avatar">
+                                <span class="avatar-title rounded-circle border border-white bg-dark"><i class="fa-solid fa-bell"></i></span>
+                            </div>
+                            <div class="flex-1 ml-3 pt-1">
+                                <h6 class="text-uppercase fw-bold mb-1">{{ alert.alert_title }} <span class="text-warning pl-3">{{ alert.alert_type }}</span></h6>
+                                <span class="text-muted">{{ alert.alert_description[0:150] }}</span>
+                            </div>
+                            <div class="float-right pt-1">
+                                <b>Alert time</b>
+                                <small class="text-muted">{{ alert.alert_source_event_time }}</small>
+                            </div>
+                        </div>
+
+                        {% if not loop.last %}
+                            <div class="separator-dashed"></div>
+                        {% endif %}
+
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
                 <div class="row row-card-no-pd">
                     <div class="col-md-12">
                         <div class="card mb-4" id="rescard1">
