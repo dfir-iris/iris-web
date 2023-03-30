@@ -50,10 +50,14 @@ class Alert(db.Model):
     modification_history = Column(JSON)
     alert_iocs = Column(JSON)
     alert_assets = Column(JSON)
+    alert_client_id = Column(ForeignKey('client.client_id'), nullable=False)
+    alert_classification_id = Column(ForeignKey('case_classification.id'))
 
     user = relationship('User', foreign_keys=[alert_owner_id])
     severity = relationship('AlertSeverity')
     status = relationship('AlertStatus')
+    client = relationship('Client')
+    classification = relationship('CaseClassification')
 
     cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')
 

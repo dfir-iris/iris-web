@@ -17,9 +17,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from flask_login import current_user
 from operator import and_
 
 from app import db
+from app.models import Cases
 from app.models.alerts import Alert
 
 
@@ -40,7 +42,9 @@ def get_filtered_alerts(
         owner: str = None,
         source: str = None,
         tags: str = None,
-        read: bool = None
+        read: bool = None,
+        client: int = None,
+        classification: int = None
 ):
     """
     Get a list of alerts that match the given filter conditions
@@ -56,6 +60,8 @@ def get_filtered_alerts(
         source (str): The source of the alert
         tags (str): The tags of the alert
         read (bool): The read status of the alert
+        client (int): The client id of the alert
+        classification (int): The classification id of the alert
 
     returns:
         list: A list of alerts that match the given filter conditions
@@ -89,6 +95,12 @@ def get_filtered_alerts(
 
     if read is not None:
         conditions.append(Alert.alert_is_read == read)
+
+    if client:
+        conditions.append(Alert.alert_client_id == client)
+
+    if classification:
+        conditions.append(Alert.alert_classification_id == classification)
 
     if conditions:
         conditions = [and_(*conditions)] if len(conditions) > 1 else conditions
@@ -150,3 +162,28 @@ def get_alert_by_id(alert_id: int) -> Alert:
         Alert: The alert that was retrieved from the database
     """
     return db.session.query(Alert).filter(Alert.alert_id == alert_id).first()
+
+
+def create_case_from_alert(alert: Alert) -> Cases:
+    """
+    Create a case from an alert
+
+    args:
+        alert (Alert): The Alert
+
+    returns:
+        Cases: The case that was created from the alert
+    """
+    # Create the case
+    case = Cases(
+        name=f"[ALERT] {alert.alert_title}",
+        description=f"*Alert escalated*\n{alert.alert_description}",
+        soc_id=alert.alert_id,
+        client_id=alert.client_id,
+        user=current_user,
+        classification_id=alert.classification_id
+    )
+
+    case.save()
+
+    return case

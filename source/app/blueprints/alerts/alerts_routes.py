@@ -24,7 +24,8 @@ from flask_login import current_user
 from werkzeug import Response
 
 from app import db
-from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id
+from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert
+from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema
 from app.util import ac_api_requires, response_error, str_to_bool
@@ -66,7 +67,9 @@ def alerts_list_route(caseid) -> Response:
         owner=request.args.get('alert_owner_id'),
         source=request.args.get('alert_source'),
         tags=request.args.get('alert_tags'),
-        read=alert_is_read
+        read=alert_is_read,
+        classification=request.args.get('alert_classification_id'),
+        client=request.args.get('alert_client_id')
     )
 
     return response_success(data=alert_schema.dump(filtered_data, many=True))
@@ -177,3 +180,67 @@ def alerts_update_route(alert_id, caseid) -> Response:
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
 
+
+@alerts_blueprint.route('/alerts/delete/<int:alert_id>', methods=['POST'])
+@ac_api_requires(Permissions.alerts_writer)
+def alerts_delete_route(alert_id, caseid) -> Response:
+    """
+    Delete an alert from the database
+
+    args:
+        caseid (str): The case id
+        alert_id (int): The alert id
+
+    returns:
+        Response: The response
+    """
+
+    alert = get_alert_by_id(alert_id)
+    if not alert:
+        return response_error('Alert not found')
+
+    try:
+        # Delete the alert from the database
+        db.session.delete(alert)
+        db.session.commit()
+
+        # Return the deleted alert as JSON
+        return response_success(data={'alert_id': alert_id})
+
+    except Exception as e:
+        # Handle any errors during deserialization or DB operations
+        return response_error(str(e))
+
+
+@alerts_blueprint.route('/alerts/escalate/<int:alert_id>', methods=['POST'])
+@ac_api_requires(Permissions.alerts_writer)
+def alerts_escalate_route(alert_id, caseid) -> Response:
+    """
+    Escalate an alert
+
+    args:
+        caseid (str): The case id
+        alert_id (int): The alert id
+
+    returns:
+        Response: The response
+    """
+
+    alert = get_alert_by_id(alert_id)
+    if not alert:
+        return response_error('Alert not found')
+
+    try:
+        # Escalate the alert to a case
+        alert.alert_status_id = AlertStatus.query.filter_by(status_name='Escalated').first().id
+        db.session.commit()
+
+        # Create a new case from the alert
+        create_case_from_alert(alert)
+
+        # Return the updated alert as JSON
+        return response_success(data={'alert_id': alert_id})
+
+    except Exception as e:
+        # Handle any errors during deserialization or DB operations
+        return response_error(str(e))
