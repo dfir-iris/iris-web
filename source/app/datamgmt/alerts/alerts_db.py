@@ -177,7 +177,7 @@ def create_case_from_alert(alert: Alert) -> Cases:
     # Create the case
     case = Cases(
         name=f"[ALERT] {alert.alert_title}",
-        description=f"*Alert escalated*\n{alert.alert_description}",
+        description=f"*Alert escalated by {current_user.name}*\n\n### Alert content\n\n{alert.alert_description}",
         soc_id=alert.alert_id,
         client_id=alert.alert_client_id,
         user=current_user,
@@ -185,5 +185,8 @@ def create_case_from_alert(alert: Alert) -> Cases:
     )
 
     case.save()
+    alert.cases.append(case)
+
+    db.session.commit()
 
     return case
