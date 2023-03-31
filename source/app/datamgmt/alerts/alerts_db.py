@@ -206,3 +206,17 @@ def merge_alert_in_case(alert: Alert, case: Cases):
     alert.cases.append(case)
 
     db.session.commit()
+
+
+def unmerge_alert_from_case(alert: Alert, case: Cases):
+    """
+    Unmerge an alert from a case
+
+    args:
+        alert (Alert): The Alert
+        case (Cases): The Case
+    """
+    # Unlink the alert from the case
+    alert.cases.remove(case)
+
+    db.session.commit()
