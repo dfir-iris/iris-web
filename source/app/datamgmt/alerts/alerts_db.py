@@ -192,3 +192,17 @@ def create_case_from_alert(alert: Alert) -> Cases:
     db.session.commit()
 
     return case
+
+
+def merge_alert_in_case(alert: Alert, case: Cases):
+    """
+    Merge an alert in a case
+
+    args:
+        alert (Alert): The Alert
+        case (Cases): The Case
+    """
+    # Link the alert to the case
+    alert.cases.append(case)
+
+    db.session.commit()

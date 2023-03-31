@@ -24,7 +24,9 @@ from flask_login import current_user
 from werkzeug import Response
 
 from app import db
-from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert
+from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
+    merge_alert_in_case
+from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -259,3 +261,46 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
 
+
+@alerts_blueprint.route('/alerts/merge/<int:alert_id>', methods=['POST'])
+@ac_api_requires(Permissions.alerts_writer)
+def alerts_merge_route(alert_id, caseid) -> Response:
+    """
+    Merge an alert into a case
+
+    args:
+        caseid (str): The case id
+        alert_id (int): The alert id
+
+    returns:
+        Response: The response
+    """
+    if request.json is None:
+        return response_error('No JSON data provided')
+
+    target_case_id = request.json.get('target_case_id')
+    if target_case_id is None:
+        return response_error('No target case id provided')
+
+    alert = get_alert_by_id(alert_id)
+    if not alert:
+        return response_error('Alert not found')
+
+    case = get_case(target_case_id)
+    if not case:
+        return response_error('Target case not found')
+
+    try:
+        # Merge the alert into a case
+        alert.alert_status_id = AlertStatus.query.filter_by(status_name='Merged').first().status_id
+        db.session.commit()
+
+        # Merge alert in the case
+        merge_alert_in_case(alert, case)
+
+        # Return the updated alert as JSON
+        return response_success(data=CaseSchema().dump(case))
+
+    except Exception as e:
+        # Handle any errors during deserialization or DB operations
+        return response_error(str(e))
