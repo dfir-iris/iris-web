@@ -44,7 +44,9 @@ def get_filtered_alerts(
         tags: str = None,
         read: bool = None,
         client: int = None,
-        classification: int = None
+        classification: int = None,
+        page: int = 1,
+        per_page: int = 10
 ):
     """
     Get a list of alerts that match the given filter conditions
@@ -108,7 +110,7 @@ def get_filtered_alerts(
         conditions = []
 
     # Query the alerts using the filter conditions
-    filtered_alerts = db.session.query(Alert).filter(*conditions).all()
+    filtered_alerts = db.session.query(Alert).filter(*conditions).paginate(page, per_page, False)
 
     return filtered_alerts
 

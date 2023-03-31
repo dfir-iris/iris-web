@@ -56,6 +56,8 @@ def alerts_list_route(caseid) -> Response:
     returns:
         Response: The response
     """
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
 
     alert_schema = AlertSchema()
 
@@ -74,10 +76,20 @@ def alerts_list_route(caseid) -> Response:
         tags=request.args.get('alert_tags'),
         read=alert_is_read,
         classification=request.args.get('alert_classification_id'),
-        client=request.args.get('alert_client_id')
+        client=request.args.get('alert_client_id'),
+        page=page,
+        per_page=per_page
     )
 
-    return response_success(data=alert_schema.dump(filtered_data, many=True))
+    alerts = {
+        'total': filtered_data.total,
+        'alerts': alert_schema.dump(filtered_data.items, many=True),
+        'last_page': filtered_data.pages,
+        'current_page': filtered_data.page,
+        'next_page': filtered_data.next_num if filtered_data.has_next else None,
+    }
+
+    return response_success(data=alerts)
 
 
 @alerts_blueprint.route('/alerts/add', methods=['POST'])
