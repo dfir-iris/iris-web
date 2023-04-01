@@ -7,7 +7,7 @@ async function updateAlerts(page) {
   const per_page = 10;
   const data = await fetchAlerts(page, per_page);
 
-  if (!notify_auto_api(data)) {
+  if (!notify_auto_api(data, true)) {
     return;
   }
   const alerts = data.data.alerts;
@@ -68,10 +68,14 @@ async function updateAlerts(page) {
     pageLink.href = `javascript:updateAlerts(${i})`;
     pageLink.textContent = i;
     pageLink.className = 'page-link';
+
+    const pageItem = document.createElement('li');
+    pageItem.className = 'page-item';
     if (i === page) {
-      pageLink.className += ' active';
+      pageItem.className += ' active';
     }
-    paginationContainer.appendChild(pageLink);
+    pageItem.appendChild(pageLink);
+    paginationContainer.appendChild(pageItem);
   }
 }
 
