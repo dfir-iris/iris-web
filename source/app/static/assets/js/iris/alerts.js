@@ -106,7 +106,7 @@ async function escalateAlertModal(alert_id) {
 }
 
 function escalateAlert(alert_id) {
-    post_request_api(`/alerts/escalate/${alert_id}?cid=${get_caseid()}`)
+    post_request_api(`/alerts/escalate/${alert_id}`)
         .then((data) => {
             if (data.status == 'success') {
                 $("#escalateModal").modal("hide");

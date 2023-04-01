@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from flask_login import current_user
 from operator import and_
+from sqlalchemy.orm import joinedload
 
 from app import db
 from app.models import Cases
@@ -110,7 +111,13 @@ def get_filtered_alerts(
         conditions = []
 
     # Query the alerts using the filter conditions
-    filtered_alerts = db.session.query(Alert).filter(*conditions).paginate(page, per_page, False)
+    filtered_alerts = db.session.query(
+        Alert
+    ).filter(
+        *conditions
+    ).options(
+        joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.client)
+    ).paginate(page, per_page, False)
 
     return filtered_alerts
 

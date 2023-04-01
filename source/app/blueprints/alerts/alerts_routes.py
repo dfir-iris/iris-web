@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from flask_wtf import FlaskForm
 from typing import Union
 
 from datetime import datetime
@@ -375,5 +376,7 @@ def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
     if url_redir:
         return redirect(url_for('alerts.alerts_list_view_route', cid=caseid))
 
-    return render_template('alerts.html', caseid=caseid)
+    form = FlaskForm()
+
+    return render_template('alerts.html', caseid=caseid, form=form)
 

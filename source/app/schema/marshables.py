@@ -64,7 +64,7 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models.alerts import Alert
+from app.models.alerts import Alert, AlertSeverity, AlertStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -847,11 +847,25 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class AlertSeveritySchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = AlertSeverity
+        load_instance = True
+
+
+class AlertStatusSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = AlertStatus
+        load_instance = True
+
+
 class AlertSchema(ma.SQLAlchemyAutoSchema):
+    severity = ma.Nested(AlertSeveritySchema)
+    status = ma.Nested(AlertStatusSchema)
+    client = ma.Nested(CustomerSchema)
+
     class Meta:
         model = Alert
         include_relationships = True
         include_fk = True
         load_instance = True
-        exclude = ['alert_creation_time',
-                   'alert_owner_id', 'modification_history']
