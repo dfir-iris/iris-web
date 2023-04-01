@@ -76,12 +76,22 @@ async function updateAlerts(page, per_page) {
     pageItem.appendChild(pageLink);
     paginationContainer.appendChild(pageItem);
   }
-}
 
+  // Update the URL with the filter parameters
+  const queryParams = new URLSearchParams(window.location.search);
+  queryParams.set('page', page);
+  queryParams.set('per_page', per_page);
+  history.replaceState(null, null, `?${queryParams.toString()}`);
+
+}
 
 document.querySelector('#alertsPerPage').addEventListener('change', (e) => {
   const per_page = parseInt(e.target.value, 10);
   updateAlerts(1, per_page); // Update the alerts list with the new 'per_page' value and reset to the first page
 });
 
-updateAlerts(1, 10); // Initial call to load the first page
+// Load the filter parameters from the URL
+const queryParams = new URLSearchParams(window.location.search);
+const page = parseInt(queryParams.get('page') || '1', 10);
+const per_page = parseInt(queryParams.get('per_page') || '10', 10);
+updateAlerts(page, per_page);
