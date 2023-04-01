@@ -42,3 +42,15 @@
   border-color: #E9727D !important;
     color: white;
 }
+
+.bg-muted {
+  background-color: #6b6d73 !important;
+}
+
+.bg-low {
+  background-color: #ffdc71 !important;
+}
+
+.bg-critical {
+  background-color: #7d0fdd !important;
+}

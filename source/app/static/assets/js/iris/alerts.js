@@ -122,6 +122,23 @@ async function fetchAlerts(page, per_page, filters_string = {}) {
   return await response;
 }
 
+function alert_severity_to_color(severity) {
+  switch (severity) {
+    case 'Critical':
+      return 'critical';
+    case 'High':
+      return 'danger';
+    case 'Medium':
+      return 'warning';
+    case 'Low':
+      return 'low';
+    case 'Informational':
+      return 'info';
+    default:
+      return 'muted';
+  }
+}
+
 async function updateAlerts(page, per_page, filters = {}) {
   const filterString = objectToQueryString(filters);
   const data = await fetchAlerts(page, per_page, filterString);
@@ -138,15 +155,18 @@ async function updateAlerts(page, per_page, filters = {}) {
   // Add the fetched alerts to the alerts container
   alerts.forEach((alert) => {
     const alertElement = document.createElement('div');
+
+    const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
+
     alertElement.innerHTML = `
       <div class="card alert-card full-height">
         <div class="card-body">
           <div class="d-flex">
             <div class="avatar mt-2">
-              <span class="avatar-title rounded-circle border border-white bg-dark"><i class="fa-solid fa-fire"></i></span>
+              <span class="avatar-title rounded-circle border border-white bg-${colorSeverity}"><i class="fa-solid fa-fire"></i></span>
             </div>
             <div class="flex-1 ml-3 pt-1">
-              <h6 class="text-uppercase fw-bold mb-1">${alert.alert_title} <span class="text-warning pl-3">${alert.alert_type}</span></h6>
+              <h6 class="text-uppercase fw-bold mb-1">${alert.alert_title} <span class="text-${colorSeverity} pl-3"></h6>
               <span class="text-muted">${alert.alert_description.substring(0, 150)}</span><br/>
               <div class="mt-2">
                 
