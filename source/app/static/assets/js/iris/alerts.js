@@ -5,9 +5,51 @@ function objectToQueryString(obj) {
     .join('&');
 }
 
-function escalateAlertModal(alert_id) {
+async function fetchAlert(alertId) {
+    const response = get_raw_request_api(`/alerts/${alertId}?cid=${get_caseid()}`);
+    return await response;
+}
+
+async function escalateAlertModal(alert_id) {
     const escalateButton = document.getElementById("escalateButton");
     escalateButton.setAttribute("data-alert-id", alert_id);
+
+    const alertDataReq = await fetchAlert(alert_id);
+    const ioCsList = document.getElementById("ioCsList");
+    const assetsList = document.getElementById("assetsList");
+
+     $("#modalAlertId").val(alert_id);
+     $("#modalAlertTitle").val(alertDataReq.data.alert_title);
+
+    // Clear the lists
+    ioCsList.innerHTML = "";
+    assetsList.innerHTML = "";
+
+    if (!notify_auto_api(alertDataReq, true)) {
+        return;
+    }
+
+    alertData = alertDataReq.data;
+
+    // Populate the IOC and assets lists
+    if (alertData.alert_iocs.length !== 0) {
+        alertData.alert_iocs.forEach((ioc) => {
+            const option = document.createElement("option");
+            option.value = ioc.uuid;
+            option.textContent = ioc.name;
+            ioCsList.appendChild(option);
+        });
+    }
+
+    if (alertData.alert_assets.length !== 0) {
+        alertData.alert_assets.forEach((asset) => {
+            const option = document.createElement("option");
+            option.value = asset.uuid;
+            option.textContent = asset.name;
+            assetsList.appendChild(option);
+        });
+    }
+
     $("#escalateModal").modal("show");
 }
 
@@ -64,8 +106,8 @@ async function updateAlerts(page, per_page, filters = {}) {
                   <small class="text-muted ml-1">${alert.status.status_name}</small></span>
                 <span title="Alert source"><b class="ml-4"><i class="fa-solid fa-cloud-arrow-down"></i></b>
                   <small class="text-muted ml-1">${alert.source || 'Unspecified'}</small></span>
-                <span title="Alert UUID"><small class="text-muted ml-1"><i>#${alert.alert_uuid}</i></small></span>
-                <span title="Alert UUID"><small class="text-muted ml-1"><i>#${alert.alert_id}</i></small></span>
+                <span title="Alert UUID" class="float-right"><small class="text-muted ml-1"><i>#${alert.alert_uuid}</i></small></span>
+                <span title="Alert UUID" class="float-right"><small class="text-muted ml-1"><i>#${alert.alert_id} -</i></small></span>
               </div>
             </div>
             <div class="float-right ml-2">
