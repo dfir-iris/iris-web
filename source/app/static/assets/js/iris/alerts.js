@@ -3,8 +3,7 @@ async function fetchAlerts(page, per_page) {
   return await response;
 }
 
-async function updateAlerts(page) {
-  const per_page = 10;
+async function updateAlerts(page, per_page) {
   const data = await fetchAlerts(page, per_page);
 
   if (!notify_auto_api(data, true)) {
@@ -24,7 +23,7 @@ async function updateAlerts(page) {
         <div class="card-body">
           <div class="d-flex">
             <div class="avatar mt-2">
-              <span class="avatar-title rounded-circle border border-white bg-dark"><i class="fa-solid fa-link"></i></span>
+              <span class="avatar-title rounded-circle border border-white bg-dark"><i class="fa-solid fa-fire"></i></span>
             </div>
             <div class="flex-1 ml-3 pt-1">
               <h6 class="text-uppercase fw-bold mb-1">${alert.alert_title} <span class="text-warning pl-3">${alert.alert_type}</span></h6>
@@ -49,7 +48,7 @@ async function updateAlerts(page) {
               <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                 <a href="#" class="dropdown-item" onclick="copy_object_link_md('alert', ${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                 <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item text-danger" onclick="remove_alert_from_case(${alert.alert_id}, {{ session['current_case'].case_id }});"><small class="fa fa-link-slash mr-2"></small>Unlink alert</a>
+                <a href="#" class="dropdown-item text-danger" onclick="remove_alert_from_case(${alert.alert_id}, 1);"><small class="fa fa-link-slash mr-2"></small>Unlink alert</a>
               </div>
             </div>
           </div>
@@ -65,7 +64,7 @@ async function updateAlerts(page) {
 
   for (let i = 1; i <= Math.ceil(data.data.total / per_page); i++) {
     const pageLink = document.createElement('a');
-    pageLink.href = `javascript:updateAlerts(${i})`;
+    pageLink.href = `javascript:updateAlerts(${i}, ${per_page})`;
     pageLink.textContent = i;
     pageLink.className = 'page-link';
 
@@ -79,4 +78,10 @@ async function updateAlerts(page) {
   }
 }
 
-updateAlerts(1); // Initial call to load the first page
+
+document.querySelector('#alertsPerPage').addEventListener('change', (e) => {
+  const per_page = parseInt(e.target.value, 10);
+  updateAlerts(1, per_page); // Update the alerts list with the new 'per_page' value and reset to the first page
+});
+
+updateAlerts(1, 10); // Initial call to load the first page
