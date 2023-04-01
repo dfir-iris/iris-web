@@ -5,6 +5,24 @@ function objectToQueryString(obj) {
     .join('&');
 }
 
+function escalateAlertModal(alert_id) {
+    const escalateButton = document.getElementById("escalateButton");
+    escalateButton.setAttribute("data-alert-id", alert_id);
+    $("#escalateModal").modal("show");
+}
+
+function escalateAlert(alert_id) {
+    post_request_api(`/alerts/escalate/${alert_id}?cid=${get_caseid()}`)
+        .then((data) => {
+            if (data.status == 'success') {
+                $("#escalateModal").modal("hide");
+                notify_auto_api(data);
+            } else {
+                notify_auto_api(data);
+            }
+        });
+}
+
 async function fetchAlerts(page, per_page, filters_string = {}) {
   const response = get_raw_request_api(`/alerts/filter?cid=${get_caseid()}&page=${page}&per_page=${per_page}&${filters_string}`);
   return await response;
@@ -37,6 +55,7 @@ async function updateAlerts(page, per_page, filters = {}) {
               <h6 class="text-uppercase fw-bold mb-1">${alert.alert_title} <span class="text-warning pl-3">${alert.alert_type}</span></h6>
               <span class="text-muted">${alert.alert_description.substring(0, 150)}</span><br/>
               <div class="mt-2">
+                
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                 <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
                 <span title="Alert severity"><b class="ml-4"><i class="fa-solid fa-bolt"></i></b>
@@ -45,6 +64,8 @@ async function updateAlerts(page, per_page, filters = {}) {
                   <small class="text-muted ml-1">${alert.status.status_name}</small></span>
                 <span title="Alert source"><b class="ml-4"><i class="fa-solid fa-cloud-arrow-down"></i></b>
                   <small class="text-muted ml-1">${alert.source || 'Unspecified'}</small></span>
+                <span title="Alert UUID"><small class="text-muted ml-1"><i>#${alert.alert_uuid}</i></small></span>
+                <span title="Alert UUID"><small class="text-muted ml-1"><i>#${alert.alert_id}</i></small></span>
               </div>
             </div>
             <div class="float-right ml-2">
@@ -62,10 +83,10 @@ async function updateAlerts(page, per_page, filters = {}) {
           </div>
         </div>
          <div class="alert-actions mr-2">
-          <button type="button" class="btn btn-alert-primary btn-sm ml-2">Escalate to new case</button>
-          <button type="button" class="btn btn-alert-primary btn-sm ml-2">Merge into case</button>
-          <button type="button" class="btn btn-alert-success btn-sm ml-2">Resolve</button>
-          <button type="button" class="btn btn-alert-danger btn-sm ml-2">Close</button>
+          <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateAlertModal(${alert.alert_id});">Escalate to new case</button>
+          <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlert(${alert.alert_id});">Merge into case</button>
+          <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="resolveAlert(${alert.alert_id});">Resolve</button>
+          <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
         </div>
       </div>    
     `;
@@ -126,6 +147,14 @@ document.getElementById('resetFilters').addEventListener('click', function () {
 
     // Trigger the form submit event to fetch alerts with the updated filters
     form.dispatchEvent(new Event('submit'));
+});
+
+document.getElementById("escalateButton").addEventListener("click", () => {
+
+    const alertId = document.getElementById("escalateButton").getAttribute("data-alert-id");
+
+    escalateAlert(alertId);
+
 });
 
 // Load the filter parameters from the URL

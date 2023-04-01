@@ -853,5 +853,5 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
         include_fk = True
         load_instance = True
-        exclude = ['alert_id', 'alert_creation_time',
+        exclude = ['alert_creation_time',
                    'alert_owner_id', 'modification_history']
