@@ -10,6 +10,7 @@ async function fetchAlert(alertId) {
     return await response;
 }
 
+
 async function escalateAlertModal(alert_id) {
     const escalateButton = document.getElementById("escalateButton");
     escalateButton.setAttribute("data-alert-id", alert_id);
@@ -31,23 +32,74 @@ async function escalateAlertModal(alert_id) {
 
     alertData = alertDataReq.data;
 
-    // Populate the IOC and assets lists
     if (alertData.alert_iocs.length !== 0) {
         alertData.alert_iocs.forEach((ioc) => {
-            const option = document.createElement("option");
-            option.value = ioc.uuid;
-            option.textContent = ioc.name;
-            ioCsList.appendChild(option);
+            const label = document.createElement("label");
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.name = "ioc";
+            input.value = ioc.uuid;
+            input.checked = true;
+            label.appendChild(input);
+            const text = document.createTextNode(` ${ioc.name}`);
+            label.appendChild(text);
+            label.className = "d-block";
+            ioCsList.appendChild(label);
         });
+
+        $("#toggle-iocs").on("click", function () {
+            let allChecked = true;
+            $("#ioCsList input[type='checkbox']").each(function () {
+                if (!$(this).prop("checked")) {
+                    allChecked = false;
+                }
+                $(this).prop("checked", !$(this).prop("checked"));
+            });
+
+            if (allChecked) {
+                $(this).text("Select All");
+            } else {
+                $(this).text("Deselect All");
+            }
+        });
+        $("#ioc-container").show();
+    } else {
+        $("#ioc-container").show();
     }
 
     if (alertData.alert_assets.length !== 0) {
         alertData.alert_assets.forEach((asset) => {
-            const option = document.createElement("option");
-            option.value = asset.uuid;
-            option.textContent = asset.name;
-            assetsList.appendChild(option);
+            const label = document.createElement("label");
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.name = "asset";
+            input.value = asset.uuid;
+            input.checked = true;
+            label.appendChild(input);
+            const text = document.createTextNode(` ${asset.name}`);
+            label.appendChild(text);
+            label.className = "d-block";
+            assetsList.appendChild(label);
         });
+
+        $("#toggle-assets").on("click", function () {
+            let allChecked = true;
+            $("#assetsList input[type='checkbox']").each(function () {
+                if (!$(this).prop("checked")) {
+                    allChecked = false;
+                }
+                $(this).prop("checked", !$(this).prop("checked"));
+            });
+
+            if (allChecked) {
+                $(this).text("Select All");
+            } else {
+                $(this).text("Deselect All");
+            }
+        });
+        $("#asset-container").show();
+    } else {
+        $("#asset-container").hide();
     }
 
     $("#escalateModal").modal("show");
