@@ -373,7 +373,7 @@ def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
         Response: The response
     """
     if url_redir:
-        return redirect(url_for('alerts_list_view_route', caseid=caseid))
+        return redirect(url_for('alerts.alerts_list_view_route', cid=caseid))
 
     return render_template('alerts.html', caseid=caseid)
 

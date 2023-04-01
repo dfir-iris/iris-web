@@ -1,10 +1,18 @@
-async function fetchAlerts(page, per_page) {
-  const response = get_raw_request_api(`/alerts/filter?cid=${get_caseid()}&page=${page}&per_page=${per_page}`);
+function objectToQueryString(obj) {
+  return Object.keys(obj)
+    .filter(key => obj[key] !== undefined && obj[key] !== null && obj[key] !== '')
+    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]))
+    .join('&');
+}
+
+async function fetchAlerts(page, per_page, filters_string = {}) {
+  const response = get_raw_request_api(`/alerts/filter?cid=${get_caseid()}&page=${page}&per_page=${per_page}&${filters_string}`);
   return await response;
 }
 
-async function updateAlerts(page, per_page) {
-  const data = await fetchAlerts(page, per_page);
+async function updateAlerts(page, per_page, filters = {}) {
+  const filterString = objectToQueryString(filters);
+  const data = await fetchAlerts(page, per_page, filterString);
 
   if (!notify_auto_api(data, true)) {
     return;
@@ -59,28 +67,41 @@ async function updateAlerts(page, per_page) {
   });
 
   // Update the pagination links
-  const paginationContainer = document.querySelector('.pagination-container');
-  paginationContainer.innerHTML = '';
+  const paginationContainers = document.querySelectorAll('.pagination-container');
+  paginationContainers.forEach(paginationContainer => {
+    paginationContainer.innerHTML = '';
 
-  for (let i = 1; i <= Math.ceil(data.data.total / per_page); i++) {
-    const pageLink = document.createElement('a');
-    pageLink.href = `javascript:updateAlerts(${i}, ${per_page})`;
-    pageLink.textContent = i;
-    pageLink.className = 'page-link';
+    for (let i = 1; i <= Math.ceil(data.data.total / per_page); i++) {
+      const pageLink = document.createElement('a');
+      pageLink.href = `javascript:updateAlerts(${i}, ${per_page})`;
+      pageLink.textContent = i;
+      pageLink.className = 'page-link';
 
-    const pageItem = document.createElement('li');
-    pageItem.className = 'page-item';
-    if (i === page) {
-      pageItem.className += ' active';
+      const pageItem = document.createElement('li');
+      pageItem.className = 'page-item';
+      if (i === page) {
+        pageItem.className += ' active';
+      }
+      pageItem.appendChild(pageLink);
+      paginationContainer.appendChild(pageItem);
     }
-    pageItem.appendChild(pageLink);
-    paginationContainer.appendChild(pageItem);
-  }
+  });
 
   // Update the URL with the filter parameters
   const queryParams = new URLSearchParams(window.location.search);
   queryParams.set('page', page);
   queryParams.set('per_page', per_page);
+
+  for (const key in filters) {
+    if (filters.hasOwnProperty(key)) {
+      if (filters[key] === '') {
+        queryParams.delete(key);
+      } else {
+        queryParams.set(key, filters[key]);
+      }
+    }
+  }
+
   history.replaceState(null, null, `?${queryParams.toString()}`);
 
 }
@@ -90,8 +111,35 @@ document.querySelector('#alertsPerPage').addEventListener('change', (e) => {
   updateAlerts(1, per_page); // Update the alerts list with the new 'per_page' value and reset to the first page
 });
 
+document.querySelector('#alertFilterForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  // Get the filter values from the form
+  const formData = new FormData(e.target);
+  const filters = Object.fromEntries(formData.entries());
+
+  // Update the alerts list with the new filters and reset to the first page
+  updateAlerts(1, document.querySelector('#alertsPerPage').value, filters);
+});
+
+document.getElementById('resetFilters').addEventListener('click', function () {
+    const form = document.getElementById('alertFilterForm');
+
+    // Reset all input fields
+    form.querySelectorAll('input, select').forEach((element) => {
+        if (element.type === 'checkbox') {
+            element.checked = false;
+        } else {
+            element.value = '';
+        }
+    });
+
+    // Trigger the form submit event to fetch alerts with the updated filters
+    form.dispatchEvent(new Event('submit'));
+});
+
 // Load the filter parameters from the URL
 const queryParams = new URLSearchParams(window.location.search);
 const page = parseInt(queryParams.get('page') || '1', 10);
 const per_page = parseInt(queryParams.get('per_page') || '10', 10);
-updateAlerts(page, per_page);
+updateAlerts(page, per_page, {});
