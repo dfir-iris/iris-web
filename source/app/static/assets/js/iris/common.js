@@ -1235,6 +1235,63 @@ function random_filename(length) {
    return filename;
 }
 
+function createPagination(currentPage, totalPages, per_page, callback, paginationContainersNodes) {
+  const maxPagesToShow = 5;
+  const paginationContainers = document.querySelectorAll(paginationContainersNodes);
+
+  paginationContainers.forEach(paginationContainer => {
+    paginationContainer.innerHTML = '';
+
+    const startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    // Add Previous button
+    const prevPage = document.createElement('a');
+    prevPage.href = `javascript:${callback}(${Math.max(1, currentPage - 1)}, ${per_page})`;
+    prevPage.textContent = 'Previous';
+    prevPage.className = 'page-link';
+
+    const prevItem = document.createElement('li');
+    prevItem.className = 'page-item';
+    if (currentPage === 1) {
+      prevItem.classList.add('disabled');
+    }
+    prevItem.appendChild(prevPage);
+    paginationContainer.appendChild(prevItem);
+
+    // Add page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      const pageLink = document.createElement('a');
+      pageLink.href = `javascript:${callback}(${i}, ${per_page})`;
+      pageLink.textContent = i;
+      pageLink.className = 'page-link';
+
+      const pageItem = document.createElement('li');
+      pageItem.className = 'page-item';
+      if (i === currentPage) {
+        pageItem.classList.add('active');
+      }
+      pageItem.appendChild(pageLink);
+      paginationContainer.appendChild(pageItem);
+    }
+
+    // Add Next button
+    const nextPage = document.createElement('a');
+    nextPage.href = `javascript:${callback}(${Math.min(totalPages, currentPage + 1)}, ${per_page})`;
+    nextPage.textContent = 'Next';
+    nextPage.className = 'page-link';
+
+    const nextItem = document.createElement('li');
+    nextItem.className = 'page-item';
+    if (currentPage === totalPages) {
+      nextItem.classList.add('disabled');
+    }
+    nextItem.appendChild(nextPage);
+    paginationContainer.appendChild(nextItem);
+  });
+}
+
+
 $(document).ready(function(){
     notify_redirect();
     update_time();

@@ -67,25 +67,28 @@ async function updateAlerts(page, per_page, filters = {}) {
   });
 
   // Update the pagination links
-  const paginationContainers = document.querySelectorAll('.pagination-container');
-  paginationContainers.forEach(paginationContainer => {
-    paginationContainer.innerHTML = '';
-
-    for (let i = 1; i <= Math.ceil(data.data.total / per_page); i++) {
-      const pageLink = document.createElement('a');
-      pageLink.href = `javascript:updateAlerts(${i}, ${per_page})`;
-      pageLink.textContent = i;
-      pageLink.className = 'page-link';
-
-      const pageItem = document.createElement('li');
-      pageItem.className = 'page-item';
-      if (i === page) {
-        pageItem.className += ' active';
-      }
-      pageItem.appendChild(pageLink);
-      paginationContainer.appendChild(pageItem);
-    }
-  });
+  const currentPage = page;
+  const totalPages = Math.ceil(data.data.total / per_page);
+  createPagination(currentPage, totalPages, per_page, 'updateAlerts', '.pagination-container');
+  // const paginationContainers = document.querySelectorAll('.pagination-container');
+  // paginationContainers.forEach(paginationContainer => {
+  //   paginationContainer.innerHTML = '';
+  //
+  //   for (let i = 1; i <= Math.ceil(data.data.total / per_page); i++) {
+  //     const pageLink = document.createElement('a');
+  //     pageLink.href = `javascript:updateAlerts(${i}, ${per_page})`;
+  //     pageLink.textContent = i;
+  //     pageLink.className = 'page-link';
+  //
+  //     const pageItem = document.createElement('li');
+  //     pageItem.className = 'page-item';
+  //     if (i === page) {
+  //       pageItem.className += ' active';
+  //     }
+  //     pageItem.appendChild(pageLink);
+  //     paginationContainer.appendChild(pageItem);
+  //   }
+  // });
 
   // Update the URL with the filter parameters
   const queryParams = new URLSearchParams(window.location.search);
