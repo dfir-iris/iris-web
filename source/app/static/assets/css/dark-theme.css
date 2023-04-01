@@ -1,9 +1,9 @@
 body {
-    background: #111420;
+    background: #010409;
 }
 
 body .main-header {
-    box-shadow: 0px 0px 5px #121727;
+    box-shadow: 0px 0px 5px #010409;
 }
 
 body .main-panel {
@@ -280,8 +280,8 @@ body .timeline-even {
 
 .bg-close-gradient {
   background: #1f283e !important;
-  background: -webkit-linear-gradient(legacy-direction(-45deg), #203C51, #5A7F9B) !important;
-  background: linear-gradient(-45deg, #1E09099C, #1C121287) !important;
+  background: -webkit-linear-gradient(legacy-direction(-45deg), #010409, #51252587) !important;
+  background: linear-gradient(-45deg, #010409, #51252587) !important;
 }
 
 body .amsify-suggestags-input {
@@ -512,8 +512,8 @@ body .form-check [type="checkbox"] + .form-check-sign {
 
 body .bg-primary-gradient{
     background: #1f283e !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #0A0B11, #1f283e) !important;
-    background: linear-gradient(-45deg, #0A0B11, #1f283e) !important;
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #010409, #1f283e) !important;
+    background: linear-gradient(-45deg, #010409, #1f283e) !important;
 }
 
 body .modal-header,

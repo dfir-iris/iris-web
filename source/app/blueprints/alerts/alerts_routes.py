@@ -17,9 +17,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from typing import Union
+
 from datetime import datetime
 
-from flask import Blueprint, request
+from flask import Blueprint, request, render_template, redirect, url_for
 from flask_login import current_user
 from werkzeug import Response
 
@@ -33,7 +35,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema, CaseSchema
-from app.util import ac_api_requires, response_error, str_to_bool, add_obj_history_entry
+from app.util import ac_api_requires, response_error, str_to_bool, add_obj_history_entry, ac_requires
 from app.util import response_success
 
 alerts_blueprint = Blueprint(
@@ -356,3 +358,22 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
     except Exception as e:
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
+
+
+@alerts_blueprint.route('/alerts', methods=['GET'])
+@ac_requires(Permissions.alerts_reader)
+def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
+    """
+    List all alerts
+
+    args:
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+    if url_redir:
+        return redirect(url_for('alerts_list_view_route', caseid=caseid))
+
+    return render_template('alerts.html', caseid=caseid)
+

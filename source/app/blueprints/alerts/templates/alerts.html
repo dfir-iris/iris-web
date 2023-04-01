@@ -1,0 +1,35 @@
+{% extends "layouts/default.html" %}
+
+{% block title %} Alerts {% endblock title %}
+
+{% block stylesheets %}
+
+    <link rel="stylesheet" href="/static/assets/css/suggestags.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+	    <div class="page-inner">
+			<div class="mt-2 mb-4">
+				<div class="row ml-2 mr-2">
+					<h2 class="pb-2">Alerts</h2>
+				</div>
+			</div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="pagination-container">
+
+                </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="alerts-container col-12">
+
+                </div>
+            </div>
+        </div>
+{% endblock content %}
+
+{% block javascripts %}
+    <script src="/static/assets/js/iris/alerts.js"></script>
+{% endblock javascripts %}
