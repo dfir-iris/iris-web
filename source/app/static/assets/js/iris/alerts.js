@@ -27,7 +27,7 @@ async function updateAlerts(page, per_page, filters = {}) {
   alerts.forEach((alert) => {
     const alertElement = document.createElement('div');
     alertElement.innerHTML = `
-      <div class="card full-height" style="border-radius: 15px;margin-bottom: 10px;">
+      <div class="card alert-card full-height">
         <div class="card-body">
           <div class="d-flex">
             <div class="avatar mt-2">
@@ -61,6 +61,12 @@ async function updateAlerts(page, per_page, filters = {}) {
             </div>
           </div>
         </div>
+         <div class="alert-actions mr-2">
+          <button type="button" class="btn btn-alert-primary btn-sm ml-2">Escalate to new case</button>
+          <button type="button" class="btn btn-alert-primary btn-sm ml-2">Merge into case</button>
+          <button type="button" class="btn btn-alert-success btn-sm ml-2">Resolve</button>
+          <button type="button" class="btn btn-alert-danger btn-sm ml-2">Close</button>
+        </div>
       </div>    
     `;
     alertsContainer.appendChild(alertElement);
@@ -70,25 +76,6 @@ async function updateAlerts(page, per_page, filters = {}) {
   const currentPage = page;
   const totalPages = Math.ceil(data.data.total / per_page);
   createPagination(currentPage, totalPages, per_page, 'updateAlerts', '.pagination-container');
-  // const paginationContainers = document.querySelectorAll('.pagination-container');
-  // paginationContainers.forEach(paginationContainer => {
-  //   paginationContainer.innerHTML = '';
-  //
-  //   for (let i = 1; i <= Math.ceil(data.data.total / per_page); i++) {
-  //     const pageLink = document.createElement('a');
-  //     pageLink.href = `javascript:updateAlerts(${i}, ${per_page})`;
-  //     pageLink.textContent = i;
-  //     pageLink.className = 'page-link';
-  //
-  //     const pageItem = document.createElement('li');
-  //     pageItem.className = 'page-item';
-  //     if (i === page) {
-  //       pageItem.className += ' active';
-  //     }
-  //     pageItem.appendChild(pageLink);
-  //     paginationContainer.appendChild(pageItem);
-  //   }
-  // });
 
   // Update the URL with the filter parameters
   const queryParams = new URLSearchParams(window.location.search);

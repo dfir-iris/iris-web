@@ -1,0 +1,44 @@
+.alert-card {
+    position: relative;
+    border-radius: 15px;
+    margin-bottom: 10px;
+      overflow: hidden;
+
+}
+
+.alert-card .alert-actions {
+  display: none;
+}
+
+.alert-card:hover .alert-actions {
+  display: block;
+}
+
+.alert-actions {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  justify-content: space-between;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+}
+
+.btn-alert-primary {
+  background: #445169 !important;
+  border-color: #445169 !important;
+    color: white;
+}
+
+.btn-alert-success {
+  background: #32B67A !important;
+  border-color: #32B67A !important;
+    color: white;
+}
+
+.btn-alert-danger {
+  background: #E9727D !important;
+  border-color: #E9727D !important;
+    color: white;
+}

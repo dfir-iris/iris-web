@@ -847,3 +847,10 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
     border-left: 4px solid #FFAD46;
     background-color: #343a40;
 }
+
+.alert-actions {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: #202940;
+}
