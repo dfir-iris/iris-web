@@ -10,6 +10,33 @@ async function fetchAlert(alertId) {
     return await response;
 }
 
+const selectsConfig = {
+    alertStatusFilter: {
+        url: '/manage/alert-status/list',
+        id: 'status_id',
+        name: 'status_name',
+    },
+    alertSeverityFilter: {
+        url: '/manage/severities/list',
+        id: 'severity_id',
+        name: 'severity_name'
+    },
+    alertClassificationFilter: {
+        url: '/manage/case-classifications/list',
+        id: 'id',
+        name: 'name_expanded',
+    },
+    alertCustomerFilter: {
+        url: '/manage/customers/list',
+        id: 'customer_id',
+        name: 'customer_name'
+    },
+    alertOwnerFilter: {
+        url: '/manage/users/list',
+        id: 'user_id',
+        name: 'user_name'
+    }
+};
 
 async function escalateAlertModal(alert_id) {
     const escalateButton = $("#escalateButton");
@@ -444,6 +471,12 @@ function setFormValuesFromUrl() {
     if (input.length > 0) {
       if (input.prop('type') === 'checkbox') {
         input.prop('checked', value === 'true');
+      } else if (input.is('select') && selectsConfig[input.attr('id')]) {
+        input.one('click', function () {
+          fetchSelectOptions(input.attr('id'), selectsConfig[input.attr('id')]).then(() => {
+            input.val(value);
+          }).catch(error => console.error(error));
+        }).trigger('click');
       } else {
         input.val(value);
       }
@@ -455,11 +488,12 @@ function setFormValuesFromUrl() {
     return acc;
   }, {});
 
-   const page = parseInt(queryParams.get('page') || '1', 10);
-   const per_page = parseInt(queryParams.get('per_page') || '10', 10);
+  const page = parseInt(queryParams.get('page') || '1', 10);
+  const per_page = parseInt(queryParams.get('per_page') || '10', 10);
 
   updateAlerts(page, per_page, filters);
 }
+
 
 function fetchSelectOptions(selectElementId, configItem) {
   return new Promise((resolve, reject) => {
@@ -486,36 +520,6 @@ function fetchSelectOptions(selectElementId, configItem) {
       });
   });
 }
-
-
-const selectsConfig = {
-    alertStatusFilter: {
-        url: '/manage/alert-status/list',
-        id: 'status_id',
-        name: 'status_name',
-    },
-    alertSeverityFilter: {
-        url: '/manage/severities/list',
-        id: 'severity_id',
-        name: 'severity_name'
-    },
-    alertClassificationFilter: {
-        url: '/manage/case-classifications/list',
-        id: 'id',
-        name: 'name_expanded',
-    },
-    alertCustomerFilter: {
-        url: '/manage/customers/list',
-        id: 'customer_id',
-        name: 'customer_name'
-    },
-    alertOwnerFilter: {
-        url: '/manage/users/list',
-        id: 'user_id',
-        name: 'user_name'
-    }
-};
-
 
 $(document).ready(function () {
     setFormValuesFromUrl();
