@@ -65,11 +65,11 @@ async function escalateAlertModal(alert_id) {
             const input = $('<input>').attr({
                 type: 'checkbox',
                 name: 'ioc',
-                value: ioc.uuid,
+                value: ioc.ioc_uuid,
                 checked: true,
             });
             label.append(input);
-            label.append(` ${ioc.name}`);
+            label.append(` ${ioc.ioc_value}`);
             ioCsList.append(label);
         });
 
@@ -99,11 +99,11 @@ async function escalateAlertModal(alert_id) {
             const input = $('<input>').attr({
                 type: 'checkbox',
                 name: 'asset',
-                value: asset.uuid,
+                value: asset.asset_uuid,
                 checked: true,
             });
             label.append(input);
-            label.append(` ${asset.name}`);
+            label.append(` ${asset.asset_name}`);
             assetsList.append(label);
         });
 
