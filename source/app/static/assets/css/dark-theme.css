@@ -854,3 +854,7 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
     right: 0;
     background-color: #202940;
 }
+
+.border-white {
+  border-color: unset;
+}

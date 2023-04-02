@@ -163,7 +163,7 @@ async function updateAlerts(page, per_page, filters = {}) {
         <div class="card-body">
           <div class="d-flex">
             <div class="avatar mt-2">
-              <span class="avatar-title rounded-circle border border-white bg-${colorSeverity}"><i class="fa-solid fa-fire"></i></span>
+              <span class="avatar-title rounded-circle  bg-${colorSeverity}"><i class="fa-solid fa-fire"></i></span>
             </div>
             <div class="flex-1 ml-3 pt-1">
               <h6 class="text-uppercase fw-bold mb-1">${alert.alert_title} <span class="text-${colorSeverity} pl-3"></h6>
@@ -231,12 +231,12 @@ async function updateAlerts(page, per_page, filters = {}) {
 
 }
 
-document.querySelector('#alertsPerPage').addEventListener('change', (e) => {
+$('#alertsPerPage').on('change', (e) => {
   const per_page = parseInt(e.target.value, 10);
   updateAlerts(1, per_page); // Update the alerts list with the new 'per_page' value and reset to the first page
 });
 
-document.querySelector('#alertFilterForm').addEventListener('submit', (e) => {
+$('#alertFilterForm').on('submit', (e) => {
   e.preventDefault();
 
   // Get the filter values from the form
@@ -244,35 +244,57 @@ document.querySelector('#alertFilterForm').addEventListener('submit', (e) => {
   const filters = Object.fromEntries(formData.entries());
 
   // Update the alerts list with the new filters and reset to the first page
-  updateAlerts(1, document.querySelector('#alertsPerPage').value, filters);
+  updateAlerts(1, $('#alertsPerPage').val(), filters);
 });
 
-document.getElementById('resetFilters').addEventListener('click', function () {
-    const form = document.getElementById('alertFilterForm');
+$('#resetFilters').on('click', function () {
+  const form = $('#alertFilterForm');
 
-    // Reset all input fields
-    form.querySelectorAll('input, select').forEach((element) => {
-        if (element.type === 'checkbox') {
-            element.checked = false;
-        } else {
-            element.value = '';
-        }
-    });
+  // Reset all input fields
+  form.find('input, select').each((_, element) => {
+    if (element.type === 'checkbox') {
+      $(element).prop('checked', false);
+    } else {
+      $(element).val('');
+    }
+  });
 
-    // Trigger the form submit event to fetch alerts with the updated filters
-    form.dispatchEvent(new Event('submit'));
+  // Trigger the form submit event to fetch alerts with the updated filters
+  form.trigger('submit');
 });
 
-document.getElementById("escalateButton").addEventListener("click", () => {
-
-    const alertId = document.getElementById("escalateButton").getAttribute("data-alert-id");
-
-    escalateAlert(alertId);
-
+$("#escalateButton").on("click", () => {
+  const alertId = $("#escalateButton").data("alert-id");
+  escalateAlert(alertId);
 });
 
-// Load the filter parameters from the URL
-const queryParams = new URLSearchParams(window.location.search);
-const page = parseInt(queryParams.get('page') || '1', 10);
-const per_page = parseInt(queryParams.get('per_page') || '10', 10);
-updateAlerts(page, per_page, {});
+
+function setFormValuesFromUrl() {
+  const queryParams = new URLSearchParams(window.location.search);
+  const form = $('#alertFilterForm');
+
+  queryParams.forEach((value, key) => {
+    const input = form.find(`[name="${key}"]`);
+    if (input.length > 0) {
+      if (input.prop('type') === 'checkbox') {
+        input.prop('checked', value === 'true');
+      } else {
+        input.val(value);
+      }
+    }
+  });
+
+  const filters = form.serializeArray().reduce((acc, { name, value }) => {
+    acc[name] = value;
+    return acc;
+  }, {});
+
+   const page = parseInt(queryParams.get('page') || '1', 10);
+   const per_page = parseInt(queryParams.get('per_page') || '10', 10);
+
+  updateAlerts(page, per_page, filters);
+}
+
+$(document).ready(function () {
+    setFormValuesFromUrl();
+});
