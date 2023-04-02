@@ -12,19 +12,19 @@ async function fetchAlert(alertId) {
 
 
 async function escalateAlertModal(alert_id) {
-    const escalateButton = document.getElementById("escalateButton");
-    escalateButton.setAttribute("data-alert-id", alert_id);
+    const escalateButton = $("#escalateButton");
+    escalateButton.attr("data-alert-id", alert_id);
 
     const alertDataReq = await fetchAlert(alert_id);
-    const ioCsList = document.getElementById("ioCsList");
-    const assetsList = document.getElementById("assetsList");
+    const ioCsList = $("#ioCsList");
+    const assetsList = $("#assetsList");
 
-     $("#modalAlertId").val(alert_id);
-     $("#modalAlertTitle").val(alertDataReq.data.alert_title);
+    $("#modalAlertId").val(alert_id);
+    $("#modalAlertTitle").val(alertDataReq.data.alert_title);
 
     // Clear the lists
-    ioCsList.innerHTML = "";
-    assetsList.innerHTML = "";
+    ioCsList.html("");
+    assetsList.html("");
 
     if (!notify_auto_api(alertDataReq, true)) {
         return;
@@ -34,17 +34,16 @@ async function escalateAlertModal(alert_id) {
 
     if (alertData.alert_iocs.length !== 0) {
         alertData.alert_iocs.forEach((ioc) => {
-            const label = document.createElement("label");
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.name = "ioc";
-            input.value = ioc.uuid;
-            input.checked = true;
-            label.appendChild(input);
-            const text = document.createTextNode(` ${ioc.name}`);
-            label.appendChild(text);
-            label.className = "d-block";
-            ioCsList.appendChild(label);
+            const label = $('<label></label>').addClass('d-block');
+            const input = $('<input>').attr({
+                type: 'checkbox',
+                name: 'ioc',
+                value: ioc.uuid,
+                checked: true,
+            });
+            label.append(input);
+            label.append(` ${ioc.name}`);
+            ioCsList.append(label);
         });
 
         $("#toggle-iocs").on("click", function () {
@@ -69,17 +68,16 @@ async function escalateAlertModal(alert_id) {
 
     if (alertData.alert_assets.length !== 0) {
         alertData.alert_assets.forEach((asset) => {
-            const label = document.createElement("label");
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.name = "asset";
-            input.value = asset.uuid;
-            input.checked = true;
-            label.appendChild(input);
-            const text = document.createTextNode(` ${asset.name}`);
-            label.appendChild(text);
-            label.className = "d-block";
-            assetsList.appendChild(label);
+            const label = $('<label></label>').addClass('d-block');
+            const input = $('<input>').attr({
+                type: 'checkbox',
+                name: 'asset',
+                value: asset.uuid,
+                checked: true,
+            });
+            label.append(input);
+            label.append(` ${asset.name}`);
+            assetsList.append(label);
         });
 
         $("#toggle-assets").on("click", function () {
@@ -149,17 +147,17 @@ async function updateAlerts(page, per_page, filters = {}) {
   const alerts = data.data.alerts;
 
   // Clear the current alerts list
-  const alertsContainer = document.querySelector('.alerts-container');
-  alertsContainer.innerHTML = '';
+  const alertsContainer = $('.alerts-container');
+  alertsContainer.html('');
 
   // Add the fetched alerts to the alerts container
   alerts.forEach((alert) => {
-    const alertElement = document.createElement('div');
+    const alertElement = $('<div></div>');
 
     const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
 
-    alertElement.innerHTML = `
-      <div class="card alert-card full-height">
+    alertElement.html(`
+       <div class="card alert-card full-height">
         <div class="card-body">
           <div class="d-flex">
             <div class="avatar mt-2">
@@ -203,8 +201,8 @@ async function updateAlerts(page, per_page, filters = {}) {
           <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
         </div>
       </div>    
-    `;
-    alertsContainer.appendChild(alertElement);
+    `);
+    alertsContainer.append(alertElement);
   });
 
   // Update the pagination links
@@ -228,7 +226,6 @@ async function updateAlerts(page, per_page, filters = {}) {
   }
 
   history.replaceState(null, null, `?${queryParams.toString()}`);
-
 }
 
 $('#alertsPerPage').on('change', (e) => {
