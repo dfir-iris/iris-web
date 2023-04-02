@@ -462,26 +462,31 @@ function setFormValuesFromUrl() {
 }
 
 function fetchSelectOptions(selectElementId, configItem) {
-  get_request_api(configItem.url)
-    .then(function (data) {
-      if (!notify_auto_api(data, true)) {
-        return;
-      }
-      const selectElement = $(`#${selectElementId}`);
-      selectElement.empty();
-      selectElement.append($('<option>', {
-        value: null,
-        text: ''
-      }));
-
-      data.data.forEach(function (item) {
+  return new Promise((resolve, reject) => {
+    get_request_api(configItem.url)
+      .then(function (data) {
+        if (!notify_auto_api(data, true)) {
+          reject('Failed to fetch options');
+          return;
+        }
+        const selectElement = $(`#${selectElementId}`);
+        selectElement.empty();
         selectElement.append($('<option>', {
-          value: item[configItem.id],
-          text: item[configItem.name]
+          value: null,
+          text: ''
         }));
+
+        data.data.forEach(function (item) {
+          selectElement.append($('<option>', {
+            value: item[configItem.id],
+            text: item[configItem.name]
+          }));
+        });
+        resolve();
       });
-    });
+  });
 }
+
 
 const selectsConfig = {
   alertStatusFilter: {
@@ -500,6 +505,9 @@ const selectsConfig = {
 $(document).ready(function () {
     setFormValuesFromUrl();
     for (const [selectElementId, configItem] of Object.entries(selectsConfig)) {
-        fetchSelectOptions(selectElementId, configItem);
-    }
+        $(`#${selectElementId}`).one('click', function () {
+          fetchSelectOptions(selectElementId, configItem)
+            .catch(error => console.error(error));
+        });
+      }
 });
