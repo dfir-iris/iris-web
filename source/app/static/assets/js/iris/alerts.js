@@ -131,7 +131,33 @@ async function escalateAlertModal(alert_id) {
 }
 
 function escalateAlert(alert_id) {
-    post_request_api(`/alerts/escalate/${alert_id}`)
+
+    const selectedIOCs = $('#ioCsList input[type="checkbox"]:checked').map((_, checkbox) => {
+        return {
+            id: $(checkbox).attr('id'),
+            value: $(checkbox).val()
+        };
+    }).get();
+
+    const selectedAssets = $('#assetsList input[type="checkbox"]:checked').map((_, checkbox) => {
+        return {
+            id: $(checkbox).attr('id'),
+            value: $(checkbox).val()
+        };
+    }).get();
+
+    const note = $('#note').val();
+    const importAsEvent = $('#importAsEvent').is(':checked');
+
+    const requestBody = {
+        iocs: selectedIOCs,
+        assets: selectedAssets,
+        note: note,
+        import_as_event: importAsEvent,
+        csrf_token: $("#csrf_token").val()
+    };
+
+    post_request_api(`/alerts/escalate/${alert_id}`, JSON.stringify(requestBody))
         .then((data) => {
             if (data.status == 'success') {
                 $("#escalateModal").modal("hide");

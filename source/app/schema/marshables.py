@@ -31,7 +31,7 @@ import dateutil.parser
 import marshmallow
 import pyminizip
 from flask_login import current_user
-from marshmallow import fields
+from marshmallow import fields, Schema, validate, ValidationError
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.validate import Length
@@ -847,6 +847,46 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+def validate_ioc_type(type_id):
+    if not IocType.query.get(type_id):
+        raise ValidationError("Invalid ioc_type ID")
+
+
+def validate_ioc_tlp(tlp_id):
+    if not Tlp.query.get(tlp_id):
+        raise ValidationError("Invalid ioc_tlp ID")
+
+
+def validate_asset_type(asset_id):
+    if not AssetsType.query.get(asset_id):
+        raise ValidationError("Invalid asset_type ID")
+
+
+def validate_asset_tlp(tlp_id):
+    if not Tlp.query.get(tlp_id):
+        raise ValidationError("Invalid asset_tlp ID")
+
+
+class AlertIOCSchema(Schema):
+    ioc_value = fields.String(required=True)
+    ioc_description = fields.String(required=True)
+    ioc_tlp = fields.Integer(required=True, validate=validate_ioc_tlp)
+    ioc_type = fields.Integer(required=True, validate=validate_ioc_type)
+    ioc_tags = fields.List(fields.String(), required=True)
+    ioc_enrichment = fields.Dict(required=True)
+
+
+class AlertAssetSchema(Schema):
+    asset_name = fields.String(required=True)
+    asset_description = fields.String(required=True)
+    asset_tlp = fields.Integer(required=True, validate=validate_asset_tlp)
+    asset_type = fields.Integer(required=True, validate=validate_asset_type)
+    asset_ip = fields.String(required=True)
+    asset_domain = fields.String(required=True)
+    asset_tags = fields.List(fields.String(), required=True)
+    asset_enrichment = fields.Dict(required=True)
+
+
 class SeveritySchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Severity
@@ -863,6 +903,8 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     severity = ma.Nested(SeveritySchema)
     status = ma.Nested(AlertStatusSchema)
     customer = ma.Nested(CustomerSchema)
+    alert_iocs = fields.List(fields.Nested(AlertIOCSchema))
+    alert_assets = fields.List(fields.Nested(AlertAssetSchema))
 
     class Meta:
         model = Alert
