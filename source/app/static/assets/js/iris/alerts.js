@@ -461,6 +461,24 @@ function setFormValuesFromUrl() {
   updateAlerts(page, per_page, filters);
 }
 
+function fetchSelectOptions() {
+    const selectElement = $('#alertStatusFilter');
+    get_request_api('/manage/alert-status/list')
+        .then(function (data) {
+            if (!notify_auto_api(data, true)) {
+                return;
+            }
+            selectElement.empty();
+            data.data.forEach(function (item) {
+                selectElement.append($('<option>', {
+                    value: item.status_id,
+                    text: item.status_name
+                }));
+            });
+        });
+}
+
 $(document).ready(function () {
     setFormValuesFromUrl();
+    fetchSelectOptions();
 });
