@@ -52,3 +52,19 @@
 .bg-critical {
   background-color: #7d0fdd !important;
 }
+
+.enrichment-dl {
+  font-size: 0.9em;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 0;
+}
+
+.enrichment-dl dt {
+  font-weight: bold;
+}
+
+.enrichment-dl dd {
+  margin-left: 20px;
+  margin-bottom: 8px;
+}

@@ -137,6 +137,21 @@ function alert_severity_to_color(severity) {
   }
 }
 
+function generateDefinitionList(obj) {
+  let html = "";
+  for (const key in obj) {
+    const value = obj[key];
+    html += `<dt>${key}:</dt>`;
+    if (typeof value === "object" && value !== null) {
+      html += `<dd><dl>${generateDefinitionList(value)}</dl></dd>`;
+    } else {
+      html += `<dd>${value}</dd>`;
+    }
+  }
+  return html;
+}
+
+
 async function updateAlerts(page, per_page, filters = {}) {
   const filterString = objectToQueryString(filters);
   const data = await fetchAlerts(page, per_page, filterString);
@@ -172,10 +187,30 @@ async function updateAlerts(page, per_page, filters = {}) {
               <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4">
                 <div class="card p-3 mt-2">
                     <div class="card-body">
+                    <h3 class="title mb-3"><strong>General info</strong></h3>  
+                      <div class="row">
+                        ${alert.alert_source ? `<div class="col-md-3"><b>Source:</b></div>
+                        <div class="col-md-9">${alert.alert_source}</div>
+                      </div>`: ''}
+                      ${alert.alert_source_link ? `<div class="row mt-2">
+                        <div class="col-md-3"><b>Source Link:</b></div>
+                        <div class="col-md-9"><a href="${alert.alert_source_link}">${alert.alert_source_link}</a></div>
+                      </div>`: ''}
+                      ${alert.alert_source_ref ? `<div class="row mt-2">
+                        <div class="col-md-3"><b>Source Reference:</b></div>
+                        <div class="col-md-9">${alert.alert_source_ref}</div>
+                      </div>`: ''}
+                      ${alert.alert_source_content ? `<div class="row mt-2">
+                        <div class="col-md-3"><b>Raw Alert:</b></div>
+                        <div class="col-md-9">
+                          <pre class="pre-scrollable">${alert.alert_source_content}</pre>
+                        </div>
+                      </div>`: ''}
+                    
                     <!-- Alert Context section -->
                     ${
                       alert.alert_context && Object.keys(alert.alert_context).length > 0
-                        ? `<h3 class="title mb-3"><strong>Context</strong></h3>
+                        ? `<div class="separator-solid"></div><h3 class="title mt-3 mb-3"><strong>Context</strong></h3>
                            <dl class="row">
                              ${Object.entries(alert.alert_context)
                                .map(
@@ -214,7 +249,10 @@ async function updateAlerts(page, per_page, filters = {}) {
                                        <td>${ioc.ioc_type ? ioc.ioc_type : ''}</td>
                                        <td>${ioc.ioc_tags ? ioc.ioc_tlp : ''}</td>
                                        <td>${ioc.ioc_tags ? ioc.ioc_tags.join(', ') : ''}</td>
-                                       <td>${ioc.ioc_enrichment ? JSON.stringify(ioc.ioc_enrichment) : ''}</td>
+                                       <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
+                                          View Enrichment
+                                        </button>` : ''}
+                                        </td>
                                      </tr>`
                                    )
                                    .join('')}
@@ -223,10 +261,6 @@ async function updateAlerts(page, per_page, filters = {}) {
                            </div>`
                         : ''
                     }
-
-                    <p>Alert Source Link: ${alert.alert_source_link}</p>
-                    <p>Alert Source Reference: ${alert.alert_source_reference}</p>
-                    <!-- Add more details here -->
                     </div>
                   </div>
               </div>
@@ -239,11 +273,12 @@ async function updateAlerts(page, per_page, filters = {}) {
                 <span title="Alert status"><b class="ml-4"><i class="fa-solid fa-filter"></i></b>
                   <small class="text-muted ml-1">${alert.status.status_name}</small></span>
                 <span title="Alert source"><b class="ml-4"><i class="fa-solid fa-cloud-arrow-down"></i></b>
-                  <small class="text-muted ml-1">${alert.source || 'Unspecified'}</small></span>
+                  <small class="text-muted ml-1">${alert.alert_source || 'Unspecified'}</small></span>
                 <span title="Alert UUID" class="float-right"><small class="text-muted ml-1"><i>#${alert.alert_uuid}</i></small></span>
                 <span title="Alert UUID" class="float-right"><small class="text-muted ml-1"><i>#${alert.alert_id} -</i></small></span>
               </div>
             </div>
+            
             <div class="float-right ml-2">
               <button class="btn bg-transparent pull-right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
@@ -328,6 +363,10 @@ $("#escalateButton").on("click", () => {
   escalateAlert(alertId);
 });
 
+function showEnrichment(enrichment) {
+  const enrichmentDataElement = document.getElementById('enrichmentData');
+  enrichmentDataElement.innerHTML = generateDefinitionList(enrichment);
+}
 
 function setFormValuesFromUrl() {
   const queryParams = new URLSearchParams(window.location.search);
