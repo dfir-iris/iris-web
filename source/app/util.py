@@ -732,4 +732,4 @@ def hmac_verify(signature_enc, data):
 
 
 def str_to_bool(value):
-    return value.lower() in ['true', '1', 'yes']
+    return value.lower() in ['true', '1', 'yes', 'y', 't']

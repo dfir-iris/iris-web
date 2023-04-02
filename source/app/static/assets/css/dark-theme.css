@@ -858,3 +858,7 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 .border-white {
   border-color: unset;
 }
+
+.alert-card {
+  border: #004079b0 1px solid;
+}

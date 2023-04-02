@@ -35,27 +35,13 @@
         <div class="collapse" id="filterCardBody">
             <form id="alertFilterForm" class="container">
                 <div class="form-row">
-                    <div class="col-md-3 form-group">
-                        <label for="alert_start_date">Start Date:</label>
-                        <input type="date" class="form-control" id="alert_start_date" name="source_start_date">
-                    </div>
-                    <div class="col-md-3 form-group">
-                        <label for="alert_end_date">End Date:</label>
-                        <input type="date" class="form-control" id="alert_end_date" name="source_end_date">
-                    </div>
                     <div class="col-md-6 form-group">
                         <label for="alert_title">Title</label>
                         <input type="text" class="form-control" id="alert_title" name="alert_title">
                     </div>
-                </div>
-                <div class="form-row">
                     <div class="col-md-6 form-group">
                         <label for="alert_description">Description</label>
                         <input type="text" class="form-control" id="alert_description" name="alert_description">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label for="alert_source">Source</label>
-                        <input type="text" class="form-control" id="alert_source" name="alert_source">
                     </div>
                 </div>
                 <div class="form-row">
@@ -81,19 +67,36 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="col-md-4 form-group">
+                    <div class="col-md-6 form-group">
+                        <label for="alert_source">Source</label>
+                        <input type="text" class="form-control" id="alert_source" name="alert_source">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_start_date">Start Date:</label>
+                        <input type="date" class="form-control" id="alert_start_date" name="source_start_date">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_end_date">End Date:</label>
+                        <input type="date" class="form-control" id="alert_end_date" name="source_end_date">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-md-3 form-group">
                         <label for="alertOwnerFilter">Owner</label>
                         <select class="form-control" id="alertOwnerFilter" name="alert_owner_id">
                         </select>
                     </div>
-                    <div class="col-md-4 form-group">
+                    <div class="col-md-3 form-group">
                         <label for="alert_tags">Tags</label>
                         <input type="text" class="form-control" id="alert_tags" name="alert_tags">
                     </div>
-                    <div class="col-md-4 form-group">
-                        <div class="form-check mt-4">
-                            <input type="checkbox" class="form-check-input" id="alert_is_read" name="alert_is_read">
-                            <label class="form-check-label" for="alert_is_read">Is read</label>
+                    <div class="col-md-3 form-group">
+                        <div class="form-check">
+                            <label class="form-check-label mt-3">
+                                <input checked="" class="form-check-input" id="alertIsRead" name="alert_is_read" type="checkbox" value="y">
+                                <span class="form-check-sign"> Alert is read
+                                </span>
+                            </label>
                         </div>
                     </div>
                 </div>

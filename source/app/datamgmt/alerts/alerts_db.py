@@ -72,37 +72,37 @@ def get_filtered_alerts(
     # Build the filter conditions
     conditions = []
 
-    if start_date and end_date:
+    if start_date is not None and end_date is not None:
         conditions.append(Alert.alert_creation_time.between(start_date, end_date))
 
-    if title:
+    if title is not None:
         conditions.append(Alert.alert_title.ilike(f'%{title}%'))
 
-    if description:
+    if description is not None:
         conditions.append(Alert.alert_description.ilike(f'%{description}%'))
 
-    if status:
+    if status is not None:
         conditions.append(Alert.alert_status_id == status)
 
-    if severity:
+    if severity is not None:
         conditions.append(Alert.alert_severity_id == severity)
 
-    if owner:
+    if owner is not None:
         conditions.append(Alert.alert_owner_id == owner)
 
-    if source:
-        conditions.append(Alert.alert_source == source)
+    if source is not None:
+        conditions.append(Alert.alert_source.ilike(f'%{source}%'))
 
-    if tags:
+    if tags is not None:
         conditions.append(Alert.alert_tags.ilike(f"%{tags}%"))
 
     if read is not None:
         conditions.append(Alert.alert_is_read == read)
 
-    if client:
+    if client is not None:
         conditions.append(Alert.alert_customer_id == client)
 
-    if classification:
+    if classification is not None:
         conditions.append(Alert.alert_classification_id == classification)
 
     if conditions:

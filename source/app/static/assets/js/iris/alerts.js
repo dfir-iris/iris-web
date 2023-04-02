@@ -430,7 +430,7 @@ function delete_alert(alert_id) {
     post_request_api('/alerts/delete/'+alert_id)
     .then(function (data) {
         if (notify_auto_api(data)) {
-            updateAlerts();
+            setFormValuesFromUrl();
         }
     });
 }
@@ -501,8 +501,8 @@ const selectsConfig = {
     },
     alertClassificationFilter: {
         url: '/manage/case-classifications/list',
-        id: 'classification_id',
-        name: 'name',
+        id: 'id',
+        name: 'name_expanded',
     },
     alertCustomerFilter: {
         url: '/manage/customers/list',

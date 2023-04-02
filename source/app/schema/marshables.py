@@ -862,7 +862,7 @@ class AlertStatusSchema(ma.SQLAlchemyAutoSchema):
 class AlertSchema(ma.SQLAlchemyAutoSchema):
     severity = ma.Nested(SeveritySchema)
     status = ma.Nested(AlertStatusSchema)
-    client = ma.Nested(CustomerSchema)
+    customer = ma.Nested(CustomerSchema)
 
     class Meta:
         model = Alert
