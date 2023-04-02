@@ -53,6 +53,16 @@
   background-color: #7d0fdd !important;
 }
 
+.alert-m-title-critical:hover {
+  color: #7d0fdd;
+}
+.alert-m-title-low:hover {
+  color: #ffdc71;
+}
+.alert-m-title-muted:hover {
+  color: #6b6d73;
+}
+
 .enrichment-dl {
   font-size: 0.9em;
   max-height: 200px;
@@ -68,3 +78,9 @@
   margin-left: 20px;
   margin-bottom: 8px;
 }
+
+
+.alert-m-title{
+  cursor: pointer;
+}
+

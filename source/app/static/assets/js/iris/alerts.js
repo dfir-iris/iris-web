@@ -176,10 +176,10 @@ async function updateAlerts(page, per_page, filters = {}) {
         <div class="card-body">
           <div class="d-flex">
             <div class="avatar mt-2 cursor-pointer">
-                <span class="avatar-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
+                <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
             </div>
             <div class="flex-1 ml-3 pt-1">
-                <h6 class="text-uppercase fw-bold mb-1 cursor-pointer" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                <h6 class="text-uppercase fw-bold mb-1 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
                   ${alert.alert_title}
                   <span class="text-${colorSeverity} pl-3"></span>
                 </h6>
