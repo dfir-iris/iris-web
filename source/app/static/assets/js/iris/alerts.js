@@ -246,10 +246,51 @@ async function updateAlerts(page, per_page, filters = {}) {
                                      <tr>
                                        <td>${ioc.ioc_value}</td>
                                        <td>${ioc.ioc_description}</td>
-                                       <td>${ioc.ioc_type ? ioc.ioc_type : ''}</td>
-                                       <td>${ioc.ioc_tags ? ioc.ioc_tlp : ''}</td>
-                                       <td>${ioc.ioc_tags ? ioc.ioc_tags.join(', ') : ''}</td>
+                                       <td>${ioc.ioc_type ? ioc.ioc_type : '-'}</td>
+                                       <td>${ioc.ioc_tags ? ioc.ioc_tlp : '-'}</td>
+                                       <td>${ioc.ioc_tags ? ioc.ioc_tags.join(', ') : '-'}</td>
                                        <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
+                                          View Enrichment
+                                        </button>` : ''}
+                                        </td>
+                                     </tr>`
+                                   )
+                                   .join('')}
+                               </tbody>
+                             </table>
+                           </div>`
+                        : ''
+                    }
+                    
+                    <!-- Alert assets section -->
+                    ${
+                      alert.alert_assets && alert.alert_assets.length > 0
+                        ? `<div class="separator-solid"></div><h3 class="title mb-3"><strong>Assets</strong></h3>
+                           <div class="table-responsive">
+                             <table class="table table-sm table-striped">
+                               <thead>
+                                 <tr>
+                                   <th>Name</th>
+                                   <th>Description</th>
+                                   <th>Type</th>
+                                   <th>Domain</th>
+                                   <th>IP</th>
+                                   <th>Tags</th>
+                                   <th>Enrichment</th>
+                                 </tr>
+                               </thead>
+                               <tbody>
+                                 ${alert.alert_assets
+                                   .map(
+                                     (asset) => `
+                                     <tr>
+                                       <td>${asset.asset_name ? asset.asset_name : '-'}</td>
+                                       <td>${asset.asset_name ? asset.asset_description : '-'}</td>
+                                       <td>${asset.asset_type ? asset.asset_type : '-'}</td>
+                                       <td>${asset.asset_domain ? asset.asset_domain : '-'}</td>
+                                       <td>${asset.asset_ip ? asset.asset_ip : '-'}</td>
+                                       <td>${asset.asset_tags ? asset.asset_tags.join(', ') : '-'}</td>
+                                       <td>${asset.asset_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(asset.asset_enrichment).replace(/"/g, '&quot;')})">
                                           View Enrichment
                                         </button>` : ''}
                                         </td>
