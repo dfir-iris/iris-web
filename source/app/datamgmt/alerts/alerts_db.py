@@ -38,9 +38,9 @@ def get_filtered_alerts(
         end_date: str = None,
         title: str = None,
         description: str = None,
-        status: str = None,
-        severity: str = None,
-        owner: str = None,
+        status: int = None,
+        severity: int = None,
+        owner: int = None,
         source: str = None,
         tags: str = None,
         read: bool = None,
@@ -100,7 +100,7 @@ def get_filtered_alerts(
         conditions.append(Alert.alert_is_read == read)
 
     if client:
-        conditions.append(Alert.alert_client_id == client)
+        conditions.append(Alert.alert_customer_id == client)
 
     if classification:
         conditions.append(Alert.alert_classification_id == classification)

@@ -489,16 +489,31 @@ function fetchSelectOptions(selectElementId, configItem) {
 
 
 const selectsConfig = {
-  alertStatusFilter: {
-    url: '/manage/alert-status/list',
-    id: 'status_id',
-    name: 'status_name',
-  },
-  alertSeverityFilter: {
-    url: '/manage/severities/list',
-    id: 'severity_id',
-    name: 'severity_name',
-  },
+    alertStatusFilter: {
+        url: '/manage/alert-status/list',
+        id: 'status_id',
+        name: 'status_name',
+    },
+    alertSeverityFilter: {
+        url: '/manage/severities/list',
+        id: 'severity_id',
+        name: 'severity_name'
+    },
+    alertClassificationFilter: {
+        url: '/manage/case-classifications/list',
+        id: 'classification_id',
+        name: 'name',
+    },
+    alertCustomerFilter: {
+        url: '/manage/customers/list',
+        id: 'customer_id',
+        name: 'customer_name'
+    },
+    alertOwnerFilter: {
+        url: '/manage/users/list',
+        id: 'user_id',
+        name: 'user_name'
+    }
 };
 
 

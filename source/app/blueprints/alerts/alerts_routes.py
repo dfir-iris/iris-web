@@ -80,7 +80,7 @@ def alerts_list_route(caseid) -> Response:
         tags=request.args.get('alert_tags'),
         read=alert_is_read,
         classification=request.args.get('alert_classification_id'),
-        client=request.args.get('alert_client_id'),
+        client=request.args.get('alert_customer_id'),
         page=page,
         per_page=per_page
     )
