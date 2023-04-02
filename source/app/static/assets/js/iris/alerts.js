@@ -461,24 +461,45 @@ function setFormValuesFromUrl() {
   updateAlerts(page, per_page, filters);
 }
 
-function fetchSelectOptions() {
-    const selectElement = $('#alertStatusFilter');
-    get_request_api('/manage/alert-status/list')
-        .then(function (data) {
-            if (!notify_auto_api(data, true)) {
-                return;
-            }
-            selectElement.empty();
-            data.data.forEach(function (item) {
-                selectElement.append($('<option>', {
-                    value: item.status_id,
-                    text: item.status_name
-                }));
-            });
-        });
+function fetchSelectOptions(selectElementId, configItem) {
+  get_request_api(configItem.url)
+    .then(function (data) {
+      if (!notify_auto_api(data, true)) {
+        return;
+      }
+      const selectElement = $(`#${selectElementId}`);
+      selectElement.empty();
+      selectElement.append($('<option>', {
+        value: null,
+        text: ''
+      }));
+
+      data.data.forEach(function (item) {
+        selectElement.append($('<option>', {
+          value: item[configItem.id],
+          text: item[configItem.name]
+        }));
+      });
+    });
 }
+
+const selectsConfig = {
+  alertStatusFilter: {
+    url: '/manage/alert-status/list',
+    id: 'status_id',
+    name: 'status_name',
+  },
+  alertSeverityFilter: {
+    url: '/manage/severities/list',
+    id: 'severity_id',
+    name: 'severity_name',
+  },
+};
+
 
 $(document).ready(function () {
     setFormValuesFromUrl();
-    fetchSelectOptions();
+    for (const [selectElementId, configItem] of Object.entries(selectsConfig)) {
+        fetchSelectOptions(selectElementId, configItem);
+    }
 });
