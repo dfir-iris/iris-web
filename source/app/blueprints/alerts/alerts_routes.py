@@ -26,6 +26,7 @@ from flask import Blueprint, request, render_template, redirect, url_for
 from flask_login import current_user
 from werkzeug import Response
 
+import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
     merge_alert_in_case, unmerge_alert_from_case
@@ -273,6 +274,9 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
         return response_success(data=CaseSchema().dump(case))
 
     except Exception as e:
+
+        app.logger.exception(e)
+
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
 

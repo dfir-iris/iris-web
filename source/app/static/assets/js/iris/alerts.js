@@ -183,7 +183,10 @@ async function updateAlerts(page, per_page, filters = {}) {
                   ${alert.alert_title}
                   <span class="text-${colorSeverity} pl-3"></span>
                 </h6>
-              <span class="text-muted">${alert.alert_description}</span><br/>
+                <div class="d-flex mb-3">
+                    <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
+                </div>
+              <span class="">${alert.alert_description}</span><br/>
               <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4">
                 <div class="card p-3 mt-2">
                     <div class="card-body">
@@ -199,6 +202,14 @@ async function updateAlerts(page, per_page, filters = {}) {
                       ${alert.alert_source_ref ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Reference:</b></div>
                         <div class="col-md-9">${alert.alert_source_ref}</div>
+                      </div>`: ''}
+                      ${alert.alert_source_event_time ? `<div class="row mt-2">
+                        <div class="col-md-3"><b>Source Event Time:</b></div>
+                        <div class="col-md-9">${alert.alert_source_event_time}</div>
+                      </div>`: ''}
+                      ${alert.alert_creation_time ? `<div class="row mt-2">
+                        <div class="col-md-3"><b>IRIS Creation Time:</b></div>
+                        <div class="col-md-9">${alert.alert_creation_time}</div>
                       </div>`: ''}
                     
                     <!-- Alert Context section -->
@@ -242,7 +253,7 @@ async function updateAlerts(page, per_page, filters = {}) {
                                        <td>${ioc.ioc_description}</td>
                                        <td>${ioc.ioc_type ? ioc.ioc_type : '-'}</td>
                                        <td>${ioc.ioc_tags ? ioc.ioc_tlp : '-'}</td>
-                                       <td>${ioc.ioc_tags ? ioc.ioc_tags.join(', ') : '-'}</td>
+                                       <td>${ioc.ioc_tags ? ioc.ioc_tags.map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join(''): ''}</td>
                                        <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
                                           View Enrichment
                                         </button>` : ''}
@@ -283,7 +294,7 @@ async function updateAlerts(page, per_page, filters = {}) {
                                        <td>${asset.asset_type ? asset.asset_type : '-'}</td>
                                        <td>${asset.asset_domain ? asset.asset_domain : '-'}</td>
                                        <td>${asset.asset_ip ? asset.asset_ip : '-'}</td>
-                                       <td>${asset.asset_tags ? asset.asset_tags.join(', ') : '-'}</td>
+                                       <td>${asset.asset_tags ? asset.asset_tags.map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join(''): ''}</td>
                                        <td>${asset.asset_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(asset.asset_enrichment).replace(/"/g, '&quot;')})">
                                           View Enrichment
                                         </button>` : ''}
@@ -310,19 +321,19 @@ async function updateAlerts(page, per_page, filters = {}) {
                     </div>
                   </div>
               </div>
-              <div class="mt-2">
+              <div class="mt-4">
                 
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                 <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
-                <span title="Alert severity"><b class="ml-4"><i class="fa-solid fa-bolt"></i></b>
+                <span title="Alert severity"><b class="ml-3"><i class="fa-solid fa-bolt"></i></b>
                   <small class="text-muted ml-1">${alert.severity.severity_name}</small></span>
-                <span title="Alert status"><b class="ml-4"><i class="fa-solid fa-filter"></i></b>
+                <span title="Alert status"><b class="ml-3"><i class="fa-solid fa-filter"></i></b>
                   <small class="text-muted ml-1">${alert.status.status_name}</small></span>
-                <span title="Alert source"><b class="ml-4"><i class="fa-solid fa-cloud-arrow-down"></i></b>
-                  <small class="text-muted ml-1 mr-1">${alert.alert_source || 'Unspecified'}</small></span>
+                <span title="Alert source"><b class="ml-3"><i class="fa-solid fa-cloud-arrow-down"></i></b>
+                  <small class="text-muted ml-1">${alert.alert_source || 'Unspecified'}</small></span>
+                <span title="Alert client"><b class="ml-3"><i class="fa-regular fa-circle-user"></i></b>
+                  <small class="text-muted ml-1 mr-4">${alert.customer.customer_name || 'Unspecified'}</small></span>
                 ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join(''): ''}
-                <span title="Alert UUID" class="float-right"><small class="text-muted ml-1"><i>#${alert.alert_uuid}</i></small></span>
-                <span title="Alert UUID" class="float-right"><small class="text-muted ml-1"><i>#${alert.alert_id} -</i></small></span>
               </div>
             </div>
             
@@ -333,7 +344,7 @@ async function updateAlerts(page, per_page, filters = {}) {
               <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                 <a href="#" class="dropdown-item" onclick="copy_object_link_md('alert', ${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                 <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item text-danger" onclick="remove_alert_from_case(${alert.alert_id}, 1);"><small class="fa fa-link-slash mr-2"></small>Unlink alert</a>
+                <a href="#" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
               </div>
             </div>
           </div>
@@ -413,6 +424,15 @@ $("#escalateButton").on("click", () => {
 function showEnrichment(enrichment) {
   const enrichmentDataElement = document.getElementById('enrichmentData');
   enrichmentDataElement.innerHTML = generateDefinitionList(enrichment);
+}
+
+function delete_alert(alert_id) {
+    post_request_api('/alerts/delete/'+alert_id)
+    .then(function (data) {
+        if (notify_auto_api(data)) {
+            updateAlerts();
+        }
+    });
 }
 
 function setFormValuesFromUrl() {

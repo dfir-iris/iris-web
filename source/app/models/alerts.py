@@ -21,9 +21,6 @@ class AlertCaseAssociation(db.Model):
     alert_id = Column(ForeignKey('alerts.alert_id'), primary_key=True, nullable=False)
     case_id = Column(ForeignKey('cases.case_id'), primary_key=True, nullable=False, index=True)
 
-    alert = relationship('Alert', backref=backref("alert_case_association", cascade="all, delete-orphan"))
-    case = relationship('Cases', backref=backref("alert_case_association", cascade="all, delete-orphan"))
-
 
 class Alert(db.Model):
     __tablename__ = 'alerts'
@@ -39,7 +36,6 @@ class Alert(db.Model):
     alert_source_content = Column(JSON)
     alert_severity_id = Column(ForeignKey('alert_severity.severity_id'), nullable=False)
     alert_status_id = Column(ForeignKey('alert_status.status_id'), nullable=False)
-    alert_display_content = Column(JSON)
     alert_context = Column(JSON)
     alert_source_event_time = Column(DateTime, nullable=False, server_default=text("now()"))
     alert_creation_time = Column(DateTime, nullable=False, server_default=text("now()"))
@@ -50,13 +46,13 @@ class Alert(db.Model):
     modification_history = Column(JSON)
     alert_iocs = Column(JSON)
     alert_assets = Column(JSON)
-    alert_client_id = Column(ForeignKey('client.client_id'), nullable=False)
+    alert_customer_id = Column(ForeignKey('client.client_id'), nullable=False)
     alert_classification_id = Column(ForeignKey('case_classification.id'))
 
     user = relationship('User', foreign_keys=[alert_owner_id])
     severity = relationship('AlertSeverity')
     status = relationship('AlertStatus')
-    client = relationship('Client')
+    customer = relationship('Client')
     classification = relationship('CaseClassification')
 
     cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')

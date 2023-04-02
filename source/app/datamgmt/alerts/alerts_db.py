@@ -116,7 +116,7 @@ def get_filtered_alerts(
     ).filter(
         *conditions
     ).options(
-        joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.client)
+        joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer)
     ).paginate(page, per_page, False)
 
     return filtered_alerts
@@ -188,7 +188,7 @@ def create_case_from_alert(alert: Alert) -> Cases:
         name=f"[ALERT] {alert.alert_title}",
         description=f"*Alert escalated by {current_user.name}*\n\n### Alert content\n\n{alert.alert_description}",
         soc_id=alert.alert_id,
-        client_id=alert.alert_client_id,
+        client_id=alert.alert_customer_id,
         user=current_user,
         classification_id=alert.alert_classification_id
     )
