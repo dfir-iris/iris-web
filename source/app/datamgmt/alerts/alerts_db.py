@@ -46,6 +46,7 @@ def get_filtered_alerts(
         read: bool = None,
         client: int = None,
         classification: int = None,
+        alert_id: int = None,
         page: int = 1,
         per_page: int = 10
 ):
@@ -65,6 +66,9 @@ def get_filtered_alerts(
         read (bool): The read status of the alert
         client (int): The client id of the alert
         classification (int): The classification id of the alert
+        alert_id (int): The alert id
+        page (int): The page number
+        per_page (int): The number of alerts per page
 
     returns:
         list: A list of alerts that match the given filter conditions
@@ -101,6 +105,9 @@ def get_filtered_alerts(
 
     if client is not None:
         conditions.append(Alert.alert_customer_id == client)
+
+    if alert_id is not None:
+        conditions.append(Alert.alert_id == alert_id)
 
     if classification is not None:
         conditions.append(Alert.alert_classification_id == classification)
