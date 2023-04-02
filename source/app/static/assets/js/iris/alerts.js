@@ -160,12 +160,76 @@ async function updateAlerts(page, per_page, filters = {}) {
        <div class="card alert-card full-height">
         <div class="card-body">
           <div class="d-flex">
-            <div class="avatar mt-2">
-              <span class="avatar-title rounded-circle  bg-${colorSeverity}"><i class="fa-solid fa-fire"></i></span>
+            <div class="avatar mt-2 cursor-pointer">
+                <span class="avatar-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
             </div>
             <div class="flex-1 ml-3 pt-1">
-              <h6 class="text-uppercase fw-bold mb-1">${alert.alert_title} <span class="text-${colorSeverity} pl-3"></h6>
-              <span class="text-muted">${alert.alert_description.substring(0, 150)}</span><br/>
+                <h6 class="text-uppercase fw-bold mb-1 cursor-pointer" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                  ${alert.alert_title}
+                  <span class="text-${colorSeverity} pl-3"></span>
+                </h6>
+              <span class="text-muted">${alert.alert_description}</span><br/>
+              <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4">
+                <div class="card p-3 mt-2">
+                    <div class="card-body">
+                    <!-- Alert Context section -->
+                    ${
+                      alert.alert_context && Object.keys(alert.alert_context).length > 0
+                        ? `<h3 class="title mb-3"><strong>Context</strong></h3>
+                           <dl class="row">
+                             ${Object.entries(alert.alert_context)
+                               .map(
+                                 ([key, value]) =>
+                                   `<dt class="col-sm-3">${key}</dt>
+                                    <dd class="col-sm-9">${value}</dd>`
+                               )
+                               .join('')}
+                           </dl>`
+                        : ''
+                    }
+                
+                    <!-- Alert IOCs section -->
+                    ${
+                      alert.alert_iocs && alert.alert_iocs.length > 0
+                        ? `<div class="separator-solid"></div><h3 class="title mb-3"><strong>IOCs</strong></h3>
+                           <div class="table-responsive">
+                             <table class="table table-sm table-striped">
+                               <thead>
+                                 <tr>
+                                   <th>Value</th>
+                                   <th>Description</th>
+                                   <th>Type</th>
+                                   <th>TLP</th>
+                                   <th>Tags</th>
+                                   <th>Enrichment</th>
+                                 </tr>
+                               </thead>
+                               <tbody>
+                                 ${alert.alert_iocs
+                                   .map(
+                                     (ioc) => `
+                                     <tr>
+                                       <td>${ioc.ioc_value}</td>
+                                       <td>${ioc.ioc_description}</td>
+                                       <td>${ioc.ioc_type ? ioc.ioc_type : ''}</td>
+                                       <td>${ioc.ioc_tags ? ioc.ioc_tlp : ''}</td>
+                                       <td>${ioc.ioc_tags ? ioc.ioc_tags.join(', ') : ''}</td>
+                                       <td>${ioc.ioc_enrichment ? JSON.stringify(ioc.ioc_enrichment) : ''}</td>
+                                     </tr>`
+                                   )
+                                   .join('')}
+                               </tbody>
+                             </table>
+                           </div>`
+                        : ''
+                    }
+
+                    <p>Alert Source Link: ${alert.alert_source_link}</p>
+                    <p>Alert Source Reference: ${alert.alert_source_reference}</p>
+                    <!-- Add more details here -->
+                    </div>
+                  </div>
+              </div>
               <div class="mt-2">
                 
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
@@ -181,10 +245,8 @@ async function updateAlerts(page, per_page, filters = {}) {
               </div>
             </div>
             <div class="float-right ml-2">
-              <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <span class="btn-label">
-                  <i class="fa fa-cog"></i>
-                </span>
+              <button class="btn bg-transparent pull-right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
               </button>
               <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
                 <a href="#" class="dropdown-item" onclick="copy_object_link_md('alert', ${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
@@ -193,6 +255,7 @@ async function updateAlerts(page, per_page, filters = {}) {
               </div>
             </div>
           </div>
+
         </div>
          <div class="alert-actions mr-2">
           <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateAlertModal(${alert.alert_id});">Escalate to new case</button>
