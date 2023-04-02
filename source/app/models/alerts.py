@@ -34,7 +34,7 @@ class Alert(db.Model):
     alert_source_ref = Column(Text)
     alert_source_link = Column(Text)
     alert_source_content = Column(JSON)
-    alert_severity_id = Column(ForeignKey('alert_severity.severity_id'), nullable=False)
+    alert_severity_id = Column(ForeignKey('severities.severity_id'), nullable=False)
     alert_status_id = Column(ForeignKey('alert_status.status_id'), nullable=False)
     alert_context = Column(JSON)
     alert_source_event_time = Column(DateTime, nullable=False, server_default=text("now()"))
@@ -50,7 +50,7 @@ class Alert(db.Model):
     alert_classification_id = Column(ForeignKey('case_classification.id'))
 
     user = relationship('User', foreign_keys=[alert_owner_id])
-    severity = relationship('AlertSeverity')
+    severity = relationship('Severity')
     status = relationship('AlertStatus')
     customer = relationship('Client')
     classification = relationship('CaseClassification')
@@ -58,8 +58,8 @@ class Alert(db.Model):
     cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')
 
 
-class AlertSeverity(db.Model):
-    __tablename__ = 'alert_severity'
+class Severity(db.Model):
+    __tablename__ = 'severities'
 
     severity_id = Column(Integer, primary_key=True)
     severity_name = Column(Text, nullable=False, unique=True)
