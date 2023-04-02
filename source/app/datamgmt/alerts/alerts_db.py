@@ -23,7 +23,7 @@ from sqlalchemy.orm import joinedload
 
 from app import db
 from app.models import Cases
-from app.models.alerts import Alert
+from app.models.alerts import Alert, AlertStatus
 
 
 def db_list_all_alerts():
@@ -229,3 +229,26 @@ def unmerge_alert_from_case(alert: Alert, case: Cases):
     alert.cases.remove(case)
 
     db.session.commit()
+
+
+def get_alert_status_list():
+    """
+    Get a list of alert statuses
+
+    returns:
+        list: A list of alert statuses
+    """
+    return db.session.query(AlertStatus).distinct().all()
+
+
+def get_alert_status_by_id(status_id: int) -> AlertStatus:
+    """
+    Get an alert status from the database
+
+    args:
+        status_id (int): The ID of the alert status
+
+    returns:
+        AlertStatus: The alert status that was retrieved from the database
+    """
+    return db.session.query(AlertStatus).filter(AlertStatus.status_id == status_id).first()

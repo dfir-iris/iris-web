@@ -38,6 +38,7 @@ from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_access_control import manage_ac_blueprint
+from app.blueprints.manage.manage_alerts_status_routes import manage_alerts_status_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
@@ -83,6 +84,7 @@ app.register_blueprint(manage_attributes_blueprint)
 app.register_blueprint(manage_ac_blueprint)
 app.register_blueprint(manage_groups_blueprint)
 app.register_blueprint(manage_case_classification_blueprint)
+app.register_blueprint(manage_alerts_status_blueprint)
 
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
