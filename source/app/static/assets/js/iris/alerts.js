@@ -200,12 +200,6 @@ async function updateAlerts(page, per_page, filters = {}) {
                         <div class="col-md-3"><b>Source Reference:</b></div>
                         <div class="col-md-9">${alert.alert_source_ref}</div>
                       </div>`: ''}
-                      ${alert.alert_source_content ? `<div class="row mt-2">
-                        <div class="col-md-3"><b>Raw Alert:</b></div>
-                        <div class="col-md-9">
-                          <pre class="pre-scrollable">${alert.alert_source_content}</pre>
-                        </div>
-                      </div>`: ''}
                     
                     <!-- Alert Context section -->
                     ${
@@ -302,6 +296,17 @@ async function updateAlerts(page, per_page, filters = {}) {
                            </div>`
                         : ''
                     }
+                    
+                    ${
+                      alert.alert_source_content
+                        ? `<div class="separator-solid"></div><h3 class="title mt-3 mb-3"><strong>Raw Alert</strong></h3>
+                           <button class="btn btn-sm btn-outline-dark" type="button" data-toggle="collapse" data-target="#rawAlert-${alert.alert_id}" aria-expanded="false" aria-controls="rawAlert-${alert.alert_id}">Toggle Raw Alert</button>
+                           <div class="collapse mt-3" id="rawAlert-${alert.alert_id}">
+                             <pre class="pre-scrollable">${JSON.stringify(alert.alert_source_content, null, 2)}</pre>
+                           </div>`
+                        : ""
+                    }
+                    
                     </div>
                   </div>
               </div>
@@ -314,7 +319,8 @@ async function updateAlerts(page, per_page, filters = {}) {
                 <span title="Alert status"><b class="ml-4"><i class="fa-solid fa-filter"></i></b>
                   <small class="text-muted ml-1">${alert.status.status_name}</small></span>
                 <span title="Alert source"><b class="ml-4"><i class="fa-solid fa-cloud-arrow-down"></i></b>
-                  <small class="text-muted ml-1">${alert.alert_source || 'Unspecified'}</small></span>
+                  <small class="text-muted ml-1 mr-1">${alert.alert_source || 'Unspecified'}</small></span>
+                ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join(''): ''}
                 <span title="Alert UUID" class="float-right"><small class="text-muted ml-1"><i>#${alert.alert_uuid}</i></small></span>
                 <span title="Alert UUID" class="float-right"><small class="text-muted ml-1"><i>#${alert.alert_id} -</i></small></span>
               </div>

@@ -56,6 +56,15 @@
 .alert-m-title-critical:hover {
   color: #7d0fdd;
 }
+.alert-m-title-danger:hover {
+  color: #F25961;
+}
+.alert-m-title-warning:hover {
+  color: #FFAD46;
+}
+.alert-m-title-info:hover {
+  color: #48ABF7;
+}
 .alert-m-title-low:hover {
   color: #ffdc71;
 }
