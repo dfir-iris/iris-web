@@ -83,7 +83,8 @@ def alerts_list_route(caseid) -> Response:
         client=request.args.get('alert_customer_id'),
         alert_id=request.args.get('alert_id'),
         page=page,
-        per_page=per_page
+        per_page=per_page,
+        sort=request.args.get('sort')
     )
 
     alerts = {

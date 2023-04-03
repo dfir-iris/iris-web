@@ -23,6 +23,7 @@ from datetime import datetime
 
 from flask_login import current_user
 from operator import and_
+from sqlalchemy import desc, asc
 from sqlalchemy.orm import joinedload
 from typing import List
 
@@ -59,7 +60,8 @@ def get_filtered_alerts(
         classification: int = None,
         alert_id: int = None,
         page: int = 1,
-        per_page: int = 10
+        per_page: int = 10,
+        sort: str = 'desc'
 ):
     """
     Get a list of alerts that match the given filter conditions
@@ -80,6 +82,7 @@ def get_filtered_alerts(
         alert_id (int): The alert id
         page (int): The page number
         per_page (int): The number of alerts per page
+        sort (str): The sort order
 
     returns:
         list: A list of alerts that match the given filter conditions
@@ -128,6 +131,8 @@ def get_filtered_alerts(
     else:
         conditions = []
 
+    order_func = desc if sort == "desc" else asc
+
     # Query the alerts using the filter conditions
     filtered_alerts = db.session.query(
         Alert
@@ -135,7 +140,9 @@ def get_filtered_alerts(
         *conditions
     ).options(
         joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer)
-    ).paginate(page, per_page, False)
+    ).order_by(
+        order_func(Alert.alert_source_event_time)
+    ).paginate(page, per_page, error_out=False)
 
     return filtered_alerts
 

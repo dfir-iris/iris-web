@@ -164,9 +164,13 @@ function escalateAlert(alert_id) {
         });
 }
 
-async function fetchAlerts(page, per_page, filters_string = {}) {
-  const response = get_raw_request_api(`/alerts/filter?cid=${get_caseid()}&page=${page}&per_page=${per_page}&${filters_string}`);
+async function fetchAlerts(page, per_page, filters_string = {}, sort_order= 'desc') {
+
+    const response = get_raw_request_api(`/alerts/filter?cid=${get_caseid()}&page=${page}&per_page=${per_page}
+  &sort=${sort_order}&${filters_string}`);
+
   return await response;
+
 }
 
 function alert_severity_to_color(severity) {
@@ -201,9 +205,9 @@ function generateDefinitionList(obj) {
 }
 
 
-async function updateAlerts(page, per_page, filters = {}) {
+async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
   const filterString = objectToQueryString(filters);
-  const data = await fetchAlerts(page, per_page, filterString);
+  const data = await fetchAlerts(page, per_page, filterString, sort_order);
 
   if (!notify_auto_api(data, true)) {
     return;
@@ -430,12 +434,27 @@ async function updateAlerts(page, per_page, filters = {}) {
     }
   }
 
+  queryParams.set('sort', sort_order);
+
   history.replaceState(null, null, `?${queryParams.toString()}`);
+
+  $('#alertsInfoFilter').text(`${data.data.total} Alerts ${ filterString ? '(filtered)' : '' }`);
+
 }
 
 $('#alertsPerPage').on('change', (e) => {
   const per_page = parseInt(e.target.value, 10);
-  updateAlerts(1, per_page); // Update the alerts list with the new 'per_page' value and reset to the first page
+  updateAlerts(1, per_page, undefined, sortOrder); // Update the alerts list with the new 'per_page' value and reset to the first page
+});
+
+let sortOrder = 'desc';
+
+$('#orderAlertsBtn').on('click', function () {
+  sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+  const iconClass = sortOrder === 'desc' ? 'fas fa-arrow-up-short-wide' : 'fas fa-arrow-up-wide-short';
+
+  $('#orderAlertsBtn i').attr('class', iconClass);
+  updateAlerts(1, 10, {}, sortOrder);
 });
 
 $('#alertFilterForm').on('submit', (e) => {
@@ -493,7 +512,7 @@ function setFormValuesFromUrl() {
     const input = form.find(`[name="${key}"]`);
     if (input.length > 0) {
       if (input.prop('type') === 'checkbox') {
-        input.prop('checked', value === 'true');
+        input.prop('checked', value in ['true', 'y', 'yes', '1', 'on']);
       } else if (input.is('select') && selectsConfig[input.attr('id')]) {
         const ajaxCall = new Promise((resolve, reject) => {
           input.one('click', function () {
