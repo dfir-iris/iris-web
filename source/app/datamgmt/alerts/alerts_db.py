@@ -17,6 +17,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
+
+from datetime import datetime
+
 from flask_login import current_user
 from operator import and_
 from sqlalchemy.orm import joinedload
@@ -24,10 +28,13 @@ from typing import List
 
 from app import db
 from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
+from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
-from app.models import Cases
+from app.datamgmt.states import update_timeline_state
+from app.models import Cases, EventCategory
 from app.models.alerts import Alert, AlertStatus
-from app.schema.marshables import IocSchema, CaseAssetsSchema
+from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
+from app.util import add_obj_history_entry
 
 
 def db_list_all_alerts():
@@ -184,6 +191,17 @@ def get_alert_by_id(alert_id: int) -> Alert:
     return db.session.query(Alert).filter(Alert.alert_id == alert_id).first()
 
 
+def get_unspecified_event_category():
+    """
+    Get the id of the 'Unspecified' event category
+    """
+    event_cat = EventCategory.query.filter(
+        EventCategory.name == 'Unspecified'
+    ).first()
+
+    return event_cat
+
+
 def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List[str],
                            note: str, import_as_event: bool) -> Cases:
     """
@@ -223,6 +241,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     ioc_schema = IocSchema()
     asset_schema = CaseAssetsSchema()
     ioc_links = []
+    asset_links = []
 
     # Add the IOCs to the case
     for ioc_uuid in iocs_list:
@@ -256,6 +275,50 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
                                      user_id=current_user.id
                                      )
                 set_ioc_links(ioc_links, asset.asset_id)
+                asset_links.append(asset.asset_id)
+
+    # Add event to timeline
+    if import_as_event:
+
+        unspecified_cat = get_unspecified_event_category()
+
+        print(alert.alert_source_event_time.strftime('"%Y-%m-%dT%H:%M:%S.%f"'))
+
+        event_schema = EventSchema()
+        event = event_schema.load({
+            'event_title': f"[ALERT] {alert.alert_title}",
+            'event_content': alert.alert_description,
+            'event_source': alert.alert_source,
+            'event_raw': json.dumps(alert.alert_source_content, indent=4),
+            'event_date': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+            'event_date_wtz': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+            'event_iocs': ioc_links,
+            'event_assets': asset_links,
+            'event_tags': alert.alert_tags,
+            'event_tz': '+00:00',
+            'event_category_id': unspecified_cat.id,
+        }, session=db.session)
+
+        event.case_id = case.case_id
+        event.user_id = current_user.id
+        event.event_added = datetime.utcnow()
+
+        add_obj_history_entry(event, 'created')
+
+        db.session.add(event)
+        update_timeline_state(caseid=case.case_id)
+
+        event.category = [unspecified_cat]
+
+        update_event_assets(event_id=event.event_id,
+                            caseid=case.case_id,
+                            assets_list=asset_links,
+                            iocs_list=ioc_links,
+                            sync_iocs_assets=False)
+
+        update_event_iocs(event_id=event.event_id,
+                          caseid=case.case_id,
+                          iocs_list=ioc_links)
 
     db.session.commit()
 

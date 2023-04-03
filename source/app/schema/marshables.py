@@ -282,10 +282,6 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             raise marshmallow.exceptions.ValidationError("Invalid event category ID",
                                                          field_name="event_category_id")
 
-        if not isinstance(int(data.get('event_category_id')), int):
-            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
-                                                         field_name="event_category_id")
-
         event_cat = EventCategory.query.filter(EventCategory.id == int(data.get('event_category_id'))).count()
         if not event_cat:
             raise marshmallow.exceptions.ValidationError("Invalid event category ID",
