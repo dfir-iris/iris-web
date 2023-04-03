@@ -272,58 +272,58 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                         
                         <!-- Alert Context section -->
                         ${
-              alert.alert_context && Object.keys(alert.alert_context).length > 0
-                  ? `<div class="separator-solid"></div><h3 class="title mt-3 mb-3"><strong>Context</strong></h3>
-                               <dl class="row">
-                                 ${Object.entries(alert.alert_context)
-                      .map(
-                          ([key, value]) =>
-                              `<dt class="col-sm-3">${key}</dt>
-                                        <dd class="col-sm-9">${value}</dd>`
-                      )
-                      .join('')}
-                               </dl>`
-                  : ''
-          }
+                              alert.alert_context && Object.keys(alert.alert_context).length > 0
+                                  ? `<div class="separator-solid"></div><h3 class="title mt-3 mb-3"><strong>Context</strong></h3>
+                                               <dl class="row">
+                                                 ${Object.entries(alert.alert_context)
+                                      .map(
+                                          ([key, value]) =>
+                                              `<dt class="col-sm-3">${key}</dt>
+                                                        <dd class="col-sm-9">${value}</dd>`
+                                      )
+                                      .join('')}
+                                               </dl>`
+                                  : ''
+                          }
                     
                         <!-- Alert IOCs section -->
                         ${
-              alert.alert_iocs && alert.alert_iocs.length > 0
-                  ? `<div class="separator-solid"></div><h3 class="title mb-3"><strong>IOCs</strong></h3>
-                               <div class="table-responsive">
-                                 <table class="table table-sm table-striped">
-                                   <thead>
-                                     <tr>
-                                       <th>Value</th>
-                                       <th>Description</th>
-                                       <th>Type</th>
-                                       <th>TLP</th>
-                                       <th>Tags</th>
-                                       <th>Enrichment</th>
-                                     </tr>
-                                   </thead>
-                                   <tbody>
-                                     ${alert.alert_iocs
-                      .map(
-                          (ioc) => `
-                                         <tr>
-                                           <td>${ioc.ioc_value}</td>
-                                           <td>${ioc.ioc_description}</td>
-                                           <td>${ioc.ioc_type ? ioc.ioc_type : '-'}</td>
-                                           <td>${ioc.ioc_tags ? ioc.ioc_tlp : '-'}</td>
-                                           <td>${ioc.ioc_tags ? ioc.ioc_tags.map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
-                                           <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
-                                              View Enrichment
-                                            </button>` : ''}
-                                            </td>
-                                         </tr>`
-                      )
-                      .join('')}
-                                   </tbody>
-                                 </table>
-                               </div>`
-                  : ''
-          }
+                          alert.alert_iocs && alert.alert_iocs.length > 0
+                              ? `<div class="separator-solid"></div><h3 class="title mb-3"><strong>IOCs</strong></h3>
+                                           <div class="table-responsive">
+                                             <table class="table table-sm table-striped">
+                                               <thead>
+                                                 <tr>
+                                                   <th>Value</th>
+                                                   <th>Description</th>
+                                                   <th>Type</th>
+                                                   <th>TLP</th>
+                                                   <th>Tags</th>
+                                                   <th>Enrichment</th>
+                                                 </tr>
+                                               </thead>
+                                               <tbody>
+                                                 ${alert.alert_iocs
+                                  .map(
+                                      (ioc) => `
+                                                     <tr>
+                                                       <td>${ioc.ioc_value}</td>
+                                                       <td>${ioc.ioc_description}</td>
+                                                       <td>${ioc.ioc_type ? ioc.ioc_type : '-'}</td>
+                                                       <td>${ioc.ioc_tags ? ioc.ioc_tlp : '-'}</td>
+                                                       <td>${ioc.ioc_tags ? ioc.ioc_tags.map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
+                                                       <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
+                                                          View Enrichment
+                                                        </button>` : ''}
+                                                        </td>
+                                                     </tr>`
+                                  )
+                                  .join('')}
+                                               </tbody>
+                                             </table>
+                                           </div>`
+                              : ''
+                      }
                         
                         <!-- Alert assets section -->
                         ${
@@ -390,7 +390,8 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                     <span title="Alert source"><b class="ml-3"><i class="fa-solid fa-cloud-arrow-down"></i></b>
                       <small class="text-muted ml-1">${alert.alert_source || 'Unspecified'}</small></span>
                     <span title="Alert client"><b class="ml-3"><i class="fa-regular fa-circle-user"></i></b>
-                      <small class="text-muted ml-1 mr-4">${alert.customer.customer_name || 'Unspecified'}</small></span>
+                      <small class="text-muted ml-1 mr-2">${alert.customer.customer_name || 'Unspecified'}</small></span>
+                    ${alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
                     ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}
                   </div>
                 </div>
@@ -444,7 +445,7 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
 
   history.replaceState(null, null, `?${queryParams.toString()}`);
 
-  $('#alertsInfoFilter').text(`${data.data.total} Alerts ${ filterString ? '(filtered)' : '' }`);
+  $('#alertsInfoFilter').text(`${data.data.total} Alert${ data.data.total > 1 ? 's' : ''} ${ filterString ? '(filtered)' : '' }`);
 
 }
 

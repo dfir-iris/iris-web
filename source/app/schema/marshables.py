@@ -912,6 +912,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     severity = ma.Nested(SeveritySchema)
     status = ma.Nested(AlertStatusSchema)
     customer = ma.Nested(CustomerSchema)
+    classification = ma.Nested(CaseClassificationSchema)
     alert_iocs = fields.List(fields.Nested(AlertIOCSchema))
     alert_assets = fields.List(fields.Nested(AlertAssetSchema))
 
