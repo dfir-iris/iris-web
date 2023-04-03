@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import uuid
+
 import datetime
 import logging
 import os
@@ -874,6 +876,12 @@ class AlertIOCSchema(Schema):
     ioc_type = fields.Integer(required=True, validate=validate_ioc_type)
     ioc_tags = fields.List(fields.String(), required=True)
     ioc_enrichment = fields.Dict(required=True)
+    ioc_uuid = fields.String(required=False)
+
+    @post_load
+    def add_ioc_uuid(self, data, **kwargs):
+        data['ioc_uuid'] = str(uuid.uuid4())
+        return data
 
 
 class AlertAssetSchema(Schema):
@@ -885,6 +893,12 @@ class AlertAssetSchema(Schema):
     asset_domain = fields.String(required=True)
     asset_tags = fields.List(fields.String(), required=True)
     asset_enrichment = fields.Dict(required=True)
+    asset_uuid = fields.String(required=False)
+
+    @post_load
+    def add_asset_uuid(self, data, **kwargs):
+        data['asset_uuid'] = str(uuid.uuid4())
+        return data
 
 
 class SeveritySchema(ma.SQLAlchemyAutoSchema):
