@@ -843,7 +843,7 @@ function do_md_filter_xss(html) {
 
 const avatarCache = {};
 
-function get_avatar_initials(name, small) {
+function get_avatar_initials(name, small, onClickFunction) {
     if (avatarCache[name] && avatarCache[name][small ? 'small' : 'large']) {
         return avatarCache[name][small ? 'small' : 'large'];
     }
@@ -861,8 +861,10 @@ function get_avatar_initials(name, small) {
     const avatarColor = get_avatar_color(snum);
     const av_size = small ? 'avatar-sm' : 'avatar';
 
-    const avatarHTML = `<div class="avatar ${av_size}" title="${name}">
-        <span class="avatar-title rounded-circle" style="background-color:${avatarColor};">${initials}</span>
+    const onClick = onClickFunction ? `onclick="${onClickFunction}"` : '';
+
+    const avatarHTML = `<div class="avatar ${av_size}" title="${name}" ${onClick}>
+        <span class="avatar-title rounded-circle" style="background-color:${avatarColor}; cursor:pointer;">${initials}</span>
     </div>`;
 
     if (!avatarCache[name]) {

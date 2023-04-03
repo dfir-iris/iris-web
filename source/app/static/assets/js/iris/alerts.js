@@ -238,9 +238,10 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                         <div class="avatar cursor-pointer">
                             <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
                         </div>
-                        ${alert.owner ? get_avatar_initials(alert.owner.user_name, true) : ''}
+                        ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : ''}
                         <div class="envelope-icon">
-                            ${ alert.alert_is_read ? '<span class="badge badge-pill badge-success">Read</span>' : '<span class="badge badge-light badge-pill">New</span>'}
+                            ${ alert.alert_is_read ? `<span class="badge badge-pill badge-success" style="cursor:pointer;" onclick="markUnreadAlert(${alert.alert_id})">Read</span>` : 
+                                `<span onclick="markReadAlert(${alert.alert_id})" class="badge badge-light badge-pill" style="cursor:pointer;">New</span>`}
                         </div>
                     </div>
                 </div>
@@ -515,6 +516,68 @@ function delete_alert(alert_id) {
     .then(function (data) {
         if (notify_auto_api(data)) {
             setFormValuesFromUrl();
+        }
+    });
+}
+
+function markUnreadAlert(alert_id) {
+    data = {
+        'alert_is_read': false
+    }
+    updateAlert(alert_id, data, true);
+}
+
+function markReadAlert(alert_id) {
+    data = {
+        'alert_is_read': true
+    }
+    updateAlert(alert_id, data, true);
+}
+
+async function changeAlertOwner(alertId) {
+    const userList = await get_request_api('/manage/users/list');
+    const selectElement = document.getElementById('new-owner-select');
+
+    if (!notify_auto_api(userList)) return;
+    const userListData = userList.data;
+
+    // Clear the previous options
+    selectElement.innerHTML = '';
+
+    // Populate the select element with user options
+    userListData.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.user_id;
+        option.textContent = user.user_name;
+        selectElement.appendChild(option);
+    });
+
+    // Show the modal
+    const modalInstance = new bootstrap.Modal(document.getElementById('changeAlertAssignementModal'));
+    modalInstance.show();
+
+    // Assign click event listener to the Assign Owner button
+    document.getElementById('assign-owner-button').onclick = async () => {
+        const newOwnerId = selectElement.value;
+        const requestBody = {
+            "alert_owner_id": newOwnerId
+        };
+
+        updateAlert(alertId, requestBody, true);
+
+        // Close the modal
+        modalInstance.hide();
+    };
+}
+
+function updateAlert(alert_id, data= {}, do_refresh= false) {
+    data['csrf_token'] = $('#csrf_token').val();
+    post_request_api('/alerts/update/'+alert_id, JSON.stringify(data))
+    .then(function (data) {
+        if (notify_auto_api(data)) {
+            if (do_refresh) {
+                setFormValuesFromUrl();
+            }
         }
     });
 }
