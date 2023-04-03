@@ -422,6 +422,7 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
              <div class="alert-actions mr-2">
               <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateAlertModal(${alert.alert_id});">Escalate to new case</button>
               <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlert(${alert.alert_id});">Merge into case</button>
+              <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="changeAlertOwner(${alert.alert_id});">Assign</button>
               <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="resolveAlert(${alert.alert_id});">Resolve</button>
               <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
             </div>
