@@ -146,8 +146,8 @@ function escalateAlert(alert_id) {
     const importAsEvent = $('#importAsEvent').is(':checked');
 
     const requestBody = {
-        import_iocs: selectedIOCs,
-        import_assets: selectedAssets,
+        iocs_import_list: selectedIOCs,
+        assets_import_list: selectedAssets,
         note: note,
         import_as_event: importAsEvent,
         csrf_token: $("#csrf_token").val()

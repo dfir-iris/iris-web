@@ -872,8 +872,8 @@ def validate_asset_tlp(tlp_id):
 class AlertIOCSchema(Schema):
     ioc_value = fields.String(required=True)
     ioc_description = fields.String(required=True)
-    ioc_tlp = fields.Integer(required=True, validate=validate_ioc_tlp)
-    ioc_type = fields.Integer(required=True, validate=validate_ioc_type)
+    ioc_tlp_id = fields.Integer(required=True, validate=validate_ioc_tlp)
+    ioc_type_id = fields.Integer(required=True, validate=validate_ioc_type)
     ioc_tags = fields.List(fields.String(), required=True)
     ioc_enrichment = fields.Dict(required=True)
     ioc_uuid = fields.String(required=False)
@@ -887,8 +887,8 @@ class AlertIOCSchema(Schema):
 class AlertAssetSchema(Schema):
     asset_name = fields.String(required=True)
     asset_description = fields.String(required=True)
-    asset_tlp = fields.Integer(required=True, validate=validate_asset_tlp)
-    asset_type = fields.Integer(required=True, validate=validate_asset_type)
+    asset_tlp_id = fields.Integer(required=True, validate=validate_asset_tlp)
+    asset_type_id = fields.Integer(required=True, validate=validate_asset_type)
     asset_ip = fields.String(required=True)
     asset_domain = fields.String(required=True)
     asset_tags = fields.List(fields.String(), required=True)

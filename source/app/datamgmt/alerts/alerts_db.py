@@ -17,13 +17,17 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from typing import List
+
 from flask_login import current_user
 from operator import and_
 from sqlalchemy.orm import joinedload
 
 from app import db
+from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.models import Cases
 from app.models.alerts import Alert, AlertStatus
+from app.schema.marshables import IocSchema
 
 
 def db_list_all_alerts():
@@ -180,12 +184,17 @@ def get_alert_by_id(alert_id: int) -> Alert:
     return db.session.query(Alert).filter(Alert.alert_id == alert_id).first()
 
 
-def create_case_from_alert(alert: Alert) -> Cases:
+def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List[str],
+                           note: str, import_as_event: bool) -> Cases:
     """
     Create a case from an alert
 
     args:
         alert (Alert): The Alert
+        iocs_list (list): The list of IOCs
+        assets_list (list): The list of assets
+        note (str): The note to add to the case
+        import_as_event (bool): Whether to import the alert as an event
 
     returns:
         Cases: The case that was created from the alert
@@ -204,6 +213,21 @@ def create_case_from_alert(alert: Alert) -> Cases:
 
     # Link the alert to the case
     alert.cases.append(case)
+
+    ioc_schema = IocSchema()
+
+    # Add the IOCs to the case
+    for ioc_uuid in iocs_list:
+        for alert_ioc in alert.alert_iocs:
+            if alert_ioc['ioc_uuid'] == ioc_uuid:
+                alert_ioc['ioc_tags'] = ','.join(alert_ioc['ioc_tags'])
+
+                # TODO: Transform the ioc-enrichment to a custom attribute in the alert if possible
+                del alert_ioc['ioc_enrichment']
+
+                ioc = ioc_schema.load(alert_ioc, session=db.session)
+                ioc, existed = add_ioc(ioc, current_user.id, case.case_id)
+                add_ioc_link(ioc.ioc_id, case.case_id)
 
     db.session.commit()
 

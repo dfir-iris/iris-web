@@ -18,7 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from flask_wtf import FlaskForm
-from typing import Union
+from typing import Union, List
 
 from datetime import datetime
 
@@ -252,7 +252,15 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
     if not alert:
         return response_error('Alert not found')
 
+    if request.json is None:
+        return response_error('No JSON data provided')
 
+    data = request.get_json()
+
+    iocs_import_list: List[str] = data.get('iocs_import_list')
+    assets_import_list: List[str] = data.get('assets_import_list')
+    note: str = data.get('note')
+    import_as_event: bool = data.get('import_as_event')
 
     try:
         # Escalate the alert to a case
@@ -260,7 +268,8 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
         db.session.commit()
 
         # Create a new case from the alert
-        case = create_case_from_alert(alert)
+        case = create_case_from_alert(alert, iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
+                                      import_as_event=import_as_event)
 
         if not case:
             return response_error('Failed to create case from alert')
