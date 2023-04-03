@@ -1239,6 +1239,12 @@ function createPagination(currentPage, totalPages, per_page, callback, paginatio
   const maxPagesToShow = 5;
   const paginationContainers = document.querySelectorAll(paginationContainersNodes);
 
+  if (totalPages === 1 || totalPages === 0) {
+    paginationContainers.forEach(paginationContainer => {
+      paginationContainer.innerHTML = '';
+    });
+    return;
+  }
   paginationContainers.forEach(paginationContainer => {
     paginationContainer.innerHTML = '';
 
@@ -1284,10 +1290,11 @@ function createPagination(currentPage, totalPages, per_page, callback, paginatio
     const nextItem = document.createElement('li');
     nextItem.className = 'page-item';
     if (currentPage === totalPages) {
-      nextItem.classList.add('disabled');
+        nextItem.classList.add('disabled');
     }
     nextItem.appendChild(nextPage);
     paginationContainer.appendChild(nextItem);
+
   });
 }
 
