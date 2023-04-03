@@ -536,44 +536,43 @@ function markReadAlert(alert_id) {
 }
 
 async function changeAlertOwner(alertId) {
-    const userList = await get_request_api('/manage/users/list');
-    const selectElement = document.getElementById('new-owner-select');
+  // Fetch the user list from the endpoint
+  const usersReq = await get_request_api('/manage/users/list');
 
-    if (!notify_auto_api(userList)) return;
-    const userListData = userList.data;
+  if (!notify_auto_api(usersReq, false)) { return; };
 
-    // Clear the previous options
-    selectElement.innerHTML = '';
+  users = usersReq.data;
 
-    // Populate the select element with user options
-    userListData.forEach(user => {
-        const option = document.createElement('option');
-        option.value = user.user_id;
-        option.textContent = user.user_name;
-        selectElement.appendChild(option);
-    });
+  // Populate the select element with the fetched user list
+  const userSelect = $('#changeOwnerAlertSelect');
+  userSelect.empty();
+  users.forEach((user) => {
+    userSelect.append(`<option value="${user.user_id}">${user.user_name}</option>`);
+  });
 
-    // Show the modal
-    const modalInstance = new bootstrap.Modal(document.getElementById('changeAlertAssignementModal'));
-    modalInstance.show();
+  $('#alertIDAssignModal').text(alertId);
 
-    // Assign click event listener to the Assign Owner button
-    document.getElementById('assign-owner-button').onclick = async () => {
-        const newOwnerId = selectElement.value;
-        const requestBody = {
-            "alert_owner_id": newOwnerId
-        };
+  // Show the modal
+  $('#changeAlertOwnerModal').modal('show');
 
-        updateAlert(alertId, requestBody, true);
+  // Set up the form submission
+  document.getElementById('assign-owner-button').onclick = async () => {
+      // Get the selected user ID
+      const newOwnerId = userSelect.val();
 
-        // Close the modal
-        modalInstance.hide();
-    };
+      // Send a POST request to the update endpoint
+      updateAlert(alertId, {alert_owner_id: newOwnerId}, true)
+      .then(() => {
+            // Close the modal
+            $('#changeAlertOwnerModal').modal('hide');
+      });
+  };
 }
 
-function updateAlert(alert_id, data= {}, do_refresh= false) {
+
+async function updateAlert(alert_id, data= {}, do_refresh= false) {
     data['csrf_token'] = $('#csrf_token').val();
-    post_request_api('/alerts/update/'+alert_id, JSON.stringify(data))
+    return post_request_api('/alerts/update/'+alert_id, JSON.stringify(data))
     .then(function (data) {
         if (notify_auto_api(data)) {
             if (do_refresh) {
