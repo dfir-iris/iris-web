@@ -92,3 +92,16 @@
 .alert-m-title{
   cursor: pointer;
 }
+
+.avatar-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.envelope-icon {
+    position: absolute;
+    top: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px; /* Adjust the icon size */
+}

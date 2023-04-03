@@ -233,12 +233,18 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
            <div class="card alert-card full-height">
             <div class="card-body">
               <div class="d-flex">
-               <div class="avatar-group mt-2">
-                    <div class="avatar cursor-pointer">
-                        <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
+                <div class="avatar-group mt-2">
+                   <div class="avatar-wrapper">
+                        <div class="avatar cursor-pointer">
+                            <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
+                        </div>
+                        ${alert.owner ? get_avatar_initials(alert.owner.user_name, true) : ''}
+                        <div class="envelope-icon">
+                            ${ alert.alert_is_read ? '<span class="badge badge-pill badge-success">Read</span>' : '<span class="badge badge-light badge-pill">New</span>'}
+                        </div>
                     </div>
-                    ${ alert.owner ? get_avatar_initials(alert.owner.user_name, true) : ''}
                 </div>
+                
                 <div class="flex-1 ml-3 pt-1">
                     <h6 class="text-uppercase fw-bold mb-1 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
                       ${alert.alert_title}
