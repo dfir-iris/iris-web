@@ -435,13 +435,23 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
               </div>
     
             </div>
-             <div class="alert-actions mr-2">
-              <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateAlertModal(${alert.alert_id});">Escalate to new case</button>
-              <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlert(${alert.alert_id});">Merge into case</button>
-              <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="changeAlertOwner(${alert.alert_id});">Assign</button>
-              <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="resolveAlert(${alert.alert_id});">Resolve</button>
-              <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
-            </div>
+                <div class="alert-actions mr-2">
+                    <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateAlertModal(${alert.alert_id});">Escalate to new case</button>
+                    <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlert(${alert.alert_id});">Merge into case</button>
+                    
+                    <div class="dropdown ml-2 d-inline-block">
+                        <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Assign
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
+                            <a class="dropdown-item" href="#" onclick="changeAlertOwner(${alert.alert_id});">Assign to other</a>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="resolveAlert(${alert.alert_id});">Resolve</button>
+                    <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
+                </div>
           </div>    
         `);
           alertsContainer.append(alertElement);
@@ -568,11 +578,19 @@ function changeStatusAlert(alert_id, status_name) {
     updateAlert(alert_id, data, true);
 }
 
+
+function setAlertOwnerToMe(alert_id) {
+    data = {
+        'alert_owner_id': user_id
+    }
+    updateAlert(alert_id, data, true);
+}
+
 async function changeAlertOwner(alertId) {
   // Fetch the user list from the endpoint
   const usersReq = await get_request_api('/manage/users/list');
 
-  if (!notify_auto_api(usersReq, false)) { return; };
+  if (!notify_auto_api(usersReq, true)) { return; };
 
   users = usersReq.data;
 

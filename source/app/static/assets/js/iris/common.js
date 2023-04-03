@@ -1321,6 +1321,19 @@ function createPagination(currentPage, totalPages, per_page, callback, paginatio
   });
 }
 
+let userWhoami = JSON.parse(sessionStorage.getItem('userWhoami'));
+
+let userWhoamiRequest = (function() {
+  if (!userWhoami) {
+    get_request_api('/user/whoami')
+      .done((data) => {
+        if (notify_auto_api(data, true)) {
+            userWhoami = data.data;
+          sessionStorage.setItem('userWhoami', JSON.stringify(userWhoami));
+        }
+      });
+  }
+});
 
 $(document).ready(function(){
     notify_redirect();
@@ -1426,7 +1439,6 @@ $(document).ready(function(){
         return false;
     });
 
-
     var sh_ext = showdown.extension('bootstrap-tables', function () {
       return [{
         type: "output",
@@ -1443,9 +1455,10 @@ $(document).ready(function(){
           });
           return liveHtml.html();
         }
-      }];
-});
+          }];
+    });
 
+    userWhoamiRequest();
 });
 
 
