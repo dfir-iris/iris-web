@@ -841,29 +841,46 @@ function do_md_filter_xss(html) {
         });
 }
 
+const avatarCache = {};
+
 function get_avatar_initials(name, small) {
-    initial = name.split(' ');
+    if (avatarCache[name] && avatarCache[name][small ? 'small' : 'large']) {
+        return avatarCache[name][small ? 'small' : 'large'];
+    }
+
+    const initial = name.split(' ');
+    let snum;
+
     if (initial.length > 1) {
-        initial = initial[0][0] + initial[1][0];
-        snum = initial[0].charCodeAt(0) + initial[1].charCodeAt(0);
+        snum = initial[0][0].charCodeAt(0) + initial[1][0].charCodeAt(0);
     } else {
-        initial = initial[0][0];
-        snum = initial.charCodeAt(0);
-    }
-    initial = initial.toUpperCase();
-
-    bgs = ['bg-info', 'bg-default', 'bg-primary', 'bg-secondary', 'bg-success', 'bg-warning', 'bg-danger'];
-    bg = bgs[snum % bgs.length];
-    if (small === undefined || small === null || small === false) {
-        av_size = 'avatar';
-    } else {
-        av_size = 'avatar-sm';
+        snum = initial[0][0].charCodeAt(0);
     }
 
-    return `<div class="avatar ${av_size}" title="${name}">
-        <span class="avatar-title rounded-circle ${bg}">${initial}</span>
+    const initials = initial.map(i => i[0].toUpperCase()).join('');
+    const avatarColor = get_avatar_color(snum);
+    const av_size = small ? 'avatar-sm' : 'avatar';
+
+    const avatarHTML = `<div class="avatar ${av_size}" title="${name}">
+        <span class="avatar-title rounded-circle" style="background-color:${avatarColor};">${initials}</span>
     </div>`;
+
+    if (!avatarCache[name]) {
+        avatarCache[name] = {};
+    }
+    avatarCache[name][small ? 'small' : 'large'] = avatarHTML;
+
+    return avatarHTML;
 }
+
+function get_avatar_color(snum) {
+    const hue = snum * 137.508 % 360; // Use the golden angle for more distinct colors
+    const saturation = 60 + (snum % 30); // Saturation range: 60-90
+    const lightness = 40 + (snum % 20); // Lightness range: 40-60
+
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
 
 function edit_inner_editor(btn_id, container_id, ctrd_id) {
     $('#'+container_id).toggle();
