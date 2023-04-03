@@ -487,6 +487,7 @@ function delete_alert(alert_id) {
 function setFormValuesFromUrl() {
   const queryParams = new URLSearchParams(window.location.search);
   const form = $('#alertFilterForm');
+  const ajaxCalls = [];
 
   queryParams.forEach((value, key) => {
     const input = form.find(`[name="${key}"]`);
@@ -494,26 +495,31 @@ function setFormValuesFromUrl() {
       if (input.prop('type') === 'checkbox') {
         input.prop('checked', value === 'true');
       } else if (input.is('select') && selectsConfig[input.attr('id')]) {
-        input.one('click', function () {
-          fetchSelectOptions(input.attr('id'), selectsConfig[input.attr('id')]).then(() => {
-            input.val(value);
-          }).catch(error => console.error(error));
-        }).trigger('click');
+        const ajaxCall = new Promise((resolve, reject) => {
+          input.one('click', function () {
+            fetchSelectOptions(input.attr('id'), selectsConfig[input.attr('id')]).then(() => {
+              input.val(value);
+              resolve();
+            }).catch(error => {
+              console.error(error);
+              reject(error);
+            });
+          }).trigger('click');
+        });
+        ajaxCalls.push(ajaxCall);
       } else {
         input.val(value);
       }
     }
   });
 
-  const filters = form.serializeArray().reduce((acc, { name, value }) => {
-    acc[name] = value;
-    return acc;
-  }, {});
-
-  const page = parseInt(queryParams.get('page') || '1', 10);
-  const per_page = parseInt(queryParams.get('per_page') || '10', 10);
-
-  updateAlerts(page, per_page, filters);
+  Promise.all(ajaxCalls)
+    .then(() => {
+      form.trigger('submit');
+    })
+    .catch(error => {
+      console.error('Error setting form values:', error);
+    });
 }
 
 
@@ -544,11 +550,12 @@ function fetchSelectOptions(selectElementId, configItem) {
 }
 
 $(document).ready(function () {
-    setFormValuesFromUrl();
     for (const [selectElementId, configItem] of Object.entries(selectsConfig)) {
         $(`#${selectElementId}`).one('click', function () {
           fetchSelectOptions(selectElementId, configItem)
             .catch(error => console.error(error));
         });
       }
+    setFormValuesFromUrl();
+
 });
