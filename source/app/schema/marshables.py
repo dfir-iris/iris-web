@@ -887,7 +887,6 @@ class AlertIOCSchema(Schema):
 class AlertAssetSchema(Schema):
     asset_name = fields.String(required=True)
     asset_description = fields.String(required=True)
-    asset_tlp_id = fields.Integer(required=True, validate=validate_asset_tlp)
     asset_type_id = fields.Integer(required=True, validate=validate_asset_type)
     asset_ip = fields.String(required=True)
     asset_domain = fields.String(required=True)

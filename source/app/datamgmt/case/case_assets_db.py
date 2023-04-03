@@ -152,6 +152,7 @@ def delete_asset(asset_id, caseid):
 
         update_assets_state(caseid=caseid)
 
+
 def get_assets_types():
     assets_types = [(c.asset_id, c.asset_name) for c
                     in AssetsType.query.with_entities(AssetsType.asset_name,
@@ -159,6 +160,17 @@ def get_assets_types():
                     ]
 
     return assets_types
+
+
+def get_unspecified_analysis_status_id():
+    """
+    Get the id of the 'Unspecified' analysis status
+    """
+    analysis_status = AnalysisStatus.query.filter(
+        AnalysisStatus.name == 'Unspecified'
+    ).first()
+
+    return analysis_status.id if analysis_status else None
 
 
 def get_analysis_status_list():

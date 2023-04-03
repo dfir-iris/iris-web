@@ -17,17 +17,17 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from typing import List
-
 from flask_login import current_user
 from operator import and_
 from sqlalchemy.orm import joinedload
+from typing import List
 
 from app import db
+from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.models import Cases
 from app.models.alerts import Alert, AlertStatus
-from app.schema.marshables import IocSchema
+from app.schema.marshables import IocSchema, CaseAssetsSchema
 
 
 def db_list_all_alerts():
@@ -215,6 +215,8 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     alert.cases.append(case)
 
     ioc_schema = IocSchema()
+    asset_schema = CaseAssetsSchema()
+    ioc_links = []
 
     # Add the IOCs to the case
     for ioc_uuid in iocs_list:
@@ -222,12 +224,32 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
             if alert_ioc['ioc_uuid'] == ioc_uuid:
                 alert_ioc['ioc_tags'] = ','.join(alert_ioc['ioc_tags'])
 
-                # TODO: Transform the ioc-enrichment to a custom attribute in the alert if possible
+                # TODO: Transform the ioc-enrichment to a custom attribute in the ioc
                 del alert_ioc['ioc_enrichment']
 
                 ioc = ioc_schema.load(alert_ioc, session=db.session)
                 ioc, existed = add_ioc(ioc, current_user.id, case.case_id)
                 add_ioc_link(ioc.ioc_id, case.case_id)
+                ioc_links.append(ioc.ioc_id)
+
+    # Add the assets to the case
+    for asset_uuid in assets_list:
+        for alert_asset in alert.alert_assets:
+            if alert_asset['asset_uuid'] == asset_uuid:
+
+                alert_asset['asset_tags'] = ','.join(alert_asset['asset_tags'])
+                alert_asset['analysis_status_id'] = get_unspecified_analysis_status_id()
+
+                # TODO: Transform the asset-enrichment to a custom attribute in the asset if possible
+                del alert_asset['asset_enrichment']
+
+                asset = asset_schema.load(alert_asset, session=db.session)
+
+                asset = create_asset(asset=asset,
+                                     caseid=case.case_id,
+                                     user_id=current_user.id
+                                     )
+                set_ioc_links(ioc_links, asset.asset_id)
 
     db.session.commit()
 
