@@ -535,6 +535,13 @@ function markReadAlert(alert_id) {
     updateAlert(alert_id, data, true);
 }
 
+function resolveAlert(alert_id) {
+    data = {
+        'alert_is_resolved': true
+    }
+    updateAlert(alert_id, data, true);
+}
+
 async function changeAlertOwner(alertId) {
   // Fetch the user list from the endpoint
   const usersReq = await get_request_api('/manage/users/list');

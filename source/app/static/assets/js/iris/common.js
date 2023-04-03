@@ -844,8 +844,13 @@ function do_md_filter_xss(html) {
 const avatarCache = {};
 
 function get_avatar_initials(name, small, onClickFunction) {
+    const av_size = small ? 'avatar-sm' : 'avatar';
+    const onClick = onClickFunction ? `onclick="${onClickFunction}"` : '';
+
     if (avatarCache[name] && avatarCache[name][small ? 'small' : 'large']) {
-        return avatarCache[name][small ? 'small' : 'large'];
+        return `<div class="avatar ${av_size}" title="${name}" ${onClick}>
+            ${avatarCache[name][small ? 'small' : 'large']}
+        </div>`;
     }
 
     const initial = name.split(' ');
@@ -859,20 +864,18 @@ function get_avatar_initials(name, small, onClickFunction) {
 
     const initials = initial.map(i => i[0].toUpperCase()).join('');
     const avatarColor = get_avatar_color(snum);
-    const av_size = small ? 'avatar-sm' : 'avatar';
 
-    const onClick = onClickFunction ? `onclick="${onClickFunction}"` : '';
-
-    const avatarHTML = `<div class="avatar ${av_size}" title="${name}" ${onClick}>
-        <span class="avatar-title rounded-circle" style="background-color:${avatarColor}; cursor:pointer;">${initials}</span>
+    const avatarHTMLin = `<span class="avatar-title rounded-circle" style="background-color:${avatarColor}; cursor:pointer;">${initials}</span>`
+    const avatarHTMLout = `<div class="avatar ${av_size}" title="${name}" ${onClick}>
+        ${avatarHTMLin}
     </div>`;
 
     if (!avatarCache[name]) {
         avatarCache[name] = {};
     }
-    avatarCache[name][small ? 'small' : 'large'] = avatarHTML;
+    avatarCache[name][small ? 'small' : 'large'] = avatarHTMLin;
 
-    return avatarHTML;
+    return avatarHTMLout;
 }
 
 function get_avatar_color(snum) {
