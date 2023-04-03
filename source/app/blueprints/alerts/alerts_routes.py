@@ -252,6 +252,8 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
     if not alert:
         return response_error('Alert not found')
 
+
+
     try:
         # Escalate the alert to a case
         alert.alert_status_id = AlertStatus.query.filter_by(status_name='Escalated').first().status_id

@@ -135,25 +135,19 @@ async function escalateAlertModal(alert_id) {
 function escalateAlert(alert_id) {
 
     const selectedIOCs = $('#ioCsList input[type="checkbox"]:checked').map((_, checkbox) => {
-        return {
-            id: $(checkbox).attr('id'),
-            value: $(checkbox).val()
-        };
+        return $(checkbox).attr('id');
     }).get();
 
     const selectedAssets = $('#assetsList input[type="checkbox"]:checked').map((_, checkbox) => {
-        return {
-            id: $(checkbox).attr('id'),
-            value: $(checkbox).val()
-        };
+        return $(checkbox).attr('id');
     }).get();
 
     const note = $('#note').val();
     const importAsEvent = $('#importAsEvent').is(':checked');
 
     const requestBody = {
-        iocs: selectedIOCs,
-        assets: selectedAssets,
+        import_iocs: selectedIOCs,
+        import_assets: selectedAssets,
         note: note,
         import_as_event: importAsEvent,
         csrf_token: $("#csrf_token").val()
