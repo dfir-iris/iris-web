@@ -199,10 +199,16 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     returns:
         Cases: The case that was created from the alert
     """
+
+    escalation_note = ""
+    if note:
+        escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
+
     # Create the case
     case = Cases(
         name=f"[ALERT] {alert.alert_title}",
-        description=f"*Alert escalated by {current_user.name}*\n\n### Alert content\n\n{alert.alert_description}",
+        description=f"*Alert escalated by {current_user.name}*\n\n{escalation_note}"
+                    f"### Alert content\n\n{alert.alert_description}",
         soc_id=alert.alert_id,
         client_id=alert.alert_customer_id,
         user=current_user,
