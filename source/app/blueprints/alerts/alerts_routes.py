@@ -123,7 +123,6 @@ def alerts_add_route(caseid) -> Response:
         # Deserialize the JSON data into an Alert object
         new_alert = alert_schema.load(data)
 
-        new_alert.alert_owner_id = current_user.id
         new_alert.alert_creation_time = datetime.utcnow()
 
         # Add the new alert to the session and commit it

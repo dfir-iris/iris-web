@@ -764,6 +764,13 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class BasicUserSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = User
+        load_instance = True
+        only = ['id', 'user', 'name', 'email']
+
+
 class UserSchema(ma.SQLAlchemyAutoSchema):
     user_roles_str = fields.List(fields.String, required=False)
     user_name = auto_field('name', required=True, validate=Length(min=2))
@@ -913,6 +920,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     status = ma.Nested(AlertStatusSchema)
     customer = ma.Nested(CustomerSchema)
     classification = ma.Nested(CaseClassificationSchema)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     alert_iocs = fields.List(fields.Nested(AlertIOCSchema))
     alert_assets = fields.List(fields.Nested(AlertAssetSchema))
 

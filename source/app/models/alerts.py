@@ -49,7 +49,7 @@ class Alert(db.Model):
     alert_customer_id = Column(ForeignKey('client.client_id'), nullable=False)
     alert_classification_id = Column(ForeignKey('case_classification.id'))
 
-    user = relationship('User', foreign_keys=[alert_owner_id])
+    owner = relationship('User', foreign_keys=[alert_owner_id])
     severity = relationship('Severity')
     status = relationship('AlertStatus')
     customer = relationship('Client')

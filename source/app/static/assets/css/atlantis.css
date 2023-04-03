@@ -3686,8 +3686,9 @@ body {
     display: inline-flex;
 }
 
-.avatar-group .avatar+.avatar {
-    margin-left: -.75rem;
+.avatar-group .avatar + .avatar {
+   margin-left: -1.3rem;
+   margin-top: 1rem;
 }
 
 .avatar-group .avatar-xs+.avatar-xs {

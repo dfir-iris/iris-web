@@ -860,8 +860,8 @@ function get_avatar_initials(name, small) {
         av_size = 'avatar-sm';
     }
 
-    return `<div class="${av_size}" title="${name}">
-        <span class="avatar-title rounded-circle border border-white ${bg}">${initial}</span>
+    return `<div class="avatar ${av_size}" title="${name}">
+        <span class="avatar-title rounded-circle ${bg}">${initial}</span>
     </div>`;
 }
 
