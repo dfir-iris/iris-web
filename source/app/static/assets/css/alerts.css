@@ -14,7 +14,7 @@
 
 .alert-actions {
   position: absolute;
-  bottom: 0;
+  bottom: 7px;
   right: 0;
   background-color: rgba(255, 255, 255, 0.9);
   padding: 10px;

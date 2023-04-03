@@ -38,6 +38,23 @@ const selectsConfig = {
     }
 };
 
+let alertStatusList = {};
+
+function getAlertStatusList() {
+    get_request_api('/manage/alert-status/list')
+        .then((data) => {
+            if (!notify_auto_api(data, true)) {
+                return;
+            }
+            alertStatusList = data.data;
+        });
+}
+
+function getAlertStatusId(statusName) {
+    const status = alertStatusList.find((status) => status.status_name === statusName);
+    return status ? status.status_id : undefined;
+}
+
 async function escalateAlertModal(alert_id) {
     const escalateButton = $("#escalateButton");
     escalateButton.attr("data-alert-id", alert_id);
@@ -203,7 +220,6 @@ function generateDefinitionList(obj) {
   }
   return html;
 }
-
 
 async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
   const filterString = objectToQueryString(filters);
@@ -536,8 +552,18 @@ function markReadAlert(alert_id) {
 }
 
 function resolveAlert(alert_id) {
-    data = {
-        'alert_is_resolved': true
+    changeStatusAlert(alert_id, 'Resolved');
+}
+
+function closeAlert(alert_id) {
+    changeStatusAlert(alert_id, 'Closed');
+}
+
+function changeStatusAlert(alert_id, status_name) {
+    let status_id = getAlertStatusId(status_name);
+
+    let data = {
+        'alert_status_id': status_id
     }
     updateAlert(alert_id, data, true);
 }
@@ -662,5 +688,5 @@ $(document).ready(function () {
         });
       }
     setFormValuesFromUrl();
-
+    getAlertStatusList();
 });
