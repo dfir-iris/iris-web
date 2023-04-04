@@ -449,6 +449,22 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                         </div>
                     </div>
                     
+                    <div class="dropdown ml-2 d-inline-block">
+                        <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Set status
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusAlert((${alert.alert_id}, 'Assigned');">Assigned</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'Resolved');">Resolved</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'Escalated');">Escalated</a>
+                        </div>
+                    </div>
+                    
                     <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="resolveAlert(${alert.alert_id});">Resolve</button>
                     <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
                 </div>
