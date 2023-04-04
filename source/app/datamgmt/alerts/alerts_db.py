@@ -114,9 +114,6 @@ def get_filtered_alerts(
     if tags is not None:
         conditions.append(Alert.alert_tags.ilike(f"%{tags}%"))
 
-    if read is not None:
-        conditions.append(Alert.alert_is_read == read)
-
     if client is not None:
         conditions.append(Alert.alert_customer_id == client)
 

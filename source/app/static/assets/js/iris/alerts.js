@@ -256,8 +256,7 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                         </div>
                         ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : ''}
                         <div class="envelope-icon">
-                            ${ alert.alert_is_read ? `<span class="badge badge-pill badge-success" style="cursor:pointer;" onclick="markUnreadAlert(${alert.alert_id})">Read</span>` : 
-                                `<span onclick="markReadAlert(${alert.alert_id})" class="badge badge-light badge-pill" style="cursor:pointer;">New</span>`}
+                            ${ alert.status ? `<span class="badge badge-pill badge-light" style="cursor:pointer;">${alert.status.status_name}</span>`: ''} 
                         </div>
                     </div>
                 </div>
@@ -561,20 +560,6 @@ function delete_alert(alert_id) {
             setFormValuesFromUrl();
         }
     });
-}
-
-function markUnreadAlert(alert_id) {
-    data = {
-        'alert_is_read': false
-    }
-    updateAlert(alert_id, data, true);
-}
-
-function markReadAlert(alert_id) {
-    data = {
-        'alert_is_read': true
-    }
-    updateAlert(alert_id, data, true);
 }
 
 function resolveAlert(alert_id) {

@@ -41,7 +41,6 @@ class Alert(db.Model):
     alert_creation_time = Column(DateTime, nullable=False, server_default=text("now()"))
     alert_note = Column(Text)
     alert_tags = Column(Text)
-    alert_is_read = Column(Boolean, nullable=False, server_default=text("false"))
     alert_owner_id = Column(ForeignKey('user.id'))
     modification_history = Column(JSON)
     alert_iocs = Column(JSON)

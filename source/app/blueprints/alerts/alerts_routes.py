@@ -65,9 +65,6 @@ def alerts_list_route(caseid) -> Response:
 
     alert_schema = AlertSchema()
 
-    alert_is_read_str = request.args.get('alert_is_read')
-    alert_is_read = str_to_bool(alert_is_read_str) if alert_is_read_str is not None else None
-
     filtered_data = get_filtered_alerts(
         start_date=request.args.get('source_start_date'),
         end_date=request.args.get('source_end_date'),
@@ -78,7 +75,6 @@ def alerts_list_route(caseid) -> Response:
         owner=request.args.get('alert_owner_id'),
         source=request.args.get('alert_source'),
         tags=request.args.get('alert_tags'),
-        read=alert_is_read,
         classification=request.args.get('alert_classification_id'),
         client=request.args.get('alert_customer_id'),
         alert_id=request.args.get('alert_id'),
