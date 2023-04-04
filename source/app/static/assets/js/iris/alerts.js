@@ -55,7 +55,7 @@ function getAlertStatusId(statusName) {
     return status ? status.status_id : undefined;
 }
 
-async function escalateAlertModal(alert_id) {
+async function escalateOrMergeAlertModal(alert_id, merge = false) {
     const escalateButton = $("#escalateButton");
     escalateButton.attr("data-alert-id", alert_id);
 
@@ -65,6 +65,15 @@ async function escalateAlertModal(alert_id) {
 
     $("#modalAlertId").val(alert_id);
     $("#modalAlertTitle").val(alertDataReq.data.alert_title);
+
+    if (merge) {
+        $('#escalateModalLabel').text('Merge Alert');
+        $('#escalateModalExplanation').text('This alert will be merged into the case. Select the IOCs and Assets to merge into the case.');
+        const alertListOpenCases = await get_request_api();
+    } else {
+        $('#escalateModalLabel').text('Escalate Alert');
+        $('#escalateModalExplanation').text('This alert will be escalated into a new case. Select the IOCs and Assets to escalate into the case.');
+    }
 
     // Clear the lists
     ioCsList.html("");
@@ -149,7 +158,7 @@ async function escalateAlertModal(alert_id) {
     $("#escalateModal").modal("show");
 }
 
-function escalateAlert(alert_id) {
+function escalateOrMergeAlert(alert_id, merge = false) {
 
     const selectedIOCs = $('#ioCsList input[type="checkbox"]:checked').map((_, checkbox) => {
         return $(checkbox).attr('id');
@@ -170,7 +179,7 @@ function escalateAlert(alert_id) {
         csrf_token: $("#csrf_token").val()
     };
 
-    post_request_api(`/alerts/escalate/${alert_id}`, JSON.stringify(requestBody))
+    post_request_api(`/alerts/${merge ? 'merge': 'escalate'}/${alert_id}`, JSON.stringify(requestBody))
         .then((data) => {
             if (data.status == 'success') {
                 $("#escalateModal").modal("hide");
@@ -434,7 +443,7 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
             </div>
                 <div class="alert-actions mr-2">
                     <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateAlertModal(${alert.alert_id});">Escalate to new case</button>
-                    <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlert(${alert.alert_id});">Merge into case</button>
+                    <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id});">Merge into case</button>
                     
                     <div class="dropdown ml-2 d-inline-block">
                         <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

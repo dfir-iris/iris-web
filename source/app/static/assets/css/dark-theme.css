@@ -22,6 +22,31 @@ body .main-panel {
     background: #1f283e;
 }
 
+@-webkit-keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #010409;
+  }
+}
+@-moz-keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #010409;
+  }
+}
+@keyframes yellow-fade {
+  from {
+    background: #f96;
+  }
+  to {
+    background: #010409;
+  }
+}
+
 body .card,
 body .row-card-no-pd,
 body .list-group-item,

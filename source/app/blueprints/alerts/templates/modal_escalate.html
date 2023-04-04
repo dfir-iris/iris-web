@@ -2,13 +2,13 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="escalateModalLabel">Escalate Alert</h5>
+        <h5 class="modal-title" id="escalateModalLabel"></h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-          <div class="form-group"><span>The following alert will be converted to a case. Select the IOCs and assets to import in the case.</span></div>
+          <div class="form-group"><span id="escalateModalExplanation">The following alert will be converted to a case.</span></div>
           <div class="form-group row">
             <div class="col">
                 <label for="alertId">Alert ID</label>
@@ -18,6 +18,10 @@
                 <label for="alertTitle">Title</label>
                 <input type="text" class="form-control" id="modalAlertTitle" readonly>
             </div>
+          </div>
+          <div class="">
+              <label>Select case to import to</label>
+              <select class="form-control" id="modalAlertOwner"></select>
           </div>
           <div class="form-group" id="ioc-container" style="display:none;">
             <label>IOCs to import</label>
