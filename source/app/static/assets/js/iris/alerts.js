@@ -56,8 +56,9 @@ function getAlertStatusId(statusName) {
 }
 
 async function escalateOrMergeAlertModal(alert_id, merge = false) {
-    const escalateButton = $("#escalateButton");
+    const escalateButton = $("#escalateOrMergeButton");
     escalateButton.attr("data-alert-id", alert_id);
+    escalateButton.attr("data-merge", merge);
 
     const alertDataReq = await fetchAlert(alert_id);
     const ioCsList = $("#ioCsList");
@@ -69,10 +70,33 @@ async function escalateOrMergeAlertModal(alert_id, merge = false) {
     if (merge) {
         $('#escalateModalLabel').text('Merge Alert');
         $('#escalateModalExplanation').text('This alert will be merged into the case. Select the IOCs and Assets to merge into the case.');
-        const alertListOpenCases = await get_request_api();
+        $("#escalateOrMergeButton").text('Merge Alert')
+        $('#mergeAlertCaseSelectSection').show();
+        var options = {
+                ajax: {
+                url: '/context/search-cases'+ case_param(),
+                type: 'GET',
+                dataType: 'json'
+            },
+            locale: {
+                    emptyTitle: 'Select and Begin Typing',
+                    statusInitialized: '',
+            },
+            preprocessData: function (data) {
+                return context_data_parser(data);
+            },
+            preserveSelected: false
+        };
+        await get_request_api('/context/get-cases/100')
+            .done((data) => {
+                mergeAlertCasesSelectOption(data);
+                $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
+            });
+
     } else {
         $('#escalateModalLabel').text('Escalate Alert');
         $('#escalateModalExplanation').text('This alert will be escalated into a new case. Select the IOCs and Assets to escalate into the case.');
+        $('#mergeAlertCaseSelectSection').hide();
     }
 
     // Clear the lists
@@ -156,7 +180,38 @@ async function escalateOrMergeAlertModal(alert_id, merge = false) {
     }
 
     $("#escalateModal").modal("show");
+    if (merge) {
+        $('#mergeAlertCaseSelect').selectpicker('refresh');
+        $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
+    }
 }
+
+function mergeAlertCasesSelectOption(data) {
+    if(notify_auto_api(data, true)) {
+        $('#mergeAlertCaseSelect').empty();
+
+        $('#mergeAlertCaseSelect').append('<optgroup label="Opened" id="switchMergeAlertCasesOpen"></optgroup>');
+        $('#mergeAlertCaseSelect').append('<optgroup label="Closed" id="switchMergeAlertCasesClose"></optgroup>');
+        ocs = data.data;
+        ret_data = [];
+        for (index in ocs) {
+            case_name = sanitizeHTML(ocs[index].name);
+            cs_name = sanitizeHTML(ocs[index].customer_name);
+            ret_data.push({
+                        'value': ocs[index].case_id,
+                        'text': `${case_name} (${cs_name}) ${ocs[index].access}`
+                    });
+            if (ocs[index].close_date != null) {
+                $('#switchMergeAlertCasesClose').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`);
+            } else {
+                $('#switchMergeAlertCasesOpen').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`)
+            }
+        }
+
+        return ret_data;
+    }
+}
+
 
 function escalateOrMergeAlert(alert_id, merge = false) {
 
@@ -178,6 +233,10 @@ function escalateOrMergeAlert(alert_id, merge = false) {
         import_as_event: importAsEvent,
         csrf_token: $("#csrf_token").val()
     };
+
+    if (merge) {
+        requestBody.target_case_id = $('#mergeAlertCaseSelect').val();
+    }
 
     post_request_api(`/alerts/${merge ? 'merge': 'escalate'}/${alert_id}`, JSON.stringify(requestBody))
         .then((data) => {
@@ -442,8 +501,8 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
     
             </div>
                 <div class="alert-actions mr-2">
-                    <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateAlertModal(${alert.alert_id});">Escalate to new case</button>
-                    <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id});">Merge into case</button>
+                    <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateOrMergeAlertModal(${alert.alert_id}, false);">Escalate to new case</button>
+                    <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="escalateOrMergeAlertModal(${alert.alert_id}, true);">Merge into case</button>
                     
                     <div class="dropdown ml-2 d-inline-block">
                         <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -550,9 +609,11 @@ $('#resetFilters').on('click', function () {
   form.trigger('submit');
 });
 
-$("#escalateButton").on("click", () => {
-  const alertId = $("#escalateButton").data("alert-id");
-  escalateAlert(alertId);
+$("#escalateOrMergeButton").on("click", () => {
+  const alertId = $("#escalateOrMergeButton").data("alert-id");
+  const merge = $("#escalateOrMergeButton").data("merge");
+
+  escalateOrMergeAlert(alertId, merge);
 });
 
 function showEnrichment(enrichment) {
@@ -639,7 +700,7 @@ async function updateAlert(alert_id, data = {}, do_refresh = false) {
           const updatedAlertElement = $(`#alertCard-${alert_id}`);
           if (updatedAlertElement.length) {
             $('html, body').animate({
-              scrollTop: updatedAlertElement.offset().top
+              scrollTop: updatedAlertElement.offset().top + updatedAlertElement.height()
             }, 300);
             $(`#alertCard-${alert_id}`).addClass('fade-it');
           }

@@ -305,7 +305,9 @@ def alerts_merge_route(alert_id, caseid) -> Response:
     if request.json is None:
         return response_error('No JSON data provided')
 
-    target_case_id = request.json.get('target_case_id')
+    data = request.get_json()
+
+    target_case_id = data.get('target_case_id')
     if target_case_id is None:
         return response_error('No target case id provided')
 
@@ -317,13 +319,19 @@ def alerts_merge_route(alert_id, caseid) -> Response:
     if not case:
         return response_error('Target case not found')
 
+    iocs_import_list: List[str] = data.get('iocs_import_list')
+    assets_import_list: List[str] = data.get('assets_import_list')
+    note: str = data.get('note')
+    import_as_event: bool = data.get('import_as_event')
+
     try:
         # Merge the alert into a case
         alert.alert_status_id = AlertStatus.query.filter_by(status_name='Merged').first().status_id
         db.session.commit()
 
         # Merge alert in the case
-        merge_alert_in_case(alert, case)
+        merge_alert_in_case(alert, case, iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
+                            import_as_event=import_as_event)
 
         # Return the updated alert as JSON
         return response_success(data=CaseSchema().dump(case))
