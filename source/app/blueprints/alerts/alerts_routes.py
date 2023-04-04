@@ -77,6 +77,7 @@ def alerts_list_route(caseid) -> Response:
         tags=request.args.get('alert_tags'),
         classification=request.args.get('alert_classification_id'),
         client=request.args.get('alert_customer_id'),
+        case_id=request.args.get('case_id'),
         alert_id=request.args.get('alert_id'),
         page=page,
         per_page=per_page,

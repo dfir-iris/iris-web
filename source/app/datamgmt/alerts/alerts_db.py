@@ -33,7 +33,7 @@ from app.datamgmt.case.case_events_db import update_event_assets, update_event_i
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory
-from app.models.alerts import Alert, AlertStatus
+from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation
 from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
 from app.util import add_obj_history_entry
 
@@ -55,7 +55,7 @@ def get_filtered_alerts(
         owner: int = None,
         source: str = None,
         tags: str = None,
-        read: bool = None,
+        case_id: int = None,
         client: int = None,
         classification: int = None,
         alert_id: int = None,
@@ -76,7 +76,7 @@ def get_filtered_alerts(
         owner (str): The owner of the alert
         source (str): The source of the alert
         tags (str): The tags of the alert
-        read (bool): The read status of the alert
+        case_id (int): The case id of the alert
         client (int): The client id of the alert
         classification (int): The classification id of the alert
         alert_id (int): The alert id
@@ -123,6 +123,9 @@ def get_filtered_alerts(
     if classification is not None:
         conditions.append(Alert.alert_classification_id == classification)
 
+    if case_id is not None:
+        conditions.append(Alert.cases.any(AlertCaseAssociation.case_id == case_id))
+
     if conditions:
         conditions = [and_(*conditions)] if len(conditions) > 1 else conditions
     else:
@@ -136,7 +139,7 @@ def get_filtered_alerts(
     ).filter(
         *conditions
     ).options(
-        joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer)
+        joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer), joinedload(Alert.cases)
     ).order_by(
         order_func(Alert.alert_source_event_time)
     ).paginate(page, per_page, error_out=False)
