@@ -700,7 +700,7 @@ async function updateAlert(alert_id, data = {}, do_refresh = false) {
           const updatedAlertElement = $(`#alertCard-${alert_id}`);
           if (updatedAlertElement.length) {
             $('html, body').animate({
-              scrollTop: updatedAlertElement.offset().top + updatedAlertElement.height()
+              scrollTop: updatedAlertElement.offset().top - 60
             }, 300);
             $(`#alertCard-${alert_id}`).addClass('fade-it');
           }
