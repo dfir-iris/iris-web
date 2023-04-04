@@ -342,13 +342,14 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
         note (str): The note to add to the case
         import_as_event (bool): Whether to import the alert as an event
     """
+    if case in alert.cases:
+        return case
 
     escalation_note = ""
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
-    case.description += f"\n\n*Alert escalated by {current_user.name}*\n\n{escalation_note}" \
-                        f"### Alert content\n\n{alert.alert_description}"
+    case.description += f"\n\n*Alert #{alert.alert_id} escalated by {current_user.name}*\n\n{escalation_note}"
 
     # Link the alert to the case
     alert.cases.append(case)
