@@ -246,8 +246,8 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
           const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
 
           alertElement.html(`
-           <div class="card alert-card full-height">
-            <div class="card-body">
+           <div class="card alert-card full-height" id="alertCard-${alert.alert_id}">
+            <div class="card-body" >
               <div class="d-flex">
                 <div class="avatar-group mt-2">
                    <div class="avatar-wrapper">
@@ -256,7 +256,7 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                         </div>
                         ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : ''}
                         <div class="envelope-icon">
-                            ${ alert.status ? `<span class="badge badge-pill badge-light" style="cursor:pointer;">${alert.status.status_name}</span>`: ''} 
+                            ${ alert.status ? `<span class="badge badge-pill badge-light">${alert.status.status_name}</span>`: ''} 
                         </div>
                     </div>
                 </div>
@@ -410,8 +410,6 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                     <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
                     <span title="Alert severity"><b class="ml-3"><i class="fa-solid fa-bolt"></i></b>
                       <small class="text-muted ml-1">${alert.severity.severity_name}</small></span>
-                    <span title="Alert status"><b class="ml-3"><i class="fa-solid fa-filter"></i></b>
-                      <small class="text-muted ml-1">${alert.status.status_name}</small></span>
                     <span title="Alert source"><b class="ml-3"><i class="fa-solid fa-cloud-arrow-down"></i></b>
                       <small class="text-muted ml-1">${alert.alert_source || 'Unspecified'}</small></span>
                     <span title="Alert client"><b class="ml-3"><i class="fa-regular fa-circle-user"></i></b>
@@ -622,17 +620,27 @@ async function changeAlertOwner(alertId) {
 }
 
 
-async function updateAlert(alert_id, data= {}, do_refresh= false) {
-    data['csrf_token'] = $('#csrf_token').val();
-    return post_request_api('/alerts/update/'+alert_id, JSON.stringify(data))
-    .then(function (data) {
-        if (notify_auto_api(data)) {
-            if (do_refresh) {
-                setFormValuesFromUrl();
-            }
-        }
-    });
+async function updateAlert(alert_id, data = {}, do_refresh = false) {
+  data['csrf_token'] = $('#csrf_token').val();
+  return post_request_api('/alerts/update/' + alert_id, JSON.stringify(data)).then(function (data) {
+    if (notify_auto_api(data)) {
+      if (do_refresh) {
+        setFormValuesFromUrl();
+        setTimeout(() => {
+          const updatedAlertElement = $(`#alertCard-${alert_id}`);
+          if (updatedAlertElement.length) {
+            $('html, body').animate({
+              scrollTop: updatedAlertElement.offset().top
+            }, 300);
+            $(`#alertCard-${alert_id}`).addClass('fade-it');
+          }
+        }, 200);
+      }
+    }
+  });
 }
+
+
 
 function setFormValuesFromUrl() {
   const queryParams = new URLSearchParams(window.location.search);

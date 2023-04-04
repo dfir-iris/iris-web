@@ -865,7 +865,7 @@ function get_avatar_initials(name, small, onClickFunction) {
     const initials = initial.map(i => i[0].toUpperCase()).join('');
     const avatarColor = get_avatar_color(snum);
 
-    const avatarHTMLin = `<span class="avatar-title rounded-circle" style="background-color:${avatarColor}; cursor:pointer;">${initials}</span>`
+    const avatarHTMLin = `<span class="avatar-title avatar-iris rounded-circle" style="background-color:${avatarColor}; cursor:pointer;">${initials}</span>`
     const avatarHTMLout = `<div class="avatar ${av_size}" title="${name}" ${onClick}>
         ${avatarHTMLin}
     </div>`;

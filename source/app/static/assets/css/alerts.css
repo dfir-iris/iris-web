@@ -1,6 +1,6 @@
 .alert-card {
     position: relative;
-    border-radius: 15px;
+    border-radius: 35px;
     margin-bottom: 10px;
 }
 
@@ -39,6 +39,14 @@
   background: #E9727D !important;
   border-color: #E9727D !important;
     color: white;
+}
+
+.bg-alert-success {
+  background-color: #32B67A !important;
+}
+
+.bg-alert-danger {
+  background-color: #E9727D !important;
 }
 
 .bg-muted {
@@ -95,7 +103,7 @@
 
 .avatar-wrapper {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
 }
 
 .envelope-icon {
