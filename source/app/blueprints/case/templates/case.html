@@ -56,7 +56,7 @@
                         <div class="ml-2 col">
                             <div class="row ml-1">
                                 {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>{% endif %}
-                                {% if case.alerts| length > 0 %}<h5 title="Alerts"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 badge-warning"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</span></h5>{% endif %}
+                                {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 badge-warning" href="/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
                             </div>
                         </div>
                         <div class="col mr-2">
