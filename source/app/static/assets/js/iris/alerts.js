@@ -1,3 +1,5 @@
+let sortOrder ;
+
 function objectToQueryString(obj) {
   return Object.keys(obj)
     .filter(key => obj[key] !== undefined && obj[key] !== null && obj[key] !== '')
@@ -280,9 +282,10 @@ function generateDefinitionList(obj) {
   return html;
 }
 
-async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
+async function updateAlerts(page, per_page, filters = {}){
+  if (sortOrder === undefined) { sortOrder = 'desc'; }
   const filterString = objectToQueryString(filters);
-  const data = await fetchAlerts(page, per_page, filterString, sort_order);
+  const data = await fetchAlerts(page, per_page, filterString, sortOrder);
 
   if (!notify_auto_api(data, true)) {
     return;
@@ -559,7 +562,7 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
     }
   }
 
-  queryParams.set('sort', sort_order);
+  queryParams.set('sort', sortOrder);
 
   history.replaceState(null, null, `?${queryParams.toString()}`);
 
@@ -572,14 +575,22 @@ $('#alertsPerPage').on('change', (e) => {
   updateAlerts(1, per_page, undefined, sortOrder); // Update the alerts list with the new 'per_page' value and reset to the first page
 });
 
-let sortOrder = 'desc';
 
 $('#orderAlertsBtn').on('click', function () {
   sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
   const iconClass = sortOrder === 'desc' ? 'fas fa-arrow-up-short-wide' : 'fas fa-arrow-up-wide-short';
 
   $('#orderAlertsBtn i').attr('class', iconClass);
-  updateAlerts(1, 10, {}, sortOrder);
+
+  const queryParams = new URLSearchParams(window.location.search);
+  let page_number = parseInt(queryParams.get('page'));
+  let per_page = parseInt(queryParams.get('per_page'));
+
+
+  const formData = new FormData($('#alertFilterForm')[0]);
+  const filters = Object.fromEntries(formData.entries());
+
+  updateAlerts(page_number, per_page, filters, sortOrder);
 });
 
 $('#alertFilterForm').on('submit', (e) => {
@@ -589,8 +600,12 @@ $('#alertFilterForm').on('submit', (e) => {
   const formData = new FormData(e.target);
   const filters = Object.fromEntries(formData.entries());
 
+  const queryParams = new URLSearchParams(window.location.search);
+  const page_number = parseInt(queryParams.get('page'));
+  const per_page = parseInt(queryParams.get('per_page'));
+
   // Update the alerts list with the new filters and reset to the first page
-  updateAlerts(1, $('#alertsPerPage').val(), filters);
+  updateAlerts(page_number, per_page, filters);
 });
 
 $('#resetFilters').on('click', function () {
