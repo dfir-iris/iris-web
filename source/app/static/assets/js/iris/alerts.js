@@ -101,6 +101,7 @@ async function mergeAlertModal(alert_id) {
     // Configure the modal for both escalation and merging
     $('#escalateModalLabel').text(`Merge alert #${alert_id} in a new case`);
     $('#escalateModalExplanation').text('This alert will be escalated into a new case. Select the IOCs and Assets to escalate into the case.');
+    escalateButton.attr("data-merge", false);
     $('#mergeAlertCaseSelectSection').hide();
 
     // Load case options for merging
@@ -156,6 +157,8 @@ async function mergeAlertModal(alert_id) {
     }
 
     $("#escalateModal").modal("show");
+
+    $("input[type='radio'][name='mergeOption']:checked").trigger("change");
 
     $("input[type='radio'][name='mergeOption']").on("change", function () {
         if ($(this).val() === "existing_case") {
