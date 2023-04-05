@@ -124,7 +124,7 @@
         {
           "value": "domain-compromise",
           "expanded": "Domain Compromise",
-          "description": "The whole domain is compromised; this is commonly used for active directory and detected by a “pass the ticket” attack or a discovery of “ad dumps” files."
+          "description": "The whole domain is compromised; this is commonly used for active directory and detected by a 'pass the ticket' attack or a discovery of 'ad dumps' files."
         },
         {
           "value": "application-compromise",
