@@ -55,10 +55,41 @@ function getAlertStatusId(statusName) {
     return status ? status.status_id : undefined;
 }
 
-async function mergeAlertModal(alert_id, merge = false) {
+function appendLabels(list, items, itemType) {
+    items.forEach((item) => {
+        const label = $('<label></label>').addClass('d-block');
+        const input = $('<input>').attr({
+            type: 'checkbox',
+            name: itemType,
+            value: item[itemType + '_name'] || item[itemType + '_value'],
+            id: item[itemType + '_uuid'],
+            checked: true,
+        });
+        label.append(input);
+        label.append(` ${item[itemType + '_name'] || item[itemType + '_value']}`);
+        list.append(label);
+    });
+}
+
+function toggleSelectDeselect(toggleButton, listSelector) {
+    let allChecked = true;
+    $(listSelector).each(function () {
+        if (!$(this).prop("checked")) {
+            allChecked = false;
+        }
+        $(this).prop("checked", !$(this).prop("checked"));
+    });
+
+    if (allChecked) {
+        toggleButton.text("Select All");
+    } else {
+        toggleButton.text("Deselect All");
+    }
+}
+
+async function mergeAlertModal(alert_id) {
     const escalateButton = $("#escalateOrMergeButton");
     escalateButton.attr("data-alert-id", alert_id);
-    escalateButton.attr("data-merge", merge);
 
     const alertDataReq = await fetchAlert(alert_id);
     const ioCsList = $("#ioCsList");
@@ -67,37 +98,32 @@ async function mergeAlertModal(alert_id, merge = false) {
     $("#modalAlertId").val(alert_id);
     $("#modalAlertTitle").val(alertDataReq.data.alert_title);
 
-    if (merge) {
-        $('#escalateModalLabel').text('Merge Alert');
-        $('#escalateModalExplanation').text('This alert will be merged into the case. Select the IOCs and Assets to merge into the case.');
-        $("#escalateOrMergeButton").text('Merge Alert')
-        $('#mergeAlertCaseSelectSection').show();
-        var options = {
-                ajax: {
-                url: '/context/search-cases'+ case_param(),
-                type: 'GET',
-                dataType: 'json'
-            },
-            locale: {
-                    emptyTitle: 'Select and Begin Typing',
-                    statusInitialized: '',
-            },
-            preprocessData: function (data) {
-                return context_data_parser(data);
-            },
-            preserveSelected: false
-        };
-        await get_request_api('/context/get-cases/100')
-            .done((data) => {
-                mergeAlertCasesSelectOption(data);
-                $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
-            });
+    // Configure the modal for both escalation and merging
+    $('#escalateModalLabel').text(`Merge alert #${alert_id} in a new case`);
+    $('#escalateModalExplanation').text('This alert will be escalated into a new case. Select the IOCs and Assets to escalate into the case.');
+    $('#mergeAlertCaseSelectSection').hide();
 
-    } else {
-        $('#escalateModalLabel').text('Escalate Alert');
-        $('#escalateModalExplanation').text('This alert will be escalated into a new case. Select the IOCs and Assets to escalate into the case.');
-        $('#mergeAlertCaseSelectSection').hide();
-    }
+    // Load case options for merging
+    var options = {
+        ajax: {
+            url: '/context/search-cases' + case_param(),
+            type: 'GET',
+            dataType: 'json'
+        },
+        locale: {
+            emptyTitle: 'Select and Begin Typing',
+            statusInitialized: '',
+        },
+        preprocessData: function (data) {
+            return context_data_parser(data);
+        },
+        preserveSelected: false
+    };
+    await get_request_api('/context/get-cases/100')
+        .done((data) => {
+            mergeAlertCasesSelectOption(data);
+            $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
+        });
 
     // Clear the lists
     ioCsList.html("");
@@ -110,34 +136,9 @@ async function mergeAlertModal(alert_id, merge = false) {
     alertData = alertDataReq.data;
 
     if (alertData.alert_iocs.length !== 0) {
-        alertData.alert_iocs.forEach((ioc) => {
-            const label = $('<label></label>').addClass('d-block');
-            const input = $('<input>').attr({
-                type: 'checkbox',
-                name: 'ioc',
-                value: ioc.ioc_name,
-                id: ioc.ioc_uuid,
-                checked: true,
-            });
-            label.append(input);
-            label.append(` ${ioc.ioc_value}`);
-            ioCsList.append(label);
-        });
-
+        appendLabels(ioCsList, alertData.alert_iocs, 'ioc');
         $("#toggle-iocs").on("click", function () {
-            let allChecked = true;
-            $("#ioCsList input[type='checkbox']").each(function () {
-                if (!$(this).prop("checked")) {
-                    allChecked = false;
-                }
-                $(this).prop("checked", !$(this).prop("checked"));
-            });
-
-            if (allChecked) {
-                $(this).text("Select All");
-            } else {
-                $(this).text("Deselect All");
-            }
+            toggleSelectDeselect($(this), "#ioCsList input[type='checkbox']");
         });
         $("#ioc-container").show();
     } else {
@@ -145,34 +146,9 @@ async function mergeAlertModal(alert_id, merge = false) {
     }
 
     if (alertData.alert_assets.length !== 0) {
-        alertData.alert_assets.forEach((asset) => {
-            const label = $('<label></label>').addClass('d-block');
-            const input = $('<input>').attr({
-                type: 'checkbox',
-                name: 'asset',
-                value: asset.asset_name,
-                id: asset.asset_uuid,
-                checked: true,
-            });
-            label.append(input);
-            label.append(` ${asset.asset_name}`);
-            assetsList.append(label);
-        });
-
+        appendLabels(assetsList, alertData.alert_assets, 'asset');
         $("#toggle-assets").on("click", function () {
-            let allChecked = true;
-            $("#assetsList input[type='checkbox']").each(function () {
-                if (!$(this).prop("checked")) {
-                    allChecked = false;
-                }
-                $(this).prop("checked", !$(this).prop("checked"));
-            });
-
-            if (allChecked) {
-                $(this).text("Select All");
-            } else {
-                $(this).text("Deselect All");
-            }
+            toggleSelectDeselect($(this), "#assetsList input[type='checkbox']");
         });
         $("#asset-container").show();
     } else {
@@ -180,10 +156,22 @@ async function mergeAlertModal(alert_id, merge = false) {
     }
 
     $("#escalateModal").modal("show");
-    if (merge) {
-        $('#mergeAlertCaseSelect').selectpicker('refresh');
-        $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
-    }
+
+    $("input[type='radio'][name='mergeOption']").on("change", function () {
+        if ($(this).val() === "existing_case") {
+            $('#escalateModalLabel').text(`Merge alert #${alert_id} in existing case`);
+            $('#escalateModalExplanation').text('This alert will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
+            $('#mergeAlertCaseSelectSection').show();
+            $('#mergeAlertCaseSelect').selectpicker('refresh');
+            $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
+            escalateButton.attr("data-merge", true);
+        } else {
+            $('#escalateModalLabel').text(`Merge alert #${alert_id} in new case`);
+            $('#escalateModalExplanation').text('This alert will be merged into a new case. Select the IOCs and Assets to merge into the case.');
+            $('#mergeAlertCaseSelectSection').hide();
+            escalateButton.attr("data-merge", false);
+        }
+    });
 }
 
 function mergeAlertCasesSelectOption(data) {
