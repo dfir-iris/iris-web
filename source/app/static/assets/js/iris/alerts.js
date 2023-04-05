@@ -289,6 +289,14 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
   }
   const alerts = data.data.alerts;
 
+  // Check if the selection mode is active
+   const selectionModeActive = $('body').hasClass('selection-mode');
+   selectionModeActive ? $('body').removeClass('selection-mode') : '';
+   $('#toggle-selection-mode').text('Select');
+   $('body').removeClass('selection-mode');
+   $('#select-deselect-all').hide();
+   $('#alerts-batch-actions').hide();
+
   // Clear the current alerts list
   const alertsContainer = $('.alerts-container');
   alertsContainer.html('');
