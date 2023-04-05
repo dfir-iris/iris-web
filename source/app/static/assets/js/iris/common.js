@@ -1259,66 +1259,82 @@ function random_filename(length) {
 
 function createPagination(currentPage, totalPages, per_page, callback, paginationContainersNodes) {
   const maxPagesToShow = 5;
-  const paginationContainers = document.querySelectorAll(paginationContainersNodes);
+  const paginationContainers = $(paginationContainersNodes);
 
   if (totalPages === 1 || totalPages === 0) {
-    paginationContainers.forEach(paginationContainer => {
-      paginationContainer.innerHTML = '';
-    });
+    paginationContainers.html('');
     return;
   }
-  paginationContainers.forEach(paginationContainer => {
-    paginationContainer.innerHTML = '';
+
+  paginationContainers.each(function() {
+    const paginationContainer = $(this);
+    paginationContainer.html('');
 
     const startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
     const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-    // Add Previous button
-    const prevPage = document.createElement('a');
-    prevPage.href = `javascript:${callback}(${Math.max(1, currentPage - 1)}, ${per_page})`;
-    prevPage.textContent = 'Previous';
-    prevPage.className = 'page-link';
+    // Add First page button
+      if (totalPages > maxPagesToShow) {
+          const firstItem = $('<li>', {class: 'page-item'}).appendTo(paginationContainer);
+          if (currentPage === 1) {
+              firstItem.addClass('disabled');
+          }
+          $('<a>', {
+              href: `javascript:${callback}(1, ${per_page},{}, true)`,
+              text: 'First page',
+              class: 'page-link',
+          }).appendTo(firstItem);
+      }
 
-    const prevItem = document.createElement('li');
-    prevItem.className = 'page-item';
+    // Add Previous button
+    const prevItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
     if (currentPage === 1) {
-      prevItem.classList.add('disabled');
+      prevItem.addClass('disabled');
     }
-    prevItem.appendChild(prevPage);
-    paginationContainer.appendChild(prevItem);
+    $('<a>', {
+      href: `javascript:${callback}(${Math.max(1, currentPage - 1)}, ${per_page},{}, true)`,
+      text: 'Previous',
+      class: 'page-link',
+    }).appendTo(prevItem);
 
     // Add page numbers
     for (let i = startPage; i <= endPage; i++) {
-      const pageLink = document.createElement('a');
-      pageLink.href = `javascript:${callback}(${i}, ${per_page})`;
-      pageLink.textContent = i;
-      pageLink.className = 'page-link';
-
-      const pageItem = document.createElement('li');
-      pageItem.className = 'page-item';
+      const pageItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
       if (i === currentPage) {
-        pageItem.classList.add('active');
+        pageItem.addClass('active');
       }
-      pageItem.appendChild(pageLink);
-      paginationContainer.appendChild(pageItem);
+      $('<a>', {
+        href: `javascript:${callback}(${i}, ${per_page},{}, true)`,
+        text: i,
+        class: 'page-link',
+      }).appendTo(pageItem);
     }
 
     // Add Next button
-    const nextPage = document.createElement('a');
-    nextPage.href = `javascript:${callback}(${Math.min(totalPages, currentPage + 1)}, ${per_page})`;
-    nextPage.textContent = 'Next';
-    nextPage.className = 'page-link';
-
-    const nextItem = document.createElement('li');
-    nextItem.className = 'page-item';
+    const nextItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
     if (currentPage === totalPages) {
-        nextItem.classList.add('disabled');
+      nextItem.addClass('disabled');
     }
-    nextItem.appendChild(nextPage);
-    paginationContainer.appendChild(nextItem);
+    $('<a>', {
+      href: `javascript:${callback}(${Math.min(totalPages, currentPage + 1)}, ${per_page},{}, true)`,
+      text: 'Next',
+      class: 'page-link',
+    }).appendTo(nextItem);
 
+   if (totalPages > maxPagesToShow) {
+       const lastItem = $('<li>', {class: 'page-item'}).appendTo(paginationContainer);
+       if (currentPage === totalPages) {
+           lastItem.addClass('disabled');
+       }
+       $('<a>', {
+           href: `javascript:${callback}(${totalPages}, ${per_page},{}, true)`,
+           text: 'Last page',
+           class: 'page-link',
+       }).appendTo(lastItem);
+   }
   });
 }
+
 
 let userWhoami = JSON.parse(sessionStorage.getItem('userWhoami'));
 

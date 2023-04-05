@@ -282,8 +282,19 @@ function generateDefinitionList(obj) {
   return html;
 }
 
-async function updateAlerts(page, per_page, filters = {}){
+function getFiltersFromUrl() {
+    const formData = new FormData($('#alertFilterForm')[0]);
+    return Object.fromEntries(formData.entries());
+}
+
+async function updateAlerts(page, per_page, filters = {}, paging=false){
   if (sortOrder === undefined) { sortOrder = 'desc'; }
+
+  if (paging) {
+      filters = getFiltersFromUrl();
+      console.log(filters);
+  }
+
   const filterString = objectToQueryString(filters);
   const data = await fetchAlerts(page, per_page, filterString, sortOrder);
 
@@ -601,11 +612,10 @@ $('#alertFilterForm').on('submit', (e) => {
   const filters = Object.fromEntries(formData.entries());
 
   const queryParams = new URLSearchParams(window.location.search);
-  const page_number = parseInt(queryParams.get('page'));
   const per_page = parseInt(queryParams.get('per_page'));
 
   // Update the alerts list with the new filters and reset to the first page
-  updateAlerts(page_number, per_page, filters);
+  updateAlerts(1, per_page, filters);
 });
 
 $('#resetFilters').on('click', function () {
