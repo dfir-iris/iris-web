@@ -784,17 +784,42 @@ function fetchSelectOptions(selectElementId, configItem) {
 
 function getBatchAlerts() {
     const selectedAlerts = [];
-  // Loop through all checkboxes
-  $('.tickbox input[type="checkbox"]').each(function() {
-    // Check if the checkbox is checked
-    if ($(this).is(':checked')) {
-      // Get the associated alert ID and add it to the selectedAlerts array
-      const alertId = $(this).data('alert-id');
-      selectedAlerts.push(alertId);
-    }
-  });
+    $('.tickbox input[type="checkbox"]').each(function() {
+        if ($(this).is(':checked')) {
+          const alertId = $(this).data('alert-id');
+          selectedAlerts.push(alertId);
+        }
+    });
+    return selectedAlerts;
+}
 
-  return selectedAlerts;
+function changeStatusBatchAlerts(status_name) {
+    const data = {
+        'alert_status_id': getAlertStatusId(status_name)
+    }
+
+    updateBatchAlerts(data);
+}
+
+function updateBatchAlerts(data_content= {}) {
+    const selectedAlerts = getBatchAlerts();
+    if (selectedAlerts.length === 0) {
+        notify_error('Please select at least one alert to perform this action on.');
+        return;
+    }
+
+    const data = {
+        'alert_ids': selectedAlerts,
+        'csrf_token': $('#csrf_token').val(),
+        'updates': data_content
+    };
+
+    post_request_api('/alerts/batch/update', JSON.stringify(data)).then(function (data) {
+        if (notify_auto_api(data)) {
+            setFormValuesFromUrl();
+        }
+    });
+
 }
 
 $(document).ready(function () {

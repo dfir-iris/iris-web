@@ -200,6 +200,54 @@ def alerts_update_route(alert_id, caseid) -> Response:
         return response_error(str(e))
 
 
+@alerts_blueprint.route('/alerts/batch/update', methods=['POST'])
+@ac_api_requires(Permissions.alerts_writer)
+def alerts_batch_update_route(caseid: int) -> Response:
+    """
+    Update multiple alerts in the database
+
+    args:
+        caseid (int): The case id
+
+    returns:
+        Response: The response
+    """
+    if not request.json:
+        return response_error('No JSON data provided')
+
+    # Load the JSON data from the request
+    data = request.get_json()
+
+    # Get the list of alert IDs and updates from the request data
+    alert_ids: List[int] = data.get('alert_ids', [])
+    updates = data.get('updates', {})
+
+    if not alert_ids:
+        return response_error('No alert IDs provided')
+
+    alert_schema = AlertSchema()
+
+    # Process each alert ID
+    for alert_id in alert_ids:
+        alert = get_alert_by_id(alert_id)
+        if not alert:
+            return response_error(f'Alert with ID {alert_id} not found')
+
+        try:
+            # Deserialize the JSON data into an Alert object
+            updated_alert = alert_schema.load(updates, instance=alert, partial=True)
+
+            # Save the changes
+            db.session.commit()
+
+        except Exception as e:
+            # Handle any errors during deserialization or DB operations
+            return response_error(str(e))
+
+    # Return a success response
+    return response_success(msg='Batch update successful')
+
+
 @alerts_blueprint.route('/alerts/delete/<int:alert_id>', methods=['POST'])
 @ac_api_requires(Permissions.alerts_writer)
 def alerts_delete_route(alert_id, caseid) -> Response:
