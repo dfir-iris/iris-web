@@ -23,8 +23,8 @@
                             Assign
                         </button>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#" onclick="updateBatchAlerts({alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
-                            <a class="dropdown-item" href="#" onclick="changeBatchAlertOwner();">Assign to other</a>
+                            <a class="dropdown-item" href="#" onclick="updateBatchAlerts({alert_owner_id: userWhoami.user_id});">Assign to me</a>
+                            <a class="dropdown-item" href="#" onclick="changeBatchAlertOwner();">Assign</a>
                         </div>
                     </div>
 
@@ -34,17 +34,12 @@
                         </button>
                         <div class="dropdown-menu">
                             <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('New');">New</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Assigned');">Assigned</a>
                             <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('In progress');">In progress</a>
                             <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Pending');">Pending</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Resolved');">Resolved</a>
                             <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Closed');">Closed</a>
                             <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Merged');">Merged</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Escalated');">Escalated</a>
                         </div>
                     </div>
-
-                    <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="resolveAlert();">Resolve</button>
                     <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert();">Close</button>
                 </div>
                 <button class="btn btn-sm mb-2 mr-2" id="select-deselect-all" style="display:none;">Select all</button>
