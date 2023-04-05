@@ -317,7 +317,7 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
            <div class="card alert-card full-height" id="alertCard-${alert.alert_id}">
             <div class="card-body" >
               <div class="d-flex">
-                <div class="avatar-group mt-2">
+                <div class="avatar-group mt-3 ${alert.owner ? '': 'ml-2 mr-2' }">
                    <div class="avatar-wrapper">
                         <div class="avatar cursor-pointer">
                             <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
@@ -329,7 +329,7 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                     </div>
                 </div>
                 
-                <div class="flex-1 ml-3 pt-1">
+                <div class="flex-1 ml-4 pt-1">
                     <h6 class="text-uppercase fw-bold mb-1 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
                       ${alert.alert_title}
                       <span class="text-${colorSeverity} pl-3"></span>
