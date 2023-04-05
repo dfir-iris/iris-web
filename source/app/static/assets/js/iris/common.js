@@ -887,7 +887,6 @@ function get_avatar_color(snum) {
 }
 
 
-
 function edit_inner_editor(btn_id, container_id, ctrd_id) {
     $('#'+container_id).toggle();
     if ($('#'+container_id).is(':visible')) {

@@ -17,6 +17,39 @@
                 <div class="card-subtitle mt-2"><button class="btn btn-sm">Filters</button></div>
             </div>
             <div class="d-flex">
+                <div id="alerts-batch-actions" style="display:none;" class="mr-4">
+                    <div class="dropdown ml-2 d-inline-block">
+                        <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Assign
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" onclick="updateBatchAlert({alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
+                            <a class="dropdown-item" href="#" onclick="changeBatchAlertOwner();">Assign to other</a>
+                        </div>
+                    </div>
+
+                    <div class="dropdown ml-2 d-inline-block">
+                        <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Set status
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('New');">New</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts(('Assigned');">Assigned</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('In progress');">In progress</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Pending');">Pending</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Resolved');">Resolved</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Closed');">Closed</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Merged');">Merged</a>
+                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Escalated');">Escalated</a>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="resolveAlert(${alert.alert_id});">Resolve</button>
+                    <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
+                </div>
+                <button class="btn btn-sm mb-2 mr-2" id="select-deselect-all" style="display:none;">Select all</button>
+
+                <button class="btn btn-sm mb-2 mr-2" id="toggle-selection-mode">Select</button>
                 <button class="btn btn-sm mb-2" id="orderAlertsBtn"><i class="fas fa-arrow-up-short-wide"></i></button>
                 <div class="pagination-dropdown-container ml-3 mt-1">
                   <label for="alertsPerPage">Alerts per page:</label>

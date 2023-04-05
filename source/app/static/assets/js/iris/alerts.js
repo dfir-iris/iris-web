@@ -314,18 +314,23 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
           const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
 
           alertElement.html(`
-           <div class="card alert-card full-height" id="alertCard-${alert.alert_id}">
+           <div class="card alert-card full-height alert-card-selectable" id="alertCard-${alert.alert_id}">
             <div class="card-body" >
               <div class="d-flex">
                 <div class="avatar-group mt-3 ${alert.owner ? '': 'ml-2 mr-2' }">
-                   <div class="avatar-wrapper">
-                        <div class="avatar cursor-pointer">
-                            <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
+                    <div class="avatar-tickbox-wrapper">
+                       <div class="avatar-wrapper">
+                            <div class="avatar cursor-pointer">
+                                <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
+                            </div>
+                            ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : ''}
+                            <div class="envelope-icon">
+                                ${ alert.status ? `<span class="badge badge-pill badge-light">${alert.status.status_name}</span>`: ''} 
+                            </div>
                         </div>
-                        ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : ''}
-                        <div class="envelope-icon">
-                            ${ alert.status ? `<span class="badge badge-pill badge-light">${alert.status.status_name}</span>`: ''} 
-                        </div>
+                    <div class="tickbox" style="display:none;">
+                        <input type="checkbox" class="alert-selection-checkbox" data-alert-id="${alert.alert_id}" />
+                     </div>
                     </div>
                 </div>
                 
@@ -777,6 +782,21 @@ function fetchSelectOptions(selectElementId, configItem) {
   });
 }
 
+function getBatchAlerts() {
+    const selectedAlerts = [];
+  // Loop through all checkboxes
+  $('.tickbox input[type="checkbox"]').each(function() {
+    // Check if the checkbox is checked
+    if ($(this).is(':checked')) {
+      // Get the associated alert ID and add it to the selectedAlerts array
+      const alertId = $(this).data('alert-id');
+      selectedAlerts.push(alertId);
+    }
+  });
+
+  return selectedAlerts;
+}
+
 $(document).ready(function () {
     for (const [selectElementId, configItem] of Object.entries(selectsConfig)) {
         $(`#${selectElementId}`).one('click', function () {
@@ -786,4 +806,34 @@ $(document).ready(function () {
       }
     setFormValuesFromUrl();
     getAlertStatusList();
+
+      $('#toggle-selection-mode').on('click', function() {
+        // Toggle the 'selection-mode' class on the body element
+        $('body').toggleClass('selection-mode');
+
+        // Check if the selection mode is active
+        const selectionModeActive = $('body').hasClass('selection-mode');
+
+        // Update the button text
+        $(this).text(selectionModeActive ? 'Cancel' : 'Select');
+
+        // Toggle the display of avatars, tickboxes and selection-related buttons
+        $('.alert-card-selectable').each(function() {
+          const avatarTickboxWrapper = $(this).find('.avatar-tickbox-wrapper');
+          avatarTickboxWrapper.find('.avatar-wrapper').toggle(!selectionModeActive);
+          avatarTickboxWrapper.find('.tickbox').toggle(selectionModeActive);
+        });
+
+        $('#select-deselect-all').toggle(selectionModeActive).text('Select all');
+        $('#alerts-batch-actions').toggle(selectionModeActive);
+      });
+
+      $('#select-deselect-all').on('click', function() {
+        const allSelected = $('.tickbox input[type="checkbox"]:not(:checked)').length === 0;
+
+        $('.tickbox input[type="checkbox"]').prop('checked', !allSelected);
+        $(this).text(allSelected ? 'Select all' : 'Deselect all');
+      });
+
+
 });
