@@ -165,7 +165,7 @@ def add_template(caseid):
 
         return response_success("Added successfully", data=ret)
 
-    return response_error(f"File is invalid")
+    return response_error("File is invalid")
 
 
 @manage_templates_blueprint.route('/manage/templates/download/<report_id>', methods=['GET'])
