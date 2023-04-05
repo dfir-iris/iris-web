@@ -695,6 +695,48 @@ async function changeAlertOwner(alertId) {
 }
 
 
+async function changeBatchAlertOwner(alertId) {
+
+    const selectedAlerts = getBatchAlerts();
+    if (selectedAlerts.length === 0) {
+        notify_error('Please select at least one alert to perform this action on.');
+        return;
+    }
+
+      // Fetch the user list from the endpoint
+      const usersReq = await get_request_api('/manage/users/list');
+
+      if (!notify_auto_api(usersReq, true)) { return; };
+
+      users = usersReq.data;
+
+      // Populate the select element with the fetched user list
+      const userSelect = $('#changeOwnerAlertSelect');
+      userSelect.empty();
+      users.forEach((user) => {
+        userSelect.append(`<option value="${user.user_id}">${user.user_name}</option>`);
+      });
+
+      $('#alertIDAssignModal').text(alertId);
+
+      // Show the modal
+      $('#changeAlertOwnerModal').modal('show');
+
+      // Set up the form submission
+      document.getElementById('assign-owner-button').onclick = async () => {
+          // Get the selected user ID
+          const newOwnerId = userSelect.val();
+
+          // Send a POST request to the update endpoint
+          updateBatchAlerts({alert_owner_id: newOwnerId})
+          .then(() => {
+                // Close the modal
+                $('#changeAlertOwnerModal').modal('hide');
+          });
+      };
+}
+
+
 async function updateAlert(alert_id, data = {}, do_refresh = false) {
   data['csrf_token'] = $('#csrf_token').val();
   return post_request_api('/alerts/update/' + alert_id, JSON.stringify(data)).then(function (data) {
@@ -801,7 +843,7 @@ function changeStatusBatchAlerts(status_name) {
     updateBatchAlerts(data);
 }
 
-function updateBatchAlerts(data_content= {}) {
+async function updateBatchAlerts(data_content= {}) {
     const selectedAlerts = getBatchAlerts();
     if (selectedAlerts.length === 0) {
         notify_error('Please select at least one alert to perform this action on.');
@@ -814,7 +856,7 @@ function updateBatchAlerts(data_content= {}) {
         'updates': data_content
     };
 
-    post_request_api('/alerts/batch/update', JSON.stringify(data)).then(function (data) {
+    return post_request_api('/alerts/batch/update', JSON.stringify(data)).then(function (data) {
         if (notify_auto_api(data)) {
             setFormValuesFromUrl();
         }
