@@ -134,6 +134,31 @@ function refresh_case_template_table() {
   notify_success("Refreshed");
 }
 
+function delete_case_template(id) {
+    swal({
+        title: "Are you sure ?",
+        text: "You won't be able to revert this !",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            post_request_api('/manage/case-templates/delete/' + id)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    window.location.href = '/manage/case-templates' + case_param();
+                }
+            });
+        } else {
+            swal("Pfew, that was close");
+        }
+    });
+}
+
 function case_template_detail(ctempl_id) {
     let url = '/manage/case-templates/' + ctempl_id + '/modal' + case_param();
     $('#modal_case_template_json').load(url, function (response, status, xhr) {
@@ -182,8 +207,11 @@ function case_template_detail(ctempl_id) {
 
         $('#submit_new_case_template').on("click", function () {
             update_case_template(ctempl_id, editor, false, false);
-        })
+        });
 
+        $('#submit_delete_case_template').on("click", function () {
+            delete_case_template(ctempl_id);
+        });
     });
     $('#modal_case_template').modal({ show: true });
 }
@@ -213,7 +241,7 @@ function update_case_template(ctempl_id, editor, partial, complete){
     })
     .fail((error) => {
         let data = error.responseJSON;
-        $('#submit_new_case_template').text('Save');
+        $('#submit_new_case_template').text('Update');
         $('#alert_case_template_edit').text(data.message);
         if (data.data && data.data.length > 0) {
             let output='<li>'+ sanitizeHTML(data.data) +'</li>';

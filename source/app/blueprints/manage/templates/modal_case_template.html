@@ -121,5 +121,32 @@
     </div>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-success float-right" id="submit_new_case_template">Update</button>
+    {% if case_template.id %}
+    <button
+            type="button"
+            class="btn btn-outline-danger mt-5"
+             id="submit_delete_case_template"
+    >
+        Delete
+    </button>
+    <button
+            type="button"
+            class="btn btn-outline-success ml-4 mt-5 float-right"
+            id="submit_new_case_template"
+    >
+        Update
+    </button>
+
+    {% else %}
+
+    <button
+            type="button"
+            class="btn btn-outline-success ml-4 mt-5 float-right"
+            id="submit_new_case_template"
+    >
+        Save
+    </button>
+
+    {% endif %}
 </div>
+
