@@ -590,7 +590,7 @@ $('#orderAlertsBtn').on('click', function () {
   const formData = new FormData($('#alertFilterForm')[0]);
   const filters = Object.fromEntries(formData.entries());
 
-  updateAlerts(page_number, per_page, filters, sortOrder);
+  updateAlerts(page_number, per_page, filters);
 });
 
 $('#alertFilterForm').on('submit', (e) => {
@@ -822,6 +822,12 @@ function fetchSelectOptions(selectElementId, configItem) {
           value: null,
           text: ''
         }));
+        if (selectElementId === 'alertOwnerFilter') {
+            selectElement.append($('<option>', {
+                value: '-1',
+                text: 'Unassigned'
+            }));
+        }
 
         data.data.forEach(function (item) {
           selectElement.append($('<option>', {

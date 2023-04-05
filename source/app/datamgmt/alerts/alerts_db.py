@@ -27,6 +27,7 @@ from sqlalchemy import desc, asc
 from sqlalchemy.orm import joinedload
 from typing import List
 
+import app
 from app import db
 from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
 from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
@@ -106,7 +107,10 @@ def get_filtered_alerts(
         conditions.append(Alert.alert_severity_id == severity)
 
     if owner is not None:
-        conditions.append(Alert.alert_owner_id == owner)
+        if owner == -1:
+            conditions.append(Alert.alert_owner_id.is_(None))
+        else:
+            conditions.append(Alert.alert_owner_id == owner)
 
     if source is not None:
         conditions.append(Alert.alert_source.ilike(f'%{source}%'))
@@ -133,16 +137,22 @@ def get_filtered_alerts(
 
     order_func = desc if sort == "desc" else asc
 
-    # Query the alerts using the filter conditions
-    filtered_alerts = db.session.query(
-        Alert
-    ).filter(
-        *conditions
-    ).options(
-        joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer), joinedload(Alert.cases)
-    ).order_by(
-        order_func(Alert.alert_source_event_time)
-    ).paginate(page, per_page, error_out=False)
+    try:
+
+        # Query the alerts using the filter conditions
+        filtered_alerts = db.session.query(
+            Alert
+        ).filter(
+            *conditions
+        ).options(
+            joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer), joinedload(Alert.cases)
+        ).order_by(
+            order_func(Alert.alert_source_event_time)
+        ).paginate(page, per_page, error_out=False)
+
+    except Exception as e:
+        app.app.logger.exception(f"Error getting alerts: {str(e)}")
+        filtered_alerts = None
 
     return filtered_alerts
 
