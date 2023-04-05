@@ -314,10 +314,11 @@ async function updateAlerts(page, per_page, filters = {}, sort_order = 'desc'){
                             <div class="avatar cursor-pointer">
                                 <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
                             </div>
-                            ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : ''}
+                            ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : 
+                                `<div title="Assign to me" class="avatar avatar-sm" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);"><span class="avatar-title avatar-iris rounded-circle btn-alert-primary" style="cursor:pointer;"><i class="fa-solid fa-hand"></i></span></div>`}
                             <div class="envelope-icon">
                                 ${ alert.status ? `<span class="badge badge-pill badge-light">${alert.status.status_name}</span>`: ''} 
-                            </div>
+                            </div>                            
                         </div>
                     <div class="tickbox" style="display:none;">
                         <input type="checkbox" class="alert-selection-checkbox" data-alert-id="${alert.alert_id}" />

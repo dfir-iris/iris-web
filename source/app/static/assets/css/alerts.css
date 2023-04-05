@@ -108,8 +108,9 @@
 
 .envelope-icon {
     position: absolute;
-    top: 76px;
+    top: 75px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 16px; /* Adjust the icon size */
+    font-size: 16px;
 }
+
