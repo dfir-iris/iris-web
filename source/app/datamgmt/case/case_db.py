@@ -165,15 +165,12 @@ def save_case_tags(tags, case_id):
 
 
 def get_case_tags(case_id):
-    tags = CaseTags.query.with_entities(
-        Tags.tag_title
-    ).filter(
-        CaseTags.case_id == case_id
-    ).join(
-        CaseTags.tag
-    ).all()
+    case = Cases.query.get(case_id)
 
-    return [tag.tag_title for tag in tags]
+    if case:
+        return [tag.tag_title for tag in case.tags]
+
+    return []
 
 
 def get_activities_report_template():

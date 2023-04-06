@@ -76,6 +76,8 @@ class Cases(db.Model):
 
     alerts = relationship('Alert', secondary="alert_case_association", back_populates='cases', viewonly=True)
 
+    tags = relationship('Tags', secondary="case_tags", back_populates='cases')
+
     def __init__(self,
                  name=None,
                  soc_id=None,
@@ -152,9 +154,6 @@ class CaseTags(db.Model):
 
     case_id = Column(ForeignKey('cases.case_id'), primary_key=True, nullable=False)
     tag_id = Column(ForeignKey('tags.id'), primary_key=True, nullable=False, index=True)
-
-    case = relationship('Cases')
-    tag = relationship('Tags')
 
 
 class CasesEvent(db.Model):

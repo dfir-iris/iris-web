@@ -236,6 +236,7 @@ function escalateOrMergeAlert(alert_id, merge = false) {
         assets_import_list: selectedAssets,
         note: note,
         import_as_event: importAsEvent,
+        case_tags: $('#case_tags').val(),
         csrf_token: $("#csrf_token").val()
     };
 

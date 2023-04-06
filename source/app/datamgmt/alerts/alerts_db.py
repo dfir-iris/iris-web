@@ -33,7 +33,7 @@ from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_un
 from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.datamgmt.states import update_timeline_state
-from app.models import Cases, EventCategory
+from app.models import Cases, EventCategory, Tags
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation
 from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
 from app.util import add_obj_history_entry
@@ -220,7 +220,7 @@ def get_unspecified_event_category():
 
 
 def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List[str],
-                           note: str, import_as_event: bool) -> Cases:
+                           note: str, import_as_event: bool, case_tags: str) -> Cases:
     """
     Create a case from an alert
 
@@ -230,6 +230,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         assets_list (list): The list of assets
         note (str): The note to add to the case
         import_as_event (bool): Whether to import the alert as an event
+        case_tags (str): The tags to add to the case
 
     returns:
         Cases: The case that was created from the alert
@@ -251,6 +252,13 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     )
 
     case.save()
+
+    for tag in case_tags.split(','):
+        tag = Tags(tag_title=tag)
+        tag.save()
+        case.tags.append(tag)
+
+    db.session.commit()
 
     # Link the alert to the case
     alert.cases.append(case)
