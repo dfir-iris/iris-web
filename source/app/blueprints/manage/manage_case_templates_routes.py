@@ -25,6 +25,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
+from marshmallow import ValidationError
 
 from app import db
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
@@ -35,6 +36,7 @@ from app.forms import CaseTemplateForm, AddAssetForm
 from app.models import CaseTemplate
 from app.models.authorization import Permissions
 from app.iris_engine.utils.tracker import track_activity
+from app.schema.marshables import CaseTemplateSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import response_error
@@ -145,9 +147,9 @@ def add_case_template(caseid):
         return response_error("Found errors in case template", data=str(e))
 
     try:
-        case_template = CaseTemplate(**case_template_dict)
-        case_template.created_by_user_id = current_user.id
-
+        case_template_dict["created_by_user_id"] = current_user.id
+        case_template_data = CaseTemplateSchema().load(case_template_dict)
+        case_template = CaseTemplate(**case_template_data)
         db.session.add(case_template)
         db.session.commit()
     except Exception as e:
@@ -191,8 +193,17 @@ def update_case_template(cur_id, caseid):
     except Exception as e:
         return response_error("Found errors in case template", data=str(e))
 
-    case_template.update_from_dict(updated_case_template_dict)
-    db.session.commit()
+    case_template_schema = CaseTemplateSchema()
+
+    try:
+        # validate the request data and load it into an instance of the `CaseTemplate` object
+        case_template_data = case_template_schema.load(updated_case_template_dict, partial=True)
+        # update the existing `case_template` object with the new data
+        case_template.update_from_dict(case_template_data)
+        # commit the changes to the database
+        db.session.commit()
+    except ValidationError as error:
+        return response_error("Could not validate case template", data=str(error))
 
     return response_success("Case template updated")
 
