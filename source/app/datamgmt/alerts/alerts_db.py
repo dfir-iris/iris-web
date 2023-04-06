@@ -351,7 +351,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
 
 def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
-                        assets_list: List[str], note: str, import_as_event: bool):
+                        assets_list: List[str], note: str, import_as_event: bool, case_tags: str):
     """
     Merge an alert in a case
 
@@ -362,6 +362,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
         assets_list (list): The list of assets
         note (str): The note to add to the case
         import_as_event (bool): Whether to import the alert as an event
+        case_tags (str): The tags to add to the case
     """
     if case in alert.cases:
         return case
@@ -371,6 +372,11 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
     case.description += f"\n\n*Alert #{alert.alert_id} escalated by {current_user.name}*\n\n{escalation_note}"
+
+    for tag in case_tags.split(','):
+        tag = Tags(tag_title=tag)
+        tag.save()
+        case.tags.append(tag)
 
     # Link the alert to the case
     alert.cases.append(case)

@@ -121,45 +121,22 @@ def get_case_report_template():
     return reports
 
 
-def save_case_tags(tags, case_id):
-
+def save_case_tags(tags, case):
     if tags is None:
         return
 
-    to_add = []
-
-    existing_tags = CaseTags.query.filter(
-        CaseTags.case_id == case_id
-    ).all()
-    existing_tags = [tag.tag_id for tag in existing_tags]
+    case.tags.clear()
 
     for tag in tags.split(','):
         tag = tag.strip()
         if tag:
-            tg = Tags.query.filter(Tags.tag_title == tag).first()
-            if not tg:
-                tg = Tags()
-                tg.tag_title = tag
-                tg.tag_creation_date = datetime.datetime.now()
-                db.session.add(tg)
-                db.session.commit()
-            to_add.append(tg.id)
+            tg = Tags.query.filter_by(tag_title=tag).first()
 
-    CaseTags.query.filter(and_(
-        CaseTags.case_id == case_id,
-        CaseTags.tag_id.notin_(to_add)
-    )).delete()
+            if tg is None:
+                tg = Tags(tag_title=tag)
+                tg.save()
 
-    to_delete = [tag for tag in existing_tags if tag not in to_add]
-    if to_delete:
-        Tags.query.filter(Tags.id.in_(to_delete)).delete()
-
-    for tag in to_add:
-        if tag not in existing_tags:
-            ct = CaseTags()
-            ct.case_id = case_id
-            ct.tag_id = tag
-            db.session.add(ct)
+            case.tags.append(tg)
 
     db.session.commit()
 

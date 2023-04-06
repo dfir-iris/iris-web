@@ -569,11 +569,12 @@ class Tags(db.Model):
             self.tag_title = existing_tag.tag_title
             self.tag_creation_date = existing_tag.tag_creation_date
         else:
+            self.id = None
             self.tag_title = tag_title
             self.tag_creation_date = datetime.datetime.now()
 
     def save(self):
-        if not self.id:
+        if self.id is None:
             db.session.add(self)
             db.session.commit()
 

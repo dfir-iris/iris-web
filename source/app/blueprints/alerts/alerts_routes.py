@@ -309,7 +309,7 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
     assets_import_list: List[str] = data.get('assets_import_list')
     note: str = data.get('note')
     import_as_event: bool = data.get('import_as_event')
-    case_tags: List[str] = data.get('case_tags')
+    case_tags:str = data.get('case_tags')
 
     try:
         # Escalate the alert to a case
@@ -376,6 +376,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
     assets_import_list: List[str] = data.get('assets_import_list')
     note: str = data.get('note')
     import_as_event: bool = data.get('import_as_event')
+    case_tags = data.get('case_tags')
 
     try:
         # Merge the alert into a case
@@ -384,7 +385,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
 
         # Merge alert in the case
         merge_alert_in_case(alert, case, iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
-                            import_as_event=import_as_event)
+                            import_as_event=import_as_event, case_tags=case_tags)
 
         # Return the updated alert as JSON
         return response_success(data=CaseSchema().dump(case))
