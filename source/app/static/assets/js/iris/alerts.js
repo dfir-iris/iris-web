@@ -371,7 +371,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
                     </div>
                   <span class="">${alert.alert_description}</span><br/>
                   <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4">
-                    <div class="card p-3 mt-2">
+                    <div class="card-no-pd mt-2">
                         <div class="card-body">
                         <h3 class="title mb-3"><strong>General info</strong></h3>  
                           <div class="row">
@@ -452,7 +452,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
                         
                         <!-- Alert assets section -->
                         ${
-              alert.alert_assets && alert.alert_assets.length > 0
+                        alert.alert_assets && alert.alert_assets.length > 0
                   ? `<div class="separator-solid"></div><h3 class="title mb-3"><strong>Assets</strong></h3>
                                <div class="table-responsive">
                                  <table class="table table-sm table-striped">
@@ -516,6 +516,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
                       <small class="text-muted ml-1 mr-2">${alert.customer.customer_name || 'Unspecified'}</small></span>
                     ${alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
                     ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}
+                    ${alert.cases ? alert.cases.map((case_) => `<a href="/case?cid=${case_}" target=”_blank” class="ml-2" title="Merged in case #${case_}"><i class="fa-solid fa-link"></i>#${case_}</a>`).join('') : ''}
                   </div>
                 </div>
                 
