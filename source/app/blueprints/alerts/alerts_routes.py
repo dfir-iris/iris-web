@@ -29,7 +29,7 @@ from werkzeug import Response
 import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
-    merge_alert_in_case, unmerge_alert_from_case
+    merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -128,6 +128,13 @@ def alerts_add_route(caseid) -> Response:
         # Add the new alert to the session and commit it
         db.session.add(new_alert)
         db.session.commit()
+
+        # Add history entry
+        add_obj_history_entry(new_alert, 'Alert created')
+
+        # Cache the alert for similarities check
+        cache_similar_alert(new_alert.alert_customer_id, assets=data.get('alert_assets'),
+                            iocs=data.get('alert_iocs'), alert_id=new_alert.alert_id)
 
         # Return the newly created alert as JSON
         return response_success(data=alert_schema.dump(new_alert))

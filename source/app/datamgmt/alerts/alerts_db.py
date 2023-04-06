@@ -34,7 +34,7 @@ from app.datamgmt.case.case_events_db import update_event_assets, update_event_i
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags
-from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation
+from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache
 from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
 from app.util import add_obj_history_entry
 
@@ -498,3 +498,61 @@ def get_alert_status_by_id(status_id: int) -> AlertStatus:
         AlertStatus: The alert status that was retrieved from the database
     """
     return db.session.query(AlertStatus).filter(AlertStatus.status_id == status_id).first()
+
+
+def cache_similar_alert(customer_id, assets, iocs, alert_id):
+    """
+    Cache similar alerts
+
+    args:
+        customer_id (int): The ID of the customer
+        assets (list): The list of assets
+        iocs (list): The list of IOCs
+        alert_id (int): The ID of the alert
+
+    returns:
+        None
+
+    """
+    for asset in assets:
+        cache_entry = SimilarAlertsCache(customer_id=customer_id, asset_name=asset['asset_name'], alert_id=alert_id)
+        db.session.add(cache_entry)
+
+    for ioc in iocs:
+        cache_entry = SimilarAlertsCache(customer_id=customer_id, ioc_value=ioc['ioc_value'], alert_id=alert_id)
+        db.session.add(cache_entry)
+
+    db.session.commit()
+
+
+def get_similar_alerts(customer_id, assets, iocs):
+    """
+    Check if an alert is similar to another alert
+
+    args:
+        customer_id (int): The ID of the customer
+        assets (list): The list of assets
+        iocs (list): The list of IOCs
+
+    returns:
+        bool: True if the alert is similar to another alert, False otherwise
+    """
+    asset_names = [asset['asset_name'] for asset in assets]
+    ioc_values = [ioc['ioc_value'] for ioc in iocs]
+
+    similar_assets = SimilarAlertsCache.query.filter(
+        SimilarAlertsCache.customer_id == customer_id,
+        SimilarAlertsCache.asset_name.in_(asset_names)
+    ).all()
+
+    similar_iocs = SimilarAlertsCache.query.filter(
+        SimilarAlertsCache.customer_id == customer_id,
+        SimilarAlertsCache.ioc_value.in_(ioc_values)
+    ).all()
+
+    similarities = {
+        'assets': similar_assets,
+        'iocs': similar_iocs
+    }
+
+    return similarities

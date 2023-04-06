@@ -73,5 +73,22 @@ class AlertStatus(db.Model):
     status_description = Column(Text)
 
 
+class SimilarAlertsCache(db.Model):
+    __tablename__ = 'similar_alerts_cache'
 
+    id = Column(BigInteger, primary_key=True)
+    customer_id = Column(BigInteger, ForeignKey('client.client_id'), nullable=False)
+    asset_name = Column(Text, nullable=True)
+    ioc_value = Column(Text, nullable=True)
+    alert_id = Column(BigInteger, ForeignKey('alerts.alert_id'), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=text("now()"))
+
+    alert = relationship('Alert')
+    customer = relationship('Client')
+
+    def __init__(self, customer_id, alert_id, asset_name=None, ioc_value=None):
+        self.customer_id = customer_id
+        self.asset_name = asset_name
+        self.ioc_value = ioc_value
+        self.alert_id = alert_id
 
