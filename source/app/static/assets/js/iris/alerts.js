@@ -97,6 +97,10 @@ async function mergeAlertModal(alert_id) {
     const ioCsList = $("#ioCsList");
     const assetsList = $("#assetsList");
 
+    if (!notify_auto_api(alertDataReq, true)) {
+        return;
+    }
+
     $("#modalAlertId").val(alert_id);
     $("#modalAlertTitle").val(alertDataReq.data.alert_title);
 
@@ -105,6 +109,14 @@ async function mergeAlertModal(alert_id) {
     $('#escalateModalExplanation').text('This alert will be escalated into a new case. Select the IOCs and Assets to escalate into the case.');
     escalateButton.attr("data-merge", false);
     $('#mergeAlertCaseSelectSection').hide();
+
+    const case_tags = $('#case_tags');
+
+    case_tags.val(alertDataReq.data.alert_tags)
+    case_tags.amsifySuggestags({
+        printValues: false,
+        suggestions: []
+    });
 
     // Load case options for merging
     var options = {
