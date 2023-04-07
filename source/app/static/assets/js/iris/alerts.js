@@ -253,6 +253,8 @@ function escalateOrMergeAlert(alert_id, merge = false) {
                 notify_auto_api(data);
             }
         });
+
+
 }
 
 async function fetchAlerts(page, per_page, filters_string = {}, sort_order= 'desc') {
@@ -303,7 +305,7 @@ function getFiltersFromUrl() {
 function renderAlert(alert) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
 
-  const alertHtml = `
+  return `
         <div class="card alert-card full-height alert-card-selectable" id="alertCard-${alert.alert_id}">
             <div class="card-body" >
               <div class="d-flex">
@@ -489,9 +491,9 @@ function renderAlert(alert) {
                       <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                   </button>
                   <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                    <a href="#" class="dropdown-item" onclick="copy_object_link_md('alert', ${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
+                    <a href="javascript:void(0)" class="dropdown-item" onclick="copy_object_link_md('alert', ${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                     <div class="dropdown-divider"></div>
-                    <a href="#" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
+                    <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
                   </div>
                 </div>
               </div>
@@ -505,8 +507,8 @@ function renderAlert(alert) {
                             Assign
                         </button>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
-                            <a class="dropdown-item" href="#" onclick="changeAlertOwner(${alert.alert_id});">Assign</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="changeAlertOwner(${alert.alert_id});">Assign</a>
                         </div>
                     </div>
                     
@@ -515,11 +517,11 @@ function renderAlert(alert) {
                             Set status
                         </button>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
                         </div>
                     </div>
                     
@@ -529,9 +531,21 @@ function renderAlert(alert) {
           </div>
   `;
 
-  return alertHtml;
 }
 
+async function refreshAlert(alertId, alertData) {
+    if (alertData === undefined) {
+        const alertDataReq = await fetchAlert(alertId);
+        if (!notify_auto_api(alertDataReq, true)) {
+            return;
+        }
+        alertData = alertDataReq.data;
+    }
+
+    const alertElement = $(`#alertCard-${alertId}`);
+    const alertHtml = renderAlert(alertData);
+    alertElement.replaceWith(alertHtml);
+}
 
 async function updateAlerts(page, per_page, filters = {}, paging=false){
   if (sortOrder === undefined) { sortOrder = 'desc'; }
@@ -800,16 +814,13 @@ async function updateAlert(alert_id, data = {}, do_refresh = false) {
   return post_request_api('/alerts/update/' + alert_id, JSON.stringify(data)).then(function (data) {
     if (notify_auto_api(data)) {
       if (do_refresh) {
-        setFormValuesFromUrl();
-        setTimeout(() => {
-          const updatedAlertElement = $(`#alertCard-${alert_id}`);
-          if (updatedAlertElement.length) {
-            $('html, body').animate({
-              scrollTop: updatedAlertElement.offset().top - 60
-            }, 300);
-            $(`#alertCard-${alert_id}`).addClass('fade-it');
-          }
-        }, 200);
+        refreshAlert(alert_id, data.data)
+            .then(() => {
+                const updatedAlertElement = $(`#alertCard-${alert_id}`);
+                if (updatedAlertElement.length) {
+                    $(`#alertCard-${alert_id}`).addClass('fade-it');
+                }
+            });
       }
     }
   });
