@@ -217,6 +217,31 @@ function mergeAlertCasesSelectOption(data) {
     }
 }
 
+function fetchSmartRelations(alert_id) {
+    fetchSimilarAlerts(alert_id);
+}
+
+function fetchSimilarAlerts(alert_id) {
+  const similarAlertsElement = $(`#similarAlerts-${alert_id}`);
+  if (!similarAlertsElement.html()) {
+    get_request_api(`/alerts/similarities/${alert_id}`)
+      .done((data) => {
+        if (notify_auto_api(data, true)) {
+          const similarAlerts = data.data;
+          const similarAlertsList = $(`#similarAlerts-${alert_id}`);
+          similarAlertsList.html('');
+          similarAlerts.forEach((alert) => {
+            const alertElement = $('<li></li>');
+            alertElement.addClass('list-group-item');
+            alertElement.html(`<a href="/alerts/${alert.alert_id}">#${alert.alert_id} - ${alert.alert_title} - ${alert.alert_description}</a>`);
+            similarAlertsList.append(alertElement);
+          });
+        }
+      });
+  }
+}
+
+
 
 function escalateOrMergeAlert(alert_id, merge = false) {
 
@@ -313,7 +338,10 @@ function renderAlert(alert) {
                     <div class="avatar-tickbox-wrapper">
                        <div class="avatar-wrapper">
                             <div class="avatar cursor-pointer">
-                                <span class="avatar-title alert-m-title rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"><i class="fa-solid fa-fire"></i></span>
+                                <span class="avatar-title alert-m-title alert-similarity-trigger rounded-circle bg-${colorSeverity}" 
+                                data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}" onclick="fetchSmartRelations(${alert.alert_id});">
+                                <i class="fa-solid fa-fire"></i></span>
+
                             </div>
                             ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : 
                                 `<div title="Assign to me" class="avatar avatar-sm" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);"><span class="avatar-title avatar-iris rounded-circle btn-alert-primary" style="cursor:pointer;"><i class="fa-solid fa-hand"></i></span></div>`}
@@ -328,7 +356,8 @@ function renderAlert(alert) {
                 </div>
                 
                 <div class="flex-1 ml-4 pt-1">
-                    <h6 class="text-uppercase fw-bold mb-1 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                    <h6 class="text-uppercase fw-bold mb-1 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}"
+                    onclick="fetchSmartRelations(${alert.alert_id})">
                       ${alert.alert_title}
                       <span class="text-${colorSeverity} pl-3"></span>
                     </h6>
@@ -376,6 +405,11 @@ function renderAlert(alert) {
                                                </dl>`
                                   : ''
                           }
+                        
+                        <div class="separator-solid"></div>
+                        <h3 class="title mt-3 mb-3"><strong>Potential relations</strong></h3>
+                        <div id="similarAlerts-${alert.alert_id}" class="mt-4"></div>
+
                     
                         <!-- Alert IOCs section -->
                         ${

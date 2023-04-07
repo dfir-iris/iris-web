@@ -525,7 +525,7 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
     db.session.commit()
 
 
-def get_related_alerts(customer_id, assets, iocs):
+def get_related_alerts(customer_id, assets, iocs, details=False):
     """
     Check if an alert is related to another alert
 
@@ -533,6 +533,7 @@ def get_related_alerts(customer_id, assets, iocs):
         customer_id (int): The ID of the customer
         assets (list): The list of assets
         iocs (list): The list of IOCs
+        details (bool): Whether to return the details of the related alerts
 
     returns:
         bool: True if the alert is related to another alert, False otherwise
@@ -556,3 +557,34 @@ def get_related_alerts(customer_id, assets, iocs):
     }
 
     return similarities
+
+
+def get_related_alerts_details(customer_id, assets, iocs):
+    """
+    Get the details of the related alerts
+
+    args:
+        customer_id (int): The ID of the customer
+        assets (list): The list of assets
+        iocs (list): The list of IOCs
+
+    returns:
+        list: The details of the related alerts
+    """
+    asset_names = [asset['asset_name'] for asset in assets]
+    ioc_values = [ioc['ioc_value'] for ioc in iocs]
+
+    related_alerts = (
+        db.session.query(Alert)
+        .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
+        .filter(
+            SimilarAlertsCache.customer_id == customer_id,
+            db.or_(
+                SimilarAlertsCache.asset_name.in_(asset_names),
+                SimilarAlertsCache.ioc_value.in_(ioc_values),
+            ),
+        )
+        .all()
+    )
+
+    return related_alerts

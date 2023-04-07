@@ -29,7 +29,7 @@ from werkzeug import Response
 import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
-    merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts
+    merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -174,6 +174,35 @@ def alerts_get_route(caseid, alert_id) -> Response:
     alert_dump['related_alerts'] = similar_alerts
 
     return response_success(data=alert_dump)
+
+
+@alerts_blueprint.route('/alerts/similarities/<int:alert_id>', methods=['GET'])
+@ac_api_requires(Permissions.alerts_reader)
+def alerts_similarities_route(caseid, alert_id) -> Response:
+    """
+    Get an alert and similarities from the database
+
+    args:
+        caseid (str): The case id
+        alert_id (int): The alert id
+
+    returns:
+        Response: The response
+    """
+
+    alert_schema = AlertSchema()
+
+    # Get the alert from the database
+    alert = get_alert_by_id(alert_id)
+
+    # Return the alert as JSON
+    if alert is None:
+        return response_error('Alert not found')
+
+    # Get similar alerts
+    similar_alerts = get_related_alerts_details(alert.alert_customer_id, alert.alert_assets, alert.alert_iocs)
+
+    return response_success(data=similar_alerts)
 
 
 @alerts_blueprint.route('/alerts/update/<int:alert_id>', methods=['POST'])
