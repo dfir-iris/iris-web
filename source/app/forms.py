@@ -130,6 +130,7 @@ class AddCaseForm(FlaskForm):
     case_customer = SelectField(u'Customer', validators=[InputRequired()])
     case_organisations = SelectMultipleField(u'Organisations')
     classification_id = SelectField(u'Classification')
+    case_template_id = SelectField(u'Case Template')
 
 
 class ContactForm(FlaskForm):

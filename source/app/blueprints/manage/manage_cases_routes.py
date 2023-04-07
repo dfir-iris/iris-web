@@ -43,6 +43,7 @@ from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
+from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
 from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
@@ -91,6 +92,7 @@ def manage_index_cases(caseid, url_redir):
 
     form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
     form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
+    form.case_template_id.choices = [(ctp['id'], ctp['display_name']) for ctp in get_case_templates_list()]
 
     attributes = get_default_custom_attributes('case')
 
@@ -269,6 +271,7 @@ def api_add_case(caseid):
     try:
 
         request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
+        case_template_id = request_data.pop("case_template_id", "")
         case = case_schema.load(request_data)
         case.owner_id = current_user.id
 
