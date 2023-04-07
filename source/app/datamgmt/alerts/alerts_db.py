@@ -33,10 +33,12 @@ from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_un
 from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.datamgmt.states import update_timeline_state
-from app.models import Cases, EventCategory, Tags
+from app.models import Cases, EventCategory, Tags, AssetsType
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache
 from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
 from app.util import add_obj_history_entry
+
+from sqlalchemy.orm import aliased
 
 
 def db_list_all_alerts():
@@ -307,8 +309,6 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
         unspecified_cat = get_unspecified_event_category()
 
-        print(alert.alert_source_event_time.strftime('"%Y-%m-%dT%H:%M:%S.%f"'))
-
         event_schema = EventSchema()
         event = event_schema.load({
             'event_title': f"[ALERT] {alert.alert_title}",
@@ -515,11 +515,13 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
 
     """
     for asset in assets:
-        cache_entry = SimilarAlertsCache(customer_id=customer_id, asset_name=asset['asset_name'], alert_id=alert_id)
+        cache_entry = SimilarAlertsCache(customer_id=customer_id, asset_name=asset['asset_name'],
+                                         asset_type_id=asset["asset_type_id"], alert_id=alert_id)
         db.session.add(cache_entry)
 
     for ioc in iocs:
-        cache_entry = SimilarAlertsCache(customer_id=customer_id, ioc_value=ioc['ioc_value'], alert_id=alert_id)
+        cache_entry = SimilarAlertsCache(customer_id=customer_id, ioc_value=ioc['ioc_value'],
+                                         ioc_type_id=ioc['ioc_type_id'], alert_id=alert_id)
         db.session.add(cache_entry)
 
     db.session.commit()
@@ -569,22 +571,90 @@ def get_related_alerts_details(customer_id, assets, iocs):
         iocs (list): The list of IOCs
 
     returns:
-        list: The details of the related alerts
+        dict: The details of the related alerts with matched assets and/or IOCs
     """
     asset_names = [asset['asset_name'] for asset in assets]
     ioc_values = [ioc['ioc_value'] for ioc in iocs]
 
+    asset_type_alias = aliased(AssetsType)
+
     related_alerts = (
-        db.session.query(Alert)
+        db.session.query(Alert, SimilarAlertsCache.asset_name, SimilarAlertsCache.ioc_value,
+                         asset_type_alias.asset_icon_not_compromised)
         .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
+        .outerjoin(asset_type_alias, SimilarAlertsCache.asset_type_id == asset_type_alias.asset_id)
         .filter(
             SimilarAlertsCache.customer_id == customer_id,
-            db.or_(
-                SimilarAlertsCache.asset_name.in_(asset_names),
-                SimilarAlertsCache.ioc_value.in_(ioc_values),
-            ),
+            (SimilarAlertsCache.asset_name.in_(asset_names) | SimilarAlertsCache.ioc_value.in_(ioc_values))
         )
         .all()
     )
 
-    return related_alerts
+    alerts_dict = {}
+
+    for alert, asset_name, ioc_value, asset_icon_not_compromised in related_alerts:
+        if alert.alert_id not in alerts_dict:
+            alerts_dict[alert.alert_id] = {'alert': alert, 'assets': [], 'iocs': []}
+
+        if asset_name in asset_names:
+            asset_info = {'asset_name': asset_name, 'icon': asset_icon_not_compromised}
+            alerts_dict[alert.alert_id]['assets'].append(asset_info)
+        if ioc_value in ioc_values:
+            alerts_dict[alert.alert_id]['iocs'].append(ioc_value)
+
+    nodes = []
+    edges = []
+
+    added_assets = set()
+    added_iocs = set()
+
+    for alert_id, alert_info in alerts_dict.items():
+        nodes.append({
+            'id': f'alert_{alert_id}',
+            'label': f'Alert #{alert_id}',
+            'title': alert_info['alert'].alert_title,
+            'group': 'alert',
+            'shape': 'image',
+            'image': '/static/assets/img/graph/bell-solid.png'
+        })
+
+        for asset_info in alert_info['assets']:
+            asset_id = asset_info['asset_name']
+
+            if asset_id not in added_assets:
+                nodes.append({
+                    'id': f'asset_{asset_id}',
+                    'label': asset_id,
+                    'group': 'asset',
+                    'shape': 'image',
+                    'image': '/static/assets/img/graph/' + asset_info['icon']
+                })
+                added_assets.add(asset_id)
+
+            edges.append({
+                'from': f'alert_{alert_id}',
+                'to': f'asset_{asset_id}'
+            })
+
+        for ioc_value in alert_info['iocs']:
+            if ioc_value not in added_iocs:
+                nodes.append({
+                    'id': f'ioc_{ioc_value}',
+                    'label': ioc_value,
+                    'group': 'ioc',
+                    'shape': 'image',
+                    'image': '/static/assets/img/graph/virus-covid-solid.png'
+                })
+                added_iocs.add(ioc_value)
+
+            edges.append({
+                'from': f'alert_{alert_id}',
+                'to': f'ioc_{ioc_value}',
+                'dashes': True
+            })
+
+    return {
+        'nodes': nodes,
+        'edges': edges
+    }
+

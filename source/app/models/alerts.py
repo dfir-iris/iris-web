@@ -83,12 +83,20 @@ class SimilarAlertsCache(db.Model):
     alert_id = Column(BigInteger, ForeignKey('alerts.alert_id'), nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=text("now()"))
 
+    asset_type_id = Column(Integer, ForeignKey('assets_type.asset_id'), nullable=True)
+    ioc_type_id = Column(Integer, ForeignKey('ioc_type.type_id'), nullable=True)
+
     alert = relationship('Alert')
     customer = relationship('Client')
+    asset_type = relationship('AssetsType')
+    ioc_type = relationship('IocType')
 
-    def __init__(self, customer_id, alert_id, asset_name=None, ioc_value=None):
+    def __init__(self, customer_id, alert_id, asset_name=None, ioc_value=None, asset_type_id=None, ioc_type_id=None):
         self.customer_id = customer_id
         self.asset_name = asset_name
         self.ioc_value = ioc_value
         self.alert_id = alert_id
+        self.asset_type_id = asset_type_id
+        self.ioc_type_id = ioc_type_id
+
 
