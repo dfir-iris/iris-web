@@ -29,7 +29,7 @@ from werkzeug import Response
 import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
-    merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert
+    merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -167,7 +167,13 @@ def alerts_get_route(caseid, alert_id) -> Response:
     if alert is None:
         return response_error('Alert not found')
 
-    return response_success(data=alert_schema.dump(alert))
+    alert_dump = alert_schema.dump(alert)
+
+    # Get similar alerts
+    similar_alerts = get_related_alerts(alert.alert_customer_id, alert.alert_assets, alert.alert_iocs)
+    alert_dump['related_alerts'] = similar_alerts
+
+    return response_success(data=alert_dump)
 
 
 @alerts_blueprint.route('/alerts/update/<int:alert_id>', methods=['POST'])

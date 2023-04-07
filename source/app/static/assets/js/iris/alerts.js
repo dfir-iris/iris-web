@@ -300,47 +300,11 @@ function getFiltersFromUrl() {
     return Object.fromEntries(formData.entries());
 }
 
-async function updateAlerts(page, per_page, filters = {}, paging=false){
-  if (sortOrder === undefined) { sortOrder = 'desc'; }
+function renderAlert(alert) {
+  const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
 
-  if (paging) {
-      filters = getFiltersFromUrl();
-      console.log(filters);
-  }
-
-  const filterString = objectToQueryString(filters);
-  const data = await fetchAlerts(page, per_page, filterString, sortOrder);
-
-  if (!notify_auto_api(data, true)) {
-    return;
-  }
-  const alerts = data.data.alerts;
-
-  // Check if the selection mode is active
-   const selectionModeActive = $('body').hasClass('selection-mode');
-   selectionModeActive ? $('body').removeClass('selection-mode') : '';
-   $('#toggle-selection-mode').text('Select');
-   $('body').removeClass('selection-mode');
-   $('#select-deselect-all').hide();
-   $('#alerts-batch-actions').hide();
-
-  // Clear the current alerts list
-  const alertsContainer = $('.alerts-container');
-  alertsContainer.html('');
-
-  if (alerts.length === 0) {
-    // Display "No results" message when there are no alerts
-    alertsContainer.append('<div class="ml-auto mr-auto">No results</div>');
-  } else {
-
-      // Add the fetched alerts to the alerts container
-      alerts.forEach((alert) => {
-          const alertElement = $('<div></div>');
-
-          const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
-
-          alertElement.html(`
-           <div class="card alert-card full-height alert-card-selectable" id="alertCard-${alert.alert_id}">
+  const alertHtml = `
+        <div class="card alert-card full-height alert-card-selectable" id="alertCard-${alert.alert_id}">
             <div class="card-body" >
               <div class="d-flex">
                 <div class="avatar-group mt-3 ${alert.owner ? '': 'ml-2 mr-2' }">
@@ -562,7 +526,53 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
                     <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
                 </div>
           </div>    
-        `);
+          </div>
+  `;
+
+  return alertHtml;
+}
+
+
+async function updateAlerts(page, per_page, filters = {}, paging=false){
+  if (sortOrder === undefined) { sortOrder = 'desc'; }
+
+  if (paging) {
+      filters = getFiltersFromUrl();
+      console.log(filters);
+  }
+
+  const filterString = objectToQueryString(filters);
+  const data = await fetchAlerts(page, per_page, filterString, sortOrder);
+
+  if (!notify_auto_api(data, true)) {
+    return;
+  }
+  const alerts = data.data.alerts;
+
+  // Check if the selection mode is active
+   const selectionModeActive = $('body').hasClass('selection-mode');
+   selectionModeActive ? $('body').removeClass('selection-mode') : '';
+   $('#toggle-selection-mode').text('Select');
+   $('body').removeClass('selection-mode');
+   $('#select-deselect-all').hide();
+   $('#alerts-batch-actions').hide();
+
+  // Clear the current alerts list
+  const alertsContainer = $('.alerts-container');
+  alertsContainer.html('');
+
+  if (alerts.length === 0) {
+    // Display "No results" message when there are no alerts
+    alertsContainer.append('<div class="ml-auto mr-auto">No results</div>');
+  } else {
+
+      // Add the fetched alerts to the alerts container
+      alerts.forEach((alert) => {
+          const alertElement = $('<div></div>');
+
+          const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
+          const alertHtml = renderAlert(alert, colorSeverity);
+          alertElement.html(alertHtml);
           alertsContainer.append(alertElement);
       });
   }
