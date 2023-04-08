@@ -42,8 +42,8 @@ from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
-from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
-from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
+from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, case_template_pre_modifier, \
+    case_template_post_modifier
 from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
@@ -264,25 +264,31 @@ def api_case_close(cur_id, caseid):
 @ac_api_requires(Permissions.standard_user)
 def api_add_case(caseid):
     case_schema = CaseSchema()
-    case_template_enabled = False
-    case_template = None
 
     try:
 
         request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
         case_template_id = request_data.pop("case_template_id", "")
-        if len(case_template_id) > 0:
-            case_template = get_case_template_by_id(case_template_id)
-            if not case_template:
-                return response_error(f"Invalid Case template ID {case_template_id}")
-            case_template_enabled = True
 
         case = case_schema.load(request_data)
         case.owner_id = current_user.id
-        if case_template_enabled is True and case_template.title_prefix:
-            case.name = "[" + case_template.title_prefix + "] " + case.name[0]
+
+        if len(case_template_id) > 0:
+            case = case_template_pre_modifier(case, case_template_id)
+            if case is None:
+                return response_error(msg=f"Invalid Case template ID {case_template_id}", status=400)
 
         case.save()
+
+        if len(case_template_id) > 0:
+            try:
+                case, logs = case_template_post_modifier(case, case_template_id)
+                if len(logs) > 0:
+                    return response_error(msg=f"Could not update new case with {case_template_id}", data=logs, status=400)
+            except Exception as e:
+                log.error(e.__str__())
+                return response_error(msg=f"Unexpected error when loading template {case_template_id} to new case.",
+                                      data=[e.__str__()], status=400)
 
         ac_set_new_case_access(None, case.case_id)
 

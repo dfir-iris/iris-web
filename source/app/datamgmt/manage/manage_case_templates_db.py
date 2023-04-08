@@ -16,10 +16,17 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from datetime import datetime
 from typing import List, Optional
 
-from app.models import CaseTemplate
+import marshmallow
+
+from app import db
+from app.datamgmt.case.case_notes_db import add_note_group, add_note
+from app.datamgmt.case.case_tasks_db import add_task
+from app.models import CaseTemplate, Cases, Tags, NotesGroup
 from app.models.authorization import User
+from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseGroupNoteSchema, CaseAddNoteSchema
 
 
 def get_case_templates_list() -> List[dict]:
@@ -36,6 +43,7 @@ def get_case_templates_list() -> List[dict]:
         CaseTemplate.title_prefix,
         CaseTemplate.author,
         CaseTemplate.created_at,
+
         CaseTemplate.updated_at,
         User.name.label('added_by')
     ).join(
@@ -139,3 +147,142 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
         return None
     except Exception as e:
         return str(e)
+
+
+def case_template_pre_modifier(case_schema: CaseSchema, case_template_id: str):
+    case_template = get_case_template_by_id(int(case_template_id))
+    if not case_template:
+        return None
+    if case_template.title_prefix:
+        case_schema.name = "[" + case_template.title_prefix + "] " + case_schema.name[0]
+
+    return case_schema
+
+
+def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
+    logs = []
+    # Update case tasks
+    for task_template in case_template.tasks:
+        try:
+            # validate before saving
+            task_schema = CaseTaskSchema()
+
+            # Remap case task template fields
+            # Set status to "To Do" which is ID 1
+            mapped_task_template = {
+                "task_title": task_template['title'],
+                "task_description": task_template['description'] if task_template.get('description') else "",
+                "task_tags": ",".join(tag for tag in task_template["tags"]) if task_template.get('description') else "",
+                "task_status_id": 1
+            }
+
+            task = task_schema.load(mapped_task_template)
+
+            assignee_id_list = []
+
+            ctask = add_task(task=task,
+                             assignee_id_list=assignee_id_list,
+                             user_id=case.user_id,
+                             caseid=case.case_id
+                             )
+
+            if not ctask:
+                logs.append("Unable to create task for internal reasons")
+
+        except marshmallow.exceptions.ValidationError as e:
+            logs.append(e.messages)
+
+    return logs
+
+
+def case_template_populate_notes(case: Cases, note_group_template: dict, ng: NotesGroup):
+    logs = []
+    if note_group_template.get("notes"):
+        for note_template in note_group_template["notes"]:
+            # validate before saving
+            note_schema = CaseAddNoteSchema()
+            mapped_note_template = {
+                "group_id": ng.group_id,
+                "note_title": note_template["title"],
+                "note_content": note_template["content"] if note_template.get("content") else ""
+            }
+            note_schema.verify_group_id(mapped_note_template, caseid=ng.group_case_id)
+            note = note_schema.load(mapped_note_template)
+
+            cnote = add_note(note.get('note_title'),
+                             datetime.utcnow(),
+                             case.user_id,
+                             case.case_id,
+                             note.get('group_id'),
+                             note_content=note.get('note_content'))
+
+            if not cnote:
+                logs.append("Unable to add note for internal reasons")
+                break
+    return logs
+
+
+def case_template_populate_note_groups(case: Cases, case_template: CaseTemplate):
+    logs = []
+    # Update case tasks
+    for note_group_template in case_template.note_groups:
+        try:
+            # validate before saving
+            note_group_schema = CaseGroupNoteSchema()
+
+            # Remap case task template fields
+            # Set status to "To Do" which is ID 1
+            mapped_note_group_template = {
+                "group_title": note_group_template['title']
+            }
+
+            note_group = note_group_schema.load(mapped_note_group_template)
+
+            ng = add_note_group(group_title=note_group.group_title,
+                                caseid=case.case_id,
+                                userid=case.user_id,
+                                creationdate=datetime.utcnow())
+
+            if not ng:
+                logs.append("Unable to add note group for internal reasons")
+                break
+
+            logs = case_template_populate_notes(case, note_group_template, ng)
+
+        except marshmallow.exceptions.ValidationError as e:
+            logs.append(e.messages)
+
+    return logs
+
+
+def case_template_post_modifier(case: Cases, case_template_id: str):
+    case_template = get_case_template_by_id(int(case_template_id))
+    logs = []
+    if not case_template:
+        logs.append(f"Case template {case_template_id} not found")
+        return None, logs
+
+    # Update summary, we want to append in order not to skip the initial case description
+    case.description += "\n" + case_template.summary
+
+    # Update case tags
+    """ Bug when there is a collision between a case tag already defined and the new one with the same title
+    for tag_str in case_template.tags:
+    tag = Tags(tag_title=tag_str)
+    tag.save()
+    case.tags.append(tag)
+    """
+
+    # Update case tasks
+    logs = case_template_populate_tasks(case, case_template)
+    if logs:
+        return case, logs
+
+    # Update case note groups
+    logs = case_template_populate_note_groups(case, case_template)
+    if logs:
+        return case, logs
+
+    db.session.commit()
+
+    return case, logs
