@@ -40,7 +40,7 @@ from app.iris_engine.access_control.utils import ac_get_effective_permissions_of
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
-from app.schema.marshables import UserSchema
+from app.schema.marshables import UserSchema, BasicUserSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import endpoint_deprecated
@@ -193,3 +193,16 @@ def profile_refresh_permissions_and_ac(caseid):
 
     return response_success('Access control and permissions refreshed')
 
+
+@profile_blueprint.route('/user/whoami', methods=['GET'])
+@ac_api_requires()
+def profile_whoami(caseid):
+    """
+    Returns the current user's profile
+    """
+    user = get_user(current_user.id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    user_schema = BasicUserSchema()
+    return response_success(data=user_schema.dump(user))

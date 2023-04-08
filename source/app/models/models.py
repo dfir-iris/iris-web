@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
 
 # IMPORTS ------------------------------------------------
 import enum
@@ -587,8 +588,30 @@ class Tags(db.Model):
     __tablename__ = 'tags'
 
     id = Column(BigInteger, primary_key=True, nullable=False)
-    tag_title = Column(Text)
+    tag_title = Column(Text, unique=True)
     tag_creation_date = Column(DateTime)
+
+    cases = relationship('Cases', secondary="case_tags", back_populates='tags', viewonly=True)
+
+    def __init__(self, tag_title):
+        existing_tag = self.get_by_title(tag_title)
+        if existing_tag:
+            self.id = existing_tag.id
+            self.tag_title = existing_tag.tag_title
+            self.tag_creation_date = existing_tag.tag_creation_date
+        else:
+            self.id = None
+            self.tag_title = tag_title
+            self.tag_creation_date = datetime.datetime.now()
+
+    def save(self):
+        if self.id is None:
+            db.session.add(self)
+            db.session.commit()
+
+    @classmethod
+    def get_by_title(cls, tag_title):
+        return cls.query.filter_by(tag_title=tag_title).first()
 
 
 class TaskAssignee(db.Model):

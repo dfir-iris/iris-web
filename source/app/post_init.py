@@ -48,6 +48,7 @@ from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
 from app.models import create_safe_limited
+from app.models.alerts import Severity, AlertStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
@@ -131,6 +132,12 @@ def run_post_init(development=False):
 
         log.info("Creating base tasks status")
         create_safe_task_status()
+
+        log.info("Creating base severities")
+        create_safe_severities()
+
+        log.info("Creating base alert status")
+        create_safe_alert_status()
 
         log.info("Creating base hooks")
         create_safe_hooks()
@@ -498,6 +505,28 @@ def create_safe_task_status():
     create_safe(db.session, TaskStatus, status_name='On hold', status_description="", status_bscolor="muted")
     create_safe(db.session, TaskStatus, status_name='Done', status_description="", status_bscolor="success")
     create_safe(db.session, TaskStatus, status_name='Canceled', status_description="", status_bscolor="muted")
+
+
+def create_safe_severities():
+    create_safe(db.session, Severity, severity_name='Unspecified', severity_description="Unspecified")
+    create_safe(db.session, Severity, severity_name='Informational', severity_description="Informational")
+    create_safe(db.session, Severity, severity_name='Low', severity_description="Low")
+    create_safe(db.session, Severity, severity_name='Medium', severity_description="Medium")
+    create_safe(db.session, Severity, severity_name='High', severity_description="High")
+    create_safe(db.session, Severity, severity_name='Critical', severity_description="Critical")
+
+
+def create_safe_alert_status():
+    create_safe(db.session, AlertStatus, status_name='Unspecified', status_description="Unspecified")
+    create_safe(db.session, AlertStatus, status_name='New', status_description="Alert is new and unassigned")
+    create_safe(db.session, AlertStatus, status_name='Assigned', status_description="Alert is assigned to a user and pending "
+                                                                      "investigation")
+    create_safe(db.session, AlertStatus, status_name='In progress', status_description="Alert is being investigated")
+    create_safe(db.session, AlertStatus, status_name='Pending', status_description="Alert is in a pending state")
+    create_safe(db.session, AlertStatus, status_name='Resolved', status_description="Alert resolved without escalation")
+    create_safe(db.session, AlertStatus, status_name='Closed', status_description="Alert closed, no action taken")
+    create_safe(db.session, AlertStatus, status_name='Merged', status_description="Alert merged into an existing case")
+    create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
 
 
 def create_safe_assets():

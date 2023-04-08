@@ -168,7 +168,7 @@ function notify_warning(message) {
 }
 
 function notify_auto_api(data, silent_success) {
-    if (data.status == 'success') {
+    if (data.status === 'success') {
         if (silent_success === undefined || silent_success === false) {
             if (data.message.length === 0) {
                 data.message = 'Operation succeeded';
@@ -841,29 +841,51 @@ function do_md_filter_xss(html) {
         });
 }
 
-function get_avatar_initials(name, small) {
-    initial = name.split(' ');
+const avatarCache = {};
+
+function get_avatar_initials(name, small, onClickFunction) {
+    const av_size = small ? 'avatar-sm' : 'avatar';
+    const onClick = onClickFunction ? `onclick="${onClickFunction}"` : '';
+
+    if (avatarCache[name] && avatarCache[name][small ? 'small' : 'large']) {
+        return `<div class="avatar ${av_size}" title="${name}" ${onClick}>
+            ${avatarCache[name][small ? 'small' : 'large']}
+        </div>`;
+    }
+
+    const initial = name.split(' ');
+    let snum;
+
     if (initial.length > 1) {
-        initial = initial[0][0] + initial[1][0];
-        snum = initial[0].charCodeAt(0) + initial[1].charCodeAt(0);
+        snum = initial[0][0].charCodeAt(0) + initial[1][0].charCodeAt(0);
     } else {
-        initial = initial[0][0];
-        snum = initial.charCodeAt(0);
-    }
-    initial = initial.toUpperCase();
-
-    bgs = ['bg-info', 'bg-default', 'bg-primary', 'bg-secondary', 'bg-success', 'bg-warning', 'bg-danger'];
-    bg = bgs[snum % bgs.length];
-    if (small === undefined || small === null || small === false) {
-        av_size = 'avatar';
-    } else {
-        av_size = 'avatar-sm';
+        snum = initial[0][0].charCodeAt(0);
     }
 
-    return `<div class="${av_size}" title="${name}">
-        <span class="avatar-title rounded-circle border border-white ${bg}">${initial}</span>
+    const initials = initial.map(i => i[0].toUpperCase()).join('');
+    const avatarColor = get_avatar_color(snum);
+
+    const avatarHTMLin = `<span class="avatar-title avatar-iris rounded-circle" style="background-color:${avatarColor}; cursor:pointer;">${initials}</span>`
+    const avatarHTMLout = `<div class="avatar ${av_size}" title="${name}" ${onClick}>
+        ${avatarHTMLin}
     </div>`;
+
+    if (!avatarCache[name]) {
+        avatarCache[name] = {};
+    }
+    avatarCache[name][small ? 'small' : 'large'] = avatarHTMLin;
+
+    return avatarHTMLout;
 }
+
+function get_avatar_color(snum) {
+    const hue = snum * 137.508 % 360; // Use the golden angle for more distinct colors
+    const saturation = 40 + (snum % 20); // Saturation range: 40-60
+    const lightness = 55 + (snum % 10); // Lightness range: 70-80
+
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
 
 function edit_inner_editor(btn_id, container_id, ctrd_id) {
     $('#'+container_id).toggle();
@@ -1235,6 +1257,99 @@ function random_filename(length) {
    return filename;
 }
 
+function createPagination(currentPage, totalPages, per_page, callback, paginationContainersNodes) {
+  const maxPagesToShow = 5;
+  const paginationContainers = $(paginationContainersNodes);
+
+  if (totalPages === 1 || totalPages === 0) {
+    paginationContainers.html('');
+    return;
+  }
+
+  paginationContainers.each(function() {
+    const paginationContainer = $(this);
+    paginationContainer.html('');
+
+    const startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    // Add First page button
+      if (totalPages > maxPagesToShow) {
+          const firstItem = $('<li>', {class: 'page-item'}).appendTo(paginationContainer);
+          if (currentPage === 1) {
+              firstItem.addClass('disabled');
+          }
+          $('<a>', {
+              href: `javascript:${callback}(1, ${per_page},{}, true)`,
+              text: 'First page',
+              class: 'page-link',
+          }).appendTo(firstItem);
+      }
+
+    // Add Previous button
+    const prevItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
+    if (currentPage === 1) {
+      prevItem.addClass('disabled');
+    }
+    $('<a>', {
+      href: `javascript:${callback}(${Math.max(1, currentPage - 1)}, ${per_page},{}, true)`,
+      text: 'Previous',
+      class: 'page-link',
+    }).appendTo(prevItem);
+
+    // Add page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      const pageItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
+      if (i === currentPage) {
+        pageItem.addClass('active');
+      }
+      $('<a>', {
+        href: `javascript:${callback}(${i}, ${per_page},{}, true)`,
+        text: i,
+        class: 'page-link',
+      }).appendTo(pageItem);
+    }
+
+    // Add Next button
+    const nextItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
+    if (currentPage === totalPages) {
+      nextItem.addClass('disabled');
+    }
+    $('<a>', {
+      href: `javascript:${callback}(${Math.min(totalPages, currentPage + 1)}, ${per_page},{}, true)`,
+      text: 'Next',
+      class: 'page-link',
+    }).appendTo(nextItem);
+
+   if (totalPages > maxPagesToShow) {
+       const lastItem = $('<li>', {class: 'page-item'}).appendTo(paginationContainer);
+       if (currentPage === totalPages) {
+           lastItem.addClass('disabled');
+       }
+       $('<a>', {
+           href: `javascript:${callback}(${totalPages}, ${per_page},{}, true)`,
+           text: 'Last page',
+           class: 'page-link',
+       }).appendTo(lastItem);
+   }
+  });
+}
+
+
+let userWhoami = JSON.parse(sessionStorage.getItem('userWhoami'));
+
+let userWhoamiRequest = (function() {
+  if (!userWhoami) {
+    get_request_api('/user/whoami')
+      .done((data) => {
+        if (notify_auto_api(data, true)) {
+            userWhoami = data.data;
+          sessionStorage.setItem('userWhoami', JSON.stringify(userWhoami));
+        }
+      });
+  }
+});
+
 $(document).ready(function(){
     notify_redirect();
     update_time();
@@ -1339,7 +1454,6 @@ $(document).ready(function(){
         return false;
     });
 
-
     var sh_ext = showdown.extension('bootstrap-tables', function () {
       return [{
         type: "output",
@@ -1356,9 +1470,10 @@ $(document).ready(function(){
           });
           return liveHtml.html();
         }
-      }];
-});
+          }];
+    });
 
+    userWhoamiRequest();
 });
 
 

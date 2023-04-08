@@ -162,9 +162,6 @@ class IrisConfig(configparser.ConfigParser):
 
 
 # --------- Configuration ---------
-# read the private configuration file
-#config = configparser.ConfigParser()
-
 config = IrisConfig()
 
 # Fetch the values

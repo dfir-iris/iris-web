@@ -22,7 +22,7 @@ import uuid
 from datetime import datetime
 from flask_login import current_user
 # IMPORTS ------------------------------------------------
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger, Table
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Date
@@ -45,7 +45,7 @@ from app.datamgmt.states import update_ioc_state
 from app.datamgmt.states import update_notes_state
 from app.datamgmt.states import update_tasks_state
 from app.datamgmt.states import update_timeline_state
-from app.models.models import Client
+from app.models.models import Client, Base
 
 
 class Cases(db.Model):
@@ -73,6 +73,10 @@ class Cases(db.Model):
     user = relationship('User', foreign_keys=[user_id])
     owner = relationship('User', foreign_keys=[owner_id])
     classification = relationship('CaseClassification')
+
+    alerts = relationship('Alert', secondary="alert_case_association", back_populates='cases', viewonly=True)
+
+    tags = relationship('Tags', secondary="case_tags", back_populates='cases')
 
     def __init__(self,
                  name=None,
@@ -150,9 +154,6 @@ class CaseTags(db.Model):
 
     case_id = Column(ForeignKey('cases.case_id'), primary_key=True, nullable=False)
     tag_id = Column(ForeignKey('tags.id'), primary_key=True, nullable=False, index=True)
-
-    case = relationship('Cases')
-    tag = relationship('Tags')
 
 
 class CasesEvent(db.Model):

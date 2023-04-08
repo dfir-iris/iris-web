@@ -136,7 +136,7 @@ services:
       - iris_frontend
       - iris_backend
     ports:
-      - "${INTERFACE_HTTPS_PORT:-443}:443"
+      - "${INTERFACE_HTTPS_PORT:-443}:${INTERFACE_HTTPS_PORT:-443}"
     volumes:
       - "./docker/dev_certs/:/www/certs/:ro"
     restart: on-failure:5

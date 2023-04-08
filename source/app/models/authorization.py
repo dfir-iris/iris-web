@@ -31,6 +31,9 @@ class Permissions(enum.Enum):
     standard_user = 0x1
     server_administrator = 0x2
 
+    alerts_reader = 0x4
+    alerts_writer = 0x8
+
 
 class Organisation(db.Model):
     __tablename__ = 'organisations'

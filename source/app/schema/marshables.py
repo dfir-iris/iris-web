@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import uuid
+
 import datetime
 import logging
 import os
@@ -31,7 +33,7 @@ import dateutil.parser
 import marshmallow
 import pyminizip
 from flask_login import current_user
-from marshmallow import fields
+from marshmallow import fields, Schema, validate, ValidationError
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow import ValidationError
@@ -65,6 +67,7 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
+from app.models.alerts import Alert, Severity, AlertStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -315,10 +318,6 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         for field in ['event_title', 'event_date', 'event_tz', 'event_category_id', 'event_assets', 'event_iocs']:
             if field not in data:
                 raise marshmallow.exceptions.ValidationError(f"Missing field {field}", field_name=field)
-
-        if not isinstance(int(data.get('event_category_id')), int):
-            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
-                                                         field_name="event_category_id")
 
         if not isinstance(int(data.get('event_category_id')), int):
             raise marshmallow.exceptions.ValidationError("Invalid event category ID",
@@ -806,6 +805,20 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class BasicUserSchema(ma.SQLAlchemyAutoSchema):
+    user_id = auto_field('id', required=False)
+    user_uuid = auto_field('uuid', required=False)
+    user_name = auto_field('name', required=True, validate=Length(min=2))
+    user_login = auto_field('user', required=True, validate=Length(min=2))
+    user_email = auto_field('email', required=True, validate=Length(min=2))
+
+    class Meta:
+        model = User
+        load_instance = True
+        exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
+                   'has_deletion_confirmation', 'id', 'name', 'email', 'user', 'uuid']
+
+
 class UserSchema(ma.SQLAlchemyAutoSchema):
     user_roles_str = fields.List(fields.String, required=False)
     user_name = auto_field('name', required=True, validate=Length(min=2))
@@ -885,3 +898,82 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
                                                              field_name="user_password")
 
         return data
+
+
+def validate_ioc_type(type_id):
+    if not IocType.query.get(type_id):
+        raise ValidationError("Invalid ioc_type ID")
+
+
+def validate_ioc_tlp(tlp_id):
+    if not Tlp.query.get(tlp_id):
+        raise ValidationError("Invalid ioc_tlp ID")
+
+
+def validate_asset_type(asset_id):
+    if not AssetsType.query.get(asset_id):
+        raise ValidationError("Invalid asset_type ID")
+
+
+def validate_asset_tlp(tlp_id):
+    if not Tlp.query.get(tlp_id):
+        raise ValidationError("Invalid asset_tlp ID")
+
+
+class AlertIOCSchema(Schema):
+    ioc_value = fields.String(required=True)
+    ioc_description = fields.String(required=True)
+    ioc_tlp_id = fields.Integer(required=True, validate=validate_ioc_tlp)
+    ioc_type_id = fields.Integer(required=True, validate=validate_ioc_type)
+    ioc_tags = fields.List(fields.String(), required=True)
+    ioc_enrichment = fields.Dict(required=True)
+    ioc_uuid = fields.String(required=False)
+
+    @post_load
+    def add_ioc_uuid(self, data, **kwargs):
+        data['ioc_uuid'] = str(uuid.uuid4())
+        return data
+
+
+class AlertAssetSchema(Schema):
+    asset_name = fields.String(required=True)
+    asset_description = fields.String(required=True)
+    asset_type_id = fields.Integer(required=True, validate=validate_asset_type)
+    asset_ip = fields.String(required=True)
+    asset_domain = fields.String(required=True)
+    asset_tags = fields.List(fields.String(), required=True)
+    asset_enrichment = fields.Dict(required=True)
+    asset_uuid = fields.String(required=False)
+
+    @post_load
+    def add_asset_uuid(self, data, **kwargs):
+        data['asset_uuid'] = str(uuid.uuid4())
+        return data
+
+
+class SeveritySchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Severity
+        load_instance = True
+
+
+class AlertStatusSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = AlertStatus
+        load_instance = True
+
+
+class AlertSchema(ma.SQLAlchemyAutoSchema):
+    severity = ma.Nested(SeveritySchema)
+    status = ma.Nested(AlertStatusSchema)
+    customer = ma.Nested(CustomerSchema)
+    classification = ma.Nested(CaseClassificationSchema)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    alert_iocs = fields.List(fields.Nested(AlertIOCSchema))
+    alert_assets = fields.List(fields.Nested(AlertAssetSchema))
+
+    class Meta:
+        model = Alert
+        include_relationships = True
+        include_fk = True
+        load_instance = True

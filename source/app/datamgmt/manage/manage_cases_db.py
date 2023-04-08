@@ -21,7 +21,7 @@ from pathlib import Path
 
 from datetime import datetime
 from sqlalchemy import and_
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, contains_eager, subqueryload
 
 from app import db
 from app.datamgmt.case.case_db import get_case_tags
@@ -43,6 +43,7 @@ from app.models import IocLink
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
+from app.models.alerts import Alert, AlertCaseAssociation
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import OrganisationCaseAccess
@@ -232,7 +233,7 @@ def get_case_details_rt(case_id):
         ).outerjoin(
             owner_alias, and_(Cases.owner_id == owner_alias.id)
         ).join(
-            Cases.client
+            Cases.client,
         ).outerjoin(
             Cases.classification
         ).first()

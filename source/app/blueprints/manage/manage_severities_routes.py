@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+#
+#  IRIS Source Code
+#  contact@dfir-iris.org
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 3 of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+from flask import Blueprint, Response
+
+from app.datamgmt.manage.manage_common import get_severity_by_id, get_severities_list
+from app.schema.marshables import SeveritySchema
+from app.util import ac_api_requires
+from app.util import response_success
+
+manage_severities_blueprint = Blueprint('manage_severities',
+                                        __name__,
+                                        template_folder='templates')
+
+
+# CONTENT ------------------------------------------------
+@manage_severities_blueprint.route('/manage/severities/list', methods=['GET'])
+@ac_api_requires()
+def list_severities(caseid: int) -> Response:
+    """
+    Get the list of severities
+
+    Args:
+        caseid (int): case id
+
+    Returns:
+        Flask Response object
+    """
+    l_cl = get_severities_list()
+    schema = SeveritySchema()
+
+    return response_success("", data=schema.dump(l_cl, many=True))
+
+
+@manage_severities_blueprint.route('/manage/severities/<int:severity_id>', methods=['GET'])
+@ac_api_requires()
+def get_case_alert_status(severity_id: int, caseid: int) -> Response:
+    """
+    Get the alert status
+
+    Args:
+        severity_id (int): severity id
+        caseid (int): case id
+    """
+    cl = get_severity_by_id(severity_id)
+    schema = SeveritySchema()
+
+    return response_success("", data=schema.dump(cl))

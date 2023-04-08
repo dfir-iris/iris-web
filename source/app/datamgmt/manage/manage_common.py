@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
-
+#!/usr/bin/env python3
+#
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2023 - DFIR-IRIS
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -17,13 +17,28 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from app import db
+from app.models.alerts import Severity
 
-set -e
 
-# envsubst will make a substitution on every $variable in a file, since the nginx file contains nginx variable like $host, we have to limit the substitution to this set
-# otherwise, each nginx variable will be replaced by an empty string
-envsubst '${INTERFACE_HTTPS_PORT} ${IRIS_UPSTREAM_SERVER} ${IRIS_UPSTREAM_PORT} ${SERVER_NAME} ${KEY_FILENAME} ${CERT_FILENAME}' < /etc/nginx/nginx.conf > /tmp/nginx.conf
-cp /tmp/nginx.conf /etc/nginx/nginx.conf
-rm /tmp/nginx.conf
+def get_severities_list():
+    """
+    Get a list of severities from the database
 
-exec nginx -g "daemon off;"
+    returns:
+        list: A list of severities
+    """
+    return db.session.query(Severity).distinct().all()
+
+
+def get_severity_by_id(status_id: int) -> Severity:
+    """
+    Get a severity from the database by its ID
+
+    args:
+        status_id (int): The ID of the severity to retrieve
+
+    returns:
+        Severity: The severity object
+    """
+    return db.session.query(Severity).filter(Severity.severity_id == status_id).first()
