@@ -24,6 +24,7 @@ import marshmallow
 from app import db
 from app.datamgmt.case.case_notes_db import add_note_group, add_note
 from app.datamgmt.case.case_tasks_db import add_task
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models import CaseTemplate, Cases, Tags, NotesGroup
 from app.models.authorization import User
 from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseGroupNoteSchema, CaseAddNoteSchema
@@ -176,6 +177,8 @@ def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
                 "task_status_id": 1
             }
 
+            mapped_task_template = call_modules_hook('on_preload_task_create', data=mapped_task_template, caseid=case.case_id)
+
             task = task_schema.load(mapped_task_template)
 
             assignee_id_list = []
@@ -185,6 +188,8 @@ def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
                              user_id=case.user_id,
                              caseid=case.case_id
                              )
+
+            ctask = call_modules_hook('on_postload_task_create', data=ctask, caseid=case.case_id)
 
             if not ctask:
                 logs.append("Unable to create task for internal reasons")
@@ -201,11 +206,15 @@ def case_template_populate_notes(case: Cases, note_group_template: dict, ng: Not
         for note_template in note_group_template["notes"]:
             # validate before saving
             note_schema = CaseAddNoteSchema()
+
             mapped_note_template = {
                 "group_id": ng.group_id,
                 "note_title": note_template["title"],
                 "note_content": note_template["content"] if note_template.get("content") else ""
             }
+
+            mapped_note_template = call_modules_hook('on_preload_note_create', data=mapped_note_template, caseid=case.case_id)
+
             note_schema.verify_group_id(mapped_note_template, caseid=ng.group_case_id)
             note = note_schema.load(mapped_note_template)
 
@@ -215,6 +224,8 @@ def case_template_populate_notes(case: Cases, note_group_template: dict, ng: Not
                              case.case_id,
                              note.get('group_id'),
                              note_content=note.get('note_content'))
+
+            cnote = call_modules_hook('on_postload_note_create', data=cnote, caseid=case.case_id)
 
             if not cnote:
                 logs.append("Unable to add note for internal reasons")
