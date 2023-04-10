@@ -1,5 +1,9 @@
 <div class="modal-header">
+    {% if case_template.id %}
     <h4>Edit case template {{ case_template.display_name }}</h4>
+    {% else %}
+    <h4>Add case template</h4>
+    {% endif %}
     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true">&times;</span></button>
 </div>
@@ -10,7 +14,11 @@
             <div class="row">
                 <div class="col-6">
                     <div class="accordion accordion-primary">
+                        {% if case_template.id %}
                         <h2>{{ case_template.display_name }} template</h2>
+                        {% else %}
+                        <h2>New template</h2>
+                        {% endif %}
                         <p>Case templates allow to prefill case objects such as tasks, tags, and notes.<br/>
                             It could be used to add procedures defining how to react against a specific kind of incident (phishing, ransomware, APT...)</p>
                         <div class="alert-std alert-warning" role="alert">
