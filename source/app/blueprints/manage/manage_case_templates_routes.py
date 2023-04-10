@@ -122,10 +122,15 @@ def add_template_modal(caseid):
     return render_template("modal_case_template.html", form=form, case_template=case_template)
 
 
+@manage_case_templates_blueprint.route('/manage/case-templates/upload/modal', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def upload_template_modal(caseid):
+    return render_template("modal_upload_case_template.html")
+
+
 @manage_case_templates_blueprint.route('/manage/case-templates/add', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def add_case_template(caseid):
-
     data = request.get_json()
     if not data:
         return response_error("Invalid request")
