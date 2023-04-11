@@ -313,37 +313,6 @@ function fetchSimilarAlerts(alert_id) {
     get_request_api(`/alerts/similarities/${alert_id}`)
       .done((data) => {
           createNetwork(alert_id, data.data, `similarAlerts-${alert_id}`);
-        // if (notify_auto_api(data, true)) {
-        //   const similarAlerts = data.data;
-        //   const similarAlertsList = $(`#similarAlerts-${alert_id}`);
-        //   similarAlertsList.html('');
-        //   if (similarAlerts.both.length !== 0) {
-        //       similarAlerts.both.forEach((alert) => {
-        //           const alertElement = $('<li></li>');
-        //           alertElement.addClass('list-group-item');
-        //           alertElement.html(`<a href="/alerts/${alert.alert_id}">#${alert.alert.alert_id} - ${alert.alert.alert_title} </a>`);
-        //           similarAlertsList.append(alertElement);
-        //       });
-        //   }
-        //   if (similarAlerts.assets.length !== 0) {
-        //       similarAlertsList.append($('<h6>Assets</h6>'));
-        //       similarAlerts.assets.forEach((alert) => {
-        //           const alertElement = $('<li></li>');
-        //           alertElement.addClass('list-group-item');
-        //           alertElement.html(`<a href="/alerts/${alert.alert_id}">#${alert.alert_id} - ${alert.alert_title} - ${alert.alert_description}</a>`);
-        //           similarAlertsList.append(alertElement);
-        //       });
-        //   }
-        //  if (similarAlerts.iocs.length !== 0) {
-        //      similarAlertsList.append($('<h6>IOCs</h6>'));
-        //      similarAlerts.iocs.forEach((alert) => {
-        //          const alertElement = $('<li></li>');
-        //          alertElement.addClass('list-group-item');
-        //          alertElement.html(`<a href="/alerts/${alert.alert_id}">#${alert.alert_id} - ${alert.alert_title} - ${alert.alert_description}</a>`);
-        //          similarAlertsList.append(alertElement);
-        //      });
-        //  }
-        // }
       });
   }
 }
