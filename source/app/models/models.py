@@ -594,20 +594,18 @@ class Tags(db.Model):
     cases = relationship('Cases', secondary="case_tags", back_populates='tags', viewonly=True)
 
     def __init__(self, tag_title):
-        existing_tag = self.get_by_title(tag_title)
-        if existing_tag:
-            self.id = existing_tag.id
-            self.tag_title = existing_tag.tag_title
-            self.tag_creation_date = existing_tag.tag_creation_date
-        else:
-            self.id = None
-            self.tag_title = tag_title
-            self.tag_creation_date = datetime.datetime.now()
+        self.id = None
+        self.tag_title = tag_title
+        self.tag_creation_date = datetime.datetime.now()
 
     def save(self):
-        if self.id is None:
+        existing_tag = self.get_by_title(self.tag_title)
+        if existing_tag:
+            return existing_tag
+        else:
             db.session.add(self)
             db.session.commit()
+            return self
 
     @classmethod
     def get_by_title(cls, tag_title):

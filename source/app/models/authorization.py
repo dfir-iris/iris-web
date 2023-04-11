@@ -31,8 +31,9 @@ class Permissions(enum.Enum):
     standard_user = 0x1
     server_administrator = 0x2
 
-    alerts_reader = 0x4
-    alerts_writer = 0x8
+    alerts_read = 0x4
+    alerts_write = 0x8
+    alerts_delete = 0x10
 
 
 class Organisation(db.Model):

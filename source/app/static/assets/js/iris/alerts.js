@@ -223,6 +223,30 @@ function fetchSmartRelations(alert_id) {
     fetchSimilarAlerts(alert_id);
 }
 
+function buildAlertLink(alert_id){
+    const current_path = location.protocol + '//' + location.host
+    return current_path + '/alerts' + case_param() + '&alert_id=' + alert_id;
+}
+
+function copyAlertLink(alert_id) {
+    const link = buildAlertLink(alert_id);
+    navigator.clipboard.writeText(link).then(function() {
+        notify_success('Link copied');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error('Shared link', err);
+    });
+}
+
+function copyMDAlertLink(alert_id){
+    const link = `[<i class="fa-solid fa-bell"></i> #${alert_id}](${buildAlertLink(alert_id)})`;
+    navigator.clipboard.writeText(link).then(function() {
+        notify_success('MD link copied');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error('Shared link', err);
+    });
+}
 
 function generateNetworkData(alert_id, relatedAlerts) {
   const nodes = [];
@@ -262,6 +286,14 @@ function generateNetworkData(alert_id, relatedAlerts) {
   }
 
   return { nodes, edges };
+}
+
+function getAlertOffset(element) {
+  const rect = element.getBoundingClientRect();
+  return {
+    left: rect.left,
+    top: rect.top + window.scrollY,
+  };
 }
 
 function createNetwork(alert, relatedAlerts, containerId) {
@@ -304,6 +336,47 @@ function createNetwork(alert, relatedAlerts, containerId) {
 
   const container = document.getElementById(containerId);
   const network = new vis.Network(container, data, options);
+
+  let selectedNodeId = null;
+
+  network.on('oncontext', (event) => {
+      event.event.preventDefault();
+
+      const nodeId = network.getNodeAt(event.pointer.DOM);
+
+      if (nodeId) {
+        selectedNodeId = nodeId;
+
+        // Get the offset of the container element.
+        const containerOffset = getAlertOffset(container);
+
+        const x = event.pointer.DOM.x;
+        const y = containerOffset.top + event.pointer.DOM.y;
+
+        const contextMenu = document.getElementById('context-menu');
+        contextMenu.style.left = `${x}px`;
+        contextMenu.style.top = `${y}px`;
+        contextMenu.classList.remove('hidden');
+      }
+  });
+
+      // Hide the context menu on a click anywhere else.
+    document.addEventListener('click', () => {
+      const contextMenu = document.getElementById('context-menu');
+      contextMenu.classList.add('hidden');
+    });
+
+    // Add event listeners for each menu item.
+    document.getElementById('view-alert').addEventListener('click', () => {
+      // Handle the "View Alert" action.
+      console.log('View alert for node', selectedNodeId);
+    });
+
+    document.getElementById('unlink').addEventListener('click', () => {
+      // Handle the "Unlink" action.
+      console.log('Unlink node', selectedNodeId);
+    });
+
 }
 
 
@@ -313,37 +386,6 @@ function fetchSimilarAlerts(alert_id) {
     get_request_api(`/alerts/similarities/${alert_id}`)
       .done((data) => {
           createNetwork(alert_id, data.data, `similarAlerts-${alert_id}`);
-        // if (notify_auto_api(data, true)) {
-        //   const similarAlerts = data.data;
-        //   const similarAlertsList = $(`#similarAlerts-${alert_id}`);
-        //   similarAlertsList.html('');
-        //   if (similarAlerts.both.length !== 0) {
-        //       similarAlerts.both.forEach((alert) => {
-        //           const alertElement = $('<li></li>');
-        //           alertElement.addClass('list-group-item');
-        //           alertElement.html(`<a href="/alerts/${alert.alert_id}">#${alert.alert.alert_id} - ${alert.alert.alert_title} </a>`);
-        //           similarAlertsList.append(alertElement);
-        //       });
-        //   }
-        //   if (similarAlerts.assets.length !== 0) {
-        //       similarAlertsList.append($('<h6>Assets</h6>'));
-        //       similarAlerts.assets.forEach((alert) => {
-        //           const alertElement = $('<li></li>');
-        //           alertElement.addClass('list-group-item');
-        //           alertElement.html(`<a href="/alerts/${alert.alert_id}">#${alert.alert_id} - ${alert.alert_title} - ${alert.alert_description}</a>`);
-        //           similarAlertsList.append(alertElement);
-        //       });
-        //   }
-        //  if (similarAlerts.iocs.length !== 0) {
-        //      similarAlertsList.append($('<h6>IOCs</h6>'));
-        //      similarAlerts.iocs.forEach((alert) => {
-        //          const alertElement = $('<li></li>');
-        //          alertElement.addClass('list-group-item');
-        //          alertElement.html(`<a href="/alerts/${alert.alert_id}">#${alert.alert_id} - ${alert.alert_title} - ${alert.alert_description}</a>`);
-        //          similarAlertsList.append(alertElement);
-        //      });
-        //  }
-        // }
       });
   }
 }
@@ -517,7 +559,7 @@ function renderAlert(alert) {
                         <h3 class="title mt-3 mb-3"><strong>Relations</strong></h3>
                         The following relations are automatically generated by IRIS based on the alert's IOCs and assets 
                         in the system. They are an indication only and may not be accurate. 
-                        <div id="similarAlerts-${alert.alert_id}" class="mt-4"></div>
+                        <div id="similarAlerts-${alert.alert_id}" class="mt-4 similar-alert-graph"></div>
 
                     
                         <!-- Alert IOCs section -->
@@ -634,7 +676,8 @@ function renderAlert(alert) {
                       <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                   </button>
                   <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                    <a href="javascript:void(0)" class="dropdown-item" onclick="copy_object_link_md('alert', ${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
+                    <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                    <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                     <div class="dropdown-divider"></div>
                     <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
                   </div>
@@ -807,7 +850,10 @@ $('#alertFilterForm').on('submit', (e) => {
   const filters = Object.fromEntries(formData.entries());
 
   const queryParams = new URLSearchParams(window.location.search);
-  const per_page = parseInt(queryParams.get('per_page'));
+  let per_page = parseInt(queryParams.get('per_page'));
+  if (!per_page) {
+      per_page = 10;
+  }
 
   // Update the alerts list with the new filters and reset to the first page
   updateAlerts(1, per_page, filters);
