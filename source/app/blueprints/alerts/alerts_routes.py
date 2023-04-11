@@ -49,7 +49,7 @@ alerts_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @alerts_blueprint.route('/alerts/filter', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
 def alerts_list_route(caseid) -> Response:
     """
     Get a list of alerts from the database
@@ -99,7 +99,7 @@ def alerts_list_route(caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/add', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
 def alerts_add_route(caseid) -> Response:
     """
     Add a new alert to the database
@@ -145,7 +145,7 @@ def alerts_add_route(caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
 def alerts_get_route(caseid, alert_id) -> Response:
     """
     Get an alert from the database
@@ -177,7 +177,7 @@ def alerts_get_route(caseid, alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/similarities/<int:alert_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
 def alerts_similarities_route(caseid, alert_id) -> Response:
     """
     Get an alert and similarities from the database
@@ -189,8 +189,6 @@ def alerts_similarities_route(caseid, alert_id) -> Response:
     returns:
         Response: The response
     """
-
-    alert_schema = AlertSchema()
 
     # Get the alert from the database
     alert = get_alert_by_id(alert_id)
@@ -206,7 +204,7 @@ def alerts_similarities_route(caseid, alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/update/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
 def alerts_update_route(alert_id, caseid) -> Response:
     """
     Update an alert in the database
@@ -246,7 +244,7 @@ def alerts_update_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/update', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
 def alerts_batch_update_route(caseid: int) -> Response:
     """
     Update multiple alerts in the database
@@ -294,7 +292,7 @@ def alerts_batch_update_route(caseid: int) -> Response:
 
 
 @alerts_blueprint.route('/alerts/delete/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_delete)
+@ac_api_requires(Permissions.alerts_delete, no_cid_required=True)
 def alerts_delete_route(alert_id, caseid) -> Response:
     """
     Delete an alert from the database
@@ -325,7 +323,7 @@ def alerts_delete_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/escalate/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
 def alerts_escalate_route(alert_id, caseid) -> Response:
     """
     Escalate an alert
@@ -385,7 +383,7 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/merge/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
 def alerts_merge_route(alert_id, caseid) -> Response:
     """
     Merge an alert into a case
@@ -438,7 +436,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/unmerge/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
 def alerts_unmerge_route(alert_id, caseid) -> Response:
     """
     Unmerge an alert from a case
@@ -478,7 +476,7 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts', methods=['GET'])
-@ac_requires(Permissions.alerts_read)
+@ac_requires(Permissions.alerts_read, no_cid_required=True)
 def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
     """
     List all alerts

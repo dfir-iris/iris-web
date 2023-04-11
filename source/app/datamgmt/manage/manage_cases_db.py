@@ -265,7 +265,6 @@ def delete_case(case_id):
     CaseProtagonist.query.filter(CaseProtagonist.case_id == case_id).delete()
     AlertCaseAssociation.query.filter(AlertCaseAssociation.case_id == case_id).delete()
 
-
     dsf_list = DataStoreFile.query.filter(DataStoreFile.file_case_id == case_id).all()
 
     for dsf_list_item in dsf_list:

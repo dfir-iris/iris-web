@@ -207,10 +207,11 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_case_access(request_data, access_level, from_api=False):
+def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
+
     caseid = request_data.args.get('cid', default=None, type=int)
     redir = False
-    if not caseid:
+    if not caseid and no_cid_required is False:
         try:
 
             js_d = request_data.get_json()
@@ -236,6 +237,9 @@ def get_case_access(request_data, access_level, from_api=False):
             else:
                 log.error(traceback.print_exc())
                 return True, None, False
+
+    elif not caseid and no_cid_required is True:
+        caseid = current_user.ctx_case if current_user.ctx_case else 1
 
     case = None
 
@@ -517,7 +521,7 @@ def ac_socket_requires(*access_level):
     return inner_wrap
 
 
-def ac_requires(*permissions):
+def ac_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -526,7 +530,7 @@ def ac_requires(*permissions):
                 return redirect(not_authenticated_redirection_url())
 
             else:
-                redir, caseid, _ = get_case_access(request, [])
+                redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
@@ -584,7 +588,7 @@ def endpoint_deprecated(message, version):
     return inner_wrap
 
 
-def ac_api_requires(*permissions):
+def ac_api_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -601,7 +605,8 @@ def ac_api_requires(*permissions):
                 return response_error("Authentication required", status=401)
 
             else:
-                redir, caseid, _ = get_case_access(request, [], from_api=True)
+
+                redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
                 if not caseid or redir:
                     return response_error("Invalid case ID", status=404)
                 kwargs.update({"caseid": caseid})

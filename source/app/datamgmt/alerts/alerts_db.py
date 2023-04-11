@@ -246,7 +246,9 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     case = Cases(
         name=f"[ALERT] {alert.alert_title}",
         description=f"*Alert escalated by {current_user.name}*\n\n{escalation_note}"
-                    f"### Alert content\n\n{alert.alert_description}",
+                    f"### Alert description\n\n{alert.alert_description}"
+                    f"\n\n### IRIS alert link\n\n"
+                    f"[<i class='fa-solid fa-bell'></i> #{alert.alert_id}](/alerts?alert_id={alert.alert_id})",
         soc_id=alert.alert_id,
         client_id=alert.alert_customer_id,
         user=current_user,
@@ -615,7 +617,8 @@ def get_related_alerts_details(customer_id, assets, iocs):
             'title': alert_info['alert'].alert_title,
             'group': 'alert',
             'shape': 'image',
-            'image': '/static/assets/img/graph/bell-solid.png'
+            'image': '/static/assets/img/graph/bell-solid.png',
+            'font': "12px verdana white" if current_user.in_dark_mode else ''
         })
 
         for asset_info in alert_info['assets']:
@@ -627,7 +630,8 @@ def get_related_alerts_details(customer_id, assets, iocs):
                     'label': asset_id,
                     'group': 'asset',
                     'shape': 'image',
-                    'image': '/static/assets/img/graph/' + asset_info['icon']
+                    'image': '/static/assets/img/graph/' + asset_info['icon'],
+                    'font': "12px verdana white" if current_user.in_dark_mode else ''
                 })
                 added_assets.add(asset_id)
 
@@ -643,7 +647,8 @@ def get_related_alerts_details(customer_id, assets, iocs):
                     'label': ioc_value,
                     'group': 'ioc',
                     'shape': 'image',
-                    'image': '/static/assets/img/graph/virus-covid-solid.png'
+                    'image': '/static/assets/img/graph/virus-covid-solid.png',
+                    'font': "12px verdana white" if current_user.in_dark_mode else ''
                 })
                 added_iocs.add(ioc_value)
 
