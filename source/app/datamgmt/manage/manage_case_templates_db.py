@@ -277,12 +277,10 @@ def case_template_post_modifier(case: Cases, case_template_id: str):
     case.description += "\n" + case_template.summary
 
     # Update case tags
-    """ Bug when there is a collision between a case tag already defined and the new one with the same title
     for tag_str in case_template.tags:
-    tag = Tags(tag_title=tag_str)
-    tag.save()
-    case.tags.append(tag)
-    """
+        tag = Tags(tag_title=tag_str)
+        tag = tag.save()
+        case.tags.append(tag)
 
     # Update case tasks
     logs = case_template_populate_tasks(case, case_template)
