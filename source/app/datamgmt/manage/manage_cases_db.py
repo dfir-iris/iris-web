@@ -51,7 +51,7 @@ from app.models.authorization import User
 from app.models import UserActivity
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
-from app.models.cases import CaseProtagonist
+from app.models.cases import CaseProtagonist, CaseTags
 
 
 def list_cases_id():
@@ -260,6 +260,12 @@ def delete_case(case_id):
     UserActivity.query.filter(UserActivity.case_id == case_id).delete()
     CaseReceivedFile.query.filter(CaseReceivedFile.case_id == case_id).delete()
     IocLink.query.filter(IocLink.case_id == case_id).delete()
+
+    CaseTags.query.filter(CaseTags.case_id == case_id).delete()
+    CaseProtagonist.query.filter(CaseProtagonist.case_id == case_id).delete()
+    AlertCaseAssociation.query.filter(AlertCaseAssociation.case_id == case_id).delete()
+
+
     dsf_list = DataStoreFile.query.filter(DataStoreFile.file_case_id == case_id).all()
 
     for dsf_list_item in dsf_list:
