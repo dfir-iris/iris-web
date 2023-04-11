@@ -850,7 +850,10 @@ $('#alertFilterForm').on('submit', (e) => {
   const filters = Object.fromEntries(formData.entries());
 
   const queryParams = new URLSearchParams(window.location.search);
-  const per_page = parseInt(queryParams.get('per_page'));
+  let per_page = parseInt(queryParams.get('per_page'));
+  if (!per_page) {
+      per_page = 10;
+  }
 
   // Update the alerts list with the new filters and reset to the first page
   updateAlerts(1, per_page, filters);
