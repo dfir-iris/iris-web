@@ -693,7 +693,7 @@ function get_row_id(row) {
     return null;
 }
 
-var iClassWhiteList = ['fa-solid fa-tags','fa-solid fa-tag', 'fa-solid fa-virus-covid text-danger mr-1',
+var iClassWhiteList = ['fa-solid fa-tags','fa-solid fa-tag', 'fa-solid fa-bell', 'fa-solid fa-virus-covid text-danger mr-1',
 'fa-solid fa-file-shield text-success mr-1', 'fa-regular fa-file mr-1', 'fa-solid fa-lock text-success mr-1']
 
 function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_callback, do_save, readonly, live_preview) {

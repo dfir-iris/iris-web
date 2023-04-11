@@ -118,3 +118,35 @@
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+.similar-alert-graph {
+    background-color: #f2f2f2;
+    border-radius: 25px;
+}
+
+.hidden {
+  display: none;
+}
+
+#context-menu {
+  position: absolute;
+  z-index: 100;
+  background-color: white;
+  border: 1px solid black;
+  padding: 10px;
+}
+
+#context-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#context-menu li {
+  padding: 5px;
+  cursor: pointer;
+}
+
+#context-menu li:hover {
+  background-color: #f0f0f0;
+}
