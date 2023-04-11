@@ -257,7 +257,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
     for tag in case_tags.split(','):
         tag = Tags(tag_title=tag)
-        tag.save()
+        tag = tag.save()
         case.tags.append(tag)
 
     db.session.commit()
