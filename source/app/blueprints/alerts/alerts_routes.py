@@ -30,7 +30,7 @@ import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
     merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details, \
-    get_alert_comments
+    get_alert_comments, delete_alert_comment
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -539,21 +539,32 @@ def alert_comments_get(alert_id, caseid):
         return response_error('Invalid alert ID')
 
     return response_success(data=CommentSchema(many=True).dump(alert_comments))
-#
-#
-# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
-# @ac_api_requires(Permissions.alerts_write, no_cid_required=True)
-# def case_comment_delete(cur_id, com_id, caseid):
-#
-#     success, msg = delete_event_comment(cur_id, com_id)
-#     if not success:
-#         return response_error(msg)
-#
-#     call_modules_hook('on_postload_event_comment_delete', data=com_id, caseid=caseid)
-#
-#     track_activity(f"comment {com_id} on event {cur_id} deleted", caseid=caseid)
-#     return response_success(msg)
-#
+
+
+@alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/delete', methods=['POST'])
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alert_comment_delete(alert_id, com_id, caseid):
+    """
+    Delete a comment for an alert
+
+    args:
+        alert_id (int): The alert id
+        com_id (int): The comment id
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+
+    success, msg = delete_alert_comment(alert_id, com_id)
+    if not success:
+        return response_error(msg)
+
+    call_modules_hook('on_postload_alert_comment_delete', data=com_id, caseid=caseid)
+
+    track_activity(f"comment {com_id} on alert {alert_id} deleted", caseid=caseid)
+    return response_success(msg)
+
 #
 # @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 # @ac_api_requires(Permissions.alerts_read, no_cid_required=True)

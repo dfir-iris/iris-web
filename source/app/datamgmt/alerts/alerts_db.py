@@ -25,7 +25,7 @@ from flask_login import current_user
 from operator import and_
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import joinedload
-from typing import List
+from typing import List, Tuple
 
 import app
 from app import db
@@ -675,4 +675,26 @@ def get_alert_comments(alert_id: int) -> List[Comments]:
         list: The list of comments
     """
     return Comments.query.filter(Comments.comment_alert_id == alert_id).all()
+
+
+def delete_alert_comment(comment_id: int, alert_id: int) -> Tuple[bool, str]:
+    """
+    Delete a comment of an alert
+
+    args:
+        comment_id (int): The ID of the comment
+    """
+    comment = Comments.query.filter(
+        Comments.comment_id == comment_id,
+        Comments.comment_user_id == current_user.id,
+        Comments.comment_alert_id == alert_id
+    ).first()
+    if not comment:
+        return False, "You are not allowed to delete this comment"
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return True, "Comment deleted successfully"
+
 
