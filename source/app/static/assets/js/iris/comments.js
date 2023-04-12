@@ -1,6 +1,8 @@
 var g_comment_desc_editor = null;
-function comment_element(element_id, element_type) {
-    var url = `/case/${element_type}/${element_id}/comments/modal`;
+function comment_element(element_id, element_type, is_alert=false) {
+
+    const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
+    const url = `${prefix}/${element_id}/comments/modal`;
     $('#modal_comment_content').load(url + case_param(),
         function (response, status, xhr) {
             if (status !== "success") {
@@ -55,11 +57,13 @@ function save_comment(element_id, element_type) {
     save_comment_ext(element_id, element_type, false);
 }
 
-function save_comment_ext(element_id, element_type, do_close){
+function save_comment_ext(element_id, element_type, do_close, is_alert=false){
     data = Object();
     data['comment_text'] = g_comment_desc_editor.getValue();
     data['csrf_token'] = $('#csrf_token').val();
-    post_request_api(`/case/${element_type}/${element_id}/comments/add`, JSON.stringify(data), true)
+    const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
+
+    post_request_api(`${prefix}/${element_id}/comments/add`, JSON.stringify(data), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             load_comments(element_id, element_type);
@@ -104,13 +108,14 @@ function increase_modal_comments_count(element_type, element_id) {
     }
 }
 
-function delete_comment(comment_id, element_id, element_type) {
+function delete_comment(comment_id, element_id, element_type, is_alert= false) {
     do_deletion_prompt("You are about to delete comment #" + comment_id)
     .then((doDelete) => {
         if (doDelete) {
             data = Object();
             data['csrf_token'] = $('#csrf_token').val();
-            post_request_api(`/case/${element_type}/${element_id}/comments/${comment_id}/delete`, JSON.stringify(data))
+            const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
+            post_request_api(`${prefix}/${element_id}/comments/${comment_id}/delete`, JSON.stringify(data))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     load_comments(element_id, element_type);
@@ -121,9 +126,9 @@ function delete_comment(comment_id, element_id, element_type) {
     });
 }
 
-function edit_comment(comment_id, element_id, element_type) {
-
-    get_request_api(`/case/${element_type}/${element_id}/comments/${comment_id}`)
+function edit_comment(comment_id, element_id, element_type, is_alert=false) {
+    const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
+    get_request_api(`${prefix}/${element_id}/comments/${comment_id}`)
     .done((data) => {
         if(notify_auto_api(data, true)) {
 
@@ -139,12 +144,13 @@ function edit_comment(comment_id, element_id, element_type) {
 
 }
 
-function save_edit_comment(element_id, element_type) {
+function save_edit_comment(element_id, element_type, is_alert=false) {
     data = Object();
     data['comment_text'] = g_comment_desc_editor.getValue();
     comment_id = $('.comment_editing').data('comment_id');
     data['csrf_token'] = $('#csrf_token').val();
-    post_request_api(`/case/${element_type}/${element_id}/comments/${comment_id}/edit`, JSON.stringify(data), true)
+    const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
+    post_request_api(`${prefix}/${element_id}/comments/${comment_id}/edit`, JSON.stringify(data), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             cancel_edition(comment_id);
@@ -164,7 +170,7 @@ function cancel_edition(comment_id) {
     g_comment_desc_editor.setValue('');
 }
 
-function load_comments(element_id, element_type, comment_id, do_notification) {
+function load_comments(element_id, element_type, comment_id, do_notification, is_alert=false) {
 
     if (do_notification !== undefined) {
         silent_success = !do_notification;
@@ -172,7 +178,9 @@ function load_comments(element_id, element_type, comment_id, do_notification) {
         silent_success = true;
     }
 
-    get_request_api(`/case/${element_type}/${element_id}/comments/list`)
+    const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
+
+    get_request_api(`${prefix}/${element_id}/comments/list`)
     .done((data) => {
         if (notify_auto_api(data, silent_success)) {
             $('#comments_list').empty();
