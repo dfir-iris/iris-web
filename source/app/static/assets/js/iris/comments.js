@@ -127,7 +127,8 @@ function delete_comment(comment_id, element_id, element_type, is_alert= false) {
     });
 }
 
-function edit_comment(comment_id, element_id, element_type, is_alert=false) {
+function edit_comment(comment_id, element_id, element_type) {
+    const is_alert = element_type === 'alerts';
     const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
     get_request_api(`${prefix}/${element_id}/comments/${comment_id}`)
     .done((data) => {
@@ -145,11 +146,13 @@ function edit_comment(comment_id, element_id, element_type, is_alert=false) {
 
 }
 
-function save_edit_comment(element_id, element_type, is_alert=false) {
+function save_edit_comment(element_id, element_type) {
     data = Object();
     data['comment_text'] = g_comment_desc_editor.getValue();
     comment_id = $('.comment_editing').data('comment_id');
     data['csrf_token'] = $('#csrf_token').val();
+
+    const is_alert = element_type === 'alerts';
     const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
     post_request_api(`${prefix}/${element_id}/comments/${comment_id}/edit`, JSON.stringify(data), true)
     .done((data) => {
@@ -192,19 +195,20 @@ function load_comments(element_id, element_type, comment_id, do_notification, is
                 converter = get_showdown_convert();
                 html = converter.makeHtml(comment_text);
                 comment_html = do_md_filter_xss(html);
-                if (names.hasOwnProperty(data['data'][i].name)) {
-                    avatar = names[data['data'][i].name];
+                const username = data['data'][i].user.user_name;
+                if (names.hasOwnProperty(username)) {
+                    avatar = names[username];
                 } else {
-                    avatar = get_avatar_initials(data['data'][i].name);
-                    names[data['data'][i].name] = avatar;
+                    avatar = get_avatar_initials(username);
+                    names[username] = avatar;
                 }
 
                 can_edit = "";
                 current_user = $('#current_username').text();
 
-                if (current_user === data['data'][i].user) {
-                    can_edit = '<a href="#" class="btn btn-sm comment-edition-hidden" title="Edit comment" onclick="edit_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\', is_alert); return false;"><i class="fa-solid fa-edit text-dark"></i></a>';
-                    can_edit += '<a href="#" class="btn btn-sm comment-edition-hidden" title="Delete comment" onclick="delete_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\', is_alert); return false;"><i class="fa-solid fa-trash text-dark"></i></a>';
+                if (current_user === data['data'][i].user.user_login) {
+                    can_edit = '<a href="#" class="btn btn-sm comment-edition-hidden" title="Edit comment" onclick="edit_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\'); return false;"><i class="fa-solid fa-edit text-dark"></i></a>';
+                    can_edit += '<a href="#" class="btn btn-sm comment-edition-hidden" title="Delete comment" onclick="delete_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\'); return false;"><i class="fa-solid fa-trash text-dark"></i></a>';
                 }
 
                 comment = `

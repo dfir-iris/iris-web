@@ -309,19 +309,12 @@ def get_linked_iocs_finfo_from_asset(asset_id):
 
 
 def get_case_asset_comments(asset_id):
-    return AssetComments.query.filter(
+    return Comments.query.filter(
         AssetComments.comment_asset_id == asset_id
     ).with_entities(
-        AssetComments.comment_id,
-        Comments.comment_text,
-        Comments.comment_date,
-        Comments.comment_update_date,
-        Comments.comment_uuid,
-        User.name,
-        User.user
-    ).join(
-        AssetComments.comment,
-        Comments.user
+        Comments
+    ).join(AssetComments,
+           Comments.comment_id == AssetComments.comment_id
     ).order_by(
         Comments.comment_date.asc()
     ).all()

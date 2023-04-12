@@ -130,8 +130,7 @@ def case_comments_get(cur_id, caseid):
     if event_comments is None:
         return response_error('Invalid event ID')
 
-    res = [com._asdict() for com in event_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(event_comments))
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])

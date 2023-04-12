@@ -229,7 +229,89 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class UserSchema(ma.SQLAlchemyAutoSchema):
+    user_roles_str = fields.List(fields.String, required=False)
+    user_name = auto_field('name', required=True, validate=Length(min=2))
+    user_login = auto_field('user', required=True, validate=Length(min=2))
+    user_email = auto_field('email', required=True, validate=Length(min=2))
+    user_password = auto_field('password', required=True, validate=Length(min=2))
+    user_isadmin = fields.Boolean(required=True)
+    csrf_token = fields.String(required=False)
+    user_id = fields.Integer(required=False)
+    user_primary_organisation_id = fields.Integer(required=False)
+
+    class Meta:
+        model = User
+        load_instance = True
+        include_fk = True
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email']
+
+    @pre_load()
+    def verify_username(self, data, **kwargs):
+        user = data.get('user_login')
+        user_id = data.get('user_id')
+        luser = User.query.filter(
+            User.user == user
+        ).all()
+        for usr in luser:
+            if usr.id != user_id:
+                raise marshmallow.exceptions.ValidationError('User name already taken',
+                                                             field_name="user_login")
+
+        return data
+
+    @pre_load()
+    def verify_email(self, data, **kwargs):
+        email = data.get('user_email')
+        user_id = data.get('user_id')
+        luser = User.query.filter(
+            User.email == email
+        ).all()
+        for usr in luser:
+            if usr.id != user_id:
+                raise marshmallow.exceptions.ValidationError('User email already taken',
+                                                             field_name="user_email")
+
+        return data
+
+    @pre_load()
+    def verify_password(self, data, **kwargs):
+        server_settings = ServerSettings.query.first()
+        password = data.get('user_password')
+        if data.get('user_password') == '' and data.get('user_id') != 0:
+            # Update
+            data.pop('user_password')
+
+        else:
+            password_error = ""
+            if len(password) < server_settings.password_policy_min_length:
+                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters. "
+
+            if server_settings.password_policy_upper_case:
+                if not any(char.isupper() for char in password):
+                    password_error += "Password must contain uppercase char. "
+
+            if server_settings.password_policy_lower_case:
+                if not any(char.islower() for char in password):
+                    password_error += "Password must contain lowercase char. "
+
+            if server_settings.password_policy_digit:
+                if not any(char.isdigit() for char in password):
+                    password_error += "Password must contain digit. "
+
+            if len(server_settings.password_policy_special_chars) > 0:
+                if not any(char in server_settings.password_policy_special_chars for char in password):
+                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
+
+            if len(password_error) > 0:
+                raise marshmallow.exceptions.ValidationError(password_error,
+                                                             field_name="user_password")
+
+        return data
+
+
 class CommentSchema(ma.SQLAlchemyAutoSchema):
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
 
     class Meta:
         model = Comments
@@ -777,86 +859,6 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
         exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
                    'has_deletion_confirmation', 'id', 'name', 'email', 'user', 'uuid']
 
-
-class UserSchema(ma.SQLAlchemyAutoSchema):
-    user_roles_str = fields.List(fields.String, required=False)
-    user_name = auto_field('name', required=True, validate=Length(min=2))
-    user_login = auto_field('user', required=True, validate=Length(min=2))
-    user_email = auto_field('email', required=True, validate=Length(min=2))
-    user_password = auto_field('password', required=True, validate=Length(min=2))
-    user_isadmin = fields.Boolean(required=True)
-    csrf_token = fields.String(required=False)
-    user_id = fields.Integer(required=False)
-    user_primary_organisation_id = fields.Integer(required=False)
-
-    class Meta:
-        model = User
-        load_instance = True
-        include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email']
-
-    @pre_load()
-    def verify_username(self, data, **kwargs):
-        user = data.get('user_login')
-        user_id = data.get('user_id')
-        luser = User.query.filter(
-            User.user == user
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User name already taken',
-                                                             field_name="user_login")
-
-        return data
-
-    @pre_load()
-    def verify_email(self, data, **kwargs):
-        email = data.get('user_email')
-        user_id = data.get('user_id')
-        luser = User.query.filter(
-            User.email == email
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User email already taken',
-                                                             field_name="user_email")
-
-        return data
-
-    @pre_load()
-    def verify_password(self, data, **kwargs):
-        server_settings = ServerSettings.query.first()
-        password = data.get('user_password')
-        if data.get('user_password') == '' and data.get('user_id') != 0:
-            # Update
-            data.pop('user_password')
-
-        else:
-            password_error = ""
-            if len(password) < server_settings.password_policy_min_length:
-                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters. "
-
-            if server_settings.password_policy_upper_case:
-                if not any(char.isupper() for char in password):
-                    password_error += "Password must contain uppercase char. "
-
-            if server_settings.password_policy_lower_case:
-                if not any(char.islower() for char in password):
-                    password_error += "Password must contain lowercase char. "
-
-            if server_settings.password_policy_digit:
-                if not any(char.isdigit() for char in password):
-                    password_error += "Password must contain digit. "
-
-            if len(server_settings.password_policy_special_chars) > 0:
-                if not any(char in server_settings.password_policy_special_chars for char in password):
-                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
-
-            if len(password_error) > 0:
-                raise marshmallow.exceptions.ValidationError(password_error,
-                                                             field_name="user_password")
-
-        return data
 
 
 def validate_ioc_type(type_id):
