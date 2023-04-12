@@ -161,6 +161,13 @@
   </ul>
 </div>
 
+<div class="modal" role="dialog" tabindex="-1" id="modal_comment" data-backdrop="false">
+    <div class="modal-lg modal-dialog modal-comment" role="document">
+        <div class="modal-content shadow-xl" id="modal_comment_content">
+        </div>
+    </div>
+</div>
+
 {% include 'modal_escalate.html' %}
 {% include 'modal_enrichment.html' %}
 {% include 'modal_new_alert_owner.html' %}
@@ -171,6 +178,6 @@
     <script src="/static/assets/js/plugin/vis/vis.min.js"></script>
     <script src="/static/assets/js/plugin/vis/vis-network.min.js"></script>
     <script src="/static/assets/js/iris/alerts.js"></script>
-
+    <script src="/static/assets/js/iris/comments.js"></script>
 {% endblock javascripts %}
 

@@ -406,6 +406,13 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_note_comment_delete',
                 hook_description='Triggered on note comment deletion, after commit in DB')
 
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_commented',
+                hook_description='Triggered on alert commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_comment_update',
+                hook_description='Triggered on alert comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_comment_delete',
+                hook_description='Triggered on alert comment deletion, after commit in DB')
+
 
 def pg_add_pgcrypto_ext():
     # Open a cursor to perform database operations.

@@ -30,7 +30,7 @@ function comment_element(element_id, element_type, is_alert=false) {
             headers = get_editor_headers('g_comment_desc_editor', null, 'comment_edition_btn');
             $('#comment_edition_btn').append(headers);
 
-            load_comments(element_id, element_type);
+            load_comments(element_id, element_type, undefined, undefined, is_alert);
         }
     );
 }
@@ -57,16 +57,17 @@ function save_comment(element_id, element_type) {
     save_comment_ext(element_id, element_type, false);
 }
 
-function save_comment_ext(element_id, element_type, do_close, is_alert=false){
+function save_comment_ext(element_id, element_type, do_close){
     data = Object();
     data['comment_text'] = g_comment_desc_editor.getValue();
     data['csrf_token'] = $('#csrf_token').val();
+    const is_alert = element_type === 'alerts';
     const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
 
     post_request_api(`${prefix}/${element_id}/comments/add`, JSON.stringify(data), true)
     .done((data) => {
         if(notify_auto_api(data)) {
-            load_comments(element_id, element_type);
+            load_comments(element_id, element_type, undefined, undefined, is_alert);
             g_comment_desc_editor.setValue('');
             increase_modal_comments_count(element_type, element_id);
         }
@@ -118,7 +119,7 @@ function delete_comment(comment_id, element_id, element_type, is_alert= false) {
             post_request_api(`${prefix}/${element_id}/comments/${comment_id}/delete`, JSON.stringify(data))
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    load_comments(element_id, element_type);
+                    load_comments(element_id, element_type, undefined, undefined, is_alert);
                     decrease_modal_comments_count(element_type, element_id);
                 }
             });
@@ -202,8 +203,8 @@ function load_comments(element_id, element_type, comment_id, do_notification, is
                 current_user = $('#current_username').text();
 
                 if (current_user === data['data'][i].user) {
-                    can_edit = '<a href="#" class="btn btn-sm comment-edition-hidden" title="Edit comment" onclick="edit_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\'); return false;"><i class="fa-solid fa-edit text-dark"></i></a>';
-                    can_edit += '<a href="#" class="btn btn-sm comment-edition-hidden" title="Delete comment" onclick="delete_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\'); return false;"><i class="fa-solid fa-trash text-dark"></i></a>';
+                    can_edit = '<a href="#" class="btn btn-sm comment-edition-hidden" title="Edit comment" onclick="edit_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\', is_alert); return false;"><i class="fa-solid fa-edit text-dark"></i></a>';
+                    can_edit += '<a href="#" class="btn btn-sm comment-edition-hidden" title="Delete comment" onclick="delete_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\', is_alert); return false;"><i class="fa-solid fa-trash text-dark"></i></a>';
                 }
 
                 comment = `
