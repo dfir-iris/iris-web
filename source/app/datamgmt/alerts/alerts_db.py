@@ -33,7 +33,7 @@ from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_un
 from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.datamgmt.states import update_timeline_state
-from app.models import Cases, EventCategory, Tags, AssetsType
+from app.models import Cases, EventCategory, Tags, AssetsType, Comments
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache
 from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
 from app.util import add_obj_history_entry
@@ -662,4 +662,17 @@ def get_related_alerts_details(customer_id, assets, iocs):
         'nodes': nodes,
         'edges': edges
     }
+
+
+def get_alert_comments(alert_id: int) -> List[Comments]:
+    """
+    Get the comments of an alert
+
+    args:
+        alert_id (int): The ID of the alert
+
+    returns:
+        list: The list of comments
+    """
+    return Comments.query.filter(Comments.comment_alert_id == alert_id).all()
 

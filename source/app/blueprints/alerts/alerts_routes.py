@@ -29,14 +29,15 @@ from werkzeug import Response
 import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
-    merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details
+    merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details, \
+    get_alert_comments
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
-from app.schema.marshables import AlertSchema, CaseSchema
+from app.schema.marshables import AlertSchema, CaseSchema, CommentSchema
 from app.util import ac_api_requires, response_error, str_to_bool, add_obj_history_entry, ac_requires
 from app.util import response_success
 
@@ -519,26 +520,25 @@ def alert_comment_modal(cur_id, caseid, url_redir):
                            title=alert.alert_id)
 
 
-# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
-# @ac_api_requires(Permissions.alerts_read, no_cid_required=True)
-# def alert_comments_get(cur_id, caseid):
-#     """
-#     Get the comments for an alert
-#
-#     args:
-#         cur_id (int): The alert id
-#         caseid (str): The case id
-#
-#     returns:
-#         Response: The response
-#     """
-#
-#     event_comments = get_case_event_comments(cur_id, caseid=caseid)
-#     if event_comments is None:
-#         return response_error('Invalid event ID')
-#
-#     res = [com._asdict() for com in event_comments]
-#     return response_success(data=res)
+@alerts_blueprint.route('/alerts/<int:alert_id>/comments/list', methods=['GET'])
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+def alert_comments_get(alert_id, caseid):
+    """
+    Get the comments for an alert
+
+    args:
+        alert_id (int): The alert id
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+
+    alert_comments = get_alert_comments(alert_id)
+    if alert_comments is None:
+        return response_error('Invalid alert ID')
+
+    return response_success(data=CommentSchema(many=True).dump(alert_comments))
 #
 #
 # @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
