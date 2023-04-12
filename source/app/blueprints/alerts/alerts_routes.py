@@ -568,7 +568,7 @@ def alert_comment_delete(alert_id, com_id, caseid):
     return response_success(msg)
 
 
-@alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@alerts_blueprint.route('/alerts/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_api_requires(Permissions.alerts_read, no_cid_required=True)
 def alert_comment_get(cur_id, com_id, caseid):
     """
@@ -605,7 +605,7 @@ def alert_comment_edit(alert_id, com_id, caseid):
         Response: The response
     """
 
-    return case_comment_update(com_id, 'events', caseid)
+    return case_comment_update(com_id, 'events', caseid=None)
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/add', methods=['POST'])

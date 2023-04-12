@@ -160,7 +160,7 @@ function save_edit_comment(element_id, element_type) {
     .done((data) => {
         if(notify_auto_api(data)) {
             cancel_edition(comment_id);
-            load_comments(element_id, element_type, comment_id);
+            load_comments(element_id, element_type, comment_id, undefined, is_alert);
         }
     });
 }

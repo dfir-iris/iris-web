@@ -678,7 +678,7 @@ function renderAlert(alert) {
                 <div class="float-right ml-2">
                 <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
                     <span class="btn-label">
-                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments}</span>
+                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
                     </span>
                 </button>
                   <button class="btn bg-transparent pull-right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
