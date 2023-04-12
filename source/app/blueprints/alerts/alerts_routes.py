@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import marshmallow
 from flask_wtf import FlaskForm
 from typing import Union, List
 
@@ -28,6 +29,7 @@ from werkzeug import Response
 
 import app
 from app import db
+from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
     merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details, \
     get_alert_comments, delete_alert_comment, get_alert_comment
@@ -568,7 +570,7 @@ def alert_comment_delete(alert_id, com_id, caseid):
 
 @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_api_requires(Permissions.alerts_read, no_cid_required=True)
-def case_comment_get(cur_id, com_id, caseid):
+def alert_comment_get(cur_id, com_id, caseid):
     """
     Get a comment for an alert
 
@@ -587,48 +589,67 @@ def case_comment_get(cur_id, com_id, caseid):
 
     return response_success(data=CommentSchema().dump(comment))
 
-#
-# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
-# @ac_api_requires(Permissions.alerts_write, no_cid_required=True)
-# def case_comment_edit(cur_id, com_id, caseid):
-#
-#     return case_comment_update(com_id, 'events', caseid)
-#
-#
-# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
-# @ac_api_requires(Permissions.alerts_write, no_cid_required=True)
-# def case_comment_add(cur_id, caseid):
-#
-#     try:
-#         event = get_case_event(event_id=cur_id, caseid=caseid)
-#         if not event:
-#             return response_error('Invalid event ID')
-#
-#         comment_schema = CommentSchema()
-#
-#         comment = comment_schema.load(request.get_json())
-#         comment.comment_case_id = caseid
-#         comment.comment_user_id = current_user.id
-#         comment.comment_date = datetime.now()
-#         comment.comment_update_date = datetime.now()
-#         db.session.add(comment)
-#         db.session.commit()
-#
-#         add_comment_to_event(event.event_id, comment.comment_id)
-#
-#         add_obj_history_entry(event, 'commented')
-#
-#         db.session.commit()
-#
-#         hook_data = {
-#             "comment": comment_schema.dump(comment),
-#             "event": EventSchema().dump(event)
-#         }
-#         call_modules_hook('on_postload_event_commented', data=hook_data, caseid=caseid)
-#
-#         track_activity(f"event \"{event.event_title}\" commented", caseid=caseid)
-#         return response_success("Event commented", data=comment_schema.dump(comment))
-#
-#     except marshmallow.exceptions.ValidationError as e:
-#         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
-#
+
+@alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alert_comment_edit(alert_id, com_id, caseid):
+    """
+    Edit a comment for an alert
+
+    args:
+        alert_id (int): The alert id
+        com_id (int): The comment id
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+
+    return case_comment_update(com_id, 'events', caseid)
+
+
+@alerts_blueprint.route('/alerts/<int:alert_id>/comments/add', methods=['POST'])
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def case_comment_add(alert_id, caseid):
+    """
+    Add a comment to an alert
+
+    args:
+        alert_id (int): The alert id
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+
+    try:
+        alert = get_alert_by_id(alert_id=alert_id)
+        if not alert:
+            return response_error('Invalid alert ID')
+
+        comment_schema = CommentSchema()
+
+        comment = comment_schema.load(request.get_json())
+        comment.comment_alert_id = alert_id
+        comment.comment_user_id = current_user.id
+        comment.comment_date = datetime.now()
+        comment.comment_update_date = datetime.now()
+        db.session.add(comment)
+        db.session.commit()
+
+        add_obj_history_entry(alert, 'commented')
+
+        db.session.commit()
+
+        hook_data = {
+            "comment": comment_schema.dump(comment),
+            "alert": AlertSchema().dump(alert)
+        }
+        call_modules_hook('on_postload_alert_commented', data=hook_data, caseid=caseid)
+
+        track_activity(f"alert \"{alert.alert_id}\" commented", caseid=caseid)
+        return response_success("Alert commented", data=comment_schema.dump(comment))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
