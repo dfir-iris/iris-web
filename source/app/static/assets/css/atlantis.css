@@ -15795,3 +15795,7 @@ td.dt-nowrap { white-space: nowrap }
 .swal-button:not(.swal-button--confirm, .swal-button--cancel) {
   background-color: #053c80e8;
 }
+
+.modal_comment.modal.show {
+    display: none;
+}

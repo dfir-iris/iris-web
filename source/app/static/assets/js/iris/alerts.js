@@ -676,12 +676,12 @@ function renderAlert(alert) {
                 </div>
                 
                 <div class="float-right ml-2">
-                <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
+                <button type="button" class="btn bg-transparent btn-sm mt-1" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
                     <span class="btn-label">
                         <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
                     </span>
                 </button>
-                  <button class="btn bg-transparent pull-right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <button class="btn bg-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                   </button>
                   <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
