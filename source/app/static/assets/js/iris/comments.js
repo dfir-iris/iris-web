@@ -109,12 +109,14 @@ function increase_modal_comments_count(element_type, element_id) {
     }
 }
 
-function delete_comment(comment_id, element_id, element_type, is_alert= false) {
+function delete_comment(comment_id, element_id, element_type) {
     do_deletion_prompt("You are about to delete comment #" + comment_id)
     .then((doDelete) => {
         if (doDelete) {
             data = Object();
             data['csrf_token'] = $('#csrf_token').val();
+
+            const is_alert = element_type === 'alerts';
             const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
             post_request_api(`${prefix}/${element_id}/comments/${comment_id}/delete`, JSON.stringify(data))
             .done((data) => {

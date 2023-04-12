@@ -852,12 +852,13 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
     user_name = auto_field('name', required=True, validate=Length(min=2))
     user_login = auto_field('user', required=True, validate=Length(min=2))
     user_email = auto_field('email', required=True, validate=Length(min=2))
+    has_deletion_confirmation = auto_field('has_deletion_confirmation', required=False, default=False)
 
     class Meta:
         model = User
         load_instance = True
         exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
-                   'has_deletion_confirmation', 'id', 'name', 'email', 'user', 'uuid']
+                   'id', 'name', 'email', 'user', 'uuid']
 
 
 

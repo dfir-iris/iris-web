@@ -1335,11 +1335,10 @@ function createPagination(currentPage, totalPages, per_page, callback, paginatio
   });
 }
 
-
 let userWhoami = JSON.parse(sessionStorage.getItem('userWhoami'));
 
-let userWhoamiRequest = (function() {
-  if (!userWhoami) {
+function userWhoamiRequest(force = false) {
+  if (!userWhoami || force) {
     get_request_api('/user/whoami')
       .done((data) => {
         if (notify_auto_api(data, true)) {
@@ -1348,7 +1347,42 @@ let userWhoamiRequest = (function() {
         }
       });
   }
-});
+}
+
+function do_deletion_prompt(message) {
+    if (userWhoami.has_deletion_confirmation) {
+            return new Promise((resolve, reject) => {
+                swal({
+                    title: "Are you sure?",
+                    text: message,
+                    icon: "warning",
+                    buttons: {
+                        cancel: {
+                            text: "Cancel",
+                            value: false,
+                            visible: true,
+                            closeModal: true
+                        },
+                        confirm: {
+                           text: "Confirm",
+                           value: true
+                        }
+                    },
+                    dangerMode: true
+                })
+                .then((willDelete) => {
+                    resolve(willDelete);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+            });
+    } else {
+        return new Promise((resolve, reject) => {
+            resolve(true);
+        });
+    }
+}
 
 $(document).ready(function(){
     notify_redirect();

@@ -558,7 +558,7 @@ def alert_comment_delete(alert_id, com_id, caseid):
         Response: The response
     """
 
-    success, msg = delete_alert_comment(alert_id, com_id)
+    success, msg = delete_alert_comment(comment_id=com_id, alert_id=alert_id)
     if not success:
         return response_error(msg)
 
