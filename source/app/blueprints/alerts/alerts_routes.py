@@ -494,3 +494,119 @@ def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
 
     return render_template('alerts.html', caseid=caseid, form=form)
 
+
+@alerts_blueprint.route('/alerts/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_requires(Permissions.alerts_read, no_cid_required=True)
+def alert_comment_modal(cur_id, caseid, url_redir):
+    """
+    Get the modal for the alert comments
+
+    args:
+        cur_id (int): The alert id
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+    if url_redir:
+        return redirect(url_for('alerts.alerts_list_view_route', cid=caseid, redirect=True))
+
+    alert = get_alert_by_id(cur_id)
+    if not alert:
+        return response_error('Invalid alert ID')
+
+    return render_template("modal_conversation.html", element_id=cur_id, element_type='alerts',
+                           title=alert.alert_id)
+
+
+# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
+# @ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+# def alert_comments_get(cur_id, caseid):
+#     """
+#     Get the comments for an alert
+#
+#     args:
+#         cur_id (int): The alert id
+#         caseid (str): The case id
+#
+#     returns:
+#         Response: The response
+#     """
+#
+#     event_comments = get_case_event_comments(cur_id, caseid=caseid)
+#     if event_comments is None:
+#         return response_error('Invalid event ID')
+#
+#     res = [com._asdict() for com in event_comments]
+#     return response_success(data=res)
+#
+#
+# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+# @ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+# def case_comment_delete(cur_id, com_id, caseid):
+#
+#     success, msg = delete_event_comment(cur_id, com_id)
+#     if not success:
+#         return response_error(msg)
+#
+#     call_modules_hook('on_postload_event_comment_delete', data=com_id, caseid=caseid)
+#
+#     track_activity(f"comment {com_id} on event {cur_id} deleted", caseid=caseid)
+#     return response_success(msg)
+#
+#
+# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+# @ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+# def case_comment_get(cur_id, com_id, caseid):
+#
+#     comment = get_case_event_comment(cur_id, com_id, caseid=caseid)
+#     if not comment:
+#         return response_error("Invalid comment ID")
+#
+#     return response_success(data=comment._asdict())
+#
+#
+# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+# @ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+# def case_comment_edit(cur_id, com_id, caseid):
+#
+#     return case_comment_update(com_id, 'events', caseid)
+#
+#
+# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
+# @ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+# def case_comment_add(cur_id, caseid):
+#
+#     try:
+#         event = get_case_event(event_id=cur_id, caseid=caseid)
+#         if not event:
+#             return response_error('Invalid event ID')
+#
+#         comment_schema = CommentSchema()
+#
+#         comment = comment_schema.load(request.get_json())
+#         comment.comment_case_id = caseid
+#         comment.comment_user_id = current_user.id
+#         comment.comment_date = datetime.now()
+#         comment.comment_update_date = datetime.now()
+#         db.session.add(comment)
+#         db.session.commit()
+#
+#         add_comment_to_event(event.event_id, comment.comment_id)
+#
+#         add_obj_history_entry(event, 'commented')
+#
+#         db.session.commit()
+#
+#         hook_data = {
+#             "comment": comment_schema.dump(comment),
+#             "event": EventSchema().dump(event)
+#         }
+#         call_modules_hook('on_postload_event_commented', data=hook_data, caseid=caseid)
+#
+#         track_activity(f"event \"{event.event_title}\" commented", caseid=caseid)
+#         return response_success("Event commented", data=comment_schema.dump(comment))
+#
+#     except marshmallow.exceptions.ValidationError as e:
+#         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+#

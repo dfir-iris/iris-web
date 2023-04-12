@@ -660,9 +660,11 @@ class Comments(db.Model):
     comment_update_date = Column(DateTime)
     comment_user_id = Column(ForeignKey('user.id'))
     comment_case_id = Column(ForeignKey('cases.case_id'))
+    comment_alert_id = Column(ForeignKey('alerts.alert_id'))
 
     user = relationship('User')
     case = relationship('Cases')
+    alert = relationship('Alert')
 
 
 class EventComments(db.Model):
@@ -728,6 +730,17 @@ class NotesComments(db.Model):
     comment_note_id = Column(ForeignKey('notes.note_id'))
 
     note = relationship('Notes')
+    comment = relationship('Comments')
+
+
+class AlertsComments(db.Model):
+    __tablename__ = "alert_comments"
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_alert_id = Column(ForeignKey('alerts.alert_id'))
+
+    alert = relationship('Alert')
     comment = relationship('Comments')
 
 
