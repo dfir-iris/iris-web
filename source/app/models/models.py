@@ -733,17 +733,6 @@ class NotesComments(db.Model):
     comment = relationship('Comments')
 
 
-class AlertsComments(db.Model):
-    __tablename__ = "alert_comments"
-
-    id = Column(BigInteger, primary_key=True)
-    comment_id = Column(ForeignKey('comments.comment_id'))
-    comment_alert_id = Column(ForeignKey('alerts.alert_id'))
-
-    alert = relationship('Alert')
-    comment = relationship('Comments')
-
-
 class IrisModule(db.Model):
     __tablename__ = "iris_module"
 
