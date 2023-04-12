@@ -30,7 +30,7 @@ import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
     merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details, \
-    get_alert_comments, delete_alert_comment
+    get_alert_comments, delete_alert_comment, get_alert_comment
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -565,17 +565,28 @@ def alert_comment_delete(alert_id, com_id, caseid):
     track_activity(f"comment {com_id} on alert {alert_id} deleted", caseid=caseid)
     return response_success(msg)
 
-#
-# @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
-# @ac_api_requires(Permissions.alerts_read, no_cid_required=True)
-# def case_comment_get(cur_id, com_id, caseid):
-#
-#     comment = get_case_event_comment(cur_id, com_id, caseid=caseid)
-#     if not comment:
-#         return response_error("Invalid comment ID")
-#
-#     return response_success(data=comment._asdict())
-#
+
+@alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+def case_comment_get(cur_id, com_id, caseid):
+    """
+    Get a comment for an alert
+
+    args:
+        cur_id (int): The alert id
+        com_id (int): The comment id
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+
+    comment = get_alert_comment(cur_id, com_id)
+    if not comment:
+        return response_error("Invalid comment ID")
+
+    return response_success(data=CommentSchema().dump(comment))
+
 #
 # @alerts_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
 # @ac_api_requires(Permissions.alerts_write, no_cid_required=True)

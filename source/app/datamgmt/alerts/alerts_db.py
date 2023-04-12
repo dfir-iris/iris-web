@@ -677,6 +677,23 @@ def get_alert_comments(alert_id: int) -> List[Comments]:
     return Comments.query.filter(Comments.comment_alert_id == alert_id).all()
 
 
+def get_alert_comment(alert_id: int, comment_id: int) -> Comments:
+    """
+    Get a comment of an alert
+
+    args:
+        alert_id (int): The ID of the alert
+        comment_id (int): The ID of the comment
+
+    returns:
+        Comments: The comment
+    """
+    return Comments.query.filter(
+        Comments.comment_alert_id == alert_id,
+        Comments.comment_id == comment_id
+    ).first()
+
+
 def delete_alert_comment(comment_id: int, alert_id: int) -> Tuple[bool, str]:
     """
     Delete a comment of an alert
