@@ -519,7 +519,7 @@ def alert_comment_modal(cur_id, caseid, url_redir):
         return response_error('Invalid alert ID')
 
     return render_template("modal_conversation.html", element_id=cur_id, element_type='alerts',
-                           title=alert.alert_id)
+                           title=f" alert #{alert.alert_id}")
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/list', methods=['GET'])

@@ -538,6 +538,10 @@ function renderAlert(alert) {
                             <div class="col-md-9">${alert.alert_creation_time}</div>
                           </div>` : ''}
                         
+                        <div class="separator-solid"></div>
+                        <h3 class="title mb-3"><strong>Alert note</strong></h3>
+                        <pre id=alertNote-${alert.alert_id}>${alert.alert_note}</pre>
+                        
                         <!-- Alert Context section -->
                         ${
                               alert.alert_context && Object.keys(alert.alert_context).length > 0
@@ -670,7 +674,7 @@ function renderAlert(alert) {
                     <span title="Alert client"><b class="ml-3"><i class="fa-regular fa-circle-user"></i></b>
                       <small class="text-muted ml-1 mr-2">${alert.customer.customer_name || 'Unspecified'}</small></span>
                     ${alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
-                    ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}
+                    ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${alert.alert_tags}</div>` : ''}
                     ${alert.cases ? alert.cases.map((case_) => `<a href="/case?cid=${case_}" target=”_blank” class="ml-2" title="Merged in case #${case_}"><i class="fa-solid fa-link"></i>#${case_}</a>`).join('') : ''}
                   </div>
                 </div>
@@ -681,6 +685,7 @@ function renderAlert(alert) {
                         <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
                     </span>
                 </button>
+                <button class="btn btn-sm bg-transparent" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button></h3>
                   <button class="btn bg-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                   </button>
@@ -720,7 +725,7 @@ function renderAlert(alert) {
                         </div>
                     </div>
                     
-                    <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeAlert(${alert.alert_id});">Close</button>
+                    <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
                 </div>
           </div>    
           </div>
@@ -909,8 +914,47 @@ function resolveAlert(alert_id) {
     changeStatusAlert(alert_id, 'Resolved');
 }
 
-function closeAlert(alert_id) {
-    changeStatusAlert(alert_id, 'Closed');
+async function editAlert(alert_id, close=false) {
+
+    const alertTag = $('#editAlertTags');
+    const confirmAlertEdition = $('#confirmAlertEdition');
+
+    alertTag.val($(`#alertTags-${alert_id}`).text())
+    alertTag.amsifySuggestags({
+     printValues: false,
+     suggestions: []
+    });
+    $('#editAlertNote').val($(`#alertNote-${alert_id}`).text());
+
+    if (close) {
+        confirmAlertEdition.text('Close alert');
+        $('#closeAlertModalLabel').text(`Close alert #${alert_id}`);
+    } else {
+        $('#closeAlertModalLabel').text(`Edit alert #${alert_id}`);
+        confirmAlertEdition.text('Save')
+    }
+
+
+    $('#editAlertModal').modal('show');
+
+    confirmAlertEdition.off('click').on('click', function () {
+        let alert_note = $('#editAlertNote').val();
+        let alert_tags = alertTag.val();
+
+        let data = {
+          alert_note: alert_note,
+          alert_tags: alert_tags
+        };
+
+        if (close) {
+            data['alert_status_id'] = getAlertStatusId('Closed');
+        }
+
+        updateAlert(alert_id, data, true, true)
+            .then(() => {
+                $('#editAlertModal').modal('hide');
+            });
+    });
 }
 
 function changeStatusAlert(alert_id, status_name) {
@@ -1007,16 +1051,19 @@ async function changeBatchAlertOwner(alertId) {
 }
 
 
-async function updateAlert(alert_id, data = {}, do_refresh = false) {
+async function updateAlert(alert_id, data = {}, do_refresh = false, collapse_toggle = false) {
   data['csrf_token'] = $('#csrf_token').val();
   return post_request_api('/alerts/update/' + alert_id, JSON.stringify(data)).then(function (data) {
     if (notify_auto_api(data)) {
       if (do_refresh) {
-        refreshAlert(alert_id, data.data)
+        return refreshAlert(alert_id, data.data)
             .then(() => {
                 const updatedAlertElement = $(`#alertCard-${alert_id}`);
                 if (updatedAlertElement.length) {
-                    $(`#alertCard-${alert_id}`).addClass('fade-it');
+                    if (collapse_toggle) {
+                       $(`#additionalDetails-${alert_id}`).collapse('show');
+                    }
+                    updatedAlertElement.addClass('fade-it');
                 }
             });
       }
