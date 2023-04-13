@@ -386,11 +386,6 @@ function createNetwork(alert, relatedAlerts, containerId) {
         }
     });
 
-    document.getElementById('unlink').addEventListener('click', () => {
-      // Handle the "Unlink" action.
-      console.log('Unlink node', selectedNodeId);
-    });
-
 }
 
 
