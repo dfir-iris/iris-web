@@ -1060,7 +1060,7 @@ async function updateAlert(alert_id, data = {}, do_refresh = false, collapse_tog
             .then(() => {
                 const updatedAlertElement = $(`#alertCard-${alert_id}`);
                 if (updatedAlertElement.length) {
-                    if (collapse_toggle) {
+                    if (collapse_toggle && $(`#additionalDetails-${alert_id}`).hasClass('show')) {
                        $(`#additionalDetails-${alert_id}`).collapse('show');
                     }
                     updatedAlertElement.addClass('fade-it');
