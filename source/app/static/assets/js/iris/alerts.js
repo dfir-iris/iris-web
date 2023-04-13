@@ -338,6 +338,9 @@ function createNetwork(alert, relatedAlerts, containerId) {
   const network = new vis.Network(container, data, options);
 
   let selectedNodeId = null;
+  let node_type = null;
+  let node_id = null;
+
 
   network.on('oncontext', (event) => {
       event.event.preventDefault();
@@ -346,17 +349,21 @@ function createNetwork(alert, relatedAlerts, containerId) {
 
       if (nodeId) {
         selectedNodeId = nodeId;
+        node_type = selectedNodeId.split('_')[0];
+        node_id = selectedNodeId.split('_')[1];
 
-        // Get the offset of the container element.
-        const containerOffset = getAlertOffset(container);
+        if (node_type === 'alert') {
+            // Get the offset of the container element.
+            const containerOffset = getAlertOffset(container);
 
-        const x = event.pointer.DOM.x;
-        const y = containerOffset.top + event.pointer.DOM.y;
+            const x = event.pointer.DOM.x + 160;
+            const y = containerOffset.top + event.pointer.DOM.y;
 
-        const contextMenu = document.getElementById('context-menu');
-        contextMenu.style.left = `${x}px`;
-        contextMenu.style.top = `${y}px`;
-        contextMenu.classList.remove('hidden');
+            const contextMenu = document.getElementById('context-menu');
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
+            contextMenu.classList.remove('hidden');
+        }
       }
   });
 
@@ -368,8 +375,15 @@ function createNetwork(alert, relatedAlerts, containerId) {
 
     // Add event listeners for each menu item.
     document.getElementById('view-alert').addEventListener('click', () => {
-      // Handle the "View Alert" action.
-      console.log('View alert for node', selectedNodeId);
+
+
+        if (node_type === 'asset') {
+            window.open(`/assets/${node_id}`);
+        } else if (node_type === 'ioc') {
+            window.open(`/indicators/${node_id}`);
+        } else {
+            window.open(`/alerts?alert_id=${node_id}&cid=${get_caseid()}`);
+        }
     });
 
     document.getElementById('unlink').addEventListener('click', () => {
