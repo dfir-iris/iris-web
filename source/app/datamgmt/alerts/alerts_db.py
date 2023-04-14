@@ -729,3 +729,24 @@ def delete_alert_comment(comment_id: int, alert_id: int) -> Tuple[bool, str]:
     return True, "Comment deleted successfully"
 
 
+def delete_alerts(alert_ids: List[int]) -> bool:
+    """
+    Delete multiples alerts from the database
+
+    args:
+        alert_ids (List[int]): list of alerts to delete
+
+    returns:
+        True if deleted successfully
+    """
+    try:
+
+        Comments.query.filter(Comments.comment_alert_id.in_(alert_ids)).delete()
+        Alert.query.filter(Alert.alert_id.in_(alert_ids)).delete()
+
+    except Exception as e:
+        db.session.rollback()
+        app.logger.exception(str(e))
+        return False, str(e)
+
+    return True, ""

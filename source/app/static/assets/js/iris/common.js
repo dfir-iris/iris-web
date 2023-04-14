@@ -1349,8 +1349,8 @@ function userWhoamiRequest(force = false) {
   }
 }
 
-function do_deletion_prompt(message) {
-    if (userWhoami.has_deletion_confirmation) {
+function do_deletion_prompt(message, force_prompt=false) {
+    if (userWhoami.has_deletion_confirmation || force_prompt) {
             return new Promise((resolve, reject) => {
                 swal({
                     title: "Are you sure?",

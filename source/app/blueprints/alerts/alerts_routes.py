@@ -32,7 +32,7 @@ from app import db
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
     merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details, \
-    get_alert_comments, delete_alert_comment, get_alert_comment, delete_similar_alert_cache
+    get_alert_comments, delete_alert_comment, get_alert_comment, delete_similar_alert_cache, delete_alerts
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -292,6 +292,38 @@ def alerts_batch_update_route(caseid: int) -> Response:
 
     # Return a success response
     return response_success(msg='Batch update successful')
+
+
+@alerts_blueprint.route('/alerts/batch/delete', methods=['POST'])
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_batch_delete_route(caseid: int) -> Response:
+    """
+    Delete multiple alerts from the database
+
+    args:
+        caseid (int): The case id
+
+    returns:
+        Response: The response
+    """
+    if not request.json:
+        return response_error('No JSON data provided')
+
+    # Load the JSON data from the request
+    data = request.get_json()
+
+    # Get the list of alert IDs and updates from the request data
+    alert_ids: List[int] = data.get('alert_ids', [])
+
+    if not alert_ids:
+        return response_error('No alert IDs provided')
+
+    success, logs = delete_alerts(alert_ids)
+
+    if not success:
+        return response_error(logs)
+
+    return response_success(msg='Batch delete successful')
 
 
 @alerts_blueprint.route('/alerts/delete/<int:alert_id>', methods=['POST'])

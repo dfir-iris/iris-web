@@ -55,7 +55,7 @@ class Alert(db.Model):
     classification = relationship('CaseClassification')
 
     cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')
-    comments = relationship('Comments', back_populates='alert')
+    comments = relationship('Comments', back_populates='alert', cascade='all, delete-orphan')
 
 
 class Severity(db.Model):
