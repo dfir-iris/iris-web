@@ -529,6 +529,20 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
     db.session.commit()
 
 
+def delete_similar_alert_cache(alert_id):
+    """
+    Delete the similar alert cache
+
+    args:
+        alert_id (int): The ID of the alert
+
+    returns:
+        None
+    """
+    SimilarAlertsCache.query.filter(SimilarAlertsCache.alert_id == alert_id).delete()
+    db.session.commit()
+
+
 def get_related_alerts(customer_id, assets, iocs, details=False):
     """
     Check if an alert is related to another alert

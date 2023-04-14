@@ -32,7 +32,7 @@ from app import db
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
     merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details, \
-    get_alert_comments, delete_alert_comment, get_alert_comment
+    get_alert_comments, delete_alert_comment, get_alert_comment, delete_similar_alert_cache
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -313,6 +313,9 @@ def alerts_delete_route(alert_id, caseid) -> Response:
         return response_error('Alert not found')
 
     try:
+        # Delete the case association
+        delete_similar_alert_cache(alert_id=alert_id)
+
         # Delete the alert from the database
         db.session.delete(alert)
         db.session.commit()

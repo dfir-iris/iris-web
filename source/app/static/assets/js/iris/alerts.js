@@ -483,7 +483,7 @@ function getFiltersFromUrl() {
     return Object.fromEntries(formData.entries());
 }
 
-function renderAlert(alert) {
+function renderAlert(alert, expanded=false) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
 
   return `
@@ -520,7 +520,7 @@ function renderAlert(alert) {
                         <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
                     </div>
                   <span class="">${alert.alert_description}</span><br/>
-                  <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4">
+                  <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4 ${expanded? 'show': ''}">
                     <div class="card-no-pd mt-2">
                         <div class="card-body">
                         <h3 class="title mb-3"><strong>General info</strong></h3>  
@@ -740,7 +740,7 @@ function renderAlert(alert) {
 
 }
 
-async function refreshAlert(alertId, alertData) {
+async function refreshAlert(alertId, alertData, expanded=false) {
     if (alertData === undefined) {
         const alertDataReq = await fetchAlert(alertId);
         if (!notify_auto_api(alertDataReq, true)) {
@@ -750,7 +750,7 @@ async function refreshAlert(alertId, alertData) {
     }
 
     const alertElement = $(`#alertCard-${alertId}`);
-    const alertHtml = renderAlert(alertData);
+    const alertHtml = renderAlert(alertData, expanded);
     alertElement.replaceWith(alertHtml);
 }
 
@@ -759,7 +759,6 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
 
   if (paging) {
       filters = getFiltersFromUrl();
-      console.log(filters);
   }
 
   const filterString = objectToQueryString(filters);
@@ -791,8 +790,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
       alerts.forEach((alert) => {
           const alertElement = $('<div></div>');
 
-          const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
-          const alertHtml = renderAlert(alert, colorSeverity);
+          const alertHtml = renderAlert(alert);
           alertElement.html(alertHtml);
           alertsContainer.append(alertElement);
       });
@@ -1063,13 +1061,11 @@ async function updateAlert(alert_id, data = {}, do_refresh = false, collapse_tog
   return post_request_api('/alerts/update/' + alert_id, JSON.stringify(data)).then(function (data) {
     if (notify_auto_api(data)) {
       if (do_refresh) {
-        return refreshAlert(alert_id, data.data)
+        const expanded = $(`#additionalDetails-${alert_id}`).hasClass('show');
+        return refreshAlert(alert_id, data.data, expanded)
             .then(() => {
                 const updatedAlertElement = $(`#alertCard-${alert_id}`);
                 if (updatedAlertElement.length) {
-                    if (collapse_toggle && $(`#additionalDetails-${alert_id}`).hasClass('show')) {
-                       $(`#additionalDetails-${alert_id}`).collapse('show');
-                    }
                     updatedAlertElement.addClass('fade-it');
                 }
             });
