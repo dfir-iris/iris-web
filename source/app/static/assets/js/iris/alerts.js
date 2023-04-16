@@ -246,46 +246,6 @@ function copyMDAlertLink(alert_id){
     });
 }
 
-function generateNetworkData(alert_id, relatedAlerts) {
-  const nodes = [];
-  const edges = [];
-
-  // Add the opened alert node
-  nodes.push({ id: alert_id, label: `Current alert: ${alert_id}`, image: "/static/assets/img/graph/bell-solid.png", shape: 'image', value: 1});
-
-  // Process related alerts
-  for (const category of ['both', 'assets', 'iocs']) {
-    const color = category === 'both' ? 'orange' : category === 'assets' ? 'blue' : 'green';
-
-    for (const relatedAlert of relatedAlerts[category]) {
-      const alertId = relatedAlert.alert.alert_id;
-      nodes.push({ id: alertId, label: `Alert: ${alertId}`, image: "/static/assets/img/graph/bell-solid.png", shape: 'image', value: 1});
-
-      // Add edges for assets
-      for (const asset of relatedAlert.assets) {
-        const assetId = `asset_${asset}`;
-        if (!nodes.some(node => node.id === assetId)) {
-          nodes.push({ id: assetId, label: asset });
-        }
-        edges.push({ from: alert_id, to: assetId });
-        edges.push({ from: assetId, to: alertId });
-      }
-
-      // Add edges for iocs
-      for (const ioc of relatedAlert.iocs) {
-        const iocId = `ioc_${ioc}`;
-        if (!nodes.some(node => node.id === iocId)) {
-          nodes.push({ id: iocId, label: ioc, image: '/static/assets/img/graph/virus-covid-solid.png', shape: 'image', value: 1});
-        }
-        edges.push({ from: alert_id, to: iocId });
-        edges.push({ from: iocId, to: alertId });
-      }
-    }
-  }
-
-  return { nodes, edges };
-}
-
 function getAlertOffset(element) {
   const rect = element.getBoundingClientRect();
   return {
@@ -294,7 +254,7 @@ function getAlertOffset(element) {
   };
 }
 
-function createNetwork(alert, relatedAlerts, containerId) {
+function createNetwork(alert, relatedAlerts, containerId, containerConfigureId) {
   const { nodes, edges } = relatedAlerts;
 
   const data = {
@@ -332,15 +292,15 @@ function createNetwork(alert, relatedAlerts, containerId) {
     }
   };
 
-  const container = document.getElementById(containerId);
-  const network = new vis.Network(container, data, options);
+    const container = document.getElementById(containerId);
+    const network = new vis.Network(container, data, options);
 
-  let selectedNodeId = null;
-  let node_type = null;
-  let node_id = null;
+    let selectedNodeId = null;
+    let node_type = null;
+    let node_id = null;
 
 
-  network.on('oncontext', (event) => {
+    network.on('oncontext', (event) => {
       event.event.preventDefault();
 
       const nodeId = network.getNodeAt(event.pointer.DOM);
@@ -365,23 +325,13 @@ function createNetwork(alert, relatedAlerts, containerId) {
       }
   });
 
-      // Hide the context menu on a click anywhere else.
     document.addEventListener('click', () => {
       const contextMenu = document.getElementById('context-menu');
       contextMenu.classList.add('hidden');
     });
 
-    // Add event listeners for each menu item.
     document.getElementById('view-alert').addEventListener('click', () => {
-
-
-        if (node_type === 'asset') {
-            window.open(`/assets/${node_id}`);
-        } else if (node_type === 'ioc') {
-            window.open(`/indicators/${node_id}`);
-        } else {
-            window.open(`/alerts?alert_id=${node_id}&cid=${get_caseid()}`);
-        }
+        window.open(`/alerts?alert_id=${node_id}&cid=${get_caseid()}`);
     });
 
 }
@@ -392,7 +342,7 @@ function fetchSimilarAlerts(alert_id) {
   if (!similarAlertsElement.html()) {
     get_request_api(`/alerts/similarities/${alert_id}`)
       .done((data) => {
-          createNetwork(alert_id, data.data, `similarAlerts-${alert_id}`);
+          createNetwork(alert_id, data.data, `similarAlerts-${alert_id}`, `graphConfigure-${alert_id}`);
       });
   }
 }
@@ -670,8 +620,7 @@ function renderAlert(alert, expanded=false) {
                         </div>
                       </div>
                   </div>
-                  <div class="mt-4">
-                    
+                  <div class="mt-4">                    
                     <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                     <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
                     <span title="Alert severity"><b class="ml-3"><i class="fa-solid fa-bolt"></i></b>
@@ -682,7 +631,20 @@ function renderAlert(alert, expanded=false) {
                       <small class="text-muted ml-1 mr-2">${alert.customer.customer_name || 'Unspecified'}</small></span>
                     ${alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
                     ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${alert.alert_tags}</div>` : ''}
-                    ${alert.cases ? alert.cases.map((case_) => `<a href="/case?cid=${case_}" target=”_blank” class="ml-2" title="Merged in case #${case_}"><i class="fa-solid fa-link"></i>#${case_}</a>`).join('') : ''}
+                  
+                    ${alert.cases ? alert.cases.map((case_) => `
+                    <div class="dropdown ml-2 d-inline-block">
+                          <a class="bg-transparent ml-2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="javascript:void(0)">
+                              <span aria-hidden="true"><i class="fa-solid fa-link"></i>#${case_}</span>
+                          </a>
+                          <div class="dropdown-menu">
+                            <a class="dropdown-item" href="/case?cid=${case_}" target="_blank"><i class="fa-solid fa-eye mr-2"></i> View case #${case_}</a>    
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="unlinkAlertFromCase(${case_})"><i class="fa-solid fa-unlink mr-2"></i>Unlink alert from case #${case_}</a>
+                          </div>
+                    </div>
+                    `).join('') : ''}
+                  
                   </div>
                 </div>
                 
@@ -692,11 +654,11 @@ function renderAlert(alert, expanded=false) {
                         <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
                     </span>
                 </button>
-                <button class="btn btn-sm bg-transparent" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button></h3>
+                <button class="btn btn-sm bg-transparent" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button>
                   <button class="btn bg-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                   </button>
-                  <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
+                  <div class="dropdown-menu" role="menu">
                     <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
                     <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                     <div class="dropdown-divider"></div>
@@ -915,10 +877,6 @@ function delete_alert(alert_id) {
     });
 }
 
-function resolveAlert(alert_id) {
-    changeStatusAlert(alert_id, 'Resolved');
-}
-
 async function editAlert(alert_id, close=false) {
 
     const alertTag = $('#editAlertTags');
@@ -967,14 +925,6 @@ function changeStatusAlert(alert_id, status_name) {
 
     let data = {
         'alert_status_id': status_id
-    }
-    updateAlert(alert_id, data, true);
-}
-
-
-function setAlertOwnerToMe(alert_id) {
-    data = {
-        'alert_owner_id': user_id
     }
     updateAlert(alert_id, data, true);
 }

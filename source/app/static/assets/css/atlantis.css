@@ -8144,7 +8144,7 @@ body .badge-danger {
 }
 
 .modal-content {
-    border-radius: .4rem !important;
+    border-radius: 10px !important;
     border: 0 !important;
 }
 

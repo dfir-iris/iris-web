@@ -729,7 +729,7 @@ def delete_alert_comment(comment_id: int, alert_id: int) -> Tuple[bool, str]:
     return True, "Comment deleted successfully"
 
 
-def delete_alerts(alert_ids: List[int]) -> bool:
+def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
     """
     Delete multiples alerts from the database
 
