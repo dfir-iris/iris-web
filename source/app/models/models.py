@@ -23,7 +23,7 @@ import datetime
 import enum
 import uuid
 
-from sqlalchemy import BigInteger, UniqueConstraint
+from sqlalchemy import BigInteger, UniqueConstraint, Table
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -143,6 +143,22 @@ class AssetsType(db.Model):
     asset_icon_compromised = Column(String(255))
 
 
+alert_assets_association = Table(
+    'alert_assets_association',
+    db.Model.metadata,
+    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
+    Column('asset_id', ForeignKey('case_assets.asset_id'), primary_key=True)
+)
+
+
+alert_iocs_association = Table(
+    'alert_iocs_association',
+    db.Model.metadata,
+    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
+    Column('ioc_id', ForeignKey('ioc.ioc_id'), primary_key=True)
+)
+
+
 class CaseAssets(db.Model):
     __tablename__ = 'case_assets'
 
@@ -167,6 +183,8 @@ class CaseAssets(db.Model):
     user = relationship('User')
     asset_type = relationship('AssetsType')
     analysis_status = relationship('AnalysisStatus')
+
+    alerts = relationship('Alert', secondary=alert_assets_association, back_populates='assets')
 
 
 class AnalysisStatus(db.Model):
@@ -345,6 +363,8 @@ class Ioc(db.Model):
     user = relationship('User')
     tlp = relationship('Tlp')
     ioc_type = relationship('IocType')
+
+    alerts = relationship('Alert', secondary=alert_iocs_association, back_populates='iocs')
 
 
 class CustomAttribute(db.Model):

@@ -207,7 +207,12 @@ def get_alert_by_id(alert_id: int) -> Alert:
     returns:
         Alert: The alert that was retrieved from the database
     """
-    return db.session.query(Alert).filter(Alert.alert_id == alert_id).first()
+    return (
+        db.session.query(Alert)
+        .options(joinedload(Alert.iocs), joinedload(Alert.assets))
+        .filter(Alert.alert_id == alert_id)
+        .first()
+    )
 
 
 def get_unspecified_event_category():
@@ -594,8 +599,14 @@ def get_related_alerts_details(customer_id, assets, iocs):
     returns:
         dict: The details of the related alerts with matched assets and/or IOCs
     """
-    asset_names = [asset['asset_name'] for asset in assets]
-    ioc_values = [ioc['ioc_value'] for ioc in iocs]
+    if not assets or not iocs:
+        return {
+            'nodes': {},
+            'edges': {}
+        }
+
+    asset_names = [asset.asset_name for asset in assets]
+    ioc_values = [ioc.ioc_value for ioc in iocs]
 
     asset_type_alias = aliased(AssetsType)
 

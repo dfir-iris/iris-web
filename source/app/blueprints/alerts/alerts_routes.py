@@ -37,9 +37,10 @@ from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models import Ioc, CaseAssets
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
-from app.schema.marshables import AlertSchema, CaseSchema, CommentSchema
+from app.schema.marshables import AlertSchema, CaseSchema, CommentSchema, CaseAssetsSchema, IocSchema
 from app.util import ac_api_requires, response_error, str_to_bool, add_obj_history_entry, ac_requires
 from app.util import response_success
 
@@ -118,15 +119,26 @@ def alerts_add_route(caseid) -> Response:
         return response_error('No JSON data provided')
 
     alert_schema = AlertSchema()
+    ioc_schema = IocSchema()
+    asset_schema = CaseAssetsSchema()
 
     try:
         # Load the JSON data from the request
         data = request.get_json()
 
+        iocs_list = data.pop('alert_iocs', [])
+        assets_list = data.pop('alert_assets', [])
+
+        iocs = ioc_schema.load(iocs_list, many=True)
+        assets = asset_schema.load(assets_list, many=True)
+
         # Deserialize the JSON data into an Alert object
         new_alert = alert_schema.load(data)
 
         new_alert.alert_creation_time = datetime.utcnow()
+
+        new_alert.iocs = iocs
+        new_alert.assets = assets
 
         # Add the new alert to the session and commit it
         db.session.add(new_alert)
@@ -136,13 +148,14 @@ def alerts_add_route(caseid) -> Response:
         add_obj_history_entry(new_alert, 'Alert created')
 
         # Cache the alert for similarities check
-        cache_similar_alert(new_alert.alert_customer_id, assets=data.get('alert_assets'),
-                            iocs=data.get('alert_iocs'), alert_id=new_alert.alert_id)
+        cache_similar_alert(new_alert.alert_customer_id, assets=assets_list,
+                            iocs=iocs_list, alert_id=new_alert.alert_id)
 
         # Return the newly created alert as JSON
         return response_success(data=alert_schema.dump(new_alert))
 
     except Exception as e:
+        app.app.logger.exception(e)
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
 
@@ -201,7 +214,7 @@ def alerts_similarities_route(caseid, alert_id) -> Response:
         return response_error('Alert not found')
 
     # Get similar alerts
-    similar_alerts = get_related_alerts_details(alert.alert_customer_id, alert.alert_assets, alert.alert_iocs)
+    similar_alerts = get_related_alerts_details(alert.alert_customer_id, alert.assets, alert.iocs)
 
     return response_success(data=similar_alerts)
 

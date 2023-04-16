@@ -161,6 +161,7 @@ class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     ioc_links = fields.List(fields.Integer, required=False)
+    asset_enrichment = fields.Dict(required=False)
 
     class Meta:
         model = CaseAssets
@@ -174,10 +175,11 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
             raise marshmallow.exceptions.ValidationError("Invalid asset type ID",
                                                          field_name="asset_type_id")
 
-        status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).count()
-        if not status:
-            raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
-                                                         field_name="analysis_status_id")
+        if data.get('analysis_status_id'):
+            status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).count()
+            if not status:
+                raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
+                                                             field_name="analysis_status_id")
 
         return data
 
@@ -193,6 +195,7 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
 class IocSchema(ma.SQLAlchemyAutoSchema):
     ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
     ioc_type = auto_field('ioc_type', required=False)
+    ioc_enrichment = fields.Dict(required=False)
 
     class Meta:
         model = Ioc
@@ -882,37 +885,6 @@ def validate_asset_tlp(tlp_id):
         raise ValidationError("Invalid asset_tlp ID")
 
 
-class AlertIOCSchema(Schema):
-    ioc_value = fields.String(required=True)
-    ioc_description = fields.String(required=True)
-    ioc_tlp_id = fields.Integer(required=True, validate=validate_ioc_tlp)
-    ioc_type_id = fields.Integer(required=True, validate=validate_ioc_type)
-    ioc_tags = fields.List(fields.String(), required=True)
-    ioc_enrichment = fields.Dict(required=True)
-    ioc_uuid = fields.String(required=False)
-
-    @post_load
-    def add_ioc_uuid(self, data, **kwargs):
-        data['ioc_uuid'] = str(uuid.uuid4())
-        return data
-
-
-class AlertAssetSchema(Schema):
-    asset_name = fields.String(required=True)
-    asset_description = fields.String(required=True)
-    asset_type_id = fields.Integer(required=True, validate=validate_asset_type)
-    asset_ip = fields.String(required=True)
-    asset_domain = fields.String(required=True)
-    asset_tags = fields.List(fields.String(), required=True)
-    asset_enrichment = fields.Dict(required=True)
-    asset_uuid = fields.String(required=False)
-
-    @post_load
-    def add_asset_uuid(self, data, **kwargs):
-        data['asset_uuid'] = str(uuid.uuid4())
-        return data
-
-
 class SeveritySchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Severity
@@ -931,8 +903,8 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     customer = ma.Nested(CustomerSchema)
     classification = ma.Nested(CaseClassificationSchema)
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
-    alert_iocs = fields.List(fields.Nested(AlertIOCSchema))
-    alert_assets = fields.List(fields.Nested(AlertAssetSchema))
+    alert_iocs = ma.Nested(IocSchema, many=True)
+    alert_assets = ma.Nested(CaseAssetsSchema, many=True)
 
     class Meta:
         model = Alert

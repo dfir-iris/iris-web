@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, backref
 
 from app import db
-from app.models import Base
+from app.models import Base, alert_assets_association, alert_iocs_association
 from app.models.cases import Cases
 
 
@@ -43,8 +43,6 @@ class Alert(db.Model):
     alert_tags = Column(Text)
     alert_owner_id = Column(ForeignKey('user.id'))
     modification_history = Column(JSON)
-    alert_iocs = Column(JSON)
-    alert_assets = Column(JSON)
     alert_customer_id = Column(ForeignKey('client.client_id'), nullable=False)
     alert_classification_id = Column(ForeignKey('case_classification.id'))
 
@@ -56,6 +54,9 @@ class Alert(db.Model):
 
     cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')
     comments = relationship('Comments', back_populates='alert', cascade='all, delete-orphan')
+
+    assets = relationship('CaseAssets', secondary=alert_assets_association, back_populates='alerts')
+    iocs = relationship('Ioc', secondary=alert_iocs_association, back_populates='alerts')
 
 
 class Severity(db.Model):
@@ -99,5 +100,3 @@ class SimilarAlertsCache(db.Model):
         self.alert_id = alert_id
         self.asset_type_id = asset_type_id
         self.ioc_type_id = ioc_type_id
-
-
