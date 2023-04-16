@@ -553,7 +553,7 @@ function renderAlert(alert, expanded=false) {
                     
                         <!-- Alert IOCs section -->
                         ${
-                          alert.alert_iocs && alert.alert_iocs.length > 0
+                          alert.iocs && alert.iocs.length > 0
                               ? `<div class="separator-solid"></div><h3 class="title mb-3"><strong>IOCs</strong></h3>
                                            <div class="table-responsive">
                                              <table class="table table-sm table-striped">
@@ -568,15 +568,15 @@ function renderAlert(alert, expanded=false) {
                                                  </tr>
                                                </thead>
                                                <tbody>
-                                                 ${alert.alert_iocs
+                                                 ${alert.iocs
                                   .map(
                                       (ioc) => `
                                                      <tr>
                                                        <td>${ioc.ioc_value}</td>
                                                        <td>${ioc.ioc_description}</td>
                                                        <td>${ioc.ioc_type ? ioc.ioc_type : '-'}</td>
-                                                       <td>${ioc.ioc_tags ? ioc.ioc_tlp : '-'}</td>
-                                                       <td>${ioc.ioc_tags ? ioc.ioc_tags.map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
+                                                       <td>${ioc.ioc_tlp ? ioc.ioc_tlp : '-'}</td>
+                                                       <td>${ioc.ioc_tags ? ioc.ioc_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
                                                        <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
                                                           View Enrichment
                                                         </button>` : ''}
@@ -592,7 +592,7 @@ function renderAlert(alert, expanded=false) {
                         
                         <!-- Alert assets section -->
                         ${
-                        alert.alert_assets && alert.alert_assets.length > 0
+                        alert.assets && alert.assets.length > 0
                   ? `<div class="separator-solid"></div><h3 class="title mb-3"><strong>Assets</strong></h3>
                                <div class="table-responsive">
                                  <table class="table table-sm table-striped">
@@ -608,16 +608,16 @@ function renderAlert(alert, expanded=false) {
                                      </tr>
                                    </thead>
                                    <tbody>
-                                     ${alert.alert_assets
+                                     ${alert.assets
                       .map(
                           (asset) => `
                                          <tr>
                                            <td>${asset.asset_name ? asset.asset_name : '-'}</td>
-                                           <td>${asset.asset_name ? asset.asset_description : '-'}</td>
+                                           <td>${asset.asset_description ? asset.asset_description : '-'}</td>
                                            <td>${asset.asset_type ? asset.asset_type : '-'}</td>
                                            <td>${asset.asset_domain ? asset.asset_domain : '-'}</td>
                                            <td>${asset.asset_ip ? asset.asset_ip : '-'}</td>
-                                           <td>${asset.asset_tags ? asset.asset_tags.map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
+                                           <td>${asset.asset_tags ? asset.asset_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
                                            <td>${asset.asset_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(asset.asset_enrichment).replace(/"/g, '&quot;')})">
                                               View Enrichment
                                             </button>` : ''}

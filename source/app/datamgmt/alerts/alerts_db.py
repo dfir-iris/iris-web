@@ -147,7 +147,8 @@ def get_filtered_alerts(
         ).filter(
             *conditions
         ).options(
-            joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer), joinedload(Alert.cases)
+            joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer), joinedload(Alert.cases),
+            joinedload(Alert.iocs), joinedload(Alert.assets)
         ).order_by(
             order_func(Alert.alert_source_event_time)
         ).paginate(page, per_page, error_out=False)

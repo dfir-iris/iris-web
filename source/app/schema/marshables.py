@@ -903,8 +903,8 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     customer = ma.Nested(CustomerSchema)
     classification = ma.Nested(CaseClassificationSchema)
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
-    alert_iocs = ma.Nested(IocSchema, many=True)
-    alert_assets = ma.Nested(CaseAssetsSchema, many=True)
+    iocs = ma.Nested(IocSchema, many=True)
+    assets = ma.Nested(CaseAssetsSchema, many=True)
 
     class Meta:
         model = Alert
