@@ -186,7 +186,7 @@ def alerts_get_route(caseid, alert_id) -> Response:
     alert_dump = alert_schema.dump(alert)
 
     # Get similar alerts
-    similar_alerts = get_related_alerts(alert.alert_customer_id, alert.alert_assets, alert.alert_iocs)
+    similar_alerts = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
     alert_dump['related_alerts'] = similar_alerts
 
     return response_success(data=alert_dump)

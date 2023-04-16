@@ -158,10 +158,53 @@ class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
 
+class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
+    csrf_token = fields.String(required=False)
+    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
+    asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
+    asset_icon_compromised = auto_field('asset_icon_compromised')
+    asset_icon_not_compromised = auto_field('asset_icon_not_compromised')
+
+    class Meta:
+        model = AssetsType
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        client = AssetsType.query.filter(
+            func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
+            AssetsType.asset_id != data.asset_id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "Asset type name already exists",
+                field_name="asset_name"
+            )
+
+        return data
+
+    def load_store_icon(self, file_storage, field_type):
+        if not file_storage.filename:
+            return None
+
+        fpath, message = store_icon(file_storage)
+
+        if fpath is None:
+            raise marshmallow.exceptions.ValidationError(
+                message,
+                field_name=field_type
+            )
+
+        setattr(self, field_type, fpath)
+
+        return fpath
+
+
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     ioc_links = fields.List(fields.Integer, required=False)
     asset_enrichment = fields.Dict(required=False)
+    asset_type = ma.Nested(AssetTypeSchema, required=False)
 
     class Meta:
         model = CaseAssets
@@ -192,10 +235,36 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class IocTypeSchema(ma.SQLAlchemyAutoSchema):
+    type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
+    type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
+    type_taxonomy = auto_field('type_taxonomy')
+    type_validation_regex = auto_field('type_validation_regex')
+    type_validation_expect = auto_field('type_validation_expect')
+
+    class Meta:
+        model = IocType
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        client = IocType.query.filter(
+            func.lower(IocType.type_name) == func.lower(data.type_name),
+            IocType.type_id != data.type_id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "IOC type name already exists",
+                field_name="type_name"
+            )
+
+        return data
+
+
 class IocSchema(ma.SQLAlchemyAutoSchema):
     ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
-    ioc_type = auto_field('ioc_type', required=False)
     ioc_enrichment = fields.Dict(required=False)
+    ioc_type = ma.Nested(IocTypeSchema, required=False)
 
     class Meta:
         model = Ioc
@@ -515,47 +584,6 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         return file_path, file_size, file_hash
 
 
-class AssetSchema(ma.SQLAlchemyAutoSchema):
-    csrf_token = fields.String(required=False)
-    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
-    asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
-    asset_icon_compromised = auto_field('asset_icon_compromised')
-    asset_icon_not_compromised = auto_field('asset_icon_not_compromised')
-
-    class Meta:
-        model = AssetsType
-        load_instance = True
-
-    @post_load
-    def verify_unique(self, data, **kwargs):
-        client = AssetsType.query.filter(
-            func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
-            AssetsType.asset_id != data.asset_id
-        ).first()
-        if client:
-            raise marshmallow.exceptions.ValidationError(
-                "Asset type name already exists",
-                field_name="asset_name"
-            )
-
-        return data
-
-    def load_store_icon(self, file_storage, field_type):
-        if not file_storage.filename:
-            return None
-
-        fpath, message = store_icon(file_storage)
-
-        if fpath is None:
-            raise marshmallow.exceptions.ValidationError(
-                message,
-                field_name=field_type
-            )
-
-        setattr(self, field_type, fpath)
-
-        return fpath
-
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
     http_proxy = auto_field('http_proxy', required=False, allow_none=False)
@@ -581,30 +609,6 @@ class ContactSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
 
-class IocTypeSchema(ma.SQLAlchemyAutoSchema):
-    type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
-    type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
-    type_taxonomy = auto_field('type_taxonomy')
-    type_validation_regex = auto_field('type_validation_regex')
-    type_validation_expect = auto_field('type_validation_expect')
-
-    class Meta:
-        model = IocType
-        load_instance = True
-
-    @post_load
-    def verify_unique(self, data, **kwargs):
-        client = IocType.query.filter(
-            func.lower(IocType.type_name) == func.lower(data.type_name),
-            IocType.type_id != data.type_id
-        ).first()
-        if client:
-            raise marshmallow.exceptions.ValidationError(
-                "IOC type name already exists",
-                field_name="type_name"
-            )
-
-        return data
 
 
 class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):

@@ -175,8 +175,8 @@ async function mergeAlertModal(alert_id) {
 
     alertData = alertDataReq.data;
 
-    if (alertData.alert_iocs.length !== 0) {
-        appendLabels(ioCsList, alertData.alert_iocs, 'ioc');
+    if (alertData.iocs.length !== 0) {
+        appendLabels(ioCsList, alertData.iocs, 'ioc');
         $("#toggle-iocs").on("click", function () {
             toggleSelectDeselect($(this), "#ioCsList input[type='checkbox']");
         });
@@ -185,8 +185,8 @@ async function mergeAlertModal(alert_id) {
         $("#ioc-container").show();
     }
 
-    if (alertData.alert_assets.length !== 0) {
-        appendLabels(assetsList, alertData.alert_assets, 'asset');
+    if (alertData.assets.length !== 0) {
+        appendLabels(assetsList, alertData.assets, 'asset');
         $("#toggle-assets").on("click", function () {
             toggleSelectDeselect($(this), "#assetsList input[type='checkbox']");
         });
@@ -574,7 +574,7 @@ function renderAlert(alert, expanded=false) {
                                                      <tr>
                                                        <td>${ioc.ioc_value}</td>
                                                        <td>${ioc.ioc_description}</td>
-                                                       <td>${ioc.ioc_type ? ioc.ioc_type : '-'}</td>
+                                                       <td>${ioc.ioc_type ? ioc.ioc_type.type_name : '-'}</td>
                                                        <td>${ioc.ioc_tlp ? ioc.ioc_tlp : '-'}</td>
                                                        <td>${ioc.ioc_tags ? ioc.ioc_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
                                                        <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
@@ -614,7 +614,7 @@ function renderAlert(alert, expanded=false) {
                                          <tr>
                                            <td>${asset.asset_name ? asset.asset_name : '-'}</td>
                                            <td>${asset.asset_description ? asset.asset_description : '-'}</td>
-                                           <td>${asset.asset_type ? asset.asset_type : '-'}</td>
+                                           <td>${asset.asset_type ? asset.asset_type.asset_name : '-'}</td>
                                            <td>${asset.asset_domain ? asset.asset_domain : '-'}</td>
                                            <td>${asset.asset_ip ? asset.asset_ip : '-'}</td>
                                            <td>${asset.asset_tags ? asset.asset_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>

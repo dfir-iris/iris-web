@@ -273,42 +273,37 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     # Link the alert to the case
     alert.cases.append(case)
 
-    ioc_schema = IocSchema()
-    asset_schema = CaseAssetsSchema()
     ioc_links = []
     asset_links = []
 
     # Add the IOCs to the case
     for ioc_uuid in iocs_list:
-        for alert_ioc in alert.alert_iocs:
-            if alert_ioc['ioc_uuid'] == ioc_uuid:
-                alert_ioc['ioc_tags'] = ','.join(alert_ioc['ioc_tags'])
+        for alert_ioc in alert.iocs:
+            if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
                 # TODO: Transform the ioc-enrichment to a custom attribute in the ioc
-                del alert_ioc['ioc_enrichment']
+                # del alert_ioc['ioc_enrichment']
 
-                ioc = ioc_schema.load(alert_ioc, session=db.session)
-                ioc, existed = add_ioc(ioc, current_user.id, case.case_id)
+                ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
                 add_ioc_link(ioc.ioc_id, case.case_id)
                 ioc_links.append(ioc.ioc_id)
 
     # Add the assets to the case
     for asset_uuid in assets_list:
-        for alert_asset in alert.alert_assets:
-            if alert_asset['asset_uuid'] == asset_uuid:
+        for alert_asset in alert.assets:
+            if str(alert_asset.asset_uuid) == asset_uuid:
 
-                alert_asset['asset_tags'] = ','.join(alert_asset['asset_tags'])
-                alert_asset['analysis_status_id'] = get_unspecified_analysis_status_id()
+                alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
 
                 # TODO: Transform the asset-enrichment to a custom attribute in the asset if possible
-                del alert_asset['asset_enrichment']
+                # del alert_asset['asset_enrichment']
 
-                asset = asset_schema.load(alert_asset, session=db.session)
-
-                asset = create_asset(asset=asset,
+                asset = create_asset(asset=alert_asset,
                                      caseid=case.case_id,
                                      user_id=current_user.id
                                      )
+                asset.asset_uuid = alert_asset.asset_uuid
+
                 set_ioc_links(ioc_links, asset.asset_id)
                 asset_links.append(asset.asset_id)
 
@@ -567,8 +562,8 @@ def get_related_alerts(customer_id, assets, iocs, details=False):
     returns:
         bool: True if the alert is related to another alert, False otherwise
     """
-    asset_names = [asset['asset_name'] for asset in assets]
-    ioc_values = [ioc['ioc_value'] for ioc in iocs]
+    asset_names = [asset.asset_name for asset in assets]
+    ioc_values = [ioc.ioc_value for ioc in iocs]
 
     similar_assets = SimilarAlertsCache.query.filter(
         SimilarAlertsCache.customer_id == customer_id,

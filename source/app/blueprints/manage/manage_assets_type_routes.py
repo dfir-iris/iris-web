@@ -35,7 +35,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.models.models import AssetsType
 from app.models.models import CaseAssets
-from app.schema.marshables import AssetSchema
+from app.schema.marshables import AssetTypeSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import response_error
@@ -117,7 +117,7 @@ def view_assets(cur_id, caseid):
     if not asset_type:
         return response_error("Invalid asset type ID")
 
-    asset_schema = AssetSchema()
+    asset_schema = AssetTypeSchema()
     try:
 
         asset_sc = asset_schema.load(request.form, instance=asset_type)
@@ -155,7 +155,7 @@ def add_assets_modal(caseid, url_redir):
 @ac_api_requires(Permissions.server_administrator)
 def add_assets(caseid):
 
-    asset_schema = AssetSchema()
+    asset_schema = AssetTypeSchema()
     try:
 
         asset_sc = asset_schema.load(request.form)
