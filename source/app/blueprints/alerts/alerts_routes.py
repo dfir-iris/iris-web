@@ -503,10 +503,13 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
 
     try:
         # Unmerge alert from the case
-        unmerge_alert_from_case(alert, case)
+        success, message = unmerge_alert_from_case(alert, case)
 
-        # Return the updated alert as JSON
-        return response_success(data=CaseSchema().dump(case))
+        if success is False:
+            return response_error(message)
+
+        # Return the updated case as JSON
+        return response_success(data=CaseSchema().dump(case), msg=message)
 
     except Exception as e:
         # Handle any errors during deserialization or DB operations

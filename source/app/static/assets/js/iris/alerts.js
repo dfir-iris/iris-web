@@ -89,6 +89,31 @@ function toggleSelectDeselect(toggleButton, listSelector) {
     }
 }
 
+function unlinkAlertFromCase(alert_id, case_id) {
+
+    do_deletion_prompt(`Unlink alert #${alert_id} from the case #${case_id}?`, true)
+        .then( () => {
+            unlinkAlertFromCaseRequest(alert_id, case_id)
+                .then((data) => {
+                    if (!notify_auto_api(data)) {
+                        return;
+                    }
+                    refreshAlert(alert_id)
+                        .then((data) => {
+                            notify_auto_api(data, true);
+                        });
+                });
+    });
+
+}
+
+async function unlinkAlertFromCaseRequest(alert_id, case_id) {
+    return await post_request_api(`/alerts/unmerge/${alert_id}`, JSON.stringify({
+        target_case_id: case_id,
+        csrf_token: $('#csrf_token').val()
+    }));
+}
+
 async function mergeAlertModal(alert_id) {
     const escalateButton = $("#escalateOrMergeButton");
     escalateButton.attr("data-alert-id", alert_id);
@@ -640,7 +665,7 @@ function renderAlert(alert, expanded=false) {
                           <div class="dropdown-menu">
                             <a class="dropdown-item" href="/case?cid=${case_}" target="_blank"><i class="fa-solid fa-eye mr-2"></i> View case #${case_}</a>    
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="unlinkAlertFromCase(${case_})"><i class="fa-solid fa-unlink mr-2"></i>Unlink alert from case #${case_}</a>
+                            <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="unlinkAlertFromCase(${alert.alert_id}, ${case_})"><i class="fa-solid fa-unlink mr-2"></i>Unlink alert from case #${case_}</a>
                           </div>
                     </div>
                     `).join('') : ''}

@@ -473,10 +473,15 @@ def unmerge_alert_from_case(alert: Alert, case: Cases):
         alert (Alert): The Alert
         case (Cases): The Case
     """
-    # Unlink the alert from the case
-    alert.cases.remove(case)
+    # Check if the case is in the alert.cases list
+    if alert in case.alerts:
+        # Unlink the alert from the case
+        case.alerts.remove(alert)
+        db.session.commit()
+    else:
+        return False, f"Case {case.case_id} not linked with alert {alert.alert_id}"
 
-    db.session.commit()
+    return True, f"Alert {alert.alert_id} unlinked from case {case.case_id}"
 
 
 def get_alert_status_list():
