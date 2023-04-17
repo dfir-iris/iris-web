@@ -21,9 +21,6 @@ services:
   rabbitmq:
       image: rabbitmq:3-management-alpine
       container_name: iriswebapp_rabbitmq
-      ports:
-          - "127.0.0.1:5672:5672"
-          - "127.0.0.1:15672:15672"
       networks:
         - iris_backend
 
@@ -33,8 +30,6 @@ services:
     container_name: iriswebapp_db
     image: iriswebapp_db:v2.0.1
     restart: always
-    ports:
-      - "127.0.0.1:5432:5432"
     environment:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
@@ -64,8 +59,6 @@ services:
     depends_on:
       - "rabbitmq"
       - "db"
-    ports:
-      - "127.0.0.1:8000:8000"
     env_file:
       - .env
     environment:
@@ -113,7 +106,6 @@ services:
       - IRIS_SECURITY_PASSWORD_SALT
       - IRIS_WORKER
     networks:
-      - iris_frontend
       - iris_backend
 
   nginx:
@@ -134,7 +126,6 @@ services:
       - IRIS_AUTHENTICATION_TYPE
     networks:
       - iris_frontend
-      - iris_backend
     ports:
       - "${INTERFACE_HTTPS_PORT:-443}:443"
     volumes:
@@ -152,7 +143,5 @@ volumes:
 networks:
   iris_backend:
     name: iris_backend
-    driver: bridge
   iris_frontend:
     name: iris_frontend
-    driver: bridge
