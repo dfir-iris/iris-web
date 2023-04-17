@@ -841,6 +841,20 @@ class IrisReport(db.Model):
         return self
 
 
+class SavedFilter(db.Model):
+    __tablename__ = 'saved_filters'
+
+    filter_id = Column(BigInteger, primary_key=True)
+    created_by = Column(ForeignKey('user.id'), nullable=False)
+    filter_name = Column(Text, nullable=False)
+    filter_description = Column(Text)
+    filter_data = Column(JSON, nullable=False)
+    filter_is_private = Column(Boolean, nullable=False)
+    filter_type = Column(Text, nullable=False)
+
+    user = relationship('User', foreign_keys=[created_by])
+
+
 class CeleryTaskMeta(db.Model):
     __bind_key__ = 'iris_tasks'
     __tablename__ = 'celery_taskmeta'

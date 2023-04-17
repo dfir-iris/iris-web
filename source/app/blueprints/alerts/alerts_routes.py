@@ -703,4 +703,3 @@ def case_comment_add(alert_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
-

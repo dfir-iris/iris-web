@@ -46,7 +46,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification
+from app.models import AnalysisStatus, CaseClassification, SavedFilter
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -915,3 +915,12 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
         include_fk = True
         load_instance = True
+
+
+class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = SavedFilter
+        load_instance = True
+        include_fk = True
+        include_relationships = True
+

@@ -391,8 +391,8 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
 
     # Add the IOCs to the case
     for ioc_uuid in iocs_list:
-        for alert_ioc in alert.alert_iocs:
-            if alert_ioc['ioc_uuid'] == ioc_uuid:
+        for alert_ioc in alert.iocs:
+            if alert_ioc.ioc_uuid == ioc_uuid:
                 alert_ioc['ioc_tags'] = ','.join(alert_ioc['ioc_tags'])
 
                 # TODO: Transform the ioc-enrichment to a custom attribute in the ioc
