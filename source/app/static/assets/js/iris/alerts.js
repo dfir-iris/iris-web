@@ -809,6 +809,9 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
 
   $('#alertsInfoFilter').text(`${data.data.total} Alert${ data.data.total > 1 ? 's' : ''} ${ filterString ? '(filtered)' : '' }`);
 
+  const isExpanded = queryParams.get('is-expanded') === 'true';
+  collapseAlerts(isExpanded);
+
 }
 
 $('#alertsPerPage').on('change', (e) => {
@@ -849,20 +852,31 @@ function refreshAlerts(){
 }
 
 function toggleCollapseAllAlerts() {
-    const alertsContainer = $('.alert-collapsible');
     const toggleAllBtn = $('#toggleAllAlertsBtn');
     const isExpanded = toggleAllBtn.data('is-expanded') || false;
 
+    collapseAlerts(!isExpanded);
+
+    const queryParams = new URLSearchParams(window.location.search);
+    queryParams.set('is-expanded', !isExpanded);
+    window.history.replaceState(null, '', '?' + queryParams.toString());
+}
+
+function collapseAlerts(isExpanded) {
+    const alertsContainer = $('.alert-collapsible');
+    const toggleAllBtn = $('#toggleAllAlertsBtn');
+
     if (isExpanded) {
-        alertsContainer.collapse('hide');
-        toggleAllBtn.text('Expand All');
-        toggleAllBtn.data('is-expanded', false);
-    } else {
         alertsContainer.collapse('show');
         toggleAllBtn.text('Collapse All');
         toggleAllBtn.data('is-expanded', true);
+    } else {
+        alertsContainer.collapse('hide');
+        toggleAllBtn.text('Expand All');
+        toggleAllBtn.data('is-expanded', false);
     }
 }
+
 
 
 $('#alertFilterForm').on('submit', (e) => {
