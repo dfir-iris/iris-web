@@ -495,7 +495,7 @@ function renderAlert(alert, expanded=false) {
                         <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
                     </div>
                   <span class="">${alert.alert_description}</span><br/>
-                  <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4 ${expanded? 'show': ''}">
+                  <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4 ${expanded? 'show': ''} alert-collapsible">
                     <div class="card-no-pd mt-2">
                         <div class="card-body">
                         <h3 class="title mb-3"><strong>General info</strong></h3>  
@@ -847,6 +847,23 @@ function refreshAlerts(){
             notify_success('Refreshed');
         });
 }
+
+function toggleCollapseAllAlerts() {
+    const alertsContainer = $('.alert-collapsible');
+    const toggleAllBtn = $('#toggleAllAlertsBtn');
+    const isExpanded = toggleAllBtn.data('is-expanded') || false;
+
+    if (isExpanded) {
+        alertsContainer.collapse('hide');
+        toggleAllBtn.text('Expand All');
+        toggleAllBtn.data('is-expanded', false);
+    } else {
+        alertsContainer.collapse('show');
+        toggleAllBtn.text('Collapse All');
+        toggleAllBtn.data('is-expanded', true);
+    }
+}
+
 
 $('#alertFilterForm').on('submit', (e) => {
   e.preventDefault();
