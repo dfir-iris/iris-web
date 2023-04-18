@@ -17,15 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import marshmallow
 from flask import Blueprint, request
-from flask_wtf import FlaskForm
-from typing import Union, List
+from flask_login import current_user
 from werkzeug import Response
 
 from app import db
-from app.datamgmt.filters.filters_db import get_filter_by_id
-from app.models.authorization import Permissions
+from app.datamgmt.filters.filters_db import get_filter_by_id, list_filters_by_type
 from app.schema.marshables import SavedFilterSchema
 from app.util import ac_api_requires, response_success, response_error
 
@@ -50,8 +47,10 @@ def filters_add_route(caseid) -> Response:
     try:
         # Load the JSON data from the request
         data = request.get_json()
+        data['created_by'] = current_user.id
 
         new_saved_filter = saved_filter_schema.load(data)
+
         db.session.add(new_saved_filter)
         db.session.commit()
 
@@ -122,7 +121,7 @@ def filters_delete_route(filter_id, caseid) -> Response:
 
 @saved_filters_blueprint.route('/filters/<int:filter_id>', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
-def filters_delete_route(filter_id, caseid) -> Response:
+def filters_get_route(filter_id, caseid) -> Response:
     """
     Get a saved filter
 
@@ -145,3 +144,27 @@ def filters_delete_route(filter_id, caseid) -> Response:
         # Handle any errors during DB operations
         return response_error(str(e))
 
+
+@saved_filters_blueprint.route('/filters/<string:filter_type>/list', methods=['GET'])
+@ac_api_requires(no_cid_required=True)
+def filters_list_route(filter_type, caseid) -> Response:
+    """
+    List saved filters
+
+    args:
+        filter_type: The type of filter to list (e.g. 'search')
+
+
+    returns:
+        Response object
+    """
+    saved_filter_schema = SavedFilterSchema(many=True)
+
+    try:
+        saved_filters = list_filters_by_type(str(filter_type).lower())
+
+        return response_success(data=saved_filter_schema.dump(saved_filters))
+
+    except Exception as e:
+        # Handle any errors during DB operations
+        return response_error(str(e))

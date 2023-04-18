@@ -977,15 +977,17 @@ async function editAlert(alert_id, close=false) {
 }
 
 function fetchSavedFilters() {
-    // Replace the URL with the actual endpoint to fetch saved filters
-    const url = '/path/to/saved/filters/endpoint';
-    $.get(url, function(data) {
-        const savedFiltersDropdown = $('#savedFilters');
-        savedFiltersDropdown.empty().append('<option value="">-- Select a saved filter --</option>');
+    const url = '/filters/alerts/list';
+    get_request_api(url)
+        .then((data) => {
+            if (notify_auto_api(data)) {
+                const savedFiltersDropdown = $('#savedFilters');
+                savedFiltersDropdown.empty().append('<option value="">-- Select a saved filter --</option>');
 
-        data.forEach(filter => {
-            savedFiltersDropdown.append(`<option value="${filter.id}">${filter.name}</option>`);
-        });
+                data.data.forEach(filter => {
+                    savedFiltersDropdown.append(`<option value="${filter.filter_id}">${filter.filter_name}</option>`);
+                });
+            }
     });
 }
 
@@ -998,19 +1000,19 @@ $('#saveFilters').on('click', function() {
     const filterName = prompt('Enter a name for this filter:');
     if (!filterName) return;
 
-    // Replace the URL with the actual endpoint to save filters
-    const url = '/path/to/save/filter/endpoint';
-
-    $.ajax({
-        type: 'POST',
-        url: url,
-        data: JSON.stringify({ name: filterName, filter_data: filterData }),
-        contentType: 'application/json; charset=utf-8',
-        success: function() {
+    const url = '/filters/add';
+    post_request_api(url, JSON.stringify({
+        filter_name: filterName,
+        filter_description: filterName,
+        filter_data: filterData,
+        filter_is_private: false,
+        filter_type: 'alerts',
+        csrf_token: $('#csrf_token').val()
+        }
+    ))
+    .then(function (data) {
+        if (notify_auto_api(data)) {
             fetchSavedFilters();
-        },
-        error: function(xhr, textStatus, errorThrown) {
-            console.error('Error saving filter:', textStatus, errorThrown);
         }
     });
 });
@@ -1019,17 +1021,21 @@ $('#savedFilters').on('change', function() {
     const selectedFilterId = $(this).val();
     if (!selectedFilterId) return;
 
-    const url = `/path/to/saved/filter/endpoint/${selectedFilterId}`;
+    const url = `/filters/${selectedFilterId}`;
 
-    $.get(url, function(data) {
-        const queryParams = new URLSearchParams();
-        Object.entries(data.filter_data).forEach(([key, value]) => {
-            queryParams.set(key, value);
-        });
+    get_request_api(url)
+        .then((data) => {
+            if(!notify_auto_api(data, true)) return;
+            const queryParams = new URLSearchParams();
+            Object.entries(data.data.filter_data).forEach(([key, value]) => {
+                if (value !== '') {
+                    queryParams.set(key, value);
+                }
+            });
 
-        // Update the URL and reload the page with the new filter settings
-        window.location.href = window.location.pathname + '?' + queryParams.toString();
-    });
+            // Update the URL and reload the page with the new filter settings
+            window.location.href = window.location.pathname + case_param() + '&' + queryParams.toString();
+        })
 });
 
 function changeStatusAlert(alert_id, status_name) {
@@ -1286,6 +1292,7 @@ $(document).ready(function () {
       }
     setFormValuesFromUrl();
     getAlertStatusList();
+    fetchSavedFilters()
 
       $('#toggle-selection-mode').on('click', function() {
         // Toggle the 'selection-mode' class on the body element

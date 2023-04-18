@@ -36,6 +36,7 @@ from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
+from app.blueprints.filters.filters_routes import saved_filters_blueprint
 from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_access_control import manage_ac_blueprint
 from app.blueprints.manage.manage_alerts_status_routes import manage_alerts_status_blueprint
@@ -87,6 +88,7 @@ app.register_blueprint(manage_groups_blueprint)
 app.register_blueprint(manage_case_classification_blueprint)
 app.register_blueprint(manage_alerts_status_blueprint)
 app.register_blueprint(manage_severities_blueprint)
+app.register_blueprint(saved_filters_blueprint)
 
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
