@@ -15799,3 +15799,8 @@ td.dt-nowrap { white-space: nowrap }
 .modal_comment.modal.show {
     display: none;
 }
+
+.custom-saved-filters {
+    max-height: 60vh;
+    overflow-y: auto;
+}

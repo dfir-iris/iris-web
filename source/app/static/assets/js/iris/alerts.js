@@ -990,7 +990,7 @@ function fetchSavedFilters() {
                     <button class="btn btn-sm dropdown-toggle" type="button" id="savedFilters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Select preset filter
                     </button>
-                    <div class="dropdown-menu" aria-labelledby="savedFilters">
+                    <div class="dropdown-menu custom-saved-filters" aria-labelledby="savedFilters">
                 `;
 
                 data.data.forEach(filter => {
