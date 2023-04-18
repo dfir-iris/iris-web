@@ -30,6 +30,9 @@ services:
     container_name: iriswebapp_db
     image: iriswebapp_db:v2.0.1
     restart: always
+    # Used for debugging purposes, should be deleted for production
+    ports:
+      - "127.0.0.1:5432:5432"
     environment:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
@@ -59,6 +62,9 @@ services:
     depends_on:
       - "rabbitmq"
       - "db"
+    # Used for debugging purposes, should be deleted for production
+    ports:
+      - "127.0.0.1:8000:8000"
     env_file:
       - .env
     environment:
