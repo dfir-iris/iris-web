@@ -11,62 +11,76 @@
 <div class="page-inner">
     <div class="">
         {{ form.csrf_token }}
-        <div class=" d-flex justify-content-between align-items-center">
-            <div class="col col-heading">
-                <div class="card-title"><span id="alertsInfoFilter">Loading..</span></div>
-                <div class="card-subtitle mt-2">
-                    <div class="d-flex">
-                        <button class="btn btn-sm" href="#filterCardBody" title="Filter" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="filterCardBody">Filters</button>
-                        <select class="form-control" id="savedFilters">
-                                    <option value="">Select preset filter</option>
-                        </select>
-                    </div>
+        <div class="container-fluid">
+            <div class="row justify-content-between align-items-center">
+                <div class="card-title">
+                    <span id="alertsInfoFilter">Loading..</span>
                 </div>
             </div>
-            <div class="d-flex">
-                <div id="alerts-batch-actions" style="display:none;" class="mr-4 mt-4">
-                    <div class="dropdown ml-2 d-inline-block">
-                        <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Assign
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#" onclick="updateBatchAlerts({alert_owner_id: userWhoami.user_id});">Assign to me</a>
-                            <a class="dropdown-item" href="#" onclick="changeBatchAlertOwner();">Assign</a>
+            <div class="row justify-content-between align-items-center">
+                <div class="col">
+                    <div class="card-subtitle mt-2">
+                        <div class="d-flex">
+                            <button class="btn btn-sm" href="#filterCardBody" title="Filter" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="filterCardBody">Filter</button>
+                            <button type="button" class="btn btn-sm ml-2" id="togglePresets">Presets</button>
+                            <div class="preset-dropdown-container ml-2" style="display: none;">
+                                <select class="form-control" id="savedFilters">
+                                    <option value="">Select preset filter</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-dark ml-2" id="resetFilters" style="display: none;">Clear Filters</button>
                         </div>
                     </div>
-
-                    <div class="dropdown ml-2 d-inline-block">
-                        <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Set status
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('New');">New</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('In progress');">In progress</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Pending');">Pending</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Closed');">Closed</a>
-                            <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Merged');">Merged</a>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="deleteBatchAlerts();"><i class="fa fa-trash mr-2"></i>Delete</button>
                 </div>
-                <button class="btn btn-sm mb-2 mr-2" id="select-deselect-all" style="display:none;">Select all</button>
+                <div class="col-auto">
+                    <div class="card-subtitle mt-2">
+                        <div class="d-flex">
+                        <div id="alerts-batch-actions" style="display:none;" class="mr-4">
+                            <div class="dropdown ml-2 d-inline-block">
+                                <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Assign
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" onclick="updateBatchAlerts({alert_owner_id: userWhoami.user_id});">Assign to me</a>
+                                    <a class="dropdown-item" href="#" onclick="changeBatchAlertOwner();">Assign</a>
+                                </div>
+                            </div>
 
-                <button class="btn btn-sm mb-2 mr-2" id="toggle-selection-mode">Select</button>
-                <button class="btn btn-sm mb-2 mr-2" id="orderAlertsBtn"><i class="fas fa-arrow-up-short-wide"></i></button>
-                <button class="btn btn-sm mb-2 mr-2" onclick="refreshAlerts();">Refresh</button>
-                <button id="toggleAllAlertsBtn" class="btn btn-sm mb-2 mr-2" onclick="toggleCollapseAllAlerts()" data-is-expanded="false">Expand All</button>
-                <div class="pagination-dropdown-container ml-3 mt-1">
-                  <label for="alertsPerPage">Alerts per page:</label>
-                  <select id="alertsPerPage">
-                    <option value="5">5</option>
-                    <option value="10" selected>10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="200">200</option>
-                    <option value="500">500</option>
-                    <option value="1000">1000</option>
-                  </select>
+                            <div class="dropdown ml-2 d-inline-block">
+                                <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Set status
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('New');">New</a>
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('In progress');">In progress</a>
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Pending');">Pending</a>
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Closed');">Closed</a>
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Merged');">Merged</a>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="deleteBatchAlerts();"><i class="fa fa-trash mr-2"></i>Delete</button>
+                        </div>
+                        <button class="btn btn-sm mr-2" id="select-deselect-all" style="display:none;">Select all</button>
+
+                        <button class="btn btn-sm mr-2" id="toggle-selection-mode">Select</button>
+                        <button class="btn btn-sm mr-2" id="orderAlertsBtn"><i class="fas fa-arrow-up-short-wide"></i></button>
+                        <button class="btn btn-sm mr-2" onclick="refreshAlerts();">Refresh</button>
+                        <button id="toggleAllAlertsBtn" class="btn btn-sm mr-2" onclick="toggleCollapseAllAlerts()" data-is-expanded="false">Expand All</button>
+                        <div class="pagination-dropdown-container ml-3 mt-1">
+                            <label for="alertsPerPage">Alerts per page:</label>
+                            <select id="alertsPerPage">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                                <option value="500">500</option>
+                                <option value="1000">1000</option>
+                          </select>
+                        </div>
+                    </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -140,8 +154,7 @@
                 <div class="form-row mt-3">
                     <div class="col centered">
                         <button type="submit" class="btn btn-sm btn-primary">Apply Filters</button>
-                        <button type="button" class="btn btn-sm btn-dark" id="resetFilters">Clear Filters</button>
-                        <button type="button" class="btn btn-sm btn-success" id="saveFilters">Save Filters</button>
+                        <button type="button" class="btn btn-sm btn-outline-success float-right" id="saveFilters">Save Filters</button>
                     </div>
                 </div>
             </form>

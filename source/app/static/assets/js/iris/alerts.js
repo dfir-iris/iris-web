@@ -809,6 +809,8 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
 
   $('#alertsInfoFilter').text(`${data.data.total} Alert${ data.data.total > 1 ? 's' : ''} ${ filterString ? '(filtered)' : '' }`);
 
+  filterString ? $('#resetFilters').show() : $('#resetFilters').hide();
+
   const isExpanded = queryParams.get('is-expanded') === 'true';
   collapseAlerts(isExpanded);
 
@@ -1322,5 +1324,8 @@ $(document).ready(function () {
         $(this).text(allSelected ? 'Select all' : 'Deselect all');
       });
 
+    $('#togglePresets').on('click', function() {
+        $('.preset-dropdown-container').toggle();
+    });
 
 });
