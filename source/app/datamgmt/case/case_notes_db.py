@@ -221,7 +221,7 @@ def add_note_group(group_title, caseid, userid, creationdate):
 
     db.session.add(ng)
 
-    update_notes_state(caseid=caseid)
+    update_notes_state(caseid=caseid, userid=userid)
     db.session.commit()
 
     if group_title == '':
