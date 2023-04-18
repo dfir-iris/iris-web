@@ -81,10 +81,13 @@ def _authenticate_ldap(form, username, password):
             if not app.config.get('LDAP_USER_PROVISIONING'):
                 return _render_template(form, 'Wrong credentials. Please try again.')
             log.info(f'Provisioning user "{username}" which is present in LDAP but not yet in database.')
-            # TODO: the user is created with a fixed password
-            #       this may be unsafe, if the server configuration is switched from LDAP to local
-            #       ideally it should be possible to create a user without providing any password
-            user = create_user(username, username, 'password_ldap_created', '', True)
+            # TODO the user is created with a fixed password
+            #      this may be unsafe, if the server configuration is switched from LDAP to local
+            #      ideally it should be possible to create a user without providing any password
+            # TODO It seems email unicity is required (a fixed email causes a problem at the second account creation)
+            #      I am just forging a dummy email from the username since
+            #      There is probably a better alternative
+            user = create_user(username, username, 'password_ldap_created', f'{username}@ldap', True)
 
         return wrap_login_user(user)
     except Exception as e:
