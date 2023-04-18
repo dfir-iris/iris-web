@@ -212,11 +212,21 @@
             <input type="text" class="form-control" id="editAlertTags">
           </div>
         </form>
+          <div class="form-group alert-edition-part">
+            <label for="editAlertClassification">Classification</label>
+            <select class="form-control" id="editAlertClassification">
+            </select>
+          </div>
+           <div class="form-group alert-edition-part">
+            <label for="editAlertSeverity">Severity</label>
+            <select class="form-control" id="editAlertSeverity">
+            </select>
+          </div>
+          <div class="mt-4">
+            <button type="button" class="btn btn-primary float-right mr-2" id="confirmAlertEdition">Close Alert</button>
+            <button type="button" class="btn btn-dark float-right mr-2" data-dismiss="modal">Cancel</button>
+          </div>
       </div>
-     <div class="modal-footer">
-        <button type="button" class="btn btn-dark" data-dismiss="modal">Cancel</button>
-      <button type="button" class="btn btn-primary" id="confirmAlertEdition">Close Alert</button>
-    </div>
     </div>
   </div>
 </div>

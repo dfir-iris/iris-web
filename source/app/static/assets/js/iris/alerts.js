@@ -447,6 +447,8 @@ function alertStatusToColor(status) {
             return 'alert-card-done';
         case 'Merged':
             return 'alert-card-done';
+        case 'Escalated':
+            return 'alert-card-done';
         default:
             return '';
     }
@@ -663,12 +665,12 @@ function renderAlert(alert, expanded=false) {
                     <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                     <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
                     <span title="Alert severity"><b class="ml-3"><i class="fa-solid fa-bolt"></i></b>
-                      <small class="text-muted ml-1">${alert.severity.severity_name}</small></span>
+                      <small class="text-muted ml-1" id="alertSeverity-${alert.alert_id}" data-severity-id="${alert.severity.severity_id}">${alert.severity.severity_name}</small></span>
                     <span title="Alert source"><b class="ml-3"><i class="fa-solid fa-cloud-arrow-down"></i></b>
                       <small class="text-muted ml-1">${alert.alert_source || 'Unspecified'}</small></span>
                     <span title="Alert client"><b class="ml-3"><i class="fa-regular fa-circle-user"></i></b>
                       <small class="text-muted ml-1 mr-2">${alert.customer.customer_name || 'Unspecified'}</small></span>
-                    ${alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
+                    ${alert.classification && alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification" id="alertClassification-${alert.alert_id}" data-classification-id="${alert.classification.id}"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
                     ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${alert.alert_tags}</div>` : ''}
                   
                     ${alert.cases ? alert.cases.map((case_) => `
@@ -967,12 +969,25 @@ async function editAlert(alert_id, close=false) {
 
     if (close) {
         confirmAlertEdition.text('Close alert');
+        $('.alert-edition-part').hide();
         $('#closeAlertModalLabel').text(`Close alert #${alert_id}`);
     } else {
+        $('.alert-edition-part').show();
         $('#closeAlertModalLabel').text(`Edit alert #${alert_id}`);
         confirmAlertEdition.text('Save')
     }
 
+    fetchSelectOptions('editAlertClassification', selectsConfig['alertClassificationFilter']).then(() => {
+      $('#editAlertClassification').val($(`#alertClassification-${alert_id}`).data('classification-id'));
+    }).catch(error => {
+      console.error(error);
+    });
+
+    fetchSelectOptions('editAlertSeverity', selectsConfig['alertSeverityFilter']).then(() => {
+      $('#editAlertSeverity').val($(`#alertSeverity-${alert_id}`).data('severity-id'));
+    }).catch(error => {
+      console.error(error);
+    });
 
     $('#editAlertModal').modal('show');
 
@@ -982,7 +997,9 @@ async function editAlert(alert_id, close=false) {
 
         let data = {
           alert_note: alert_note,
-          alert_tags: alert_tags
+          alert_tags: alert_tags,
+          alert_classification_id: $('#editAlertClassification').val(),
+          alert_severity_id: $('#editAlertSeverity').val()
         };
 
         if (close) {

@@ -15486,7 +15486,7 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(255, 255, 255, 0);
   }
 }
 @-moz-keyframes yellow-fade {
@@ -15494,7 +15494,7 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(255, 255, 255, 0);
   }
 }
 @keyframes yellow-fade {
@@ -15502,14 +15502,14 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(255, 255, 255, 0);
   }
 }
 .fade-it {
-  -webkit-animation: yellow-fade 2s ease-in-out 0s;
-  -moz-animation: yellow-fade 2s ease-in-out 0s;
-  -o-animation: yellow-fade 2s ease-in-out 0s;
-  animation: yellow-fade 2s ease-in-out 0s;
+  -webkit-animation: yellow-fade 1s ease-in-out 0s;
+  -moz-animation: yellow-fade 1s ease-in-out 0s;
+  -o-animation: yellow-fade 1s ease-in-out 0s;
+  animation: yellow-fade 1s ease-in-out 0s;
 }
 
 .modal { overflow: auto !important; }
