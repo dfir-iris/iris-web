@@ -402,6 +402,9 @@ class Config:
 
         LDAP_AUTHENTICATION_TYPE = config.load('LDAP', 'AUTHENTICATION_TYPE')
 
+        LDAP_USER_PROVISIONING = config.load('LDAP', 'USER_PROVISIONING', fallback='False')
+        LDAP_USER_PROVISIONING = (LDAP_USER_PROVISIONING == 'True')
+
         LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
         LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
 

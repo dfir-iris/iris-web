@@ -40,6 +40,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.models.authorization import User
 from app.util import is_authentication_ldap
+from app.datamgmt.manage.manage_users_db import create_user
 
 
 login_blueprint = Blueprint(
@@ -49,6 +50,60 @@ login_blueprint = Blueprint(
 )
 
 log = app.logger
+
+
+# filter User out of database through username
+def _retrieve_user_by_username(username):
+    user = User.query.filter(
+        User.user == username,
+        User.active == True
+    ).first()
+    if not user:
+        track_activity("someone tried to log in with user '{}', which does not exist".format(username),
+                       ctx_less=True, display_in_ui=False)
+    return user
+
+
+def _render_template_login(form, msg):
+    organisation_name = app.config.get('ORGANISATION_NAME')
+    return render_template('login.html', form=form, msg=msg, organisation_name=organisation_name)
+
+
+def _authenticate_ldap(form, username, password):
+    try:
+        if ldap_authenticate(username, password) is False:
+            track_activity("wrong login password for user '{}' using LDAP auth".format(username),
+                           ctx_less=True, display_in_ui=False)
+            return _render_template_login(form, 'Wrong credentials. Please try again.')
+
+        user = _retrieve_user_by_username(username)
+        if not user:
+            if not app.config.get('LDAP_USER_PROVISIONING'):
+                return _render_template(form, 'Wrong credentials. Please try again.')
+            log.info(f'Provisioning user "{username}" which is present in LDAP but not yet in database.')
+            # TODO: the user is created with a fixed password
+            #       this may be unsafe, if the server configuration is switched from LDAP to local
+            #       ideally it should be possible to create a user without providing any password
+            user = create_user(username, username, 'password_ldap_created', '', True)
+
+        return wrap_login_user(user)
+    except Exception as e:
+        log.error(e.__str__())
+        return _render_template_login(form, 'LDAP authentication unavailable. Check server logs')
+
+
+def _authenticate_password(form, username, password):
+    user = _retrieve_user_by_username(username)
+    if not user:
+        return _render_template(form, 'Wrong credentials. Please try again.')
+
+    if bc.check_password_hash(user.password, password):
+        return wrap_login_user(user)
+
+    track_activity("wrong login password for user '{}' using local auth".format(username), ctx_less=True,
+                   display_in_ui=False)
+    return _render_template(form, 'Wrong credentials. Please try again.')
+
 
 # CONTENT ------------------------------------------------
 # Authenticate user
@@ -65,56 +120,18 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
         # Declare the login form
         form = LoginForm(request.form)
 
-        # Flask message injected into the page, in case of any errors
-        msg = None
-        c_exists = False
-
         # check if both http method is POST and form is valid on submit
-        if form.validate_on_submit():
+        if not form.validate_on_submit():
+            return _render_template_login(form, None)
 
-            # assign form data to variables
-            username = request.form.get('username', '', type=str)
-            password = request.form.get('password', '', type=str)
+        # assign form data to variables
+        username = request.form.get('username', '', type=str)
+        password = request.form.get('password', '', type=str)
 
-            # filter User out of database through username
-            user = User.query.filter(
-                User.user == username,
-                User.active == True
-            ).first()
+        if is_authentication_ldap() is True:
+            return _authenticate_ldap(form, username, password)
 
-            if user:
-                if is_authentication_ldap() is True:
-                    try:
-                        if ldap_authenticate(username, password) is True:
-                            return wrap_login_user(user)
-
-                        else:
-                            track_activity("wrong login password for user '{}' using LDAP auth".format(username),
-                                           ctx_less=True, display_in_ui=False)
-
-                            msg = "Wrong credentials. Please try again."
-                            return render_template('login.html', form=form, msg=msg)
-
-                    except Exception as e:
-                        log.error(e.__str__())
-                        return render_template('login.html', form=form,
-                                               msg='LDAP authentication unavailable. Check server logs')
-
-                elif bc.check_password_hash(user.password, password):
-                    return wrap_login_user(user)
-
-                else:
-                    track_activity("wrong login password for user '{}' using local auth".format(username), ctx_less=True,
-                                   display_in_ui=False)
-                    msg = "Wrong credentials. Please try again."
-
-            else:
-                track_activity("someone tried to log in with user '{}', which does not exist".format(username),
-                               ctx_less=True, display_in_ui=False)
-                msg = "Wrong credentials. Please try again."
-
-        return render_template('login.html', form=form, msg=msg,
-                               organisation_name=app.config.get('ORGANISATION_NAME'))
+        return _authenticate_password(form, username, password)
 
 
 def wrap_login_user(user):
