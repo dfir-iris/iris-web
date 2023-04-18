@@ -116,6 +116,40 @@
   </div><!-- /.modal-dialog -->
 </div>
 
+<div class="modal" id="saveFilterModal" tabindex="-1" role="dialog" aria-labelledby="saveFilterModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="saveFilterModalLabel">Save Filter</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="filterName">Filter Name *</label>
+          <input type="text" class="form-control" id="filterName" placeholder="Filter name">
+        </div>
+        <div class="form-group">
+          <label for="filterDescription">Filter Description</label>
+          <input type="text" class="form-control" id="filterDescription" placeholder="Filter description">
+        </div>
+          <div class="form-check">
+            <label class="form-check-label mt-3">
+                <input checked="" class="form-check-input" id="filterIsPrivate" name="filterIsPrivate" type="checkbox">
+                <span class="form-check-sign"> Private Filter
+                    <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the filter will be only visible to you" style="cursor:pointer;"></i>
+                </span>
+            </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-outline-success" id="saveFilterButton">Save Filter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" tabindex="-1" role="dialog" id="modal_help" data-backdrop="true">
 </div>
 

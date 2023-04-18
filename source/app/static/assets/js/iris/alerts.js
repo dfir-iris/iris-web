@@ -983,40 +983,87 @@ function fetchSavedFilters() {
     get_request_api(url)
         .then((data) => {
             if (notify_auto_api(data)) {
-                const savedFiltersDropdown = $('#savedFilters');
-                savedFiltersDropdown.empty().append('<option value="">-- Select a saved filter --</option>');
+                const savedFiltersDropdown = $('#savedFiltersDropdown');
+                savedFiltersDropdown.empty();
+
+                let dropdownHtml = `
+                    <button class="btn btn-sm dropdown-toggle" type="button" id="savedFilters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Select preset filter
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="savedFilters">
+                `;
 
                 data.data.forEach(filter => {
-                    savedFiltersDropdown.append(`<option value="${filter.filter_id}">${filter.filter_name}</option>`);
+                    dropdownHtml += `
+                        <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" data-filter-id="${filter.filter_id}">
+                            <span>${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span>
+                            <i class="ml-4 fas fa-trash delete-filter text-danger" data-filter-id="${filter.filter_id}" title="Delete filter"></i>
+                        </a>
+                    `;
+                });
+
+                dropdownHtml += '</div>';
+
+                savedFiltersDropdown.append(dropdownHtml);
+
+                savedFiltersDropdown.on('click', '.delete-filter', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    const filterId = $(this).data('filter-id');
+                    if (!filterId) return;
+
+                    do_deletion_prompt('Are you sure you want to delete this filter?', true)
+                        .then((do_delete) => {
+                            if (!do_delete) return;
+                            const url = `/filters/delete/${filterId}`;
+                            const data = {
+                                csrf_token: $('#csrf_token').val()
+                            };
+                            post_request_api(url, JSON.stringify(data))
+                                .then((data) => {
+                                    if (notify_auto_api(data)) {
+                                        fetchSavedFilters();
+                                    }
+                                });
+                    });
                 });
             }
-    });
+        });
 }
 
-$('#saveFilters').on('click', function() {
+$('#saveFilters').on('click', function () {
+    $('#saveFilterModal').modal('show');
+});
+
+$('#saveFilterButton').on('click', function () {
     const filterData = $('#alertFilterForm').serializeArray().reduce((obj, item) => {
         obj[item.name] = item.value;
         return obj;
     }, {});
 
-    const filterName = prompt('Enter a name for this filter:');
+    const filterName = $('#filterName').val();
+    const filterDescription = $('#filterDescription').val();
+    const filterIsPrivate = $('#filterIsPrivate').prop('checked');
+
     if (!filterName) return;
 
     const url = '/filters/add';
     post_request_api(url, JSON.stringify({
         filter_name: filterName,
-        filter_description: filterName,
+        filter_description: filterDescription,
         filter_data: filterData,
-        filter_is_private: false,
+        filter_is_private: filterIsPrivate,
         filter_type: 'alerts',
         csrf_token: $('#csrf_token').val()
-        }
-    ))
-    .then(function (data) {
-        if (notify_auto_api(data)) {
-            fetchSavedFilters();
-        }
-    });
+    }))
+        .then(function (data) {
+            if (notify_auto_api(data)) {
+                fetchSavedFilters();
+            }
+        });
+
+    $('#saveFilterModal').modal('hide');
 });
 
 $('#savedFilters').on('change', function() {
