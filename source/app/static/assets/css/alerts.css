@@ -16,11 +16,10 @@
   position: absolute;
   bottom: 7px;
   right: 0;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.35);
   padding: 10px;
   justify-content: space-between;
-  border-bottom-left-radius: 15px;
-  border-bottom-right-radius: 15px;
+  border-radius: 15px;
 }
 
 .btn-alert-primary {
@@ -149,4 +148,8 @@
 
 #context-menu li:hover {
   background-color: #f0f0f0;
+}
+
+.alert-card-done {
+  background-color: #e6e6e6;
 }

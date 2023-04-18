@@ -439,6 +439,19 @@ function alert_severity_to_color(severity) {
   }
 }
 
+function alertStatusToColor(status) {
+    switch (status) {
+        case 'Closed':
+            return 'alert-card-done';
+        case 'Dismissed':
+            return 'alert-card-done';
+        case 'Merged':
+            return 'alert-card-done';
+        default:
+            return '';
+    }
+}
+
 function generateDefinitionList(obj) {
   let html = "";
   for (const key in obj) {
@@ -460,9 +473,10 @@ function getFiltersFromUrl() {
 
 function renderAlert(alert, expanded=false) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
+  const alert_color = alertStatusToColor(alert.status.status_name);
 
   return `
-        <div class="card alert-card full-height alert-card-selectable" id="alertCard-${alert.alert_id}">
+        <div class="card alert-card full-height alert-card-selectable ${alert_color}" id="alertCard-${alert.alert_id}">
             <div class="card-body" >
               <div class="d-flex">
                 <div class="avatar-group mt-3 ${alert.owner ? '': 'ml-2 mr-2' }">
@@ -718,8 +732,12 @@ function renderAlert(alert, expanded=false) {
                             <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
                         </div>
                     </div>
-                    
+                    ${alert.status.status_name === 'Closed' ? `
+                        <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">Set in progress</button>
+                    `: ` 
                     <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
+                    <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
+                    `}
                 </div>
           </div>    
           </div>
