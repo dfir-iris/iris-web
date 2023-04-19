@@ -34,7 +34,7 @@ from app.datamgmt.case.case_events_db import update_event_assets, update_event_i
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association
+    alert_iocs_association, Ioc
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache
 from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
 from app.util import add_obj_history_entry
@@ -756,34 +756,92 @@ def delete_alert_comment(comment_id: int, alert_id: int) -> Tuple[bool, str]:
     return True, "Comment deleted successfully"
 
 
-def delete_assets_associations(alert_ids: List[int]) -> None:
+def remove_alerts_from_assets_by_ids(alert_ids: List[int]) -> None:
     """
-    Delete the assets associations of the alerts
+    Remove the alerts from the CaseAssets based on the alert_ids
 
     args:
-        alert_ids (List[int]): list of alerts to delete
+        alert_ids (List[int]): list of alerts to remove
+
+    returns:
+        None
     """
-    case_assets = alert_assets_association.query.filter(
-        alert_assets_association.alert_id.in_(alert_ids)
-    ).all()
+    # Query the affected CaseAssets based on the alert_ids
+    affected_case_assets = (
+        db.session.query(CaseAssets)
+        .join(alert_assets_association)
+        .join(Alert, alert_assets_association.c.alert_id == Alert.alert_id)
+        .filter(Alert.alert_id.in_(alert_ids))
+        .all()
+    )
 
-    db.session.delete(case_assets)
+    # Remove the alerts and delete the CaseAssets if not related to a case
+    for case_asset in affected_case_assets:
+        # Remove the alerts based on alert_ids
+        case_asset.alerts = [alert for alert in case_asset.alerts if alert.alert_id not in alert_ids]
 
+        # Delete the CaseAsset if it's not related to a case
+        if case_asset.case_id is None:
+            db.session.delete(case_asset)
+
+    # Commit the changes
     db.session.commit()
 
 
-def delete_iocs_associations(alert_ids: List[int]) -> None:
+def remove_alerts_from_iocs_by_ids(alert_ids: List[int]) -> None:
     """
-    Delete the iocs associations of the alerts
+    Remove the alerts from the Ioc based on the alert_ids
 
     args:
-        alert_ids (List[int]): list of alerts to delete
+        alert_ids (List[int]): list of alerts to remove
+
+    returns:
+        None
     """
-    case_iocs = alert_iocs_association.query.filter(
-        alert_iocs_association.alert_id.in_(alert_ids)
+    # Query the affected CaseAssets based on the alert_ids
+    affected_case_iocs = (
+        db.session.query(Ioc)
+        .join(alert_iocs_association)
+        .join(Alert, alert_iocs_association.c.alert_id == Alert.alert_id)
+        .filter(Alert.alert_id.in_(alert_ids))
+        .all()
     )
 
-    db.session.delete(case_iocs)
+    # Remove the alerts and delete the Ioc if not related to a case
+    for ioc in affected_case_iocs:
+        # Remove the alerts based on alert_ids
+        ioc.alerts = [alert for alert in ioc.alerts if alert.alert_id not in alert_ids]
+
+    # Commit the changes
+    db.session.commit()
+
+
+def remove_case_alerts_by_ids(alert_ids: List[int]) -> None:
+    """
+    Remove the alerts from the Case based on the alert_ids
+
+    args:
+        alert_ids (List[int]): list of alerts to remove
+
+    returns:
+        None
+    """
+    affected_cases = (
+        db.session.query(Cases)
+        .join(AlertCaseAssociation)
+        .join(Alert, AlertCaseAssociation.alert_id == Alert.alert_id)
+        .filter(Alert.alert_id.in_(alert_ids))
+        .all()
+    )
+
+    for case in affected_cases:
+        # Remove the alerts based on alert_ids
+        case.alerts = [alert for alert in case.alerts if alert.alert_id not in alert_ids]
+
+    db.session.query(AlertCaseAssociation).filter(
+        AlertCaseAssociation.alert_id.in_(alert_ids)
+    ).delete(synchronize_session='fetch')
+
     db.session.commit()
 
 
@@ -800,8 +858,10 @@ def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
     try:
 
         delete_similar_alerts_cache(alert_ids)
-        delete_assets_associations(alert_ids)
-        delete_iocs_associations(alert_ids)
+
+        remove_alerts_from_assets_by_ids(alert_ids)
+        remove_alerts_from_iocs_by_ids(alert_ids)
+        remove_case_alerts_by_ids(alert_ids)
 
         Comments.query.filter(Comments.comment_alert_id.in_(alert_ids)).delete()
         Alert.query.filter(Alert.alert_id.in_(alert_ids)).delete()
@@ -812,3 +872,4 @@ def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
         return False, str(e)
 
     return True, ""
+
