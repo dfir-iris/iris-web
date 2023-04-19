@@ -151,6 +151,8 @@ def alerts_add_route(caseid) -> Response:
         cache_similar_alert(new_alert.alert_customer_id, assets=assets_list,
                             iocs=iocs_list, alert_id=new_alert.alert_id)
 
+        track_activity(f"created alert #{new_alert.alert_id} - {new_alert.alert_title}")
+
         # Return the newly created alert as JSON
         return response_success(data=alert_schema.dump(new_alert))
 
@@ -244,6 +246,15 @@ def alerts_update_route(alert_id, caseid) -> Response:
     try:
         # Load the JSON data from the request
         data = request.get_json()
+
+        activity_data = []
+        for key, value in data.items():
+            old_value = getattr(alert, key, None)
+            if old_value is not None and old_value != value:
+                activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
+
+        if activity_data:
+            track_activity(f"updated alert #{alert_id}: \"{','.join(activity_data)}\"", caseid)
 
         # Deserialize the JSON data into an Alert object
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
