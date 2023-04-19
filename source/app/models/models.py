@@ -589,7 +589,7 @@ class Tags(db.Model):
 
     def save(self):
         existing_tag = self.get_by_title(self.tag_title)
-        if existing_tag:
+        if existing_tag is not None:
             return existing_tag
         else:
             db.session.add(self)

@@ -67,6 +67,19 @@ def alerts_list_route(caseid) -> Response:
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
 
+    alert_ids_str = request.args.get('alert_ids')
+    if alert_ids_str:
+        alert_ids = [int(alert_id) for alert_id in alert_ids_str.split(',')]
+    else:
+        alert_ids = None
+
+    alert_id = request.args.get('alert_id', type=int)
+    if alert_id:
+        if alert_ids:
+            alert_ids.append(alert_id)
+        else:
+            alert_ids = [alert_id]
+
     alert_schema = AlertSchema()
 
     filtered_data = get_filtered_alerts(
@@ -82,7 +95,7 @@ def alerts_list_route(caseid) -> Response:
         classification=request.args.get('alert_classification_id', type=int),
         client=request.args.get('alert_customer_id'),
         case_id=request.args.get('case_id', type=int),
-        alert_id=request.args.get('alert_id', type=int),
+        alert_ids=alert_ids,
         page=page,
         per_page=per_page,
         sort=request.args.get('sort')
@@ -547,6 +560,66 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
         return response_success(data=CaseSchema().dump(case), msg=message)
 
     except Exception as e:
+        # Handle any errors during deserialization or DB operations
+        return response_error(str(e))
+
+
+@alerts_blueprint.route('/alerts/batch/merge', methods=['POST'])
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_batch_merge_route(caseid) -> Response:
+    """
+    Merge multiple alerts into a case
+
+    args:
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+    if request.json is None:
+        return response_error('No JSON data provided')
+
+    data = request.get_json()
+
+    target_case_id = data.get('target_case_id')
+    if target_case_id is None:
+        return response_error('No target case id provided')
+
+    alert_ids = data.get('alert_ids')
+    if not alert_ids:
+        return response_error('No alert ids provided')
+
+    case = get_case(target_case_id)
+    if not case:
+        return response_error('Target case not found')
+
+    iocs_import_list: List[str] = data.get('iocs_import_list')
+    assets_import_list: List[str] = data.get('assets_import_list')
+    note: str = data.get('note')
+    import_as_event: bool = data.get('import_as_event')
+    case_tags = data.get('case_tags')
+
+    try:
+        # Merge the alerts into a case
+        for alert_id in alert_ids.split(','):
+            alert_id = int(alert_id)
+
+            alert = get_alert_by_id(alert_id)
+            if not alert:
+                continue
+
+            alert.alert_status_id = AlertStatus.query.filter_by(status_name='Merged').first().status_id
+            db.session.commit()
+
+            # Merge alert in the case
+            merge_alert_in_case(alert, case, iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
+                                import_as_event=import_as_event, case_tags=case_tags)
+
+        # Return the updated case as JSON
+        return response_success(data=CaseSchema().dump(case))
+
+    except Exception as e:
+        app.app.logger.exception(e)
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
 

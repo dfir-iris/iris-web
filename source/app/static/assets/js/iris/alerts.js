@@ -12,6 +12,11 @@ async function fetchAlert(alertId) {
     return await response;
 }
 
+async function fetchMultipleAlerts(alertIds) {
+    const response = get_raw_request_api(`/alerts/filter?cid=${get_caseid()}&alert_ids=${alertIds.join(',')}`);
+    return await response;
+}
+
 const selectsConfig = {
     alertStatusFilter: {
         url: '/manage/alert-status/list',
@@ -112,6 +117,85 @@ async function unlinkAlertFromCaseRequest(alert_id, case_id) {
         target_case_id: case_id,
         csrf_token: $('#csrf_token').val()
     }));
+}
+
+async function mergeMultipleAlertsModal() {
+    const selectedAlerts = getBatchAlerts();
+    if (selectedAlerts.length === 0) {
+        notify_error('Please select at least one alert to perform this action on.');
+        return;
+    }
+    const alertDataReq = await fetchMultipleAlerts(selectedAlerts);
+
+    if (!notify_auto_api(alertDataReq, true)) {
+        return;
+    }
+
+    const ioCsList = $("#ioCsList");
+    const assetsList = $("#assetsList");
+
+    // Configure the modal for both escalation and merging
+    $('#escalateModalLabel').text('Merge multiple alerts in a new case');
+    $('#escalateModalExplanation').text('These alerts will be merged into a new case. Select the IOCs and Assets to escalate into the case.');
+    $('#modalAlertTitleContainer').hide();
+
+    $('#mergeAlertCaseSelectSection').show();
+
+    const case_tags = $('#case_tags');
+
+    case_tags.val('')
+    case_tags.amsifySuggestags({
+        printValues: false,
+        suggestions: []
+    });
+
+    // Load case options for merging
+    var options = {
+        ajax: {
+            url: '/context/search-cases' + case_param(),
+            type: 'GET',
+            dataType: 'json'
+        },
+        locale: {
+            emptyTitle: 'Select and Begin Typing',
+            statusInitialized: '',
+        },
+        preprocessData: function (data) {
+            return context_data_parser(data);
+        },
+        preserveSelected: false
+    };
+    await get_request_api('/context/get-cases/100')
+        .done((data) => {
+            mergeAlertCasesSelectOption(data);
+            $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
+        });
+
+    // Clear the lists
+    ioCsList.html("");
+    assetsList.html("");
+
+    if (!notify_auto_api(alertDataReq, true)) {
+        return;
+    }
+
+    let alertsData = alertDataReq.data;
+
+    for (let i = 0; i < alertsData.length; i++) {
+        let alertData = alertsData[i];
+        if (alertData.iocs.length !== 0) {
+            appendLabels(ioCsList, alertData.iocs, 'ioc');
+        }
+        if (alertData.assets.length !== 0) {
+            appendLabels(assetsList, alertData.assets, 'asset');
+        }
+    }
+
+    $('#escalateOrMergeButton').attr("data-merge", true);
+    $('#escalateOrMergeButton').attr("data-alert-id", selectedAlerts.join(','));
+    $('#escalateOrMergeButton').attr("data-multi-merge", true);
+    $('#escalateModal').modal('show');
+
 }
 
 async function mergeAlertModal(alert_id) {
@@ -374,7 +458,7 @@ function fetchSimilarAlerts(alert_id) {
 
 
 
-function escalateOrMergeAlert(alert_id, merge = false) {
+function escalateOrMergeAlert(alert_id, merge = false, batch = false) {
 
     const selectedIOCs = $('#ioCsList input[type="checkbox"]:checked').map((_, checkbox) => {
         return $(checkbox).attr('id');
@@ -396,11 +480,19 @@ function escalateOrMergeAlert(alert_id, merge = false) {
         csrf_token: $("#csrf_token").val()
     };
 
+    let url = `/alerts/escalate/${alert_id}`;
+
     if (merge) {
         requestBody.target_case_id = $('#mergeAlertCaseSelect').val();
+        url = `/alerts/merge/${alert_id}`;
     }
 
-    post_request_api(`/alerts/${merge ? 'merge': 'escalate'}/${alert_id}`, JSON.stringify(requestBody))
+    if (batch) {
+        requestBody.alert_ids = alert_id;
+        url = `/alerts/batch/merge`;
+    }
+
+    post_request_api(url, JSON.stringify(requestBody))
         .then((data) => {
             if (data.status == 'success') {
                 $("#escalateModal").modal("hide");
@@ -409,8 +501,6 @@ function escalateOrMergeAlert(alert_id, merge = false) {
                 notify_auto_api(data);
             }
         });
-
-
 }
 
 async function fetchAlerts(page, per_page, filters_string = {}, sort_order= 'desc') {
@@ -958,10 +1048,13 @@ $('#resetFilters').on('click', function () {
 });
 
 $("#escalateOrMergeButton").on("click", () => {
-  const alertId = $("#escalateOrMergeButton").data("alert-id");
-  const merge = $("#escalateOrMergeButton").data("merge");
 
-  escalateOrMergeAlert(alertId, merge);
+    const alertId = $("#escalateOrMergeButton").data("alert-id");
+  const merge = $("#escalateOrMergeButton").data("merge");
+  const multiMerge = $("#escalateOrMergeButton").data("multi-merge");
+
+  escalateOrMergeAlert(alertId, merge, multiMerge);
+
 });
 
 function showEnrichment(enrichment) {

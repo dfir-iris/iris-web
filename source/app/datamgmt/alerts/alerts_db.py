@@ -64,7 +64,7 @@ def get_filtered_alerts(
         case_id: int = None,
         client: int = None,
         classification: int = None,
-        alert_id: int = None,
+        alert_ids: List[int] = None,
         page: int = 1,
         per_page: int = 10,
         sort: str = 'desc'
@@ -85,7 +85,7 @@ def get_filtered_alerts(
         case_id (int): The case id of the alert
         client (int): The client id of the alert
         classification (int): The classification id of the alert
-        alert_id (int): The alert id
+        alert_ids (int): The alert ids
         page (int): The page number
         per_page (int): The number of alerts per page
         sort (str): The sort order
@@ -126,8 +126,9 @@ def get_filtered_alerts(
     if client is not None:
         conditions.append(Alert.alert_customer_id == client)
 
-    if alert_id is not None:
-        conditions.append(Alert.alert_id == alert_id)
+    if alert_ids is not None:
+        if isinstance(alert_ids, list):
+            conditions.append(Alert.alert_id.in_(alert_ids))
 
     if classification is not None:
         conditions.append(Alert.alert_classification_id == classification)
@@ -378,8 +379,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
     case.description += f"\n\n*Alert #{alert.alert_id} escalated by {current_user.name}*\n\n{escalation_note}"
 
     for tag in case_tags.split(','):
-        tag = Tags(tag_title=tag)
-        tag.save()
+        tag = Tags(tag_title=tag).save()
         case.tags.append(tag)
 
     # Link the alert to the case
