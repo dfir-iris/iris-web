@@ -151,5 +151,10 @@
 }
 
 .alert-card-done {
-  background-color: #e6e6e6;
+  background-color: #f2f2f2;
+}
+
+.alert-card-new .alert-bade-status {
+    background-color: #9D2F35;
+  color: white;
 }

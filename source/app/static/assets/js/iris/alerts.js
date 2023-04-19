@@ -449,6 +449,8 @@ function alertStatusToColor(status) {
             return 'alert-card-done';
         case 'Escalated':
             return 'alert-card-done';
+        case 'New':
+            return 'alert-card-new';
         default:
             return '';
     }
@@ -493,7 +495,7 @@ function renderAlert(alert, expanded=false) {
                             ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : 
                                 `<div title="Assign to me" class="avatar avatar-sm" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);"><span class="avatar-title avatar-iris rounded-circle btn-alert-primary" style="cursor:pointer;"><i class="fa-solid fa-hand"></i></span></div>`}
                             <div class="envelope-icon">
-                                ${ alert.status ? `<span class="badge badge-pill badge-light">${alert.status.status_name}</span>`: ''} 
+                                ${ alert.status ? `<span class="badge alert-bade-status badge-pill badge-light">${alert.status.status_name}</span>`: ''} 
                             </div>                            
                         </div>
                     <div class="tickbox" style="display:none;">

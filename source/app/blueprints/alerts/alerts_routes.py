@@ -254,7 +254,7 @@ def alerts_update_route(alert_id, caseid) -> Response:
                 activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
 
         if activity_data:
-            track_activity(f"updated alert #{alert_id}: \"{','.join(activity_data)}\"", caseid)
+            track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", caseid)
 
         # Deserialize the JSON data into an Alert object
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
@@ -304,8 +304,17 @@ def alerts_batch_update_route(caseid: int) -> Response:
             return response_error(f'Alert with ID {alert_id} not found')
 
         try:
+            activity_data = []
+            for key, value in updates.items():
+                old_value = getattr(alert, key, None)
+                if old_value is not None and old_value != value:
+                    activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
+
             # Deserialize the JSON data into an Alert object
-            updated_alert = alert_schema.load(updates, instance=alert, partial=True)
+            alert_schema.load(updates, instance=alert, partial=True)
+
+            if activity_data:
+                track_activity(f"updated alerts #{alert_id}: {','.join(activity_data)}", caseid)
 
             # Save the changes
             db.session.commit()
@@ -346,6 +355,8 @@ def alerts_batch_delete_route(caseid: int) -> Response:
 
     if not success:
         return response_error(logs)
+
+    track_activity(f"deleted alerts #{','.join(str(alert_id) for alert_id in alert_ids)}", caseid)
 
     return response_success(msg='Batch delete successful')
 
