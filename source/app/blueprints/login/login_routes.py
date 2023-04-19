@@ -20,6 +20,9 @@
 
 # IMPORTS ------------------------------------------------
 
+import random
+import string
+
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -81,13 +84,16 @@ def _authenticate_ldap(form, username, password):
             if not app.config.get('LDAP_USER_PROVISIONING'):
                 return _render_template(form, 'Wrong credentials. Please try again.')
             log.info(f'Provisioning user "{username}" which is present in LDAP but not yet in database.')
-            # TODO the user is created with a fixed password
-            #      this may be unsafe, if the server configuration is switched from LDAP to local
+            # TODO the user password is chosen randomly
             #      ideally it should be possible to create a user without providing any password
+            # TODO to create the user password, we use the same code as the one to generate the administrator password in post_init.py
+            #      => should factor and reuse this code bit as a function
+            #      => also, it should probably be more secure to use the secrets module (instead of random)
+            password = ''.join(random.choices(string.printable[:-6], k=16))
             # TODO It seems email unicity is required (a fixed email causes a problem at the second account creation)
             #      I am just forging a dummy email from the username since
             #      There is probably a better alternative
-            user = create_user(username, username, 'password_ldap_created', f'{username}@ldap', True)
+            user = create_user(username, username, password, f'{username}@ldap', True)
 
         return wrap_login_user(user)
     except Exception as e:
