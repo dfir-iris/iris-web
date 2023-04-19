@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from functools import reduce
+
 import json
 
 from datetime import datetime
@@ -133,10 +135,8 @@ def get_filtered_alerts(
     if case_id is not None:
         conditions.append(Alert.cases.any(AlertCaseAssociation.case_id == case_id))
 
-    if conditions:
-        conditions = [and_(*conditions)] if len(conditions) > 1 else conditions
-    else:
-        conditions = []
+    if len(conditions) > 1:
+        conditions = [reduce(and_, conditions)]
 
     order_func = desc if sort == "desc" else asc
 

@@ -814,6 +814,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   const queryParams = new URLSearchParams(window.location.search);
   queryParams.set('page', page);
   queryParams.set('per_page', per_page);
+  let filter_tags_info = '';
 
   for (const key in filters) {
     if (filters.hasOwnProperty(key)) {
@@ -821,6 +822,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
         queryParams.delete(key);
       } else {
         queryParams.set(key, filters[key]);
+        filter_tags_info += `<span class="badge badge-pill badge-light"><i class="fa fa-filter mr-1"></i>${key}: ${filters[key]}</span>`
       }
     }
   }
@@ -829,7 +831,13 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
 
   history.replaceState(null, null, `?${queryParams.toString()}`);
 
-  $('#alertsInfoFilter').text(`${data.data.total} Alert${ data.data.total > 1 ? 's' : ''} ${ filterString ? '(filtered)' : '' }`);
+  $('#alertsInfoFilter').text(`${data.data.total} Alert${ data.data.total > 1 ? 's' : ''} ${ filterString ? `(filtered)` : '' }`);
+
+  if (filter_tags_info) {
+        $('#alertsInfoFilterTags').html(filter_tags_info);
+  } else {
+        $('#alertsInfoFilterTags').html('');
+  }
 
   filterString ? $('#resetFilters').show() : $('#resetFilters').hide();
 
