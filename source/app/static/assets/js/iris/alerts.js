@@ -814,7 +814,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   const queryParams = new URLSearchParams(window.location.search);
   queryParams.set('page', page);
   queryParams.set('per_page', per_page);
-  let filter_tags_info = '';
+  let filter_tags_info = [];
 
   for (const key in filters) {
     if (filters.hasOwnProperty(key)) {
@@ -822,7 +822,12 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
         queryParams.delete(key);
       } else {
         queryParams.set(key, filters[key]);
-        filter_tags_info += `<span class="badge badge-pill badge-light"><i class="fa fa-filter mr-1"></i>${key}: ${filters[key]}</span>`
+        filter_tags_info.push(`  
+          <span class="badge badge-light">
+            <i class="fa-solid fa-magnifying-glass mr-1"></i>${key}: ${filterXSS(filters[key])}
+            <span class="tag-delete-alert-filter" data-filter-key="${key}" style="cursor: pointer;" title="Remove filter"><i class="fa-solid fa-xmark ml-1"></i></span>
+          </span>
+        `)
       }
     }
   }
@@ -834,9 +839,17 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   $('#alertsInfoFilter').text(`${data.data.total} Alert${ data.data.total > 1 ? 's' : ''} ${ filterString ? `(filtered)` : '' }`);
 
   if (filter_tags_info) {
-        $('#alertsInfoFilterTags').html(filter_tags_info);
+    $('#alertsInfoFilterTags').html(filter_tags_info.join(' + '));
+    $('#alertsInfoFilterTags .tag-delete-alert-filter').on('click', function () {
+      const filterKey = $(this).data('filter-key');
+      delete filters[filterKey];
+      queryParams.delete(filterKey);
+      $(`#${filterKey}`).val('');
+      history.replaceState(null, null, `?${queryParams.toString()}`);
+      updateAlerts(page, per_page, filters);
+    });
   } else {
-        $('#alertsInfoFilterTags').html('');
+    $('#alertsInfoFilterTags').html('');
   }
 
   filterString ? $('#resetFilters').show() : $('#resetFilters').hide();
