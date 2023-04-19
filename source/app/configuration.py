@@ -405,6 +405,9 @@ class Config:
         LDAP_USER_PROVISIONING = config.load('LDAP', 'USER_PROVISIONING', fallback='False')
         LDAP_USER_PROVISIONING = (LDAP_USER_PROVISIONING == 'True')
 
+        LDAP_USER_ATTRIBUTE_DISPLAY_NAME = config.load('LDAP', 'USER_ATTRIBUTE_DISPLAY_NAME')
+        LDAP_USER_ATTRIBUTE_MAIL = config.load('LDAP', 'USER_ATTRIBUTE_MAIL')
+
         LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
         LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
 

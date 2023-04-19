@@ -45,6 +45,14 @@ def get_user(user_id, id_key: str = 'id'):
     return user
 
 
+def get_active_user_by_login(username):
+    user = User.query.filter(
+        User.user == username,
+        User.active == True
+    ).first()
+    return user
+
+
 def list_users_id():
     users = User.query.with_entities(User.user_id).all()
     return users

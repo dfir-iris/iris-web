@@ -20,9 +20,6 @@
 
 # IMPORTS ------------------------------------------------
 
-import random
-import string
-
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -43,7 +40,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.models.authorization import User
 from app.util import is_authentication_ldap
-from app.datamgmt.manage.manage_users_db import create_user
+from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 
 
 login_blueprint = Blueprint(
@@ -57,10 +54,7 @@ log = app.logger
 
 # filter User out of database through username
 def _retrieve_user_by_username(username):
-    user = User.query.filter(
-        User.user == username,
-        User.active == True
-    ).first()
+    user = get_active_user_by_login(username)
     if not user:
         track_activity("someone tried to log in with user '{}', which does not exist".format(username),
                        ctx_less=True, display_in_ui=False)
@@ -81,19 +75,7 @@ def _authenticate_ldap(form, username, password):
 
         user = _retrieve_user_by_username(username)
         if not user:
-            if not app.config.get('LDAP_USER_PROVISIONING'):
-                return _render_template(form, 'Wrong credentials. Please try again.')
-            log.info(f'Provisioning user "{username}" which is present in LDAP but not yet in database.')
-            # TODO the user password is chosen randomly
-            #      ideally it should be possible to create a user without providing any password
-            # TODO to create the user password, we use the same code as the one to generate the administrator password in post_init.py
-            #      => should factor and reuse this code bit as a function
-            #      => also, it should probably be more secure to use the secrets module (instead of random)
-            password = ''.join(random.choices(string.printable[:-6], k=16))
-            # TODO It seems email unicity is required (a fixed email causes a problem at the second account creation)
-            #      I am just forging a dummy email from the username since
-            #      There is probably a better alternative
-            user = create_user(username, username, password, f'{username}@ldap', True)
+            return _render_template(form, 'Wrong credentials. Please try again.')
 
         return wrap_login_user(user)
     except Exception as e:
