@@ -103,10 +103,7 @@ function unlinkAlertFromCase(alert_id, case_id) {
                     if (!notify_auto_api(data)) {
                         return;
                     }
-                    refreshAlert(alert_id)
-                        .then((data) => {
-                            notify_auto_api(data, true);
-                        });
+                    refreshAlert(alert_id);
                 });
     });
 
@@ -1404,7 +1401,7 @@ function setFormValuesFromUrl() {
         input.val(value);
       }
     } else if (input in ['alert_ids']) {
-        
+
     }
   });
 

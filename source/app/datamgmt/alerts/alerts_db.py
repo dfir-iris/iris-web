@@ -255,7 +255,7 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
     case = Cases(
         name=case_title if case_title else f"Merge of alerts {', '.join([str(alert.alert_id) for alert in alerts])}",
         description=f"*Alerts escalated by {current_user.name}*\n\n{escalation_note}"
-                    f"[Alerts](/alerts?alert_ids={','.join([str(alert.alert_id) for alert in alerts])})",
+                    f"[Alerts link](/alerts?alert_ids={','.join([str(alert.alert_id) for alert in alerts])})",
         soc_id='',
         client_id=alerts[0].alert_customer_id,
         user=current_user,
@@ -604,9 +604,9 @@ def unmerge_alert_from_case(alert: Alert, case: Cases):
         case (Cases): The Case
     """
     # Check if the case is in the alert.cases list
-    if alert in case.alerts:
+    if case in alert.cases:
         # Unlink the alert from the case
-        case.alerts.remove(alert)
+        alert.cases.remove(case)
         db.session.commit()
     else:
         return False, f"Case {case.case_id} not linked with alert {alert.alert_id}"
