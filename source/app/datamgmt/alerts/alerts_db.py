@@ -229,6 +229,132 @@ def get_unspecified_event_category():
     return event_cat
 
 
+def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_list: List[str], case_title: str,
+                            note: str, import_as_event: bool, case_tags: str) -> Cases:
+    """
+    Create a case from multiple alerts
+
+    args:
+        alerts (Alert): The Alerts
+        iocs_list (list): The list of IOCs
+        assets_list (list): The list of assets
+        note (str): The note to add to the case
+        import_as_event (bool): Whether to import the alert as an event
+        case_tags (str): The tags to add to the case
+        case_title (str): The title of the case
+
+    returns:
+        Cases: The case that was created from the alert
+    """
+
+    escalation_note = ""
+    if note:
+        escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
+
+    # Create the case
+    case = Cases(
+        name=case_title if case_title else f"Merge of alerts {', '.join([str(alert.alert_id) for alert in alerts])}",
+        description=f"*Alerts escalated by {current_user.name}*\n\n{escalation_note}"
+                    f"[Alerts](/alerts?alert_ids={','.join([str(alert.alert_id) for alert in alerts])})",
+        soc_id='',
+        client_id=alerts[0].alert_customer_id,
+        user=current_user,
+        classification_id=alerts[0].alert_classification_id
+    )
+
+    case.save()
+
+    for tag in case_tags.split(','):
+        tag = Tags(tag_title=tag)
+        tag = tag.save()
+        case.tags.append(tag)
+
+    db.session.commit()
+
+    # Link the alert to the case
+    for alert in alerts:
+        alert.cases.append(case)
+
+        ioc_links = []
+        asset_links = []
+
+        # Add the IOCs to the case
+        for ioc_uuid in iocs_list:
+            for alert_ioc in alert.iocs:
+                if str(alert_ioc.ioc_uuid) == ioc_uuid:
+
+                    # TODO: Transform the ioc-enrichment to a custom attribute in the ioc
+                    # del alert_ioc['ioc_enrichment']
+
+                    ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
+                    add_ioc_link(ioc.ioc_id, case.case_id)
+                    ioc_links.append(ioc.ioc_id)
+
+        # Add the assets to the case
+        for asset_uuid in assets_list:
+            for alert_asset in alert.assets:
+                if str(alert_asset.asset_uuid) == asset_uuid:
+
+                    alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
+
+                    # TODO: Transform the asset-enrichment to a custom attribute in the asset if possible
+                    # del alert_asset['asset_enrichment']
+
+                    asset = create_asset(asset=alert_asset,
+                                         caseid=case.case_id,
+                                         user_id=current_user.id
+                                         )
+                    asset.asset_uuid = alert_asset.asset_uuid
+
+                    set_ioc_links(ioc_links, asset.asset_id)
+                    asset_links.append(asset.asset_id)
+
+        # Add event to timeline
+        if import_as_event:
+
+            unspecified_cat = get_unspecified_event_category()
+
+            event_schema = EventSchema()
+            event = event_schema.load({
+                'event_title': f"[ALERT] {alert.alert_title}",
+                'event_content': alert.alert_description,
+                'event_source': alert.alert_source,
+                'event_raw': json.dumps(alert.alert_source_content, indent=4),
+                'event_date': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+                'event_date_wtz': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+                'event_iocs': ioc_links,
+                'event_assets': asset_links,
+                'event_tags': alert.alert_tags,
+                'event_tz': '+00:00',
+                'event_category_id': unspecified_cat.id,
+            }, session=db.session)
+
+            event.case_id = case.case_id
+            event.user_id = current_user.id
+            event.event_added = datetime.utcnow()
+
+            add_obj_history_entry(event, 'created')
+
+            db.session.add(event)
+            update_timeline_state(caseid=case.case_id)
+
+            event.category = [unspecified_cat]
+
+            update_event_assets(event_id=event.event_id,
+                                caseid=case.case_id,
+                                assets_list=asset_links,
+                                iocs_list=ioc_links,
+                                sync_iocs_assets=False)
+
+            update_event_iocs(event_id=event.event_id,
+                              caseid=case.case_id,
+                              iocs_list=ioc_links)
+
+    db.session.commit()
+
+    return case
+
+
 def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List[str], case_title: str,
                            note: str, import_as_event: bool, case_tags: str) -> Cases:
     """

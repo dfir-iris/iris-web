@@ -511,18 +511,18 @@ function escalateOrMergeAlert(alert_id, merge = false, batch = false) {
         csrf_token: $("#csrf_token").val()
     };
 
-    let url = `/alerts/escalate/${alert_id}`;
+    let url =  batch ? `/alerts/batch/`: `/alerts/`;
 
     if (merge) {
         requestBody.target_case_id = $('#mergeAlertCaseSelect').val();
-        url = `/alerts/merge/${alert_id}`;
+        url += batch ? 'merge' : `merge/${alert_id}`;
     } else {
         requestBody.case_title = $('#modalEscalateCaseTitle').val();
+        url += batch ? 'escalate' : `escalate/${alert_id}`;
     }
 
     if (batch) {
         requestBody.alert_ids = alert_id;
-        url = `/alerts/batch/merge`;
     }
 
     post_request_api(url, JSON.stringify(requestBody))
@@ -1403,6 +1403,8 @@ function setFormValuesFromUrl() {
       } else {
         input.val(value);
       }
+    } else if (input in ['alert_ids']) {
+        
     }
   });
 

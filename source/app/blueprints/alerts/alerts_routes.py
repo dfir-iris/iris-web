@@ -32,7 +32,8 @@ from app import db
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
     merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details, \
-    get_alert_comments, delete_alert_comment, get_alert_comment, delete_similar_alert_cache, delete_alerts
+    get_alert_comments, delete_alert_comment, get_alert_comment, delete_similar_alert_cache, delete_alerts, \
+    create_case_from_alerts
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -69,16 +70,19 @@ def alerts_list_route(caseid) -> Response:
 
     alert_ids_str = request.args.get('alert_ids')
     if alert_ids_str:
-        alert_ids = [int(alert_id) for alert_id in alert_ids_str.split(',')]
+        try:
+
+            if ',' in alert_ids_str:
+                alert_ids = [int(alert_id) for alert_id in alert_ids_str.split(',')]
+
+            else:
+                alert_ids = [int(alert_ids_str)]
+
+        except ValueError:
+            return response_error('Invalid alert id')
+
     else:
         alert_ids = None
-
-    alert_id = request.args.get('alert_id', type=int)
-    if alert_id:
-        if alert_ids:
-            alert_ids.append(alert_id)
-        else:
-            alert_ids = [alert_id]
 
     alert_schema = AlertSchema()
 
@@ -622,6 +626,72 @@ def alerts_batch_merge_route(caseid) -> Response:
         if note:
             case.description += f"\n\n### Escalation note\n\n{note}\n\n" if case.description else f"\n\n{note}\n\n"
             db.session.commit()
+
+        # Return the updated case as JSON
+        return response_success(data=CaseSchema().dump(case))
+
+    except Exception as e:
+        app.app.logger.exception(e)
+        # Handle any errors during deserialization or DB operations
+        return response_error(str(e))
+
+
+@alerts_blueprint.route('/alerts/batch/escalate', methods=['POST'])
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_batch_escalate_route(caseid) -> Response:
+    """
+    Escalate multiple alerts into a case
+
+    args:
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+    if request.json is None:
+        return response_error('No JSON data provided')
+
+    data = request.get_json()
+
+    alert_ids = data.get('alert_ids')
+    if not alert_ids:
+        return response_error('No alert ids provided')
+
+    iocs_import_list: List[str] = data.get('iocs_import_list')
+    assets_import_list: List[str] = data.get('assets_import_list')
+    note: str = data.get('note')
+    import_as_event: bool = data.get('import_as_event')
+    case_tags = data.get('case_tags')
+    case_title = data.get('case_title')
+    alerts_list = []
+    try:
+        # Merge the alerts into a case
+        for alert_id in alert_ids.split(','):
+            alert_id = int(alert_id)
+
+            alert = get_alert_by_id(alert_id)
+            if not alert:
+                continue
+
+            alert.alert_status_id = AlertStatus.query.filter_by(status_name='Merged').first().status_id
+            db.session.commit()
+            alerts_list.append(alert)
+
+        # Merge alerts in the case
+        case = create_case_from_alerts(alerts_list, iocs_list=iocs_import_list, assets_list=assets_import_list,
+                                       note=note, import_as_event=import_as_event, case_tags=case_tags,
+                                       case_title=case_title)
+
+        if not case:
+            return response_error('Failed to create case from alert')
+
+        ac_set_new_case_access(None, case.case_id)
+
+        case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
+
+        add_obj_history_entry(case, 'created')
+        track_activity("new case {case_name} created from alerts".format(case_name=case.name),
+                       caseid=caseid, ctx_less=True)
 
         # Return the updated case as JSON
         return response_success(data=CaseSchema().dump(case))
