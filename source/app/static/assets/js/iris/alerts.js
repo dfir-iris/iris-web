@@ -775,7 +775,7 @@ function renderAlert(alert, expanded=false) {
                   
                     ${alert.cases ? alert.cases.map((case_) => `
                     <div class="dropdown ml-2 d-inline-block">
-                          <a class="bg-transparent ml-2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="javascript:void(0)">
+                          <a class="bg-transparent ml-2" title="Merged in case #${case_}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="javascript:void(0)">
                               <span aria-hidden="true"><i class="fa-solid fa-link"></i>#${case_}</span>
                           </a>
                           <div class="dropdown-menu">
