@@ -435,7 +435,9 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
     assets_import_list: List[str] = data.get('assets_import_list')
     note: str = data.get('note')
     import_as_event: bool = data.get('import_as_event')
-    case_tags:str = data.get('case_tags')
+    case_tags: str = data.get('case_tags')
+    case_title: str = data.get('case_title')
+
 
     try:
         # Escalate the alert to a case
@@ -444,7 +446,7 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
 
         # Create a new case from the alert
         case = create_case_from_alert(alert, iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
-                                      import_as_event=import_as_event, case_tags=case_tags)
+                                      import_as_event=import_as_event, case_tags=case_tags, case_title=case_title)
 
         if not case:
             return response_error('Failed to create case from alert')
@@ -510,7 +512,8 @@ def alerts_merge_route(alert_id, caseid) -> Response:
         db.session.commit()
 
         # Merge alert in the case
-        merge_alert_in_case(alert, case, iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
+        merge_alert_in_case(alert, case,
+                            iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
                             import_as_event=import_as_event, case_tags=case_tags)
 
         # Return the updated alert as JSON

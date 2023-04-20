@@ -215,7 +215,11 @@ async function mergeAlertModal(alert_id) {
 
     // Configure the modal for both escalation and merging
     $('#escalateModalLabel').text(`Merge alert #${alert_id} in a new case`);
-    $('#escalateModalExplanation').text('This alert will be escalated into a new case. Select the IOCs and Assets to escalate into the case.');
+    $('#escalateModalExplanation').text('This alert will be escalated into a new case. Set a title and select the IOCs and Assets to escalate into the case.');
+
+    $('#modalEscalateCaseTitle').val(`[ALERT] ${alertDataReq.data.alert_title}`);
+    $('#modalEscalateCaseTitleContainer').show();
+
     escalateButton.attr("data-merge", false);
     $('#mergeAlertCaseSelectSection').hide();
 
@@ -288,13 +292,15 @@ async function mergeAlertModal(alert_id) {
             $('#escalateModalLabel').text(`Merge alert #${alert_id} in existing case`);
             $('#escalateModalExplanation').text('This alert will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
             $('#mergeAlertCaseSelectSection').show();
+            $('#modalEscalateCaseTitleContainer').hide();
             $('#mergeAlertCaseSelect').selectpicker('refresh');
             $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
             escalateButton.attr("data-merge", true);
         } else {
             $('#escalateModalLabel').text(`Merge alert #${alert_id} in new case`);
-            $('#escalateModalExplanation').text('This alert will be merged into a new case. Select the IOCs and Assets to merge into the case.');
+            $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
             $('#mergeAlertCaseSelectSection').hide();
+            $('#modalEscalateCaseTitleContainer').show();
             escalateButton.attr("data-merge", false);
         }
     });
@@ -485,6 +491,8 @@ function escalateOrMergeAlert(alert_id, merge = false, batch = false) {
     if (merge) {
         requestBody.target_case_id = $('#mergeAlertCaseSelect').val();
         url = `/alerts/merge/${alert_id}`;
+    } else {
+        requestBody.case_title = $('#modalEscalateCaseTitle').val();
     }
 
     if (batch) {

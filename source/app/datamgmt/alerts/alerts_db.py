@@ -229,7 +229,7 @@ def get_unspecified_event_category():
     return event_cat
 
 
-def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List[str],
+def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List[str], case_title: str,
                            note: str, import_as_event: bool, case_tags: str) -> Cases:
     """
     Create a case from an alert
@@ -241,6 +241,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         note (str): The note to add to the case
         import_as_event (bool): Whether to import the alert as an event
         case_tags (str): The tags to add to the case
+        case_title (str): The title of the case
 
     returns:
         Cases: The case that was created from the alert
@@ -252,7 +253,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
     # Create the case
     case = Cases(
-        name=f"[ALERT] {alert.alert_title}",
+        name=f"[ALERT] {alert.alert_title}" if not case_title else case_title,
         description=f"*Alert escalated by {current_user.name}*\n\n{escalation_note}"
                     f"### Alert description\n\n{alert.alert_description}"
                     f"\n\n### IRIS alert link\n\n"
@@ -364,6 +365,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
         alert (Alert): The Alert
         case (Cases): The Case
         iocs_list (list): The list of IOCs
+        case_title (str): The title of the case
         assets_list (list): The list of assets
         note (str): The note to add to the case
         import_as_event (bool): Whether to import the alert as an event
