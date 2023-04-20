@@ -31,7 +31,7 @@ manage_alerts_status_blueprint = Blueprint('manage_alerts_status',
 
 # CONTENT ------------------------------------------------
 @manage_alerts_status_blueprint.route('/manage/alert-status/list', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def list_alert_status(caseid: int) -> Response:
     """
     Get the list of alert status
@@ -49,7 +49,7 @@ def list_alert_status(caseid: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-status/<int:classification_id>', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def get_case_alert_status(status_id: int, caseid: int) -> Response:
     """
     Get the alert status

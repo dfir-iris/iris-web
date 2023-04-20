@@ -21,7 +21,7 @@
 from flask import Blueprint
 
 from app.models.models import EventCategory
-from app.util import api_login_required
+from app.util import api_login_required, ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -32,7 +32,7 @@ manage_event_cat_blueprint = Blueprint('manage_event_cat',
 
 # CONTENT ------------------------------------------------
 @manage_event_cat_blueprint.route('/manage/event-categories/list', methods=['GET'])
-@api_login_required
+@ac_api_requires(no_cid_required=True)
 def list_event_categories(caseid):
     lcat= EventCategory.query.with_entities(
         EventCategory.id,
@@ -45,7 +45,7 @@ def list_event_categories(caseid):
 
 
 @manage_event_cat_blueprint.route('/manage/event-categories/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(no_cid_required=True)
 def get_event_category(cur_id, caseid):
     lcat = EventCategory.query.with_entities(
         EventCategory.id,

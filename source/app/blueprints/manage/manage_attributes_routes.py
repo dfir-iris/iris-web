@@ -45,7 +45,7 @@ manage_attributes_blueprint = Blueprint('manage_attributes',
 
 # CONTENT ------------------------------------------------
 @manage_attributes_blueprint.route('/manage/attributes')
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_attributes(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -56,7 +56,7 @@ def manage_attributes(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/list')
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def list_attributes(caseid):
     # Get all attributes
     attributes = CustomAttribute.query.with_entities(
@@ -74,7 +74,7 @@ def list_attributes(caseid):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def attributes_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -91,7 +91,7 @@ def attributes_modal(cur_id, caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/preview', methods=['POST'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def attributes_preview(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -115,7 +115,7 @@ def attributes_preview(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def update_attribute(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")

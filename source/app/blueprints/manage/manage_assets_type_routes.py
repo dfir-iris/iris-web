@@ -47,7 +47,7 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 @manage_assets_blueprint.route('/manage/asset-type/list')
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def list_assets(caseid):
     # Get all assets
     assets = AssetsType.query.with_entities(
@@ -71,7 +71,7 @@ def list_assets(caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def view_asset_api(cur_id, caseid):
     # Get all assets
     asset_type = AssetsType.query.with_entities(
@@ -90,7 +90,7 @@ def view_asset_api(cur_id, caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def view_assets_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_assets.manage_assets', cid=caseid))
@@ -111,7 +111,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def view_assets(cur_id, caseid):
     asset_type = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset_type:
@@ -142,7 +142,7 @@ def view_assets(cur_id, caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def add_assets_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_assets.manage_assets', cid=caseid))
@@ -152,7 +152,7 @@ def add_assets_modal(caseid, url_redir):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def add_assets(caseid):
 
     asset_schema = AssetTypeSchema()
@@ -183,7 +183,7 @@ def add_assets(caseid):
 
 
 @manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def delete_assets(cur_id, caseid):
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset:
@@ -198,9 +198,9 @@ def delete_assets(cur_id, caseid):
         #not deleting icons for now because multiple asset_types might rely on the same icon
         
         #only delete icons if there is only one AssetType linked to it
-        if(len(AssetsType.query.filter(AssetsType.asset_icon_compromised == asset.asset_icon_compromised).all()) == 1):
+        if len(AssetsType.query.filter(AssetsType.asset_icon_compromised == asset.asset_icon_compromised).all()) == 1:
             os.unlink(os.path.join(app.config['ASSET_STORE_PATH'], asset.asset_icon_compromised))
-        if(len(AssetsType.query.filter(AssetsType.asset_icon_not_compromised == asset.asset_icon_not_compromised).all()) == 1):
+        if len(AssetsType.query.filter(AssetsType.asset_icon_not_compromised == asset.asset_icon_not_compromised).all()) == 1:
             os.unlink(os.path.join(app.config['ASSET_STORE_PATH'], asset.asset_icon_not_compromised))
 
     except Exception as e:

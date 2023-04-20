@@ -69,7 +69,7 @@ log = app.logger
 
 
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_users_list(caseid):
 
     users = get_users_list()
@@ -78,7 +78,7 @@ def manage_users_list(caseid):
 
 
 @manage_users_blueprint.route('/manage/users/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def add_user_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
@@ -92,7 +92,7 @@ def add_user_modal(caseid, url_redir):
 
 
 @manage_users_blueprint.route('/manage/users/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def add_user(caseid):
     try:
 
@@ -123,7 +123,7 @@ def add_user(caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def view_user(cur_id, caseid):
 
     user = get_user_details(user_id=cur_id)
@@ -135,7 +135,7 @@ def view_user(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def view_user_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
@@ -159,7 +159,7 @@ def view_user_modal(cur_id, caseid, url_redir):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/groups/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_user_group_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_users.add_user', cid=caseid))
@@ -174,7 +174,7 @@ def manage_user_group_modal(cur_id, caseid, url_redir):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/groups/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_user_group_(cur_id, caseid):
 
     if not request.is_json:
@@ -199,7 +199,7 @@ def manage_user_group_(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_user_cac_modal(cur_id, caseid, url_redir):
 
     if url_redir:
@@ -227,7 +227,7 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_user_cac_add_case(cur_id, caseid):
 
     if not request.is_json:
@@ -263,7 +263,7 @@ def manage_user_cac_add_case(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_user_cac_delete_cases(cur_id,  caseid):
 
     user = get_user(cur_id)
@@ -302,7 +302,7 @@ def manage_user_cac_delete_cases(cur_id,  caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/case-access/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_user_cac_delete_case(cur_id,  caseid):
 
     user = get_user(cur_id)
@@ -341,7 +341,7 @@ def manage_user_cac_delete_case(cur_id,  caseid):
 
 
 @manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def update_user_api(cur_id, caseid):
 
     try:
@@ -372,7 +372,7 @@ def update_user_api(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def deactivate_user_api(cur_id, caseid):
 
     user = get_user(cur_id)
@@ -394,7 +394,7 @@ def deactivate_user_api(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/activate/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def activate_user_api(cur_id, caseid):
 
     user = get_user(cur_id)
@@ -414,7 +414,7 @@ def activate_user_api(cur_id, caseid):
 
 if is_authentication_local():
     @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['POST'])
-    @ac_api_requires(Permissions.server_administrator)
+    @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
     def view_delete_user(cur_id, caseid):
 
         try:
@@ -443,7 +443,7 @@ if is_authentication_local():
 
 # Unrestricted section - non admin available
 @manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def exists_user_restricted(cur_id, caseid):
 
     user = get_user(cur_id)
@@ -460,7 +460,7 @@ def exists_user_restricted(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/lookup/login/<string:login>', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def lookup_name_restricted(login, caseid):
     user = get_user_by_username(login)
     if not user:
@@ -479,7 +479,7 @@ def lookup_name_restricted(login, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/restricted/list', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def manage_users_list_restricted(caseid):
 
     users = get_users_list_restricted()
