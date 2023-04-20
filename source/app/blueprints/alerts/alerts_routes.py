@@ -601,6 +601,7 @@ def alerts_batch_merge_route(caseid) -> Response:
     note: str = data.get('note')
     import_as_event: bool = data.get('import_as_event')
     case_tags = data.get('case_tags')
+    case_title = data.get('case_title')
 
     try:
         # Merge the alerts into a case
@@ -615,8 +616,12 @@ def alerts_batch_merge_route(caseid) -> Response:
             db.session.commit()
 
             # Merge alert in the case
-            merge_alert_in_case(alert, case, iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
+            merge_alert_in_case(alert, case, iocs_list=iocs_import_list, assets_list=assets_import_list, note=None,
                                 import_as_event=import_as_event, case_tags=case_tags)
+
+        if note:
+            case.description += f"\n\n### Escalation note\n\n{note}\n\n" if case.description else f"\n\n{note}\n\n"
+            db.session.commit()
 
         # Return the updated case as JSON
         return response_success(data=CaseSchema().dump(case))

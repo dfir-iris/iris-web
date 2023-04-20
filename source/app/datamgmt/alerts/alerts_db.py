@@ -378,7 +378,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
-    case.description += f"\n\n*Alert #{alert.alert_id} escalated by {current_user.name}*\n\n{escalation_note}"
+    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_id={alert.alert_id}) escalated by {current_user.name}*\n\n{escalation_note}"
 
     for tag in case_tags.split(','):
         tag = Tags(tag_title=tag).save()

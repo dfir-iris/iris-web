@@ -121,6 +121,7 @@ async function unlinkAlertFromCaseRequest(alert_id, case_id) {
 
 async function mergeMultipleAlertsModal() {
     const selectedAlerts = getBatchAlerts();
+    const escalateButton = $("#escalateOrMergeButton");
     if (selectedAlerts.length === 0) {
         notify_error('Please select at least one alert to perform this action on.');
         return;
@@ -136,10 +137,14 @@ async function mergeMultipleAlertsModal() {
 
     // Configure the modal for both escalation and merging
     $('#escalateModalLabel').text('Merge multiple alerts in a new case');
-    $('#escalateModalExplanation').text('These alerts will be merged into a new case. Select the IOCs and Assets to escalate into the case.');
+    $('#escalateModalExplanation').text('These alerts will be merged into a new case. Set the case title and select the IOCs and Assets to escalate into the case.');
     $('#modalAlertTitleContainer').hide();
 
-    $('#mergeAlertCaseSelectSection').show();
+    $('#modalEscalateCaseTitle').val(`[ALERT] Escalation of ${selectedAlerts.length} alerts`);
+    $('#modalEscalateCaseTitleContainer').show();
+
+    escalateButton.attr("data-merge", false);
+    $('#mergeAlertCaseSelectSection').hide();
 
     const case_tags = $('#case_tags');
 
@@ -191,10 +196,30 @@ async function mergeMultipleAlertsModal() {
         }
     }
 
-    $('#escalateOrMergeButton').attr("data-merge", true);
-    $('#escalateOrMergeButton').attr("data-alert-id", selectedAlerts.join(','));
-    $('#escalateOrMergeButton').attr("data-multi-merge", true);
+    escalateButton.attr("data-merge", true);
+    escalateButton.attr("data-alert-id", selectedAlerts.join(','));
+    escalateButton.attr("data-multi-merge", true);
     $('#escalateModal').modal('show');
+
+    $("input[type='radio'][name='mergeOption']:checked").trigger("change");
+
+    $("input[type='radio'][name='mergeOption']").on("change", function () {
+        if ($(this).val() === "existing_case") {
+            $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in an existing case`);
+            $('#escalateModalExplanation').text('These alerts will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
+            $('#mergeAlertCaseSelectSection').show();
+            $('#modalEscalateCaseTitleContainer').hide();
+            $('#mergeAlertCaseSelect').selectpicker('refresh');
+            $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
+            escalateButton.attr("data-merge", true);
+        } else {
+            $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in new case`);
+            $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
+            $('#mergeAlertCaseSelectSection').hide();
+            $('#modalEscalateCaseTitleContainer').show();
+            escalateButton.attr("data-merge", false);
+        }
+    });
 
 }
 
@@ -261,7 +286,7 @@ async function mergeAlertModal(alert_id) {
         return;
     }
 
-    alertData = alertDataReq.data;
+    let alertData = alertDataReq.data;
 
     if (alertData.iocs.length !== 0) {
         appendLabels(ioCsList, alertData.iocs, 'ioc');
