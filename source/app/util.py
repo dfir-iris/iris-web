@@ -31,6 +31,7 @@ import string
 import traceback
 import uuid
 import weakref
+from flask_socketio import Namespace
 from functools import wraps
 from pathlib import Path
 from cryptography.hazmat.primitives import hashes
@@ -55,7 +56,7 @@ from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
-from app import TEMPLATE_PATH
+from app import TEMPLATE_PATH, socket_io
 from app import app
 from app import db
 from app.datamgmt.case.case_db import case_exists
@@ -738,3 +739,6 @@ def hmac_verify(signature_enc, data):
 
 def str_to_bool(value):
     return value.lower() in ['true', '1', 'yes', 'y', 't']
+
+
+

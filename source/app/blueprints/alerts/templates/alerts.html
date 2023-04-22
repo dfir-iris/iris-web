@@ -64,7 +64,10 @@
                         <button class="btn btn-sm mr-2" id="toggle-selection-mode">Select</button>
                         <button class="btn btn-sm mr-2" id="orderAlertsBtn"><i class="fas fa-arrow-up-short-wide"></i></button>
                         <button id="toggleAllAlertsBtn" class="btn btn-sm mr-2" onclick="toggleCollapseAllAlerts()" data-is-expanded="false">Expand All</button>
-                        <button class="btn btn-sm mr-2 ml-2" onclick="refreshAlerts();">Refresh</button>
+                        <div class="d-inline-block position-relative">
+                            <button class="btn btn-sm mr-2 ml-2" onclick="refreshAlerts();">Refresh</button>
+                            <span class="badge badge-pill badge-danger position-absolute" id="newAlertsBadge" style="top: -10px; right: -10px; display: none;">0</span>
+                        </div>
                         <div class="pagination-dropdown-container ml-3 mt-1">
                             <label for="alertsPerPage">Alerts per page:</label>
                             <select id="alertsPerPage">
@@ -251,5 +254,6 @@
     <script src="/static/assets/js/plugin/vis/vis-network.min.js"></script>
     <script src="/static/assets/js/iris/alerts.js"></script>
     <script src="/static/assets/js/iris/comments.js"></script>
+    <script src="/static/assets/js/core/socket.io.js"></script>
 {% endblock javascripts %}
 

@@ -170,6 +170,9 @@ def alerts_add_route(caseid) -> Response:
 
         track_activity(f"created alert #{new_alert.alert_id} - {new_alert.alert_title}")
 
+        # Emit a socket io event
+        app.socket_io.emit('new_alert', alert_schema.dump(new_alert), namespace='/alerts')
+
         # Return the newly created alert as JSON
         return response_success(data=alert_schema.dump(new_alert))
 

@@ -1014,6 +1014,7 @@ function refreshAlerts(){
     updateAlerts(page_number, per_page, filters)
         .then(() => {
             notify_success('Refreshed');
+            $('#newAlertsBadge').text(0).hide();
         });
 }
 
@@ -1515,6 +1516,17 @@ async function deleteBatchAlerts(data_content= {}) {
 
 }
 
+let alertCount = 0;
+
+function updateAlertBadge() {
+    const badge = $('#refreshAlertsBadge');
+
+    if (alertCount > 0) {
+        badge.text(alertCount).show();
+    } else {
+        badge.hide();
+    }
+}
 
 $(document).ready(function () {
     for (const [selectElementId, configItem] of Object.entries(selectsConfig)) {
@@ -1527,36 +1539,46 @@ $(document).ready(function () {
     getAlertStatusList();
     fetchSavedFilters()
 
-      $('#toggle-selection-mode').on('click', function() {
-        // Toggle the 'selection-mode' class on the body element
-        $('body').toggleClass('selection-mode');
+    // Connect to socket.io alerts namespace
+    const socket = io.connect('/alerts');
 
-        // Check if the selection mode is active
-        const selectionModeActive = $('body').hasClass('selection-mode');
+  $('#toggle-selection-mode').on('click', function() {
+    // Toggle the 'selection-mode' class on the body element
+    $('body').toggleClass('selection-mode');
 
-        // Update the button text
-        $(this).text(selectionModeActive ? 'Cancel' : 'Select');
+    // Check if the selection mode is active
+    const selectionModeActive = $('body').hasClass('selection-mode');
 
-        // Toggle the display of avatars, tickboxes and selection-related buttons
-        $('.alert-card-selectable').each(function() {
-          const avatarTickboxWrapper = $(this).find('.avatar-tickbox-wrapper');
-          avatarTickboxWrapper.find('.avatar-wrapper').toggle(!selectionModeActive);
-          avatarTickboxWrapper.find('.tickbox').toggle(selectionModeActive);
-        });
+    // Update the button text
+    $(this).text(selectionModeActive ? 'Cancel' : 'Select');
 
-        $('#select-deselect-all').toggle(selectionModeActive).text('Select all');
-        $('#alerts-batch-actions').toggle(selectionModeActive);
-      });
+    // Toggle the display of avatars, tickboxes and selection-related buttons
+    $('.alert-card-selectable').each(function() {
+      const avatarTickboxWrapper = $(this).find('.avatar-tickbox-wrapper');
+      avatarTickboxWrapper.find('.avatar-wrapper').toggle(!selectionModeActive);
+      avatarTickboxWrapper.find('.tickbox').toggle(selectionModeActive);
+    });
 
-      $('#select-deselect-all').on('click', function() {
-        const allSelected = $('.tickbox input[type="checkbox"]:not(:checked)').length === 0;
+    $('#select-deselect-all').toggle(selectionModeActive).text('Select all');
+    $('#alerts-batch-actions').toggle(selectionModeActive);
+  });
 
-        $('.tickbox input[type="checkbox"]').prop('checked', !allSelected);
-        $(this).text(allSelected ? 'Select all' : 'Deselect all');
-      });
+  $('#select-deselect-all').on('click', function() {
+    const allSelected = $('.tickbox input[type="checkbox"]:not(:checked)').length === 0;
+
+    $('.tickbox input[type="checkbox"]').prop('checked', !allSelected);
+    $(this).text(allSelected ? 'Select all' : 'Deselect all');
+  });
 
     $('#togglePresets').on('click', function() {
         $('.preset-dropdown-container').toggle();
     });
+
+    socket.on('new_alert', function (data) {
+        const badge = $('#newAlertsBadge');
+        const currentCount = parseInt(badge.text()) || 0;
+        badge.text(currentCount + 1).show();
+    });
+
 
 });
