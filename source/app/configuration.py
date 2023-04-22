@@ -283,6 +283,7 @@ class Config:
 
         IRIS_ADM_EMAIL = config.load('IRIS', 'ADM_EMAIL')
         IRIS_ADM_PASSWORD = config.load('IRIS', 'ADM_PASSWORD')
+        IRIS_ADM_USERNAME = config.load('IRIS', 'ADM_USERNAME')
         IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY')
 
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)

@@ -28,7 +28,7 @@ import secrets
 import string
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, exc
+from sqlalchemy import create_engine, exc, or_
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
@@ -663,9 +663,13 @@ def create_safe_auth_model():
 
 
 def create_safe_admin(def_org, gadm):
-    user = User.query.filter(
-        User.user == "administrator"
-    ).first()
+    admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
+    admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+
+    user = User.query.filter(or_(
+        User.user == admin_username,
+        User.email == app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+    )).first()
     password = None
 
     if not user:
@@ -673,11 +677,9 @@ def create_safe_admin(def_org, gadm):
         if password is None:
             password = ''.join(random.choices(string.printable[:-6], k=16))
 
-        admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
         if admin_username is None:
             admin_username = 'administrator'
 
-        admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
         if admin_email is None:
             admin_email = 'administrator@localhost'
 

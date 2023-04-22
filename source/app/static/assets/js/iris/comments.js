@@ -37,10 +37,10 @@ function comment_element(element_id, element_type, is_alert=false) {
 
 function preview_comment() {
     if(!$('#container_comment_preview').is(':visible')) {
-        comment_text = g_comment_desc_editor.getValue();
-        converter = get_showdown_convert();
-        html = converter.makeHtml(comment_text);
-        comment_html = do_md_filter_xss(html);
+        let comment_text = g_comment_desc_editor.getValue();
+        let converter = get_showdown_convert();
+        let html = converter.makeHtml(comment_text);
+        let comment_html = do_md_filter_xss(html);
         $('#target_comment_content').html(comment_html);
         $('#container_comment_preview').show();
         $('#comment_preview_button').html('<i class="fa-solid fa-eye-slash"></i> Edit');
@@ -195,7 +195,7 @@ function load_comments(element_id, element_type, comment_id, do_notification, is
 
                 comment_text = data['data'][i].comment_text;
                 converter = get_showdown_convert();
-                html = converter.makeHtml(comment_text);
+                html = converter.makeHtml(do_md_filter_xss(comment_text));
                 comment_html = do_md_filter_xss(html);
                 const username = data['data'][i].user.user_name;
                 if (names.hasOwnProperty(username)) {

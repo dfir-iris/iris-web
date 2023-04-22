@@ -376,13 +376,13 @@ $(document).ready(function() {
     });
 
 
-    var textarea = $('#case_summary');
+    //var textarea = $('#case_summary');
     editor.getSession().on("change", function () {
-        textarea.val(editor.getSession().getValue());
+        //textarea.val(do_md_filter_xss(editor.getSession().getValue()));
         $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
         let target = document.getElementById('targetDiv');
         let converter = get_showdown_convert();
-        let html = converter.makeHtml(editor.getSession().getValue());
+        let html = converter.makeHtml(do_md_filter_xss(editor.getSession().getValue()));
 
         target.innerHTML = do_md_filter_xss(html);
 

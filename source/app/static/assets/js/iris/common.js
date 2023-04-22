@@ -66,13 +66,13 @@ function ellipsis_field( data, cutoff, wordbreak ) {
 
 function propagate_form_api_errors(data_error) {
     for (e in data_error) {
-        if($("#" + e).length != 0) {
+        if($("#" + e).length !== 0) {
             $("#" + e).addClass('is-invalid');
             errors = ""
             for (n in data_error[e]) {
                     errors += data_error[e][n];
                 }
-            if($("#" + e + "-invalid-msg").length != 0) {
+            if($("#" + e + "-invalid-msg").length !== 0) {
                 $("#" + e + "-invalid-msg").remove();
             }
             $("#" + e).after("<div class='invalid-feedback' id='" + e + "-invalid-msg'>" + errors +"</div>");
@@ -496,7 +496,11 @@ function list_to_badges(wordlist, style, limit, type) {
 }
 
 var sanitizeHTML = function (str, options) {
-    return filterXSS(str, options);
+    if (options) {
+        return filterXSS(str, options);
+    } else {
+        return filterXSS(str);
+    }
 };
 
 function isWhiteSpace(s) {
@@ -773,24 +777,24 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     });
 
     if (live_preview === undefined || live_preview === true) {
-        var textarea = $('#'+content_anchor);
+        let textarea = $('#'+content_anchor);
         editor.getSession().on("change", function () {
             if (onchange_callback !== undefined && onchange_callback !== null) {
                 onchange_callback();
             }
 
-            textarea.val(editor.getSession().getValue());
-            target = document.getElementById(target_anchor);
-            converter = get_showdown_convert();
-            html = converter.makeHtml(editor.getSession().getValue());
+            textarea.text(editor.getSession().getValue());
+            let target = document.getElementById(target_anchor);
+            let converter = get_showdown_convert();
+            let html = converter.makeHtml(editor.getSession().getValue());
             target.innerHTML = do_md_filter_xss(html);
 
         });
 
-        textarea.val(editor.getSession().getValue());
-        target = document.getElementById(target_anchor);
-        converter = get_showdown_convert();
-        html = converter.makeHtml(editor.getSession().getValue());
+        textarea.text(editor.getSession().getValue());
+        let target = document.getElementById(target_anchor);
+        let converter = get_showdown_convert();
+        let html = converter.makeHtml(editor.getSession().getValue());
         target.innerHTML = do_md_filter_xss(html);
 
     }
@@ -798,18 +802,32 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
     return editor;
 }
 
+function createSanitizeExtensionForImg() {
+  return [
+    {
+      type: 'lang',
+      regex: /<.*?>/g,
+      replace: function (match) {
+        if (match.startsWith('<img')) {
+          return match.replace(/on\w+="[^"]*"/gi, '');
+        }
+        return '';
+      },
+    },
+  ];
+}
+
 
 function get_showdown_convert() {
-    converter = new showdown.Converter({
+    return new showdown.Converter({
         tables: true,
         parseImgDimensions: true,
         emoji: true,
         smoothLivePreview: true,
         strikethrough: true,
         tasklists: true,
-        extensions: ['bootstrap-tables']
+        extensions: ['bootstrap-tables', createSanitizeExtensionForImg()]
     });
-    return converter;
 }
 
 function do_md_filter_xss(html) {
@@ -1275,27 +1293,25 @@ function createPagination(currentPage, totalPages, per_page, callback, paginatio
 
     // Add First page button
       if (totalPages > maxPagesToShow) {
-          const firstItem = $('<li>', {class: 'page-item'}).appendTo(paginationContainer);
-          if (currentPage === 1) {
-              firstItem.addClass('disabled');
+          if (currentPage !== 1 && maxPagesToShow / 2 + 1 < currentPage) {
+              const firstItem = $('<li>', {class: 'page-item'}).appendTo(paginationContainer);
+              $('<a>', {
+                  href: `javascript:${callback}(1, ${per_page},{}, true)`,
+                  text: 'First page',
+                  class: 'page-link',
+              }).appendTo(firstItem);
           }
-          $('<a>', {
-              href: `javascript:${callback}(1, ${per_page},{}, true)`,
-              text: 'First page',
-              class: 'page-link',
-          }).appendTo(firstItem);
       }
 
     // Add Previous button
-    const prevItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
-    if (currentPage === 1) {
-      prevItem.addClass('disabled');
+    if (currentPage !== 1) {
+        const prevItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
+        $('<a>', {
+          href: `javascript:${callback}(${Math.max(1, currentPage - 1)}, ${per_page},{}, true)`,
+          text: 'Previous',
+          class: 'page-link',
+        }).appendTo(prevItem);
     }
-    $('<a>', {
-      href: `javascript:${callback}(${Math.max(1, currentPage - 1)}, ${per_page},{}, true)`,
-      text: 'Previous',
-      class: 'page-link',
-    }).appendTo(prevItem);
 
     // Add page numbers
     for (let i = startPage; i <= endPage; i++) {
@@ -1311,26 +1327,25 @@ function createPagination(currentPage, totalPages, per_page, callback, paginatio
     }
 
     // Add Next button
-    const nextItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
-    if (currentPage === totalPages) {
-      nextItem.addClass('disabled');
+
+    if (currentPage !== totalPages) {
+        const nextItem = $('<li>', { class: 'page-item' }).appendTo(paginationContainer);
+        $('<a>', {
+          href: `javascript:${callback}(${Math.min(totalPages, currentPage + 1)}, ${per_page},{}, true)`,
+          text: 'Next',
+          class: 'page-link',
+        }).appendTo(nextItem);
     }
-    $('<a>', {
-      href: `javascript:${callback}(${Math.min(totalPages, currentPage + 1)}, ${per_page},{}, true)`,
-      text: 'Next',
-      class: 'page-link',
-    }).appendTo(nextItem);
 
    if (totalPages > maxPagesToShow) {
-       const lastItem = $('<li>', {class: 'page-item'}).appendTo(paginationContainer);
-       if (currentPage === totalPages) {
-           lastItem.addClass('disabled');
+       if (currentPage !== totalPages) {
+            const lastItem = $('<li>', {class: 'page-item'}).appendTo(paginationContainer);
+            $('<a>', {
+               href: `javascript:${callback}(${totalPages}, ${per_page},{}, true)`,
+               text: 'Last page',
+               class: 'page-link',
+           }).appendTo(lastItem);
        }
-       $('<a>', {
-           href: `javascript:${callback}(${totalPages}, ${per_page},{}, true)`,
-           text: 'Last page',
-           class: 'page-link',
-       }).appendTo(lastItem);
    }
   });
 }
