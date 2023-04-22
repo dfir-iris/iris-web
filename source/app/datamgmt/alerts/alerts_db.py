@@ -36,7 +36,7 @@ from app.datamgmt.case.case_events_db import update_event_assets, update_event_i
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association, Ioc
+    alert_iocs_association, Ioc, IocLink
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache
 from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
 from app.util import add_obj_history_entry
@@ -726,7 +726,7 @@ def get_related_alerts(customer_id, assets, iocs, details=False):
     return similarities
 
 
-def get_related_alerts_details(customer_id, assets, iocs):
+def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_alerts, open_cases, closed_cases):
     """
     Get the details of the related alerts
 
@@ -734,6 +734,10 @@ def get_related_alerts_details(customer_id, assets, iocs):
         customer_id (int): The ID of the customer
         assets (list): The list of assets
         iocs (list): The list of IOCs
+        open_alerts (bool): Include open alerts
+        closed_alerts (bool): Include closed alerts
+        open_cases (bool): Include open cases
+        closed_cases (bool): Include closed cases
 
     returns:
         dict: The details of the related alerts with matched assets and/or IOCs
@@ -748,16 +752,31 @@ def get_related_alerts_details(customer_id, assets, iocs):
     ioc_values = [ioc.ioc_value for ioc in iocs]
 
     asset_type_alias = aliased(AssetsType)
+    alert_status_filter = None
+
+    if open_alerts and not closed_alerts:
+        alert_status_filter = AlertStatus.query.with_entities(
+            AlertStatus.status_id
+        ).filter(AlertStatus.status_name.in_('New', 'Assigned ', 'In progress', 'Pending')).all()
+    if closed_alerts and not open_alerts:
+        alert_status_filter = AlertStatus.query.with_entities(
+            AlertStatus.status_id
+        ).filter(AlertStatus.status_name.in_('Closed', 'Merged', 'Escalated')).all()
+
+    conditions = and_( SimilarAlertsCache.customer_id == customer_id,
+            (SimilarAlertsCache.asset_name.in_(asset_names) | SimilarAlertsCache.ioc_value.in_(ioc_values))
+                      )
+
+    if alert_status_filter:
+        conditions = and_(conditions,
+                          Alert.alert_status_id.in_(alert_status_filter))
 
     related_alerts = (
         db.session.query(Alert, SimilarAlertsCache.asset_name, SimilarAlertsCache.ioc_value,
                          asset_type_alias.asset_icon_not_compromised)
         .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
         .outerjoin(asset_type_alias, SimilarAlertsCache.asset_type_id == asset_type_alias.asset_id)
-        .filter(
-            SimilarAlertsCache.customer_id == customer_id,
-            (SimilarAlertsCache.asset_name.in_(asset_names) | SimilarAlertsCache.ioc_value.in_(ioc_values))
-        )
+        .filter(conditions)
         .all()
     )
 
@@ -778,6 +797,7 @@ def get_related_alerts_details(customer_id, assets, iocs):
 
     added_assets = set()
     added_iocs = set()
+    added_cases = set()
 
     for alert_id, alert_info in alerts_dict.items():
         nodes.append({
@@ -826,6 +846,75 @@ def get_related_alerts_details(customer_id, assets, iocs):
                 'to': f'ioc_{ioc_value}',
                 'dashes': True
             })
+
+    if open_cases or closed_cases:
+        # Find cases with matching IOC value and IOC type
+        matching_ioc_cases = (
+            db.session.query(IocLink)
+            .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name)
+            .join(IocLink.ioc)
+            .filter(
+                Ioc.ioc_value.in_(added_iocs)
+            )
+            .distinct()
+            .all()
+        )
+
+        # Find cases with matching asset_title and asset_type
+        matching_asset_cases = (
+            db.session.query(CaseAssets)
+            .with_entities(CaseAssets.case_id, CaseAssets.asset_name, Cases.name)
+            .join(CaseAssets.case)
+            .filter(
+                CaseAssets.asset_name.in_(added_assets)
+            )
+            .distinct(CaseAssets.case_id)
+            .all()
+        )
+
+        cases_data = {}
+
+        # Iterate through matching_ioc_cases and update cases_data
+        for case_id, ioc_value, case_name in matching_ioc_cases:
+            if case_id not in cases_data:
+                cases_data[case_id] = {'name': case_name, 'matching_ioc': [], 'matching_assets': []}
+            cases_data[case_id]['matching_ioc'].append(ioc_value)
+
+        # Iterate through matching_asset_cases and update cases_data
+        for case_id, asset_name, case_name in matching_asset_cases:
+            if case_id not in cases_data:
+                cases_data[case_id] = {'name': case_name, 'matching_ioc': [], 'matching_assets': []}
+            cases_data[case_id]['matching_assets'].append(asset_name)
+
+        # Add nodes and edges for matching cases
+        for case_id in cases_data:
+            if case_id not in added_cases:
+                nodes.append({
+                    'id': f'case_{case_id}',
+                    'label': f'Case #{case_id}',
+                    'title': cases_data[case_id]['name'],
+                    'group': 'case',
+                    'shape': 'image',
+                    'image': '/static/assets/img/graph/briefcase.png',
+                    'font': "12px verdana white" if current_user.in_dark_mode else ''
+                })
+                added_cases.add(case_id)
+
+            # Add edges for matching IOC
+            for ioc_value in cases_data[case_id]['matching_ioc']:
+                edges.append({
+                    'from': f'ioc_{ioc_value}',
+                    'to': f'case_{case_id}',
+                    'dashes': True
+                })
+
+            # Add edges for matching assets
+            for asset_name in cases_data[case_id]['matching_assets']:
+                edges.append({
+                    'from': f'asset_{asset_name}',
+                    'to': f'case_{case_id}',
+                    'dashes': True
+                })
 
     return {
         'nodes': nodes,

@@ -240,8 +240,15 @@ def alerts_similarities_route(caseid, alert_id) -> Response:
     if alert is None:
         return response_error('Alert not found')
 
+    open_alerts = request.args.get('open-alerts', 'false').lower() == 'true'
+    open_cases = request.args.get('open-cases', 'false').lower() == 'true'
+    closed_cases = request.args.get('closed-cases', 'false').lower() == 'true'
+    closed_alerts = request.args.get('closed-alerts', 'false').lower() == 'true'
+
     # Get similar alerts
-    similar_alerts = get_related_alerts_details(alert.alert_customer_id, alert.assets, alert.iocs)
+    similar_alerts = get_related_alerts_details(alert.alert_customer_id, alert.assets, alert.iocs,
+                                                open_alerts=open_alerts, open_cases=open_cases,
+                                                closed_cases=closed_cases, closed_alerts=closed_alerts)
 
     return response_success(data=similar_alerts)
 

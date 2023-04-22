@@ -530,7 +530,6 @@ def create_safe_alert_status():
                                                                       "investigation")
     create_safe(db.session, AlertStatus, status_name='In progress', status_description="Alert is being investigated")
     create_safe(db.session, AlertStatus, status_name='Pending', status_description="Alert is in a pending state")
-    create_safe(db.session, AlertStatus, status_name='Resolved', status_description="Alert resolved without escalation")
     create_safe(db.session, AlertStatus, status_name='Closed', status_description="Alert closed, no action taken")
     create_safe(db.session, AlertStatus, status_name='Merged', status_description="Alert merged into an existing case")
     create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
