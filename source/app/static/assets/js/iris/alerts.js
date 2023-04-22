@@ -1578,6 +1578,7 @@ $(document).ready(function () {
         const badge = $('#newAlertsBadge');
         const currentCount = parseInt(badge.text()) || 0;
         badge.text(currentCount + 1).show();
+        badge.attr('title', 'New alerts available');
     });
 
 

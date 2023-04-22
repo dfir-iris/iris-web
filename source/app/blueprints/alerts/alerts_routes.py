@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
+
 import marshmallow
 from flask_wtf import FlaskForm
 from typing import Union, List
@@ -171,7 +173,10 @@ def alerts_add_route(caseid) -> Response:
         track_activity(f"created alert #{new_alert.alert_id} - {new_alert.alert_title}")
 
         # Emit a socket io event
-        app.socket_io.emit('new_alert', alert_schema.dump(new_alert), namespace='/alerts')
+        app.socket_io.emit('new_alert', json.dumps({
+            'alert_id': new_alert.alert_id,
+            'alert_title': new_alert.alert_title
+        }), namespace='/alerts')
 
         # Return the newly created alert as JSON
         return response_success(data=alert_schema.dump(new_alert))
