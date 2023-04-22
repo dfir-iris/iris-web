@@ -468,7 +468,7 @@ function createNetwork(alert, relatedAlerts, containerId, containerConfigureId) 
     });
 
     document.getElementById('view-alert').addEventListener('click', () => {
-        window.open(`/alerts?alert_id=${node_id}&cid=${get_caseid()}`);
+        window.open(`/alerts?alert_ids=${node_id}&cid=${get_caseid()}`);
     });
 
 }
