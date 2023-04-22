@@ -757,11 +757,11 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     if open_alerts and not closed_alerts:
         alert_status_filter = AlertStatus.query.with_entities(
             AlertStatus.status_id
-        ).filter(AlertStatus.status_name.in_('New', 'Assigned ', 'In progress', 'Pending')).all()
+        ).filter(AlertStatus.status_name.in_(['New', 'Assigned ', 'In progress', 'Pending', 'Unspecified'])).all()
     if closed_alerts and not open_alerts:
         alert_status_filter = AlertStatus.query.with_entities(
             AlertStatus.status_id
-        ).filter(AlertStatus.status_name.in_('Closed', 'Merged', 'Escalated')).all()
+        ).filter(AlertStatus.status_name.in_(['Closed', 'Merged', 'Escalated'])).all()
 
     conditions = and_( SimilarAlertsCache.customer_id == customer_id,
             (SimilarAlertsCache.asset_name.in_(asset_names) | SimilarAlertsCache.ioc_value.in_(ioc_values))
@@ -769,7 +769,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
     if alert_status_filter:
         conditions = and_(conditions,
-                          Alert.alert_status_id.in_(alert_status_filter))
+                          Alert.alert_status_id.in_([a.status_id for a in alert_status_filter]))
 
     related_alerts = (
         db.session.query(Alert, SimilarAlertsCache.asset_name, SimilarAlertsCache.ioc_value,
