@@ -943,8 +943,10 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
 
   // Clear the current alerts list
   const alertsContainer = $('.alerts-container');
-  alertsContainer.html('');
+  const queryParams = new URLSearchParams(window.location.search);
+  const isExpanded = queryParams.get('is-expanded') === 'true';
 
+  alertsContainer.html('');
   if (alerts.length === 0) {
     // Display "No results" message when there are no alerts
     alertsContainer.append('<div class="ml-auto mr-auto">No results</div>');
@@ -954,7 +956,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
       alerts.forEach((alert) => {
           const alertElement = $('<div></div>');
 
-          const alertHtml = renderAlert(alert);
+          const alertHtml = renderAlert(alert, isExpanded);
           alertElement.html(alertHtml);
           alertsContainer.append(alertElement);
       });
@@ -966,7 +968,6 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   createPagination(currentPage, totalPages, per_page, 'updateAlerts', '.pagination-container');
 
   // Update the URL with the filter parameters
-  const queryParams = new URLSearchParams(window.location.search);
   queryParams.set('page', page);
   queryParams.set('per_page', per_page);
   let filter_tags_info = [];
@@ -1009,9 +1010,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
 
   filterString ? $('#resetFilters').show() : $('#resetFilters').hide();
 
-  const isExpanded = queryParams.get('is-expanded') === 'true';
-  collapseAlerts(isExpanded);
-
+  alertsContainer.show();
 }
 
 $('#alertsPerPage').on('change', (e) => {
