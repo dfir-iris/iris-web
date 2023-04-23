@@ -1200,49 +1200,76 @@ function fetchSavedFilters() {
         .then((data) => {
             if (notify_auto_api(data)) {
                 const savedFiltersDropdown = $('#savedFiltersDropdown');
+
                 savedFiltersDropdown.empty();
 
                 let dropdownHtml = `
-                    <button class="btn btn-sm dropdown-toggle" type="button" id="savedFilters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Select preset filter
-                    </button>
-                    <div class="dropdown-menu custom-saved-filters" aria-labelledby="savedFilters">
+                    <select class="selectpicker" data-style="btn-sm" data-live-search="true" title="Select preset filter" id="savedFilters">
                 `;
 
                 data.data.forEach(filter => {
                     dropdownHtml += `
-                        <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" data-filter-id="${filter.filter_id}">
-                            <span>${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span>
-                            <i class="ml-4 fas fa-trash delete-filter text-danger" data-filter-id="${filter.filter_id}" title="Delete filter"></i>
-                        </a>
+                        <option value="${filter.filter_id}" data-subtext="${filter.filter_is_private ? '(private)' : ''}" data-tokens="${filter.filter_name}"
+                            data-content="<span data-filter-id='${filter.filter_id}'> ${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span>
+                            <i class='ml-4 fas fa-trash delete-filter text-danger' data-filter-id='${filter.filter_id}' title='Delete filter'></i>">
+                        </option>
                     `;
                 });
 
-                dropdownHtml += '</div>';
+                dropdownHtml += '</select>';
 
                 savedFiltersDropdown.append(dropdownHtml);
 
-                savedFiltersDropdown.on('click', '.delete-filter', function (event) {
-                    event.preventDefault();
-                    event.stopPropagation();
+                // Initialize the bootstrap-select component
+                $('#savedFilters').selectpicker();
 
-                    const filterId = $(this).data('filter-id');
-                    if (!filterId) return;
+                // Add the event listener after the selectpicker is loaded
+                $('#savedFilters').on('shown.bs.select', function () {
+                    $('.delete-filter').off().on('click', function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
 
-                    do_deletion_prompt('Are you sure you want to delete this filter?', true)
-                        .then((do_delete) => {
-                            if (!do_delete) return;
-                            const url = `/filters/delete/${filterId}`;
-                            const data = {
-                                csrf_token: $('#csrf_token').val()
-                            };
-                            post_request_api(url, JSON.stringify(data))
-                                .then((data) => {
-                                    if (notify_auto_api(data)) {
-                                        fetchSavedFilters();
-                                    }
-                                });
+                        console.log($(this));
+                        const filterId = $(this).data('filter-id');
+                        if (!filterId) return;
+
+                        do_deletion_prompt('Are you sure you want to delete this filter?', true)
+                            .then((do_delete) => {
+                                if (!do_delete) return;
+                                const url = `/filters/delete/${filterId}`;
+                                const data = {
+                                    csrf_token: $('#csrf_token').val()
+                                };
+                                post_request_api(url, JSON.stringify(data))
+                                    .then((data) => {
+                                        if (notify_auto_api(data)) {
+                                            fetchSavedFilters();
+                                        }
+                                    });
+                        });
                     });
+                });
+
+                $('#savedFilters').on('change', function() {
+
+                    const selectedFilterId = $('#savedFilters').val();
+                    if (!selectedFilterId) return;
+
+                    const url = `/filters/${selectedFilterId}`;
+
+                    get_request_api(url)
+                        .then((data) => {
+                            if(!notify_auto_api(data, true)) return;
+                            const queryParams = new URLSearchParams();
+                            Object.entries(data.data.filter_data).forEach(([key, value]) => {
+                                if (value !== '') {
+                                    queryParams.set(key, value);
+                                }
+                            });
+
+                            // Update the URL and reload the page with the new filter settings
+                            window.location.href = window.location.pathname + case_param() + '&' + queryParams.toString();
+                        })
                 });
             }
         });
@@ -1280,27 +1307,6 @@ $('#saveFilterButton').on('click', function () {
         });
 
     $('#saveFilterModal').modal('hide');
-});
-
-$('#savedFilters').on('change', function() {
-    const selectedFilterId = $(this).val();
-    if (!selectedFilterId) return;
-
-    const url = `/filters/${selectedFilterId}`;
-
-    get_request_api(url)
-        .then((data) => {
-            if(!notify_auto_api(data, true)) return;
-            const queryParams = new URLSearchParams();
-            Object.entries(data.data.filter_data).forEach(([key, value]) => {
-                if (value !== '') {
-                    queryParams.set(key, value);
-                }
-            });
-
-            // Update the URL and reload the page with the new filter settings
-            window.location.href = window.location.pathname + case_param() + '&' + queryParams.toString();
-        })
 });
 
 function changeStatusAlert(alert_id, status_name) {
