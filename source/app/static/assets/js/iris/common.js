@@ -65,7 +65,13 @@ function ellipsis_field( data, cutoff, wordbreak ) {
 };
 
 function propagate_form_api_errors(data_error) {
-    for (e in data_error) {
+
+    if (typeof (data_error) === typeof (' ')) {
+        notify_error(data_error);
+        return;
+    }
+
+    for (let e in data_error) {
         if($("#" + e).length !== 0) {
             $("#" + e).addClass('is-invalid');
             errors = ""

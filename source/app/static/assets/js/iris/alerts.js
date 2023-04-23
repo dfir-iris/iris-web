@@ -1209,10 +1209,7 @@ function fetchSavedFilters() {
 
                 data.data.forEach(filter => {
                     dropdownHtml += `
-                        <option value="${filter.filter_id}" data-subtext="${filter.filter_is_private ? '(private)' : ''}" data-tokens="${filter.filter_name}"
-                            data-content="<span data-filter-id='${filter.filter_id}'> ${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span>
-                            <i class='ml-4 fas fa-trash delete-filter text-danger' data-filter-id='${filter.filter_id}' title='Delete filter'></i>">
-                        </option>
+        <option value="${filter.filter_id}" data-content='<span>${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><i class="ml-4 fas fa-trash delete-filter text-danger" onclick="deleteFilter(${filter.filter_id});" title="Delete filter"></i>'>${filter.filter_name}</option>
                     `;
                 });
 
@@ -1229,8 +1226,8 @@ function fetchSavedFilters() {
                         event.preventDefault();
                         event.stopPropagation();
 
-                        console.log($(this));
-                        const filterId = $(this).data('filter-id');
+                        const filterId =  $(this).data('filter-id');
+                        console.log( $(this).data('filter-id'));
                         if (!filterId) return;
 
                         do_deletion_prompt('Are you sure you want to delete this filter?', true)
