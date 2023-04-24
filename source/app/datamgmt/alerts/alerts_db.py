@@ -21,11 +21,11 @@ from functools import reduce
 
 import json
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask_login import current_user
 from operator import and_
-from sqlalchemy import desc, asc
+from sqlalchemy import desc, asc, func
 from sqlalchemy.orm import joinedload
 from typing import List, Tuple
 
@@ -719,7 +719,8 @@ def get_related_alerts(customer_id, assets, iocs, details=False):
     return similarities
 
 
-def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_alerts, open_cases, closed_cases):
+def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_alerts, open_cases, closed_cases,
+                               days_back=7, number_of_results=200):
     """
     Get the details of the related alerts
 
@@ -731,6 +732,8 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         closed_alerts (bool): Include closed alerts
         open_cases (bool): Include open cases
         closed_cases (bool): Include closed cases
+        days_back (int): The number of days to look back
+        number_of_results (int): The maximum number of alerts to return
 
     returns:
         dict: The details of the related alerts with matched assets and/or IOCs
@@ -770,7 +773,10 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
         .outerjoin(asset_type_alias, SimilarAlertsCache.asset_type_id == asset_type_alias.asset_id)
         .filter(conditions)
+        .filter(SimilarAlertsCache.created_at >= func.now() - timedelta(days=days_back))
+        .limit(number_of_results)
         .all()
+
     )
 
     alerts_dict = {}

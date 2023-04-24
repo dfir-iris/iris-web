@@ -397,13 +397,19 @@ function getAlertOffset(element) {
   };
 }
 
-function createNetwork(alert, relatedAlerts, containerId, containerConfigureId) {
+function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, containerConfigureId) {
   const { nodes, edges } = relatedAlerts;
 
   const data = {
     nodes: new vis.DataSet(nodes),
     edges: new vis.DataSet(edges),
   };
+
+  if (nodes.length >= nb_nodes) {
+        $(`#similarAlertsNotify-${alert_id}`).text(`Relationships graph exceeded the nodes limit. Expect truncated results.`)
+  } else {
+        $(`#similarAlertsNotify-${alert_id}`).text(``);
+  }
 
   const options = {
     edges: {
@@ -501,16 +507,19 @@ function fetchSimilarAlerts(alert_id,
       const similarAlertsElement = $(`#similarAlerts-${alert_id}`);
       if (!similarAlertsElement.html() || refresh) {
         // Build the query string with the new parameters
+        const nb_nodes = $(`#nbResultsGraphFilter-${alert_id}`).val();
         const queryString = new URLSearchParams({
           'open-alerts': fetch_open_alerts,
           'closed-alerts': fetch_closed_alerts,
           'open-cases': fetch_open_cases,
           'closed-cases': fetch_closed_cases,
+          'days-back': $(`#daysBackGraphFilter-${alert_id}`).val(),
+          'number-of-nodes': nb_nodes
         }).toString();
 
-        get_request_api(`/alerts/similarities/${alert_id}?${queryString}`)
+        get_raw_request_api(`/alerts/similarities/${alert_id}?${queryString}&cid=${get_caseid()}`)
           .done((data) => {
-            createNetwork(alert_id, data.data, `similarAlerts-${alert_id}`, `graphConfigure-${alert_id}`);
+            createNetwork(alert_id, data.data, nb_nodes, `similarAlerts-${alert_id}`, `graphConfigure-${alert_id}`);
           });
       }
 }
@@ -734,7 +743,21 @@ function renderAlert(alert, expanded=false) {
                                     <input type="checkbox" name="value" value="closed_cases" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id})">
                                     <span class="selectgroup-button">Show closed cases</span>
                                 </label>
+                                <div class="selectgroup-item">
+                                    <div class="form-group mb-0">
+                                        <label class="mb-1">Nodes limit</label>
+                                        <input type="number" name="value" value="200" class="form-control" id="nbResultsGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
+                                    </div>
+                                </div>
+                                <div class="selectgroup-item">
+                                    <div class="form-group mb-0">
+                                        <label class="mb-1">Days back</label>
+                                        <input type="number" name="value" value="30" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
+                                    </div>
+                                </div>
                             </div>
+                            
+                            <div id="similarAlertsNotify-${alert.alert_id}" class="row mt-2 ml-2 text-danger"></div>
                             <div id="similarAlerts-${alert.alert_id}" class="mt-4 similar-alert-graph"></div>
                         </div>
 
@@ -1558,10 +1581,20 @@ async function updateBatchAlerts(data_content= {}) {
         'updates': data_content
     };
 
+       window.swal({
+          title: "Alerts are being updated, please wait",
+          text: "This window will close automatically when it's done",
+          icon: "/static/assets/img/loader.gif",
+          button: false,
+          allowOutsideClick: false
+        });
+
     return post_request_api('/alerts/batch/update', JSON.stringify(data)).then(function (data) {
         if (notify_auto_api(data)) {
             setFormValuesFromUrl();
         }
+    }).always(() => {
+        window.swal.close();
     });
 
 }
