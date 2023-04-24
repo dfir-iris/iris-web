@@ -1576,6 +1576,13 @@ async function deleteBatchAlerts(data_content= {}) {
 
     do_deletion_prompt(`You are about to delete ${selectedAlerts.length} alerts`, true)
     .then((doDelete) => {
+       window.swal({
+              title: "Alerts are being deleted, please wait",
+              text: "This window will close automatically when it's done",
+              icon: "/static/assets/img/loader.gif",
+              button: false,
+              allowOutsideClick: false
+        });
         if (doDelete) {
             const data = {
                 'alert_ids': selectedAlerts,
@@ -1587,10 +1594,11 @@ async function deleteBatchAlerts(data_content= {}) {
                     if (notify_auto_api(data)) {
                         setFormValuesFromUrl();
                     }
+                }).always(() => {
+                window.swal.close();
             });
         }
     });
-
 }
 
 let alertCount = 0;
