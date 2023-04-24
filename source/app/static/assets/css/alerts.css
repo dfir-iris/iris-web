@@ -165,3 +165,7 @@
     top: 50%;
     transform: translateY(-50%);
 }
+
+.hidden-trash {
+    display: none;
+}

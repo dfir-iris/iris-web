@@ -1194,9 +1194,9 @@ async function editAlert(alert_id, close=false) {
     });
 }
 
-function fetchSavedFilters() {
+async function fetchSavedFilters() {
     const url = '/filters/alerts/list';
-    get_request_api(url)
+    return get_request_api(url)
         .then((data) => {
             if (notify_auto_api(data)) {
                 const savedFiltersDropdown = $('#savedFiltersDropdown');
@@ -1209,7 +1209,7 @@ function fetchSavedFilters() {
 
                 data.data.forEach(filter => {
                     dropdownHtml += `
-                                <option value="${filter.filter_id}" data-content='<div class="d-flex align-items-center"><span>${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><div class="trash-wrapper"><i class="fas fa-trash delete-filter text-danger" id="dropfilter-id-${filter.filter_id}" title="Delete filter"></i></div></div>'>${filter.filter_name}</option>
+                                <option value="${filter.filter_id}" data-content='<div class="d-flex align-items-center"><span>${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><div class="trash-wrapper hidden-trash"><i class="fas fa-trash delete-filter text-danger" id="dropfilter-id-${filter.filter_id}" title="Delete filter"></i></div></div>'>${filter.filter_name}</option>
                     `;
                 });
 
@@ -1222,6 +1222,7 @@ function fetchSavedFilters() {
 
                 // Add the event listener after the selectpicker is loaded
                 $('#savedFilters').on('shown.bs.select', function () {
+                    $('.trash-wrapper').removeClass('hidden-trash');
                     $('.delete-filter').off().on('click', function (event) {
                         event.preventDefault();
                         event.stopPropagation();
@@ -1230,7 +1231,7 @@ function fetchSavedFilters() {
 
                         if (!filterId) return;
 
-                        do_deletion_prompt('Are you sure you want to delete this filter?', true)
+                        do_deletion_prompt(`Are you sure you want to delete filter #${filterId}?`, true)
                             .then((do_delete) => {
                                 if (!do_delete) return;
                                 const url = `/filters/delete/${filterId}`;
@@ -1245,6 +1246,8 @@ function fetchSavedFilters() {
                                     });
                         });
                     });
+                }).on('hide.bs.select', function () {
+                    $('.trash-wrapper').addClass('hidden-trash');
                 });
 
                 $('#savedFilters').on('change', function() {
@@ -1263,6 +1266,8 @@ function fetchSavedFilters() {
                                     queryParams.set(key, value);
                                 }
                             });
+
+                            queryParams.set('filter_id', selectedFilterId);
 
                             // Update the URL and reload the page with the new filter settings
                             window.location.href = window.location.pathname + case_param() + '&' + queryParams.toString();
@@ -1438,8 +1443,10 @@ function setFormValuesFromUrl() {
       } else {
         input.val(value);
       }
-    } else if (input in ['alert_ids']) {
-
+    }
+    if (key === 'filter_id') {
+        $('#savedFilters').selectpicker('val', value);
+        $('.preset-dropdown-container').show();
     }
   });
 
@@ -1582,9 +1589,12 @@ $(document).ready(function () {
             .catch(error => console.error(error));
         });
       }
-    setFormValuesFromUrl();
-    getAlertStatusList();
+
     fetchSavedFilters()
+        .then(() => {
+            setFormValuesFromUrl();
+        });
+    getAlertStatusList();
 
     // Connect to socket.io alerts namespace
     const socket = io.connect('/alerts');
