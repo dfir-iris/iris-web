@@ -355,7 +355,12 @@ function mergeAlertCasesSelectOption(data) {
 }
 
 function fetchSmartRelations(alert_id) {
-    fetchSimilarAlerts(alert_id, false, true, true,
+    $('input[value="open_alerts"]').prop('checked', true);
+    $('input[value="closed_alerts"]').prop('checked', false);
+    $('input[value="open_cases"]').prop('checked', false);
+    $('input[value="closed_cases"]').prop('checked', false);
+
+    fetchSimilarAlerts(alert_id, false, true, false,
         false, false);
 }
 
