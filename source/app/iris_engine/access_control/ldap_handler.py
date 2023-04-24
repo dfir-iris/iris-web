@@ -98,7 +98,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
             log.error(f"Cannot bind to ldap server: {conn.last_error} ")
             return False
 
-        if app.config.get('LDAP_USER_PROVISIONING'):
+        if app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
             _provision_user(conn, ldap_user_name, ldap_user)
 
     except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
