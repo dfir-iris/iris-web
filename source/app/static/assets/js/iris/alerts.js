@@ -1209,7 +1209,7 @@ function fetchSavedFilters() {
 
                 data.data.forEach(filter => {
                     dropdownHtml += `
-                        <option value="${filter.filter_id}" data-content='<span>${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><i class="ml-4 fas fa-trash delete-filter text-danger" id="filter-id-${filter.filter_id}" title="Delete filter"></i>'>${filter.filter_name}</option>
+                                <option value="${filter.filter_id}" data-content='<div class="d-flex align-items-center"><span>${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><div class="trash-wrapper"><i class="fas fa-trash delete-filter text-danger" id="dropfilter-id-${filter.filter_id}" title="Delete filter"></i></div></div>'>${filter.filter_name}</option>
                     `;
                 });
 

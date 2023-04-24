@@ -158,3 +158,10 @@
     background-color: #9D2F35;
   color: white;
 }
+
+.trash-wrapper {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+}
