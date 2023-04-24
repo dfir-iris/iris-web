@@ -1001,6 +1001,9 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
       delete filters[filterKey];
       queryParams.delete(filterKey);
       $(`#${filterKey}`).val('');
+
+      resetSavedFilters(queryParams, false);
+
       history.replaceState(null, null, `?${queryParams.toString()}`);
       updateAlerts(page, per_page, filters);
     });
@@ -1008,7 +1011,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
     $('#alertsInfoFilterTags').html('');
   }
 
-  filterString ? $('#resetFilters').show() : $('#resetFilters').hide();
+  filterString || queryParams.get('filter_id') ? $('#resetFilters').show() : $('#resetFilters').hide();
 
   alertsContainer.show();
 }
@@ -1077,8 +1080,6 @@ function collapseAlerts(isExpanded) {
     }
 }
 
-
-
 $('#alertFilterForm').on('submit', (e) => {
   e.preventDefault();
 
@@ -1099,18 +1100,35 @@ $('#alertFilterForm').on('submit', (e) => {
 $('#resetFilters').on('click', function () {
   const form = $('#alertFilterForm');
 
-  // Reset all input fields
-  form.find('input, select').each((_, element) => {
-    if (element.type === 'checkbox') {
-      $(element).prop('checked', false);
-    } else {
-      $(element).val('');
-    }
-  });
+    // Reset all input fields
+    form.find('input, select').each((_, element) => {
+        if (element.type === 'checkbox') {
+          $(element).prop('checked', false);
+        } else {
+          $(element).val('');
+        }
+    });
+
+    // Reset the saved filters dropdown
+    resetSavedFilters(null);
 
   // Trigger the form submit event to fetch alerts with the updated filters
   form.trigger('submit');
 });
+
+function resetSavedFilters(queryParams = null, replaceState = true) {
+    if (queryParams === null || queryParams === undefined) {
+        queryParams = new URLSearchParams(window.location.search);
+    }
+    queryParams.delete('filter_id');
+    if (replaceState) {
+        window.history.replaceState(null, null, `?${queryParams.toString()}`);
+    }
+    $('.preset-dropdown-container').hide();
+    $('#savedFilters').selectpicker('val', '');
+
+    return queryParams;
+}
 
 $("#escalateOrMergeButton").on("click", () => {
 
