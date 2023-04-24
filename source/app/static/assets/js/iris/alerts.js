@@ -418,9 +418,11 @@ function createNetwork(alert, relatedAlerts, containerId, containerConfigureId) 
         improvedLayout: true
     },
     interaction: {
-      hideEdgesOnDrag: false
+      hideEdgesOnDrag: false,
+        tooltipDelay: 100
     },
     height: (window.innerHeight- 250) + "px",
+    clickToUse: true,
     physics: {
         forceAtlas2Based: {
           gravitationalConstant: -167,
@@ -464,23 +466,28 @@ function createNetwork(alert, relatedAlerts, containerId, containerConfigureId) 
             const x = event.pointer.DOM.x + 160;
             const y = containerOffset.top + event.pointer.DOM.y;
 
-            const contextMenu = document.getElementById('context-menu');
+            const contextMenu = document.getElementById('context-menu-relationships');
             contextMenu.style.left = `${x}px`;
             contextMenu.style.top = `${y}px`;
             contextMenu.classList.remove('hidden');
+
+            $('#view-alert').data('alert-id', node_id);
+
         }
       }
   });
 
     document.addEventListener('click', () => {
-      const contextMenu = document.getElementById('context-menu');
+      const contextMenu = document.getElementById('context-menu-relationships');
       contextMenu.classList.add('hidden');
     });
 
-    document.getElementById('view-alert').addEventListener('click', () => {
-        window.open(`/alerts?alert_ids=${node_id}&cid=${get_caseid()}`);
-    });
+}
 
+function viewAlertGraph() {
+    const alert_id = $(this).data('alert-id');
+
+    window.open(`/alerts?alert_ids=${alert_id}&cid=${get_caseid()}`);
 }
 
 
