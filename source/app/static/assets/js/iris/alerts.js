@@ -438,6 +438,10 @@ function createNetwork(alert, relatedAlerts, containerId, containerConfigureId) 
     const container = document.getElementById(containerId);
     const network = new vis.Network(container, data, options);
 
+    network.on("stabilizationIterationsDone", function () {
+        network.setOptions( { physics: false } );
+    });
+
     let selectedNodeId = null;
     let node_type = null;
     let node_id = null;
