@@ -743,18 +743,23 @@ function renderAlert(alert, expanded=false) {
                                     <input type="checkbox" name="value" value="closed_cases" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id})">
                                     <span class="selectgroup-button">Show closed cases</span>
                                 </label>
-                                <div class="selectgroup-item">
-                                    <div class="form-group mb-0">
-                                        <label class="mb-1">Nodes limit</label>
+                                <label class="selectgroup-item">
+                                    <div class="input-group mb-4">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Nodes limit</span>
+                                        </div>
                                         <input type="number" name="value" value="200" class="form-control" id="nbResultsGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
                                     </div>
-                                </div>
-                                <div class="selectgroup-item">
-                                    <div class="form-group mb-0">
-                                        <label class="mb-1">Days back</label>
-                                        <input type="number" name="value" value="30" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
+                                </label>
+                                <label class="selectgroup-item">
+                                    <div class="input-group mb-4">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Lookback (days)</span>
+                                        </div>
+                                        <input type="number" name="value" value="7" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
                                     </div>
-                                </div>
+                                </label>
+                                    
                             </div>
                             
                             <div id="similarAlertsNotify-${alert.alert_id}" class="row mt-2 ml-2 text-danger"></div>
