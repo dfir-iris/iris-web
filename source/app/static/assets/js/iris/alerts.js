@@ -751,7 +751,7 @@ function renderAlert(alert, expanded=false) {
                                 </div>
                             </div>
                             <div class="row mt-4">
-                                <div class="col-md-3 col-xl-2">
+                                <div class="col">
                                     <div class="input-group mb-4">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">Nodes limit</span>
@@ -759,7 +759,7 @@ function renderAlert(alert, expanded=false) {
                                         <input type="number" name="value" value="100" class="form-control" id="nbResultsGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
                                     </div>
                                 </div>
-                                <div class="col-md-3 col-xl-2">
+                                <div class="col">
                                     <div class="input-group mb-4">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">Lookback (days)</span>

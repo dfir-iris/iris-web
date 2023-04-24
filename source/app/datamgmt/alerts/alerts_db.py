@@ -803,7 +803,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
         nodes.append({
             'id': f'alert_{alert_id}',
-            'label': f'[Closed] Alert #{alert_id}' if alert_color is not '' else f'Alert #{alert_id}',
+            'label': f'[Closed] Alert #{alert_id}' if alert_color != '' else f'Alert #{alert_id}',
             'title': alert_info['alert'].alert_title,
             'group': 'alert',
             'shape': 'icon',
@@ -870,7 +870,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         matching_ioc_cases = (
             db.session.query(IocLink)
             .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name, Cases.close_date)
-            .join(IocLink.ioc)
+            .join(IocLink.ioc, IocLink.case)
             .filter(
                 Ioc.ioc_value.in_(added_iocs),
                 close_condition
