@@ -567,6 +567,11 @@ function escalateOrMergeAlert(alert_id, merge = false, batch = false) {
             if (data.status == 'success') {
                 $("#escalateModal").modal("hide");
                 notify_auto_api(data);
+                if (batch) {
+                    refreshAlerts();
+                } else {
+                    refreshAlert(alert_id);
+                }
             } else {
                 notify_auto_api(data);
             }
