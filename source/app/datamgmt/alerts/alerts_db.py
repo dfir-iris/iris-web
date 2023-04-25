@@ -748,24 +748,28 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     ioc_values = [ioc.ioc_value for ioc in iocs]
 
     asset_type_alias = aliased(AssetsType)
-    alert_status_filter = None
-
-    if open_alerts and not closed_alerts:
-        alert_status_filter = AlertStatus.query.with_entities(
-            AlertStatus.status_id
-        ).filter(AlertStatus.status_name.in_(['New', 'Assigned ', 'In progress', 'Pending', 'Unspecified'])).all()
-    if closed_alerts and not open_alerts:
-        alert_status_filter = AlertStatus.query.with_entities(
-            AlertStatus.status_id
-        ).filter(AlertStatus.status_name.in_(['Closed', 'Merged', 'Escalated'])).all()
+    alert_status_filter = []
 
     conditions = and_(SimilarAlertsCache.customer_id == customer_id,
                       (SimilarAlertsCache.asset_name.in_(asset_names) | SimilarAlertsCache.ioc_value.in_(ioc_values))
                       )
 
-    if alert_status_filter:
-        conditions = and_(conditions,
-                          Alert.alert_status_id.in_([a.status_id for a in alert_status_filter]))
+    if open_alerts:
+        open_alert_status_ids = AlertStatus.query.with_entities(
+            AlertStatus.status_id
+        ).filter(AlertStatus.status_name.in_(['New', 'Assigned ', 'In progress', 'Pending', 'Unspecified'])).all()
+        alert_status_filter += open_alert_status_ids
+
+    if closed_alerts:
+        closed_alert_status_ids = AlertStatus.query.with_entities(
+            AlertStatus.status_id
+        ).filter(AlertStatus.status_name.in_(['Closed', 'Merged', 'Escalated'])).all()
+        alert_status_filter += closed_alert_status_ids
+
+    alert_status_filter = [status_id[0] for status_id in alert_status_filter]
+
+    # Add alert_status_filter to the conditions
+    conditions = and_(conditions, Alert.alert_status_id.in_(alert_status_filter))
 
     related_alerts = (
         db.session.query(Alert, SimilarAlertsCache.asset_name, SimilarAlertsCache.ioc_value,

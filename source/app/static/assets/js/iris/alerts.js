@@ -406,7 +406,7 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
   };
 
   if (nodes.length >= nb_nodes) {
-        $(`#similarAlertsNotify-${alert_id}`).text(`Relationships graph exceeded the nodes limit. Expect truncated results.`)
+        $(`#similarAlertsNotify-${alert_id}`).text(`Relationships node exceeded the nodes limit. Expect truncated results.`)
   } else {
         $(`#similarAlertsNotify-${alert_id}`).text(``);
   }
@@ -1669,10 +1669,12 @@ function updateAlertBadge() {
 
 function refreshAlertRelationships(alertId) {
     // Get the checked status of each checkbox
-    let fetch_open_alerts = $('input[value="open_alerts"]').is(':checked');
-    let fetch_closed_alerts = $('input[value="closed_alerts"]').is(':checked');
-    let fetch_open_cases = $('input[value="open_cases"]').is(':checked');
-    let fetch_closed_cases = $('input[value="closed_cases"]').is(':checked');
+    let fetch_open_alerts = $('input[value="open_alerts"]').prop('checked');
+    let fetch_closed_alerts = $('input[value="closed_alerts"]').prop('checked');
+    let fetch_open_cases = $('input[value="open_cases"]').prop('checked');
+    let fetch_closed_cases = $('input[value="closed_cases"]').prop('checked');
+
+    console.log("fetch_open_alerts: " + fetch_open_alerts)
 
     fetchSimilarAlerts(alertId, true, fetch_open_alerts, fetch_closed_alerts,
         fetch_open_cases, fetch_closed_cases);
