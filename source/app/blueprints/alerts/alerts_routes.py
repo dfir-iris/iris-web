@@ -247,6 +247,11 @@ def alerts_similarities_route(caseid, alert_id) -> Response:
     days_back = request.args.get('days-back', 7, type=int)
     number_of_results = request.args.get('number-of-nodes', 100, type=int)
 
+    if number_of_results < 0:
+        number_of_results = 100
+    if days_back < 0:
+        days_back = 7
+
     # Get similar alerts
     similar_alerts = get_related_alerts_details(alert.alert_customer_id, alert.assets, alert.iocs,
                                                 open_alerts=open_alerts, open_cases=open_cases,
