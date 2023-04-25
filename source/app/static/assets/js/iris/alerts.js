@@ -677,6 +677,7 @@ function renderAlert(alert, expanded=false) {
                     ${alert.alert_title}
                     <span class="text-${colorSeverity} pl-3"></span>
                     <div class="d-flex mb-3">
+                       
                         <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
                     </div>
                   </h6>
@@ -903,7 +904,8 @@ function renderAlert(alert, expanded=false) {
                 </div>
               `).join('') + '</div>' : '<div class="mb-4"></div>'}
 
-              <div class="">                    
+              <div class="">
+                ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-2">${alert.status.status_name}</span>` : ''}                    
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                 <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
                 <span title="Alert severity"><b class="ml-3"><i class="fa-solid fa-bolt"></i></b>
