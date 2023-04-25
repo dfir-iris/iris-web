@@ -32,11 +32,18 @@ from app.datamgmt.manage.manage_users_db import create_user, get_active_user_by_
 log = app.logger
 
 
+def _get_unique_identifier(user_login):
+    if app.config.get('LDAP_AUTHENTICATION_TYPE').lower() == 'ntlm':
+        return user_login[user_login.find('\\')+1:]
+    return user_login
+
+
 def _provision_user(connection, user_login):
     if get_active_user_by_login(user_login):
         return
     search_base = app.config.get('LDAP_SEARCH_DN')
     attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
+    unique_identifier = _get_unique_identifier(user_login)
     attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
     attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
     attributes = []
@@ -44,7 +51,7 @@ def _provision_user(connection, user_login):
         attributes.append(attribute_display_name)
     if attribute_mail:
         attributes.append(attribute_mail)
-    connection.search(search_base, f'({attribute_unique_identifier}={user_login})', attributes=attributes)
+    connection.search(search_base, f'({attribute_unique_identifier}={unique_identifier})', attributes=attributes)
     entry = connection.entries[0]
     if attribute_display_name:
         user_name = entry[attribute_display_name].value
