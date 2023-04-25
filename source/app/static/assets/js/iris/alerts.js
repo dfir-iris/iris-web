@@ -653,7 +653,7 @@ function renderAlert(alert, expanded=false) {
           <!-- Avatar group and tickbox -->
           
         </div>
-        <div class=" flex-column">
+        <div class="col">
           <!-- Alert details -->
           <div class="d-flex flex-column">
             <div class="flex-1 ml-md-4 mr-4 pt-1">
@@ -891,9 +891,9 @@ function renderAlert(alert, expanded=false) {
                     </div>
                   </div>
               </div>
-              ${alert.cases ? `<div class='row mt-4'>` + alert.cases.map((case_) => `
+              ${alert.cases ? `<div class='row mt-4 mb-2'>` + alert.cases.map((case_) => `
                 <div class="dropdown ml-2 d-inline-block">
-                      <a class="bg-transparent ml-2" title="Merged in case #${case_}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="javascript:void(0)">
+                      <a class="bg-transparent ml-3" title="Merged in case #${case_}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="javascript:void(0)">
                           <span aria-hidden="true"><i class="fa-solid fa-link"></i>#${case_}</span>
                       </a>
                       <div class="dropdown-menu">

@@ -528,13 +528,13 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
 
     # Add the assets to the case
     for asset_uuid in assets_list:
-        for alert_asset in alert.alert_assets:
-            if alert_asset['asset_uuid'] == asset_uuid:
-                alert_asset['asset_tags'] = ','.join(alert_asset['asset_tags'])
-                alert_asset['analysis_status_id'] = get_unspecified_analysis_status_id()
+        for alert_asset in alert.assets:
+            if alert_asset.asset_uuid == asset_uuid:
+                alert_asset.asset_tags = ','.join(alert_asset['asset_tags'])
+                alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
 
                 # TODO: Transform the asset-enrichment to a custom attribute in the asset if possible
-                del alert_asset['asset_enrichment']
+                del alert_asset.asset_enrichment
 
                 asset = asset_schema.load(alert_asset, session=db.session)
 

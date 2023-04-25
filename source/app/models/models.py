@@ -36,7 +36,7 @@ from sqlalchemy import TIMESTAMP
 from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, JSONB
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -178,6 +178,7 @@ class CaseAssets(db.Model):
     user_id = Column(ForeignKey('user.id'))
     analysis_status_id = Column(ForeignKey('analysis_status.id'))
     custom_attributes = Column(JSON)
+    #asset_enrichment = Column(JSONB)
 
     case = relationship('Cases')
     user = relationship('User')
@@ -359,6 +360,7 @@ class Ioc(db.Model):
     ioc_misp = Column(Text)
     ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
     custom_attributes = Column(JSON)
+    #ioc_enrichment = Column(JSONB)
 
     user = relationship('User')
     tlp = relationship('Tlp')
