@@ -905,7 +905,7 @@ function renderAlert(alert, expanded=false) {
               `).join('') + '</div>' : '<div class="mb-4"></div>'}
 
               <div class="">
-                ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-2">${alert.status.status_name}</span>` : ''}                    
+                ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-3">${alert.status.status_name}</span>` : ''}                    
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                 <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
                 <span title="Alert severity"><b class="ml-3"><i class="fa-solid fa-bolt"></i></b>
@@ -928,7 +928,7 @@ function renderAlert(alert, expanded=false) {
         </div>
       </div>
     </div>
-    <div class="alert-actions mr-2">
+    <div class="alert-actions mr-3">
       <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id}, false);">Merge</button>
       
       <div class="dropdown ml-2 d-inline-block">
