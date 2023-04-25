@@ -32,17 +32,19 @@ from app.datamgmt.manage.manage_users_db import create_user, get_active_user_by_
 log = app.logger
 
 
-def _provision_user(connection, user_login, search_base):
+def _provision_user(connection, user_login):
     if get_active_user_by_login(user_login):
         return
-    attribute_display_name = app.config.get('LDAP_USER_ATTRIBUTE_DISPLAY_NAME')
-    attribute_mail = app.config.get('LDAP_USER_ATTRIBUTE_MAIL')
+    search_base = app.config.get('LDAP_SEARCH_DN')
+    attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
+    attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
+    attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
     attributes = []
     if attribute_display_name:
         attributes.append(attribute_display_name)
     if attribute_mail:
         attributes.append(attribute_mail)
-    connection.search(search_base, '(objectClass=*)', attributes=attributes)
+    connection.search(search_base, f'({attribute_unique_identifier}={user_login})', attributes=attributes)
     entry = connection.entries[0]
     if attribute_display_name:
         user_name = entry[attribute_display_name].value
@@ -70,7 +72,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     Authenticate to the LDAP server
     """
     ldap_user_pwd = conv.escape_filter_chars(ldap_user_pwd)
-    if app.config.get("LDAP_AUTHENTICATION_TYPE").lower() != 'ntlm':
+    if app.config.get('LDAP_AUTHENTICATION_TYPE').lower() != 'ntlm':
         ldap_user_name = conv.escape_filter_chars(ldap_user_name)
         ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name.strip()},{app.config.get('LDAP_USER_SUFFIX')}"
     else:
@@ -99,7 +101,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
             return False
 
         if app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
-            _provision_user(conn, ldap_user_name, ldap_user)
+            _provision_user(conn, ldap_user_name)
 
     except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
         log.error(f'Wrong credentials. Error : {e.__str__()}')
