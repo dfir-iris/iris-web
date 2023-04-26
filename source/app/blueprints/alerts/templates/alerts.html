@@ -185,10 +185,9 @@
         </ul>
     </nav>
 </div>
-<div id="context-menu-relationships" class="hidden">
-  <ul>
-    <li id="view-alert" onclick="viewAlertGraph();">View Alert</li>
-  </ul>
+<div class="dropdown-menu" id="context-menu-relationships" style="display: none;">
+    <a id="view-alert" class="dropdown-item" style="cursor: pointer;" onclick="viewAlertGraph();">
+        <i class="fas fa-eye mr-2"></i><span id="view-alert-text">View Alert</span></a>
 </div>
 
 <div class="modal" role="dialog" tabindex="-1" id="modal_comment" data-backdrop="false">

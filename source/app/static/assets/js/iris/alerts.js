@@ -400,6 +400,11 @@ function getAlertOffset(element) {
 function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, containerConfigureId) {
   const { nodes, edges } = relatedAlerts;
 
+  if (nodes.length === 0) {
+      $(`#similarAlertsNotify-${alert_id}`).text(`No relationships found for this alert`);
+     return;
+  }
+
   const data = {
     nodes: new vis.DataSet(nodes),
     edges: new vis.DataSet(edges),
@@ -455,31 +460,36 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
       const nodeId = network.getNodeAt(event.pointer.DOM);
 
       if (nodeId) {
-        selectedNodeId = nodeId;
-        node_type = selectedNodeId.split('_')[0];
-        node_id = selectedNodeId.split('_')[1];
 
-        if (node_type === 'alert') {
-            // Get the offset of the container element.
-            const containerOffset = getAlertOffset(container);
+          selectedNodeId = nodeId;
+          node_type = selectedNodeId.split('_')[0];
+          node_id = selectedNodeId.split('_')[1];
 
-            const x = event.pointer.DOM.x + 160;
-            const y = containerOffset.top + event.pointer.DOM.y;
+          if (node_type === 'alert' || node_type === 'case') {
+              // Get the offset of the container element.
+              const containerOffset = getAlertOffset(container);
 
-            const contextMenu = document.getElementById('context-menu-relationships');
-            contextMenu.style.left = `${x}px`;
-            contextMenu.style.top = `${y}px`;
-            contextMenu.classList.remove('hidden');
+              const x = event.pointer.DOM.x + 110;
+              const y = containerOffset.top + event.pointer.DOM.y;
 
-            $('#view-alert').data('alert-id', node_id);
+              const contextMenu = $('#context-menu-relationships');
+              contextMenu.css({
+                  position: 'absolute',
+                  left: `${x}px`,
+                  top: `${y}px`
+              })
 
-        }
+              $('#view-alert').data('node-id', node_id);
+              $('#view-alert').data('node-type', node_type);
+              $('#view-alert-text').text(`View ${node_type} #${node_id}`);
+              contextMenu.show();
+          }
       }
-  });
+    });
 
     document.addEventListener('click', () => {
-      const contextMenu = document.getElementById('context-menu-relationships');
-      contextMenu.classList.add('hidden');
+      const contextMenu = $('#context-menu-relationships');
+      contextMenu.hide();
     });
 
       if (nodes.length >= nb_nodes) {
@@ -491,9 +501,14 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
 }
 
 function viewAlertGraph() {
-    const alert_id = $(this).data('alert-id');
+    const node_id = $("#view-alert").data('node-id');
+    const node_type = $("#view-alert").data('node-type');
 
-    window.open(`/alerts?alert_ids=${alert_id}&cid=${get_caseid()}`);
+    if (node_type === 'alert') {
+        window.open(`/alerts?alert_ids=${node_id}&cid=${get_caseid()}`);
+    } else if (node_type === 'case') {
+        window.open(`/case?cid=${node_id}`);
+    }
 }
 
 
@@ -774,24 +789,25 @@ function renderAlert(alert, expanded=false) {
                                     <span class="selectgroup-button">Show closed cases</span>
                                 </label>
                             </div>
-                        </div>
-                        <div class="row mt-4">
-                            <div class="col-md-3 col-xl-2">
-                                <div class="input-group mb-4">
+                            <div class="mt-4">
+                                <div class="input-group ">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Nodes limit</span>
                                     </div>
                                     <input type="number" name="value" value="100" class="form-control" id="nbResultsGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
                                 </div>
                             </div>
-                            <div class="col-md-3 col-xl-2">
-                                <div class="input-group mb-4">
+                            <div class="ml-2 mt-4">
+                                <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Lookback (days)</span>
                                     </div>
                                     <input type="number" name="value" value="7" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
                                 </div>
-                            </div>                                
+                            </div>  
+                        </div>
+                        <div class="row mt-4">
+                                    
                         </div>
                         <div id="similarAlertsNotify-${alert.alert_id}" class="row mt-2 ml-2 text-danger"></div>
                         <div id="similarAlerts-${alert.alert_id}" class="mt-4 similar-alert-graph"></div>
