@@ -240,6 +240,8 @@ def get_case_access(request_data, access_level, from_api=False, no_cid_required=
                 return True, None, False
 
     elif not caseid and no_cid_required is True:
+        if request_data.is_json and request_data.json.get('cid'):
+            request_data.json.pop('cid')
         caseid = current_user.ctx_case if current_user.ctx_case else 1
 
     case = None
