@@ -65,6 +65,8 @@ def get_filtered_alerts(
         client: int = None,
         classification: int = None,
         alert_ids: List[int] = None,
+        assets: List[str] = None,
+        iocs: List[str] = None,
         page: int = 1,
         per_page: int = 10,
         sort: str = 'desc'
@@ -86,6 +88,8 @@ def get_filtered_alerts(
         client (int): The client id of the alert
         classification (int): The classification id of the alert
         alert_ids (int): The alert ids
+        assets (list): The assets of the alert
+        iocs (list): The iocs of the alert
         page (int): The page number
         per_page (int): The number of alerts per page
         sort (str): The sort order
@@ -135,6 +139,14 @@ def get_filtered_alerts(
 
     if case_id is not None:
         conditions.append(Alert.cases.any(AlertCaseAssociation.case_id == case_id))
+
+    if assets is not None:
+        if isinstance(assets, list):
+            conditions.append(Alert.assets.any(CaseAssets.asset_name.in_(assets)))
+
+    if iocs is not None:
+        if isinstance(iocs, list):
+            conditions.append(Alert.iocs.any(Ioc.ioc_value.in_(iocs)))
 
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
@@ -518,9 +530,6 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
             if alert_ioc.ioc_uuid == ioc_uuid:
                 alert_ioc['ioc_tags'] = ','.join(alert_ioc['ioc_tags'])
 
-                # TODO: Transform the ioc-enrichment to a custom attribute in the ioc
-                del alert_ioc['ioc_enrichment']
-
                 ioc = ioc_schema.load(alert_ioc, session=db.session)
                 ioc, existed = add_ioc(ioc, current_user.id, case.case_id)
                 add_ioc_link(ioc.ioc_id, case.case_id)
@@ -532,9 +541,6 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
             if alert_asset.asset_uuid == asset_uuid:
                 alert_asset.asset_tags = ','.join(alert_asset['asset_tags'])
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
-
-                # TODO: Transform the asset-enrichment to a custom attribute in the asset if possible
-                del alert_asset.asset_enrichment
 
                 asset = asset_schema.load(alert_asset, session=db.session)
 

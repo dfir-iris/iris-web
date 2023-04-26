@@ -18,15 +18,12 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import json
-
 import marshmallow
-from flask_wtf import FlaskForm
-from typing import Union, List
-
 from datetime import datetime
-
 from flask import Blueprint, request, render_template, redirect, url_for
 from flask_login import current_user
+from flask_wtf import FlaskForm
+from typing import Union, List
 from werkzeug import Response
 
 import app
@@ -40,11 +37,10 @@ from app.datamgmt.case.case_db import get_case
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Ioc, CaseAssets
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema, CaseSchema, CommentSchema, CaseAssetsSchema, IocSchema
-from app.util import ac_api_requires, response_error, str_to_bool, add_obj_history_entry, ac_requires
+from app.util import ac_api_requires, response_error, add_obj_history_entry, ac_requires
 from app.util import response_success
 
 alerts_blueprint = Blueprint(
@@ -71,6 +67,7 @@ def alerts_list_route(caseid) -> Response:
     per_page = request.args.get('per_page', 10, type=int)
 
     alert_ids_str = request.args.get('alert_ids')
+    alert_ids = None
     if alert_ids_str:
         try:
 
@@ -83,8 +80,33 @@ def alerts_list_route(caseid) -> Response:
         except ValueError:
             return response_error('Invalid alert id')
 
-    else:
-        alert_ids = None
+    alert_assets_str = request.args.get('alert_assets')
+    alert_assets = None
+    if alert_assets_str:
+        try:
+
+            if ',' in alert_assets_str:
+                alert_assets = [str(alert_asset) for alert_asset in alert_assets_str.split(',')]
+
+            else:
+                alert_assets = [str(alert_assets_str)]
+
+        except ValueError:
+            return response_error('Invalid alert asset')
+
+    alert_iocs_str = request.args.get('alert_iocs')
+    alert_iocs = None
+    if alert_iocs_str:
+        try:
+
+            if ',' in alert_iocs_str:
+                alert_iocs = [str(alert_ioc) for alert_ioc in alert_iocs_str.split(',')]
+
+            else:
+                alert_iocs = [str(alert_iocs_str)]
+
+        except ValueError:
+            return response_error('Invalid alert ioc')
 
     alert_schema = AlertSchema()
 
@@ -104,7 +126,9 @@ def alerts_list_route(caseid) -> Response:
         alert_ids=alert_ids,
         page=page,
         per_page=per_page,
-        sort=request.args.get('sort')
+        sort=request.args.get('sort'),
+        assets=alert_assets,
+        iocs=alert_iocs
     )
 
     if filtered_data is None:

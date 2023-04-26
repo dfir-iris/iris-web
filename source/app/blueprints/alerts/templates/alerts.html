@@ -87,15 +87,23 @@
             </div>
         </div>
         <div class="collapse" id="filterCardBody">
-            <form id="alertFilterForm" class="container">
+            <form id="alertFilterForm" class="container mt-4">
                 <div class="form-row">
-                    <div class="col-md-6 form-group">
+                    <div class="col-md-3 form-group">
                         <label for="alert_title">Title</label>
                         <input type="text" class="form-control" id="alert_title" name="alert_title">
                     </div>
-                    <div class="col-md-6 form-group">
+                    <div class="col-md-3 form-group">
                         <label for="alert_description">Description</label>
                         <input type="text" class="form-control" id="alert_description" name="alert_description">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_source">Source</label>
+                        <input type="text" class="form-control" id="alert_source" name="alert_source">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_tags">Tags</label>
+                        <input type="text" class="form-control" id="alert_tags" name="alert_tags">
                     </div>
                 </div>
                 <div class="form-row">
@@ -121,10 +129,6 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="col-md-6 form-group">
-                        <label for="alert_source">Source</label>
-                        <input type="text" class="form-control" id="alert_source" name="alert_source">
-                    </div>
                     <div class="col-md-3 form-group">
                         <label for="alert_start_date">Start Date</label>
                         <input type="date" class="form-control" id="alert_start_date" name="source_start_date">
@@ -133,24 +137,28 @@
                         <label for="alert_end_date">End Date</label>
                         <input type="date" class="form-control" id="alert_end_date" name="source_end_date">
                     </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alertAssets">Asset(s) name</label>
+                        <input class="form-control" id="alertAssets" name="alert_assets">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alertIocs">IOC(s)</label>
+                        <input class="form-control" id="alertIocs" name="alert_iocs">
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="col-md-3 form-group">
-                        <label for="alertOwnerFilter">Owner</label>
-                        <select class="form-control" id="alertOwnerFilter" name="alert_owner_id">
-                        </select>
-                    </div>
-                    <div class="col-md-3 form-group">
-                        <label for="alert_tags">Tags</label>
-                        <input type="text" class="form-control" id="alert_tags" name="alert_tags">
-                    </div>
-                    <div class="col-md-3 form-group">
-                        <label for="alertIdFilter">Alerts ID</label>
+                        <label for="alertIdFilter">Alert(s) ID</label>
                         <input class="form-control" id="alertIdFilter" name="alert_ids">
                     </div>
                     <div class="col-md-3 form-group">
                         <label for="caseIdFilter">Case ID</label>
                         <input type="number" class="form-control" id="caseIdFilter" name="case_id">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alertOwnerFilter">Owner</label>
+                        <select class="form-control" id="alertOwnerFilter" name="alert_owner_id">
+                        </select>
                     </div>
                 </div>
                 <div class="form-row mt-3">
