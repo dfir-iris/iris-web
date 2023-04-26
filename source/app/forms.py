@@ -97,6 +97,7 @@ class AddUserForm(FlaskForm):
     user_name = StringField(u'Username', validators=[DataRequired()])
     user_password = PasswordField(u'Password', validators=[DataRequired()])
     user_email = StringField(u'Email', validators=[DataRequired(), Email()])
+    user_is_service_account = BooleanField(u'Use as service account')
 
 
 class AddGroupForm(FlaskForm):

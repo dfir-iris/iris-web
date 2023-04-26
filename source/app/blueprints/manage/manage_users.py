@@ -106,7 +106,8 @@ def add_user(caseid):
                            user_login=cuser.user,
                            user_email=cuser.email,
                            user_password=cuser.password,
-                           user_active=jsdata.get('active'))
+                           user_active=jsdata.get('active'),
+                           user_is_service_account=cuser.is_service_account)
 
         udata = user_schema.dump(user)
         udata['user_api_key'] = user.api_key
@@ -141,7 +142,7 @@ def view_user_modal(cur_id, caseid, url_redir):
         return redirect(url_for('manage_users.add_user', cid=caseid))
 
     form = AddUserForm()
-    user = get_user_details(cur_id)
+    user = get_user_details(cur_id, include_api_key=True)
 
     if not user:
         return response_error("Invalid user ID")
@@ -151,6 +152,7 @@ def view_user_modal(cur_id, caseid, url_redir):
     form.user_login.render_kw = {'value': user.get('user_login')}
     form.user_name.render_kw = {'value': user.get('user_name')}
     form.user_email.render_kw = {'value': user.get('user_email')}
+    form.user_is_service_account.render_kw = {'checked': user.get('user_is_service_account')}
 
     server_settings = get_srv_settings()
 

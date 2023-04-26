@@ -70,7 +70,7 @@ from app.models.alerts import Alert, Severity, AlertStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.util import file_sha256sum
+from app.util import file_sha256sum, str_to_bool
 from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
@@ -306,17 +306,18 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     user_name = auto_field('name', required=True, validate=Length(min=2))
     user_login = auto_field('user', required=True, validate=Length(min=2))
     user_email = auto_field('email', required=True, validate=Length(min=2))
-    user_password = auto_field('password', required=True, validate=Length(min=2))
+    user_password = auto_field('password', required=False)
     user_isadmin = fields.Boolean(required=True)
     csrf_token = fields.String(required=False)
     user_id = fields.Integer(required=False)
     user_primary_organisation_id = fields.Integer(required=False)
+    user_is_service_account = auto_field('is_service_account', required=False)
 
     class Meta:
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email']
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
 
     @pre_load()
     def verify_username(self, data, **kwargs):
@@ -350,9 +351,13 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     def verify_password(self, data, **kwargs):
         server_settings = ServerSettings.query.first()
         password = data.get('user_password')
-        if data.get('user_password') == '' and data.get('user_id') != 0:
+
+        if password == '' or password is None and str_to_bool(data.get('user_is_service_account')) is True:
+            return data
+
+        if password == '' or password is None and data.get('user_id') != 0:
             # Update
-            data.pop('user_password')
+            data.pop('user_password') if 'user_password' in data else None
 
         else:
             password_error = ""

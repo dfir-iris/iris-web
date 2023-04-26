@@ -20,8 +20,7 @@ depends_on = None
 def upgrade():
     if not _table_has_column('user', 'is_service_account'):
         op.add_column('user',
-                      sa.Column('is_service_account', sa.Boolean, nullable=False, default=False))
-
+                      sa.Column('is_service_account', sa.Boolean, default=False))
 
     pass
 
