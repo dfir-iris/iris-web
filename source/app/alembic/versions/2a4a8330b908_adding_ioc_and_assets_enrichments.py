@@ -19,7 +19,7 @@ depends_on = None
 
 
 def upgrade():
-    if not _table_has_column('asset_enrichment', 'case_assets'):
+    if not _table_has_column('case_assets', 'asset_enrichment'):
         # Add asset_enrichment column to case_assets
         op.add_column('case_assets', sa.Column('asset_enrichment', JSONB, nullable=True))
 
@@ -29,7 +29,7 @@ def upgrade():
 
 
 def downgrade():
-    if _table_has_column('asset_enrichment', 'case_assets'):
+    if not _table_has_column('case_assets', 'asset_enrichment'):
         # Remove asset_enrichment column from case_assets
         op.drop_column('case_assets', 'asset_enrichment')
 
