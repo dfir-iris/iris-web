@@ -178,7 +178,7 @@ class CaseAssets(db.Model):
     user_id = Column(ForeignKey('user.id'))
     analysis_status_id = Column(ForeignKey('analysis_status.id'))
     custom_attributes = Column(JSON)
-    #asset_enrichment = Column(JSONB)
+    asset_enrichment = Column(JSONB)
 
     case = relationship('Cases')
     user = relationship('User')
@@ -360,7 +360,7 @@ class Ioc(db.Model):
     ioc_misp = Column(Text)
     ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
     custom_attributes = Column(JSON)
-    #ioc_enrichment = Column(JSONB)
+    ioc_enrichment = Column(JSONB)
 
     user = relationship('User')
     tlp = relationship('Tlp')
