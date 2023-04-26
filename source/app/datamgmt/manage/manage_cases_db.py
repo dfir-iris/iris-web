@@ -27,7 +27,7 @@ from app import db
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, CaseClassification
+from app.models import CaseAssets, CaseClassification, alert_assets_association
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
@@ -284,7 +284,29 @@ def delete_case(case_id):
 
     CaseEventsAssets.query.filter(CaseEventsAssets.case_id == case_id).delete()
     CaseEventsIoc.query.filter(CaseEventsIoc.case_id == case_id).delete()
-    CaseAssets.query.filter(CaseAssets.case_id == case_id).delete()
+
+    CaseAssetsAlias = aliased(CaseAssets)
+
+    # Query for CaseAssets that are not referenced in alerts and match the case_id
+    assets_to_delete = db.session.query(CaseAssets).filter(
+        and_(
+            CaseAssets.case_id == case_id,
+            ~db.session.query(alert_assets_association).filter(
+                alert_assets_association.c.asset_id == CaseAssetsAlias.asset_id
+            ).exists()
+        )
+    )
+
+    # Delete the assets
+    assets_to_delete.delete(synchronize_session='fetch')
+
+    # Get all alerts associated with assets in the case
+    alerts_to_update = db.session.query(CaseAssets).filter(CaseAssets.case_id == case_id)
+
+    # Update case_id for the alerts
+    alerts_to_update.update({CaseAssets.case_id: None}, synchronize_session='fetch')
+    db.session.commit()
+
     NotesGroupLink.query.filter(NotesGroupLink.case_id == case_id).delete()
     NotesGroup.query.filter(NotesGroup.group_case_id == case_id).delete()
     Notes.query.filter(Notes.note_case_id == case_id).delete()

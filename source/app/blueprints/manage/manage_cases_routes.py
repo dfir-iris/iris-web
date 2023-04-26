@@ -35,6 +35,7 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug import Response
 
+import app
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import register_case_protagonists
@@ -208,7 +209,8 @@ def api_delete_case(cur_id, caseid):
                 return response_error("Tried to delete a non-existing case")
 
         except Exception as e:
-            return response_error("Cannot delete a non empty case. {}".format(e))
+            app.app.logger.exception(e)
+            return response_error("Cannot delete the case. Please check server logs for additional informations")
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
