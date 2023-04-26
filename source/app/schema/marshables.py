@@ -203,7 +203,7 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     ioc_links = fields.List(fields.Integer, required=False)
-    asset_enrichment = fields.Dict(required=False)
+    asset_enrichment = auto_field('asset_enrichment', required=False)
     asset_type = ma.Nested(AssetTypeSchema, required=False)
 
     class Meta:
@@ -263,7 +263,7 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
 
 class IocSchema(ma.SQLAlchemyAutoSchema):
     ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
-    ioc_enrichment = fields.Dict(required=False)
+    ioc_enrichment = auto_field('ioc_enrichment', required=False)
     ioc_type = ma.Nested(IocTypeSchema, required=False)
 
     class Meta:

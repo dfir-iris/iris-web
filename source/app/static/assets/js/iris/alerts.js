@@ -986,6 +986,9 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
       filters = getFiltersFromUrl();
   }
 
+  const alertsContainer = $('.alerts-container');
+  alertsContainer.html('<h4 class="ml-auto mr-auto">Retrieving alerts...</h4>');
+
   const filterString = objectToQueryString(filters);
   const data = await fetchAlerts(page, per_page, filterString, sortOrder);
 
@@ -1003,7 +1006,6 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
    $('#alerts-batch-actions').hide();
 
   // Clear the current alerts list
-  const alertsContainer = $('.alerts-container');
   const queryParams = new URLSearchParams(window.location.search);
   const isExpanded = queryParams.get('is-expanded') === 'true';
 
