@@ -405,12 +405,6 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
     edges: new vis.DataSet(edges),
   };
 
-  if (nodes.length >= nb_nodes) {
-        $(`#similarAlertsNotify-${alert_id}`).text(`Relationships node exceeded the nodes limit. Expect truncated results.`)
-  } else {
-        $(`#similarAlertsNotify-${alert_id}`).text(``);
-  }
-
   const options = {
     edges: {
       smooth: {
@@ -488,6 +482,12 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
       contextMenu.classList.add('hidden');
     });
 
+      if (nodes.length >= nb_nodes) {
+            $(`#similarAlertsNotify-${alert_id}`).text(`Relationships node exceeded the nodes limit. Expect truncated results.`)
+      } else {
+            $(`#similarAlertsNotify-${alert_id}`).text(``);
+      }
+
 }
 
 function viewAlertGraph() {
@@ -517,6 +517,7 @@ function fetchSimilarAlerts(alert_id,
           'number-of-nodes': nb_nodes
         }).toString();
 
+        $(`#similarAlertsNotify-${alert_id}`).text('Fetching relationships...');
         get_raw_request_api(`/alerts/similarities/${alert_id}?${queryString}&cid=${get_caseid()}`)
           .done((data) => {
             createNetwork(alert_id, data.data, nb_nodes, `similarAlerts-${alert_id}`, `graphConfigure-${alert_id}`);
@@ -657,7 +658,7 @@ function renderAlert(alert, expanded=false) {
           <!-- Alert details -->
           <div class="d-flex flex-column">
             <div class="flex-1 ml-md-4 mr-4 pt-1">
-              <div class="row">
+              <div class="row mb-3">
                   <div class="avatar-group ${alert.owner ? '' : 'ml-2 mr-2'}">
                     <div class="avatar-tickbox-wrapper">
                       <div class="avatar-wrapper">
