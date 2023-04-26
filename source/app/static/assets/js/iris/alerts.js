@@ -1204,8 +1204,10 @@ $("#escalateOrMergeButton").on("click", () => {
 });
 
 function showEnrichment(enrichment) {
-  const enrichmentDataElement = document.getElementById('enrichmentData');
-  enrichmentDataElement.innerHTML = generateDefinitionList(enrichment);
+    const ace = get_new_ace_editor('enrichmentData', null,
+        null, null, null, true, false);
+    ace.session.setMode("ace/mode/json");
+    ace.setValue(JSON.stringify(enrichment, null, 4), -1);
 }
 
 function delete_alert(alert_id) {
