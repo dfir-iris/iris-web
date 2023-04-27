@@ -213,7 +213,7 @@ def update_case_template(cur_id, caseid):
     return response_success("Case template updated")
 
 
-@manage_case_templates_blueprint.route('/manage/case-templates/delete/<case_template_id>', methods=['POST'])
+@manage_case_templates_blueprint.route('/manage/case-templates/delete/<int:case_template_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def delete_case_template(case_template_id, caseid):
     case_template = get_case_template_by_id(case_template_id)

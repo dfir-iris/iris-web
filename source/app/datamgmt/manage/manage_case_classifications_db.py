@@ -51,3 +51,16 @@ def get_case_classification_by_id(cur_id: int) -> CaseClassification:
     case_classification = CaseClassification.query.filter_by(id=cur_id).first()
     return case_classification
 
+
+def get_case_classification_by_name(cur_name: str) -> CaseClassification:
+    """Get a case classification
+
+    Args:
+        cur_name (str): case classification name
+
+    Returns:
+        CaseClassification: Case classification
+    """
+    case_classification = CaseClassification.query.filter_by(name=cur_name).first()
+    return case_classification
+

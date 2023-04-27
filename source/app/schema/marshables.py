@@ -248,6 +248,7 @@ class CaseTemplateSchema(ma.Schema):
     title_prefix = fields.String(allow_none=True, validate=Length(max=32), missing="")
     summary = fields.String(allow_none=True, missing="")
     tags = fields.List(fields.String(), allow_none=True, missing=[])
+    classification = fields.String(allow_none=True, missing="")
 
     def validate_string_or_list(value):
         if not isinstance(value, (str, list)):

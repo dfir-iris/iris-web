@@ -24,6 +24,7 @@ import marshmallow
 from app import db
 from app.datamgmt.case.case_notes_db import add_note_group, add_note
 from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_name
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models import CaseTemplate, Cases, Tags, NotesGroup
 from app.models.authorization import User
@@ -155,7 +156,11 @@ def case_template_pre_modifier(case_schema: CaseSchema, case_template_id: str):
     if not case_template:
         return None
     if case_template.title_prefix:
-        case_schema.name = "[" + case_template.title_prefix + "] " + case_schema.name[0]
+        case_schema.name = case_template.title_prefix + " " + case_schema.name[0]
+
+    case_classification = get_case_classification_by_name(case_template.classification)
+    if case_classification:
+        case_schema.classification_id = case_classification.id
 
     return case_schema
 

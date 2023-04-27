@@ -591,7 +591,7 @@ def get_users_list_restricted_from_case(case_id):
 def create_user(user_name: str, user_login: str, user_password: str, user_email: str, user_active: bool,
                 user_external_id: str = None, user_is_service_account: bool = False):
 
-    if user_is_service_account and user_password is None or user_password is '':
+    if user_is_service_account and user_password is None or user_password == '':
         pw_hash = None
 
     else:
@@ -609,7 +609,7 @@ def create_user(user_name: str, user_login: str, user_password: str, user_email:
 
 def update_user(user: User, name: str = None, email: str = None, password: str = None):
 
-    if password is not None and password is not '':
+    if password is not None and password != '':
         pw_hash = bc.generate_password_hash(password.encode('utf8')).decode('utf8')
         user.password = pw_hash
 
