@@ -264,7 +264,7 @@ class CeleryConfig:
 # --------- APP ---------
 class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.0.1"
+    IRIS_VERSION = "v2.0.2"
 
     API_MIN_VERSION = "2.0.0"
     API_MAX_VERSION = "2.0.0"
@@ -399,6 +399,11 @@ class Config:
             raise Exception('LDAP enabled and no user suffix configured')
 
         LDAP_AUTHENTICATION_TYPE = config.load('LDAP', 'AUTHENTICATION_TYPE')
+
+        LDAP_SEARCH_DN = config.load('LDAP', 'SEARCH_DN')
+        LDAP_ATTRIBUTE_IDENTIFIER = config.load('LDAP', 'ATTRIBUTE_IDENTIFIER')
+        LDAP_ATTRIBUTE_DISPLAY_NAME = config.load('LDAP', 'ATTRIBUTE_DISPLAY_NAME')
+        LDAP_ATTRIBUTE_MAIL = config.load('LDAP', 'ATTRIBUTE_MAIL')
 
         LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
         LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
