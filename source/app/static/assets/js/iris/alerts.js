@@ -275,6 +275,20 @@ async function mergeAlertModal(alert_id) {
             $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
         });
 
+    await get_request_api('/manage/case-templates/list')
+        .done((data) => {
+            if (notify_auto_api(data, true)) {
+                data = data.data;
+                const templateSelect = $('#mergeAlertCaseTemplateSelect');
+                templateSelect.html('');
+                templateSelect.append('<option value="">Select a template</option>');
+                for (let i = 0; i < data.length; i++) {
+                    templateSelect.append(`<option value="${data[i].id}">${data[i].display_name}</option>`);
+                }
+                templateSelect.selectpicker('refresh');
+            }
+        });
+
     // Clear the lists
     ioCsList.html("");
     assetsList.html("");
@@ -555,12 +569,19 @@ function escalateOrMergeAlert(alert_id, merge = false, batch = false) {
     const note = $('#note').val();
     const importAsEvent = $('#importAsEvent').is(':checked');
 
+    let case_template_id = null;
+
+    if (!merge) {
+        case_template_id = $('#mergeAlertCaseTemplateSelect').val();
+    }
+
     const requestBody = {
         iocs_import_list: selectedIOCs,
         assets_import_list: selectedAssets,
         note: note,
         import_as_event: importAsEvent,
         case_tags: $('#case_tags').val(),
+        case_template_id: case_template_id,
         csrf_token: $("#csrf_token").val()
     };
 
@@ -1215,8 +1236,6 @@ $("#escalateOrMergeButton").on("click", () => {
   const merge = $("#escalateOrMergeButton").data("merge");
   const multiMerge = $("#escalateOrMergeButton").data("multi-merge");
 
-  console.log(merge);
-  console.log(typeof merge);
   escalateOrMergeAlert(alertId, merge, multiMerge);
 
 });

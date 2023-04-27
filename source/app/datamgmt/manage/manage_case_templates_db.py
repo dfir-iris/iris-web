@@ -17,7 +17,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import marshmallow
 
@@ -271,7 +271,7 @@ def case_template_populate_note_groups(case: Cases, case_template: CaseTemplate)
     return logs
 
 
-def case_template_post_modifier(case: Cases, case_template_id: str):
+def case_template_post_modifier(case: Cases, case_template_id: Union[str, int]):
     case_template = get_case_template_by_id(int(case_template_id))
     logs = []
     if not case_template:

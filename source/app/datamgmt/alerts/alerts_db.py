@@ -34,6 +34,8 @@ from app import db
 from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
 from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
+from app.datamgmt.manage.manage_case_templates_db import case_template_pre_modifier, get_case_template_by_id, \
+    case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
     alert_iocs_association, Ioc, IocLink
@@ -365,7 +367,7 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
 
 
 def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List[str], case_title: str,
-                           note: str, import_as_event: bool, case_tags: str) -> Cases:
+                           note: str, import_as_event: bool, case_tags: str, template_id: int) -> Cases:
     """
     Create a case from an alert
 
@@ -377,6 +379,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         import_as_event (bool): Whether to import the alert as an event
         case_tags (str): The tags to add to the case
         case_title (str): The title of the case
+        template_id (int): The template to use for the case
 
     returns:
         Cases: The case that was created from the alert
@@ -386,9 +389,16 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
+    case_template_title_prefix = ""
+
+    if template_id is not None and template_id != 0 and template_id != '':
+        case_template = get_case_template_by_id(template_id)
+        if case_template:
+            case_template_title_prefix = case_template.title_prefix
+
     # Create the case
     case = Cases(
-        name=f"[ALERT] {alert.alert_title}" if not case_title else case_title,
+        name=f"[ALERT]{case_template_title_prefix} {alert.alert_title}" if not case_title else f"{case_template_title_prefix} {case_title}",
         description=f"*Alert escalated by {current_user.name}*\n\n{escalation_note}"
                     f"### Alert description\n\n{alert.alert_description}"
                     f"\n\n### IRIS alert link\n\n"
@@ -484,6 +494,9 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         update_event_iocs(event_id=event.event_id,
                           caseid=case.case_id,
                           iocs_list=ioc_links)
+
+    if template_id is not None and template_id != 0 and template_id != '':
+        case, logs = case_template_post_modifier(case, template_id)
 
     db.session.commit()
 

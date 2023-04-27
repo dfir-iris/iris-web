@@ -34,13 +34,18 @@
 
           <div class="form-group"><span id="escalateModalExplanation"></span></div>
           <div class="form-group" id="modalEscalateCaseTitleContainer" style="display:none;">
-              <label>New case title</label>
+              <label>New case title *</label>
              <input type="text" class="form-control" id="modalEscalateCaseTitle" name="new_case_title">
           </div>
 
          <div class="form-group" id="mergeAlertCaseSelectSection" style="display:none;">
-             <label for="mergeAlertCaseSelect">Select case to merge into</label>
+             <label for="mergeAlertCaseSelect">Select case to merge into *</label>
             <select class="selectpicker form-control" data-dropup-auto="false" data-live-search="true" id="mergeAlertCaseSelect">
+            </select>
+         </div>
+         <div class="form-group" id="mergeAlertCaseTemplateSection">
+             <label for="mergeAlertCaseTemplate">Select case template</label>
+            <select class="selectpicker form-control" data-dropup-auto="false" data-live-search="true" id="mergeAlertCaseTemplateSelect">
             </select>
           </div>
           <div class="form-group mt-4" id="ioc-container" style="display:none;">

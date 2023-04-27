@@ -48,7 +48,7 @@ manage_case_templates_blueprint = Blueprint('manage_case_templates',
 
 
 # CONTENT ------------------------------------------------
-@manage_case_templates_blueprint.route('/manage/case-templates')
+@manage_case_templates_blueprint.route('/manage/case-templates', methods=['GET'])
 @ac_requires(Permissions.server_administrator)
 def manage_case_templates(caseid, url_redir):
     if url_redir:
@@ -59,8 +59,8 @@ def manage_case_templates(caseid, url_redir):
     return render_template('manage_case_templates.html', form=form)
 
 
-@manage_case_templates_blueprint.route('/manage/case-templates/list')
-@ac_api_requires(Permissions.server_administrator)
+@manage_case_templates_blueprint.route('/manage/case-templates/list', methods=['GET'])
+@ac_api_requires()
 def list_case_templates(caseid):
     """Show a list of case templates
 

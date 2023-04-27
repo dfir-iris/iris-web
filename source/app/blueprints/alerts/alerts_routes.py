@@ -490,7 +490,7 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
     import_as_event: bool = data.get('import_as_event')
     case_tags: str = data.get('case_tags')
     case_title: str = data.get('case_title')
-
+    case_template_id: int = data.get('case_template_id', None)
 
     try:
         # Escalate the alert to a case
@@ -499,7 +499,8 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
 
         # Create a new case from the alert
         case = create_case_from_alert(alert, iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
-                                      import_as_event=import_as_event, case_tags=case_tags, case_title=case_title)
+                                      import_as_event=import_as_event, case_tags=case_tags, case_title=case_title,
+                                      template_id=case_template_id)
 
         if not case:
             return response_error('Failed to create case from alert')

@@ -270,7 +270,7 @@ def api_add_case(caseid):
     try:
 
         request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
-        case_template_id = request_data.pop("case_template_id", "")
+        case_template_id = request_data.pop("case_template_id", None)
 
         case = case_schema.load(request_data)
         case.owner_id = current_user.id
