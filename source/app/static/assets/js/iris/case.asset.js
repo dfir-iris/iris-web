@@ -422,7 +422,7 @@ $(document).ready(function(){
           },
           { "data": "ioc_links",
             "render": function (data, type, row, meta) {
-              if (type === 'display' && data != null) {
+              if ((type === 'filter'  || type === 'display') && data != null) {
                 datas = "";
                 for (ds in data) {
                     datas += '<span class="badge badge-light">'+ sanitizeHTML(data[ds]['ioc_value']) + '</span>';
@@ -434,7 +434,7 @@ $(document).ready(function(){
           },
           { "data": "asset_tags",
             "render": function (data, type, row, meta) {
-              if (type === 'display' && data != null) {
+              if (type === 'display' && data != null  ) {
                   tags = "";
                   de = data.split(',');
                   for (tag in de) {
