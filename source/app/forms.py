@@ -92,6 +92,10 @@ class AddReportTemplateForm(FlaskForm):
     report_type = SelectField(u'Report Type', validators=[DataRequired()])
 
 
+class CaseTemplateForm(FlaskForm):
+    case_template_json = TextAreaField(u'Case Template JSON', validators=[DataRequired()])
+
+
 class AddUserForm(FlaskForm):
     user_login = StringField(u'Name', validators=[DataRequired()])
     user_name = StringField(u'Username', validators=[DataRequired()])
@@ -127,6 +131,7 @@ class AddCaseForm(FlaskForm):
     case_customer = SelectField(u'Customer', validators=[InputRequired()])
     case_organisations = SelectMultipleField(u'Organisations')
     classification_id = SelectField(u'Classification')
+    case_template_id = SelectField(u'Case Template')
 
 
 class ContactForm(FlaskForm):

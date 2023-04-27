@@ -41,6 +41,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import func
 
 from app import app
 from app import db
@@ -126,9 +127,9 @@ class Client(db.Model):
     name = Column(Text, unique=True)
     description = Column(Text)
     sla = Column(Text)
-    creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
     created_by = Column(ForeignKey('user.id'), nullable=True)
-    last_update_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    last_update_date = Column(DateTime, server_default=func.now(), nullable=True)
 
     custom_attributes = Column(JSON)
 
@@ -202,10 +203,39 @@ class CaseClassification(db.Model):
     name = Column(Text)
     name_expanded = Column(Text)
     description = Column(Text)
-    creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
     created_by_id = Column(ForeignKey('user.id'), nullable=True)
 
     created_by = relationship('User')
+
+
+class CaseTemplate(db.Model):
+    __tablename__ = 'case_template'
+
+    # Metadata
+    id = Column(Integer, primary_key=True)
+    created_by_user_id = Column(Integer, db.ForeignKey('user.id'))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    # Data
+    name = Column(String, nullable=False)
+    display_name = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+    author = Column(String, nullable=True)
+    title_prefix = Column(String, nullable=True)
+    summary = Column(String, nullable=True)
+    tags = Column(JSON, nullable=True)
+    tasks = Column(JSON, nullable=True)
+    note_groups = Column(JSON, nullable=True)
+
+    created_by_user = relationship('User')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_from_dict(self, data: dict):
+        for field, value in data.items():
+            setattr(self, field, value)
 
 
 class Contact(db.Model):
@@ -490,7 +520,8 @@ class NotesGroup(db.Model):
     __tablename__ = 'notes_group'
 
     group_id = Column(BigInteger, primary_key=True)
-    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
+    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                        nullable=False)
     group_title = Column(String(155))
     group_user = Column(ForeignKey('user.id'))
     group_creationdate = Column(DateTime)
@@ -676,7 +707,8 @@ class Comments(db.Model):
     __tablename__ = "comments"
 
     comment_id = Column(BigInteger, primary_key=True)
-    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
+    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                          nullable=False)
     comment_text = Column(Text)
     comment_date = Column(DateTime)
     comment_update_date = Column(DateTime)
@@ -896,4 +928,3 @@ def create_safe_attr(session, attribute_display_name, attribute_description, att
         session.add(instance)
         session.commit()
         return True
-

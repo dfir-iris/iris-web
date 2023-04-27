@@ -36,6 +36,7 @@ from flask_login import current_user
 from marshmallow import fields, Schema, validate, ValidationError
 from marshmallow import post_load
 from marshmallow import pre_load
+from marshmallow import ValidationError
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
@@ -80,7 +81,7 @@ log = app.logger
 
 def allowed_file_icon(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def get_random_string(length):
@@ -233,6 +234,47 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('asset_id'), 'asset')
 
         return data
+
+
+class CaseTemplateSchema(ma.Schema):
+    id = fields.Integer(dump_only=True)
+    created_by_user_id = fields.Integer(required=True)
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    name = fields.String(required=True)
+    display_name = fields.String(allow_none=True, missing="")
+    description = fields.String(allow_none=True, missing="")
+    author = fields.String(allow_none=True, validate=Length(max=128), missing="")
+    title_prefix = fields.String(allow_none=True, validate=Length(max=32), missing="")
+    summary = fields.String(allow_none=True, missing="")
+    tags = fields.List(fields.String(), allow_none=True, missing=[])
+
+    def validate_string_or_list(value):
+        if not isinstance(value, (str, list)):
+            raise ValidationError('Value must be a string or a list of strings')
+        if isinstance(value, list):
+            for item in value:
+                if not isinstance(item, str):
+                    raise ValidationError('All items in list must be strings')
+        return value
+
+    def validate_string_or_list_of_dict(value):
+        if not isinstance(value, (str, list)):
+            raise ValidationError('Value must be a string or a list of strings')
+        if isinstance(value, list):
+            for item in value:
+                if not isinstance(item, dict):
+                    raise ValidationError('All items in list must be dict')
+                for ivalue in item.values():
+                    if not isinstance(ivalue, str):
+                        raise ValidationError('All items in dict must be str')
+        return value
+
+    tasks = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list]))
+                        , allow_none=True, missing=[])
+    note_groups = fields.List(fields.Dict(keys=fields.Str(),
+                                          values=fields.Raw(validate=[validate_string_or_list_of_dict]))
+                              , allow_none=True, missing=[])
 
 
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
@@ -458,7 +500,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
                 raise marshmallow.exceptions.ValidationError("Invalid IOC ID",
                                                              field_name="event_assets")
         if data.get('event_color') and data.get('event_color') not in ['#fff', '#1572E899', '#6861CE99', '#48ABF799',
-                                                                       '#31CE3699',  '#F2596199', '#FFAD4699']:
+                                                                       '#31CE3699', '#F2596199', '#FFAD4699']:
             data['event_color'] = ''
         return data
 

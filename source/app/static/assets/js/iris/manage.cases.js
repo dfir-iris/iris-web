@@ -8,11 +8,19 @@ $('#case_customer').selectpicker({
     title: "Select customer *",
     style: "btn-outline-white"
 });
+$('#case_template_id').selectpicker({
+    liveSearch: true,
+    title: "Select case template",
+    style: "btn-outline-white"
+});
+$('#case_template_id').prepend(new Option('', ''));
 $('#classification_id').selectpicker({
     liveSearch: true,
     title: "Select classification",
     style: "btn-outline-white"
 });
+$('#classification_id').prepend(new Option('', ''));
+
 
 /* Submit event handler for new case */
 function submit_new_case() {
