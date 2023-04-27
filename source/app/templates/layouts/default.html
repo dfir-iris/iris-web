@@ -48,7 +48,16 @@
 				{% block content %}{% endblock content %}
 			
 			</div>
-
+			<div id="minimized_modal_box" class="col-10 col-xs-11 col-sm-4 minimized_modal shadow-lg" style="display:none;" title="Maximize modal" onclick="modal_maximize();">
+			<div class="row mt-3 mb-3">
+				<div class="col-10 d-flex">
+					<span data-notify="title" id="minimized_modal_title" class="align-self-center"></span>
+				</div>
+				<div class="col-1 d-flex" style="padding-left:5px;">
+					<i class="fa-solid fa-arrow-up-right-dots align-self-center"></i>
+				</div>
+			</div>
+		</div>
 			{% include 'includes/footer.html' %}
 		</div>
 

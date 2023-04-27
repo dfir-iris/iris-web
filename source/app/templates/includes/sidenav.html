@@ -1,6 +1,6 @@
 
 		<!-- Sidebar -->
-		<div class="sidebar sidebar-style-2">			
+		<div class="sidebar sidebar-style-2">
 			<div class="sidebar-wrapper scrollbar scrollbar-inner">
 				<div class="sidebar-content">
 					{% if current_user.is_authenticated %}
@@ -72,6 +72,12 @@
 							</a>
 						</li>
 						<li class="nav-item">
+							<a href="/alerts?cid={{session['current_case'].case_id}}">
+								<i class="flaticon-alarm-1"></i>
+								<span>Alerts</span>
+							</a>
+						</li>
+						<li class="nav-item">
 							<a href="/search?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-search-2"></i>
 								<span>Search</span>
@@ -136,6 +142,13 @@
 										<a href="/manage/attributes?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-layers-1"></i>
 											<span>Custom Attributes</span>
+										</a>
+									</li>
+
+									<li class="nav-subitem">
+										<a href="/manage/case-templates?cid={{session['current_case'].case_id}}">
+											<i class="flaticon-interface-7"></i>
+											<span>Case Templates</span>
 										</a>
 									</li>
 

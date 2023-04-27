@@ -106,19 +106,11 @@ def delete_rfile(rfile_id, caseid):
 
 
 def get_case_evidence_comments(evidence_id):
-    return EvidencesComments.query.filter(
+    return Comments.query.filter(
         EvidencesComments.comment_evidence_id == evidence_id
-    ).with_entities(
-        EvidencesComments.comment_id,
-        Comments.comment_text,
-        Comments.comment_date,
-        Comments.comment_update_date,
-        Comments.comment_uuid,
-        User.name,
-        User.user
     ).join(
-        EvidencesComments.comment,
-        Comments.user
+        EvidencesComments,
+        Comments.comment_id == EvidencesComments.comment_id
     ).order_by(
         Comments.comment_date.asc()
     ).all()

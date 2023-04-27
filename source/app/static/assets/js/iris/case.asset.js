@@ -199,7 +199,7 @@ function preview_asset_description(no_btn_update) {
     if(!$('#container_asset_description').is(':visible')) {
         asset_desc = g_asset_desc_editor.getValue();
         converter = get_showdown_convert();
-        html = converter.makeHtml(asset_desc);
+        html = converter.makeHtml(do_md_filter_xss(asset_desc));
         asset_desc_html = do_md_filter_xss(html);
         $('#target_asset_desc').html(asset_desc_html);
         $('#container_asset_description').show();
@@ -313,16 +313,6 @@ function generate_sample_csv(){
     csv_data += '"My computer","Mac - Computer","Computer of Mme Michu","192.168.15.5","iris.local","Compta|Mac"\n'
     csv_data += '"XCAS","Windows - Server","Xcas server","192.168.15.48","iris.local",""'
     download_file("sample_assets.csv", "text/csv", csv_data);
-}
-
-function download_file(filename, contentType, data) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
 }
 
 /* Page is ready, fetch the assets of the case */

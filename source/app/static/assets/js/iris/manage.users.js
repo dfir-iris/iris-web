@@ -75,6 +75,18 @@ manage_users_table = $('#users_table').dataTable( {
             }
             return data;
           }
+        },
+        { "data": "user_is_service_account",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') {
+                if (data == true) {
+                    data = '<i class="fa fa-check text-success"></i>';
+                } else {
+                    data = '<i class="fa fa-xmark text-danger"></i>';
+                }
+            }
+            return data;
+          }
         }
       ]
     }

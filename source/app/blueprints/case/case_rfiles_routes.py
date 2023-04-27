@@ -233,12 +233,11 @@ def case_comment_evidence_modal(cur_id, caseid, url_redir):
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_evidence_list(cur_id, caseid):
 
-    task_comments = get_case_evidence_comments(cur_id)
-    if task_comments is None:
+    evidence_comments = get_case_evidence_comments(cur_id)
+    if evidence_comments is None:
         return response_error('Invalid evidence ID')
 
-    res = [com._asdict() for com in task_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(evidence_comments))
 
 
 @case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/add', methods=['POST'])

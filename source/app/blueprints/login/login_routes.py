@@ -103,12 +103,9 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
     def login():
         session.permanent = True
 
-        # cut the page for authenticated users
         if current_user.is_authenticated:
-
             return redirect(url_for('index.index'))
 
-        # Declare the login form
         form = LoginForm(request.form)
 
         # check if both http method is POST and form is valid on submit

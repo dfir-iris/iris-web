@@ -28,7 +28,7 @@ import secrets
 import string
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, exc
+from sqlalchemy import create_engine, exc, or_
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
@@ -48,6 +48,7 @@ from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
 from app.models import create_safe_limited
+from app.models.alerts import Severity, AlertStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
@@ -131,6 +132,12 @@ def run_post_init(development=False):
 
         log.info("Creating base tasks status")
         create_safe_task_status()
+
+        log.info("Creating base severities")
+        create_safe_severities()
+
+        log.info("Creating base alert status")
+        create_safe_alert_status()
 
         log.info("Creating base hooks")
         create_safe_hooks()
@@ -399,6 +406,13 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_note_comment_delete',
                 hook_description='Triggered on note comment deletion, after commit in DB')
 
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_commented',
+                hook_description='Triggered on alert commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_comment_update',
+                hook_description='Triggered on alert comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_comment_delete',
+                hook_description='Triggered on alert comment deletion, after commit in DB')
+
 
 def pg_add_pgcrypto_ext():
     # Open a cursor to perform database operations.
@@ -498,6 +512,27 @@ def create_safe_task_status():
     create_safe(db.session, TaskStatus, status_name='On hold', status_description="", status_bscolor="muted")
     create_safe(db.session, TaskStatus, status_name='Done', status_description="", status_bscolor="success")
     create_safe(db.session, TaskStatus, status_name='Canceled', status_description="", status_bscolor="muted")
+
+
+def create_safe_severities():
+    create_safe(db.session, Severity, severity_name='Unspecified', severity_description="Unspecified")
+    create_safe(db.session, Severity, severity_name='Informational', severity_description="Informational")
+    create_safe(db.session, Severity, severity_name='Low', severity_description="Low")
+    create_safe(db.session, Severity, severity_name='Medium', severity_description="Medium")
+    create_safe(db.session, Severity, severity_name='High', severity_description="High")
+    create_safe(db.session, Severity, severity_name='Critical', severity_description="Critical")
+
+
+def create_safe_alert_status():
+    create_safe(db.session, AlertStatus, status_name='Unspecified', status_description="Unspecified")
+    create_safe(db.session, AlertStatus, status_name='New', status_description="Alert is new and unassigned")
+    create_safe(db.session, AlertStatus, status_name='Assigned', status_description="Alert is assigned to a user and pending "
+                                                                      "investigation")
+    create_safe(db.session, AlertStatus, status_name='In progress', status_description="Alert is being investigated")
+    create_safe(db.session, AlertStatus, status_name='Pending', status_description="Alert is in a pending state")
+    create_safe(db.session, AlertStatus, status_name='Closed', status_description="Alert closed, no action taken")
+    create_safe(db.session, AlertStatus, status_name='Merged', status_description="Alert merged into an existing case")
+    create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
 
 
 def create_safe_assets():
@@ -627,9 +662,13 @@ def create_safe_auth_model():
 
 
 def create_safe_admin(def_org, gadm):
-    user = User.query.filter(
-        User.user == "administrator"
-    ).first()
+    admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
+    admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+
+    user = User.query.filter(or_(
+        User.user == admin_username,
+        User.email == app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+    )).first()
     password = None
 
     if not user:
@@ -637,11 +676,9 @@ def create_safe_admin(def_org, gadm):
         if password is None:
             password = ''.join(random.choices(string.printable[:-6], k=16))
 
-        admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
         if admin_username is None:
             admin_username = 'administrator'
 
-        admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
         if admin_email is None:
             admin_email = 'administrator@localhost'
 

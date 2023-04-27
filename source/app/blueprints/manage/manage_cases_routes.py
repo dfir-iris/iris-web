@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 #
 #  IRIS Source Code
-#  Copyright (C) 2021 - DFIR-IRIS Airbus CyberSecurity (SAS)
-#  contact@dfir-iris.org - ir@cyberactionlab.net
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -35,6 +34,7 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug import Response
 
+import app
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import register_case_protagonists
@@ -43,6 +43,8 @@ from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
+from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, case_template_pre_modifier, \
+    case_template_post_modifier
 from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
@@ -79,18 +81,20 @@ manage_cases_blueprint = Blueprint('manage_case',
 
 # CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
-@ac_requires(Permissions.standard_user)
+@ac_requires(Permissions.standard_user, no_cid_required=True)
 def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
 
     form = AddCaseForm()
     # Fill select form field customer with the available customers in DB
-    form.case_customer.choices = [(c.client_id , c.name) for c in
+    form.case_customer.choices = [(c.client_id, c.name) for c in
                                   Client.query.order_by(Client.name)]
 
-    form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in get_user_organisations(current_user.id)]
+    form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in
+                                       get_user_organisations(current_user.id)]
     form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
+    form.case_template_id.choices = [(ctp['id'], ctp['display_name']) for ctp in get_case_templates_list()]
 
     attributes = get_default_custom_attributes('case')
 
@@ -98,7 +102,7 @@ def manage_index_cases(caseid, url_redir):
 
 
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
-@ac_case_requires()
+@ac_requires(no_cid_required=True)
 def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, str]:
     """
     Get case details
@@ -131,7 +135,7 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, s
 
 
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
-@ac_case_requires()
+@ac_requires(no_cid_required=True)
 def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
     """ Returns the case details modal for a case from a case
 
@@ -165,9 +169,8 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
 
 
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires()
+@ac_api_requires(no_cid_required=True)
 def get_case_api(cur_id, caseid):
-
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
@@ -179,9 +182,8 @@ def get_case_api(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_delete_case(cur_id, caseid):
-
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
@@ -208,13 +210,13 @@ def api_delete_case(cur_id, caseid):
                 return response_error("Tried to delete a non-existing case")
 
         except Exception as e:
-            return response_error("Cannot delete a non empty case. {}".format(e))
+            app.app.logger.exception(e)
+            return response_error("Cannot delete the case. Please check server logs for additional informations")
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_reopen_case(cur_id, caseid):
-
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
@@ -237,7 +239,7 @@ def api_reopen_case(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_case_close(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -261,18 +263,34 @@ def api_case_close(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_add_case(caseid):
-
     case_schema = CaseSchema()
 
     try:
 
         request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
+        case_template_id = request_data.pop("case_template_id", "")
+
         case = case_schema.load(request_data)
         case.owner_id = current_user.id
 
+        if len(case_template_id) > 0:
+            case = case_template_pre_modifier(case, case_template_id)
+            if case is None:
+                return response_error(msg=f"Invalid Case template ID {case_template_id}", status=400)
+
         case.save()
+
+        if len(case_template_id) > 0:
+            try:
+                case, logs = case_template_post_modifier(case, case_template_id)
+                if len(logs) > 0:
+                    return response_error(msg=f"Could not update new case with {case_template_id}", data=logs, status=400)
+            except Exception as e:
+                log.error(e.__str__())
+                return response_error(msg=f"Unexpected error when loading template {case_template_id} to new case.",
+                                      data=[e.__str__()], status=400)
 
         ac_set_new_case_access(None, case.case_id)
 
@@ -293,18 +311,16 @@ def api_add_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_list_case(caseid):
-
     data = list_cases_dict(current_user.id)
 
     return response_success("", data=data)
 
 
 @manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def update_case_info(cur_id, caseid):
-
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
@@ -326,7 +342,7 @@ def update_case_info(cur_id, caseid):
         db.session.commit()
 
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
-        save_case_tags(request_data.get('case_tags'), case_i.case_id)
+        save_case_tags(request_data.get('case_tags'), case_i)
 
         add_obj_history_entry(case_i, 'case info updated')
         track_activity("case updated {case_name}".format(case_name=case.name), caseid=cur_id)

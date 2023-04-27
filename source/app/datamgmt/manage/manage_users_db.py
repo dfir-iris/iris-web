@@ -402,7 +402,7 @@ def set_user_case_access(user_id, case_id, access_level):
     return True, 'Case access set to {} for user {}'.format(access_level, user_id)
 
 
-def get_user_details(user_id):
+def get_user_details(user_id, include_api_key=False):
 
     user = User.query.filter(User.id == user_id).first()
 
@@ -416,6 +416,10 @@ def get_user_details(user_id):
     row['user_login'] = user.user
     row['user_email'] = user.email
     row['user_active'] = user.active
+    row['user_is_service_account'] = user.is_service_account
+
+    if include_api_key:
+        row['user_api_key'] = user.api_key
 
     row['user_groups'] = get_user_groups(user_id)
     row['user_organisations'] = get_user_organisations(user_id)
@@ -477,6 +481,7 @@ def get_users_list():
         row['user_login'] = user.user
         row['user_email'] = user.email
         row['user_active'] = user.active
+        row['user_is_service_account'] = user.is_service_account
         output.append(row)
 
     return output
@@ -584,9 +589,13 @@ def get_users_list_restricted_from_case(case_id):
 
 
 def create_user(user_name: str, user_login: str, user_password: str, user_email: str, user_active: bool,
-                user_external_id: str = None):
+                user_external_id: str = None, user_is_service_account: bool = False):
 
-    pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
+    if user_is_service_account and user_password is None or user_password is '':
+        pw_hash = None
+
+    else:
+        pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
 
     user = User(user=user_login, name=user_name, email=user_email, password=pw_hash, active=user_active,
                 external_id=user_external_id)
@@ -600,7 +609,7 @@ def create_user(user_name: str, user_login: str, user_password: str, user_email:
 
 def update_user(user: User, name: str = None, email: str = None, password: str = None):
 
-    if password is not None:
+    if password is not None and password is not '':
         pw_hash = bc.generate_password_hash(password.encode('utf8')).decode('utf8')
         user.password = pw_hash
 

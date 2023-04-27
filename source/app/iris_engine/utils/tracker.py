@@ -47,17 +47,12 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
         pass
 
     try:
-        if caseid is None:
-            caseid = current_user.ctx_case
-        ua.case_id = caseid
+        ua.case_id = caseid if ctx_less is False else None
     except Exception:
         pass
 
-    if ctx_less:
-        ua.case_id = 1
-
     ua.activity_date = datetime.utcnow()
-    ua.activity_desc = message.capitalize() if not ctx_less else "[Unbound] {}".format(message.capitalize())
+    ua.activity_desc = message.capitalize()
 
     if current_user.is_authenticated:
         log.info(f"{current_user.user} [#{current_user.id}] :: Case {caseid} :: {ua.activity_desc}")

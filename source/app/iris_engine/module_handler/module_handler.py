@@ -523,7 +523,6 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
             IrisModuleHook.hook_id == hook.id
         )
 
-
     if module_name:
         condition = and_(
             condition,

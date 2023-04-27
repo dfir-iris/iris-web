@@ -172,7 +172,7 @@ function preview_ioc_description(no_btn_update) {
     if(!$('#container_ioc_description').is(':visible')) {
         ioc_desc = g_ioc_desc_editor.getValue();
         converter = get_showdown_convert();
-        html = converter.makeHtml(ioc_desc);
+        html = converter.makeHtml(do_md_filter_xss(ioc_desc));
         ioc_desc_html = do_md_filter_xss(html);
         $('#target_ioc_desc').html(ioc_desc_html);
         $('#container_ioc_description').show();
@@ -296,16 +296,6 @@ function generate_sample_csv(){
     csv_data += "1.1.1.1,ip-dst,Cloudflare DNS IP address,Cloudflare|DNS,green\n"
     csv_data += "wannacry.exe,filename,Wannacry sample found,Wannacry|Malware|PE,amber"
     download_file("sample_iocs.csv", "text/csv", csv_data);
-}
-
-function download_file(filename, contentType, data) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
 }
 
 /* Page is ready, fetch the iocs of the case */

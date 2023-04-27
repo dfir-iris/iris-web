@@ -384,8 +384,7 @@ def case_comment_ioc_list(cur_id, caseid):
     if ioc_comments is None:
         return response_error('Invalid ioc ID')
 
-    res = [com._asdict() for com in ioc_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(ioc_comments))
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/add', methods=['POST'])

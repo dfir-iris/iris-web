@@ -363,8 +363,7 @@ def case_comment_note_list(cur_id, caseid):
     if note_comments is None:
         return response_error('Invalid note ID')
 
-    res = [com._asdict() for com in note_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(note_comments))
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/add', methods=['POST'])
