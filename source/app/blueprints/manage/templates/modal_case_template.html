@@ -20,7 +20,7 @@
                         <h2>New template</h2>
                         {% endif %}
                         <p>Case templates allow to prefill case objects such as tasks, tags, and notes.<br/>
-                            It could be used to add procedures defining how to react against a specific kind of incident (phishing, ransomware, APT...)</p>
+                            It can be used to add procedures defining how to react against a specific kind of incident (phishing, ransomware, APT...)</p>
                         <div class="alert-std alert-warning" role="alert">
                              Case templates can be added and edited in this UI, or they can be uploaded as JSON files.<br/>
                             <p>IRIS will attempt to validate the contents of the case template before committing.</p>
@@ -36,8 +36,36 @@
                                 </div>
                                 <div class="span-mode"></div>
                             </div>
-
                             <div id="drop_tax_case_template" class="collapse" aria-labelledby="drop_tax_case_template" style="">
+                                <div class="card-body">
+                                    <h4>Field types</h4>
+                                    The supported fields types are:
+                                    <ul>
+                                        <li>name: The name of the case template (required).</li>
+                                        <li>display_name: The displayed name of the case template.</li>
+                                        <li>description: The description of the case template.</li>
+                                        <li>author: The author of the case template (not related to the current user).</li>
+                                        <li>classification: The classification of the case template. Should be a lowercase name matching an existing classification in IRIS.</li>
+                                        <li>title_prefix: A prefix to add to case title.</li>
+                                        <li>summary: content to prefill the summary.</li>
+                                        <li>tags: A list of case tags.</li>
+                                        <li>tasks: A list of dictionaries defining tasks. Tasks are defined by title (required), description, and list of tags.</li>
+                                        <li>note_groups: A list of dictionaries defining note groups. Note groups are defined by title (required), and list of notes. Notes have title (required) and content</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mt-4">
+                            <div class="card-header collapsed" id="drop__template_example" data-toggle="collapse" data-target="#drop_case_template_example" aria-expanded="false" aria-controls="drop_tax_attr" role="button">
+                                <div class="span-icon">
+                                    <div class="flaticon-pencil"></div>
+                                </div>
+                                <div class="span-title">
+                                    Case Template Example
+                                </div>
+                                <div class="span-mode"></div>
+                            </div>
+                            <div id="drop_case_template_example" class="collapse" aria-labelledby="drop_tax_case_template" style="">
                                 <div class="card-body">
                                     A case template is defined as below.
                                     <pre>
@@ -47,8 +75,9 @@
     "display_name": "Ransomware Infection Template",
     "description": "This case template describes first-response tasks to handle information system compromised by a ransomware.",
     "author": "DFIR-IRIS",
-    "title_prefix": "RANS",
-    "summary": "# Context \n\n\n # Contact \n\n\n # Actions \n\n\n",
+    "classification": "malicious-code:ransomware",
+    "title_prefix": "[RANS]",
+    "summary": "# Context \n\n\n# Contact \n\n\n# Actions \n\n\n",
     "tags": ["ransomware","malware"],
     "tasks": [
         {
@@ -62,7 +91,7 @@
             "tags": ["collect", "velociraptor"]
         },
         {
-            "title": "Contain"
+            "title": "Containment"
         }
     ],
     "note_groups": [
@@ -90,20 +119,6 @@
     ]
 }
                                     </pre>
-
-                                    <h4>Field types</h4>
-                                    The supported fields types are:
-                                    <ul>
-                                        <li>name: The name of the case template (required).</li>
-                                        <li>display_name: The displayed name of the case template.</li>
-                                        <li>description: The description of the case template.</li>
-                                        <li>author: The author of the case template (not related to the current user).</li>
-                                        <li>title_prefix: A prefix to add to case title.</li>
-                                        <li>summary: content to prefill the summary.</li>
-                                        <li>tags: A list of case tags.</li>
-                                        <li>tasks: A list of dictionaries defining tasks. Tasks are defined by title (required), description, and list of tags.</li>
-                                        <li>note_groups: A list of dictionaries defining note groups. Note groups are defined by title (required), and list of notes. Notes have title (required) and content</li>
-                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -113,8 +128,10 @@
                 <div class="col-6">
                     {{ form.hidden_tag() }}
                     <div class="form-group">
-                        <label for="Case Template content" class="mr-4">Case template definition
-                        </label>
+                        <div class="row">
+                            <label for="editor_detail" class="mr-4">Case template definition
+                            </label><button type="button" class="btn btn-sm ml-auto" onclick="downloadCaseTemplateDefinition();">Download definition</button>
+                        </div>
                         <div id="editor_detail">{{ form.case_template_json.data|tojsonsafe }}</div>
                     </div>
                 </div>
@@ -132,14 +149,14 @@
     {% if case_template.id %}
     <button
             type="button"
-            class="btn btn-outline-danger mt-5"
+            class="btn btn-outline-danger mr-auto"
              id="submit_delete_case_template"
     >
         Delete
     </button>
     <button
             type="button"
-            class="btn btn-outline-success ml-4 mt-5 float-right"
+            class="btn btn-outline-success ml-4 float-right"
             id="submit_new_case_template"
     >
         Update
@@ -149,7 +166,7 @@
 
     <button
             type="button"
-            class="btn btn-outline-success ml-4 mt-5 float-right"
+            class="btn btn-outline-success ml-4 float-right"
             id="submit_new_case_template"
     >
         Save
