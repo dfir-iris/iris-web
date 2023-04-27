@@ -1304,7 +1304,7 @@ async function fetchSavedFilters() {
     const url = '/filters/alerts/list';
     return get_request_api(url)
         .then((data) => {
-            if (notify_auto_api(data)) {
+            if (notify_auto_api(data, true)) {
                 const savedFiltersDropdown = $('#savedFiltersDropdown');
 
                 savedFiltersDropdown.empty();
