@@ -318,7 +318,7 @@ def alerts_update_route(alert_id, caseid) -> Response:
                 activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
 
         if activity_data:
-            track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", caseid)
+            track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", caseid=caseid, ctx_less=True)
 
         # Deserialize the JSON data into an Alert object
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
@@ -378,7 +378,7 @@ def alerts_batch_update_route(caseid: int) -> Response:
             alert_schema.load(updates, instance=alert, partial=True)
 
             if activity_data:
-                track_activity(f"updated alerts #{alert_id}: {','.join(activity_data)}", caseid)
+                track_activity(f"updated alerts #{alert_id}: {','.join(activity_data)}", caseid=caseid, ctx_less=True)
 
             # Save the changes
             db.session.commit()
@@ -450,6 +450,8 @@ def alerts_delete_route(alert_id, caseid) -> Response:
         # Delete the alert from the database
         db.session.delete(alert)
         db.session.commit()
+
+        track_activity(f"delete alert #{alert_id}", caseid=caseid, ctx_less=True)
 
         # Return the deleted alert as JSON
         return response_success(data={'alert_id': alert_id})
@@ -567,6 +569,8 @@ def alerts_merge_route(alert_id, caseid) -> Response:
                             iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
                             import_as_event=import_as_event, case_tags=case_tags)
 
+        track_activity(f"merge alert #{alert_id} into existing case #{target_case_id}", caseid=caseid, ctx_less=True)
+
         # Return the updated alert as JSON
         return response_success(data=CaseSchema().dump(case))
 
@@ -610,6 +614,8 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
         if success is False:
             return response_error(message)
 
+        track_activity(f"unmerge alert #{alert_id} from case #{target_case_id}", caseid=caseid, ctx_less=True)
+
         # Return the updated case as JSON
         return response_success(data=AlertSchema().dump(alert), msg=message)
 
@@ -652,7 +658,6 @@ def alerts_batch_merge_route(caseid) -> Response:
     note: str = data.get('note')
     import_as_event: bool = data.get('import_as_event')
     case_tags = data.get('case_tags')
-    case_title = data.get('case_title')
 
     try:
         # Merge the alerts into a case
@@ -673,6 +678,9 @@ def alerts_batch_merge_route(caseid) -> Response:
         if note:
             case.description += f"\n\n### Escalation note\n\n{note}\n\n" if case.description else f"\n\n{note}\n\n"
             db.session.commit()
+
+        track_activity(f"batched merge alerts {alert_ids} into existing case #{target_case_id}",
+                       caseid=caseid, ctx_less=True)
 
         # Return the updated case as JSON
         return response_success(data=CaseSchema().dump(case))
@@ -711,6 +719,7 @@ def alerts_batch_escalate_route(caseid) -> Response:
     case_tags = data.get('case_tags')
     case_title = data.get('case_title')
     alerts_list = []
+
     try:
         # Merge the alerts into a case
         for alert_id in alert_ids.split(','):
@@ -835,7 +844,7 @@ def alert_comment_delete(alert_id, com_id, caseid):
 
     call_modules_hook('on_postload_alert_comment_delete', data=com_id, caseid=caseid)
 
-    track_activity(f"comment {com_id} on alert {alert_id} deleted", caseid=caseid)
+    track_activity(f"comment {com_id} on alert {alert_id} deleted", caseid=caseid, ctx_less=True)
     return response_success(msg)
 
 
@@ -918,7 +927,7 @@ def case_comment_add(alert_id, caseid):
         }
         call_modules_hook('on_postload_alert_commented', data=hook_data, caseid=caseid)
 
-        track_activity(f"alert \"{alert.alert_id}\" commented", caseid=caseid)
+        track_activity(f"alert \"{alert.alert_id}\" commented", caseid=caseid, ctx_less=True)
         return response_success("Alert commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
