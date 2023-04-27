@@ -59,8 +59,8 @@
                                         {{ form.user_email(class='form-control',  autocomplete="off") }}
                                     </div>
                                      {% if not user.user_is_service_account %}
-                                    <div class="form-group mt-3">
-                                        <label for="user_pwd" class="placeholder">Password</label>
+                                    <div class="form-group mt-3" id="formGroupUserPassword">
+                                        <label for="user_pwd" class="placeholder">Password (optional for service accounts)</label>
                                         <ul>
                                             <li><small>Must contain at least {{ server_settings.password_policy_min_length }} chars</small></li>
                                             {% if server_settings.password_policy_upper_case %}
@@ -92,9 +92,9 @@
                                     <div class="form-group mt-3">
 
                                         <div class="form-check">
-                                            <label class="form-check-label mt-3">
+                                            <label class="form-check-label mt-3" >
                                                 {{ form.user_is_service_account(class="form-check-input", type="checkbox") }}
-                                                <span class="form-check-sign"> Use as service account
+                                                <span class="form-check-sign" id="formCheckIsServiceAccount">  Use as service account
                                                     <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the user won't appear in the attribution suggestions and won't be able to connect on the UI" style="cursor:pointer;"></i>
                                                 </span>
                                             </label>

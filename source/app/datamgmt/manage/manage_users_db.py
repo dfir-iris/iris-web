@@ -591,14 +591,14 @@ def get_users_list_restricted_from_case(case_id):
 def create_user(user_name: str, user_login: str, user_password: str, user_email: str, user_active: bool,
                 user_external_id: str = None, user_is_service_account: bool = False):
 
-    if user_is_service_account and user_password is None or user_password == '':
+    if user_is_service_account is True and (user_password is None or user_password == ''):
         pw_hash = None
 
     else:
         pw_hash = bc.generate_password_hash(user_password.encode('utf8')).decode('utf8')
 
     user = User(user=user_login, name=user_name, email=user_email, password=pw_hash, active=user_active,
-                external_id=user_external_id)
+                external_id=user_external_id, is_service_account=user_is_service_account)
     user.save()
 
     add_user_to_organisation(user.id, org_id=1)

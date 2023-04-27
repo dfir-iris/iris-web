@@ -395,10 +395,10 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         server_settings = ServerSettings.query.first()
         password = data.get('user_password')
 
-        if password == '' or password is None and str_to_bool(data.get('user_is_service_account')) is True:
+        if (password == '' or password is None) and str_to_bool(data.get('user_is_service_account')) is True:
             return data
 
-        if password == '' or password is None and data.get('user_id') != 0:
+        if (password == '' or password is None) and data.get('user_id') != 0:
             # Update
             data.pop('user_password') if 'user_password' in data else None
 

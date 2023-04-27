@@ -112,6 +112,8 @@ function refresh_users(do_notify) {
 }
 
 
+
+
 /* Fetch the details of an user and allow modification */
 function user_detail(user_id, goto_tab) {
     url = 'users/' + user_id + '/modal' + case_param();
@@ -282,6 +284,8 @@ function refresh_user_cac(user_id) {
         });
     }
 }
+
+
 
 function manage_user_cac(user_id) {
     url = 'users/' + user_id + '/cases-access/modal' + case_param();
