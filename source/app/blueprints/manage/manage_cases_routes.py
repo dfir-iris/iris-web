@@ -34,6 +34,7 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug import Response
 
+import app
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import register_case_protagonists
@@ -80,7 +81,7 @@ manage_cases_blueprint = Blueprint('manage_case',
 
 # CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
-@ac_requires(Permissions.standard_user)
+@ac_requires(Permissions.standard_user, no_cid_required=True)
 def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
@@ -101,7 +102,7 @@ def manage_index_cases(caseid, url_redir):
 
 
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
-@ac_case_requires()
+@ac_requires(no_cid_required=True)
 def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, str]:
     """
     Get case details
@@ -134,7 +135,7 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, s
 
 
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
-@ac_case_requires()
+@ac_requires(no_cid_required=True)
 def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
     """ Returns the case details modal for a case from a case
 
@@ -168,7 +169,7 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
 
 
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires()
+@ac_api_requires(no_cid_required=True)
 def get_case_api(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -181,7 +182,7 @@ def get_case_api(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_delete_case(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -209,11 +210,12 @@ def api_delete_case(cur_id, caseid):
                 return response_error("Tried to delete a non-existing case")
 
         except Exception as e:
-            return response_error("Cannot delete a non empty case. {}".format(e))
+            app.app.logger.exception(e)
+            return response_error("Cannot delete the case. Please check server logs for additional informations")
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_reopen_case(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -237,7 +239,7 @@ def api_reopen_case(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_case_close(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -261,7 +263,7 @@ def api_case_close(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_add_case(caseid):
     case_schema = CaseSchema()
 
@@ -309,7 +311,7 @@ def api_add_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_list_case(caseid):
     data = list_cases_dict(current_user.id)
 
@@ -317,7 +319,7 @@ def api_list_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def update_case_info(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)

@@ -183,7 +183,6 @@ def add_ioc(ioc, user_id, caseid):
     db_ioc = find_ioc(ioc.ioc_value, ioc.ioc_type_id)
 
     if not db_ioc:
-
         db.session.add(ioc)
 
         update_ioc_state(caseid=caseid)
@@ -274,19 +273,13 @@ def get_tlps_dict():
 
 
 def get_case_ioc_comments(ioc_id):
-    return IocComments.query.filter(
+    return Comments.query.filter(
         IocComments.comment_ioc_id == ioc_id
     ).with_entities(
-        IocComments.comment_id,
-        Comments.comment_text,
-        Comments.comment_date,
-        Comments.comment_update_date,
-        Comments.comment_uuid,
-        User.name,
-        User.user
+        Comments
     ).join(
-        IocComments.comment,
-        Comments.user
+        IocComments,
+        Comments.comment_id == IocComments.comment_id
     ).order_by(
         Comments.comment_date.asc()
     ).all()

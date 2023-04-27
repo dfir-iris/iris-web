@@ -55,7 +55,7 @@ manage_srv_settings_blueprint = Blueprint(
 
 
 @manage_srv_settings_blueprint.route('/manage/server/start-update', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_execute_update(caseid):
 
     eventlet.spawn(inner_init_server_update)
@@ -64,7 +64,7 @@ def manage_execute_update(caseid):
 
 
 @manage_srv_settings_blueprint.route('/manage/server/make-update', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_update(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
@@ -74,7 +74,7 @@ def manage_update(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/server/backups/make-db', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_make_db_backup(caseid):
 
     has_error, logs = backup_iris_db()
@@ -88,7 +88,7 @@ def manage_make_db_backup(caseid):
 
 
 @manage_srv_settings_blueprint.route('/manage/server/check-updates/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_check_updates_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
@@ -100,7 +100,7 @@ def manage_check_updates_modal(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/settings', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_settings(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
@@ -123,7 +123,7 @@ def manage_settings(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/settings/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_update_settings(caseid):
     if not request.is_json:
         return response_error('Invalid request')

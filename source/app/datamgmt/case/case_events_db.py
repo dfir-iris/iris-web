@@ -114,19 +114,11 @@ def get_case_event(event_id, caseid):
 
 
 def get_case_event_comments(event_id, caseid):
-    return EventComments.query.filter(
+    return Comments.query.filter(
         EventComments.comment_event_id == event_id
-    ).with_entities(
-        EventComments.comment_id,
-        Comments.comment_text,
-        Comments.comment_date,
-        Comments.comment_update_date,
-        Comments.comment_uuid,
-        User.name,
-        User.user
     ).join(
-        EventComments.comment,
-        Comments.user
+        EventComments,
+        Comments.comment_id == EventComments.comment_id
     ).order_by(
         Comments.comment_date.asc()
     ).all()

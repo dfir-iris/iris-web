@@ -298,8 +298,7 @@ def case_comment_task_list(cur_id, caseid):
     if task_comments is None:
         return response_error('Invalid task ID')
 
-    res = [com._asdict() for com in task_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(task_comments))
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/add', methods=['POST'])

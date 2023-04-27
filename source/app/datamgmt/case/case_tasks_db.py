@@ -232,19 +232,11 @@ def add_task(task, assignee_id_list, user_id, caseid):
 
 
 def get_case_task_comments(task_id):
-    return TaskComments.query.filter(
+    return Comments.query.filter(
         TaskComments.comment_task_id == task_id
-    ).with_entities(
-        TaskComments.comment_id,
-        Comments.comment_text,
-        Comments.comment_date,
-        Comments.comment_update_date,
-        Comments.comment_uuid,
-        User.name,
-        User.user
     ).join(
-        TaskComments.comment,
-        Comments.user
+        TaskComments,
+        Comments.comment_id == TaskComments.comment_id
     ).order_by(
         Comments.comment_date.asc()
     ).all()

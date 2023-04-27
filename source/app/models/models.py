@@ -23,7 +23,7 @@ import datetime
 import enum
 import uuid
 
-from sqlalchemy import BigInteger, UniqueConstraint
+from sqlalchemy import BigInteger, UniqueConstraint, Table
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -36,7 +36,7 @@ from sqlalchemy import TIMESTAMP
 from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, JSONB
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -144,6 +144,22 @@ class AssetsType(db.Model):
     asset_icon_compromised = Column(String(255))
 
 
+alert_assets_association = Table(
+    'alert_assets_association',
+    db.Model.metadata,
+    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
+    Column('asset_id', ForeignKey('case_assets.asset_id'), primary_key=True)
+)
+
+
+alert_iocs_association = Table(
+    'alert_iocs_association',
+    db.Model.metadata,
+    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
+    Column('ioc_id', ForeignKey('ioc.ioc_id'), primary_key=True)
+)
+
+
 class CaseAssets(db.Model):
     __tablename__ = 'case_assets'
 
@@ -163,11 +179,14 @@ class CaseAssets(db.Model):
     user_id = Column(ForeignKey('user.id'))
     analysis_status_id = Column(ForeignKey('analysis_status.id'))
     custom_attributes = Column(JSON)
+    asset_enrichment = Column(JSONB)
 
     case = relationship('Cases')
     user = relationship('User')
     asset_type = relationship('AssetsType')
     analysis_status = relationship('AnalysisStatus')
+
+    alerts = relationship('Alert', secondary=alert_assets_association, back_populates='assets')
 
 
 class AnalysisStatus(db.Model):
@@ -371,10 +390,13 @@ class Ioc(db.Model):
     ioc_misp = Column(Text)
     ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
     custom_attributes = Column(JSON)
+    ioc_enrichment = Column(JSONB)
 
     user = relationship('User')
     tlp = relationship('Tlp')
     ioc_type = relationship('IocType')
+
+    alerts = relationship('Alert', secondary=alert_iocs_association, back_populates='iocs')
 
 
 class CustomAttribute(db.Model):
@@ -600,7 +622,7 @@ class Tags(db.Model):
 
     def save(self):
         existing_tag = self.get_by_title(self.tag_title)
-        if existing_tag:
+        if existing_tag is not None:
             return existing_tag
         else:
             db.session.add(self)
@@ -692,9 +714,11 @@ class Comments(db.Model):
     comment_update_date = Column(DateTime)
     comment_user_id = Column(ForeignKey('user.id'))
     comment_case_id = Column(ForeignKey('cases.case_id'))
+    comment_alert_id = Column(ForeignKey('alerts.alert_id'))
 
     user = relationship('User')
     case = relationship('Cases')
+    alert = relationship('Alert')
 
 
 class EventComments(db.Model):
@@ -849,6 +873,20 @@ class IrisReport(db.Model):
         engine.dispose()
 
         return self
+
+
+class SavedFilter(db.Model):
+    __tablename__ = 'saved_filters'
+
+    filter_id = Column(BigInteger, primary_key=True)
+    created_by = Column(ForeignKey('user.id'), nullable=False)
+    filter_name = Column(Text, nullable=False)
+    filter_description = Column(Text)
+    filter_data = Column(JSON, nullable=False)
+    filter_is_private = Column(Boolean, nullable=False)
+    filter_type = Column(Text, nullable=False)
+
+    user = relationship('User', foreign_keys=[created_by])
 
 
 class CeleryTaskMeta(db.Model):

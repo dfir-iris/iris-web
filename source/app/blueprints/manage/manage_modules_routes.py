@@ -82,7 +82,7 @@ def site_map(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_modules_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_module.manage_modules_index', cid=caseid))
@@ -93,7 +93,7 @@ def manage_modules_index(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_modules_list(caseid):
     output = iris_modules_list()
 
@@ -101,7 +101,7 @@ def manage_modules_list(caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def add_module(caseid):
     if request.json is None:
         return response_error('Invalid request')
@@ -139,7 +139,7 @@ def add_module(caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def add_module_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_modules.add_module', cid=caseid))
@@ -151,7 +151,7 @@ def add_module_modal(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/get-parameter/<param_name>', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def getmodule_param(param_name, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_modules.add_module', cid=caseid))
@@ -168,7 +168,7 @@ def getmodule_param(param_name, caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/set-parameter/<param_name>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def update_module_param(param_name, caseid):
 
     if request.json is None:
@@ -195,7 +195,7 @@ def update_module_param(param_name, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def view_module(mod_id, caseid, url_redir):
 
     if url_redir:
@@ -215,7 +215,7 @@ def view_module(mod_id, caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def enable_module(mod_id, caseid):
 
     module_name = iris_module_name_from_id(mod_id)
@@ -236,7 +236,7 @@ def enable_module(mod_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/disable/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def disable_module(module_id, caseid):
     if iris_module_disable_by_id(module_id):
 
@@ -248,7 +248,7 @@ def disable_module(module_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/remove/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def view_delete_module(module_id, caseid):
     try:
 
@@ -263,7 +263,7 @@ def view_delete_module(module_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/export-config/<int:module_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def export_mod_config(module_id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(module_id)
@@ -278,7 +278,7 @@ def export_mod_config(module_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/import-config/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def import_mod_config(module_id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(module_id)
@@ -311,7 +311,7 @@ def import_mod_config(module_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def view_modules_hook(caseid):
     output = module_list_hooks_view()
     data = [item._asdict() for item in output]

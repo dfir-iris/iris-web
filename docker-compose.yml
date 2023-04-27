@@ -21,9 +21,6 @@ services:
   rabbitmq:
       image: rabbitmq:3-management-alpine
       container_name: iriswebapp_rabbitmq
-      ports:
-          - "127.0.0.1:5672:5672"
-          - "127.0.0.1:15672:15672"
       networks:
         - iris_backend
 
@@ -31,8 +28,9 @@ services:
     build:
       context: docker/db
     container_name: iriswebapp_db
-    image: iriswebapp_db:v2.0.0
+    image: iriswebapp_db:v2.0.1
     restart: always
+    # Used for debugging purposes, should be deleted for production
     ports:
       - "127.0.0.1:5432:5432"
     environment:
@@ -50,7 +48,7 @@ services:
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
-    image: iriswebapp_app:v2.0.0
+    image: iriswebapp_app:v2.0.1
     container_name: iriswebapp_app
     command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
@@ -64,6 +62,7 @@ services:
     depends_on:
       - "rabbitmq"
       - "db"
+    # Used for debugging purposes, should be deleted for production
     ports:
       - "127.0.0.1:8000:8000"
     env_file:
@@ -86,7 +85,7 @@ services:
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
-    image: iriswebapp_app:v2.0.0
+    image: iriswebapp_app:v2.0.1
     container_name: iriswebapp_worker
     command: ['./wait-for-iriswebapp.sh', 'app:8000', './iris-entrypoint.sh', 'iris-worker']
     volumes:
@@ -113,7 +112,6 @@ services:
       - IRIS_SECURITY_PASSWORD_SALT
       - IRIS_WORKER
     networks:
-      - iris_frontend
       - iris_backend
 
   nginx:
@@ -122,7 +120,7 @@ services:
       args:
         NGINX_CONF_GID: 1234
         NGINX_CONF_FILE: nginx.conf
-    image: iriswebapp_nginx:v2.0.0
+    image: iriswebapp_nginx:v2.0.1
     container_name: iriswebapp_nginx
     environment:
       - IRIS_UPSTREAM_SERVER
@@ -134,7 +132,6 @@ services:
       - IRIS_AUTHENTICATION_TYPE
     networks:
       - iris_frontend
-      - iris_backend
     ports:
       - "${INTERFACE_HTTPS_PORT:-443}:${INTERFACE_HTTPS_PORT:-443}"
     volumes:
@@ -152,7 +149,5 @@ volumes:
 networks:
   iris_backend:
     name: iris_backend
-    driver: bridge
   iris_frontend:
     name: iris_frontend
-    driver: bridge

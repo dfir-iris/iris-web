@@ -28,7 +28,7 @@ import secrets
 import string
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, exc
+from sqlalchemy import create_engine, exc, or_
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
@@ -406,6 +406,13 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_note_comment_delete',
                 hook_description='Triggered on note comment deletion, after commit in DB')
 
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_commented',
+                hook_description='Triggered on alert commented, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_comment_update',
+                hook_description='Triggered on alert comment update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_comment_delete',
+                hook_description='Triggered on alert comment deletion, after commit in DB')
+
 
 def pg_add_pgcrypto_ext():
     # Open a cursor to perform database operations.
@@ -523,7 +530,6 @@ def create_safe_alert_status():
                                                                       "investigation")
     create_safe(db.session, AlertStatus, status_name='In progress', status_description="Alert is being investigated")
     create_safe(db.session, AlertStatus, status_name='Pending', status_description="Alert is in a pending state")
-    create_safe(db.session, AlertStatus, status_name='Resolved', status_description="Alert resolved without escalation")
     create_safe(db.session, AlertStatus, status_name='Closed', status_description="Alert closed, no action taken")
     create_safe(db.session, AlertStatus, status_name='Merged', status_description="Alert merged into an existing case")
     create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
@@ -656,9 +662,13 @@ def create_safe_auth_model():
 
 
 def create_safe_admin(def_org, gadm):
-    user = User.query.filter(
-        User.user == "administrator"
-    ).first()
+    admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
+    admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+
+    user = User.query.filter(or_(
+        User.user == admin_username,
+        User.email == app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+    )).first()
     password = None
 
     if not user:
@@ -666,11 +676,9 @@ def create_safe_admin(def_org, gadm):
         if password is None:
             password = ''.join(random.choices(string.printable[:-6], k=16))
 
-        admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
         if admin_username is None:
             admin_username = 'administrator'
 
-        admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
         if admin_email is None:
             admin_email = 'administrator@localhost'
 

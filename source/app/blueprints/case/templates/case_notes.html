@@ -132,7 +132,6 @@
         setInterval(function() { check_update('notes/state'); }, 3000);
         draw_kanban();
     });
-    var has_deletion_prompt = {% if current_user.has_deletion_confirmation %}true{% else %}false{% endif %};
 </script>
 
 {% endblock javascripts %}
