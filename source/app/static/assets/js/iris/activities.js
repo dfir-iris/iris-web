@@ -9,20 +9,15 @@ Table = $("#activities_table").DataTable({
     bSort: false,
     aoColumns: [
       { "data": "activity_date",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          } },
-      { "data": "user_name",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          } },
+        "render":  $.fn.dataTable.render.text()
+      },
+        {
+            "data": "user_name",
+            "render": $.fn.dataTable.render.text()
+        },
       { "data": "case_name",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          } },
+        "render": $.fn.dataTable.render.text()
+      },
       { "data": "user_input",
         "render": function (data, type, row, meta) {
             if (type === 'display') {
@@ -47,10 +42,8 @@ Table = $("#activities_table").DataTable({
         return data;
       } },
       { "data": "activity_desc",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') { data = sanitizeHTML(data);}
-            return data;
-          } }
+        "render": $.fn.dataTable.render.text()
+      }
     ],
     filter: true,
     info: true,

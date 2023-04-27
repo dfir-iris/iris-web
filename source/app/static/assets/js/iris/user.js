@@ -95,7 +95,10 @@ $('input[type=radio][name=user-has-deletion-prompt]').change(function() {
         return;
     }
     get_request_api('deletion-prompt/set/'+ do_prompt)
-    .done((data) => {
-        notify_auto_api(data);
+    .then((data) => {
+        if (notify_auto_api(data)) {
+            userWhoamiRequest(true);
+        }
     });
+
 });

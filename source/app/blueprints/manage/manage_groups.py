@@ -66,7 +66,7 @@ log = app.logger
 
 
 @manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_index(caseid):
     groups = get_groups_list_hr_perms()
 
@@ -74,7 +74,7 @@ def manage_groups_index(caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_view_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
@@ -93,7 +93,7 @@ def manage_groups_view_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_add_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
@@ -106,7 +106,7 @@ def manage_groups_add_modal(caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_add(caseid):
 
     if not request.is_json:
@@ -135,7 +135,7 @@ def manage_groups_add(caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_update(cur_id, caseid):
 
     if not request.is_json:
@@ -176,7 +176,7 @@ def manage_groups_update(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_delete(cur_id, caseid):
 
     group = get_group(cur_id)
@@ -195,7 +195,7 @@ def manage_groups_delete(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_view(cur_id, caseid):
 
     group = get_group_details(cur_id)
@@ -206,7 +206,7 @@ def manage_groups_view(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_members_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_groups_blueprint.manage_groups_index', cid=caseid))
@@ -221,7 +221,7 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_members_update(cur_id, caseid):
 
     group = get_group_with_members(cur_id)
@@ -248,7 +248,7 @@ def manage_groups_members_update(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
     group = get_group_with_members(cur_id)
@@ -273,7 +273,7 @@ def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_cac_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_groups.manage_groups_index', cid=caseid))
@@ -299,7 +299,7 @@ def manage_groups_cac_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_cac_add_case(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
@@ -345,7 +345,7 @@ def manage_groups_cac_add_case(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_cac_delete_case(cur_id, caseid):
 
     group = get_group_with_members(cur_id)

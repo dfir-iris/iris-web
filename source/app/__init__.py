@@ -28,7 +28,7 @@ from flask_bcrypt import Bcrypt
 from flask_caching import Cache
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, Namespace
 from flask_sqlalchemy import SQLAlchemy
 from functools import partial
 from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
@@ -47,6 +47,10 @@ class ReverseProxied(object):
         if scheme is not None:
             environ['wsgi.url_scheme'] = scheme
         return self._app(environ, start_response)
+
+
+class AlertsNamespace(Namespace):
+    pass
 
 
 APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -118,6 +122,9 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
 
 socket_io = SocketIO(app, cors_allowed_origins="*")
+
+alerts_namespace = AlertsNamespace('/alerts')
+socket_io.on_namespace(alerts_namespace)
 
 
 @app.teardown_appcontext

@@ -199,7 +199,7 @@ function preview_asset_description(no_btn_update) {
     if(!$('#container_asset_description').is(':visible')) {
         asset_desc = g_asset_desc_editor.getValue();
         converter = get_showdown_convert();
-        html = converter.makeHtml(asset_desc);
+        html = converter.makeHtml(do_md_filter_xss(asset_desc));
         asset_desc_html = do_md_filter_xss(html);
         $('#target_asset_desc').html(asset_desc_html);
         $('#container_asset_description').show();

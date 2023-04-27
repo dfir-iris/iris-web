@@ -855,11 +855,9 @@ body {
   .sidebar_minimize{
     .main-panel {
       width: calc(100% - 75px);
-      transition: all .3s;
     }
     .logo-header {
       width: 75px;
-      transition: all .3s;
       padding: 0px;
       text-align: center;
       .big-logo {
@@ -885,10 +883,8 @@ body {
     }
     .sidebar{
       width: 75px;
-      transition: all .3s;
       .sidebar-wrapper{
         width: 75px;
-        transition: all .3s;
         .user {
           padding-left: 0px;
           padding-right: 0px;
@@ -914,7 +910,6 @@ body {
             }
             .badge, span, .caret, p {
               display: none;
-              transition: all .3s;
             }
             .sidebar-mini-icon{
               display: block !important;

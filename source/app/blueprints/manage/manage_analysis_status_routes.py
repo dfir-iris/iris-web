@@ -23,7 +23,7 @@ from werkzeug import Response
 
 from app.datamgmt.case.case_assets_db import get_compromise_status_dict, get_case_outcome_status_dict
 from app.models.models import AnalysisStatus
-from app.util import api_login_required
+from app.util import api_login_required, ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -34,7 +34,7 @@ manage_anastatus_blueprint = Blueprint('manage_anastatus',
 
 # CONTENT ------------------------------------------------
 @manage_anastatus_blueprint.route('/manage/analysis-status/list', methods=['GET'])
-@api_login_required
+@ac_api_requires(no_cid_required=True)
 def list_anastatus(caseid):
     lstatus = AnalysisStatus.query.with_entities(
         AnalysisStatus.id,
@@ -47,7 +47,7 @@ def list_anastatus(caseid):
 
 
 @manage_anastatus_blueprint.route('/manage/compromise-status/list', methods=['GET'])
-@api_login_required
+@ac_api_requires(no_cid_required=True)
 def list_compr_status(caseid):
     compro_status = get_compromise_status_dict()
 
@@ -55,7 +55,7 @@ def list_compr_status(caseid):
 
 
 @manage_anastatus_blueprint.route('/manage/outcome-status/list', methods=['GET'])
-@api_login_required
+@ac_api_requires(no_cid_required=True)
 def list_outcome_status(caseid) -> Response:
     """ Returns a list of outcome status
 
@@ -72,7 +72,7 @@ def list_outcome_status(caseid) -> Response:
 
 
 @manage_anastatus_blueprint.route('/manage/analysis-status/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(no_cid_required=True)
 def view_anastatus(cur_id, caseid):
     lstatus = AnalysisStatus.query.with_entities(
         AnalysisStatus.id,

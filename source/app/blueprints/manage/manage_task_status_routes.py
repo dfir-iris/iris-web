@@ -21,7 +21,7 @@
 from flask import Blueprint
 
 from app.models.models import TaskStatus
-from app.util import api_login_required
+from app.util import api_login_required, ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -32,7 +32,7 @@ manage_task_status_blueprint = Blueprint('manage_task_status',
 
 # CONTENT ------------------------------------------------
 @manage_task_status_blueprint.route('/manage/task-status/list', methods=['GET'])
-@api_login_required
+@ac_api_requires(no_cid_required=True)
 def list_task_status(caseid):
     lstatus = TaskStatus.query.with_entities(
         TaskStatus.id,
@@ -48,7 +48,7 @@ def list_task_status(caseid):
 
 # CONTENT ------------------------------------------------
 @manage_task_status_blueprint.route('/manage/task-status/<int:cur_id>', methods=['GET'])
-@api_login_required
+@ac_api_requires(no_cid_required=True)
 def view_task_status(cur_id, caseid):
     lstatus = TaskStatus.query.with_entities(
         TaskStatus.id,

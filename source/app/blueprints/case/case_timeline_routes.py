@@ -130,8 +130,7 @@ def case_comments_get(cur_id, caseid):
     if event_comments is None:
         return response_error('Invalid event ID')
 
-    res = [com._asdict() for com in event_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(event_comments))
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
@@ -555,7 +554,7 @@ def case_filter_timeline(caseid):
         ras = row._asdict()
 
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
-        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f') if ras['event_date_wtz'] else None
         ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S')
 
         if row.event_id not in events_list:

@@ -3686,9 +3686,11 @@ body {
     display: inline-flex;
 }
 
-.avatar-group .avatar+.avatar {
-    margin-left: -.75rem;
+.avatar-group .avatar + .avatar {
+   margin-left: -1.5rem;
+   margin-top: 1.1rem;
 }
+
 
 .avatar-group .avatar-xs+.avatar-xs {
     margin-left: -.40625rem;
@@ -8142,7 +8144,7 @@ body .badge-danger {
 }
 
 .modal-content {
-    border-radius: .4rem !important;
+    border-radius: 10px !important;
     border: 0 !important;
 }
 
@@ -8277,10 +8279,10 @@ body .badge-danger {
     margin-left: 8%;
     margin-bottom: 0.8%;
     background: #ffffff;
-    border-radius: 12px;
-    padding: 12px;
+    border-radius: 25px;
+    padding: 18px;
     position: relative;
-    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.24);
 }
 
 .timeline>li>.timeline-even {
@@ -15484,7 +15486,7 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(255, 255, 255, 0);
   }
 }
 @-moz-keyframes yellow-fade {
@@ -15492,7 +15494,7 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(255, 255, 255, 0);
   }
 }
 @keyframes yellow-fade {
@@ -15500,14 +15502,14 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(255, 255, 255, 0);
   }
 }
 .fade-it {
-  -webkit-animation: yellow-fade 2s ease-in-out 0s;
-  -moz-animation: yellow-fade 2s ease-in-out 0s;
-  -o-animation: yellow-fade 2s ease-in-out 0s;
-  animation: yellow-fade 2s ease-in-out 0s;
+  -webkit-animation: yellow-fade 1s ease-in-out 0s;
+  -moz-animation: yellow-fade 1s ease-in-out 0s;
+  -o-animation: yellow-fade 1s ease-in-out 0s;
+  animation: yellow-fade 1s ease-in-out 0s;
 }
 
 .modal { overflow: auto !important; }
@@ -15792,4 +15794,13 @@ td.dt-nowrap { white-space: nowrap }
 .swal-button.swal-button--confirm:not(.swal-button--danger),
 .swal-button:not(.swal-button--confirm, .swal-button--cancel) {
   background-color: #053c80e8;
+}
+
+.modal_comment.modal.show {
+    display: none;
+}
+
+.custom-saved-filters {
+    max-height: 60vh;
+    overflow-y: auto;
 }

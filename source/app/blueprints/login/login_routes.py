@@ -50,6 +50,7 @@ login_blueprint = Blueprint(
 
 log = app.logger
 
+
 # CONTENT ------------------------------------------------
 # Authenticate user
 if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
@@ -57,29 +58,20 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
     def login():
         session.permanent = True
 
-        # cut the page for authenticated users
         if current_user.is_authenticated:
-
             return redirect(url_for('index.index'))
 
-        # Declare the login form
         form = LoginForm(request.form)
-
-        # Flask message injected into the page, in case of any errors
         msg = None
-        c_exists = False
 
-        # check if both http method is POST and form is valid on submit
         if form.validate_on_submit():
+            username = form.username.data
+            password = form.password.data
 
-            # assign form data to variables
-            username = request.form.get('username', '', type=str)
-            password = request.form.get('password', '', type=str)
-
-            # filter User out of database through username
             user = User.query.filter(
                 User.user == username,
-                User.active == True
+                User.active.is_(True),
+                User.is_service_account.is_(False)
             ).first()
 
             if user:
@@ -104,7 +96,8 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
                     return wrap_login_user(user)
 
                 else:
-                    track_activity("wrong login password for user '{}' using local auth".format(username), ctx_less=True,
+                    track_activity("wrong login password for user '{}' using local auth".format(username),
+                                   ctx_less=True,
                                    display_in_ui=False)
                     msg = "Wrong credentials. Please try again."
 

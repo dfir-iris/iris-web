@@ -68,7 +68,7 @@ def get_random_string(length):
 
 # CONTENT ------------------------------------------------
 @manage_templates_blueprint.route('/manage/templates')
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_report_templates(caseid, url_redir):
     if url_redir:
         redirect(url_for('manage_templates.manage_report_templates', cid=caseid))
@@ -81,7 +81,7 @@ def manage_report_templates(caseid, url_redir):
 
 
 @manage_templates_blueprint.route('/manage/templates/list')
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def report_templates_list(caseid):
     # Get all templates
     templates = CaseTemplateReport.query.with_entities(
@@ -106,7 +106,7 @@ def report_templates_list(caseid):
 
 
 @manage_templates_blueprint.route('/manage/templates/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def add_template_modal(caseid):
     report_template = CaseTemplateReport()
     form = AddReportTemplateForm()
@@ -117,7 +117,7 @@ def add_template_modal(caseid):
 
 
 @manage_templates_blueprint.route('/manage/templates/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def add_template(caseid):
 
     report_template = CaseTemplateReport()
@@ -169,7 +169,7 @@ def add_template(caseid):
 
 
 @manage_templates_blueprint.route('/manage/templates/download/<report_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def download_template(report_id, caseid):
     if report_id != 0:
         report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
@@ -185,7 +185,7 @@ def download_template(report_id, caseid):
 
 
 @manage_templates_blueprint.route('/manage/templates/delete/<report_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def delete_template(report_id, caseid):
     error = None
 
