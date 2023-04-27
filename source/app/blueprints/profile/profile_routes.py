@@ -148,7 +148,7 @@ def update_user_view(caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@profile_blueprint.route('/user/theme/set/<theme>', methods=['GET'])
+@profile_blueprint.route('/user/theme/set/<string:theme>', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
 def profile_set_theme(theme, caseid):
     if theme not in ['dark', 'light']:
@@ -178,6 +178,22 @@ def profile_set_deletion_prompt(val, caseid):
     db.session.commit()
 
     return response_success('Deletion prompt {}'.format('enabled' if val == 'true' else 'disabled'))
+
+
+@profile_blueprint.route('/user/mini-sidebar/set/<string:val>', methods=['GET'])
+@ac_api_requires(no_cid_required=True)
+def profile_set_minisidebar(val, caseid):
+    if val not in ['true', 'false']:
+        return response_error('Invalid data')
+
+    user = get_user(current_user.id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    user.has_mini_sidebar = (val == 'true')
+    db.session.commit()
+
+    return response_success('Mini sidebar {}'.format('enabled' if val == 'true' else 'disabled'))
 
 
 @profile_blueprint.route('/user/refresh-permissions', methods=['GET'])

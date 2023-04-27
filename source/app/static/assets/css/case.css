@@ -334,7 +334,7 @@
           &:not(.active){
             .nav-link {
               color: rgba(255, 255, 255, 0.85) !important;
-              transition: all .3s;
+
               &:hover {
                 color: #fff !important;
               }
@@ -505,7 +505,7 @@
                 height: fit-content;
                 width: unset;
                 transform: rotate(0deg);
-                transition: all .3s;
+
               }
             }
           }

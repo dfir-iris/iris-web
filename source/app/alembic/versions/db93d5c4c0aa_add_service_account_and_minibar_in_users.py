@@ -1,4 +1,4 @@
-"""Add service account in users
+"""Add service account and minibar in users
 
 Revision ID: db93d5c4c0aa
 Revises: 2a4a8330b908
@@ -22,10 +22,18 @@ def upgrade():
         op.add_column('user',
                       sa.Column('is_service_account', sa.Boolean, default=False))
 
+    if not _table_has_column('user', 'has_mini_sidebar'):
+        op.add_column('user',
+                      sa.Column('has_mini_sidebar', sa.Boolean, default=False))
+
     pass
 
 
 def downgrade():
     if _table_has_column('user', 'is_service_account'):
         op.drop_column('user', 'is_service_account')
+
+    if _table_has_column('user', 'has_mini_sidebar'):
+        op.drop_column('user', 'has_mini_sidebar')
+
     pass

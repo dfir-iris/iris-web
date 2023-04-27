@@ -478,7 +478,7 @@ body {
     display: flex;
     align-items: center;
     position: relative;
-    transition: all .3s;
+
 }
 
 .logo-header .big-logo {
@@ -600,7 +600,7 @@ body {
     -webkit-box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
     -moz-box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
     box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
-    transition: all .3s;
+
 }
 
 .sidebar.full-height,
@@ -672,7 +672,7 @@ body {
     overflow: auto;
     width: 100%;
     z-index: 4;
-    transition: all .3s;
+
 }
 
 .sidebar .sidebar-wrapper .sidebar-content,
@@ -1263,7 +1263,7 @@ body {
     height: 100vh;
     min-height: 100%;
     float: right;
-    transition: all .3s;
+
 }
 
 .main-panel>.content {
@@ -1546,11 +1546,10 @@ body {
 @media screen and (min-width: 991px) {
     .sidebar_minimize .main-panel {
         width: calc(100% - 75px);
-        transition: all .3s;
     }
     .sidebar_minimize .logo-header {
         width: 75px;
-        transition: all .3s;
+
         padding: 0px;
         text-align: center;
     }
@@ -1574,11 +1573,11 @@ body {
     }
     .sidebar_minimize .sidebar {
         width: 75px;
-        transition: all .3s;
+
     }
     .sidebar_minimize .sidebar .sidebar-wrapper {
         width: 75px;
-        transition: all .3s;
+
     }
     .sidebar_minimize .sidebar .sidebar-wrapper .user {
         padding-left: 0px;
@@ -1608,7 +1607,7 @@ body {
     .sidebar_minimize .sidebar .sidebar-wrapper .nav-item a .caret,
     .sidebar_minimize .sidebar .sidebar-wrapper .nav-item a p {
         display: none;
-        transition: all .3s;
+
     }
     .sidebar_minimize .sidebar .sidebar-wrapper .nav-item a .sidebar-mini-icon {
         display: block !important;
@@ -4120,7 +4119,7 @@ label {
 .card-tasks .card-body .table td .btn {
     font-size: 15px;
     opacity: 0.7;
-    transition: all .3s;
+
 }
 
 .card-tasks .card-body .table td:hover .btn {
@@ -7363,7 +7362,7 @@ body .badge-danger {
 .btn:hover,
 .btn:focus {
     opacity: 0.9;
-    transition: all .3s;
+
 }
 
 .btn .btn-label {
@@ -14552,12 +14551,12 @@ table.dataTable.stripe tbody > tr.selected {
     padding: 10px 18px;
     height: unset;
     border-radius: 4px;
-    transition: all .3s;
+
 }
 
 .secondary-header .nav-bottom .page-navigation.page-navigation-style-2>.nav-item>.nav-link .menu-title {
     font-weight: 400;
-    transition: all .3s;
+
 }
 
 .secondary-header .nav-bottom .page-navigation.page-navigation-style-2>.nav-item>.nav-link:after {
@@ -15107,7 +15106,7 @@ table.dataTable.stripe tbody > tr.selected {
   background-size: cover;
   background-position: center center;
   box-shadow: -10px 0px 15px 0px rgba(69, 65, 78, 0.1);
-  transition: all .3s;
+
   z-index: 1101;
   padding: 20px 20px 0; }
   .quick-sidebar .scroll-wrapper .scroll-element {
@@ -15189,7 +15188,7 @@ table.dataTable.stripe tbody > tr.selected {
   background-size: cover;
   background-position: center center;
   box-shadow: -10px 0px 15px 0px rgba(69, 65, 78, 0.1);
-  transition: all .3s;
+
   z-index: 1001;
   padding: 20px 20px 0; }
   .ds-sidebar .scroll-wrapper .scroll-element {

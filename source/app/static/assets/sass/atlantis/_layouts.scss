@@ -84,7 +84,7 @@ body {
   display: flex;
   align-items: center;
   position: relative;
-  transition: all .3s;
+
   .big-logo {
     margin-right: 8px;
     &:hover {
@@ -179,7 +179,7 @@ body {
   -webkit-box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
   -moz-box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
   box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
-  transition: all .3s;
+
   &.full-height {
     margin-top: 0;
   }
@@ -233,7 +233,7 @@ body {
     width: 100%;
     z-index: 4;
     padding-bottom: 100px;
-    transition: all .3s;
+
     .sidebar-content{
       padding-top: 0px;
       padding-bottom: 55px;
@@ -595,7 +595,7 @@ body {
   height: 100vh;
   min-height: 100%;
   float: right;
-  transition: all .3s;
+
   > .content {
     padding: 0px !important;
     min-height: calc(100% - 123px);

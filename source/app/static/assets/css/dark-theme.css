@@ -423,7 +423,7 @@ body .select2-container--default .select2-selection--single .select2-selection__
   background-size: cover;
   background-position: center center;
   box-shadow: none;
-  transition: all .3s;
+
   z-index: 1101;
   padding: 20px 20px 0;
 }
@@ -450,7 +450,7 @@ body .select2-container--default .select2-selection--single .select2-selection__
   background-size: auto;
   background-size: cover;
   background-position: center center;
-  transition: all .3s;
+
   box-shadow: none;
   z-index: 1001;
   padding: 20px 20px 0;

@@ -30,6 +30,7 @@ function setCookie(name,value,days) {
     }
     document.cookie = name + "=" + (value || "")  + expires + "; path=/";
 }
+
 function getCookie(name) {
     var nameEQ = name + "=";
     var ca = document.cookie.split(';');
@@ -1369,6 +1370,22 @@ function userWhoamiRequest(force = false) {
       });
   }
 }
+
+$('.toggle-sidebar').on('click', function() {
+    if ($('.wrapper').hasClass('sidebar_minimize')) {
+        $('.wrapper').removeClass('sidebar_minimize');
+        get_request_api('/user/mini-sidebar/set/false')
+            .then((data) => {
+                notify_auto_api(data, true);
+            });
+    } else {
+        $('.wrapper').addClass('sidebar_minimize');
+        get_request_api('/user/mini-sidebar/set/true')
+            .then((data) => {
+                notify_auto_api(data, true);
+            });
+    }
+});
 
 function do_deletion_prompt(message, force_prompt=false) {
     if (userWhoami.has_deletion_confirmation || force_prompt) {
