@@ -420,18 +420,22 @@ $(document).ready(function(){
                 return ret;
             }
           },
-          { "data": "ioc_links",
+        {
+            "data": "ioc_links",
             "render": function (data, type, row, meta) {
-              if ((type === 'filter'  || type === 'display') && data != null) {
-                datas = "";
-                for (ds in data) {
-                    datas += '<span class="badge badge-light">'+ sanitizeHTML(data[ds]['ioc_value']) + '</span>';
+                if ((type === 'filter' || type === 'display') && data != null) {
+                    datas = "";
+                    for (ds in data) {
+                        datas += '<span class="badge badge-light">' + sanitizeHTML(data[ds]['ioc_value']) + '</span>';
+                    }
+                    return datas;
+                } else if (type === 'export' && data != null) {
+                    let datas = data.map(ds => sanitizeHTML(ds['ioc_value'])).join(',');
+                    return datas;
                 }
-                return datas;
-              }
-              return data;
+                return data;
             }
-          },
+        },
           { "data": "asset_tags",
             "render": function (data, type, row, meta) {
               if (type === 'display' && data != null  ) {
