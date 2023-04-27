@@ -205,6 +205,7 @@ async function mergeMultipleAlertsModal() {
             $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in an existing case`);
             $('#escalateModalExplanation').text('These alerts will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
             $('#mergeAlertCaseSelectSection').show();
+            $('#mergeAlertCaseTemplateSection').hide();
             $('#modalEscalateCaseTitleContainer').hide();
             $('#mergeAlertCaseSelect').selectpicker('refresh');
             $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
@@ -213,6 +214,7 @@ async function mergeMultipleAlertsModal() {
             $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in new case`);
             $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
             $('#mergeAlertCaseSelectSection').hide();
+            $('#mergeAlertCaseTemplateSection').show();
             $('#modalEscalateCaseTitleContainer').show();
             escalateButton.data("merge", false);
         }
@@ -328,6 +330,7 @@ async function mergeAlertModal(alert_id) {
             $('#escalateModalLabel').text(`Merge alert #${alert_id} in existing case`);
             $('#escalateModalExplanation').text('This alert will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
             $('#mergeAlertCaseSelectSection').show();
+            $('#mergeAlertCaseTemplateSection').hide();
             $('#modalEscalateCaseTitleContainer').hide();
             $('#mergeAlertCaseSelect').selectpicker('refresh');
             $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
@@ -336,6 +339,7 @@ async function mergeAlertModal(alert_id) {
             $('#escalateModalLabel').text(`Merge alert #${alert_id} in new case`);
             $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
             $('#mergeAlertCaseSelectSection').hide();
+            $('#mergeAlertCaseTemplateSection').show();
             $('#modalEscalateCaseTitleContainer').show();
             escalateButton.data("merge", false);
         }

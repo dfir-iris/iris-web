@@ -428,8 +428,6 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     for ioc_uuid in iocs_list:
         for alert_ioc in alert.iocs:
             if str(alert_ioc.ioc_uuid) == ioc_uuid:
-                # TODO: Transform the ioc-enrichment to a custom attribute in the ioc
-                # del alert_ioc['ioc_enrichment']
 
                 ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
                 add_ioc_link(ioc.ioc_id, case.case_id)
@@ -440,9 +438,6 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         for alert_asset in alert.assets:
             if str(alert_asset.asset_uuid) == asset_uuid:
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
-
-                # TODO: Transform the asset-enrichment to a custom attribute in the asset if possible
-                # del alert_asset['asset_enrichment']
 
                 asset = create_asset(asset=alert_asset,
                                      caseid=case.case_id,
@@ -467,7 +462,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
             'event_date_wtz': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f"),
             'event_iocs': ioc_links,
             'event_assets': asset_links,
-            'event_tags': alert.alert_tags,
+            'event_tags': alert.alert_tags + ',alert',
             'event_tz': '+00:00',
             'event_category_id': unspecified_cat.id,
             'event_in_graph': True,
