@@ -183,7 +183,6 @@ def add_ioc(ioc, user_id, caseid):
     db_ioc = find_ioc(ioc.ioc_value, ioc.ioc_type_id)
 
     if not db_ioc:
-        print('adding ioc')
         db.session.add(ioc)
 
         update_ioc_state(caseid=caseid)
@@ -191,7 +190,6 @@ def add_ioc(ioc, user_id, caseid):
         return ioc, False
 
     else:
-        print('ioc already exists')
         # IoC already exists
         return db_ioc, True
 

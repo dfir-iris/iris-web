@@ -208,13 +208,13 @@ async function mergeMultipleAlertsModal() {
             $('#modalEscalateCaseTitleContainer').hide();
             $('#mergeAlertCaseSelect').selectpicker('refresh');
             $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
-            escalateButton.attr("data-merge", true);
+            escalateButton.data("merge", true);
         } else {
             $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in new case`);
             $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
             $('#mergeAlertCaseSelectSection').hide();
             $('#modalEscalateCaseTitleContainer').show();
-            escalateButton.attr("data-merge", false);
+            escalateButton.data("merge", false);
         }
     });
 
@@ -317,13 +317,13 @@ async function mergeAlertModal(alert_id) {
             $('#modalEscalateCaseTitleContainer').hide();
             $('#mergeAlertCaseSelect').selectpicker('refresh');
             $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
-            escalateButton.attr("data-merge", true);
+            escalateButton.data("merge", true);
         } else {
             $('#escalateModalLabel').text(`Merge alert #${alert_id} in new case`);
             $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
             $('#mergeAlertCaseSelectSection').hide();
             $('#modalEscalateCaseTitleContainer').show();
-            escalateButton.attr("data-merge", false);
+            escalateButton.data("merge", false);
         }
     });
 }
@@ -1211,10 +1211,12 @@ function resetSavedFilters(queryParams = null, replaceState = true) {
 
 $("#escalateOrMergeButton").on("click", () => {
 
-    const alertId = $("#escalateOrMergeButton").data("alert-id");
+  const alertId = $("#escalateOrMergeButton").data("alert-id");
   const merge = $("#escalateOrMergeButton").data("merge");
   const multiMerge = $("#escalateOrMergeButton").data("multi-merge");
 
+  console.log(merge);
+  console.log(typeof merge);
   escalateOrMergeAlert(alertId, merge, multiMerge);
 
 });

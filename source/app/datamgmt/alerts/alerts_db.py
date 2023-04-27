@@ -460,6 +460,8 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
             'event_tags': alert.alert_tags,
             'event_tz': '+00:00',
             'event_category_id': unspecified_cat.id,
+            'event_in_graph': True,
+            'event_in_summary': True
         }, session=db.session)
 
         event.case_id = case.case_id
@@ -568,6 +570,8 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
             'event_tags': alert.alert_tags,
             'event_tz': '+00:00',
             'event_category_id': unspecified_cat.id,
+            'event_in_graph': True,
+            'event_in_summary': True
         }, session=db.session)
 
         event.case_id = case.case_id
