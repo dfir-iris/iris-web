@@ -16,7 +16,7 @@ def get_filter_by_id(filter_id):
     """
     saved_filter = SavedFilter.query.filter(SavedFilter.filter_id == filter_id).first()
     if saved_filter:
-        if saved_filter.filter_is_private and saved_filter.created_by != current_user.user_id:
+        if saved_filter.filter_is_private and saved_filter.created_by != current_user.id:
             return None
 
     return saved_filter

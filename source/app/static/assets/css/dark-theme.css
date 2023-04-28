@@ -1,6 +1,6 @@
 body {
 	background: rgba(0,0,0,1);
-	background: radial-gradient(circle at center 200%, rgb(1, 1, 26) 0%,rgb(0, 0, 0) 70%, rgb(0, 0, 0) 100%);
+	background: #121622
 }
 
 body .main-header {
@@ -8,11 +8,11 @@ body .main-header {
 }
 
 body .main-panel {
-    color: rgba(225, 226, 228, 0.91) !important;
+    color: #f0f0f0 !important;
 }
 
 body .main-panel {
-    color: #d9d6d6 !important;
+    color: #f0f0f0 !important;
 }
 
 .logo-header[data-background-color="blue"] {
@@ -118,7 +118,7 @@ body .page-category {
 }
 
 body a {
-    color: #9FB2FF;
+    color: #66aaff;
 }
 
 body table.dataTable tbody > tr.selected,
@@ -539,8 +539,8 @@ body .form-check [type="checkbox"] + .form-check-sign {
 
 body .bg-primary-gradient{
     background: #1f283e !important;
-    background: -webkit-linear-gradient(legacy-direction(-45deg), #010409, #1f283e) !important;
-    background: linear-gradient(-45deg, #010409, #1f283e) !important;
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #021223, #1f283e) !important;
+    background: linear-gradient(-45deg, #021223, #1f283e) !important;
 }
 
 body .modal-header,
@@ -793,7 +793,7 @@ pre {
 }
 
 .text-muted {
-  color: #9f9f9f !important;
+  color: #c7c7c7 !important;
 }
 
 .sidebar .nav>.nav-item a i, .sidebar .nav>.nav-item a i {
@@ -891,5 +891,15 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 }
 
 .alert-card-done {
-  background-color: #5e5c5c;
+    background: #1e2226 !important;
+}
+
+.btn-alert-danger {
+    background: #c62828 !important;
+    border-color: #c62828 !important;
+}
+
+.btn-alert-success {
+    background: #43a047 !important;
+    border-color: #43a047 !important;
 }

@@ -15485,7 +15485,7 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: rgba(255, 255, 255, 0);
+    background: rgba(150, 150, 150, 0);
   }
 }
 @-moz-keyframes yellow-fade {
