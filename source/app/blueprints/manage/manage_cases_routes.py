@@ -275,14 +275,14 @@ def api_add_case(caseid):
         case = case_schema.load(request_data)
         case.owner_id = current_user.id
 
-        if len(case_template_id) > 0:
+        if case_template_id and len(case_template_id) > 0:
             case = case_template_pre_modifier(case, case_template_id)
             if case is None:
                 return response_error(msg=f"Invalid Case template ID {case_template_id}", status=400)
 
         case.save()
 
-        if len(case_template_id) > 0:
+        if case_template_id and len(case_template_id) > 0:
             try:
                 case, logs = case_template_post_modifier(case, case_template_id)
                 if len(logs) > 0:

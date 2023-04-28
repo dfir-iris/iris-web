@@ -240,9 +240,7 @@ def get_case_access(request_data, access_level, from_api=False, no_cid_required=
                 return True, None, False
 
     elif not caseid and no_cid_required is True:
-        if request_data.is_json and request_data.json.get('cid'):
-            request_data.json.pop('cid')
-        caseid = current_user.ctx_case if current_user.ctx_case else 1
+        return False, None, True
 
     case = None
 
@@ -608,14 +606,20 @@ def ac_api_requires(*permissions, no_cid_required=False):
                 return response_error("Authentication required", status=401)
 
             else:
-
+                print(request.full_path)
                 redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
-                if not caseid or redir:
+
+                if not (caseid or redir) and not no_cid_required:
                     return response_error("Invalid case ID", status=404)
+
+                print(request.full_path)
                 kwargs.update({"caseid": caseid})
+                print(request.full_path)
 
                 if 'permissions' not in session:
                     session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+
+                print(session['permissions'])
 
                 if permissions:
 
