@@ -63,7 +63,11 @@ def _retrieve_user_by_username(username):
 
 def _render_template_login(form, msg):
     organisation_name = app.config.get('ORGANISATION_NAME')
-    return render_template('login.html', form=form, msg=msg, organisation_name=organisation_name)
+    login_banner = app.config.get('LOGIN_BANNER_TEXT')
+    ptfm_contact = app.config.get('LOGIN_PTFM_CONTACT')
+
+    return render_template('login.html', form=form, msg=msg, organisation_name=organisation_name,
+                           login_banner=login_banner, ptfm_contact=ptfm_contact)
 
 
 def _authenticate_ldap(form, username, password):

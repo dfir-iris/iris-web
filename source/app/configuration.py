@@ -339,6 +339,8 @@ class Config:
     ASSET_SHOW_PATH = "/static/assets/img/graph"
 
     ORGANISATION_NAME = config.load('IRIS', 'ORGANISATION_NAME', fallback='')
+    LOGIN_BANNER_TEXT = config.load('IRIS', 'LOGIN_BANNER_TEXT', fallback='')
+    LOGIN_PTFM_CONTACT = config.load('IRIS', 'LOGIN_PTFM_CONTACT', fallback='Please contact the platform administrator')
 
     UPDATE_DIR_NAME = '_updates_'
 

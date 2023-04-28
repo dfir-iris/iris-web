@@ -17,6 +17,7 @@
                 <img src="/static/assets/img/logo-white.png">
             </div>
             <h3 class="text-white">{{ organisation_name }}</h3>
+            <span class="text-white text-center mt-4">{{ login_banner|replace('\n', '<br>')|safe }}</span>
         </div>
         <div class="login__right_part col-xs-12 col-md-4">
             <h3 class="login__form_title">Sign In</h3>
@@ -46,10 +47,11 @@
                 </div>
             </form>
 
-
             <div class="login__contact_container">
-                <span>Don't have an account yet ?</span><br/>
-                Please contact the platform administrator
+                {% if ptfm_contact %}
+                    <span>Don't have an account yet ?</span><br/>
+                    {{ ptfm_contact }}
+                {% endif %}
             </div>
         </div>
     </div>
