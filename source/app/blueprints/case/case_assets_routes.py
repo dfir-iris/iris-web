@@ -152,11 +152,8 @@ def case_assets_state(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def add_asset_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
-
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def add_asset_modal(caseid):
     form = AssetBasicForm()
 
     form.asset_type_id.choices = get_assets_types()

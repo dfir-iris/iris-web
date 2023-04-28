@@ -130,10 +130,8 @@ def case_task_statusupdate(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def case_add_task_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_add_task_modal(caseid):
 
     task = CaseTasks()
     task.custom_attributes = get_default_custom_attributes('task')

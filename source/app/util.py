@@ -208,74 +208,111 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
-
+def get_caseid_from_request_data(request_data, no_cid_required):
     caseid = request_data.args.get('cid', default=None, type=int)
     redir = False
-    if not caseid and no_cid_required is False:
+    has_access = True
+
+    if not caseid and not no_cid_required:
         try:
 
             js_d = request_data.get_json()
+
             if js_d:
                 caseid = js_d.get('cid')
                 request_data.json.pop('cid')
-            else:
-                if current_user.ctx_case is None:
-                    current_user.ctx_case = 1
 
-                caseid = current_user.ctx_case
-                redir = True
+            else:
+                redir, caseid, has_access = set_caseid_from_current_user()
 
         except Exception as e:
-            cookie_session = request_data.cookies.get('session')
-            if not cookie_session:
-                # API, so just use the current_user context
-                if current_user.ctx_case is None:
-                    current_user.ctx_case = 1
+            redir, caseid, has_access = handle_exception(e, request_data)
 
-                caseid = current_user.ctx_case
+    return redir, caseid, has_access
 
-            else:
-                log.error(traceback.print_exc())
-                return True, None, False
 
-    elif not caseid and no_cid_required is True:
-        return False, None, True
+def set_caseid_from_current_user():
+    redir = False
+    if current_user.ctx_case is None:
+        redir = True
+        current_user.ctx_case = 1
+    caseid = current_user.ctx_case
+    return redir, caseid, True
 
-    case = None
 
-    restricted_access = ''
-    if not access_level:
-        access_level = [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+def handle_exception(e, request_data):
+    cookie_session = request_data.cookies.get('session')
+    if not cookie_session:
+        return set_caseid_from_current_user()
+
+    log_exception_and_error(e)
+    return True, 0, False
+
+
+def log_exception_and_error(e):
+    log.exception(e)
+    log.error(traceback.print_exc())
+
+
+def handle_no_cid_required(request, no_cid_required):
+    if no_cid_required:
+        js_d = request.get_json(silent=True)
+        caseid = js_d.get('cid') if js_d else None
+        if caseid:
+            request.json.pop('cid')
+        return False, caseid, True
+
+    return False, None, False
+
+
+def update_session(caseid, eaccess_level, from_api):
+    if not from_api:
+        restricted_access = ''
+        if not eaccess_level:
+            eaccess_level = [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+
+        if CaseAccessLevel.read_only.value == eaccess_level:
+            restricted_access = '<i class="ml-2 text-warning mt-1 fa-solid fa-lock" title="Read only access"></i>'
+
+        update_current_case(caseid, restricted_access)
+
+
+def update_current_case(caseid, restricted_access):
+    if session['current_case']['case_id'] != caseid:
+        case = get_case(caseid)
+        session['current_case'] = {
+            'case_name': "{}".format(case.name),
+            'case_info': "(#{} - {})".format(caseid, case.client.name),
+            'case_id': caseid,
+            'access': restricted_access
+        }
+
+
+def update_denied_case(caseid, from_api):
+    if not from_api:
+        session['current_case'] = {
+            'case_name': "{} to #{}".format("Access denied", caseid),
+            'case_info': "",
+            'case_id': caseid,
+            'access': '<i class="ml-2 text-danger mt-1 fa-solid fa-ban"></i>'
+        }
+
+
+def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
+    redir, caseid, has_access = get_caseid_from_request_data(request_data, no_cid_required)
+
+    redir, ctmp, has_access = handle_no_cid_required(request, no_cid_required)
+    if ctmp is not None:
+        return redir, ctmp, has_access
 
     eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
-    if eaccess_level is None:
-        if not from_api:
-            session['current_case'] = {
-                'case_name': "{} to #{}".format("Access denied", caseid),
-                'case_info': "",
-                'case_id': caseid,
-                'access': '<i class="ml-2 text-danger fa-solid fa-ban"></i>'
-            }
-
+    if eaccess_level is None and access_level != []:
+        update_denied_case(caseid, from_api)
         return redir, caseid, False
 
-    if not from_api:
-        if CaseAccessLevel.read_only.value == eaccess_level:
-            restricted_access = '<i class="ml-2 text-warning fa-solid fa-lock" title="Read only access"></i>'
+    update_session(caseid, eaccess_level, from_api)
 
-            session['current_case']['access'] = restricted_access
-
-        if session['current_case']['case_id'] != caseid:
-            case = get_case(caseid)
-            session['current_case'] = {
-                'case_name': "{}".format(case.name),
-                'case_info': "(#{} - {})".format(caseid, case.client.name),
-                'case_id': caseid,
-                'access': restricted_access
-            }
-
-    if not case and not case_exists(caseid):
+    if not get_case(caseid):
         log.warning('No case found. Using default case')
         return True, 1, True
 
@@ -606,20 +643,19 @@ def ac_api_requires(*permissions, no_cid_required=False):
                 return response_error("Authentication required", status=401)
 
             else:
-                print(request.full_path)
-                redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
+                try:
+                    redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
+                except Exception as e:
+                    log.exception(e)
+                    return response_error("Invalid data. Check server logs", status=500)
 
                 if not (caseid or redir) and not no_cid_required:
                     return response_error("Invalid case ID", status=404)
 
-                print(request.full_path)
                 kwargs.update({"caseid": caseid})
-                print(request.full_path)
 
                 if 'permissions' not in session:
                     session['permissions'] = ac_get_effective_permissions_of_user(current_user)
-
-                print(session['permissions'])
 
                 if permissions:
 

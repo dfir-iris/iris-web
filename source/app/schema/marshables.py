@@ -657,8 +657,6 @@ class ContactSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
 
-
-
 class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
     name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
     name_expanded = auto_field('name_expanded', required=True, validate=Length(min=2), allow_none=False)

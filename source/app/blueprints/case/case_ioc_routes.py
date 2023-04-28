@@ -260,10 +260,8 @@ def case_upload_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def case_add_ioc_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_add_ioc_modal(caseid):
 
     form = ModalAddCaseIOCForm()
     form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]

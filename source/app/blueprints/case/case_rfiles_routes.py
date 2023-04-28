@@ -155,10 +155,8 @@ def case_edit_rfile_modal(cur_id, caseid, url_redir):
 
 
 @case_rfiles_blueprint.route('/case/evidences/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def case_add_rfile_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_add_rfile_modal(caseid):
 
     return render_template("modal_add_case_rfile.html", rfile=None, attributes=get_default_custom_attributes('evidence'))
 

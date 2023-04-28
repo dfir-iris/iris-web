@@ -771,10 +771,8 @@ def case_edit_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def case_add_event_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_add_event_modal(caseid):
 
     event = CasesEvent()
     event.custom_attributes = get_default_custom_attributes('event')
