@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 
 from flask_login import current_user
 from operator import and_
-from sqlalchemy import desc, asc, func
+from sqlalchemy import desc, asc, func, tuple_
 from sqlalchemy.orm import joinedload
 from typing import List, Tuple
 
@@ -762,14 +762,16 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             'edges': {}
         }
 
-    asset_names = [asset.asset_name for asset in assets]
-    ioc_values = [ioc.ioc_value for ioc in iocs]
+    asset_names = [(asset.asset_name, asset.asset_type_id) for asset in assets]
+    ioc_values = [(ioc.ioc_value, ioc.ioc_type_id) for ioc in iocs]
 
     asset_type_alias = aliased(AssetsType)
     alert_status_filter = []
 
     conditions = and_(SimilarAlertsCache.customer_id == customer_id,
-                      (SimilarAlertsCache.asset_name.in_(asset_names) | SimilarAlertsCache.ioc_value.in_(ioc_values))
+                      tuple_(SimilarAlertsCache.asset_name,SimilarAlertsCache.asset_type_id).in_(asset_names)
+                      |
+                      tuple_(SimilarAlertsCache.ioc_value, SimilarAlertsCache.ioc_type_id).in_(ioc_values)
                       )
 
     if open_alerts:
@@ -807,10 +809,11 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         if alert.alert_id not in alerts_dict:
             alerts_dict[alert.alert_id] = {'alert': alert, 'assets': [], 'iocs': []}
 
-        if asset_name in asset_names:
+        if any(name == asset_name for name, _ in asset_names):
             asset_info = {'asset_name': asset_name, 'icon': asset_icon_not_compromised}
             alerts_dict[alert.alert_id]['assets'].append(asset_info)
-        if ioc_value in ioc_values:
+
+        if any(value == ioc_value for value, _ in ioc_values):
             alerts_dict[alert.alert_id]['iocs'].append(ioc_value)
 
     nodes = []
@@ -832,7 +835,8 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             'icon': {
                 'face': 'FontAwesome',
                 'code': '\uf0f3',
-                'color':  alert_color
+                'color':  alert_color,
+                'weight': "bold"
             },
             'font': "12px verdana white" if current_user.in_dark_mode else ''
         })
@@ -866,7 +870,8 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                     'icon': {
                         'face': 'FontAwesome',
                         'code': '\ue4a8',
-                        'color': 'white' if current_user.in_dark_mode else ''
+                        'color': 'white' if current_user.in_dark_mode else '',
+                        'weight': "bold"
                     },
                     'font': "12px verdana white" if current_user.in_dark_mode else ''
                 })

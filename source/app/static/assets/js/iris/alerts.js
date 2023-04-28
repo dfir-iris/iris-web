@@ -463,6 +463,22 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
     const container = document.getElementById(containerId);
     const network = new vis.Network(container, data, options);
 
+    // Create a MutationObserver to listen for DOM changes in the container
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          network.redraw(); // Force a redraw when the DOM is updated
+          break;
+        }
+      }
+    });
+
+    // Start observing the container for DOM changes
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+    });
+
     network.on("stabilizationIterationsDone", function () {
         network.setOptions( { physics: false } );
     });

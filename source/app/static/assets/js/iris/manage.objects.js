@@ -164,8 +164,8 @@ function delete_asset_type(id) {
 /***    IOC Type     ***/
 
 function add_ioc_type() {
-    url = '/manage/ioc-types/add/modal' + case_param();
-    $('#modal_add_type_content').load(url, function () {
+    let url = '/manage/ioc-types/add/modal' + case_param();
+    $('#modal_add_type_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
@@ -184,8 +184,9 @@ function add_ioc_type() {
 
             return false;
         })
+        $('#modal_add_type').modal({ show: true });
     });
-    $('#modal_add_type').modal({ show: true });
+
 }
 
 $('#ioc_table').dataTable({
