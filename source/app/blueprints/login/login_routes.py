@@ -79,7 +79,7 @@ def _authenticate_ldap(form, username, password):
 
         user = _retrieve_user_by_username(username)
         if not user:
-            return _render_template(form, 'Wrong credentials. Please try again.')
+            return _render_template_login(form, 'Wrong credentials. Please try again.')
 
         return wrap_login_user(user)
     except Exception as e:
@@ -90,14 +90,14 @@ def _authenticate_ldap(form, username, password):
 def _authenticate_password(form, username, password):
     user = _retrieve_user_by_username(username)
     if not user:
-        return _render_template(form, 'Wrong credentials. Please try again.')
+        return _render_template_login(form, 'Wrong credentials. Please try again.')
 
     if bc.check_password_hash(user.password, password):
         return wrap_login_user(user)
 
     track_activity("wrong login password for user '{}' using local auth".format(username), ctx_less=True,
                    display_in_ui=False)
-    return _render_template(form, 'Wrong credentials. Please try again.')
+    return _render_template_login(form, 'Wrong credentials. Please try again.')
 
 
 # CONTENT ------------------------------------------------
