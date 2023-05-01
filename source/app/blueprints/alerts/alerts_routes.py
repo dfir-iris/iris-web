@@ -311,19 +311,22 @@ def alerts_update_route(alert_id, caseid) -> Response:
         # Load the JSON data from the request
         data = request.get_json()
 
+        # Deserialize the JSON data into an Alert object
+        updated_alert = alert_schema.load(data, instance=alert, partial=True)
+
+        # Save the changes
+        db.session.commit()
+
         activity_data = []
         for key, value in data.items():
             old_value = getattr(alert, key, None)
             if old_value is not None and old_value != value:
                 activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
+                add_obj_history_entry(updated_alert, f"\"{key}\" from \"{old_value}\" to \"{value}\"")
 
         if activity_data:
             track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", ctx_less=True)
 
-        # Deserialize the JSON data into an Alert object
-        updated_alert = alert_schema.load(data, instance=alert, partial=True)
-
-        # Save the changes
         db.session.commit()
 
         # Return the updated alert as JSON
@@ -368,19 +371,22 @@ def alerts_batch_update_route(caseid: int) -> Response:
             return response_error(f'Alert with ID {alert_id} not found')
 
         try:
+
+            # Deserialize the JSON data into an Alert object
+            alert_schema.load(updates, instance=alert, partial=True)
+
+            db.session.commit()
+
             activity_data = []
             for key, value in updates.items():
                 old_value = getattr(alert, key, None)
                 if old_value is not None and old_value != value:
                     activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
-
-            # Deserialize the JSON data into an Alert object
-            alert_schema.load(updates, instance=alert, partial=True)
+                    add_obj_history_entry(alert, f"\"{key}\" from \"{old_value}\" to \"{value}\"")
 
             if activity_data:
                 track_activity(f"updated alerts #{alert_id}: {','.join(activity_data)}", ctx_less=True)
 
-            # Save the changes
             db.session.commit()
 
         except Exception as e:
@@ -392,7 +398,7 @@ def alerts_batch_update_route(caseid: int) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/delete', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires(Permissions.alerts_delete, no_cid_required=True)
 def alerts_batch_delete_route(caseid: int) -> Response:
     """
     Delete multiple alerts from the database
@@ -513,6 +519,8 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
         track_activity("new case {case_name} created from alert".format(case_name=case.name),
                        ctx_less=True)
 
+        add_obj_history_entry(alert, f"Alert escalated to case #{case.case_id}")
+
         # Return the updated alert as JSON
         return response_success(data=CaseSchema().dump(case))
 
@@ -571,6 +579,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
                             import_as_event=import_as_event, case_tags=case_tags)
 
         track_activity(f"merge alert #{alert_id} into existing case #{target_case_id}", ctx_less=True)
+        add_obj_history_entry(alert, f"Alert merged into existing case #{target_case_id}")
 
         # Return the updated alert as JSON
         return response_success(data=CaseSchema().dump(case))
@@ -616,6 +625,7 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
             return response_error(message)
 
         track_activity(f"unmerge alert #{alert_id} from case #{target_case_id}", ctx_less=True)
+        add_obj_history_entry(alert, f"Alert unmerged from case #{target_case_id}")
 
         # Return the updated case as JSON
         return response_success(data=AlertSchema().dump(alert), msg=message)
@@ -675,6 +685,8 @@ def alerts_batch_merge_route(caseid) -> Response:
             # Merge alert in the case
             merge_alert_in_case(alert, case, iocs_list=iocs_import_list, assets_list=assets_import_list, note=None,
                                 import_as_event=import_as_event, case_tags=case_tags)
+
+            add_obj_history_entry(alert, f"Alert merged into existing case #{target_case_id}")
 
         if note:
             case.description += f"\n\n### Escalation note\n\n{note}\n\n" if case.description else f"\n\n{note}\n\n"
@@ -749,6 +761,9 @@ def alerts_batch_escalate_route(caseid) -> Response:
         add_obj_history_entry(case, 'created')
         track_activity("new case {case_name} created from alerts".format(case_name=case.name),
                        ctx_less=True)
+
+        for alert in alerts_list:
+            add_obj_history_entry(alert, f"Alert escalated into new case #{case.case_id}")
 
         # Return the updated case as JSON
         return response_success(data=CaseSchema().dump(case))
@@ -846,6 +861,7 @@ def alert_comment_delete(alert_id, com_id, caseid):
     call_modules_hook('on_postload_alert_comment_delete', data=com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on alert {alert_id} deleted", ctx_less=True)
+
     return response_success(msg)
 
 
