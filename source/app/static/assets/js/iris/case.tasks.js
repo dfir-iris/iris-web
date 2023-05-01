@@ -353,7 +353,9 @@ $(document).ready(function(){
                }
                else if (type === 'filter' || type === 'sort'){
                   data = row['status_name']
-               }
+               } else if (type === 'export') {
+                   data = row['status_name']
+                }
               return data;
             }
           },
