@@ -331,7 +331,7 @@ $(document).ready(function(){
             "data": "asset_name",
             "className": "dt-nowrap",
             "render": function (data, type, row, meta) {
-              if (type === 'display' || type === 'filter' || type === 'sort') {
+              if (type === 'display' || type === 'filter' || type === 'sort' || type === 'export') {
                 if (row['asset_domain']) {
                     datak = sanitizeHTML(row['asset_domain'])+"\\"+ sanitizeHTML(data);
                 } else {

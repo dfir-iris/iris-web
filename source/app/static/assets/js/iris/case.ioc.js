@@ -374,7 +374,9 @@ $(document).ready(function(){
                      ' (' + sanitizeHTML(data[link]['client_name']) + ')' + '">#' + data[link]['case_id'] + '</span>'
                   }
                   return links;
-              }
+              } else if (type === 'export' && data != null) {
+                  return data.map(ds => sanitizeHTML(ds['case_name'])).join(',');
+                }
               return data;
             }
           },
