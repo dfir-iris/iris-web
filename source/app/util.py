@@ -280,12 +280,13 @@ def update_session(caseid, eaccess_level, from_api):
 def update_current_case(caseid, restricted_access):
     if session['current_case']['case_id'] != caseid:
         case = get_case(caseid)
-        session['current_case'] = {
-            'case_name': "{}".format(case.name),
-            'case_info': "(#{} - {})".format(caseid, case.client.name),
-            'case_id': caseid,
-            'access': restricted_access
-        }
+        if case:
+            session['current_case'] = {
+                'case_name': "{}".format(case.name),
+                'case_info': "(#{} - {})".format(caseid, case.client.name),
+                'case_id': caseid,
+                'access': restricted_access
+            }
 
 
 def update_denied_case(caseid, from_api):
@@ -312,7 +313,7 @@ def get_case_access(request_data, access_level, from_api=False, no_cid_required=
 
     update_session(caseid, eaccess_level, from_api)
 
-    if not get_case(caseid):
+    if caseid is not None and not get_case(caseid):
         log.warning('No case found. Using default case')
         return True, 1, True
 
