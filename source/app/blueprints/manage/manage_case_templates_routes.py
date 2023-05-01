@@ -117,7 +117,34 @@ def case_template_modal(cur_id, caseid, url_redir):
 def add_template_modal(caseid):
     case_template = CaseTemplate()
     form = CaseTemplateForm()
-    form.case_template_json.data = {}
+    form.case_template_json.data = {
+        "name": "Template name",
+        "display_name": "Template Display Name",
+        "description": "Template description",
+        "author": "YOUR NAME",
+        "classification": "known-template-classification",
+        "title_prefix": "[PREFIX]",
+        "summary": "Summary to be set",
+        "tags": ["ransomware","malware"],
+        "tasks": [
+            {
+                "title": "Task 1",
+                "description": "Task 1 description",
+                "tags": ["tag1", "tag2"]
+            }
+        ],
+        "note_groups": [
+            {
+                "title": "Note group 1",
+                "notes": [
+                    {
+                        "title": "Note 1",
+                        "content": "Note 1 content"
+                    }
+                ]
+            }
+        ]
+    }
 
     return render_template("modal_case_template.html", form=form, case_template=case_template)
 
