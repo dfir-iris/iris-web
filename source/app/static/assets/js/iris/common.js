@@ -404,7 +404,7 @@ function notify_redirect() {
                     queryString = window.location.search;
                     urlParams = new URLSearchParams(queryString);
                     urlParams.delete('redirect');
-                    window.location.search = urlParams;
+                    history.replaceState(null, null, window.location.pathname + '?' + urlParams.toString());
                 });
     }
 }
