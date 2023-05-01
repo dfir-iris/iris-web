@@ -311,21 +311,25 @@ def alerts_update_route(alert_id, caseid) -> Response:
         # Load the JSON data from the request
         data = request.get_json()
 
+        activity_data = []
+        for key, value in data.items():
+            old_value = getattr(alert, key, None)
+
+            if old_value != value:
+                activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
+
         # Deserialize the JSON data into an Alert object
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
 
         # Save the changes
         db.session.commit()
 
-        activity_data = []
-        for key, value in data.items():
-            old_value = getattr(alert, key, None)
-            if old_value is not None and old_value != value:
-                activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
-                add_obj_history_entry(updated_alert, f"\"{key}\" from \"{old_value}\" to \"{value}\"")
-
         if activity_data:
             track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", ctx_less=True)
+            add_obj_history_entry(updated_alert, f"updated alert: {','.join(activity_data)}")
+        else:
+            track_activity(f"updated alert #{alert_id}", ctx_less=True)
+            add_obj_history_entry(updated_alert, f"updated alert")
 
         db.session.commit()
 
@@ -372,20 +376,21 @@ def alerts_batch_update_route(caseid: int) -> Response:
 
         try:
 
+            activity_data = []
+            for key, value in updates.items():
+                old_value = getattr(alert, key, None)
+
+                if old_value != value:
+                    activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
+
             # Deserialize the JSON data into an Alert object
             alert_schema.load(updates, instance=alert, partial=True)
 
             db.session.commit()
 
-            activity_data = []
-            for key, value in updates.items():
-                old_value = getattr(alert, key, None)
-                if old_value is not None and old_value != value:
-                    activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
-                    add_obj_history_entry(alert, f"\"{key}\" from \"{old_value}\" to \"{value}\"")
-
             if activity_data:
                 track_activity(f"updated alerts #{alert_id}: {','.join(activity_data)}", ctx_less=True)
+                add_obj_history_entry(alert, f"updated alerts: {','.join(activity_data)}")
 
             db.session.commit()
 
