@@ -66,7 +66,7 @@ manage_customers_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @manage_customers_blueprint.route('/manage/customers')
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_requires(Permissions.customers_read, no_cid_required=True)
 def manage_customers(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -78,7 +78,7 @@ def manage_customers(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/list')
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_read, no_cid_required=True)
 def list_customers(caseid):
     client_list = get_client_list()
 
@@ -86,7 +86,7 @@ def list_customers(caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_read, no_cid_required=True)
 def view_customer(cur_id, caseid):
 
     customer = get_client_api(cur_id)
@@ -102,7 +102,7 @@ def view_customer(cur_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/view', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_requires(Permissions.customers_read, no_cid_required=True)
 def view_customer_page(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -119,7 +119,7 @@ def view_customer_page(cur_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_requires(Permissions.customers_write, no_cid_required=True)
 def customer_add_contact_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -130,7 +130,7 @@ def customer_add_contact_modal(cur_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_requires(Permissions.customers_read, no_cid_required=True)
 def customer_edit_contact_modal(cur_id, contact_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -151,7 +151,7 @@ def customer_edit_contact_modal(cur_id, contact_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_write, no_cid_required=True)
 def customer_update_contact(cur_id, contact_id, caseid):
 
     if not request.is_json:
@@ -179,7 +179,7 @@ def customer_update_contact(cur_id, contact_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_write, no_cid_required=True)
 def customer_add_contact(cur_id, caseid):
 
     if not request.is_json:
@@ -207,7 +207,7 @@ def customer_add_contact(cur_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/cases', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_read, no_cid_required=True)
 def get_customer_case_stats(cur_id, caseid):
 
     cases = get_client_cases(cur_id)
@@ -290,7 +290,7 @@ def get_customer_case_stats(cur_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_requires(Permissions.customers_read, no_cid_required=True)
 def view_customer_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -309,7 +309,7 @@ def view_customer_modal(cur_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_write, no_cid_required=True)
 def view_customers(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -332,7 +332,7 @@ def view_customers(cur_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_requires(Permissions.customers_read, no_cid_required=True)
 def add_customers_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -342,7 +342,7 @@ def add_customers_modal(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_write, no_cid_required=True)
 def add_customers(caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -363,7 +363,7 @@ def add_customers(caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_write, no_cid_required=True)
 def delete_customers(cur_id, caseid):
     try:
 
@@ -384,7 +384,7 @@ def delete_customers(cur_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:cur_id>/contacts/<int:contact_id>/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires(Permissions.customers_write, no_cid_required=True)
 def delete_contact_route(cur_id, contact_id, caseid):
     try:
 

@@ -48,7 +48,7 @@ search_blueprint = Blueprint('search',
 
 # CONTENT ------------------------------------------------
 @search_blueprint.route('/search', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.search_accross_cases)
 def search_file_post(caseid: int):
 
     jsdata = request.get_json()
@@ -141,7 +141,7 @@ def search_file_post(caseid: int):
 
 
 @search_blueprint.route('/search', methods=['GET'])
-@ac_requires(Permissions.standard_user)
+@ac_requires(Permissions.search_accross_cases)
 def search_file_get(caseid, url_redir):
     if url_redir:
         return redirect(url_for('search.search_file_get', cid=caseid))
