@@ -43,7 +43,7 @@ def _provision_user(connection, user_login):
         return
     search_base = app.config.get('LDAP_SEARCH_DN')
     attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
-    unique_identifier = _get_unique_identifier(user_login)
+    unique_identifier = conv.escape_filter_chars(_get_unique_identifier(user_login))
     attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
     attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
     attributes = []
