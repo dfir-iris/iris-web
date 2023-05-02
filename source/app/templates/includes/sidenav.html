@@ -71,24 +71,30 @@
 								<span>Case</span>
 							</a>
 						</li>
+						{% if user_has_perm(std_permissions.alerts_read) %}
 						<li class="nav-item">
 							<a href="/alerts?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-alarm-1"></i>
 								<span>Alerts</span>
 							</a>
 						</li>
+						{% endif %}
+						{% if user_has_perm(std_permissions.search_across_cases) %}
 						<li class="nav-item">
 							<a href="/search?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-search-2"></i>
 								<span>Search</span>
 							</a>
 						</li>
+						{% endif %}
+						{% if user_has_perm(std_permissions.activities_read) or user_has_perm(std_permissions.all_activities_read) %}
 						<li class="nav-item">
 							<a href="/activities?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-list"></i>
 								<span>Activities</span>
 							</a>
 						</li>
+						{% endif %}
 						<li class="nav-item">
 							<a href="/dim/tasks?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-web-1"></i>
@@ -109,7 +115,7 @@
 								<span>Manage cases</span>
 							</a>
 						</li>
-						{% if user_has_perm(std_permissions.server_administrator) %}
+
 						<li class="nav-item submenu nav-advanced">
 							<a data-toggle="collapse" href="#advanced-nav" class="" aria-expanded="false">
 								<i class="flaticon-interface-3"></i>
@@ -117,20 +123,25 @@
 								<span class="caret"></span>
 							</a>
 							<div class="collapse" id="advanced-nav" style="">
+
 								<ul class="nav nav-collapse">
+									{% if user_has_perm(std_permissions.server_administrator) %}
 									<li class="nav-subitem">
 										<a href="/manage/modules?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-technology-1"></i>
 											<span class="subsub-item">Modules</span>
 										</a>
 									</li>
+									{% endif %}
+									{% if user_has_perm(std_permissions.customers_read) %}
 									<li class="nav-subitem">
 										<a href="/manage/customers?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-profile"></i>
 											<span class="subsub-item">Customers</span>
 										</a>
 									</li>
-
+									{% endif %}
+									{% if user_has_perm(std_permissions.server_administrator) %}
 									<li class="nav-subitem">
 										<a href="/manage/objects?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-box-2"></i>
@@ -144,14 +155,16 @@
 											<span>Custom Attributes</span>
 										</a>
 									</li>
-
+									{% endif %}
+									{% if user_has_perm(std_permissions.case_templates_read) %}
 									<li class="nav-subitem">
 										<a href="/manage/case-templates?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-interface-7"></i>
 											<span>Case Templates</span>
 										</a>
 									</li>
-
+									{% endif %}
+									{% if user_has_perm(std_permissions.server_administrator) %}
 									<li class="nav-subitem">
 										<a href="/manage/templates?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-interface-6"></i>
@@ -172,6 +185,7 @@
 											<span>Server settings</span>
 										</a>
 									</li>
+									{% endif %}
 								</ul>
 							</div>
 						</li>
@@ -183,7 +197,6 @@
 							</a>
 						</li>
 					</ul>
-					{% endif %}
 				</div>
 				<div class="mt--2">
 					<div class="row ml-2 mr-2">
