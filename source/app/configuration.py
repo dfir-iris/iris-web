@@ -440,6 +440,11 @@ class Config:
 
             PRIVATE_KEY_PASSWORD = config.load('LDAP', 'PRIVATE_KEY_PASSWORD', fallback=None)
 
+            LDAP_CA_CERTIFICATE = config.load('LDAP', 'CA_CERTIFICATE')
+            if LDAP_CA_CERTIFICATE and not Path(f'certificates/ldap/{LDAP_CA_CERTIFICATE}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
+
     """ Caching 
     """
     CACHE_TYPE = "SimpleCache"
