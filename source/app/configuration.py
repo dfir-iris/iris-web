@@ -445,6 +445,9 @@ class Config:
                 log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
 
+            LDAP_CUSTOM_TLS_CONFIG = config.load('LDAP', 'CUSTOM_TLS_CONFIG', fallback='True')
+            LDAP_CUSTOM_TLS_CONFIG = (LDAP_CUSTOM_TLS_CONFIG == 'True')
+
     """ Caching 
     """
     CACHE_TYPE = "SimpleCache"

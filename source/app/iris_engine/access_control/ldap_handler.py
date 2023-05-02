@@ -81,21 +81,26 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     ldap_user_pwd = conv.escape_filter_chars(ldap_user_pwd)
     if app.config.get('LDAP_AUTHENTICATION_TYPE').lower() != 'ntlm':
         ldap_user_name = conv.escape_filter_chars(ldap_user_name)
-        ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name.strip()},{app.config.get('LDAP_USER_SUFFIX')}"
+        ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name.strip()}{ ','+app.config.get('LDAP_USER_SUFFIX') if app.config.get('LDAP_USER_SUFFIX') else ''}"
     else:
         ldap_user = f"{ldap_user_name.strip()}"
 
-    tls_configuration = Tls(validate=ssl.CERT_REQUIRED,
-                            version=app.config.get('LDAP_TLS_VERSION'),
-                            local_certificate_file=app.config.get('LDAP_SERVER_CERTIFICATE'),
-                            local_private_key_file=app.config.get('LDAP_PRIVATE_KEY'),
-                            local_private_key_password=app.config.get('LDAP_PRIVATE_KEY_PASSWORD'),
-                            ca_certs_file=app.config.get('LDAP_CA_CERTIFICATE')
-                            )
+    if app.config.get('LDAP_CUSTOM_TLS_CONFIG') is True:
+        tls_configuration = Tls(validate=ssl.CERT_REQUIRED,
+                                version=app.config.get('LDAP_TLS_VERSION'),
+                                local_certificate_file=app.config.get('LDAP_SERVER_CERTIFICATE'),
+                                local_private_key_file=app.config.get('LDAP_PRIVATE_KEY'),
+                                local_private_key_password=app.config.get('LDAP_PRIVATE_KEY_PASSWORD'),
+                                ca_certs_file=app.config.get('LDAP_CA_CERTIFICATE')
+                                )
 
-    server = Server(f'{app.config.get("LDAP_CONNECT_STRING")}',
-                    use_ssl=app.config.get('LDAP_USE_SSL'),
-                    tls=tls_configuration)
+        server = Server(f'{app.config.get("LDAP_CONNECT_STRING")}',
+                        use_ssl=app.config.get('LDAP_USE_SSL'),
+                        tls=tls_configuration)
+
+    else:
+        server = Server(f'{app.config.get("LDAP_CONNECT_STRING")}',
+                        use_ssl=app.config.get('LDAP_USE_SSL'))
 
     conn = Connection(server,
                       user=ldap_user,
