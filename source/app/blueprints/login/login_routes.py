@@ -113,7 +113,7 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
         form = LoginForm(request.form)
 
         # check if both http method is POST and form is valid on submit
-        if not form.validate_on_submit():
+        if not form.is_submitted() and form.validate():
             return _render_template_login(form, None)
 
         # assign form data to variables
