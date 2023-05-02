@@ -47,7 +47,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification, SavedFilter
+from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -512,6 +512,13 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
+
+
+class DSPathSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = DataStorePath
+        load_instance = True
+        include_fk = True
 
 
 class DSFileSchema(ma.SQLAlchemyAutoSchema):

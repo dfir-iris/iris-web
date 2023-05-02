@@ -41,7 +41,7 @@ from cryptography.exceptions import InvalidSignature
 import jwt
 import requests
 from flask import Request
-from flask import json
+import json
 from flask import render_template
 from flask import request
 from flask import session
@@ -75,7 +75,7 @@ def response(msg, data):
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp),
+    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
                               status=200,
                               mimetype='application/json')
 
@@ -86,7 +86,7 @@ def response_error(msg, data=None, status=400):
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp),
+    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
                               status=status,
                               mimetype='application/json')
 
@@ -146,6 +146,12 @@ class AlchemyEncoder(json.JSONEncoder):
             return fields
 
         if isinstance(obj, decimal.Decimal):
+            return str(obj)
+
+        if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):
+            return obj.isoformat()
+
+        if isinstance(obj, uuid.UUID):
             return str(obj)
 
         else:

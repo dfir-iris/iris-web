@@ -68,11 +68,12 @@ def get_case_classification(classification_id: int, caseid: int) -> Response:
         Flask Response object
     """
 
+    schema = CaseClassificationSchema()
     case_classification = get_case_classification_by_id(classification_id)
     if not case_classification:
         return response_error(f"Invalid case classification ID {classification_id}")
 
-    return response_success("", data=case_classification)
+    return response_success("", data=schema.dump(case_classification))
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/update/<int:classification_id>/modal',
