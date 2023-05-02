@@ -40,6 +40,13 @@ class Permissions(enum.Enum):
     customers_read = 0x40
     customers_write = 0x80
 
+    case_templates_read = 0x100
+    case_templates_write = 0x200
+
+    case_object_read = 0x400
+    case_object_write = 0x800
+
+
 
 class Organisation(db.Model):
     __tablename__ = 'organisations'
