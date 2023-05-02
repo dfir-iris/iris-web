@@ -46,18 +46,13 @@
                                             {{ form.hidden_tag() }}
 
                                             <div class="mt-4 col-md-12 col-lg-12 col-sm-12">
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <div class="input-group mb-4">
-                                                            {{ form.case_customer(class="selectpicker w-100 pl--6 btn-outline-white") }}
-                                                        </div>
-                                                    </div>
+                                                <div class="input-group mb-4">
+                                                    {{ form.case_customer(class="selectpicker form-control") }}
                                                 </div>
                                                 <div class="input-group mb-4">
                                                     {{ form.case_template_id(class="selectpicker form-control", data_actions_box="true") }}
                                                 </div>
                                                 <div class="input-group mb-4">
-
                                                     {{ form.classification_id(class="selectpicker form-control") }}
                                                 </div>
                                                 <div class="input-group mb-4">
