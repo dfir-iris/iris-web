@@ -35,7 +35,7 @@ class Permissions(enum.Enum):
     alerts_write = 0x8
     alerts_delete = 0x10
 
-    search_accross_cases = 0x20
+    search_across_cases = 0x20
 
     customers_read = 0x40
     customers_write = 0x80
