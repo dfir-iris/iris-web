@@ -478,7 +478,7 @@ body {
     display: flex;
     align-items: center;
     position: relative;
-    transition: all .3s;
+
 }
 
 .logo-header .big-logo {
@@ -600,7 +600,7 @@ body {
     -webkit-box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
     -moz-box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
     box-shadow: 4px 4px 10px rgba(69, 65, 78, 0.06);
-    transition: all .3s;
+
 }
 
 .sidebar.full-height,
@@ -672,7 +672,7 @@ body {
     overflow: auto;
     width: 100%;
     z-index: 4;
-    transition: all .3s;
+
 }
 
 .sidebar .sidebar-wrapper .sidebar-content,
@@ -1263,7 +1263,7 @@ body {
     height: 100vh;
     min-height: 100%;
     float: right;
-    transition: all .3s;
+
 }
 
 .main-panel>.content {
@@ -1546,11 +1546,10 @@ body {
 @media screen and (min-width: 991px) {
     .sidebar_minimize .main-panel {
         width: calc(100% - 75px);
-        transition: all .3s;
     }
     .sidebar_minimize .logo-header {
         width: 75px;
-        transition: all .3s;
+
         padding: 0px;
         text-align: center;
     }
@@ -1574,11 +1573,11 @@ body {
     }
     .sidebar_minimize .sidebar {
         width: 75px;
-        transition: all .3s;
+
     }
     .sidebar_minimize .sidebar .sidebar-wrapper {
         width: 75px;
-        transition: all .3s;
+
     }
     .sidebar_minimize .sidebar .sidebar-wrapper .user {
         padding-left: 0px;
@@ -1608,7 +1607,7 @@ body {
     .sidebar_minimize .sidebar .sidebar-wrapper .nav-item a .caret,
     .sidebar_minimize .sidebar .sidebar-wrapper .nav-item a p {
         display: none;
-        transition: all .3s;
+
     }
     .sidebar_minimize .sidebar .sidebar-wrapper .nav-item a .sidebar-mini-icon {
         display: block !important;
@@ -3686,9 +3685,11 @@ body {
     display: inline-flex;
 }
 
-.avatar-group .avatar+.avatar {
-    margin-left: -.75rem;
+.avatar-group .avatar + .avatar {
+   margin-left: -1.5rem;
+   margin-top: 1.1rem;
 }
+
 
 .avatar-group .avatar-xs+.avatar-xs {
     margin-left: -.40625rem;
@@ -4118,7 +4119,7 @@ label {
 .card-tasks .card-body .table td .btn {
     font-size: 15px;
     opacity: 0.7;
-    transition: all .3s;
+
 }
 
 .card-tasks .card-body .table td:hover .btn {
@@ -7361,7 +7362,7 @@ body .badge-danger {
 .btn:hover,
 .btn:focus {
     opacity: 0.9;
-    transition: all .3s;
+
 }
 
 .btn .btn-label {
@@ -8142,7 +8143,7 @@ body .badge-danger {
 }
 
 .modal-content {
-    border-radius: .4rem !important;
+    border-radius: 10px !important;
     border: 0 !important;
 }
 
@@ -8277,10 +8278,10 @@ body .badge-danger {
     margin-left: 8%;
     margin-bottom: 0.8%;
     background: #ffffff;
-    border-radius: 12px;
-    padding: 12px;
+    border-radius: 18px;
+    padding: 18px;
     position: relative;
-    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.24);
 }
 
 .timeline>li>.timeline-even {
@@ -14550,12 +14551,12 @@ table.dataTable.stripe tbody > tr.selected {
     padding: 10px 18px;
     height: unset;
     border-radius: 4px;
-    transition: all .3s;
+
 }
 
 .secondary-header .nav-bottom .page-navigation.page-navigation-style-2>.nav-item>.nav-link .menu-title {
     font-weight: 400;
-    transition: all .3s;
+
 }
 
 .secondary-header .nav-bottom .page-navigation.page-navigation-style-2>.nav-item>.nav-link:after {
@@ -15105,7 +15106,7 @@ table.dataTable.stripe tbody > tr.selected {
   background-size: cover;
   background-position: center center;
   box-shadow: -10px 0px 15px 0px rgba(69, 65, 78, 0.1);
-  transition: all .3s;
+
   z-index: 1101;
   padding: 20px 20px 0; }
   .quick-sidebar .scroll-wrapper .scroll-element {
@@ -15187,7 +15188,7 @@ table.dataTable.stripe tbody > tr.selected {
   background-size: cover;
   background-position: center center;
   box-shadow: -10px 0px 15px 0px rgba(69, 65, 78, 0.1);
-  transition: all .3s;
+
   z-index: 1001;
   padding: 20px 20px 0; }
   .ds-sidebar .scroll-wrapper .scroll-element {
@@ -15484,7 +15485,7 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(150, 150, 150, 0);
   }
 }
 @-moz-keyframes yellow-fade {
@@ -15492,7 +15493,7 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(255, 255, 255, 0);
   }
 }
 @keyframes yellow-fade {
@@ -15500,14 +15501,14 @@ div.dataTables_processing { z-index: 1; }
     background: #f96;
   }
   to {
-    background: #fff;
+    background: rgba(255, 255, 255, 0);
   }
 }
 .fade-it {
-  -webkit-animation: yellow-fade 2s ease-in-out 0s;
-  -moz-animation: yellow-fade 2s ease-in-out 0s;
-  -o-animation: yellow-fade 2s ease-in-out 0s;
-  animation: yellow-fade 2s ease-in-out 0s;
+  -webkit-animation: yellow-fade 1s ease-in-out 0s;
+  -moz-animation: yellow-fade 1s ease-in-out 0s;
+  -o-animation: yellow-fade 1s ease-in-out 0s;
+  animation: yellow-fade 1s ease-in-out 0s;
 }
 
 .modal { overflow: auto !important; }
@@ -15792,4 +15793,13 @@ td.dt-nowrap { white-space: nowrap }
 .swal-button.swal-button--confirm:not(.swal-button--danger),
 .swal-button:not(.swal-button--confirm, .swal-button--cancel) {
   background-color: #053c80e8;
+}
+
+.modal_comment.modal.show {
+    display: none;
+}
+
+.custom-saved-filters {
+    max-height: 60vh;
+    overflow-y: auto;
 }

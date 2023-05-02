@@ -39,7 +39,7 @@ manage_case_classification_blueprint = Blueprint('manage_case_classifications',
 
 # CONTENT ------------------------------------------------
 @manage_case_classification_blueprint.route('/manage/case-classifications/list', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def list_case_classifications(caseid: int) -> Response:
     """Get the list of case classifications
 
@@ -56,7 +56,7 @@ def list_case_classifications(caseid: int) -> Response:
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/<int:classification_id>', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def get_case_classification(classification_id: int, caseid: int) -> Response:
     """Get a case classification
 
@@ -68,16 +68,17 @@ def get_case_classification(classification_id: int, caseid: int) -> Response:
         Flask Response object
     """
 
+    schema = CaseClassificationSchema()
     case_classification = get_case_classification_by_id(classification_id)
     if not case_classification:
         return response_error(f"Invalid case classification ID {classification_id}")
 
-    return response_success("", data=case_classification)
+    return response_success("", data=schema.dump(case_classification))
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/update/<int:classification_id>/modal',
                                             methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def update_case_classification_modal(classification_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
     """Update a case classification
 
@@ -108,7 +109,7 @@ def update_case_classification_modal(classification_id: int, caseid: int, url_re
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/update/<int:classification_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def update_case_classification(classification_id: int, caseid: int) -> Response:
     """Update a case classification
 
@@ -143,7 +144,7 @@ def update_case_classification(classification_id: int, caseid: int) -> Response:
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
 def add_case_classification_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
     """Add a case classification
 
@@ -164,7 +165,7 @@ def add_case_classification_modal(caseid: int, url_redir: bool) -> Union[str, Re
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def add_case_classification(caseid: int) -> Response:
     """Add a case classification
 
@@ -198,7 +199,7 @@ def add_case_classification(caseid: int) -> Response:
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/delete/<int:classification_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def delete_case_classification(classification_id: int, caseid: int) -> Response:
     """Delete a case classification
 

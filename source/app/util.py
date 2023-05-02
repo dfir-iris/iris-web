@@ -31,6 +31,7 @@ import string
 import traceback
 import uuid
 import weakref
+from flask_socketio import Namespace
 from functools import wraps
 from pathlib import Path
 from cryptography.hazmat.primitives import hashes
@@ -40,7 +41,7 @@ from cryptography.exceptions import InvalidSignature
 import jwt
 import requests
 from flask import Request
-from flask import json
+import json
 from flask import render_template
 from flask import request
 from flask import session
@@ -55,7 +56,7 @@ from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
-from app import TEMPLATE_PATH
+from app import TEMPLATE_PATH, socket_io
 from app import app
 from app import db
 from app.datamgmt.case.case_db import case_exists
@@ -74,7 +75,7 @@ def response(msg, data):
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp),
+    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
                               status=200,
                               mimetype='application/json')
 
@@ -85,7 +86,7 @@ def response_error(msg, data=None, status=400):
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp),
+    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
                               status=status,
                               mimetype='application/json')
 
@@ -145,6 +146,12 @@ class AlchemyEncoder(json.JSONEncoder):
             return fields
 
         if isinstance(obj, decimal.Decimal):
+            return str(obj)
+
+        if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):
+            return obj.isoformat()
+
+        if isinstance(obj, uuid.UUID):
             return str(obj)
 
         else:
@@ -207,62 +214,79 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_case_access(request_data, access_level, from_api=False):
+def get_caseid_from_request_data(request_data, no_cid_required):
     caseid = request_data.args.get('cid', default=None, type=int)
     redir = False
-    if not caseid:
+    has_access = True
+
+    if not caseid and not no_cid_required:
         try:
 
             js_d = request_data.get_json()
+
             if js_d:
                 caseid = js_d.get('cid')
                 request_data.json.pop('cid')
-            else:
-                if current_user.ctx_case is None:
-                    current_user.ctx_case = 1
 
-                caseid = current_user.ctx_case
-                redir = True
+            else:
+                redir, caseid, has_access = set_caseid_from_current_user()
 
         except Exception as e:
-            cookie_session = request_data.cookies.get('session')
-            if not cookie_session:
-                # API, so just use the current_user context
-                if current_user.ctx_case is None:
-                    current_user.ctx_case = 1
+            redir, caseid, has_access = handle_exception(e, request_data)
 
-                caseid = current_user.ctx_case
+    return redir, caseid, has_access
 
-            else:
-                log.error(traceback.print_exc())
-                return True, None, False
 
-    case = None
+def set_caseid_from_current_user():
+    redir = False
+    if current_user.ctx_case is None:
+        redir = True
+        current_user.ctx_case = 1
+    caseid = current_user.ctx_case
+    return redir, caseid, True
 
-    restricted_access = ''
-    if not access_level:
-        access_level = [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
 
-    eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
-    if eaccess_level is None:
-        if not from_api:
-            session['current_case'] = {
-                'case_name': "{} to #{}".format("Access denied", caseid),
-                'case_info': "",
-                'case_id': caseid,
-                'access': '<i class="ml-2 text-danger fa-solid fa-ban"></i>'
-            }
+def handle_exception(e, request_data):
+    cookie_session = request_data.cookies.get('session')
+    if not cookie_session:
+        return set_caseid_from_current_user()
 
-        return redir, caseid, False
+    log_exception_and_error(e)
+    return True, 0, False
 
+
+def log_exception_and_error(e):
+    log.exception(e)
+    log.error(traceback.print_exc())
+
+
+def handle_no_cid_required(request, no_cid_required):
+    if no_cid_required:
+        js_d = request.get_json(silent=True)
+        caseid = js_d.get('cid') if js_d else None
+        if caseid:
+            request.json.pop('cid')
+        return False, caseid, True
+
+    return False, None, False
+
+
+def update_session(caseid, eaccess_level, from_api):
     if not from_api:
+        restricted_access = ''
+        if not eaccess_level:
+            eaccess_level = [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+
         if CaseAccessLevel.read_only.value == eaccess_level:
-            restricted_access = '<i class="ml-2 text-warning fa-solid fa-lock" title="Read only access"></i>'
+            restricted_access = '<i class="ml-2 text-warning mt-1 fa-solid fa-lock" title="Read only access"></i>'
 
-            session['current_case']['access'] = restricted_access
+        update_current_case(caseid, restricted_access)
 
-        if session['current_case']['case_id'] != caseid:
-            case = get_case(caseid)
+
+def update_current_case(caseid, restricted_access):
+    if session['current_case']['case_id'] != caseid:
+        case = get_case(caseid)
+        if case:
             session['current_case'] = {
                 'case_name': "{}".format(case.name),
                 'case_info': "(#{} - {})".format(caseid, case.client.name),
@@ -270,7 +294,32 @@ def get_case_access(request_data, access_level, from_api=False):
                 'access': restricted_access
             }
 
-    if not case and not case_exists(caseid):
+
+def update_denied_case(caseid, from_api):
+    if not from_api:
+        session['current_case'] = {
+            'case_name': "{} to #{}".format("Access denied", caseid),
+            'case_info': "",
+            'case_id': caseid,
+            'access': '<i class="ml-2 text-danger mt-1 fa-solid fa-ban"></i>'
+        }
+
+
+def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
+    redir, caseid, has_access = get_caseid_from_request_data(request_data, no_cid_required)
+
+    redir, ctmp, has_access = handle_no_cid_required(request, no_cid_required)
+    if ctmp is not None:
+        return redir, ctmp, has_access
+
+    eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
+    if eaccess_level is None and access_level != []:
+        update_denied_case(caseid, from_api)
+        return redir, caseid, False
+
+    update_session(caseid, eaccess_level, from_api)
+
+    if caseid is not None and not get_case(caseid):
         log.warning('No case found. Using default case')
         return True, 1, True
 
@@ -517,7 +566,7 @@ def ac_socket_requires(*access_level):
     return inner_wrap
 
 
-def ac_requires(*permissions):
+def ac_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -526,7 +575,7 @@ def ac_requires(*permissions):
                 return redirect(not_authenticated_redirection_url())
 
             else:
-                redir, caseid, _ = get_case_access(request, [])
+                redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
@@ -584,7 +633,7 @@ def endpoint_deprecated(message, version):
     return inner_wrap
 
 
-def ac_api_requires(*permissions):
+def ac_api_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -601,9 +650,15 @@ def ac_api_requires(*permissions):
                 return response_error("Authentication required", status=401)
 
             else:
-                redir, caseid, _ = get_case_access(request, [], from_api=True)
-                if not caseid or redir:
+                try:
+                    redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
+                except Exception as e:
+                    log.exception(e)
+                    return response_error("Invalid data. Check server logs", status=500)
+
+                if not (caseid or redir) and not no_cid_required:
                     return response_error("Invalid case ID", status=404)
+
                 kwargs.update({"caseid": caseid})
 
                 if 'permissions' not in session:
@@ -729,3 +784,13 @@ def hmac_verify(signature_enc, data):
         return True
     except InvalidSignature:
         return False
+
+
+def str_to_bool(value):
+    if value is None:
+        return False
+
+    return value.lower() in ['true', '1', 'yes', 'y', 't']
+
+
+

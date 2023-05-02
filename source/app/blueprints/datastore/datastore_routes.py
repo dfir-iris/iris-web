@@ -50,7 +50,7 @@ from app.datamgmt.datastore.datastore_db import ds_list_tree
 from app.forms import ModalDSFileForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
-from app.schema.marshables import DSFileSchema
+from app.schema.marshables import DSFileSchema, DSPathSchema
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import add_obj_history_entry
@@ -270,9 +270,11 @@ def datastore_move_folder(cur_id: int, caseid: int):
     dsp.path_parent_id = dsp_dst.path_id
     db.session.commit()
 
+    dsf_folder_schema = DSPathSchema()
+
     msg = f"Folder \"{dsp.path_name}\" successfully moved to \"{dsp_dst.path_name}\""
     track_activity(msg, caseid=caseid)
-    return response_success(msg, data=dsp)
+    return response_success(msg, data=dsf_folder_schema.dump(dsp))
 
 
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
@@ -290,7 +292,7 @@ def datastore_view_file(cur_id: int, caseid: int):
                               f'Update or delete virtual entry')
 
     resp = send_file(dsf.file_local_name, as_attachment=True,
-                     attachment_filename=dsf.file_original_name)
+                     download_name=dsf.file_original_name)
 
     track_activity(f"File \"{dsf.file_original_name}\" downloaded", caseid=caseid, display_in_ui=False)
     return resp
@@ -394,10 +396,11 @@ def datastore_add_folder(caseid: int):
         return response_error('Invalid data')
 
     has_error, logs, node = datastore_add_child_node(parent_node, folder_name, caseid)
+    dsf_folder_schema = DSPathSchema()
 
     if not has_error:
         track_activity(f"Folder \"{folder_name}\" added to DS", caseid=caseid)
-        return response_success(msg=logs, data=node)
+        return response_success(msg=logs, data=dsf_folder_schema.dump(node))
 
     return response_error(msg=logs)
 
@@ -419,12 +422,13 @@ def datastore_rename_folder(cur_id: int, caseid: int):
         return response_error('Invalid data')
 
     has_error, logs, dsp_base = datastore_rename_node(parent_node, folder_name, caseid)
+    dsf_folder_schema = DSPathSchema()
 
     if has_error:
         return response_error(logs)
 
     track_activity(f"Folder \"{parent_node}\" renamed to \"{folder_name}\" in DS", caseid=caseid)
-    return response_success(logs, data=dsp_base)
+    return response_success(logs, data=dsf_folder_schema.dump(dsp_base))
 
 
 @datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['POST'])

@@ -31,6 +31,7 @@ from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import User
 from app.models.authorization import UserGroup
+from app.schema.marshables import AuthorizationGroupSchema
 
 
 def get_groups_list():
@@ -64,10 +65,11 @@ def get_groups_list_hr_perms():
                 'id': member.id
             })
 
+    groups = AuthorizationGroupSchema().dump(groups, many=True)
     for group in groups:
-        perms = ac_permission_to_list(group.group_permissions)
-        setattr(group, 'group_permissions_list', perms)
-        setattr(group, 'group_members', membership_list.get(group.group_id, []))
+        perms = ac_permission_to_list(group['group_permissions'])
+        group['group_permissions_list'] = perms
+        group['group_members'] = membership_list.get(group['group_id'], [])
 
     return groups
 

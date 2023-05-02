@@ -130,10 +130,8 @@ def case_task_statusupdate(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def case_add_task_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_add_task_modal(caseid):
 
     task = CaseTasks()
     task.custom_attributes = get_default_custom_attributes('task')
@@ -298,8 +296,7 @@ def case_comment_task_list(cur_id, caseid):
     if task_comments is None:
         return response_error('Invalid task ID')
 
-    res = [com._asdict() for com in task_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(task_comments))
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/add', methods=['POST'])

@@ -92,11 +92,16 @@ class AddReportTemplateForm(FlaskForm):
     report_type = SelectField(u'Report Type', validators=[DataRequired()])
 
 
+class CaseTemplateForm(FlaskForm):
+    case_template_json = TextAreaField(u'Case Template JSON', validators=[DataRequired()])
+
+
 class AddUserForm(FlaskForm):
     user_login = StringField(u'Name', validators=[DataRequired()])
     user_name = StringField(u'Username', validators=[DataRequired()])
     user_password = PasswordField(u'Password', validators=[DataRequired()])
     user_email = StringField(u'Email', validators=[DataRequired(), Email()])
+    user_is_service_account = BooleanField(u'Use as service account')
 
 
 class AddGroupForm(FlaskForm):
@@ -126,6 +131,7 @@ class AddCaseForm(FlaskForm):
     case_customer = SelectField(u'Customer', validators=[InputRequired()])
     case_organisations = SelectMultipleField(u'Organisations')
     classification_id = SelectField(u'Classification')
+    case_template_id = SelectField(u'Case Template')
 
 
 class ContactForm(FlaskForm):

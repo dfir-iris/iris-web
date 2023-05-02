@@ -162,9 +162,6 @@ class IrisConfig(configparser.ConfigParser):
 
 
 # --------- Configuration ---------
-# read the private configuration file
-#config = configparser.ConfigParser()
-
 config = IrisConfig()
 
 # Fetch the values
@@ -286,6 +283,7 @@ class Config:
 
         IRIS_ADM_EMAIL = config.load('IRIS', 'ADM_EMAIL')
         IRIS_ADM_PASSWORD = config.load('IRIS', 'ADM_PASSWORD')
+        IRIS_ADM_USERNAME = config.load('IRIS', 'ADM_USERNAME')
         IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY')
 
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
@@ -341,6 +339,8 @@ class Config:
     ASSET_SHOW_PATH = "/static/assets/img/graph"
 
     ORGANISATION_NAME = config.load('IRIS', 'ORGANISATION_NAME', fallback='')
+    LOGIN_BANNER_TEXT = config.load('IRIS', 'LOGIN_BANNER_TEXT', fallback='')
+    LOGIN_PTFM_CONTACT = config.load('IRIS', 'LOGIN_PTFM_CONTACT', fallback='Please contact the platform administrator')
 
     UPDATE_DIR_NAME = '_updates_'
 
@@ -402,6 +402,11 @@ class Config:
 
         LDAP_AUTHENTICATION_TYPE = config.load('LDAP', 'AUTHENTICATION_TYPE')
 
+        LDAP_SEARCH_DN = config.load('LDAP', 'SEARCH_DN')
+        LDAP_ATTRIBUTE_IDENTIFIER = config.load('LDAP', 'ATTRIBUTE_IDENTIFIER')
+        LDAP_ATTRIBUTE_DISPLAY_NAME = config.load('LDAP', 'ATTRIBUTE_DISPLAY_NAME')
+        LDAP_ATTRIBUTE_MAIL = config.load('LDAP', 'ATTRIBUTE_MAIL')
+
         LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
         LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
 
@@ -429,11 +434,19 @@ class Config:
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
 
             LDAP_PRIVATE_KEY = config.load('LDAP', 'PRIVATE_KEY')
-            if not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
+            if LDAP_PRIVATE_KEY and not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
                 log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
 
             PRIVATE_KEY_PASSWORD = config.load('LDAP', 'PRIVATE_KEY_PASSWORD', fallback=None)
+
+            LDAP_CA_CERTIFICATE = config.load('LDAP', 'CA_CERTIFICATE')
+            if LDAP_CA_CERTIFICATE and not Path(f'certificates/ldap/{LDAP_CA_CERTIFICATE}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
+
+            LDAP_CUSTOM_TLS_CONFIG = config.load('LDAP', 'CUSTOM_TLS_CONFIG', fallback='True')
+            LDAP_CUSTOM_TLS_CONFIG = (LDAP_CUSTOM_TLS_CONFIG == 'True')
 
     """ Caching 
     """

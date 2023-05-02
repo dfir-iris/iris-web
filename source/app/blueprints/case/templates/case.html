@@ -53,8 +53,11 @@
                     </div>
                     <div class="row mt-2 mb--2">
 
-                        <div class="col ml-2">
-                            {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>{% endif %}
+                        <div class="ml-2 col">
+                            <div class="row ml-1">
+                                {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>{% endif %}
+                                {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 badge-warning" href="/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
+                            </div>
                         </div>
                         <div class="col mr-2">
                             {% if case.case_tags %}
@@ -66,10 +69,12 @@
                     </div>
                 </div>
             </div>
+
             <div class="page-inner mt--5">
                 <div class="row row-card-no-pd" style="padding-top: 0px;padding-bottom: 3px;">
                     {% include 'case-nav_landing.html' %}
                 </div>
+
                 <div class="row row-card-no-pd">
                     <div class="col-md-12">
                         <div class="card mb-4" id="rescard1">
@@ -241,7 +246,6 @@
 <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 
 <script>
-    var is_db_linked = {{ 1 if case.name else 0 }};
     $('#modal_select_report').selectpicker();
     load_menu_mod_options_modal([{{case.case_id}}], 'case', $("#case_modal_quick_actions"));
 </script>

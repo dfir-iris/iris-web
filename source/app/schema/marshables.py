@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import uuid
+
 import datetime
 import logging
 import os
@@ -31,9 +33,10 @@ import dateutil.parser
 import marshmallow
 import pyminizip
 from flask_login import current_user
-from marshmallow import fields
+from marshmallow import fields, Schema, validate, ValidationError
 from marshmallow import post_load
 from marshmallow import pre_load
+from marshmallow import ValidationError
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
@@ -44,7 +47,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification
+from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -64,10 +67,11 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
+from app.models.alerts import Alert, Severity, AlertStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.util import file_sha256sum
+from app.util import file_sha256sum, str_to_bool
 from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
@@ -77,7 +81,7 @@ log = app.logger
 
 def allowed_file_icon(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def get_random_string(length):
@@ -155,9 +159,53 @@ class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
 
+class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
+    csrf_token = fields.String(required=False)
+    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
+    asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
+    asset_icon_compromised = auto_field('asset_icon_compromised')
+    asset_icon_not_compromised = auto_field('asset_icon_not_compromised')
+
+    class Meta:
+        model = AssetsType
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        client = AssetsType.query.filter(
+            func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
+            AssetsType.asset_id != data.asset_id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "Asset type name already exists",
+                field_name="asset_name"
+            )
+
+        return data
+
+    def load_store_icon(self, file_storage, field_type):
+        if not file_storage.filename:
+            return None
+
+        fpath, message = store_icon(file_storage)
+
+        if fpath is None:
+            raise marshmallow.exceptions.ValidationError(
+                message,
+                field_name=field_type
+            )
+
+        setattr(self, field_type, fpath)
+
+        return fpath
+
+
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
     ioc_links = fields.List(fields.Integer, required=False)
+    asset_enrichment = auto_field('asset_enrichment', required=False)
+    asset_type = ma.Nested(AssetTypeSchema, required=False)
 
     class Meta:
         model = CaseAssets
@@ -171,10 +219,11 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
             raise marshmallow.exceptions.ValidationError("Invalid asset type ID",
                                                          field_name="asset_type_id")
 
-        status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).count()
-        if not status:
-            raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
-                                                         field_name="analysis_status_id")
+        if data.get('analysis_status_id'):
+            status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).count()
+            if not status:
+                raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
+                                                             field_name="analysis_status_id")
 
         return data
 
@@ -187,9 +236,78 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class CaseTemplateSchema(ma.Schema):
+    id = fields.Integer(dump_only=True)
+    created_by_user_id = fields.Integer(required=True)
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    name = fields.String(required=True)
+    display_name = fields.String(allow_none=True, missing="")
+    description = fields.String(allow_none=True, missing="")
+    author = fields.String(allow_none=True, validate=Length(max=128), missing="")
+    title_prefix = fields.String(allow_none=True, validate=Length(max=32), missing="")
+    summary = fields.String(allow_none=True, missing="")
+    tags = fields.List(fields.String(), allow_none=True, missing=[])
+    classification = fields.String(allow_none=True, missing="")
+
+    def validate_string_or_list(value):
+        if not isinstance(value, (str, list)):
+            raise ValidationError('Value must be a string or a list of strings')
+        if isinstance(value, list):
+            for item in value:
+                if not isinstance(item, str):
+                    raise ValidationError('All items in list must be strings')
+        return value
+
+    def validate_string_or_list_of_dict(value):
+        if not isinstance(value, (str, list)):
+            raise ValidationError('Value must be a string or a list of strings')
+        if isinstance(value, list):
+            for item in value:
+                if not isinstance(item, dict):
+                    raise ValidationError('All items in list must be dict')
+                for ivalue in item.values():
+                    if not isinstance(ivalue, str):
+                        raise ValidationError('All items in dict must be str')
+        return value
+
+    tasks = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list]))
+                        , allow_none=True, missing=[])
+    note_groups = fields.List(fields.Dict(keys=fields.Str(),
+                                          values=fields.Raw(validate=[validate_string_or_list_of_dict]))
+                              , allow_none=True, missing=[])
+
+
+class IocTypeSchema(ma.SQLAlchemyAutoSchema):
+    type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
+    type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
+    type_taxonomy = auto_field('type_taxonomy')
+    type_validation_regex = auto_field('type_validation_regex')
+    type_validation_expect = auto_field('type_validation_expect')
+
+    class Meta:
+        model = IocType
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        client = IocType.query.filter(
+            func.lower(IocType.type_name) == func.lower(data.type_name),
+            IocType.type_id != data.type_id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "IOC type name already exists",
+                field_name="type_name"
+            )
+
+        return data
+
+
 class IocSchema(ma.SQLAlchemyAutoSchema):
     ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
-    ioc_type = auto_field('ioc_type', required=False)
+    ioc_enrichment = auto_field('ioc_enrichment', required=False)
+    ioc_type = ma.Nested(IocTypeSchema, required=False)
 
     class Meta:
         model = Ioc
@@ -226,7 +344,94 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class UserSchema(ma.SQLAlchemyAutoSchema):
+    user_roles_str = fields.List(fields.String, required=False)
+    user_name = auto_field('name', required=True, validate=Length(min=2))
+    user_login = auto_field('user', required=True, validate=Length(min=2))
+    user_email = auto_field('email', required=True, validate=Length(min=2))
+    user_password = auto_field('password', required=False)
+    user_isadmin = fields.Boolean(required=True)
+    csrf_token = fields.String(required=False)
+    user_id = fields.Integer(required=False)
+    user_primary_organisation_id = fields.Integer(required=False)
+    user_is_service_account = auto_field('is_service_account', required=False)
+
+    class Meta:
+        model = User
+        load_instance = True
+        include_fk = True
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
+
+    @pre_load()
+    def verify_username(self, data, **kwargs):
+        user = data.get('user_login')
+        user_id = data.get('user_id')
+        luser = User.query.filter(
+            User.user == user
+        ).all()
+        for usr in luser:
+            if usr.id != user_id:
+                raise marshmallow.exceptions.ValidationError('User name already taken',
+                                                             field_name="user_login")
+
+        return data
+
+    @pre_load()
+    def verify_email(self, data, **kwargs):
+        email = data.get('user_email')
+        user_id = data.get('user_id')
+        luser = User.query.filter(
+            User.email == email
+        ).all()
+        for usr in luser:
+            if usr.id != user_id:
+                raise marshmallow.exceptions.ValidationError('User email already taken',
+                                                             field_name="user_email")
+
+        return data
+
+    @pre_load()
+    def verify_password(self, data, **kwargs):
+        server_settings = ServerSettings.query.first()
+        password = data.get('user_password')
+
+        if (password == '' or password is None) and str_to_bool(data.get('user_is_service_account')) is True:
+            return data
+
+        if (password == '' or password is None) and data.get('user_id') != 0:
+            # Update
+            data.pop('user_password') if 'user_password' in data else None
+
+        else:
+            password_error = ""
+            if len(password) < server_settings.password_policy_min_length:
+                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters. "
+
+            if server_settings.password_policy_upper_case:
+                if not any(char.isupper() for char in password):
+                    password_error += "Password must contain uppercase char. "
+
+            if server_settings.password_policy_lower_case:
+                if not any(char.islower() for char in password):
+                    password_error += "Password must contain lowercase char. "
+
+            if server_settings.password_policy_digit:
+                if not any(char.isdigit() for char in password):
+                    password_error += "Password must contain digit. "
+
+            if len(server_settings.password_policy_special_chars) > 0:
+                if not any(char in server_settings.password_policy_special_chars for char in password):
+                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
+
+            if len(password_error) > 0:
+                raise marshmallow.exceptions.ValidationError(password_error,
+                                                             field_name="user_password")
+
+        return data
+
+
 class CommentSchema(ma.SQLAlchemyAutoSchema):
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
 
     class Meta:
         model = Comments
@@ -279,10 +484,6 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             raise marshmallow.exceptions.ValidationError("Invalid event category ID",
                                                          field_name="event_category_id")
 
-        if not isinstance(int(data.get('event_category_id')), int):
-            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
-                                                         field_name="event_category_id")
-
         event_cat = EventCategory.query.filter(EventCategory.id == int(data.get('event_category_id'))).count()
         if not event_cat:
             raise marshmallow.exceptions.ValidationError("Invalid event category ID",
@@ -300,7 +501,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
                 raise marshmallow.exceptions.ValidationError("Invalid IOC ID",
                                                              field_name="event_assets")
         if data.get('event_color') and data.get('event_color') not in ['#fff', '#1572E899', '#6861CE99', '#48ABF799',
-                                                                       '#31CE3699',  '#F2596199', '#FFAD4699']:
+                                                                       '#31CE3699', '#F2596199', '#FFAD4699']:
             data['event_color'] = ''
         return data
 
@@ -311,6 +512,13 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
+
+
+class DSPathSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = DataStorePath
+        load_instance = True
+        include_fk = True
 
 
 class DSFileSchema(ma.SQLAlchemyAutoSchema):
@@ -431,47 +639,6 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         return file_path, file_size, file_hash
 
 
-class AssetSchema(ma.SQLAlchemyAutoSchema):
-    csrf_token = fields.String(required=False)
-    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
-    asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
-    asset_icon_compromised = auto_field('asset_icon_compromised')
-    asset_icon_not_compromised = auto_field('asset_icon_not_compromised')
-
-    class Meta:
-        model = AssetsType
-        load_instance = True
-
-    @post_load
-    def verify_unique(self, data, **kwargs):
-        client = AssetsType.query.filter(
-            func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
-            AssetsType.asset_id != data.asset_id
-        ).first()
-        if client:
-            raise marshmallow.exceptions.ValidationError(
-                "Asset type name already exists",
-                field_name="asset_name"
-            )
-
-        return data
-
-    def load_store_icon(self, file_storage, field_type):
-        if not file_storage.filename:
-            return None
-
-        fpath, message = store_icon(file_storage)
-
-        if fpath is None:
-            raise marshmallow.exceptions.ValidationError(
-                message,
-                field_name=field_type
-            )
-
-        setattr(self, field_type, fpath)
-
-        return fpath
-
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
     http_proxy = auto_field('http_proxy', required=False, allow_none=False)
@@ -495,32 +662,6 @@ class ContactSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Contact
         load_instance = True
-
-
-class IocTypeSchema(ma.SQLAlchemyAutoSchema):
-    type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
-    type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
-    type_taxonomy = auto_field('type_taxonomy')
-    type_validation_regex = auto_field('type_validation_regex')
-    type_validation_expect = auto_field('type_validation_expect')
-
-    class Meta:
-        model = IocType
-        load_instance = True
-
-    @post_load
-    def verify_unique(self, data, **kwargs):
-        client = IocType.query.filter(
-            func.lower(IocType.type_name) == func.lower(data.type_name),
-            IocType.type_id != data.type_id
-        ).first()
-        if client:
-            raise marshmallow.exceptions.ValidationError(
-                "IOC type name already exists",
-                field_name="type_name"
-            )
-
-        return data
 
 
 class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
@@ -765,82 +906,74 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
-class UserSchema(ma.SQLAlchemyAutoSchema):
-    user_roles_str = fields.List(fields.String, required=False)
+class BasicUserSchema(ma.SQLAlchemyAutoSchema):
+    user_id = auto_field('id', required=False)
+    user_uuid = auto_field('uuid', required=False)
     user_name = auto_field('name', required=True, validate=Length(min=2))
     user_login = auto_field('user', required=True, validate=Length(min=2))
     user_email = auto_field('email', required=True, validate=Length(min=2))
-    user_password = auto_field('password', required=True, validate=Length(min=2))
-    user_isadmin = fields.Boolean(required=True)
-    csrf_token = fields.String(required=False)
-    user_id = fields.Integer(required=False)
-    user_primary_organisation_id = fields.Integer(required=False)
+    has_deletion_confirmation = auto_field('has_deletion_confirmation', required=False, default=False)
 
     class Meta:
         model = User
         load_instance = True
+        exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
+                   'id', 'name', 'email', 'user', 'uuid']
+
+
+
+def validate_ioc_type(type_id):
+    if not IocType.query.get(type_id):
+        raise ValidationError("Invalid ioc_type ID")
+
+
+def validate_ioc_tlp(tlp_id):
+    if not Tlp.query.get(tlp_id):
+        raise ValidationError("Invalid ioc_tlp ID")
+
+
+def validate_asset_type(asset_id):
+    if not AssetsType.query.get(asset_id):
+        raise ValidationError("Invalid asset_type ID")
+
+
+def validate_asset_tlp(tlp_id):
+    if not Tlp.query.get(tlp_id):
+        raise ValidationError("Invalid asset_tlp ID")
+
+
+class SeveritySchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Severity
+        load_instance = True
+
+
+class AlertStatusSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = AlertStatus
+        load_instance = True
+
+
+class AlertSchema(ma.SQLAlchemyAutoSchema):
+    severity = ma.Nested(SeveritySchema)
+    status = ma.Nested(AlertStatusSchema)
+    customer = ma.Nested(CustomerSchema)
+    classification = ma.Nested(CaseClassificationSchema)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    iocs = ma.Nested(IocSchema, many=True)
+    assets = ma.Nested(CaseAssetsSchema, many=True)
+
+    class Meta:
+        model = Alert
+        include_relationships = True
         include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email']
+        load_instance = True
 
-    @pre_load()
-    def verify_username(self, data, **kwargs):
-        user = data.get('user_login')
-        user_id = data.get('user_id')
-        luser = User.query.filter(
-            User.user == user
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User name already taken',
-                                                             field_name="user_login")
 
-        return data
+class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = SavedFilter
+        load_instance = True
+        include_fk = True
+        include_relationships = True
 
-    @pre_load()
-    def verify_email(self, data, **kwargs):
-        email = data.get('user_email')
-        user_id = data.get('user_id')
-        luser = User.query.filter(
-            User.email == email
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User email already taken',
-                                                             field_name="user_email")
-
-        return data
-
-    @pre_load()
-    def verify_password(self, data, **kwargs):
-        server_settings = ServerSettings.query.first()
-        password = data.get('user_password')
-        if data.get('user_password') == '' and data.get('user_id') != 0:
-            # Update
-            data.pop('user_password')
-
-        else:
-            password_error = ""
-            if len(password) < server_settings.password_policy_min_length:
-                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters. "
-
-            if server_settings.password_policy_upper_case:
-                if not any(char.isupper() for char in password):
-                    password_error += "Password must contain uppercase char. "
-
-            if server_settings.password_policy_lower_case:
-                if not any(char.islower() for char in password):
-                    password_error += "Password must contain lowercase char. "
-
-            if server_settings.password_policy_digit:
-                if not any(char.isdigit() for char in password):
-                    password_error += "Password must contain digit. "
-
-            if len(server_settings.password_policy_special_chars) > 0:
-                if not any(char in server_settings.password_policy_special_chars for char in password):
-                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
-
-            if len(password_error) > 0:
-                raise marshmallow.exceptions.ValidationError(password_error,
-                                                             field_name="user_password")
-
-        return data

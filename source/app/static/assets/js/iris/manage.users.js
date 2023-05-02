@@ -75,6 +75,18 @@ manage_users_table = $('#users_table').dataTable( {
             }
             return data;
           }
+        },
+        { "data": "user_is_service_account",
+        "render": function (data, type, row, meta) {
+            if (type === 'display') {
+                if (data == true) {
+                    data = '<i class="fa fa-check text-success"></i>';
+                } else {
+                    data = '<i class="fa fa-xmark text-danger"></i>';
+                }
+            }
+            return data;
+          }
         }
       ]
     }
@@ -98,6 +110,8 @@ function refresh_users(do_notify) {
     });
 
 }
+
+
 
 
 /* Fetch the details of an user and allow modification */
@@ -270,6 +284,8 @@ function refresh_user_cac(user_id) {
         });
     }
 }
+
+
 
 function manage_user_cac(user_id) {
     url = 'users/' + user_id + '/cases-access/modal' + case_param();

@@ -260,10 +260,8 @@ def case_upload_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def case_add_ioc_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_add_ioc_modal(caseid):
 
     form = ModalAddCaseIOCForm()
     form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
@@ -384,8 +382,7 @@ def case_comment_ioc_list(cur_id, caseid):
     if ioc_comments is None:
         return response_error('Invalid ioc ID')
 
-    res = [com._asdict() for com in ioc_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(ioc_comments))
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/add', methods=['POST'])

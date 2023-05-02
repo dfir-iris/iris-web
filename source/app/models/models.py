@@ -17,12 +17,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
 
 # IMPORTS ------------------------------------------------
 import enum
 import uuid
 
-from sqlalchemy import BigInteger, UniqueConstraint
+from sqlalchemy import BigInteger, UniqueConstraint, Table
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -35,11 +36,12 @@ from sqlalchemy import TIMESTAMP
 from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, JSONB
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import func
 
 from app import app
 from app import db
@@ -125,9 +127,9 @@ class Client(db.Model):
     name = Column(Text, unique=True)
     description = Column(Text)
     sla = Column(Text)
-    creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
     created_by = Column(ForeignKey('user.id'), nullable=True)
-    last_update_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    last_update_date = Column(DateTime, server_default=func.now(), nullable=True)
 
     custom_attributes = Column(JSON)
 
@@ -140,6 +142,22 @@ class AssetsType(db.Model):
     asset_description = Column(String(255))
     asset_icon_not_compromised = Column(String(255))
     asset_icon_compromised = Column(String(255))
+
+
+alert_assets_association = Table(
+    'alert_assets_association',
+    db.Model.metadata,
+    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
+    Column('asset_id', ForeignKey('case_assets.asset_id'), primary_key=True)
+)
+
+
+alert_iocs_association = Table(
+    'alert_iocs_association',
+    db.Model.metadata,
+    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
+    Column('ioc_id', ForeignKey('ioc.ioc_id'), primary_key=True)
+)
 
 
 class CaseAssets(db.Model):
@@ -161,11 +179,14 @@ class CaseAssets(db.Model):
     user_id = Column(ForeignKey('user.id'))
     analysis_status_id = Column(ForeignKey('analysis_status.id'))
     custom_attributes = Column(JSON)
+    asset_enrichment = Column(JSONB)
 
     case = relationship('Cases')
     user = relationship('User')
     asset_type = relationship('AssetsType')
     analysis_status = relationship('AnalysisStatus')
+
+    alerts = relationship('Alert', secondary=alert_assets_association, back_populates='assets')
 
 
 class AnalysisStatus(db.Model):
@@ -182,10 +203,40 @@ class CaseClassification(db.Model):
     name = Column(Text)
     name_expanded = Column(Text)
     description = Column(Text)
-    creation_date = Column(DateTime, server_default=text("now()"), nullable=True)
+    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
     created_by_id = Column(ForeignKey('user.id'), nullable=True)
 
     created_by = relationship('User')
+
+
+class CaseTemplate(db.Model):
+    __tablename__ = 'case_template'
+
+    # Metadata
+    id = Column(Integer, primary_key=True)
+    created_by_user_id = Column(Integer, db.ForeignKey('user.id'))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    # Data
+    name = Column(String, nullable=False)
+    display_name = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+    author = Column(String, nullable=True)
+    title_prefix = Column(String, nullable=True)
+    summary = Column(String, nullable=True)
+    tags = Column(JSON, nullable=True)
+    tasks = Column(JSON, nullable=True)
+    note_groups = Column(JSON, nullable=True)
+    classification = Column(String, nullable=True)
+
+    created_by_user = relationship('User')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_from_dict(self, data: dict):
+        for field, value in data.items():
+            setattr(self, field, value)
 
 
 class Contact(db.Model):
@@ -340,10 +391,13 @@ class Ioc(db.Model):
     ioc_misp = Column(Text)
     ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
     custom_attributes = Column(JSON)
+    ioc_enrichment = Column(JSONB)
 
     user = relationship('User')
     tlp = relationship('Tlp')
     ioc_type = relationship('IocType')
+
+    alerts = relationship('Alert', secondary=alert_iocs_association, back_populates='iocs')
 
 
 class CustomAttribute(db.Model):
@@ -467,7 +521,8 @@ class NotesGroup(db.Model):
     __tablename__ = 'notes_group'
 
     group_id = Column(BigInteger, primary_key=True)
-    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
+    group_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                        nullable=False)
     group_title = Column(String(155))
     group_user = Column(ForeignKey('user.id'))
     group_creationdate = Column(DateTime)
@@ -556,8 +611,28 @@ class Tags(db.Model):
     __tablename__ = 'tags'
 
     id = Column(BigInteger, primary_key=True, nullable=False)
-    tag_title = Column(Text)
+    tag_title = Column(Text, unique=True)
     tag_creation_date = Column(DateTime)
+
+    cases = relationship('Cases', secondary="case_tags", back_populates='tags', viewonly=True)
+
+    def __init__(self, tag_title):
+        self.id = None
+        self.tag_title = tag_title
+        self.tag_creation_date = datetime.datetime.now()
+
+    def save(self):
+        existing_tag = self.get_by_title(self.tag_title)
+        if existing_tag is not None:
+            return existing_tag
+        else:
+            db.session.add(self)
+            db.session.commit()
+            return self
+
+    @classmethod
+    def get_by_title(cls, tag_title):
+        return cls.query.filter_by(tag_title=tag_title).first()
 
 
 class TaskAssignee(db.Model):
@@ -633,15 +708,18 @@ class Comments(db.Model):
     __tablename__ = "comments"
 
     comment_id = Column(BigInteger, primary_key=True)
-    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
+    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                          nullable=False)
     comment_text = Column(Text)
     comment_date = Column(DateTime)
     comment_update_date = Column(DateTime)
     comment_user_id = Column(ForeignKey('user.id'))
     comment_case_id = Column(ForeignKey('cases.case_id'))
+    comment_alert_id = Column(ForeignKey('alerts.alert_id'))
 
     user = relationship('User')
     case = relationship('Cases')
+    alert = relationship('Alert')
 
 
 class EventComments(db.Model):
@@ -798,6 +876,20 @@ class IrisReport(db.Model):
         return self
 
 
+class SavedFilter(db.Model):
+    __tablename__ = 'saved_filters'
+
+    filter_id = Column(BigInteger, primary_key=True)
+    created_by = Column(ForeignKey('user.id'), nullable=False)
+    filter_name = Column(Text, nullable=False)
+    filter_description = Column(Text)
+    filter_data = Column(JSON, nullable=False)
+    filter_is_private = Column(Boolean, nullable=False)
+    filter_type = Column(Text, nullable=False)
+
+    user = relationship('User', foreign_keys=[created_by])
+
+
 class CeleryTaskMeta(db.Model):
     __bind_key__ = 'iris_tasks'
     __tablename__ = 'celery_taskmeta'
@@ -837,4 +929,3 @@ def create_safe_attr(session, attribute_display_name, attribute_description, att
         session.add(instance)
         session.commit()
         return True
-

@@ -297,7 +297,7 @@ function manage_case(case_id) {
 
 $(document).ready(function() {
 
-    if ($("#editor_summary").attr("data-theme") != "dark") {
+    if ($("#editor_summary").attr("data-theme") !== "dark") {
         editor.setTheme("ace/theme/tomorrow");
     } else {
         editor.setTheme("ace/theme/iris_night");
@@ -376,13 +376,13 @@ $(document).ready(function() {
     });
 
 
-    var textarea = $('#case_summary');
+    //var textarea = $('#case_summary');
     editor.getSession().on("change", function () {
-        textarea.val(editor.getSession().getValue());
+        //textarea.val(do_md_filter_xss(editor.getSession().getValue()));
         $('#last_saved').text('Changes not saved').addClass('badge-danger').removeClass('badge-success');
-        target = document.getElementById('targetDiv'),
-        converter = get_showdown_convert();
-        html = converter.makeHtml(editor.getSession().getValue());
+        let target = document.getElementById('targetDiv');
+        let converter = get_showdown_convert();
+        let html = converter.makeHtml(do_md_filter_xss(editor.getSession().getValue()));
 
         target.innerHTML = do_md_filter_xss(html);
 
@@ -390,10 +390,9 @@ $(document).ready(function() {
 
     edit_case_summary();
     body_loaded();
-    if (is_db_linked == 1) {
-        sync_editor(true);
-        setInterval(auto_remove_typing, 2000);
-    }
+    sync_editor(true);
+    setInterval(auto_remove_typing, 2000);
+
 });
 
 

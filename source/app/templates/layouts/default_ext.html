@@ -34,7 +34,7 @@
 	{% endif %}
 </head>
 <body>
-	<div class="wrapper {% block layout %}{% endblock layout %}">
+	<div class="wrapper {% block layout %}{% endblock layout %} {% include 'includes/sidebar_handler.html' %}">
 
 
 		{% block content %}{% endblock content %}

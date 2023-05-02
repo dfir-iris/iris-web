@@ -199,7 +199,7 @@ function preview_asset_description(no_btn_update) {
     if(!$('#container_asset_description').is(':visible')) {
         asset_desc = g_asset_desc_editor.getValue();
         converter = get_showdown_convert();
-        html = converter.makeHtml(asset_desc);
+        html = converter.makeHtml(do_md_filter_xss(asset_desc));
         asset_desc_html = do_md_filter_xss(html);
         $('#target_asset_desc').html(asset_desc_html);
         $('#container_asset_description').show();
@@ -315,16 +315,6 @@ function generate_sample_csv(){
     download_file("sample_assets.csv", "text/csv", csv_data);
 }
 
-function download_file(filename, contentType, data) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:' + contentType + ';charset=utf-8,' + encodeURIComponent(data));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
-
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
@@ -341,7 +331,7 @@ $(document).ready(function(){
             "data": "asset_name",
             "className": "dt-nowrap",
             "render": function (data, type, row, meta) {
-              if (type === 'display') {
+              if (type === 'display' || type === 'filter' || type === 'sort' || type === 'export') {
                 if (row['asset_domain']) {
                     datak = sanitizeHTML(row['asset_domain'])+"\\"+ sanitizeHTML(data);
                 } else {
@@ -430,21 +420,25 @@ $(document).ready(function(){
                 return ret;
             }
           },
-          { "data": "ioc_links",
+        {
+            "data": "ioc_links",
             "render": function (data, type, row, meta) {
-              if (type === 'display' && data != null) {
-                datas = "";
-                for (ds in data) {
-                    datas += '<span class="badge badge-light">'+ sanitizeHTML(data[ds]['ioc_value']) + '</span>';
+                if ((type === 'filter' || type === 'display') && data != null) {
+                    datas = "";
+                    for (ds in data) {
+                        datas += '<span class="badge badge-light">' + sanitizeHTML(data[ds]['ioc_value']) + '</span>';
+                    }
+                    return datas;
+                } else if (type === 'export' && data != null) {
+                    let datas = data.map(ds => sanitizeHTML(ds['ioc_value'])).join(',');
+                    return datas;
                 }
-                return datas;
-              }
-              return data;
+                return data;
             }
-          },
+        },
           { "data": "asset_tags",
             "render": function (data, type, row, meta) {
-              if (type === 'display' && data != null) {
+              if (type === 'display' && data != null  ) {
                   tags = "";
                   de = data.split(',');
                   for (tag in de) {

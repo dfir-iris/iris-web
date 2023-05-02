@@ -177,7 +177,7 @@ function preview_task_description(no_btn_update) {
     if(!$('#container_task_description').is(':visible')) {
         task_desc = g_task_desc_editor.getValue();
         converter = get_showdown_convert();
-        html = converter.makeHtml(task_desc);
+        html = converter.makeHtml(do_md_filter_xss(task_desc));
         task_desc_html = do_md_filter_xss(html);
         $('#target_task_desc').html(task_desc_html);
         $('#container_task_description').show();
@@ -353,7 +353,9 @@ $(document).ready(function(){
                }
                else if (type === 'filter' || type === 'sort'){
                   data = row['status_name']
-               }
+               } else if (type === 'export') {
+                   data = row['status_name']
+                }
               return data;
             }
           },

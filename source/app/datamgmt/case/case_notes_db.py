@@ -305,19 +305,11 @@ def find_pattern_in_notes(pattern, caseid):
 
 
 def get_case_note_comments(note_id):
-    return NotesComments.query.filter(
+    return Comments.query.filter(
         NotesComments.comment_note_id == note_id
-    ).with_entities(
-        NotesComments.comment_id,
-        Comments.comment_text,
-        Comments.comment_date,
-        Comments.comment_update_date,
-        Comments.comment_uuid,
-        User.name,
-        User.user
     ).join(
-        NotesComments.comment,
-        Comments.user
+        NotesComments,
+        Comments.comment_id == NotesComments.comment_id
     ).order_by(
         Comments.comment_date.asc()
     ).all()

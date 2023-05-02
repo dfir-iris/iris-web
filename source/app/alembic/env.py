@@ -18,7 +18,6 @@ from app.configuration import SQLALCHEMY_BASE_ADMIN_URI, PG_DB_
 
 config.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_ADMIN_URI + PG_DB_)
 
-
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel

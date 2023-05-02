@@ -130,8 +130,7 @@ def case_comments_get(cur_id, caseid):
     if event_comments is None:
         return response_error('Invalid event ID')
 
-    res = [com._asdict() for com in event_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(event_comments))
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
@@ -555,7 +554,7 @@ def case_filter_timeline(caseid):
         ras = row._asdict()
 
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
-        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f')
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f') if ras['event_date_wtz'] else None
         ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S')
 
         if row.event_id not in events_list:
@@ -772,10 +771,8 @@ def case_edit_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def case_add_event_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_add_event_modal(caseid):
 
     event = CasesEvent()
     event.custom_attributes = get_default_custom_attributes('event')

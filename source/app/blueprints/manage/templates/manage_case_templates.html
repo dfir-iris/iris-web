@@ -1,0 +1,93 @@
+{% extends "layouts/default.html" %}
+
+{% block title %} Manage Case Templates {% endblock title %}
+
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+
+{% if current_user.is_authenticated %}
+{{ form.hidden_tag() }}
+<div class="page-inner">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col">
+                            <div class="card-title">Case Templates</div>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="btn btn-sm btn-dark float-right ml-2" onclick="refresh_case_template_table();">
+                                Refresh
+                            </button>
+                            <button class="btn btn-sm btn-dark float-right ml-2" onclick="add_case_template();">
+                                Add case template
+                            </button>
+                            <button class="btn btn-sm btn-dark float-right ml-2" onclick="fire_upload_case_template();">
+                                Upload case template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <div class="table-responsive" id="hooks_table_wrapper">
+                        <div class="selectgroup">
+                            <span id="table_buttons"></span>
+                        </div>
+                        <table aria-describedby="Case template list"
+                               class="table display table table-striped table-hover"
+                               style="width: 100%; border-spacing: 0;" id="case_templates_table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#ID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Added by</th>
+                                    <th scope="col">Created at</th>
+                                    <th scope="col">Updated at</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th scope="col">#ID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Added by</th>
+                                    <th scope="col">Created at</th>
+                                    <th scope="col">Updated at</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="modal" tabindex="-1"  id="modal_case_template" data-backdrop="true">
+        <div class="modal-xxl modal-dialog" role="document">
+            <div class="modal-content" id="modal_case_template_json">
+    
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div>
+    <div class="modal" tabindex="-1" role="dialog" id="modal_upload_case_template" data-backdrop="true">
+      <div class="modal-xl modal-dialog" role="document">
+        <div class="modal-content" id="modal_upload_case_template_json">
+
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+    {% endif %}
+
+    {% endblock content %}
+
+    {% block javascripts %}
+    <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
+        charset="utf-8"></script>
+    <script src="/static/assets/js/iris/manage.case.templates.js"></script>
+    {% endblock javascripts %}

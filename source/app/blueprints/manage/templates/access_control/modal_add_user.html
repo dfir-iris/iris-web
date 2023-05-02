@@ -42,6 +42,9 @@
                                     {% if not user.user_id %}
                                         <p class="ml-3"><i class="fa-solid fa-circle-info mr-2"></i>Permissions and groups memberships can be set once the user is created.</p>
                                     {% endif %}
+                                    {% if user.user_is_service_account %}
+                                        <p class="ml-3 text-warning-high"><i class="fa-solid fa-circle-info mr-2"></i>This is a service account. It cannot login interactively nor have a password.</p>
+                                    {% endif %}
                                     <div class="form-group">
                                         <label for="user_name" class="mr-4">Full name
                                         </label>
@@ -55,8 +58,9 @@
                                         <label for="user_email" class="placeholder">Email</label>
                                         {{ form.user_email(class='form-control',  autocomplete="off") }}
                                     </div>
-                                    <div class="form-group mt-3">
-                                        <label for="user_pwd" class="placeholder">Password</label>
+                                     {% if not user.user_is_service_account %}
+                                    <div class="form-group mt-3" id="formGroupUserPassword">
+                                        <label for="user_pwd" class="placeholder">Password (optional for service accounts)</label>
                                         <ul>
                                             <li><small>Must contain at least {{ server_settings.password_policy_min_length }} chars</small></li>
                                             {% if server_settings.password_policy_upper_case %}
@@ -72,6 +76,7 @@
                                                 <li class="text-sm"><small>Must contain at least one of : {{ server_settings.password_policy_special_chars }}</small></li>
                                             {% endif %}
                                         </ul>
+
                                         <div class="input-group mb-3">
                                             {{ form.user_password(class='form-control', autocomplete="off") }}
                                             <div class="input-group-append">
@@ -80,7 +85,22 @@
                                                 </span>
                                             </div>
                                         </div>
+
                                     </div>
+                                    {% endif %}
+                                    {% if not user.user_id %}
+                                    <div class="form-group mt-3">
+
+                                        <div class="form-check">
+                                            <label class="form-check-label mt-3" >
+                                                {{ form.user_is_service_account(class="form-check-input", type="checkbox") }}
+                                                <span class="form-check-sign" id="formCheckIsServiceAccount">  Use as service account
+                                                    <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the user won't appear in the attribution suggestions and won't be able to connect on the UI" style="cursor:pointer;"></i>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                     {% if user.user_id %}
                                         <div class="form-group mt-3">
                                             <label for="user_id" class="placeholder">User ID</label>
@@ -89,6 +109,10 @@
                                         <div class="form-group mt-3">
                                             <label for="user_uuid" class="placeholder">User UUID</label>
                                             <input autocomplete="off" class="form-control" type="text" value="{{ user.user_uuid }}" disabled>
+                                        </div>
+                                        <div class="form-group mt-3">
+                                            <label for="user_uuid" class="placeholder">User API Key</label>
+                                            <input autocomplete="off" class="form-control" type="text" value="{{ user.user_api_key }}" disabled>
                                         </div>
                                     {% endif %}
                                 </div>

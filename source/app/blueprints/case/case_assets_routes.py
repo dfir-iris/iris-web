@@ -152,11 +152,8 @@ def case_assets_state(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def add_asset_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
-
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def add_asset_modal(caseid):
     form = AssetBasicForm()
 
     form.asset_type_id.choices = get_assets_types()
@@ -429,12 +426,13 @@ def case_comment_asset_modal(cur_id, caseid, url_redir):
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_asset_list(cur_id, caseid):
 
-    task_comments = get_case_asset_comments(cur_id)
-    if task_comments is None:
+    asset_comments = get_case_asset_comments(cur_id)
+    if asset_comments is None:
         return response_error('Invalid asset ID')
 
-    res = [com._asdict() for com in task_comments]
-    return response_success(data=res)
+    # CommentSchema(many=True).dump(task_comments)
+    # res = [com._asdict() for com in task_comments]
+    return response_success(data=CommentSchema(many=True).dump(asset_comments))
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/add', methods=['POST'])

@@ -155,10 +155,8 @@ def case_edit_rfile_modal(cur_id, caseid, url_redir):
 
 
 @case_rfiles_blueprint.route('/case/evidences/add/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.full_access)
-def case_add_rfile_modal(caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_add_rfile_modal(caseid):
 
     return render_template("modal_add_case_rfile.html", rfile=None, attributes=get_default_custom_attributes('evidence'))
 
@@ -233,12 +231,11 @@ def case_comment_evidence_modal(cur_id, caseid, url_redir):
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_evidence_list(cur_id, caseid):
 
-    task_comments = get_case_evidence_comments(cur_id)
-    if task_comments is None:
+    evidence_comments = get_case_evidence_comments(cur_id)
+    if evidence_comments is None:
         return response_error('Invalid evidence ID')
 
-    res = [com._asdict() for com in task_comments]
-    return response_success(data=res)
+    return response_success(data=CommentSchema(many=True).dump(evidence_comments))
 
 
 @case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/add', methods=['POST'])

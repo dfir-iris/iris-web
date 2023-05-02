@@ -31,6 +31,21 @@ class Permissions(enum.Enum):
     standard_user = 0x1
     server_administrator = 0x2
 
+    alerts_read = 0x4
+    alerts_write = 0x8
+    alerts_delete = 0x10
+
+    search_across_cases = 0x20
+
+    customers_read = 0x40
+    customers_write = 0x80
+
+    case_templates_read = 0x100
+    case_templates_write = 0x200
+
+    activities_read = 0x400
+    all_activities_read = 0x800
+
 
 class Organisation(db.Model):
     __tablename__ = 'organisations'
@@ -164,16 +179,19 @@ class User(UserMixin, db.Model):
     api_key = Column(Text(), unique=True)
     external_id = Column(Text, unique=True)
     in_dark_mode = Column(Boolean())
+    has_mini_sidebar = Column(Boolean(), default=False)
     has_deletion_confirmation = Column(Boolean(), default=False)
+    is_service_account = Column(Boolean(), default=False)
 
     def __init__(self, user: str, name: str, email: str, password: str, active: bool,
-                 external_id: str = None):
+                 external_id: str = None, is_service_account: bool = False):
         self.user = user
         self.name = name
         self.password = password
         self.email = email
         self.active = active
         self.external_id = external_id
+        self.is_service_account = is_service_account
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
