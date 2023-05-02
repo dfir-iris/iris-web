@@ -55,6 +55,7 @@ services:
       # RootCA necessary when dealing with an auth server without a trusted CA signed certificate
       - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - ./certificates/:/home/iris/certificates/:ro
+      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -91,6 +92,7 @@ services:
     volumes:
       - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - ./certificates/:/home/iris/certificates/:ro
+      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data

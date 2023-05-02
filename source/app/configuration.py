@@ -434,7 +434,7 @@ class Config:
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
 
             LDAP_PRIVATE_KEY = config.load('LDAP', 'PRIVATE_KEY')
-            if not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
+            if LDAP_PRIVATE_KEY and not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
                 log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
 
