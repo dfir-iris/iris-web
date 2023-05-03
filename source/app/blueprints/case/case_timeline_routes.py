@@ -267,10 +267,11 @@ def case_getgraph(caseid):
 
     tim = []
     for row in timeline:
+
         tmp = {}
 
         tmp['date'] = row.event_date
-        tmp['group'] = row.category[0].name
+        tmp['group'] = row.category[0].name if row.category else 'Uncategorized'
         tmp['content'] = row.event_title
         if row.event_content:
             content = row.event_content.replace('\n', '<br/>')
