@@ -590,6 +590,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
         return response_success(data=CaseSchema().dump(case))
 
     except Exception as e:
+        app.app.logger.exception(e)
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
 
