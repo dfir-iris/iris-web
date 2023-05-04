@@ -13,11 +13,9 @@
 }
 
 .alert-actions {
-  position: absolute;
-  bottom: 7px;
+  position: relative;
   right: 0;
   background-color: rgba(255, 255, 255, 0.35);
-  padding: 10px;
   justify-content: space-between;
   border-radius: 15px;
 }

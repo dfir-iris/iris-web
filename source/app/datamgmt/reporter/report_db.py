@@ -24,7 +24,7 @@ from sqlalchemy import desc
 
 from app.datamgmt.case.case_notes_db import get_notes_from_group
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
-from app.models import AnalysisStatus, CompromiseStatus, TaskAssignee
+from app.models import AnalysisStatus, CompromiseStatus, TaskAssignee, NotesGroupLink
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets
@@ -250,14 +250,21 @@ def export_case_evidences_json(case_id):
 
 
 def export_case_notes_json(case_id):
-    res = Notes.query.with_entities(
+    res = Notes.query.join(
+        NotesGroupLink, NotesGroupLink.note_id == Notes.note_id
+    ).join(
+        NotesGroup, NotesGroup.group_id == NotesGroupLink.group_id
+    ).with_entities(
         Notes.note_title,
         Notes.note_content,
         Notes.note_creationdate,
         Notes.note_lastupdate,
         Notes.custom_attributes,
         Notes.note_id,
-        Notes.note_uuid
+        Notes.note_uuid,
+        NotesGroup.group_title,
+        NotesGroup.group_id,
+        NotesGroup.group_user
     ).filter(
         Notes.note_case_id == case_id
     ).all()

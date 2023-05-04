@@ -876,7 +876,7 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 }
 
 .alert-actions {
-    position: absolute;
+    position: relative;
     bottom: 0;
     right: 0;
     background-color: #202940;
