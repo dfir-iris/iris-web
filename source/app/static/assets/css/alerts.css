@@ -15,9 +15,9 @@
 .alert-actions {
   position: relative;
   right: 0;
-  background-color: rgba(255, 255, 255, 0.35);
+  /*background-color: rgba(255, 255, 255, 0.35);*/
   justify-content: space-between;
-  border-radius: 15px;
+  /*border-radius: 15px;*/
 }
 
 .btn-alert-primary {
