@@ -663,11 +663,11 @@ def create_safe_auth_model():
 
 def create_safe_admin(def_org, gadm):
     admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
-    admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+    admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@iris.local')
 
     user = User.query.filter(or_(
         User.user == admin_username,
-        User.email == app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+        User.email == app.config.get('IRIS_ADM_EMAIL', 'administrator@iris.local')
     )).first()
     password = None
 
@@ -680,7 +680,7 @@ def create_safe_admin(def_org, gadm):
             admin_username = 'administrator'
 
         if admin_email is None:
-            admin_email = 'administrator@localhost'
+            admin_email = 'administrator@iris.local'
 
         log.info(f'Creating first admin user with username "{admin_username}"')
 
