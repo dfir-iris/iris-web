@@ -51,7 +51,7 @@ metadata = Base.metadata
 
 
 class CaseStatus(enum.Enum):
-    other = 0x0
+    unknown = 0x0
     false_positive = 0x1
     true_positive = 0x2
     not_applicable = 0x3

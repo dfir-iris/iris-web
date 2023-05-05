@@ -26,6 +26,7 @@ from sqlalchemy.orm import aliased, contains_eager, subqueryload
 from app import db
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
+from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.states import delete_case_states
 from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus
 from app.models import CaseEventCategory
@@ -167,6 +168,8 @@ def close_case(case_id):
     if res:
         res.close_date = datetime.utcnow()
 
+        res.state_id = get_case_state_by_name('Closed').state_id
+
         db.session.commit()
         return res
 
@@ -180,6 +183,8 @@ def reopen_case(case_id):
 
     if res:
         res.close_date = None
+
+        res.state_id = get_case_state_by_name('Opened').state_id
 
         db.session.commit()
         return res

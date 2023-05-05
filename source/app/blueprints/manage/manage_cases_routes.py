@@ -43,7 +43,7 @@ from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
-from app.datamgmt.manage.manage_case_state_db import get_case_states_list
+from app.datamgmt.manage.manage_case_state_db import get_case_states_list, get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, case_template_pre_modifier, \
     case_template_post_modifier
 from app.datamgmt.manage.manage_cases_db import close_case
@@ -123,7 +123,7 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, s
                                                                         CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
-    res = get_case(cur_id)
+    res = get_case_details_rt(cur_id)
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
     form = FlaskForm()
@@ -282,6 +282,8 @@ def api_add_case(caseid):
             case = case_template_pre_modifier(case, case_template_id)
             if case is None:
                 return response_error(msg=f"Invalid Case template ID {case_template_id}", status=400)
+
+        case.state_id = get_case_state_by_name('Open').state_id
 
         case.save()
 

@@ -34,6 +34,7 @@ from app import db
 from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
 from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
+from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import case_template_pre_modifier, get_case_template_by_id, \
     case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
@@ -273,7 +274,8 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
         soc_id='',
         client_id=alerts[0].alert_customer_id,
         user=current_user,
-        classification_id=alerts[0].alert_classification_id
+        classification_id=alerts[0].alert_classification_id,
+        state_id=get_case_state_by_name('Opened').state_id
     )
 
     case.save()
@@ -406,7 +408,8 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         soc_id=alert.alert_id,
         client_id=alert.alert_customer_id,
         user=current_user,
-        classification_id=alert.alert_classification_id
+        classification_id=alert.alert_classification_id,
+        state_id=get_case_state_by_name('Opened').state_id
     )
 
     case.save()

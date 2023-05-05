@@ -34,9 +34,9 @@
                         </div>
                         <div class="col mt-4">
                             <div class="row">
-                                 <span title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret ml-auto btn-sm mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
+                                 <span title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret ml-auto btn-xs mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
                                     onclick="case_detail('{{ case.case_id }}', true);"
-                                 >{{ case.status_name }}</span>
+                                 ><i class="fa-solid fa-group-arrows-rotate mr-2"></i>{{ case.status_name }}</span>
                             </div>
                             <div class="row">
                                   <div class="ml-auto">
