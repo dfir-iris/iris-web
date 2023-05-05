@@ -221,6 +221,7 @@ def get_case_details_rt(case_id):
             Cases.owner_id,
             owner_alias.name.label('owner'),
             Cases.status_id,
+            Cases.state_id,
             Cases.custom_attributes,
             Cases.modification_history,
             Cases.initial_date,

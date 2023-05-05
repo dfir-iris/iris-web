@@ -34,19 +34,18 @@
                         </div>
                         <div class="col">
                             <div class="row">
-                                 <select title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret btn-sm ml-auto mb-2 {% if case.status_id == 1 %}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-outline-light{% endif %}"
+                                 <select title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret ml-auto btn-sm mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
                                           id="case_quick_status" aria-labelledby="dropdownMenuButton">
                                       <option value="0" {% if case.status_id == 0 %}selected{% endif %} class="badge-text">Unknown outcome</option>
                                       <option value="1" {% if case.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
                                       <option value="2" {% if case.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
                                       <option value="3" {% if case.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
                                   </select>
-                            </div>
+                             </div>
                             <div class="row">
                                   <div class=" ml-auto">
                                     <h5 class="text-white op-7 mb-2 float-right"><b>Customer</b> : {{ case.client.name }}</h5>
                                     {% if case.soc_id %} <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
-
                                 </div>
                             </div>
                         </div>
@@ -55,7 +54,8 @@
 
                         <div class="ml-2 col">
                             <div class="row ml-1">
-                                {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>{% endif %}
+                                {% if case.state %}<h5 title="Case state"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-list-check  mr-1"></i> {{ case.state.state_name }}</span></h5>{% endif %}
+                                {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light ml-2"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>{% endif %}
                                 {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 badge-warning" href="/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
                             </div>
                         </div>
