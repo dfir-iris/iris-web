@@ -25,6 +25,7 @@ from werkzeug.utils import redirect
 from app import db
 from app.datamgmt.manage.manage_case_state_db import get_case_state_list, \
     get_case_state_by_id
+from app.forms import CaseStateForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseStateSchema
@@ -37,7 +38,7 @@ manage_case_state_blueprint = Blueprint('manage_case_state',
 
 
 # CONTENT ------------------------------------------------
-@manage_case_state_blueprint.route('/manage/case-state/list', methods=['GET'])
+@manage_case_state_blueprint.route('/manage/case-states/list', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
 def list_case_state(caseid: int) -> Response:
     """Get the list of case state
@@ -54,7 +55,7 @@ def list_case_state(caseid: int) -> Response:
     return response_success("", data=l_cl)
 
 
-@manage_case_state_blueprint.route('/manage/case-state/<int:state_id>', methods=['GET'])
+@manage_case_state_blueprint.route('/manage/case-states/<int:state_id>', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
 def get_case_state(state_id: int, caseid: int) -> Response:
     """Get a case state
@@ -75,7 +76,7 @@ def get_case_state(state_id: int, caseid: int) -> Response:
     return response_success("", data=schema.dump(case_state))
 
 
-@manage_case_state_blueprint.route('/manage/case-state/update/<int:state_id>/modal',
+@manage_case_state_blueprint.route('/manage/case-states/update/<int:state_id>/modal',
                                             methods=['GET'])
 @ac_requires(Permissions.server_administrator, no_cid_required=True)
 def update_case_state_modal(state_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
@@ -93,7 +94,7 @@ def update_case_state_modal(state_id: int, caseid: int, url_redir: bool) -> Unio
         return redirect(url_for('manage_case_state_blueprint.update_case_state_modal',
                                 state_id=state_id, caseid=caseid))
 
-    state_form = CaseStateSchema()
+    state_form = CaseStateForm()
     case_state = get_case_state_by_id(state_id)
     if not case_state:
         return response_error(f"Invalid case state ID {state_id}")
@@ -105,7 +106,7 @@ def update_case_state_modal(state_id: int, caseid: int, url_redir: bool) -> Unio
                            case_state=case_state)
 
 
-@manage_case_state_blueprint.route('/manage/case-state/update/<int:state_id>',
+@manage_case_state_blueprint.route('/manage/case-states/update/<int:state_id>',
                                             methods=['POST'])
 @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def update_case_state(state_id: int, caseid: int) -> Response:
@@ -132,7 +133,7 @@ def update_case_state(state_id: int, caseid: int) -> Response:
         ccls = ccl.load(request.get_json(), instance=case_state)
 
         if ccls:
-            track_activity(f"updated case state {ccls.id}", caseid=caseid)
+            track_activity(f"updated case state {ccls.state_id}", caseid=caseid)
             return response_success("IOC type updated", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -141,7 +142,7 @@ def update_case_state(state_id: int, caseid: int) -> Response:
     return response_error("Unexpected error server-side. Nothing updated", data=case_state)
 
 
-@manage_case_state_blueprint.route('/manage/case-state/add/modal', methods=['GET'])
+@manage_case_state_blueprint.route('/manage/case-states/add/modal', methods=['GET'])
 @ac_requires(Permissions.server_administrator, no_cid_required=True)
 def add_case_state_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
     """Add a case state
@@ -157,12 +158,12 @@ def add_case_state_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
         return redirect(url_for('manage_case_state_blueprint.add_case_state_modal',
                                 caseid=caseid))
 
-    state_form = CaseStateSchema()
+    state_form = CaseStateForm()
 
     return render_template("modal_case_state.html", form=state_form, case_state=None)
 
 
-@manage_case_state_blueprint.route('/manage/case-state/add', methods=['POST'])
+@manage_case_state_blueprint.route('/manage/case-states/add', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def add_case_state(caseid: int) -> Response:
     """Add a case state
@@ -186,7 +187,7 @@ def add_case_state(caseid: int) -> Response:
             db.session.add(ccls)
             db.session.commit()
 
-            track_activity(f"added case state {ccls.name}", caseid=caseid)
+            track_activity(f"added case state {ccls.state_name}", caseid=caseid)
             return response_success("Case state added", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
@@ -195,7 +196,7 @@ def add_case_state(caseid: int) -> Response:
     return response_error("Unexpected error server-side. Nothing added", data=None)
 
 
-@manage_case_state_blueprint.route('/manage/case-state/delete/<int:state_id>',
+@manage_case_state_blueprint.route('/manage/case-states/delete/<int:state_id>',
                                             methods=['POST'])
 @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def delete_case_state(state_id: int, caseid: int) -> Response:
@@ -215,5 +216,5 @@ def delete_case_state(state_id: int, caseid: int) -> Response:
     db.session.delete(case_state)
     db.session.commit()
 
-    track_activity(f"deleted case state {case_state.name}", caseid=caseid)
+    track_activity(f"deleted case state {case_state.state_name}", caseid=caseid)
     return response_success("Case state deleted")

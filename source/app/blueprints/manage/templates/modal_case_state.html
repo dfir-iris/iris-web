@@ -19,9 +19,9 @@
                     {{ form.state_description(class='form-control',  autocomplete="off") }}
                 </div>
 
-            {% if case_state.id %}
+            {% if case_state.state_id %}
                 <button type="button" class="btn btn-outline-danger mt-5"
-                onclick="delete_case_state('{{ case_state.id }}');">Delete</button>
+                onclick="delete_case_state('{{ case_state.state_id }}');">Delete</button>
                 <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
                 id="submit_new_case_state">Update</button>
 
