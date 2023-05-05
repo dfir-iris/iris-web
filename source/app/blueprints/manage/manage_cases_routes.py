@@ -43,6 +43,7 @@ from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
+from app.datamgmt.manage.manage_case_state_db import get_case_states_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, case_template_pre_modifier, \
     case_template_post_modifier
 from app.datamgmt.manage.manage_cases_db import close_case
@@ -124,11 +125,12 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, s
 
     res = get_case_details_rt(cur_id)
     case_classifications = get_case_classifications_list()
+    case_states = get_case_states_list()
     form = FlaskForm()
 
     if res:
         return render_template("modal_case_info_from_case.html", data=res, form=form, protagnists=None,
-                               case_classifications=case_classifications)
+                               case_classifications=case_classifications, case_states=case_states)
 
     else:
         return response_error("Unknown case")
@@ -155,6 +157,7 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
 
     res = get_case_details_rt(cur_id)
     case_classifications = get_case_classifications_list()
+    case_states = get_case_states_list()
 
     protagonists = get_case_protagonists(cur_id)
 
@@ -162,7 +165,7 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
 
     if res:
         return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
-                               case_classifications=case_classifications)
+                               case_classifications=case_classifications, case_states=case_states)
 
     else:
         return response_error("Unknown case")

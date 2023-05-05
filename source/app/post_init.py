@@ -539,15 +539,15 @@ def create_safe_alert_status():
 
 
 def create_safe_case_states():
-    create_safe(db.session, CaseState, state_name='Unspecified', state_description="Unspecified")
-    create_safe(db.session, CaseState, state_name='New', state_description="New case")
+    create_safe(db.session, CaseState, state_name='Unspecified', state_description="Unspecified", protected=True)
+    create_safe(db.session, CaseState, state_name='New', state_description="New case", protected=True)
     create_safe(db.session, CaseState, state_name='In progress', state_description="Case is being investigated")
     create_safe(db.session, CaseState, state_name='Containment', state_description="Containment is in progress")
     create_safe(db.session, CaseState, state_name='Eradication', state_description="Eradication is in progress")
     create_safe(db.session, CaseState, state_name='Recovery', state_description="Recovery is in progress")
     create_safe(db.session, CaseState, state_name='Post-Incident', state_description="Post-incident phase")
     create_safe(db.session, CaseState, state_name='Reporting', state_description="Reporting is in progress")
-    create_safe(db.session, CaseState, state_name='Closed', state_description="Case is closed")
+    create_safe(db.session, CaseState, state_name='Closed', state_description="Case is closed", protected=True)
 
 
 def create_safe_assets():

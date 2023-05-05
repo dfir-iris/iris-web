@@ -459,7 +459,13 @@ $('#state_table').dataTable({
         {
             "data": "state_name",
             "render": function ( data, type, row ) {
-                return '<a href="#" onclick="state_detail(\'' + row['state_id'] + '\');">' + sanitizeHTML(data) +'</a>';
+                if (type === 'display') {
+                    if (row['protected'] === true) {
+                        return '<span href="#" "><i class="fa fa-lock mr-2" title="Protected state"></i>' + sanitizeHTML(data) + '</span>';
+                    }
+                    return '<a href="#" onclick="state_detail(\'' + row['state_id'] + '\');">' + sanitizeHTML(data) + '</a>';
+                }
+                return data;
             }
         },
         {
@@ -489,7 +495,7 @@ function state_detail(ioc_id) {
         $('#submit_new_case_state').on("click", function () {
             var form = $('form#form_new_case_state').serializeObject();
 
-            post_request_api('/manage/case-states/update/' + ioc_id, JSON.stringify(form), true)
+            post_request_api('/manage/case-states/update/' + ioc_id, JSON.stringify(form))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_state_table();

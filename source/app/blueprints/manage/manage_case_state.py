@@ -23,7 +23,7 @@ from flask import Blueprint, Response, url_for, render_template, request
 from werkzeug.utils import redirect
 
 from app import db
-from app.datamgmt.manage.manage_case_state_db import get_case_state_list, \
+from app.datamgmt.manage.manage_case_state_db import get_case_states_list, \
     get_case_state_by_id
 from app.forms import CaseStateForm
 from app.iris_engine.utils.tracker import track_activity
@@ -50,7 +50,7 @@ def list_case_state(caseid: int) -> Response:
         Flask Response object
 
     """
-    l_cl = get_case_state_list()
+    l_cl = get_case_states_list()
 
     return response_success("", data=l_cl)
 
@@ -125,6 +125,9 @@ def update_case_state(state_id: int, caseid: int) -> Response:
     case_state = get_case_state_by_id(state_id)
     if not case_state:
         return response_error(f"Invalid case state ID {state_id}")
+
+    if case_state.protected:
+        return response_error(f"Case state {case_state.state_name} is protected")
 
     ccl = CaseStateSchema()
 
@@ -212,6 +215,9 @@ def delete_case_state(state_id: int, caseid: int) -> Response:
     case_state = get_case_state_by_id(state_id)
     if not case_state:
         return response_error(f"Invalid case state ID {state_id}")
+
+    if case_state.protected:
+        return response_error(f"Case state {case_state.state_name} is protected")
 
     db.session.delete(case_state)
     db.session.commit()

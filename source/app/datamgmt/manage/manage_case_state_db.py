@@ -22,7 +22,7 @@ from app.models.cases import CaseState
 from app.schema.marshables import CaseStateSchema
 
 
-def get_case_state_list() -> List[dict]:
+def get_case_states_list() -> List[dict]:
     """Get a list of case state
 
     Returns:

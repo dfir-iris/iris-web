@@ -198,6 +198,7 @@ class CaseState(db.Model):
     state_id = Column(Integer, primary_key=True)
     state_name = Column(Text, nullable=False)
     state_description = Column(Text)
+    protected = Column(Boolean, default=False)
 
     cases = relationship('Cases', back_populates='state')
 
