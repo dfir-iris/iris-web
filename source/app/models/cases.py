@@ -63,7 +63,7 @@ class Cases(db.Model):
     user_id = Column(ForeignKey('user.id'))
     owner_id = Column(ForeignKey('user.id'))
     status_id = Column(Integer, nullable=False, server_default=text("0"))
-    state_id = Column(ForeignKey('case_state.state_id'), nullable=False)
+    state_id = Column(ForeignKey('case_state.state_id'), nullable=True)
     custom_attributes = Column(JSON)
     case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
                        nullable=False)
@@ -87,7 +87,8 @@ class Cases(db.Model):
                  description=None,
                  user=None,
                  custom_attributes=None,
-                 classification_id=None
+                 classification_id=None,
+                 state_id=None
                  ):
         self.name = name,
         self.soc_id = soc_id,
@@ -104,6 +105,7 @@ class Cases(db.Model):
         self.case_uuid = uuid.uuid4()
         self.status_id = 0
         self.classification_id = classification_id
+        self.state_id = state_id
 
     def save(self):
         """
