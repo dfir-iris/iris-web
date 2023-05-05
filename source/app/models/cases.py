@@ -63,6 +63,7 @@ class Cases(db.Model):
     user_id = Column(ForeignKey('user.id'))
     owner_id = Column(ForeignKey('user.id'))
     status_id = Column(Integer, nullable=False, server_default=text("0"))
+    state_id = Column(ForeignKey('case_state.state_id'), nullable=False)
     custom_attributes = Column(JSON)
     case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
                        nullable=False)
@@ -77,6 +78,7 @@ class Cases(db.Model):
     alerts = relationship('Alert', secondary="alert_case_association", back_populates='cases', viewonly=True)
 
     tags = relationship('Tags', secondary="case_tags", back_populates='cases')
+    state = relationship('CaseState', back_populates='cases')
 
     def __init__(self,
                  name=None,
@@ -186,6 +188,16 @@ class CasesEvent(db.Model):
                             primaryjoin="CasesEvent.event_id==CaseEventCategory.event_id",
                             secondaryjoin="CaseEventCategory.category_id==EventCategory.id",
                             viewonly=True)
+
+
+class CaseState(db.Model):
+    __tablename__ = 'case_state'
+
+    state_id = Column(Integer, primary_key=True)
+    state_name = Column(Text, nullable=False)
+    state_description = Column(Text)
+
+    cases = relationship('Cases', back_populates='state')
 
 
 class CaseProtagonist(db.Model):
