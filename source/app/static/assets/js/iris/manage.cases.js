@@ -202,7 +202,7 @@ $('#cases_table').dataTable({
     ordering: true,
     processing: true,
     retrieve: true,
-    lengthChange: false,
+    lengthChange: true,
     pageLength: 25,
     select: true,
     sort: true,

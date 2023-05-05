@@ -106,7 +106,7 @@ var OverviewTable = $("#overview_table").DataTable({
     ordering: true,
     processing: true,
     retrieve: true,
-    lengthChange: false,
+    lengthChange: true,
     pageLength: 25,
     order: [[ 1, "asc" ]],
     buttons: [
