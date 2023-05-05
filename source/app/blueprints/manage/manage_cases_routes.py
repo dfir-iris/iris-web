@@ -123,7 +123,7 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, s
                                                                         CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
-    res = get_case_details_rt(cur_id)
+    res = get_case(cur_id)
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
     form = FlaskForm()

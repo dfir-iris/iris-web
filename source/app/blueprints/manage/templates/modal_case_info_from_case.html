@@ -88,12 +88,8 @@
                                 {% endif %}
                             </div>
                             <div class="form-group mt--3">
-                                <label>Status :</label>
-                                {% if data.close_date %}
-                                    <span type="text" class="text-faded text-danger">Closed</span>
-                                    {% else %}
-                                    <span type="text" class="text-faded text-success">Open</span>
-                                {% endif %}
+                                <label>State :</label>
+                                <span type="text" class="text-faded">{{ data.state_name }}</span>
                             </div>
                             <div class="form-group mt--3">
                                 <label>Open date :</label>
@@ -176,11 +172,11 @@
                                  <div class="row">
                                      <div class="col-xs-12 col-6">
                                         <div class="input-group mb-2">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text">Case state</span>
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">State</span>
                                             </div>
-                                            <select class="btn dropdown-toggle btn-outline-white"
-                                                  id="case_state" aria-labelledby="dropdownMenuButton" name="state_id">
+                                            <select class="selectpicker form-control"
+                                                  id="case_state" name="state_id">
                                                 {% for clc in case_states %}
                                                     <option value="{{ clc.state_id }}" {% if data.state_id == clc.state_id %}selected{% endif %} class="badge-text">{{ clc.state_name }}</option>
                                                 {% endfor %}
@@ -189,11 +185,11 @@
                                     </div>
                                     <div class="col-xs-12 col-6">
                                         <div class="input-group mb-2">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text">Case outcome</span>
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Outcome</span>
                                             </div>
-                                            <select class="btn dropdown-toggle btn-outline-white"
-                                                  id="case_quick_status" aria-labelledby="dropdownMenuButton" name="status_id">
+                                            <select class="form-control selectpicker"
+                                                  id="case_quick_status" name="status_id">
                                               <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
                                               <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
                                               <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
@@ -360,6 +356,16 @@
     $('#case_quick_owner').selectpicker({
         liveSearch: true,
         title: "Owner",
+        style: "btn-outline-white"
+    });
+    $('#case_state').selectpicker({
+        liveSearch: true,
+        title: "Case state",
+        style: "btn-outline-white"
+    });
+    $('#case_quick_status').selectpicker({
+        liveSearch: true,
+        title: "Outcome",
         style: "btn-outline-white"
     });
 

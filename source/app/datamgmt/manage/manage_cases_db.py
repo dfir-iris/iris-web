@@ -27,7 +27,7 @@ from app import db
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, CaseClassification, alert_assets_association
+from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
@@ -51,7 +51,7 @@ from app.models.authorization import User
 from app.models import UserActivity
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
-from app.models.cases import CaseProtagonist, CaseTags
+from app.models.cases import CaseProtagonist, CaseTags, CaseState
 
 
 def list_cases_id():
@@ -222,6 +222,7 @@ def get_case_details_rt(case_id):
             owner_alias.name.label('owner'),
             Cases.status_id,
             Cases.state_id,
+            CaseState.state_name,
             Cases.custom_attributes,
             Cases.modification_history,
             Cases.initial_date,
@@ -236,7 +237,8 @@ def get_case_details_rt(case_id):
         ).join(
             Cases.client,
         ).outerjoin(
-            Cases.classification
+            Cases.classification,
+            Cases.state
         ).first()
 
         if res is None:
@@ -244,6 +246,7 @@ def get_case_details_rt(case_id):
 
         res = res._asdict()
         res['case_tags'] = ",".join(get_case_tags(case_id))
+        res['status_name'] = CaseStatus(res['status_id']).name.replace("_", " ").title()
 
         res['protagonists'] = [r._asdict() for r in get_case_protagonists(case_id)]
 
