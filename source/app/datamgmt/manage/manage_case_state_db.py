@@ -58,3 +58,15 @@ def get_case_state_by_name(cur_name: str) -> CaseState:
     case_state = CaseState.query.filter_by(state_name=cur_name).first()
     return case_state
 
+
+def get_cases_using_state(cur_id: int) -> List[dict]:
+    """Get a list of cases using a case state
+
+    Args:
+        cur_id (int): case state id
+
+    Returns:
+        List[dict]: List of cases
+    """
+    case_state = get_case_state_by_id(cur_id)
+    return case_state.cases

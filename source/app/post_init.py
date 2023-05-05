@@ -100,14 +100,23 @@ def run_post_init(development=False):
         alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
         command.upgrade(alembic_cfg, 'head')
 
+        srv_settings = ServerSettings.query.first()
+        if srv_settings is None:
+            log.info("Creating base server settings")
+            create_safe_server_settings()
+            srv_settings = ServerSettings.query.first()
+
+        prevent_objects = srv_settings.prevent_post_objects_repush
+
         log.info("Creating base languages")
         create_safe_languages()
 
         log.info("Creating base os types")
         create_safe_os_types()
 
-        log.info("Creating base IOC types")
-        create_safe_ioctypes()
+        if not prevent_objects:
+            log.info("Creating base IOC types")
+            create_safe_ioctypes()
 
         log.info("Creating base attributes")
         create_safe_attributes()
@@ -121,14 +130,16 @@ def run_post_init(development=False):
         log.info("Creating base events categories")
         create_safe_events_cats()
 
-        log.info("Creating base assets")
-        create_safe_assets()
+        if not prevent_objects:
+            log.info("Creating base assets")
+            create_safe_assets()
 
         log.info("Creating base analysis status")
         create_safe_analysis_status()
 
-        log.info("Creating base case classification")
-        create_safe_classifications()
+        if not prevent_objects:
+            log.info("Creating base case classification")
+            create_safe_classifications()
 
         log.info("Creating base tasks status")
         create_safe_task_status()
@@ -139,14 +150,12 @@ def run_post_init(development=False):
         log.info("Creating base alert status")
         create_safe_alert_status()
 
-        log.info("Creating base case states")
-        create_safe_case_states()
+        if not prevent_objects:
+            log.info("Creating base case states")
+            create_safe_case_states()
 
         log.info("Creating base hooks")
         create_safe_hooks()
-
-        log.info("Creating base server settings")
-        create_safe_server_settings()
 
         log.info("Creating initial authorisation model")
         def_org, gadm, ganalysts = create_safe_auth_model()
@@ -154,8 +163,9 @@ def run_post_init(development=False):
         log.info("Creating first administrative user")
         admin, pwd = create_safe_admin(def_org=def_org, gadm=gadm)
 
-        log.info("Registering default modules")
-        register_default_modules()
+        if not srv_settings.prevent_post_mod_repush:
+            log.info("Registering default modules")
+            register_default_modules()
 
         log.info("Creating initial customer")
         client = create_safe_client()
@@ -1182,6 +1192,7 @@ def create_safe_server_settings():
     if not ServerSettings.query.count():
         create_safe(db.session, ServerSettings,
                     http_proxy="", https_proxy="", prevent_post_mod_repush=False,
+                    prevent_post_objects_repush=False,
                     password_policy_min_length="12", password_policy_upper_case=True,
                     password_policy_lower_case=True, password_policy_digit=True,
                     password_policy_special_chars="")
@@ -1215,11 +1226,6 @@ def register_modules_pipelines():
 
 
 def register_default_modules():
-    srv_settings = ServerSettings.query.first()
-
-    if srv_settings.prevent_post_mod_repush is True:
-        log.info('Post init modules repush disabled')
-        return
 
     modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module',
                'iris_webhooks_module', 'iris_intelowl_module']

@@ -695,6 +695,7 @@ class ServerSettings(db.Model):
     https_proxy = Column(Text)
     http_proxy = Column(Text)
     prevent_post_mod_repush = Column(Boolean)
+    prevent_post_objects_repush = Column(Boolean, default=False)
     has_updates_available = Column(Boolean)
     enable_updates_check = Column(Boolean)
     password_policy_min_length = Column(Integer)

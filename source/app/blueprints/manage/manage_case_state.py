@@ -24,7 +24,7 @@ from werkzeug.utils import redirect
 
 from app import db
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list, \
-    get_case_state_by_id
+    get_case_state_by_id, get_cases_using_state
 from app.forms import CaseStateForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
@@ -218,6 +218,11 @@ def delete_case_state(state_id: int, caseid: int) -> Response:
 
     if case_state.protected:
         return response_error(f"Case state {case_state.state_name} is protected")
+
+    cases = get_cases_using_state(case_state.state_id)
+    if cases:
+        return response_error(f"Case state {case_state.state_name} is in use by case(s)"
+                              f" {','.join([str(c.case_id) for c in cases])}")
 
     db.session.delete(case_state)
     db.session.commit()

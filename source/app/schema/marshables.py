@@ -640,7 +640,6 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         return file_path, file_size, file_hash
 
 
-
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
     http_proxy = auto_field('http_proxy', required=False, allow_none=False)
     https_proxy = auto_field('https_proxy', required=False, allow_none=False)
