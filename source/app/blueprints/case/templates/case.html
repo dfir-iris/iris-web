@@ -32,7 +32,7 @@
                             <h5 class="text-warning  mb-1">Closed on {{ case.close_date }}</h5>
                             {% endif %}
                         </div>
-                        <div class="col">
+                        <div class="col mt-4">
                             <div class="row">
                                  <select title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret ml-auto btn-sm mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
                                           id="case_quick_status" aria-labelledby="dropdownMenuButton">
@@ -43,9 +43,13 @@
                                   </select>
                              </div>
                             <div class="row">
-                                  <div class=" ml-auto">
-                                    <h5 class="text-white op-7 mb-2 float-right"><b>Customer</b> : {{ case.client.name }}</h5>
-                                    {% if case.soc_id %} <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
+                                  <div class="ml-auto">
+                                    <div class="row">
+                                        <h5 class="text-white op-7 mb-2 float-right"><b>Customer</b> : {{ case.client.name }}</h5>
+                                    </div>
+                                      <div class="row">
+                                        {% if case.soc_id %} <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
+                                      </div>
                                 </div>
                             </div>
                         </div>
@@ -54,8 +58,8 @@
 
                         <div class="ml-2 col">
                             <div class="row ml-1">
-                                {% if case.state %}<h5 title="Case state"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-list-check  mr-1"></i> {{ case.state.state_name }}</span></h5>{% endif %}
-                                {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light ml-2"><i class="fa-solid fa-shield-virus mr-1"></i> {{ case.classification.name_expanded }}</span></h5>{% endif %}
+                                {% if case.state %}<h5 title="Case state"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-business-time  mr-1"></i> {{ case.state.state_name }}</span></h5>{% endif %}
+                                {% if case.classification %}<h5 title="Classification"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light ml-2"><i class="fa-solid fa-shield-virus mr-1"></i>{{ case.classification.name_expanded }}</span></h5>{% endif %}
                                 {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 badge-warning" href="/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
                             </div>
                         </div>

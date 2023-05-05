@@ -84,6 +84,11 @@ class CaseClassificationForm(FlaskForm):
     description = StringField(u'Case classification description', validators=[DataRequired()])
 
 
+class CaseStateForm(FlaskForm):
+    state_name = StringField(u'Case state name', validators=[DataRequired()])
+    state_description = StringField(u'Case state description', validators=[DataRequired()])
+
+
 class AddReportTemplateForm(FlaskForm):
     report_name = StringField(u'Report name', validators=[DataRequired()])
     report_description = StringField(u'Report description', validators=[DataRequired()])
