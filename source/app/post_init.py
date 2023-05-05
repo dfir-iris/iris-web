@@ -53,7 +53,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.models.cases import Cases
+from app.models.cases import Cases, CaseState
 from app.models.cases import Client
 from app.models.models import AnalysisStatus, CaseClassification
 from app.models.models import AssetsType
@@ -138,6 +138,9 @@ def run_post_init(development=False):
 
         log.info("Creating base alert status")
         create_safe_alert_status()
+
+        log.info("Creating base case states")
+        create_safe_case_states()
 
         log.info("Creating base hooks")
         create_safe_hooks()
@@ -533,6 +536,18 @@ def create_safe_alert_status():
     create_safe(db.session, AlertStatus, status_name='Closed', status_description="Alert closed, no action taken")
     create_safe(db.session, AlertStatus, status_name='Merged', status_description="Alert merged into an existing case")
     create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
+
+
+def create_safe_case_states():
+    create_safe(db.session, CaseState, state_name='Unspecified', state_description="Unspecified")
+    create_safe(db.session, CaseState, state_name='New', state_description="New case")
+    create_safe(db.session, CaseState, state_name='In progress', state_description="Case is being investigated")
+    create_safe(db.session, CaseState, state_name='Containment', state_description="Containment is in progress")
+    create_safe(db.session, CaseState, state_name='Eradication', state_description="Eradication is in progress")
+    create_safe(db.session, CaseState, state_name='Recovery', state_description="Recovery is in progress")
+    create_safe(db.session, CaseState, state_name='Post-Incident', state_description="Post-incident phase")
+    create_safe(db.session, CaseState, state_name='Reporting', state_description="Reporting is in progress")
+    create_safe(db.session, CaseState, state_name='Closed', state_description="Case is closed")
 
 
 def create_safe_assets():
