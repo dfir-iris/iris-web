@@ -45,7 +45,7 @@ def get_case_templates_list() -> List[dict]:
         CaseTemplate.title_prefix,
         CaseTemplate.author,
         CaseTemplate.created_at,
-
+        CaseTemplate.classification,
         CaseTemplate.updated_at,
         User.name.label('added_by')
     ).join(

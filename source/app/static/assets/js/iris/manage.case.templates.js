@@ -59,7 +59,10 @@ function add_case_template() {
                 });
             })
             .done((data) => {
-                notify_auto_api(data);
+                if (notify_auto_api(data)) {
+                    refresh_case_template_table();
+                    $('#modal_case_template').modal('hide');
+                }
             })
             .fail((error) => {
                 let data = error.responseJSON;
