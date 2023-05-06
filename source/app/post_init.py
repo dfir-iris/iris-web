@@ -687,25 +687,24 @@ def create_safe_auth_model():
 
 
 def create_safe_admin(def_org, gadm):
-    admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
-    admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@iris.local')
+    admin_username = app.config.get('IRIS_ADM_USERNAME')
+    if admin_username is None:
+        admin_username = 'administrator'
+
+    admin_email = app.config.get('IRIS_ADM_EMAIL')
+    if admin_email is None:
+        admin_email = 'administrator@localhost'
 
     user = User.query.filter(or_(
         User.user == admin_username,
-        User.email == app.config.get('IRIS_ADM_EMAIL', 'administrator@iris.local')
+        User.email == admin_email
     )).first()
     password = None
 
     if not user:
-        password = app.config.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
+        password = app.config.get('IRIS_ADM_PASSWORD')
         if password is None:
             password = ''.join(random.choices(string.printable[:-6], k=16))
-
-        if admin_username is None:
-            admin_username = 'administrator'
-
-        if admin_email is None:
-            admin_email = 'administrator@iris.local'
 
         log.info(f'Creating first admin user with username "{admin_username}"')
 
@@ -717,7 +716,7 @@ def create_safe_admin(def_org, gadm):
             active=True
         )
 
-        api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        api_key = app.config.get('IRIS_ADM_API_KEY')
         if api_key is None:
             api_key = secrets.token_urlsafe(nbytes=64)
 
@@ -741,10 +740,9 @@ def create_safe_admin(def_org, gadm):
             # Prevent leak of user set password in logs
             log.warning(">>> Administrator already exists")
 
-        adm_email = app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local")
-        if user.email != adm_email:
-            log.warning(f'Email of administrator will be updated via config to {adm_email}')
-            user.email = adm_email
+        if user.email != admin_email:
+            log.warning(f'Email of administrator will be updated via config to {admin_email}')
+            user.email = admin_email
             db.session.commit()
 
     return user, password
