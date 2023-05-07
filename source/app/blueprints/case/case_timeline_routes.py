@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import csv
 import json
 import urllib.parse
 from datetime import datetime
@@ -35,7 +36,8 @@ from sqlalchemy import and_
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.datamgmt.case.case_events_db import add_comment_to_event
+from app.datamgmt.case.case_assets_db import get_asset_by_name
+from app.datamgmt.case.case_events_db import add_comment_to_event, get_category_by_name, get_default_category
 from app.datamgmt.case.case_events_db import delete_event
 from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
@@ -52,6 +54,7 @@ from app.datamgmt.case.case_events_db import get_events_categories
 from app.datamgmt.case.case_events_db import save_event_category
 from app.datamgmt.case.case_events_db import update_event_assets
 from app.datamgmt.case.case_events_db import update_event_iocs
+from app.datamgmt.case.case_iocs_db import get_ioc_by_value
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_timeline_state
 from app.datamgmt.states import update_timeline_state
@@ -940,3 +943,185 @@ def case_event_date_convert(caseid):
     return response_error("Unable to find a matching date format")
 
 
+# BEGIN_RS_CODE
+@case_timeline_blueprint.route('/case/timeline/events/csv_upload', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_events_upload_csv(caseid):
+    event_schema = EventSchema()
+
+    jsdata = request.get_json()
+    print("======================== BEGIN_CSV_IMPORT ==========================================")
+    event_fields = [
+        "event_date",
+        "event_tz",
+        "event_title",
+        "event_category",
+        "event_content",
+        "event_raw",
+        "event_source",
+        "event_assets",
+        "event_iocs",
+        "event_tags"
+    ]
+
+    csv_lines = jsdata["CSVData"].splitlines()
+
+    csv_options = jsdata.get('CSVOptions')  if jsdata.get('CSVOptions')  else {}
+
+
+
+    event_sync_iocs_assets  = csv_options.get('event_sync_iocs_assets')  if csv_options.get('event_sync_iocs_assets')  else False
+    event_in_summary        = csv_options.get('event_in_summary')  if csv_options.get('event_in_summary')  else False
+    event_in_graph          = csv_options.get('event_in_graph')  if csv_options.get('event_in_graph')  else True
+    event_source            = csv_options.get('event_source')  if csv_options.get('event_source')  else ''
+
+
+    csv_data = list( csv.DictReader(csv_lines, delimiter=',') )
+    missing_fields= []
+    row0 = csv_data[0]
+    for fld in event_fields:
+        if row0.get(fld) == None:
+            missing_fields.append(fld)
+
+    if len(missing_fields)>0:
+        csv_fields = list(row0.keys())
+        print(missing_fields)
+        print( csv_fields)
+        msg = f"Bad SCV Fields Mapping. Fields missin: [{','.join(missing_fields)}]"
+        data = {"error_code":"BAD_FIELDS_MAPPING", "expected": ','.join(event_fields), "found": ','.join(csv_fields) ,"missing": ','.join(missing_fields)}
+        print(data)
+        return response_error(msg=msg,data=data, status=206)
+
+    # some variables
+    assets_id = {}
+    iocs_id = {}
+    cats_id = {}
+
+    DEFAULT_CAT_ID = get_default_category().id
+
+    # ==========================  checking data validity (assets, ioc, categories, etc... )  ==========================
+    line = 0
+    csv_lines = []
+    try:
+
+        for row in csv_data:
+            event_title         = row.get('event_title')
+            event_assets        = row.get('event_assets')
+            event_iocs          = row.get('event_iocs')
+            event_tags          = row.get('event_tags')
+            event_category_name = row.pop('event_category')
+
+            line += 1
+
+            if len(event_title) == 0:
+                return response_error(msg=f"Data error",
+                                      data={"Error": f"Event Title can not be empty.\nrow number: {line}"}, status=400)
+
+            if event_assets:
+                assets = []
+                for asset_name  in row.get('event_assets').replace('|',';').split(";"):
+                    if asset_name == '':
+                        continue
+                    asset = get_asset_by_name(asset_name,caseid)
+                    if asset :
+                        assets.append(asset.asset_id)
+                    else:
+                        return response_error(msg=f"Data error", data={"Error": f"Asset not reconnized : {asset_name}.\nrow number: {line}" }, status=400)
+                row['event_assets'] = assets
+
+            iocs = []
+            for ioc_value in event_iocs.replace('|',';').split(";"):
+                if ioc_value == '':
+                    continue
+                ioc = get_ioc_by_value(ioc_value,caseid)
+                if ioc:
+                    iocs.append(ioc.ioc_id)
+                else:
+                    return response_error(msg=f"Data error", data={"Error": f"IoC not reconnized : {ioc_value}.\nrow number: {line}"}, status=400)
+            row['event_iocs'] = iocs
+
+            if (event_category_name != None) and (event_category_name != ''):
+                event_category = get_category_by_name(event_category_name)
+                if event_category:
+                    row['event_category_id'] = event_category.id
+                else:
+                    return response_error(msg=f"Data error", data={"Error": f"event_category not reconnized : {event_category}.\nrow number: {line}"}, status=400)
+            else:
+                row['event_category_id'] = DEFAULT_CAT_ID
+
+            if event_tags:
+                row['event_tags'] = ','.join(event_tags.split('|'))
+
+            row['event_in_summary'] = event_in_summary
+            row['event_in_graph'] = event_in_graph
+            row['event_source'] = event_source
+
+            csv_lines.append(row)
+    except Exception as e:
+        return response_error(msg=f"Data error", data={"Exception" : f"Unhandled error {e}.\nrow number: {line}"}, status=400)
+
+    # ========================== begin saving data ============================
+    # db.session.commit()
+    session = db.session.begin_nested()
+    line = 0
+    try:
+        for row in csv_lines:
+            if row is None:
+                continue
+            line += 1
+
+            request_data        = call_modules_hook('on_preload_event_create', data=row, caseid=caseid)
+            event               = event_schema.load(request_data)
+            event.event_date, event.event_date_wtz = event_schema.validate_date(request_data.get(u'event_date'),
+                                                                                request_data.get(u'event_tz'))
+            event.case_id       = caseid
+            event.event_added   = datetime.utcnow()
+            event.user_id       = current_user.id
+
+            add_obj_history_entry(event, 'created')
+
+            db.session.add(event)
+            update_timeline_state(caseid=caseid)
+
+
+            save_event_category(event.event_id, request_data.get('event_category_id'))
+
+            setattr(event, 'event_category_id', request_data.get('event_category_id'))
+
+            success, log = update_event_assets(event_id=event.event_id,
+                                               caseid=caseid,
+                                               assets_list=request_data.get('event_assets'),
+                                               iocs_list=request_data.get('event_iocs'),
+                                               sync_iocs_assets=event_sync_iocs_assets)
+            if not success:
+                raise Exception(f'Error while saving linked assets\nlog:{log}')
+
+            success, log = update_event_iocs(event_id=event.event_id,
+                                             caseid=caseid,
+                                             iocs_list=request_data.get('event_iocs'))
+            if not success:
+                raise Exception(f'Error while saving linked iocs\nlog:{log}')
+
+            setattr(event, 'event_category_id', request_data.get('event_category_id'))
+
+            event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
+
+            track_activity("added event {}".format(event.event_id), caseid=caseid)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+
+    except Exception as e:
+        return response_error(msg=f"Data error", data={"Error": f"{e}"}, status=400)
+
+
+    #db.session.commit()
+    try:
+        session.commit()
+    except:
+        pass
+    print("======================== END_CSV_IMPORT ==========================================")
+
+    return response_success(msg="Events added (CSV File)")
+
+#END_RS_CODE

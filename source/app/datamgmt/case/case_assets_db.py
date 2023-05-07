@@ -376,3 +376,10 @@ def delete_asset_comment(asset_id, comment_id, case_id):
     db.session.commit()
 
     return True, "Comment deleted"
+
+def get_asset_by_name(asset_name, caseid):
+    asset = CaseAssets.query.filter(
+        CaseAssets.asset_name == asset_name,
+        CaseAssets.case_id == caseid
+    ).first()
+    return asset

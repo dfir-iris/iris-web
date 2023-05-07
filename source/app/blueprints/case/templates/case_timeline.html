@@ -64,6 +64,10 @@
                                   <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsvWithUI();"><small class="fa fa-download mr-2"></small> Download as CSV with user info</a>
+                                  <!-- BEGIN_RS_CODE -->
+                                  <div class="dropdown-divider"></div>
+                                  <a class="dropdown-item" href="#" onclick="fire_upload_csv_events();"><small class="fa fa-upload mr-2"></small> Upload CSV of events</a>
+                                  <!-- END_RS_CODE -->
                               </div>
                             </div>
                         </li>
@@ -120,6 +124,47 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- BEGIN RS_CODE -->
+    <div class="modal " tabindex="-1" role="dialog" id="modal_upload_csv_events" data-backdrop="true">
+      <div class="modal-lg modal-dialog" role="document">
+        <form method="post" action="" id="form_upload_csv_events">
+
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5>Upload events list (CSV format)</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                  aria-hidden="true">&times;</span></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="csv_format" class="placeholder">Expected Events CSV File format</label>
+                    <textarea id="csv_format" class="form-control col-md-12 col-sm-12 sizable-textarea" rows="2" disabled>event_timestamp,event_title,event_description,linked_assets,linked_IoCs,event_tags (separated with &quot;|&quot;),event_color,event_raw_data</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="placeholder">Events CSV File format example</label>
+                    <textarea class="form-control col-md-12 col-sm-12 sizable-textarea" rows="3" disabled>
+                    asset_name,asset_type_name,asset_description,asset_ip,asset_domain,asset_tags
+                    "My computer","Mac - Computer","Computer of Mme Michu","192.168.15.5","iris.local","Compta|Mac"
+                    "XCAS","Windows - Server","Xcas server","192.168.15.48","iris.local",""
+                    </textarea>
+                </div>
+                  <div class="form-group">
+                      <label class="placeholder">Choose CSV file to import : </label>
+                      <input id="input_upload_csv_events" type="file" accept="text/csv">
+                  </div>
+            </div>
+            <div class='invalid-feedback' id='ioc-invalid-msg'></div>
+            <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark mr-auto" onclick="generate_events_sample_csv();">Download sample CSV</button>
+                    <button type="button" class="btn btn-outline-success" onclick="upload_csv_events();">Upload</button>
+            </div>
+          </div><!-- /.modal-content -->
+        </form>
+      </div><!-- /.modal-dialog -->
+    </div>
+    <!-- END_RS_CODE -->
     {% include 'includes/footer.html' %}
 </div>
 

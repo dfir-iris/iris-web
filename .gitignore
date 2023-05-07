@@ -18,6 +18,7 @@ orcparser/
 venv1/
 .DS_Store
 .env*
+iris-web.env
 .venv/
 .vscode/
 *.code-workspace

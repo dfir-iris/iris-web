@@ -966,6 +966,51 @@ function show_timeline_filter_help() {
     });
 }
 
+/* BEGIN_RS_CODE */
+function fire_upload_csv_events() {
+    $('#modal_upload_csv_events').modal('show');
+}
+function upload_csv_events() {
+    const api_path =  '/case/timeline/events/csv_upload';
+    const modal_dlg = '#modal_upload_csv_events'
+    const file_input = '#input_upload_csv_events'
+
+    var file = $(file_input).get(0).files[0];
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        fileData = e.target.result
+        var data = new Object();
+        data['csrf_token'] = $('#csrf_token').val();
+        data['CSVData'] = fileData;
+
+        post_request_api(api_path, JSON.stringify(data), true)
+        .done((data) => {
+            jsdata = data;
+            if (jsdata.status == "success") {
+                apply_filtering();
+                $(modal_dlg).modal('hide');
+                swal("Got news for you", data.message, "success");
+
+            } else {
+                //alert( JSON.stringify(data.data,null,2));
+                swal("Got bad news for you", data.message, "error");
+            }
+        })
+       .fail((data)=> {
+            data = data['responseJSON'];
+            alert( JSON.stringify(data,null,2));
+        return false;
+       })
+
+
+    };
+    reader.readAsText(file)
+
+    return false;
+}
+/* END_RS_CODE */
+
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){
 
