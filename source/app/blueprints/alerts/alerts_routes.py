@@ -193,6 +193,8 @@ def alerts_add_route(caseid) -> Response:
         # Cache the alert for similarities check
         cache_similar_alert(new_alert.alert_customer_id, assets=assets_list,
                             iocs=iocs_list, alert_id=new_alert.alert_id)
+        
+        alert = call_modules_hook('on_postload_alert_create', data=alert, caseid=caseid)
 
         track_activity(f"created alert #{new_alert.alert_id} - {new_alert.alert_title}", ctx_less=True)
 
@@ -324,6 +326,8 @@ def alerts_update_route(alert_id, caseid) -> Response:
         # Save the changes
         db.session.commit()
 
+        alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=caseid)
+
         if activity_data:
             track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", ctx_less=True)
             add_obj_history_entry(updated_alert, f"updated alert: {','.join(activity_data)}")
@@ -388,6 +392,8 @@ def alerts_batch_update_route(caseid: int) -> Response:
 
             db.session.commit()
 
+            alert = call_modules_hook('on_postload_alert_create', data=alert, caseid=caseid)
+
             if activity_data:
                 track_activity(f"updated alerts #{alert_id}: {','.join(activity_data)}", ctx_less=True)
                 add_obj_history_entry(alert, f"updated alerts: {','.join(activity_data)}")
@@ -430,6 +436,8 @@ def alerts_batch_delete_route(caseid: int) -> Response:
 
     if not success:
         return response_error(logs)
+    
+    alert = call_modules_hook('on_postload_alert_delete', data=f'{alert_ids: alert_ids}', caseid=caseid)
 
     track_activity(f"deleted alerts #{','.join(str(alert_id) for alert_id in alert_ids)}", ctx_less=True)
 
@@ -461,6 +469,8 @@ def alerts_delete_route(alert_id, caseid) -> Response:
         # Delete the alert from the database
         db.session.delete(alert)
         db.session.commit()
+
+        alert = call_modules_hook('on_postload_alert_delete', data=alert_id, caseid=caseid)
 
         track_activity(f"delete alert #{alert_id}", ctx_less=True)
 
@@ -526,6 +536,8 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
 
         add_obj_history_entry(alert, f"Alert escalated to case #{case.case_id}")
 
+        alert = call_modules_hook('on_postload_alert_escalate', data=alert, caseid=caseid)
+
         # Return the updated alert as JSON
         return response_success(data=CaseSchema().dump(case))
 
@@ -582,6 +594,8 @@ def alerts_merge_route(alert_id, caseid) -> Response:
         merge_alert_in_case(alert, case,
                             iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
                             import_as_event=import_as_event, case_tags=case_tags)
+        
+        alert = call_modules_hook('on_postload_alert_merge', data=case, caseid=caseid)
 
         track_activity(f"merge alert #{alert_id} into existing case #{target_case_id}", ctx_less=True)
         add_obj_history_entry(alert, f"Alert merged into existing case #{target_case_id}")
@@ -632,6 +646,8 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
 
         track_activity(f"unmerge alert #{alert_id} from case #{target_case_id}", ctx_less=True)
         add_obj_history_entry(alert, f"Alert unmerged from case #{target_case_id}")
+
+        alert = call_modules_hook('on_postload_alert_unmerge', data=alert, caseid=caseid)
 
         # Return the updated case as JSON
         return response_success(data=AlertSchema().dump(alert), msg=message)
@@ -694,6 +710,8 @@ def alerts_batch_merge_route(caseid) -> Response:
 
             add_obj_history_entry(alert, f"Alert merged into existing case #{target_case_id}")
 
+            alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=caseid)
+
         if note:
             case.description += f"\n\n### Escalation note\n\n{note}\n\n" if case.description else f"\n\n{note}\n\n"
             db.session.commit()
@@ -750,6 +768,8 @@ def alerts_batch_escalate_route(caseid) -> Response:
 
             alert.alert_status_id = AlertStatus.query.filter_by(status_name='Merged').first().status_id
             db.session.commit()
+            alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=caseid)
+
             alerts_list.append(alert)
 
         # Merge alerts in the case

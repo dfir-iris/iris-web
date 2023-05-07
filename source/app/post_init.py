@@ -216,6 +216,25 @@ def create_safe_db(db_name):
 
 
 def create_safe_hooks():
+    # --- Alert
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_create',
+                hook_description='Triggered on alert creation, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_delete',
+                hook_description='Triggered on alert deletion, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_update',
+                hook_description='Triggered on alert update, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_escalate',
+                hook_description='Triggered on alert escalation, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_merge',
+                hook_description='Triggered on alert merge, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_unmerge',
+                hook_description='Triggered on alert unmerge, after commit in DB')
+    
     # --- Case
     create_safe(db.session, IrisHook, hook_name='on_preload_case_create',
                 hook_description='Triggered on case creation, before commit in DB')
