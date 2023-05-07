@@ -287,7 +287,7 @@ def api_add_case(caseid):
             if case is None:
                 return response_error(msg=f"Invalid Case template ID {case_template_id}", status=400)
 
-        case.state_id = get_case_state_by_name('Open').state_id
+        case.state_id = get_case_state_by_name('Opened').state_id
 
         case.save()
 
