@@ -194,7 +194,7 @@ def alerts_add_route(caseid) -> Response:
         cache_similar_alert(new_alert.alert_customer_id, assets=assets_list,
                             iocs=iocs_list, alert_id=new_alert.alert_id)
         
-        alert = call_modules_hook('on_postload_alert_create', data=alert, caseid=caseid)
+        new_alert = call_modules_hook('on_postload_alert_create', data=new_alert, caseid=caseid)
 
         track_activity(f"created alert #{new_alert.alert_id} - {new_alert.alert_title}", ctx_less=True)
 
@@ -595,7 +595,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
                             iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
                             import_as_event=import_as_event, case_tags=case_tags)
         
-        alert = call_modules_hook('on_postload_alert_merge', data=case, caseid=caseid)
+        alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=caseid)
 
         track_activity(f"merge alert #{alert_id} into existing case #{target_case_id}", ctx_less=True)
         add_obj_history_entry(alert, f"Alert merged into existing case #{target_case_id}")
