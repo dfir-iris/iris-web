@@ -219,6 +219,7 @@ authentication_token_introspection_url = None
 authentication_client_id = None
 authentication_client_secret = None
 authentication_app_admin_role_name = None
+authentication_jwks_url = None
 
 
 if authentication_type == 'oidc_proxy':
