@@ -362,7 +362,6 @@ function refresh_classification_table() {
   notify_success("Refreshed");
 }
 
-
 /* Fetch the details of an classification and allow modification */
 function classification_detail(ioc_id) {
     url = '/manage/case-classifications/update/' + ioc_id + '/modal' + case_param();
@@ -408,6 +407,127 @@ function delete_case_classification(id) {
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_classification_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+      } else {
+        swal("Pfew, that was close");
+      }
+    });
+}
+
+
+/***    State    ***/
+
+function add_state() {
+    url = '/manage/case-states/add/modal' + case_param();
+    $('#modal_add_type_content').load(url, function () {
+
+        $('#submit_new_case_state').on("click", function () {
+            var form = $('form#form_new_case_state').serializeObject();
+
+            post_request_api('/manage/case-states/add', JSON.stringify(form), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_state_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+
+            return false;
+        })
+    });
+    $('#modal_add_type').modal({ show: true });
+}
+
+$('#state_table').dataTable({
+    "ajax": {
+      "url": "/manage/case-states/list" + case_param(),
+      "contentType": "application/json",
+      "type": "GET",
+      "data": function ( d ) {
+        if (d.status == 'success') {
+          return JSON.stringify( d.data );
+        } else {
+          return [];
+        }
+      }
+    },
+    "order": [[ 0, "asc" ]],
+    "autoWidth": false,
+    "columns": [
+        {
+            "data": "state_name",
+            "render": function ( data, type, row ) {
+                if (type === 'display') {
+                    if (row['protected'] === true) {
+                        return '<span href="#" "><i class="fa fa-lock mr-2" title="Protected state"></i>' + sanitizeHTML(data) + '</span>';
+                    }
+                    return '<a href="#" onclick="state_detail(\'' + row['state_id'] + '\');">' + sanitizeHTML(data) + '</a>';
+                }
+                return data;
+            }
+        },
+        {
+            "data": "state_description",
+            "render": function ( data, type, row ) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+            }
+        }
+    ]
+ });
+
+function refresh_state_table() {
+  $('#state_table').DataTable().ajax.reload();
+  notify_success("Refreshed");
+}
+
+/* Fetch the details of an state and allow modification */
+function state_detail(ioc_id) {
+    url = '/manage/case-states/update/' + ioc_id + '/modal' + case_param();
+    $('#modal_add_type_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
+        $('#submit_new_case_state').on("click", function () {
+            var form = $('form#form_new_case_state').serializeObject();
+
+            post_request_api('/manage/case-states/update/' + ioc_id, JSON.stringify(form))
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_state_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+
+            return false;
+        })
+
+
+    });
+    $('#modal_add_type').modal({ show: true });
+}
+function delete_case_state(id) {
+
+    swal({
+      title: "Are you sure?",
+      text: "You won't be able to revert this !",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    })
+    .then((willDelete) => {
+      if (willDelete) {
+            post_request_api('/manage/case-states/delete/' + id)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_state_table();
                     $('#modal_add_type').modal('hide');
                 }
             });

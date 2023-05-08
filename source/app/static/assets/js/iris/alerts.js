@@ -783,21 +783,59 @@ function renderAlert(alert, expanded=false) {
                         <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
                     </div>
                   </h6>
-                  <div class="ml-auto">
-                    <button type="button" class="btn bg-transparent btn-sm" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
-                      <span class="btn-label">
-                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
-                      </span>
-                    </button>
-                    <button class="btn btn-sm bg-transparent" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button>
-                    <button class="btn bg-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-                    </button>
-                    <div class="dropdown-menu" role="menu">
-                      <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                      <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
-                      <div class="dropdown-divider"></div>
-                      <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="ml-auto alert-actions">
+                          <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id}, false);">Merge</button>
+                          
+                          <div class="dropdown ml-2 d-inline-block">
+                              <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  Assign
+                              </button>
+                              <div class="dropdown-menu">
+                                  <a class="dropdown-item" href="javascript:void(0)" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
+                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeAlertOwner(${alert.alert_id});">Assign</a>
+                              </div>
+                          </div>
+                          <div class="dropdown ml-2 d-inline-block">
+                              <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  Set status
+                              </button>
+                              <div class="dropdown-menu">
+                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
+                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
+                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
+                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
+                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
+                                </div>
+                          </div>
+                                                    ${alert.status.status_name === 'Closed' ? `
+                              <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">Set in progress</button>
+                          `: ` 
+                          <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
+                          <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
+                          `}
+                      </div>
+                  </div>
+                  </div>
+                      <div class=" d-flex mt-3">
+                        <div class="ml-auto">
+                            <button type="button" class="btn bg-transparent btn-sm mt--4" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
+                              <span class="btn-label">
+                                <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
+                              </span>
+                            </button>
+                            <button class="btn btn-sm bg-transparent mt--4" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button>
+                            <button class="btn bg-transparent mt--4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                            </button>
+                            <div class="dropdown-menu" role="menu">
+                              <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                              <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
+                              <div class="dropdown-divider"></div>
+                              <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
+                            </div>
+                        </div>
                     </div>
                   </div>
               </div>
@@ -1006,7 +1044,7 @@ function renderAlert(alert, expanded=false) {
                       </div>
                 </div>
               `).join('') + '</div>' : '<div class="mb-4"></div>'}
-
+            
               <div class="">
                 ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-3">${alert.status.status_name}</span>` : ''}                    
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
@@ -1019,7 +1057,7 @@ function renderAlert(alert, expanded=false) {
                   <small class="text-muted ml-1 mr-2">${alert.customer.customer_name || 'Unspecified'}</small></span>
                 ${alert.classification && alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification" id="alertClassification-${alert.alert_id}" data-classification-id="${alert.classification.id}"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
                 ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${alert.alert_tags}</div>` : ''}
-                                
+                
               </div>
 
             </div>
@@ -1031,37 +1069,6 @@ function renderAlert(alert, expanded=false) {
         </div>
       </div>
     </div>
-    <div class="alert-actions mr-3">
-      <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id}, false);">Merge</button>
-      
-      <div class="dropdown ml-2 d-inline-block">
-          <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Assign
-          </button>
-          <div class="dropdown-menu">
-              <a class="dropdown-item" href="javascript:void(0)" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeAlertOwner(${alert.alert_id});">Assign</a>
-          </div>
-      </div>
-      <div class="dropdown ml-2 d-inline-block">
-          <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Set status
-          </button>
-          <div class="dropdown-menu">
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
-            </div>
-      </div>
-      ${alert.status.status_name === 'Closed' ? `
-          <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">Set in progress</button>
-      `: ` 
-      <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
-      <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
-      `}
-  </div>
 </div>    
 </div>  `;
 

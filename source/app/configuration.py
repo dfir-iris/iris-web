@@ -219,6 +219,7 @@ authentication_token_introspection_url = None
 authentication_client_id = None
 authentication_client_secret = None
 authentication_app_admin_role_name = None
+authentication_jwks_url = None
 
 
 if authentication_type == 'oidc_proxy':
@@ -267,7 +268,7 @@ class Config:
     IRIS_VERSION = "v2.1.0-beta-1"
 
     API_MIN_VERSION = "2.0.0"
-    API_MAX_VERSION = "2.0.0"
+    API_MAX_VERSION = "2.0.1"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.2.0'

@@ -176,7 +176,7 @@ def download_template(report_id, caseid):
 
         fpath = os.path.join(app.config['TEMPLATES_PATH'], report_template.internal_reference)
         _, extension = os.path.splitext(report_template.internal_reference)
-        resp = send_file(fpath, as_attachment=True, attachment_filename=f"{report_template.name}.{extension}")
+        resp = send_file(fpath, as_attachment=True, download_name=f"{report_template.name}.{extension}")
 
         return resp
 

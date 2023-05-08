@@ -44,6 +44,7 @@ from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
 from app.blueprints.manage.manage_case_classifications import manage_case_classification_blueprint
+from app.blueprints.manage.manage_case_state import manage_case_state_blueprint
 from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.manage.manage_customers_routes import manage_customers_blueprint
 from app.blueprints.manage.manage_event_categories_routes import manage_event_cat_blueprint
@@ -90,6 +91,7 @@ app.register_blueprint(manage_groups_blueprint)
 app.register_blueprint(manage_case_classification_blueprint)
 app.register_blueprint(manage_alerts_status_blueprint)
 app.register_blueprint(manage_severities_blueprint)
+app.register_blueprint(manage_case_state_blueprint)
 app.register_blueprint(saved_filters_blueprint)
 
 app.register_blueprint(ctx_blueprint)

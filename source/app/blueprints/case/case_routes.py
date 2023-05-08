@@ -113,6 +113,7 @@ def case_r(caseid, url_redir):
         return render_template('select_case.html')
 
     desc_crc32, description = case_get_desc_crc(caseid)
+    setattr(case, 'status_name', CaseStatus(case.status_id).name.replace('_', ' ').title())
 
     return render_template('case.html', case=case, desc=description, crc=desc_crc32,
                            reports=reports, reports_act=reports_act, form=form)

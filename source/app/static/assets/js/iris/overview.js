@@ -37,6 +37,15 @@ var OverviewTable = $("#overview_table").DataTable({
         }
       },
       {
+        "data": "state",
+        "render": function (data, type, row, meta) {
+            if (type === 'display' && data != null) {
+                data = sanitizeHTML(data);
+            }
+            return data;
+        }
+      },
+      {
         "data": "case_open_since_days",
         "render": function(data, type, row, meta) {
            if (type === 'display') {
@@ -97,7 +106,7 @@ var OverviewTable = $("#overview_table").DataTable({
     ordering: true,
     processing: true,
     retrieve: true,
-    lengthChange: false,
+    lengthChange: true,
     pageLength: 25,
     order: [[ 1, "asc" ]],
     buttons: [

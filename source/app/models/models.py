@@ -51,7 +51,7 @@ metadata = Base.metadata
 
 
 class CaseStatus(enum.Enum):
-    other = 0x0
+    unknown = 0x0
     false_positive = 0x1
     true_positive = 0x2
     not_applicable = 0x3
@@ -695,6 +695,7 @@ class ServerSettings(db.Model):
     https_proxy = Column(Text)
     http_proxy = Column(Text)
     prevent_post_mod_repush = Column(Boolean)
+    prevent_post_objects_repush = Column(Boolean, default=False)
     has_updates_available = Column(Boolean)
     enable_updates_check = Column(Boolean)
     password_policy_min_length = Column(Integer)

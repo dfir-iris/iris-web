@@ -104,7 +104,8 @@ def case_template_modal(cur_id, caseid, url_redir):
         "summary": case_template.summary,
         "tags": case_template.tags,
         "tasks": case_template.tasks,
-        "note_groups": case_template.note_groups
+        "note_groups": case_template.note_groups,
+        "classification": case_template.classification
     }
 
     form.case_template_json.data = case_template_dict
@@ -189,13 +190,7 @@ def add_case_template(caseid):
 
     track_activity(f"Case template '{case_template.name}' added", caseid=caseid, ctx_less=True)
 
-    ret = {
-        "case_template_id": case_template.id,
-        "case_template_name": case_template.name,
-        "case_template_description": case_template.description
-    }
-
-    return response_success("Added successfully", data=ret)
+    return response_success("Added successfully", data=CaseTemplateSchema().dump(case_template))
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/update/<int:cur_id>', methods=['POST'])

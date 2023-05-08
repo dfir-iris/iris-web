@@ -71,6 +71,7 @@ from app.models.alerts import Alert, Severity, AlertStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
+from app.models.cases import CaseState
 from app.util import file_sha256sum, str_to_bool
 from app.util import stream_sha256sum
 
@@ -639,7 +640,6 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         return file_path, file_size, file_hash
 
 
-
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
     http_proxy = auto_field('http_proxy', required=False, allow_none=False)
     https_proxy = auto_field('https_proxy', required=False, allow_none=False)
@@ -729,6 +729,12 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('case_id'), 'case')
 
         return data
+
+
+class CaseStateSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = CaseState
+        load_instance = True
 
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):

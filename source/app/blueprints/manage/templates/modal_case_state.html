@@ -1,0 +1,42 @@
+<div class="modal-header">
+    <h4>Case state</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+
+        <div class="container col-md-12">
+        <form method="post" action="" id="form_new_case_state" enctype="multipart/form-data">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    <label for="name" class="mr-4">State name
+                    </label>
+                    {{ form.state_name(class='form-control',  autocomplete="off") }}
+                </div>
+                <div class="form-group mt-3">
+                    <label for="description" class="placeholder">State description</label>
+                    {{ form.state_description(class='form-control',  autocomplete="off") }}
+                </div>
+
+            {% if not case_state.protected %}
+                {% if case_state.state_id %}
+                    <button type="button" class="btn btn-outline-danger mt-5"
+                    onclick="delete_case_state('{{ case_state.state_id }}');">Delete</button>
+                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="submit_new_case_state">Update</button>
+
+                {% else %}
+
+                    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="submit_new_case_state">Save</button>
+
+                {% endif %}
+            {% else %}
+                <i class="fa fa-lock mt-4 mr-2 ml-3 text-danger mb-4" aria-hidden="true"></i> This state is protected and cannot be deleted or updated.
+            {% endif %}
+            </div>
+        </form>
+    </div>
+
+</div>

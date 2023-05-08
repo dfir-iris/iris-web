@@ -33,7 +33,7 @@ function edit_contact(contact_id, customer_id) {
 
 
         $('#submit_delete_contact').on("click", function () {
-            get_request_api('/manage/customers/' + customer_id + '/contacts/' + contact_id + '/delete')
+            post_request_api('/manage/customers/' + customer_id + '/contacts/' + contact_id + '/delete')
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.reload();
