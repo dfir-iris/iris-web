@@ -57,12 +57,6 @@ git checkout v2.1.0-beta-1
 # Copy the environment file 
 cp .env.model .env
 
-##
-## !!! v2.1.0 Beta 1 requires the following to be set in the .env 
-##
-IRIS_ADM_EMAIL="administrator@localhost"`
-IRIS_ADM_USERNAME=administrator
-
 # Build the dockers
 docker-compose build
 
