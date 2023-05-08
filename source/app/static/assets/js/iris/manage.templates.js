@@ -22,13 +22,27 @@ function add_report_template() {
             event.preventDefault();
             var formData = new FormData(this);
 
-            post_request_api('templates/add' + case_param(), formData)
-                .then((data) => {
+            $.ajax({
+                url: 'templates/add' + case_param(),
+                type: "POST",
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (data) {
                     if (notify_auto_api(data)) {
                         refresh_template_table();
                         $('#modal_add_report_template').modal('hide');
                     }
-                });
+                },
+                error: function (error) {
+                    if(error.responseJSON) {
+                        notify_error(error.responseJSON.message);
+                    } else {
+                        ajax_notify_error(error, this.url);
+                    }
+                }
+            });
 
             return false;
         })
