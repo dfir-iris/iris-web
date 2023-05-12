@@ -299,7 +299,7 @@ def api_add_case(caseid):
             except Exception as e:
                 log.error(e.__str__())
                 return response_error(msg=f"Unexpected error when loading template {case_template_id} to new case.",
-                                      data=[e.__str__()], status=400)
+                                      status=400)
 
         ac_set_new_case_access(None, case.case_id)
 
@@ -314,7 +314,7 @@ def api_add_case(caseid):
     except Exception as e:
         log.error(e.__str__())
         log.error(traceback.format_exc())
-        return response_error(msg="Error creating case", data=[e.__str__()], status=400)
+        return response_error(msg="Error creating case - check server logs", status=400)
 
     return response_success(msg='Case created', data=case_schema.dump(case))
 
@@ -363,7 +363,7 @@ def update_case_info(cur_id, caseid):
     except Exception as e:
         log.error(e.__str__())
         log.error(traceback.format_exc())
-        return response_error(msg="Error creating case", data=e.__str__(), status=400)
+        return response_error(msg="Error updating case - check server logs", status=400)
 
     return response_success(msg='Case updated', data=case_schema.dump(case))
 
