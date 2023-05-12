@@ -790,6 +790,12 @@ def str_to_bool(value):
     if value is None:
         return False
 
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, int):
+        return bool(value)
+
     return value.lower() in ['true', '1', 'yes', 'y', 't']
 
 
