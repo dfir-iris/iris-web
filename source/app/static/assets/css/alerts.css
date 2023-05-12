@@ -167,3 +167,13 @@
 .hidden-trash {
     display: none;
 }
+
+
+@media (max-width: 576px) {
+  .alert-actions {
+    flex-wrap: wrap;
+  }
+  .alert-actions > * {
+    margin-bottom: 0.5rem;
+  }
+}
