@@ -137,7 +137,7 @@ services:
     ports:
       - "${INTERFACE_HTTPS_PORT:-443}:${INTERFACE_HTTPS_PORT:-443}"
     volumes:
-      - "./docker/dev_certs/:/www/certs/:ro"
+      - "./certificates/web_certificates/:/www/certs/:ro"
     restart: on-failure:5
     depends_on:
       - "app"
