@@ -840,7 +840,7 @@ function renderAlert(alert, expanded=false) {
                   </div>
               </div>
 
-              <span class="mt-4">${alert.alert_description}</span><br />
+              <span class="mt-2">${alert.alert_description}</span><br />
               <!-- Additional details and other content -->
               <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4 ${expanded? 'show': ''} alert-collapsible">
                 <div class="card-no-pd mt-2">
