@@ -780,7 +780,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     if open_alerts:
         open_alert_status_ids = AlertStatus.query.with_entities(
             AlertStatus.status_id
-        ).filter(AlertStatus.status_name.in_(['New', 'Assigned ', 'In progress', 'Pending', 'Unspecified'])).all()
+        ).filter(AlertStatus.status_name.in_(['New', 'Assigned', 'In progress', 'Pending', 'Unspecified'])).all()
         alert_status_filter += open_alert_status_ids
 
     if closed_alerts:
