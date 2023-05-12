@@ -404,7 +404,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         description=f"*Alert escalated by {current_user.name}*\n\n{escalation_note}"
                     f"### Alert description\n\n{alert.alert_description}"
                     f"\n\n### IRIS alert link\n\n"
-                    f"[<i class='fa-solid fa-bell'></i> #{alert.alert_id}](/alerts?alert_id={alert.alert_id})",
+                    f"[<i class='fa-solid fa-bell'></i> #{alert.alert_id}](/alerts?alert_ids={alert.alert_id})",
         soc_id=alert.alert_id,
         client_id=alert.alert_customer_id,
         user=current_user,
@@ -523,7 +523,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
-    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_id={alert.alert_id}) escalated by {current_user.name}*\n\n{escalation_note}"
+    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_ids={alert.alert_id}) escalated by {current_user.name}*\n\n{escalation_note}"
 
     for tag in case_tags.split(',') if case_tags else []:
         tag = Tags(tag_title=tag).save()
