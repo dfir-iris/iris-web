@@ -651,7 +651,7 @@ def get_alert_status_by_id(status_id: int) -> AlertStatus:
     return db.session.query(AlertStatus).filter(AlertStatus.status_id == status_id).first()
 
 
-def cache_similar_alert(customer_id, assets, iocs, alert_id):
+def cache_similar_alert(customer_id, assets, iocs, alert_id, creation_date):
     """
     Cache similar alerts
 
@@ -660,6 +660,7 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
         assets (list): The list of assets
         iocs (list): The list of IOCs
         alert_id (int): The ID of the alert
+        creation_date (datetime): The creation date of the alert
 
     returns:
         None
@@ -667,12 +668,14 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
     """
     for asset in assets:
         cache_entry = SimilarAlertsCache(customer_id=customer_id, asset_name=asset['asset_name'],
-                                         asset_type_id=asset["asset_type_id"], alert_id=alert_id)
+                                         asset_type_id=asset["asset_type_id"], alert_id=alert_id,
+                                         created_at=creation_date)
         db.session.add(cache_entry)
 
     for ioc in iocs:
         cache_entry = SimilarAlertsCache(customer_id=customer_id, ioc_value=ioc['ioc_value'],
-                                         ioc_type_id=ioc['ioc_type_id'], alert_id=alert_id)
+                                         ioc_type_id=ioc['ioc_type_id'], alert_id=alert_id,
+                                         created_at=creation_date)
         db.session.add(cache_entry)
 
     db.session.commit()

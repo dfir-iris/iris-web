@@ -192,7 +192,8 @@ def alerts_add_route(caseid) -> Response:
 
         # Cache the alert for similarities check
         cache_similar_alert(new_alert.alert_customer_id, assets=assets_list,
-                            iocs=iocs_list, alert_id=new_alert.alert_id)
+                            iocs=iocs_list, alert_id=new_alert.alert_id,
+                            creation_date=new_alert.alert_source_event_time)
         
         new_alert = call_modules_hook('on_postload_alert_create', data=new_alert, caseid=caseid)
 
