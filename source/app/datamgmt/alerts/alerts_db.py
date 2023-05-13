@@ -1145,3 +1145,17 @@ def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
         return False, str(e)
 
     return True, ""
+
+
+def get_alert_status_by_name(name: str) -> AlertStatus:
+    """
+    Get the alert status by name
+
+    args:
+        name (str): The name of the alert status
+
+    returns:
+        AlertStatus: The alert status
+    """
+    return AlertStatus.query.filter(AlertStatus.status_name == name).first()
+

@@ -36,6 +36,7 @@ from werkzeug import Response
 
 import app
 from app import db
+from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import register_case_protagonists
 from app.datamgmt.case.case_db import save_case_tags
@@ -63,6 +64,7 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
+from app.models.alerts import AlertStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.models.models import Client
@@ -233,6 +235,17 @@ def api_reopen_case(cur_id, caseid):
     res = reopen_case(cur_id)
     if not res:
         return response_error("Tried to reopen an non-existing case")
+
+    # Reopen the related alerts
+    if case.alerts:
+        merged_status = get_alert_status_by_name('Merged')
+        for alert in case.alerts:
+            if alert.alert_status_id != merged_status.status_id:
+                alert.alert_status_id = merged_status.status_id
+                track_activity(f"alert ID {alert.alert_id} status updated to merged due to case #{caseid} being reopened",
+                               caseid=caseid, ctx_less=False)
+
+                db.session.add(alert)
     
     case = call_modules_hook('on_postload_case_info_update', data=case, caseid=caseid)
 
@@ -259,11 +272,22 @@ def api_case_close(cur_id, caseid):
     res = close_case(cur_id)
     if not res:
         return response_error("Tried to close an non-existing case")
+
+    # Close the related alerts
+    if case.alerts:
+        close_status = get_alert_status_by_name('Closed')
+        for alert in case.alerts:
+            if alert.alert_status_id != close_status.status_id:
+                alert.alert_status_id = close_status.status_id
+                track_activity(f"closing alert ID {alert.alert_id} due to case #{caseid} being closed",
+                               caseid=caseid, ctx_less=False)
+
+                db.session.add(alert)
     
     case = call_modules_hook('on_postload_case_info_update', data=case, caseid=caseid)
 
     add_obj_history_entry(case, 'case closed')
-    track_activity("closed case ID {}".format(cur_id), caseid=caseid, ctx_less=True)
+    track_activity("closed case ID {}".format(cur_id), caseid=caseid, ctx_less=False)
     case_schema = CaseSchema()
 
     return response_success("Case closed successfully", data=case_schema.dump(res))
@@ -306,7 +330,7 @@ def api_add_case(caseid):
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
         add_obj_history_entry(case, 'created')
-        track_activity("new case {case_name} created".format(case_name=case.name), caseid=caseid, ctx_less=True)
+        track_activity("new case {case_name} created".format(case_name=case.name), caseid=case.case_id, ctx_less=False)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
