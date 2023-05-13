@@ -13,11 +13,18 @@
 }
 
 .alert-actions {
-  position: relative;
-  right: 0;
+    position: relative;
+    right: 0;
+    top: -1.5rem;
   /*background-color: rgba(255, 255, 255, 0.35);*/
   justify-content: space-between;
   /*border-radius: 15px;*/
+}
+
+@media (max-width: 1224px) {
+  .alert-actions {
+    top: 0;
+  }
 }
 
 .btn-alert-primary {

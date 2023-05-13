@@ -759,7 +759,7 @@ function renderAlert(alert, expanded=false) {
           <!-- Alert details -->
           <div class="d-flex flex-column">
             <div class="flex-1 ml-md-4 mr-4 pt-1">
-                <div class="row">
+                <div class="row mb-4">
                     <div class="flex-column">
                         <div class="avatar-group ${alert.owner ? '' : 'ml-2 mr-2'}">
                             <div class="avatar-tickbox-wrapper">
@@ -811,9 +811,10 @@ function renderAlert(alert, expanded=false) {
                         </div>          
                                         
                     </div>
+
                 </div>
-                <div class="col">
-                    <div class="float-right alert-actions">
+                
+                <div class="float-right alert-actions mt--4">
                       <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id}, false);">Merge</button>
                       
                       <div class="dropdown ml-2 d-inline-block">
@@ -843,10 +844,11 @@ function renderAlert(alert, expanded=false) {
                       <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
                       <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
                       `}
-                    </div>
-                </div>          
+                </div>
+                <span class="mt-4">${alert.alert_description}</span>
+
                 
-              <span class="mt-4">${alert.alert_description}</span><br />
+
               <!-- Additional details and other content -->
               <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4 ${expanded? 'show': ''} alert-collapsible">
                 <div class="card-no-pd mt-2">
