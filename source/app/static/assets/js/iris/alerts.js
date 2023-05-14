@@ -18,27 +18,27 @@ async function fetchMultipleAlerts(alertIds) {
 }
 
 const selectsConfig = {
-    alertStatusFilter: {
+    alert_status_id: {
         url: '/manage/alert-status/list',
         id: 'status_id',
         name: 'status_name',
     },
-    alertSeverityFilter: {
+    alert_severity_id: {
         url: '/manage/severities/list',
         id: 'severity_id',
         name: 'severity_name'
     },
-    alertClassificationFilter: {
+    alert_classification_id: {
         url: '/manage/case-classifications/list',
         id: 'id',
         name: 'name_expanded',
     },
-    alertCustomerFilter: {
+    alert_customer_id: {
         url: '/manage/customers/list',
         id: 'customer_id',
         name: 'customer_name'
     },
-    alertOwnerFilter: {
+    alert_owner_id: {
         url: '/manage/users/list',
         id: 'user_id',
         name: 'user_name'
@@ -759,88 +759,96 @@ function renderAlert(alert, expanded=false) {
           <!-- Alert details -->
           <div class="d-flex flex-column">
             <div class="flex-1 ml-md-4 mr-4 pt-1">
-              <div class="row mb-3">
-                  <div class="avatar-group ${alert.owner ? '' : 'ml-2 mr-2'}">
-                    <div class="avatar-tickbox-wrapper">
-                      <div class="avatar-wrapper">
-                        <div class="avatar cursor-pointer">
-                          <span class="avatar-title alert-m-title alert-similarity-trigger rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
-                            <i class="fa-solid fa-fire"></i>
-                          </span>
-                        </div>
-                        ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : `<div title="Assign to me" class="avatar avatar-sm" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);"><span class="avatar-title avatar-iris rounded-circle btn-alert-primary" style="cursor:pointer;"><i class="fa-solid fa-hand"></i></span></div>`}
-                      </div>
-                      <div class="tickbox" style="display:none;">
-                        <input type="checkbox" class="alert-selection-checkbox" data-alert-id="${alert.alert_id}" />
-                      </div>
-                    </div>
-                  </div>
-                  <h6 class="text-uppercase fw-bold mb-1 mt-1 ml-3 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
-                    ${alert.alert_title}
-                    <span class="text-${colorSeverity} pl-3"></span>
-                    <div class="d-flex mb-3">
-                       
-                        <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
-                    </div>
-                  </h6>
-                <div class="col">
-                    <div class="d-flex">
-                        <div class="ml-auto alert-actions">
-                          <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id}, false);">Merge</button>
-                          
-                          <div class="dropdown ml-2 d-inline-block">
-                              <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                  Assign
-                              </button>
-                              <div class="dropdown-menu">
-                                  <a class="dropdown-item" href="javascript:void(0)" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
-                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeAlertOwner(${alert.alert_id});">Assign</a>
-                              </div>
-                          </div>
-                          <div class="dropdown ml-2 d-inline-block">
-                              <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                  Set status
-                              </button>
-                              <div class="dropdown-menu">
-                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
-                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
-                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
-                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
-                                  <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
+                <div class="row mb-4">
+                    <div class="flex-column">
+                        <div class="avatar-group ${alert.owner ? '' : 'ml-2 mr-2'}">
+                            <div class="avatar-tickbox-wrapper">
+                              <div class="avatar-wrapper">
+                                <div class="avatar cursor-pointer">
+                                  <span class="avatar-title alert-m-title alert-similarity-trigger rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                                    <i class="fa-solid fa-fire"></i>
+                                  </span>
                                 </div>
-                          </div>
-                                                    ${alert.status.status_name === 'Closed' ? `
-                              <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">Set in progress</button>
-                          `: ` 
-                          <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
-                          <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
-                          `}
-                      </div>
-                  </div>
-                  </div>
-                      <div class=" d-flex mt-3">
-                        <div class="ml-auto">
-                            <button type="button" class="btn bg-transparent btn-sm mt--4" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
-                              <span class="btn-label">
-                                <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
-                              </span>
-                            </button>
-                            <button class="btn btn-sm bg-transparent mt--4" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button>
-                            <button class="btn bg-transparent mt--4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                              <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-                            </button>
-                            <div class="dropdown-menu" role="menu">
-                              <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                              <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
-                              <div class="dropdown-divider"></div>
-                              <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
+                                ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : `<div title="Assign to me" class="avatar avatar-sm" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);"><span class="avatar-title avatar-iris rounded-circle btn-alert-primary" style="cursor:pointer;"><i class="fa-solid fa-hand"></i></span></div>`}
+                              </div>
+                              <div class="tickbox" style="display:none;">
+                                <input type="checkbox" class="alert-selection-checkbox" data-alert-id="${alert.alert_id}" />
+                              </div>
                             </div>
                         </div>
                     </div>
-                  </div>
-              </div>
+                    <div class="col-9">
+                        <h6 class="text-uppercase fw-bold mb-1 mt-1 ml-3 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                            ${alert.alert_title}
+                            <span class="text-${colorSeverity} pl-3"></span>
+                            <div class="d-flex mb-3">
+                               
+                                <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
+                            </div>
+                        </h6>
+                    </div>
+                    
+                    <div class="col-xs-12 col">
+                                        
+                        <div class=" d-flex mt-3">
+                            <div class="ml-auto">
+                                <button type="button" class="btn bg-transparent btn-sm mt--4" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
+                                  <span class="btn-label">
+                                    <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
+                                  </span>
+                                </button>
+                                <button class="btn btn-sm bg-transparent mt--4" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button>
+                                <button class="btn bg-transparent mt--4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                                </button>
+                                <div class="dropdown-menu" role="menu">
+                                  <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                  <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
+                                  <div class="dropdown-divider"></div>
+                                  <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
+                                </div>
+                            </div>
+                        </div>          
+                                        
+                    </div>
 
-              <span class="mt-4">${alert.alert_description}</span><br />
+                </div>
+                
+                <div class="float-right alert-actions mt--4">
+                      <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id}, false);">Merge</button>
+                      
+                      <div class="dropdown ml-2 d-inline-block">
+                          <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Assign
+                          </button>
+                          <div class="dropdown-menu">
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeAlertOwner(${alert.alert_id});">Assign</a>
+                          </div>
+                      </div>
+                      <div class="dropdown ml-2 d-inline-block">
+                          <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Set status
+                          </button>
+                          <div class="dropdown-menu">
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
+                            </div>
+                      </div>
+                      ${alert.status.status_name === 'Closed' ? `
+                          <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">Set in progress</button>
+                      `: ` 
+                      <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
+                      <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
+                      `}
+                </div>
+                <span class="mt-4">${alert.alert_description}</span>
+
+                
+
               <!-- Additional details and other content -->
               <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4 ${expanded? 'show': ''} alert-collapsible">
                 <div class="card-no-pd mt-2">
@@ -1352,7 +1360,7 @@ async function editAlert(alert_id, close=false) {
       console.error(error);
     });
 
-    fetchSelectOptions('editAlertSeverity', selectsConfig['alertSeverityFilter']).then(() => {
+    fetchSelectOptions('editAlertSeverity', selectsConfig['alert_severity_id']).then(() => {
       $('#editAlertSeverity').val($(`#alertSeverity-${alert_id}`).data('severity-id'));
     }).catch(error => {
       console.error(error);
@@ -1662,7 +1670,7 @@ function fetchSelectOptions(selectElementId, configItem) {
           value: null,
           text: ''
         }));
-        if (selectElementId === 'alertOwnerFilter') {
+        if (selectElementId === 'alert_owner_id') {
             selectElement.append($('<option>', {
                 value: '-1',
                 text: 'Unassigned'

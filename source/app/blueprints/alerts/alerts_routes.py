@@ -192,7 +192,8 @@ def alerts_add_route(caseid) -> Response:
 
         # Cache the alert for similarities check
         cache_similar_alert(new_alert.alert_customer_id, assets=assets_list,
-                            iocs=iocs_list, alert_id=new_alert.alert_id)
+                            iocs=iocs_list, alert_id=new_alert.alert_id,
+                            creation_date=new_alert.alert_source_event_time)
         
         new_alert = call_modules_hook('on_postload_alert_create', data=new_alert, caseid=caseid)
 
@@ -597,7 +598,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
         
         alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=caseid)
 
-        track_activity(f"merge alert #{alert_id} into existing case #{target_case_id}", ctx_less=True)
+        track_activity(f"merge alert #{alert_id} into existing case #{target_case_id}", caseid=target_case_id)
         add_obj_history_entry(alert, f"Alert merged into existing case #{target_case_id}")
 
         # Return the updated alert as JSON
@@ -644,7 +645,7 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
         if success is False:
             return response_error(message)
 
-        track_activity(f"unmerge alert #{alert_id} from case #{target_case_id}", ctx_less=True)
+        track_activity(f"unmerge alert #{alert_id} from case #{target_case_id}", caseid=target_case_id)
         add_obj_history_entry(alert, f"Alert unmerged from case #{target_case_id}")
 
         alert = call_modules_hook('on_postload_alert_unmerge', data=alert, caseid=caseid)
@@ -717,7 +718,7 @@ def alerts_batch_merge_route(caseid) -> Response:
             db.session.commit()
 
         track_activity(f"batched merge alerts {alert_ids} into existing case #{target_case_id}",
-                       ctx_less=True)
+                       caseid=target_case_id)
 
         # Return the updated case as JSON
         return response_success(data=CaseSchema().dump(case))
@@ -786,7 +787,7 @@ def alerts_batch_escalate_route(caseid) -> Response:
 
         add_obj_history_entry(case, 'created')
         track_activity("new case {case_name} created from alerts".format(case_name=case.name),
-                       ctx_less=True)
+                       caseid=case.case_id)
 
         for alert in alerts_list:
             add_obj_history_entry(alert, f"Alert escalated into new case #{case.case_id}")

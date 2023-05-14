@@ -404,7 +404,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         description=f"*Alert escalated by {current_user.name}*\n\n{escalation_note}"
                     f"### Alert description\n\n{alert.alert_description}"
                     f"\n\n### IRIS alert link\n\n"
-                    f"[<i class='fa-solid fa-bell'></i> #{alert.alert_id}](/alerts?alert_id={alert.alert_id})",
+                    f"[<i class='fa-solid fa-bell'></i> #{alert.alert_id}](/alerts?alert_ids={alert.alert_id})",
         soc_id=alert.alert_id,
         client_id=alert.alert_customer_id,
         user=current_user,
@@ -523,7 +523,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
-    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_id={alert.alert_id}) escalated by {current_user.name}*\n\n{escalation_note}"
+    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_ids={alert.alert_id}) escalated by {current_user.name}*\n\n{escalation_note}"
 
     for tag in case_tags.split(',') if case_tags else []:
         tag = Tags(tag_title=tag).save()
@@ -651,7 +651,7 @@ def get_alert_status_by_id(status_id: int) -> AlertStatus:
     return db.session.query(AlertStatus).filter(AlertStatus.status_id == status_id).first()
 
 
-def cache_similar_alert(customer_id, assets, iocs, alert_id):
+def cache_similar_alert(customer_id, assets, iocs, alert_id, creation_date):
     """
     Cache similar alerts
 
@@ -660,6 +660,7 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
         assets (list): The list of assets
         iocs (list): The list of IOCs
         alert_id (int): The ID of the alert
+        creation_date (datetime): The creation date of the alert
 
     returns:
         None
@@ -667,12 +668,14 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
     """
     for asset in assets:
         cache_entry = SimilarAlertsCache(customer_id=customer_id, asset_name=asset['asset_name'],
-                                         asset_type_id=asset["asset_type_id"], alert_id=alert_id)
+                                         asset_type_id=asset["asset_type_id"], alert_id=alert_id,
+                                         created_at=creation_date)
         db.session.add(cache_entry)
 
     for ioc in iocs:
         cache_entry = SimilarAlertsCache(customer_id=customer_id, ioc_value=ioc['ioc_value'],
-                                         ioc_type_id=ioc['ioc_type_id'], alert_id=alert_id)
+                                         ioc_type_id=ioc['ioc_type_id'], alert_id=alert_id,
+                                         created_at=creation_date)
         db.session.add(cache_entry)
 
     db.session.commit()
@@ -780,7 +783,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     if open_alerts:
         open_alert_status_ids = AlertStatus.query.with_entities(
             AlertStatus.status_id
-        ).filter(AlertStatus.status_name.in_(['New', 'Assigned ', 'In progress', 'Pending', 'Unspecified'])).all()
+        ).filter(AlertStatus.status_name.in_(['New', 'Assigned', 'In progress', 'Pending', 'Unspecified'])).all()
         alert_status_filter += open_alert_status_ids
 
     if closed_alerts:
@@ -1145,3 +1148,17 @@ def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
         return False, str(e)
 
     return True, ""
+
+
+def get_alert_status_by_name(name: str) -> AlertStatus:
+    """
+    Get the alert status by name
+
+    args:
+        name (str): The name of the alert status
+
+    returns:
+        AlertStatus: The alert status
+    """
+    return AlertStatus.query.filter(AlertStatus.status_name == name).first()
+

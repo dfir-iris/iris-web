@@ -13,11 +13,16 @@
 }
 
 .alert-actions {
-  position: relative;
-  right: 0;
-  /*background-color: rgba(255, 255, 255, 0.35);*/
-  justify-content: space-between;
-  /*border-radius: 15px;*/
+    position: relative;
+    right: 0;
+    top: -1.5rem;
+    justify-content: space-between;
+}
+
+@media (max-width: 1224px) {
+  .alert-actions {
+    top: 0;
+  }
 }
 
 .btn-alert-primary {
@@ -166,4 +171,14 @@
 
 .hidden-trash {
     display: none;
+}
+
+
+@media (max-width: 576px) {
+  .alert-actions {
+    flex-wrap: wrap;
+  }
+  .alert-actions > * {
+    margin-bottom: 0.5rem;
+  }
 }
