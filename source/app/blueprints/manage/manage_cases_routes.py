@@ -205,7 +205,7 @@ def api_delete_case(cur_id, caseid):
 
                 call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
 
-                track_activity("case {} deleted successfully".format(cur_id), caseid=1, ctx_less=True)
+                track_activity("case {} deleted successfully".format(cur_id), caseid=cur_id)
                 return response_success("Case successfully deleted")
 
             else:
@@ -250,7 +250,7 @@ def api_reopen_case(cur_id, caseid):
     case = call_modules_hook('on_postload_case_info_update', data=case, caseid=caseid)
 
     add_obj_history_entry(case, 'case reopened')
-    track_activity("reopened case ID {}".format(cur_id), caseid=caseid, ctx_less=True)
+    track_activity("reopened case ID {}".format(cur_id), caseid=caseid)
     case_schema = CaseSchema()
 
     return response_success("Case reopened successfully", data=case_schema.dump(res))
