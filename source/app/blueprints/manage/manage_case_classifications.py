@@ -135,7 +135,7 @@ def update_case_classification(classification_id: int, caseid: int) -> Response:
 
         if ccls:
             track_activity(f"updated case classification {ccls.id}", caseid=caseid)
-            return response_success("IOC type updated", ccl.dump(ccls))
+            return response_success("Case classification updated", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
