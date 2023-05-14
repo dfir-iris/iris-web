@@ -90,7 +90,7 @@ class Cases(db.Model):
                  classification_id=None,
                  state_id=None
                  ):
-        self.name = name,
+        self.name = name[:200] if name else None,
         self.soc_id = soc_id,
         self.client_id = client_id,
         self.description = description,
