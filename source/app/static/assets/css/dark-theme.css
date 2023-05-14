@@ -374,7 +374,13 @@ body input,
 body select,
 body .select2-selection,
 body .select2-container--default {
-    background: rgb(26, 32, 53) !important;
+    background:rgb(6, 14, 40) !important;
+    color: #cac7c7;
+}
+
+body .btn-light:hover,
+body .btn-white:hover {
+    background: #1a2035 !important;
     color: #cac7c7;
 }
 
