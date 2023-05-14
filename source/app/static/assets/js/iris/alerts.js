@@ -18,27 +18,27 @@ async function fetchMultipleAlerts(alertIds) {
 }
 
 const selectsConfig = {
-    alertStatusFilter: {
+    alert_status_id: {
         url: '/manage/alert-status/list',
         id: 'status_id',
         name: 'status_name',
     },
-    alertSeverityFilter: {
+    alert_severity_id: {
         url: '/manage/severities/list',
         id: 'severity_id',
         name: 'severity_name'
     },
-    alertClassificationFilter: {
+    alert_classification_id: {
         url: '/manage/case-classifications/list',
         id: 'id',
         name: 'name_expanded',
     },
-    alertCustomerFilter: {
+    alert_customer_id: {
         url: '/manage/customers/list',
         id: 'customer_id',
         name: 'customer_name'
     },
-    alertOwnerFilter: {
+    alert_owner_id: {
         url: '/manage/users/list',
         id: 'user_id',
         name: 'user_name'
@@ -1360,7 +1360,7 @@ async function editAlert(alert_id, close=false) {
       console.error(error);
     });
 
-    fetchSelectOptions('editAlertSeverity', selectsConfig['alertSeverityFilter']).then(() => {
+    fetchSelectOptions('editAlertSeverity', selectsConfig['alert_severity_id']).then(() => {
       $('#editAlertSeverity').val($(`#alertSeverity-${alert_id}`).data('severity-id'));
     }).catch(error => {
       console.error(error);
@@ -1670,7 +1670,7 @@ function fetchSelectOptions(selectElementId, configItem) {
           value: null,
           text: ''
         }));
-        if (selectElementId === 'alertOwnerFilter') {
+        if (selectElementId === 'alert_owner_id') {
             selectElement.append($('<option>', {
                 value: '-1',
                 text: 'Unassigned'
