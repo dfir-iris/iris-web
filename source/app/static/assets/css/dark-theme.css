@@ -271,6 +271,8 @@ body .kanban-board {
 
 body .kanban-item {
     background: #1a2035 !important;
+    box-shadow: none;
+    border: #004079b0 1px solid;
 }
 
 body .modal-content {
@@ -319,14 +321,17 @@ body .amsify-suggestags-input {
 body .dropdown-menu {
     color: #cac7c7;
     background: #363e53 !important;
-    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, 0.1), 4px 4px 15px -5px rgba(21, 114, 232, 0.4) !important;
+    box-shadow: none;
+    border: #004079b0 1px solid;
+    border-radius: 6px;
 }
 
 body .select2-dropdown {
     color: #cac7c7;
     background: #363e53 !important;
-    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, 0.1), 4px 4px 15px -5px rgba(21, 114, 232, 0.4) !important;
-    border: none;
+    box-shadow: none;
+    border: #004079b0 1px solid;
+    border-radius: 6px;
 }
 
 .bootstrap-select > .dropdown-toggle {
