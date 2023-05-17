@@ -43,6 +43,7 @@ from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.demo_builder import create_demo_cases
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
+from app.iris_engine.access_control.utils import ac_get_group_analysts
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
@@ -690,9 +691,7 @@ def create_safe_auth_model():
     except exc.IntegrityError:
         db.session.rollback()
         log.warning('Analysts group integrity error. Group permissions were probably changed. Updating.')
-        ganalysts = Group.query.filter(
-            Group.group_name == "Analysts"
-        ).first()
+        ganalysts = ac_get_group_analysts()
 
     if ganalysts.group_permissions != ac_get_mask_analyst():
         ganalysts.group_permissions = ac_get_mask_analyst()
