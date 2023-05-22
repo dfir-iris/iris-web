@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from sqlalchemy import func
 from typing import List
 
 from app.models import CaseClassification
@@ -76,6 +77,6 @@ def search_classification_by_name(name: str, exact_match: bool = False) -> List[
         List[dict]: List of case classifications
     """
     if exact_match:
-        return CaseClassification.query.filter_by(name=name).all()
+        return CaseClassification.query.filter(func.lower(CaseClassification.name) == name.lower()).all()
 
-    return CaseClassification.query.filter(CaseClassification.name.like(f'%{name}%')).all()
+    return CaseClassification.query.filter(CaseClassification.name.ilike(f'%{name}%')).all()
