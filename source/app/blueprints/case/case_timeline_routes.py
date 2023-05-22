@@ -1000,21 +1000,21 @@ def case_events_upload_csv(caseid):
                 return response_error(msg=f"Data error",
                                       data={"Error": f"Event Title can not be empty.\nrow number: {line}"}, status=400)
 
-            if event_assets:
-                assets = []
-                for asset_name in row.get('event_assets').replace('|', ';').split(";"):
-                    if asset_name == '':
-                        continue
-                    asset = get_asset_by_name(asset_name, caseid)
-                    if asset:
-                        assets.append(asset.asset_id)
-                    else:
-                        return response_error(msg=f"Data error", data={
-                            "Error": f"Asset not recognized : {asset_name}.\nrow number: {line}"})
-                row['event_assets'] = assets
+            assets = []
+            for asset_name in event_assets.split(";"):
+                if asset_name == '':
+                    continue
+                asset = get_asset_by_name(asset_name, caseid)
+                if asset:
+                    assets.append(asset.asset_id)
+                else:
+                    return response_error(msg=f"Data error", data={
+                        "Error": f"Asset not recognized : {asset_name}.\nrow number: {line}"})
+
+            row['event_assets'] = assets
 
             iocs = []
-            for ioc_value in event_iocs.replace('|', ';').split(";"):
+            for ioc_value in event_iocs.split("|"):
                 if ioc_value == '':
                     continue
                 ioc = get_ioc_by_value(ioc_value, caseid)
