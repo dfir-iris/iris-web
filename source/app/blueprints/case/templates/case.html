@@ -34,17 +34,17 @@
                         </div>
                         <div class="col mt-4">
                             <div class="row">
-                                 <span title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret ml-auto btn-xs mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
+                                 <span title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret ml-auto btn-xs mr-2 mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
                                     onclick="case_detail('{{ case.case_id }}', true);"
                                  ><i class="fa-solid fa-group-arrows-rotate mr-2"></i>{{ case.status_name }}</span>
                             </div>
                             <div class="row">
                                   <div class="ml-auto">
                                     <div class="row">
-                                        <h5 class="text-white op-7 mb-2 float-right"><b>Customer</b> : {{ case.client.name }}</h5>
+                                        <h5 class="text-white op-7 mb-2 float-right mr-4"><b>Customer</b> : {{ case.client.name }}</h5>
                                     </div>
                                       <div class="row">
-                                        {% if case.soc_id %} <h5 class="text-white op-7 mb-2 "><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
+                                        {% if case.soc_id %} <h5 class="text-white op-7 mb-2 mr-4"><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
                                       </div>
                                 </div>
                             </div>
