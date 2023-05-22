@@ -27,3 +27,4 @@ celerybeat-schedule.db
 source/app/static/assets/dist/
 source/app/static/assets/img/graph/*
 !source/app/static/assets/img/graph/*.png
+run_nv_test.py
