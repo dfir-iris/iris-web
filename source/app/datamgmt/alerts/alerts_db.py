@@ -646,16 +646,20 @@ def get_alert_status_by_id(status_id: int) -> AlertStatus:
     return db.session.query(AlertStatus).filter(AlertStatus.status_id == status_id).first()
 
 
-def search_alert_status_by_name(status_name: str) -> AlertStatus:
+def search_alert_status_by_name(status_name: str, exact_match: False) -> AlertStatus:
     """
     Get an alert status from the database from its name
 
     args:
         status_name (str): The name of the alert status
+        exact_match (bool): Whether to perform an exact match or not
 
     returns:
         AlertStatus: The alert status that was retrieved from the database
     """
+    if exact_match:
+        return db.session.query(AlertStatus).filter(func.lower(AlertStatus.status_name) == status_name.lower()).first()
+
     return db.session.query(AlertStatus).filter(AlertStatus.status_name.ilike(f"%{status_name}%")).all()
 
 

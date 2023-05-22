@@ -26,6 +26,7 @@ from werkzeug.utils import redirect
 
 from app import db
 from app.datamgmt.case.case_iocs_db import get_ioc_types_list
+from app.datamgmt.manage.manage_case_objs import search_ioc_type_by_name
 from app.forms import AddIocTypeForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Ioc
@@ -183,11 +184,13 @@ def search_ioc_type(caseid):
         return response_error("Invalid request")
 
     ioc_type = request.json.get('ioc_type')
-    if not ioc_type:
+    if ioc_type is None:
         return response_error("Invalid ioc type. Got None")
+
+    exact_match = request.json.get('exact_match', False)
     
     # Search for IOC types with a name that contains the specified search term
-    ioc_type = IocType.query.filter(IocType.type_name.ilike("%{}%".format(ioc_type))).all()
+    ioc_type = search_ioc_type_by_name(ioc_type, exact_match=exact_match)
     if not ioc_type:
         return response_error("No ioc types found")
     

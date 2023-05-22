@@ -64,3 +64,18 @@ def get_case_classification_by_name(cur_name: str) -> CaseClassification:
     case_classification = CaseClassification.query.filter_by(name=cur_name).first()
     return case_classification
 
+
+def search_classification_by_name(name: str, exact_match: bool = False) -> List[dict]:
+    """Search for a case classification by name
+
+    Args:
+        name (str): case classification name
+        exact_match (bool, optional): Exact match. Defaults to False.
+
+    Returns:
+        List[dict]: List of case classifications
+    """
+    if exact_match:
+        return CaseClassification.query.filter_by(name=name).all()
+
+    return CaseClassification.query.filter(CaseClassification.name.like(f'%{name}%')).all()

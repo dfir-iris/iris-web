@@ -71,11 +71,13 @@ def search_alert_status(caseid):
         return response_error("Invalid request")
 
     alert_status = request.json.get('alert_status')
-    if not alert_status:
+    if alert_status is None:
         return response_error("Invalid alert status. Got None")
 
+    exact_match = request.json.get('exact_match', False)
+
     # Search for alerts status with a name that contains the specified search term
-    alert_status = search_alert_status_by_name(alert_status)
+    alert_status = search_alert_status_by_name(alert_status, exact_match=exact_match)
     if not alert_status:
         return response_error("No alert status found")
 
