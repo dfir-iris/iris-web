@@ -113,6 +113,9 @@ function send_add_case(data_sent) {
  *  Case list section 
  *************************/
 /* case table creation */
+$.each($.find("table"), function(index, element){
+    addFilterFields($(element).attr("id"));
+});
 $('#cases_table').dataTable({
     "ajax": {
         "url": "cases/list" + case_param(),
@@ -126,8 +129,6 @@ $('#cases_table').dataTable({
             }
         }
     },
-    "order": [[3, "desc"]],
-    "autoWidth": false,
     "columns": [
         {
             "render": function (data, type, row) {
@@ -152,6 +153,13 @@ $('#cases_table').dataTable({
         },
         {
             "data": "client_name",
+            "render": function (data, type, row, meta) {
+            if (type === 'display') { data = sanitizeHTML(data);}
+            return data;
+          }
+        },
+        {
+            "data": "state_name",
             "render": function (data, type, row, meta) {
             if (type === 'display') { data = sanitizeHTML(data);}
             return data;
@@ -187,8 +195,28 @@ $('#cases_table').dataTable({
             return data;
           }
         }
-    ]
-});
+    ],
+    dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
+    filter: true,
+    info: true,
+    ordering: true,
+    processing: true,
+    retrieve: true,
+    lengthChange: true,
+    pageLength: 25,
+    select: true,
+    sort: true,
+    responsive: {
+        details: {
+            display: $.fn.dataTable.Responsive.display.childRow,
+            renderer: $.fn.dataTable.Responsive.renderer.tableAll()
+        }
+    },
+    initComplete: function () {
+            tableFiltering(this.api(), 'cases_table');
+        }
+    }
+);
 
 
 $(document).ready(function() {

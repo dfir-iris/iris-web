@@ -34,6 +34,7 @@ from app import db
 from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
 from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
+from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import case_template_pre_modifier, get_case_template_by_id, \
     case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
@@ -273,7 +274,8 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
         soc_id='',
         client_id=alerts[0].alert_customer_id,
         user=current_user,
-        classification_id=alerts[0].alert_classification_id
+        classification_id=alerts[0].alert_classification_id,
+        state_id=get_case_state_by_name('Opened').state_id
     )
 
     case.save()
@@ -402,11 +404,12 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         description=f"*Alert escalated by {current_user.name}*\n\n{escalation_note}"
                     f"### Alert description\n\n{alert.alert_description}"
                     f"\n\n### IRIS alert link\n\n"
-                    f"[<i class='fa-solid fa-bell'></i> #{alert.alert_id}](/alerts?alert_id={alert.alert_id})",
+                    f"[<i class='fa-solid fa-bell'></i> #{alert.alert_id}](/alerts?alert_ids={alert.alert_id})",
         soc_id=alert.alert_id,
         client_id=alert.alert_customer_id,
         user=current_user,
-        classification_id=alert.alert_classification_id
+        classification_id=alert.alert_classification_id,
+        state_id=get_case_state_by_name('Opened').state_id
     )
 
     case.save()
@@ -520,9 +523,9 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
-    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_id={alert.alert_id}) escalated by {current_user.name}*\n\n{escalation_note}"
+    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_ids={alert.alert_id}) escalated by {current_user.name}*\n\n{escalation_note}"
 
-    for tag in case_tags.split(','):
+    for tag in case_tags.split(',') if case_tags else []:
         tag = Tags(tag_title=tag).save()
         case.tags.append(tag)
 
@@ -648,7 +651,7 @@ def get_alert_status_by_id(status_id: int) -> AlertStatus:
     return db.session.query(AlertStatus).filter(AlertStatus.status_id == status_id).first()
 
 
-def cache_similar_alert(customer_id, assets, iocs, alert_id):
+def cache_similar_alert(customer_id, assets, iocs, alert_id, creation_date):
     """
     Cache similar alerts
 
@@ -657,6 +660,7 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
         assets (list): The list of assets
         iocs (list): The list of IOCs
         alert_id (int): The ID of the alert
+        creation_date (datetime): The creation date of the alert
 
     returns:
         None
@@ -664,12 +668,14 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id):
     """
     for asset in assets:
         cache_entry = SimilarAlertsCache(customer_id=customer_id, asset_name=asset['asset_name'],
-                                         asset_type_id=asset["asset_type_id"], alert_id=alert_id)
+                                         asset_type_id=asset["asset_type_id"], alert_id=alert_id,
+                                         created_at=creation_date)
         db.session.add(cache_entry)
 
     for ioc in iocs:
         cache_entry = SimilarAlertsCache(customer_id=customer_id, ioc_value=ioc['ioc_value'],
-                                         ioc_type_id=ioc['ioc_type_id'], alert_id=alert_id)
+                                         ioc_type_id=ioc['ioc_type_id'], alert_id=alert_id,
+                                         created_at=creation_date)
         db.session.add(cache_entry)
 
     db.session.commit()
@@ -777,7 +783,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     if open_alerts:
         open_alert_status_ids = AlertStatus.query.with_entities(
             AlertStatus.status_id
-        ).filter(AlertStatus.status_name.in_(['New', 'Assigned ', 'In progress', 'Pending', 'Unspecified'])).all()
+        ).filter(AlertStatus.status_name.in_(['New', 'Assigned', 'In progress', 'Pending', 'Unspecified'])).all()
         alert_status_filter += open_alert_status_ids
 
     if closed_alerts:
@@ -1142,3 +1148,17 @@ def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
         return False, str(e)
 
     return True, ""
+
+
+def get_alert_status_by_name(name: str) -> AlertStatus:
+    """
+    Get the alert status by name
+
+    args:
+        name (str): The name of the alert status
+
+    returns:
+        AlertStatus: The alert status
+    """
+    return AlertStatus.query.filter(AlertStatus.status_name == name).first()
+

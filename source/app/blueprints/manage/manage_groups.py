@@ -202,7 +202,8 @@ def manage_groups_view(cur_id, caseid):
     if not group:
         return response_error("Invalid group ID")
 
-    return response_success('', data=group)
+    ags = AuthorizationGroupSchema()
+    return response_success('', data=ags.dump(group))
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/modal', methods=['GET'])

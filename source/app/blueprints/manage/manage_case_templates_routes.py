@@ -49,7 +49,7 @@ manage_case_templates_blueprint = Blueprint('manage_case_templates',
 
 # CONTENT ------------------------------------------------
 @manage_case_templates_blueprint.route('/manage/case-templates', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.case_templates_read)
 def manage_case_templates(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case_templates.manage_case_templates', cid=caseid))
@@ -74,7 +74,7 @@ def list_case_templates(caseid):
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator)
+@ac_requires(Permissions.case_templates_read)
 def case_template_modal(cur_id, caseid, url_redir):
     """Get a case template
 
@@ -104,7 +104,8 @@ def case_template_modal(cur_id, caseid, url_redir):
         "summary": case_template.summary,
         "tags": case_template.tags,
         "tasks": case_template.tasks,
-        "note_groups": case_template.note_groups
+        "note_groups": case_template.note_groups,
+        "classification": case_template.classification
     }
 
     form.case_template_json.data = case_template_dict
@@ -113,23 +114,50 @@ def case_template_modal(cur_id, caseid, url_redir):
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.case_templates_write)
 def add_template_modal(caseid):
     case_template = CaseTemplate()
     form = CaseTemplateForm()
-    form.case_template_json.data = {}
+    form.case_template_json.data = {
+        "name": "Template name",
+        "display_name": "Template Display Name",
+        "description": "Template description",
+        "author": "YOUR NAME",
+        "classification": "known-template-classification",
+        "title_prefix": "[PREFIX]",
+        "summary": "Summary to be set",
+        "tags": ["ransomware","malware"],
+        "tasks": [
+            {
+                "title": "Task 1",
+                "description": "Task 1 description",
+                "tags": ["tag1", "tag2"]
+            }
+        ],
+        "note_groups": [
+            {
+                "title": "Note group 1",
+                "notes": [
+                    {
+                        "title": "Note 1",
+                        "content": "Note 1 content"
+                    }
+                ]
+            }
+        ]
+    }
 
     return render_template("modal_case_template.html", form=form, case_template=case_template)
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/upload/modal', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.case_templates_write)
 def upload_template_modal(caseid):
     return render_template("modal_upload_case_template.html")
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.case_templates_write)
 def add_case_template(caseid):
     data = request.get_json()
     if not data:
@@ -162,17 +190,11 @@ def add_case_template(caseid):
 
     track_activity(f"Case template '{case_template.name}' added", caseid=caseid, ctx_less=True)
 
-    ret = {
-        "case_template_id": case_template.id,
-        "case_template_name": case_template.name,
-        "case_template_description": case_template.description
-    }
-
-    return response_success("Added successfully", data=ret)
+    return response_success("Added successfully", data=CaseTemplateSchema().dump(case_template))
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.case_templates_write)
 def update_case_template(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -214,7 +236,7 @@ def update_case_template(cur_id, caseid):
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/delete/<int:case_template_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.case_templates_write)
 def delete_case_template(case_template_id, caseid):
     case_template = get_case_template_by_id(case_template_id)
     if case_template is None:

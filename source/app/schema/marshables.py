@@ -47,7 +47,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification, SavedFilter
+from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -71,6 +71,7 @@ from app.models.alerts import Alert, Severity, AlertStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
+from app.models.cases import CaseState
 from app.util import file_sha256sum, str_to_bool
 from app.util import stream_sha256sum
 
@@ -514,6 +515,13 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class DSPathSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = DataStorePath
+        load_instance = True
+        include_fk = True
+
+
 class DSFileSchema(ma.SQLAlchemyAutoSchema):
     csrf_token = fields.String(required=False)
     file_original_name = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
@@ -632,7 +640,6 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         return file_path, file_size, file_hash
 
 
-
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
     http_proxy = auto_field('http_proxy', required=False, allow_none=False)
     https_proxy = auto_field('https_proxy', required=False, allow_none=False)
@@ -722,6 +729,12 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('case_id'), 'case')
 
         return data
+
+
+class CaseStateSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = CaseState
+        load_instance = True
 
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):

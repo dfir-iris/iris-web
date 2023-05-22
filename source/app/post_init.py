@@ -53,7 +53,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.models.cases import Cases
+from app.models.cases import Cases, CaseState
 from app.models.cases import Client
 from app.models.models import AnalysisStatus, CaseClassification
 from app.models.models import AssetsType
@@ -100,14 +100,23 @@ def run_post_init(development=False):
         alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
         command.upgrade(alembic_cfg, 'head')
 
+        srv_settings = ServerSettings.query.first()
+        if srv_settings is None:
+            log.info("Creating base server settings")
+            create_safe_server_settings()
+            srv_settings = ServerSettings.query.first()
+
+        prevent_objects = srv_settings.prevent_post_objects_repush
+
         log.info("Creating base languages")
         create_safe_languages()
 
         log.info("Creating base os types")
         create_safe_os_types()
 
-        log.info("Creating base IOC types")
-        create_safe_ioctypes()
+        if not prevent_objects:
+            log.info("Creating base IOC types")
+            create_safe_ioctypes()
 
         log.info("Creating base attributes")
         create_safe_attributes()
@@ -121,14 +130,16 @@ def run_post_init(development=False):
         log.info("Creating base events categories")
         create_safe_events_cats()
 
-        log.info("Creating base assets")
-        create_safe_assets()
+        if not prevent_objects:
+            log.info("Creating base assets")
+            create_safe_assets()
 
         log.info("Creating base analysis status")
         create_safe_analysis_status()
 
-        log.info("Creating base case classification")
-        create_safe_classifications()
+        if not prevent_objects:
+            log.info("Creating base case classification")
+            create_safe_classifications()
 
         log.info("Creating base tasks status")
         create_safe_task_status()
@@ -139,11 +150,12 @@ def run_post_init(development=False):
         log.info("Creating base alert status")
         create_safe_alert_status()
 
+        if not prevent_objects:
+            log.info("Creating base case states")
+            create_safe_case_states()
+
         log.info("Creating base hooks")
         create_safe_hooks()
-
-        log.info("Creating base server settings")
-        create_safe_server_settings()
 
         log.info("Creating initial authorisation model")
         def_org, gadm, ganalysts = create_safe_auth_model()
@@ -151,8 +163,9 @@ def run_post_init(development=False):
         log.info("Creating first administrative user")
         admin, pwd = create_safe_admin(def_org=def_org, gadm=gadm)
 
-        log.info("Registering default modules")
-        register_default_modules()
+        if not srv_settings.prevent_post_mod_repush:
+            log.info("Registering default modules")
+            register_default_modules()
 
         log.info("Creating initial customer")
         client = create_safe_client()
@@ -203,6 +216,25 @@ def create_safe_db(db_name):
 
 
 def create_safe_hooks():
+    # --- Alert
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_create',
+                hook_description='Triggered on alert creation, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_delete',
+                hook_description='Triggered on alert deletion, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_update',
+                hook_description='Triggered on alert update, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_escalate',
+                hook_description='Triggered on alert escalation, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_merge',
+                hook_description='Triggered on alert merge, after commit in DB')
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_unmerge',
+                hook_description='Triggered on alert unmerge, after commit in DB')
+    
     # --- Case
     create_safe(db.session, IrisHook, hook_name='on_preload_case_create',
                 hook_description='Triggered on case creation, before commit in DB')
@@ -213,7 +245,10 @@ def create_safe_hooks():
                 hook_description='Triggered on case deletion, before commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_case_delete',
                 hook_description='Triggered on case deletion, after commit in DB')
-
+    
+    create_safe(db.session, IrisHook, hook_name='on_postload_case_info_update',
+                hook_description='Triggered on case update, after commit in DB')
+    
     create_safe(db.session, IrisHook, hook_name='on_manual_trigger_case',
                 hook_description='Triggered upon user action')
 
@@ -535,6 +570,18 @@ def create_safe_alert_status():
     create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
 
 
+def create_safe_case_states():
+    create_safe(db.session, CaseState, state_name='Unspecified', state_description="Unspecified", protected=True)
+    create_safe(db.session, CaseState, state_name='In progress', state_description="Case is being investigated")
+    create_safe(db.session, CaseState, state_name='Opened', state_description="Case is open", protected=True)
+    create_safe(db.session, CaseState, state_name='Containment', state_description="Containment is in progress")
+    create_safe(db.session, CaseState, state_name='Eradication', state_description="Eradication is in progress")
+    create_safe(db.session, CaseState, state_name='Recovery', state_description="Recovery is in progress")
+    create_safe(db.session, CaseState, state_name='Post-Incident', state_description="Post-incident phase")
+    create_safe(db.session, CaseState, state_name='Reporting', state_description="Reporting is in progress")
+    create_safe(db.session, CaseState, state_name='Closed', state_description="Case is closed", protected=True)
+
+
 def create_safe_assets():
 
     get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Account",
@@ -662,25 +709,24 @@ def create_safe_auth_model():
 
 
 def create_safe_admin(def_org, gadm):
-    admin_username = app.config.get('IRIS_ADM_USERNAME', 'administrator')
-    admin_email = app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+    admin_username = app.config.get('IRIS_ADM_USERNAME')
+    if admin_username is None:
+        admin_username = 'administrator'
+
+    admin_email = app.config.get('IRIS_ADM_EMAIL')
+    if admin_email is None:
+        admin_email = 'administrator@localhost'
 
     user = User.query.filter(or_(
         User.user == admin_username,
-        User.email == app.config.get('IRIS_ADM_EMAIL', 'administrator@localhost')
+        User.email == admin_email
     )).first()
     password = None
 
     if not user:
-        password = app.config.get('IRIS_ADM_PASSWORD', ''.join(random.choices(string.printable[:-6], k=16)))
+        password = app.config.get('IRIS_ADM_PASSWORD')
         if password is None:
             password = ''.join(random.choices(string.printable[:-6], k=16))
-
-        if admin_username is None:
-            admin_username = 'administrator'
-
-        if admin_email is None:
-            admin_email = 'administrator@localhost'
 
         log.info(f'Creating first admin user with username "{admin_username}"')
 
@@ -692,7 +738,7 @@ def create_safe_admin(def_org, gadm):
             active=True
         )
 
-        api_key = app.config.get('IRIS_ADM_API_KEY', secrets.token_urlsafe(nbytes=64))
+        api_key = app.config.get('IRIS_ADM_API_KEY')
         if api_key is None:
             api_key = secrets.token_urlsafe(nbytes=64)
 
@@ -716,10 +762,9 @@ def create_safe_admin(def_org, gadm):
             # Prevent leak of user set password in logs
             log.warning(">>> Administrator already exists")
 
-        adm_email = app.config.get('AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL', "administrator@iris.local")
-        if user.email != adm_email:
-            log.warning(f'Email of administrator will be updated via config to {adm_email}')
-            user.email = adm_email
+        if user.email != admin_email:
+            log.warning(f'Email of administrator will be updated via config to {admin_email}')
+            user.email = admin_email
             db.session.commit()
 
     return user, password
@@ -1167,6 +1212,7 @@ def create_safe_server_settings():
     if not ServerSettings.query.count():
         create_safe(db.session, ServerSettings,
                     http_proxy="", https_proxy="", prevent_post_mod_repush=False,
+                    prevent_post_objects_repush=False,
                     password_policy_min_length="12", password_policy_upper_case=True,
                     password_policy_lower_case=True, password_policy_digit=True,
                     password_policy_special_chars="")
@@ -1200,11 +1246,6 @@ def register_modules_pipelines():
 
 
 def register_default_modules():
-    srv_settings = ServerSettings.query.first()
-
-    if srv_settings.prevent_post_mod_repush is True:
-        log.info('Post init modules repush disabled')
-        return
 
     modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module',
                'iris_webhooks_module', 'iris_intelowl_module']

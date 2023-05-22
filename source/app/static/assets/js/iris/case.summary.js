@@ -279,7 +279,7 @@ function case_pipeline_popup() {
     });
 }
 
-function case_detail(case_id) {
+function case_detail(case_id, edit_mode=false) {
     url = '/case/details/' + case_id + case_param();
     $('#info_case_modal_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
@@ -287,6 +287,9 @@ function case_detail(case_id) {
              return false;
         }
         $('#modal_case_detail').modal({ show: true });
+        if (edit_mode) {
+            edit_case_info();
+        }
     });
 }
 

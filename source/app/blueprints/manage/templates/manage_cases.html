@@ -46,18 +46,13 @@
                                             {{ form.hidden_tag() }}
 
                                             <div class="mt-4 col-md-12 col-lg-12 col-sm-12">
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <div class="input-group mb-4">
-                                                            {{ form.case_customer(class="selectpicker w-100 pl--6 btn-outline-white") }}
-                                                        </div>
-                                                    </div>
+                                                <div class="input-group mb-4">
+                                                    {{ form.case_customer(class="selectpicker form-control") }}
                                                 </div>
                                                 <div class="input-group mb-4">
                                                     {{ form.case_template_id(class="selectpicker form-control", data_actions_box="true") }}
                                                 </div>
                                                 <div class="input-group mb-4">
-
                                                     {{ form.classification_id(class="selectpicker form-control") }}
                                                 </div>
                                                 <div class="input-group mb-4">
@@ -87,7 +82,7 @@
                                             <h4><ul class="nav nav-tabs nav-lines mr-4" role="tablist">
                                                     {% for ca in attributes %}
                                                         <li class="nav-item submenu">
-                                                            <a class="nav-link {% if loop.index == 1 %}{{"active show"}}{% endif %}"  data-toggle="tab" href="#{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
+                                                            <a class="nav-link {% if loop.index == 1 %}{{"active show"}}{% endif %}"  data-toggle="tab" href="#itab_{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
                                                             role="tab" aria-selected="false">{{ca}}</a>
                                                         </li>
                                                     {% endfor %}
@@ -113,13 +108,14 @@
                                     <div class="selectgroup">
                                         <span id="table_buttons"></span>
                                     </div>
-                                    <table class="table display table-striped table-hover" width="100%"
+                                    <table class="table display wrap col-border table-striped table-hover" width="100%"
                                         cellspacing="0" id="cases_table">
                                         <thead>
                                             <tr>
                                                 <th>Name</th>
                                                 <th>Description</th>
                                                 <th>Customer</th>
+                                                <th>State</th>
                                                 <th>Open date</th>
                                                 <th>Close date</th>
                                                 <th>SOC Ticket</th>
@@ -131,6 +127,7 @@
                                                 <th>Name</th>
                                                 <th>Description</th>
                                                 <th>Customer</th>
+                                                <th>State</th>
                                                 <th>Open date</th>
                                                 <th>Close date</th>
                                                 <th>SOC Ticket</th>
@@ -168,6 +165,7 @@
 <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
 <script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
+<script src="/static/assets/js/plugin/datatables/dataTables.responsive.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
 <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>

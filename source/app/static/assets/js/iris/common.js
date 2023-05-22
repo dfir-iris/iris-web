@@ -404,7 +404,7 @@ function notify_redirect() {
                     queryString = window.location.search;
                     urlParams = new URLSearchParams(queryString);
                     urlParams.delete('redirect');
-                    window.location.search = urlParams;
+                    history.replaceState(null, null, window.location.pathname + '?' + urlParams.toString());
                 });
     }
 }
@@ -677,9 +677,8 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
                 jsdata = data.data;
                 if (jsdata.length != 0) {
                     anchor.append('<div class="dropdown-divider"></div>');
-                } else {
-                    anchor.append('<div class="dropdown-item">No module available</div>');
                 }
+
                 for (option in jsdata) {
                     opt = jsdata[option];
                     menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
@@ -687,8 +686,6 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
                     anchor.append(menu_opt);
                 }
 
-            } else {
-                anchor.append('<div>No module available</div>');
             }
         }
     })

@@ -41,7 +41,7 @@ from cryptography.exceptions import InvalidSignature
 import jwt
 import requests
 from flask import Request
-from flask import json
+import json
 from flask import render_template
 from flask import request
 from flask import session
@@ -75,7 +75,7 @@ def response(msg, data):
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp),
+    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
                               status=200,
                               mimetype='application/json')
 
@@ -86,7 +86,7 @@ def response_error(msg, data=None, status=400):
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp),
+    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
                               status=status,
                               mimetype='application/json')
 
@@ -146,6 +146,12 @@ class AlchemyEncoder(json.JSONEncoder):
             return fields
 
         if isinstance(obj, decimal.Decimal):
+            return str(obj)
+
+        if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):
+            return obj.isoformat()
+
+        if isinstance(obj, uuid.UUID):
             return str(obj)
 
         else:
@@ -280,12 +286,13 @@ def update_session(caseid, eaccess_level, from_api):
 def update_current_case(caseid, restricted_access):
     if session['current_case']['case_id'] != caseid:
         case = get_case(caseid)
-        session['current_case'] = {
-            'case_name': "{}".format(case.name),
-            'case_info': "(#{} - {})".format(caseid, case.client.name),
-            'case_id': caseid,
-            'access': restricted_access
-        }
+        if case:
+            session['current_case'] = {
+                'case_name': "{}".format(case.name),
+                'case_info': "(#{} - {})".format(caseid, case.client.name),
+                'case_id': caseid,
+                'access': restricted_access
+            }
 
 
 def update_denied_case(caseid, from_api):
@@ -312,7 +319,7 @@ def get_case_access(request_data, access_level, from_api=False, no_cid_required=
 
     update_session(caseid, eaccess_level, from_api)
 
-    if not get_case(caseid):
+    if caseid is not None and not get_case(caseid):
         log.warning('No case found. Using default case')
         return True, 1, True
 
@@ -782,6 +789,12 @@ def hmac_verify(signature_enc, data):
 def str_to_bool(value):
     if value is None:
         return False
+
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, int):
+        return bool(value)
 
     return value.lower() in ['true', '1', 'yes', 'y', 't']
 

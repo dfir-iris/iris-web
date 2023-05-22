@@ -18,27 +18,27 @@ async function fetchMultipleAlerts(alertIds) {
 }
 
 const selectsConfig = {
-    alertStatusFilter: {
+    alert_status_id: {
         url: '/manage/alert-status/list',
         id: 'status_id',
         name: 'status_name',
     },
-    alertSeverityFilter: {
+    alert_severity_id: {
         url: '/manage/severities/list',
         id: 'severity_id',
         name: 'severity_name'
     },
-    alertClassificationFilter: {
+    alert_classification_id: {
         url: '/manage/case-classifications/list',
         id: 'id',
         name: 'name_expanded',
     },
-    alertCustomerFilter: {
+    alert_customer_id: {
         url: '/manage/customers/list',
         id: 'customer_id',
         name: 'customer_name'
     },
-    alertOwnerFilter: {
+    alert_owner_id: {
         url: '/manage/users/list',
         id: 'user_id',
         name: 'user_name'
@@ -116,235 +116,280 @@ async function unlinkAlertFromCaseRequest(alert_id, case_id) {
     }));
 }
 
-async function mergeMultipleAlertsModal() {
+function mergeMultipleAlertsModal() {
     const selectedAlerts = getBatchAlerts();
     const escalateButton = $("#escalateOrMergeButton");
     if (selectedAlerts.length === 0) {
         notify_error('Please select at least one alert to perform this action on.');
         return;
     }
-    const alertDataReq = await fetchMultipleAlerts(selectedAlerts);
+    fetchMultipleAlerts(selectedAlerts)
+        .then((alertDataReq) => {
+            if (notify_auto_api(alertDataReq, true)) {
+                const ioCsList = $("#ioCsList");
+                    const assetsList = $("#assetsList");
 
-    if (!notify_auto_api(alertDataReq, true)) {
-        return;
-    }
+                    // Configure the modal for both escalation and merging
+                    $('#escalateModalLabel').text('Merge multiple alerts in a new case');
+                    $('#escalateModalExplanation').text('These alerts will be merged into a new case. Set the case title and select the IOCs and Assets to escalate into the case.');
+                    $('#modalAlertTitleContainer').hide();
 
-    const ioCsList = $("#ioCsList");
-    const assetsList = $("#assetsList");
+                    $('#modalEscalateCaseTitle').val(`[ALERT] Escalation of ${selectedAlerts.length} alerts`);
+                    $('#modalEscalateCaseTitleContainer').show();
 
-    // Configure the modal for both escalation and merging
-    $('#escalateModalLabel').text('Merge multiple alerts in a new case');
-    $('#escalateModalExplanation').text('These alerts will be merged into a new case. Set the case title and select the IOCs and Assets to escalate into the case.');
-    $('#modalAlertTitleContainer').hide();
+                    escalateButton.attr("data-merge", false);
+                    $('#mergeAlertCaseSelectSection').hide();
 
-    $('#modalEscalateCaseTitle').val(`[ALERT] Escalation of ${selectedAlerts.length} alerts`);
-    $('#modalEscalateCaseTitleContainer').show();
+                    const case_tags = $('#case_tags');
 
-    escalateButton.attr("data-merge", false);
-    $('#mergeAlertCaseSelectSection').hide();
+                    case_tags.val('')
+                    case_tags.amsifySuggestags({
+                        printValues: false,
+                        suggestions: []
+                    });
 
-    const case_tags = $('#case_tags');
+                    // Load case options for merging
+                    var options = {
+                        ajax: {
+                            url: '/context/search-cases' + case_param(),
+                            type: 'GET',
+                            dataType: 'json'
+                        },
+                        locale: {
+                            emptyTitle: 'Select and Begin Typing',
+                            statusInitialized: '',
+                        },
+                        preprocessData: function (data) {
+                            return context_data_parser(data);
+                        },
+                        preserveSelected: false
+                    };
+                    get_request_api('/context/get-cases/100')
+                        .done((data) => {
+                            if (notify_auto_api(data, true)) {
+                                mergeAlertCasesSelectOption(data);
+                                $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
 
-    case_tags.val('')
-    case_tags.amsifySuggestags({
-        printValues: false,
-        suggestions: []
-    });
+                                get_request_api('/manage/case-templates/list')
+                                .done((dataTemplate) => {
+                                    if (notify_auto_api(dataTemplate, true)) {
+                                        dataTemplate = dataTemplate.data;
+                                        const templateSelect = $('#mergeAlertCaseTemplateSelect');
+                                        templateSelect.html('');
+                                        templateSelect.append('<option value="">Select a template</option>');
+                                        for (let i = 0; i < dataTemplate.length; i++) {
+                                            templateSelect.append(`<option value="${dataTemplate[i].id}">${dataTemplate[i].display_name}</option>`);
+                                        }
+                                        templateSelect.selectpicker('refresh');
 
-    // Load case options for merging
-    var options = {
-        ajax: {
-            url: '/context/search-cases' + case_param(),
-            type: 'GET',
-            dataType: 'json'
-        },
-        locale: {
-            emptyTitle: 'Select and Begin Typing',
-            statusInitialized: '',
-        },
-        preprocessData: function (data) {
-            return context_data_parser(data);
-        },
-        preserveSelected: false
-    };
-    await get_request_api('/context/get-cases/100')
-        .done((data) => {
-            mergeAlertCasesSelectOption(data);
-            $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
-        });
+                                        // Clear the lists
+                                        ioCsList.html("");
+                                        assetsList.html("");
 
-    // Clear the lists
-    ioCsList.html("");
-    assetsList.html("");
+                                        let alertsData = alertDataReq.data;
 
-    if (!notify_auto_api(alertDataReq, true)) {
-        return;
-    }
+                                        for (let i = 0; i < alertsData.length; i++) {
+                                            let alertData = alertsData[i];
+                                            if (alertData.iocs.length !== 0) {
+                                                appendLabels(ioCsList, alertData.iocs, 'ioc');
+                                            }
+                                            if (alertData.assets.length !== 0) {
+                                                appendLabels(assetsList, alertData.assets, 'asset');
+                                            }
+                                        }
 
-    let alertsData = alertDataReq.data;
+                                        escalateButton.attr("data-merge", false);
+                                        escalateButton.attr("data-multi-merge", true);
+                                        $("#escalateOrMergeButton").attr('onclick',
+                                            `mergeAlertClicked("${selectedAlerts.join(',')}");`);
 
-    for (let i = 0; i < alertsData.length; i++) {
-        let alertData = alertsData[i];
-        if (alertData.iocs.length !== 0) {
-            appendLabels(ioCsList, alertData.iocs, 'ioc');
-        }
-        if (alertData.assets.length !== 0) {
-            appendLabels(assetsList, alertData.assets, 'asset');
-        }
-    }
+                                        $('#escalateModal').modal('show');
 
-    escalateButton.attr("data-merge", true);
-    escalateButton.attr("data-alert-id", selectedAlerts.join(','));
-    escalateButton.attr("data-multi-merge", true);
-    $('#escalateModal').modal('show');
+                                        $("input[type='radio'][name='mergeOption']:checked").trigger("change");
 
-    $("input[type='radio'][name='mergeOption']:checked").trigger("change");
-
-    $("input[type='radio'][name='mergeOption']").on("change", function () {
-        if ($(this).val() === "existing_case") {
-            $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in an existing case`);
-            $('#escalateModalExplanation').text('These alerts will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
-            $('#mergeAlertCaseSelectSection').show();
-            $('#mergeAlertCaseTemplateSection').hide();
-            $('#modalEscalateCaseTitleContainer').hide();
-            $('#mergeAlertCaseSelect').selectpicker('refresh');
-            $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
-            escalateButton.data("merge", true);
-        } else {
-            $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in new case`);
-            $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
-            $('#mergeAlertCaseSelectSection').hide();
-            $('#mergeAlertCaseTemplateSection').show();
-            $('#modalEscalateCaseTitleContainer').show();
-            escalateButton.data("merge", false);
-        }
-    });
-
-}
-
-async function mergeAlertModal(alert_id) {
-    const escalateButton = $("#escalateOrMergeButton");
-    escalateButton.attr("data-alert-id", alert_id);
-
-    const alertDataReq = await fetchAlert(alert_id);
-    const ioCsList = $("#ioCsList");
-    const assetsList = $("#assetsList");
-
-    if (!notify_auto_api(alertDataReq, true)) {
-        return;
-    }
-
-    $("#modalAlertId").val(alert_id);
-    $("#modalAlertTitle").val(alertDataReq.data.alert_title);
-
-    // Configure the modal for both escalation and merging
-    $('#escalateModalLabel').text(`Merge alert #${alert_id} in a new case`);
-    $('#escalateModalExplanation').text('This alert will be escalated into a new case. Set a title and select the IOCs and Assets to escalate into the case.');
-
-    $('#modalEscalateCaseTitle').val(`[ALERT] ${alertDataReq.data.alert_title}`);
-    $('#modalEscalateCaseTitleContainer').show();
-
-    escalateButton.attr("data-merge", false);
-    $('#mergeAlertCaseSelectSection').hide();
-
-    const case_tags = $('#case_tags');
-
-    case_tags.val(alertDataReq.data.alert_tags)
-    case_tags.amsifySuggestags({
-        printValues: false,
-        suggestions: []
-    });
-
-    // Load case options for merging
-    var options = {
-        ajax: {
-            url: '/context/search-cases' + case_param(),
-            type: 'GET',
-            dataType: 'json'
-        },
-        locale: {
-            emptyTitle: 'Select and Begin Typing',
-            statusInitialized: '',
-        },
-        preprocessData: function (data) {
-            return context_data_parser(data);
-        },
-        preserveSelected: false
-    };
-    await get_request_api('/context/get-cases/100')
-        .done((data) => {
-            mergeAlertCasesSelectOption(data);
-            $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
-        });
-
-    await get_request_api('/manage/case-templates/list')
-        .done((data) => {
-            if (notify_auto_api(data, true)) {
-                data = data.data;
-                const templateSelect = $('#mergeAlertCaseTemplateSelect');
-                templateSelect.html('');
-                templateSelect.append('<option value="">Select a template</option>');
-                for (let i = 0; i < data.length; i++) {
-                    templateSelect.append(`<option value="${data[i].id}">${data[i].display_name}</option>`);
-                }
-                templateSelect.selectpicker('refresh');
+                                        $("input[type='radio'][name='mergeOption']").off('change').on("change", function () {
+                                            if ($(this).val() === "existing_case") {
+                                                $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in an existing case`);
+                                                $('#escalateModalExplanation').text('These alerts will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
+                                                $('#mergeAlertCaseSelectSection').show();
+                                                $('#mergeAlertCaseTemplateSection').hide();
+                                                $('#modalEscalateCaseTitleContainer').hide();
+                                                $('#mergeAlertCaseSelect').selectpicker('refresh');
+                                                $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
+                                                escalateButton.data("merge", true);
+                                            } else {
+                                                console.log('change')
+                                                $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in new case`);
+                                                $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
+                                                $('#mergeAlertCaseSelectSection').hide();
+                                                $('#mergeAlertCaseTemplateSection').show();
+                                                $('#modalEscalateCaseTitleContainer').show();
+                                                escalateButton.data("merge", false);
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
             }
         });
 
-    // Clear the lists
-    ioCsList.html("");
-    assetsList.html("");
 
-    if (!notify_auto_api(alertDataReq, true)) {
-        return;
-    }
-
-    let alertData = alertDataReq.data;
-
-    if (alertData.iocs.length !== 0) {
-        appendLabels(ioCsList, alertData.iocs, 'ioc');
-        $("#toggle-iocs").on("click", function () {
-            toggleSelectDeselect($(this), "#ioCsList input[type='checkbox']");
-        });
-        $("#ioc-container").show();
-    } else {
-        $("#ioc-container").show();
-    }
-
-    if (alertData.assets.length !== 0) {
-        appendLabels(assetsList, alertData.assets, 'asset');
-        $("#toggle-assets").on("click", function () {
-            toggleSelectDeselect($(this), "#assetsList input[type='checkbox']");
-        });
-        $("#asset-container").show();
-    } else {
-        $("#asset-container").hide();
-    }
-
-    $("#escalateModal").modal("show");
-
-    $("input[type='radio'][name='mergeOption']:checked").trigger("change");
-
-    $("input[type='radio'][name='mergeOption']").on("change", function () {
-        if ($(this).val() === "existing_case") {
-            $('#escalateModalLabel').text(`Merge alert #${alert_id} in existing case`);
-            $('#escalateModalExplanation').text('This alert will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
-            $('#mergeAlertCaseSelectSection').show();
-            $('#mergeAlertCaseTemplateSection').hide();
-            $('#modalEscalateCaseTitleContainer').hide();
-            $('#mergeAlertCaseSelect').selectpicker('refresh');
-            $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
-            escalateButton.data("merge", true);
-        } else {
-            $('#escalateModalLabel').text(`Merge alert #${alert_id} in new case`);
-            $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
-            $('#mergeAlertCaseSelectSection').hide();
-            $('#mergeAlertCaseTemplateSection').show();
-            $('#modalEscalateCaseTitleContainer').show();
-            escalateButton.data("merge", false);
-        }
-    });
 }
+
+function showEscalationModal() {
+    $("#escalateModal").modal("show");
+}
+
+function mergeAlertModal(alert_id) {
+
+    const escalateButton = $("#escalateOrMergeButton");
+    escalateButton.attr("data-alert-id", alert_id);
+
+    let alertDataReq = null;
+    const ioCsList = $("#ioCsList");
+    const assetsList = $("#assetsList");
+
+    fetchAlert(alert_id)
+        .then((data) => {
+            alertDataReq = data;
+            notify_auto_api(data, true);
+
+            $("#modalAlertId").val(alert_id);
+            $("#modalAlertTitle").val(alertDataReq.data.alert_title);
+
+            // Configure the modal for both escalation and merging
+            $('#escalateModalLabel').html(`Merge alert #${alert_id} in a new case`);
+            $('#escalateModalLabel')[0].offsetHeight;
+
+            $('#escalateModalExplanation').text('This alert will be escalated into a new case. Set a title and select the IOCs and Assets to escalate into the case.');
+
+            $('#modalEscalateCaseTitle').val(`[ALERT] ${alertDataReq.data.alert_title}`);
+            $('#modalEscalateCaseTitleContainer').show();
+
+            escalateButton.attr("data-merge", false);
+            $('#mergeAlertCaseSelectSection').hide();
+
+            const case_tags = $('#case_tags');
+
+            case_tags.val(alertDataReq.data.alert_tags)
+            case_tags.amsifySuggestags({
+                printValues: false,
+                suggestions: []
+            });
+
+            // Load case options for merging
+            var options = {
+                ajax: {
+                    url: '/context/search-cases' + case_param(),
+                    type: 'GET',
+                    dataType: 'json'
+                },
+                locale: {
+                    emptyTitle: 'Select and Begin Typing',
+                    statusInitialized: '',
+                },
+                preprocessData: function (data) {
+                    return context_data_parser(data);
+                },
+                preserveSelected: false
+            };
+
+            get_request_api('/context/get-cases/100')
+            .done((data) => {
+                if (notify_auto_api(data, true)) {
+                    mergeAlertCasesSelectOption(data);
+                    $('#mergeAlertCaseSelect').ajaxSelectPicker(options);
+
+                    get_request_api('/manage/case-templates/list')
+                    .done((data) => {
+                        if (notify_auto_api(data, true)) {
+                            data = data.data;
+                            const templateSelect = $('#mergeAlertCaseTemplateSelect');
+                            templateSelect.html('');
+                            templateSelect.append('<option value="">Select a template</option>');
+                            for (let i = 0; i < data.length; i++) {
+                                templateSelect.append(`<option value="${data[i].id}">${data[i].display_name}</option>`);
+                            }
+                            templateSelect.selectpicker('refresh');
+
+                            // Clear the lists
+                            ioCsList.html("");
+                            assetsList.html("");
+
+                            if (!notify_auto_api(alertDataReq, true)) {
+                                return;
+                            }
+
+                            let alertData = alertDataReq.data;
+
+                            if (alertData.iocs.length !== 0) {
+                                appendLabels(ioCsList, alertData.iocs, 'ioc');
+                                $("#toggle-iocs").off("click").on("click", function () {
+                                    toggleSelectDeselect($(this), "#ioCsList input[type='checkbox']");
+                                });
+                                $("#ioc-container").show();
+                            } else {
+                                $("#ioc-container").show();
+                            }
+
+                            if (alertData.assets.length !== 0) {
+                                appendLabels(assetsList, alertData.assets, 'asset');
+                                $("#toggle-assets").off("click").on("click", function () {
+                                    toggleSelectDeselect($(this), "#assetsList input[type='checkbox']");
+                                });
+                                $("#asset-container").show();
+                            } else {
+                                $("#asset-container").hide();
+                            }
+
+
+                            $("input[type='radio'][name='mergeOption']:checked").trigger("change");
+
+                            $("input[type='radio'][name='mergeOption']").off("change").on("change", function () {
+                                if ($(this).val() === "existing_case") {
+                                    $('#escalateModalLabel').text(`Merge alert #${alert_id} in existing case`);
+                                    $('#escalateModalExplanation').text('This alert will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
+                                    $('#mergeAlertCaseSelectSection').show();
+                                    $('#mergeAlertCaseTemplateSection').hide();
+                                    $('#modalEscalateCaseTitleContainer').hide();
+                                    $('#mergeAlertCaseSelect').selectpicker('refresh');
+                                    $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
+                                    escalateButton.data("merge", true);
+                                } else {
+                                    $('#escalateModalLabel').text(`Merge alert #${alert_id} in new case`);
+                                    $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
+                                    $('#mergeAlertCaseSelectSection').hide();
+                                    $('#mergeAlertCaseTemplateSection').show();
+                                    $('#modalEscalateCaseTitleContainer').show();
+                                    escalateButton.data("merge", false);
+                                }
+                            });
+
+                            $("#escalateOrMergeButton").attr('onclick',
+                                `mergeAlertClicked(${alert_id});`);
+
+                            $("#escalateModal").modal("show");
+                        }
+                    });
+                }
+            });
+
+
+        });
+
+}
+
+
+function mergeAlertClicked(alertId) {
+
+  const merge = $("#escalateOrMergeButton").data("merge");
+  const multiMerge = $("#escalateOrMergeButton").data("multi-merge");
+
+  escalateOrMergeAlert(alertId, merge, multiMerge);
+
+}
+
 
 function mergeAlertCasesSelectOption(data) {
     if(notify_auto_api(data, true)) {
@@ -714,50 +759,96 @@ function renderAlert(alert, expanded=false) {
           <!-- Alert details -->
           <div class="d-flex flex-column">
             <div class="flex-1 ml-md-4 mr-4 pt-1">
-              <div class="row mb-3">
-                  <div class="avatar-group ${alert.owner ? '' : 'ml-2 mr-2'}">
-                    <div class="avatar-tickbox-wrapper">
-                      <div class="avatar-wrapper">
-                        <div class="avatar cursor-pointer">
-                          <span class="avatar-title alert-m-title alert-similarity-trigger rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
-                            <i class="fa-solid fa-fire"></i>
-                          </span>
+                <div class="row mb-4">
+                    <div class="flex-column">
+                        <div class="avatar-group ${alert.owner ? '' : 'ml-2 mr-2'}">
+                            <div class="avatar-tickbox-wrapper">
+                              <div class="avatar-wrapper">
+                                <div class="avatar cursor-pointer">
+                                  <span class="avatar-title alert-m-title alert-similarity-trigger rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                                    <i class="fa-solid fa-fire"></i>
+                                  </span>
+                                </div>
+                                ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : `<div title="Assign to me" class="avatar avatar-sm" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);"><span class="avatar-title avatar-iris rounded-circle btn-alert-primary" style="cursor:pointer;"><i class="fa-solid fa-hand"></i></span></div>`}
+                              </div>
+                              <div class="tickbox" style="display:none;">
+                                <input type="checkbox" class="alert-selection-checkbox" data-alert-id="${alert.alert_id}" />
+                              </div>
+                            </div>
                         </div>
-                        ${alert.owner ? get_avatar_initials(alert.owner.user_name, true, `changeAlertOwner(${alert.alert_id})`) : `<div title="Assign to me" class="avatar avatar-sm" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);"><span class="avatar-title avatar-iris rounded-circle btn-alert-primary" style="cursor:pointer;"><i class="fa-solid fa-hand"></i></span></div>`}
-                      </div>
-                      <div class="tickbox" style="display:none;">
-                        <input type="checkbox" class="alert-selection-checkbox" data-alert-id="${alert.alert_id}" />
-                      </div>
                     </div>
-                  </div>
-                  <h6 class="text-uppercase fw-bold mb-1 mt-1 ml-3 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
-                    ${alert.alert_title}
-                    <span class="text-${colorSeverity} pl-3"></span>
-                    <div class="d-flex mb-3">
-                       
-                        <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
+                    <div class="col-9">
+                        <h6 class="text-uppercase fw-bold mb-1 mt-1 ml-3 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                            ${alert.alert_title}
+                            <span class="text-${colorSeverity} pl-3"></span>
+                            <div class="d-flex mb-3">
+                               
+                                <span title="Alert IDs" class=""><small class="text-muted"><i>#${alert.alert_id} - ${alert.alert_uuid}</i></small></span>
+                            </div>
+                        </h6>
                     </div>
-                  </h6>
-                  <div class="ml-auto">
-                    <button type="button" class="btn bg-transparent btn-sm" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
-                      <span class="btn-label">
-                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
-                      </span>
-                    </button>
-                    <button class="btn btn-sm bg-transparent" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button>
-                    <button class="btn bg-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
-                    </button>
-                    <div class="dropdown-menu" role="menu">
-                      <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                      <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
-                      <div class="dropdown-divider"></div>
-                      <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
+                    
+                    <div class="col-xs-12 col">
+                                        
+                        <div class=" d-flex mt-3">
+                            <div class="ml-auto">
+                                <button type="button" class="btn bg-transparent btn-sm mt--4" onclick="comment_element(${alert.alert_id}, 'alerts', true)" title="Comments">
+                                  <span class="btn-label">
+                                    <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${alert.alert_id}">${alert.comments.length || ''}</span>
+                                  </span>
+                                </button>
+                                <button class="btn btn-sm bg-transparent mt--4" type="button" onclick="editAlert(${alert.alert_id})"><i class="fa fa-pencil"></i></button>
+                                <button class="btn bg-transparent mt--4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                                </button>
+                                <div class="dropdown-menu" role="menu">
+                                  <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                  <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
+                                  <div class="dropdown-divider"></div>
+                                  <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
+                                </div>
+                            </div>
+                        </div>          
+                                        
                     </div>
-                  </div>
-              </div>
 
-              <span class="mt-4">${alert.alert_description}</span><br />
+                </div>
+                
+                <div class="float-right alert-actions mt--4">
+                      <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id}, false);">Merge</button>
+                      
+                      <div class="dropdown ml-2 d-inline-block">
+                          <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Assign
+                          </button>
+                          <div class="dropdown-menu">
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeAlertOwner(${alert.alert_id});">Assign</a>
+                          </div>
+                      </div>
+                      <div class="dropdown ml-2 d-inline-block">
+                          <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Set status
+                          </button>
+                          <div class="dropdown-menu">
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
+                              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
+                            </div>
+                      </div>
+                      ${alert.status.status_name === 'Closed' ? `
+                          <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">Set in progress</button>
+                      `: ` 
+                      <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
+                      <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
+                      `}
+                </div>
+                <span class="mt-4">${alert.alert_description}</span>
+
+                
+
               <!-- Additional details and other content -->
               <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4 ${expanded? 'show': ''} alert-collapsible">
                 <div class="card-no-pd mt-2">
@@ -961,7 +1052,7 @@ function renderAlert(alert, expanded=false) {
                       </div>
                 </div>
               `).join('') + '</div>' : '<div class="mb-4"></div>'}
-
+            
               <div class="">
                 ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-3">${alert.status.status_name}</span>` : ''}                    
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
@@ -974,7 +1065,7 @@ function renderAlert(alert, expanded=false) {
                   <small class="text-muted ml-1 mr-2">${alert.customer.customer_name || 'Unspecified'}</small></span>
                 ${alert.classification && alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification" id="alertClassification-${alert.alert_id}" data-classification-id="${alert.classification.id}"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
                 ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${alert.alert_tags}</div>` : ''}
-                                
+                
               </div>
 
             </div>
@@ -986,37 +1077,6 @@ function renderAlert(alert, expanded=false) {
         </div>
       </div>
     </div>
-    <div class="alert-actions mr-3">
-      <button type="button" class="btn btn-alert-primary btn-sm ml-2" onclick="mergeAlertModal(${alert.alert_id}, false);">Merge</button>
-      
-      <div class="dropdown ml-2 d-inline-block">
-          <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Assign
-          </button>
-          <div class="dropdown-menu">
-              <a class="dropdown-item" href="javascript:void(0)" onclick="updateAlert(${alert.alert_id}, {alert_owner_id: userWhoami.user_id}, true);">Assign to me</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeAlertOwner(${alert.alert_id});">Assign</a>
-          </div>
-      </div>
-      <div class="dropdown ml-2 d-inline-block">
-          <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Set status
-          </button>
-          <div class="dropdown-menu">
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'New');">New</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">In progress</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Pending');">Pending</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Closed</a>
-              <a class="dropdown-item" href="javascript:void(0)" onclick="changeStatusAlert(${alert.alert_id}, 'Merged');">Merged</a>
-            </div>
-      </div>
-      ${alert.status.status_name === 'Closed' ? `
-          <button type="button" class="btn btn-alert-success btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'In progress');">Set in progress</button>
-      `: ` 
-      <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="editAlert(${alert.alert_id}, true);">Close with note</button>
-      <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
-      `}
-  </div>
 </div>    
 </div>  `;
 
@@ -1250,15 +1310,6 @@ function resetSavedFilters(queryParams = null, replaceState = true) {
     return queryParams;
 }
 
-$("#escalateOrMergeButton").on("click", () => {
-
-  const alertId = $("#escalateOrMergeButton").data("alert-id");
-  const merge = $("#escalateOrMergeButton").data("merge");
-  const multiMerge = $("#escalateOrMergeButton").data("multi-merge");
-
-  escalateOrMergeAlert(alertId, merge, multiMerge);
-
-});
 
 function showEnrichment(enrichment) {
     const ace = get_new_ace_editor('enrichmentData', null,
@@ -1309,7 +1360,7 @@ async function editAlert(alert_id, close=false) {
       console.error(error);
     });
 
-    fetchSelectOptions('editAlertSeverity', selectsConfig['alertSeverityFilter']).then(() => {
+    fetchSelectOptions('editAlertSeverity', selectsConfig['alert_severity_id']).then(() => {
       $('#editAlertSeverity').val($(`#alertSeverity-${alert_id}`).data('severity-id'));
     }).catch(error => {
       console.error(error);
@@ -1619,7 +1670,7 @@ function fetchSelectOptions(selectElementId, configItem) {
           value: null,
           text: ''
         }));
-        if (selectElementId === 'alertOwnerFilter') {
+        if (selectElementId === 'alert_owner_id') {
             selectElement.append($('<option>', {
                 value: '-1',
                 text: 'Unassigned'

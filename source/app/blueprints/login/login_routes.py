@@ -89,7 +89,7 @@ def _authenticate_ldap(form, username, password):
 
 def _authenticate_password(form, username, password):
     user = _retrieve_user_by_username(username)
-    if not user:
+    if not user or user.is_service_account:
         return _render_template_login(form, 'Wrong credentials. Please try again.')
 
     if bc.check_password_hash(user.password, password):
@@ -113,7 +113,7 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
         form = LoginForm(request.form)
 
         # check if both http method is POST and form is valid on submit
-        if not form.validate_on_submit():
+        if not form.is_submitted() and not form.validate():
             return _render_template_login(form, None)
 
         # assign form data to variables

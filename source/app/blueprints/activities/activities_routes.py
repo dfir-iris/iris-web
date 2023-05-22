@@ -46,7 +46,7 @@ basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 # CONTENT ------------------------------------------------
 @activities_blueprint.route('/activities', methods=['GET'])
-@ac_requires(Permissions.standard_user)
+@ac_requires(Permissions.activities_read, Permissions.all_activities_read)
 def activities_index(caseid: int, url_redir):
     if url_redir:
         return redirect(url_for('activities.activities_index', cid=caseid, redirect=True))
@@ -57,7 +57,7 @@ def activities_index(caseid: int, url_redir):
 
 
 @activities_blueprint.route('/activities/list', methods=['GET'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.activities_read, Permissions.all_activities_read)
 def list_activities(caseid):
     # Get User activities from database
 
@@ -70,7 +70,7 @@ def list_activities(caseid):
 
 
 @activities_blueprint.route('/activities/list-all', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_api_requires(Permissions.all_activities_read)
 def list_all_activities(caseid):
     # Get User activities from database
 

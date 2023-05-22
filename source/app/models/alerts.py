@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import uuid
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import BigInteger, Table, Boolean
@@ -93,10 +95,12 @@ class SimilarAlertsCache(db.Model):
     asset_type = relationship('AssetsType')
     ioc_type = relationship('IocType')
 
-    def __init__(self, customer_id, alert_id, asset_name=None, ioc_value=None, asset_type_id=None, ioc_type_id=None):
+    def __init__(self, customer_id, alert_id, asset_name=None, ioc_value=None, asset_type_id=None, ioc_type_id=None,
+                 created_at=None):
         self.customer_id = customer_id
         self.asset_name = asset_name
         self.ioc_value = ioc_value
         self.alert_id = alert_id
         self.asset_type_id = asset_type_id
         self.ioc_type_id = ioc_type_id
+        self.created_at = created_at if created_at else datetime.utcnow()

@@ -28,7 +28,7 @@ services:
     build:
       context: docker/db
     container_name: iriswebapp_db
-    image: iriswebapp_db:v2.0.2
+    image: iriswebapp_db:v2.1.0
     restart: always
     # Used for debugging purposes, should be deleted for production
     ports:
@@ -48,13 +48,14 @@ services:
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
-    image: iriswebapp_app:v2.0.2
+    image: iriswebapp_app:v2.1.0
     container_name: iriswebapp_app
     command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
       # RootCA necessary when dealing with an auth server without a trusted CA signed certificate
       - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - ./certificates/:/home/iris/certificates/:ro
+      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -85,12 +86,13 @@ services:
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
-    image: iriswebapp_app:v2.0.2
+    image: iriswebapp_app:v2.1.0
     container_name: iriswebapp_worker
     command: ['./wait-for-iriswebapp.sh', 'app:8000', './iris-entrypoint.sh', 'iris-worker']
     volumes:
       - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
       - ./certificates/:/home/iris/certificates/:ro
+      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -120,7 +122,7 @@ services:
       args:
         NGINX_CONF_GID: 1234
         NGINX_CONF_FILE: nginx.conf
-    image: iriswebapp_nginx:v2.0.2
+    image: iriswebapp_nginx:v2.1.0
     container_name: iriswebapp_nginx
     environment:
       - IRIS_UPSTREAM_SERVER
@@ -135,7 +137,7 @@ services:
     ports:
       - "${INTERFACE_HTTPS_PORT:-443}:${INTERFACE_HTTPS_PORT:-443}"
     volumes:
-      - "./docker/dev_certs/:/www/certs/:ro"
+      - "./certificates/web_certificates/:/www/certs/:ro"
     restart: on-failure:5
     depends_on:
       - "app"

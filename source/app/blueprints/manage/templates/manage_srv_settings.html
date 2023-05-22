@@ -90,7 +90,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <h2 class="mt-4">Behavior</h2>
+                                    <h2 class="mt-4">Post-init Behavior</h2>
                                     <div class="col-12 mb-4">
 <!--                                        <div class="form-check">-->
 <!--                                            <label class="form-check-label">-->
@@ -102,6 +102,12 @@
                                             <label class="form-check-label">
                                                 <input class="form-check-input" type="checkbox" id="prevent_post_mod_repush" name="prevent_post_mod_repush" {% if settings.prevent_post_mod_repush %}checked{% endif %}>
                                                 <span class="form-check-sign">Prevent post-init step to register default modules again during boot</span>
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <input class="form-check-input" type="checkbox" id="prevent_post_objects_repush" name="prevent_post_objects_repush" {% if settings.prevent_post_objects_repush %}checked{% endif %}>
+                                                <span class="form-check-sign">Prevent post-init step to register default case objects again during boot</span>
                                             </label>
                                         </div>
                                     </div>

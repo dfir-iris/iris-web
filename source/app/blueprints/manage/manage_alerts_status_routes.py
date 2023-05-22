@@ -50,7 +50,7 @@ def list_alert_status(caseid: int) -> Response:
 
 @manage_alerts_status_blueprint.route('/manage/alert-status/<int:classification_id>', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
-def get_case_alert_status(status_id: int, caseid: int) -> Response:
+def get_case_alert_status(classification_id: int, caseid: int) -> Response:
     """
     Get the alert status
 
@@ -58,7 +58,7 @@ def get_case_alert_status(status_id: int, caseid: int) -> Response:
         status_id (int): status id
         caseid (int): case id
     """
-    cl = get_alert_status_by_id(status_id)
+    cl = get_alert_status_by_id(classification_id)
     schema = AlertStatusSchema()
 
     return response_success("", data=schema.dump(cl))

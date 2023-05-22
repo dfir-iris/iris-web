@@ -219,6 +219,7 @@ authentication_token_introspection_url = None
 authentication_client_id = None
 authentication_client_secret = None
 authentication_app_admin_role_name = None
+authentication_jwks_url = None
 
 
 if authentication_type == 'oidc_proxy':
@@ -264,10 +265,10 @@ class CeleryConfig:
 # --------- APP ---------
 class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.0.2"
+    IRIS_VERSION = "v2.1.0"
 
     API_MIN_VERSION = "2.0.0"
-    API_MAX_VERSION = "2.0.0"
+    API_MAX_VERSION = "2.0.1"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.2.0'
@@ -434,11 +435,19 @@ class Config:
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
 
             LDAP_PRIVATE_KEY = config.load('LDAP', 'PRIVATE_KEY')
-            if not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
+            if LDAP_PRIVATE_KEY and not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
                 log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
 
             PRIVATE_KEY_PASSWORD = config.load('LDAP', 'PRIVATE_KEY_PASSWORD', fallback=None)
+
+            LDAP_CA_CERTIFICATE = config.load('LDAP', 'CA_CERTIFICATE')
+            if LDAP_CA_CERTIFICATE and not Path(f'certificates/ldap/{LDAP_CA_CERTIFICATE}').is_file():
+                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
+                raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
+
+            LDAP_CUSTOM_TLS_CONFIG = config.load('LDAP', 'CUSTOM_TLS_CONFIG', fallback='True')
+            LDAP_CUSTOM_TLS_CONFIG = (LDAP_CUSTOM_TLS_CONFIG == 'True')
 
     """ Caching 
     """
