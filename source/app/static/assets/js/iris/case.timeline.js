@@ -980,30 +980,23 @@ function upload_csv_events() {
 
     var reader = new FileReader();
     reader.onload = function (e) {
-        fileData = e.target.result
-        var data = new Object();
+        let fileData = e.target.result
+        let data = new Object();
         data['csrf_token'] = $('#csrf_token').val();
         data['CSVData'] = fileData;
 
         post_request_api(api_path, JSON.stringify(data), true)
         .done((data) => {
-            jsdata = data;
-            if (jsdata.status == "success") {
+
+            if (notify_auto_api(data)) {
                 apply_filtering();
                 $(modal_dlg).modal('hide');
                 swal("Got news for you", data.message, "success");
-
             } else {
                 //alert( JSON.stringify(data.data,null,2));
                 swal("Got bad news for you", data.message, "error");
             }
         })
-       .fail((data)=> {
-            data = data['responseJSON'];
-            alert( JSON.stringify(data,null,2));
-        return false;
-       })
-
 
     };
     reader.readAsText(file)
@@ -1013,8 +1006,8 @@ function upload_csv_events() {
 
 function generate_events_sample_csv(){
     csv_data = "event_date,event_tz,event_title,event_category,event_content,event_raw,event_source,event_assets,event_iocs,event_tags\n"
-    csv_data += '"2015-12-12T00:00:00","+00:00","An event","Category","Event description","raw","source","","", "defender|malicious","",""\n'
-    csv_data += '"2015-12-12T00:00:00","+00:00","An event","Category","Event description","raw","source","","", "defender|malicious","",""\n'
+    csv_data += '"2023-03-26T03:00:30.000","+00:00","An event","Unspecified","Event description","raw","source","[]","[]","defender|malicious"\n'
+    csv_data += '"2023-03-26T03:00:35.000","+00:00","An event","Legitimate","Event description","raw","source","[]","[]", "defender|malicious"\n'
     download_file("sample_events.csv", "text/csv", csv_data);
 }
 
