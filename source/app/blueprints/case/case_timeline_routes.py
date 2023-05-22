@@ -396,7 +396,10 @@ def case_filter_timeline(caseid):
         return response_error('Invalid query string')
 
     assets = filter_d.get('asset')
+    assets_id = filter_d.get('asset_id')
+    event_ids = filter_d.get('event_id')
     iocs = filter_d.get('ioc')
+    iocs_id = filter_d.get('ioc_id')
     tags = filter_d.get('tag')
     descriptions = filter_d.get('description')
     categories = filter_d.get('category')
@@ -412,12 +415,18 @@ def case_filter_timeline(caseid):
     if assets:
         assets = [asset.lower() for asset in assets]
 
+    if assets_id:
+        assets_id = [int(asset) for asset in assets_id]
+
     if flag:
         flags = (flag[0].lower() == 'true')
         condition = and_(condition, CasesEvent.event_is_flagged == flags)
 
     if iocs:
         iocs = [ioc.lower() for ioc in iocs]
+
+    if iocs_id:
+        iocs_id = [int(ioc) for ioc in iocs_id]
 
     if tags:
         for tag in tags:
@@ -467,6 +476,15 @@ def case_filter_timeline(caseid):
             condition = and_(condition,
                              EventCategory.name == category)
 
+    if event_ids:
+        try:
+            event_ids = [int(event_id) for event_id in event_ids]
+        except Exception as e:
+            return response_error('Invalid event id')
+
+        condition = and_(condition,
+                         CasesEvent.event_id.in_(event_ids))
+
     timeline = CasesEvent.query.with_entities(
         CasesEvent.event_id,
         CasesEvent.event_uuid,
@@ -491,6 +509,16 @@ def case_filter_timeline(caseid):
         CasesEvent.user
     ).all()
 
+    assets_cache_condition = and_(
+        CaseEventsAssets.case_id == caseid
+    )
+
+    if assets_id:
+        assets_cache_condition = and_(
+            assets_cache_condition,
+            CaseEventsAssets.asset_id.in_(assets_id)
+        )
+
     assets_cache = CaseAssets.query.with_entities(
         CaseEventsAssets.event_id,
         CaseAssets.asset_id,
@@ -500,8 +528,18 @@ def case_filter_timeline(caseid):
         CaseAssets.asset_description,
         CaseAssets.asset_compromise_status_id
     ).filter(
-        CaseEventsAssets.case_id == caseid,
+        assets_cache_condition
     ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+
+    iocs_cache_condition = and_(
+        CaseEventsIoc.case_id == caseid
+    )
+
+    if iocs_id:
+        iocs_cache_condition = and_(
+            iocs_cache_condition,
+            CaseEventsIoc.ioc_id.in_(iocs_id)
+        )
 
     iocs_cache = CaseEventsIoc.query.with_entities(
         CaseEventsIoc.event_id,
@@ -509,7 +547,7 @@ def case_filter_timeline(caseid):
         Ioc.ioc_value,
         Ioc.ioc_description
     ).filter(
-        CaseEventsIoc.case_id == caseid
+        iocs_cache_condition
     ).join(
         CaseEventsIoc.ioc
     ).all()
@@ -520,16 +558,22 @@ def case_filter_timeline(caseid):
         if asset.asset_id not in cache:
             cache[asset.asset_id] = [asset.asset_name, asset.type]
 
-        if assets:
-            if asset.asset_name.lower() in assets:
-                if asset.event_id in assets_map:
-                    assets_map[asset.event_id] += 1
-                else:
-                    assets_map[asset.event_id] = 1
+        if (assets and asset.asset_name.lower() in assets) \
+                or (assets_id and asset.asset_id in assets_id):
+            if asset.event_id in assets_map:
+                assets_map[asset.event_id] += 1
+            else:
+                assets_map[asset.event_id] = 1
 
     assets_filter = []
+    len_assets = 0
+    if assets:
+        len_assets += len(assets)
+    if assets_id:
+        len_assets += len(assets_id)
+
     for event_id in assets_map:
-        if assets_map[event_id] == len(assets):
+        if assets_map[event_id] == len_assets:
             assets_filter.append(event_id)
 
     iocs_filter = []
@@ -541,7 +585,7 @@ def case_filter_timeline(caseid):
     tim = []
     events_list = []
     for row in timeline:
-        if assets is not None:
+        if assets is not None or assets_id is not None:
             if row.event_id not in assets_filter:
                 continue
 

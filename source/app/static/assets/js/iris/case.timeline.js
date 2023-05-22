@@ -403,7 +403,8 @@ function build_timeline(data) {
     $('#time_timeline_select').empty();
 
     var standard_filters = [
-                {value: 'asset:', score: 10, meta: 'Match assets of events'},
+                {value: 'asset:', score: 10, meta: 'Match assets name of events'},
+                {value: 'asset_id:', score: 10, meta: 'Match assets ID of events'},
                 {value: 'startDate:', score: 10, meta: 'Match end date of events'},
                 {value: 'endDate:', score: 10, meta: 'Match end date of events'},
                 {value: 'tag:', score: 10, meta: 'Match tag of events'},
@@ -413,7 +414,9 @@ function build_timeline(data) {
                 {value: 'title:', score: 10, meta: 'Match title of events'},
                 {value: 'source:', score: 10, meta: 'Match source of events'},
                 {value: 'raw:', score: 10, meta: 'Match raw data of events'},
-                {value: 'ioc', score: 10, meta: "Match ioc in events"},
+                {value: 'ioc', score: 10, meta: "Match ioc value in events"},
+                {value: 'ioc_id', score: 10, meta: "Match ioc ID in events"},
+                {value: 'event_id', score: 10, meta: "Match event ID in events"},
                 {value: 'AND ', score: 10, meta: 'AND operator'}
               ]
 
@@ -867,9 +870,9 @@ function timelineToCsvWithUI(){
     download_file("iris_timeline.csv", "text/csv", csv_data);
 }
 
-var parsed_filter = {};
-var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'flag', 'startDate', 'endDate'];
-
+let parsed_filter = {};
+let keywords = ['asset', 'asset_id', 'tag', 'title', 'description', 'ioc', 'ioc_id',
+        'raw', 'category', 'source', 'flag', 'startDate', 'endDate', 'event_id'];
 
 function parse_filter(str_filter, keywords) {
   for (var k = 0; k < keywords.length; k++) {
@@ -917,7 +920,9 @@ function reset_filters() {
 }
 
 function apply_filtering(post_req_fn) {
-    keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'flag', 'startDate', 'endDate'];
+    keywords = ['asset', 'asset_id', 'tag', 'title', 'description', 'ioc', 'ioc_id',
+        'raw', 'category', 'source', 'flag', 'startDate', 'endDate', 'event_id'];
+
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
