@@ -17,11 +17,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint, Response
+from flask import Blueprint, Response, request
 
-from app.datamgmt.manage.manage_common import get_severity_by_id, get_severities_list
+from app.datamgmt.manage.manage_common import get_severity_by_id, get_severities_list, search_severity_by_name
 from app.schema.marshables import SeveritySchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires, response_error
 from app.util import response_success
 
 manage_severities_blueprint = Blueprint('manage_severities',
@@ -62,3 +62,25 @@ def get_case_alert_status(severity_id: int, caseid: int) -> Response:
     schema = SeveritySchema()
 
     return response_success("", data=schema.dump(cl))
+
+
+@manage_severities_blueprint.route('/manage/severities/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_analysis_status(caseid):
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    severity_name = request.json.get('severity_name')
+    if severity_name is None:
+        return response_error("Invalid severity. Got None")
+
+    exact_match = request.json.get('exact_match', False)
+
+    # Search for severity with a name that contains the specified search term
+    severity = search_severity_by_name(severity_name, exact_match=exact_match)
+    if not severity:
+        return response_error("No severity found")
+
+    # Serialize the severity and return them in a JSON response
+    schema = SeveritySchema(many=True)
+    return response_success("", data=schema.dump(severity))

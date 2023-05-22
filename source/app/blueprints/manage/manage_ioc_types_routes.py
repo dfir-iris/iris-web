@@ -26,6 +26,7 @@ from werkzeug.utils import redirect
 
 from app import db
 from app.datamgmt.case.case_iocs_db import get_ioc_types_list
+from app.datamgmt.manage.manage_case_objs import search_ioc_type_by_name
 from app.forms import AddIocTypeForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Ioc
@@ -162,3 +163,37 @@ def update_ioc(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
     return response_error("Unexpected error server-side. Nothing updated", data=ioc_type)
+
+
+@manage_ioc_type_blueprint.route('/manage/ioc-types/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_ioc_type(caseid):
+    """Searches for IOC types in the database.
+
+    This function searches for IOC types in the database with a name that contains the specified search term.
+    It returns a JSON response containing the matching IOC types.
+
+    Args:
+        caseid: The ID of the case associated with the request.
+
+    Returns:
+        A JSON response containing the matching IOC types.
+
+    """
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    ioc_type = request.json.get('ioc_type')
+    if ioc_type is None:
+        return response_error("Invalid ioc type. Got None")
+
+    exact_match = request.json.get('exact_match', False)
+    
+    # Search for IOC types with a name that contains the specified search term
+    ioc_type = search_ioc_type_by_name(ioc_type, exact_match=exact_match)
+    if not ioc_type:
+        return response_error("No ioc types found")
+    
+    # Serialize the IOC types and return them in a JSON response
+    ioct_schema = IocTypeSchema(many=True)
+    return response_success("", data=ioct_schema.dump(ioc_type))

@@ -18,9 +18,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint
+from flask import Blueprint, request
 
+from app.datamgmt.manage.manage_case_objs import search_event_category_by_name
 from app.models.models import EventCategory
+from app.schema.marshables import EventCategorySchema
 from app.util import api_login_required, ac_api_requires
 from app.util import response_error
 from app.util import response_success
@@ -60,3 +62,26 @@ def get_event_category(cur_id, caseid):
     data = lcat._asdict()
 
     return response_success("", data=data)
+
+
+@manage_event_cat_blueprint.route('/manage/event-categories/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_event_category(caseid):
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    event_category = request.json.get('event_category')
+    if event_category is None:
+        return response_error("Invalid category. Got None")
+
+    exact_match = request.json.get('exact_match', False)
+
+    # Search for event category with a name that contains the specified search term
+    event_category = search_event_category_by_name(event_category, exact_match=exact_match)
+    if not event_category:
+        return response_error("No category found")
+
+    # Serialize the event category and return them in a JSON response
+    schema = EventCategorySchema(many=True)
+    return response_success("", data=schema.dump(event_category))
+

@@ -24,7 +24,7 @@ from werkzeug.utils import redirect
 
 from app import db
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list, \
-    get_case_classification_by_id
+    get_case_classification_by_id, search_classification_by_name
 from app.forms import CaseClassificationForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
@@ -219,3 +219,25 @@ def delete_case_classification(classification_id: int, caseid: int) -> Response:
 
     track_activity(f"deleted case classification {case_classification.name}", caseid=caseid)
     return response_success("Case classification deleted")
+
+
+@manage_case_classification_blueprint.route('/manage/case-classifications/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_alert_status(caseid):
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    classification_name = request.json.get('classification_name')
+    if classification_name is None:
+        return response_error("Invalid classification name. Got None")
+
+    exact_match = request.json.get('exact_match', False)
+
+    # Search for classifications with a name that contains the specified search term
+    classification = search_classification_by_name(classification_name, exact_match=exact_match)
+    if not classification:
+        return response_error("No classification found")
+
+    # Serialize the case classification and return them in a JSON response
+    schema = CaseClassificationSchema(many=True)
+    return response_success("", data=schema.dump(classification))

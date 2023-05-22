@@ -403,7 +403,8 @@ function build_timeline(data) {
     $('#time_timeline_select').empty();
 
     var standard_filters = [
-                {value: 'asset:', score: 10, meta: 'Match assets of events'},
+                {value: 'asset:', score: 10, meta: 'Match assets name of events'},
+                {value: 'asset_id:', score: 10, meta: 'Match assets ID of events'},
                 {value: 'startDate:', score: 10, meta: 'Match end date of events'},
                 {value: 'endDate:', score: 10, meta: 'Match end date of events'},
                 {value: 'tag:', score: 10, meta: 'Match tag of events'},
@@ -413,7 +414,9 @@ function build_timeline(data) {
                 {value: 'title:', score: 10, meta: 'Match title of events'},
                 {value: 'source:', score: 10, meta: 'Match source of events'},
                 {value: 'raw:', score: 10, meta: 'Match raw data of events'},
-                {value: 'ioc', score: 10, meta: "Match ioc in events"},
+                {value: 'ioc', score: 10, meta: "Match ioc value in events"},
+                {value: 'ioc_id', score: 10, meta: "Match ioc ID in events"},
+                {value: 'event_id', score: 10, meta: "Match event ID in events"},
                 {value: 'AND ', score: 10, meta: 'AND operator'}
               ]
 
@@ -867,9 +870,9 @@ function timelineToCsvWithUI(){
     download_file("iris_timeline.csv", "text/csv", csv_data);
 }
 
-var parsed_filter = {};
-var keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'flag', 'startDate', 'endDate'];
-
+let parsed_filter = {};
+let keywords = ['asset', 'asset_id', 'tag', 'title', 'description', 'ioc', 'ioc_id',
+        'raw', 'category', 'source', 'flag', 'startDate', 'endDate', 'event_id'];
 
 function parse_filter(str_filter, keywords) {
   for (var k = 0; k < keywords.length; k++) {
@@ -917,7 +920,9 @@ function reset_filters() {
 }
 
 function apply_filtering(post_req_fn) {
-    keywords = ['asset', 'tag', 'title', 'description', 'ioc', 'raw', 'category', 'source', 'flag', 'startDate', 'endDate'];
+    keywords = ['asset', 'asset_id', 'tag', 'title', 'description', 'ioc', 'ioc_id',
+        'raw', 'category', 'source', 'flag', 'startDate', 'endDate', 'event_id'];
+
     parsed_filter = {};
     parse_filter(tm_filter.getValue(), keywords);
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter));
@@ -965,6 +970,53 @@ function show_timeline_filter_help() {
         $('#modal_help').modal('show');
     });
 }
+
+/* BEGIN_RS_CODE */
+function fire_upload_csv_events() {
+    $('#modal_upload_csv_events').modal('show');
+}
+
+function upload_csv_events() {
+    const api_path =  '/case/timeline/events/csv_upload';
+    const modal_dlg = '#modal_upload_csv_events'
+    const file_input = '#input_upload_csv_events'
+
+    var file = $(file_input).get(0).files[0];
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        let fileData = e.target.result
+        let data = new Object();
+        data['csrf_token'] = $('#csrf_token').val();
+        data['CSVData'] = fileData;
+
+        post_request_api(api_path, JSON.stringify(data), true)
+        .done((data) => {
+
+            if (notify_auto_api(data)) {
+                apply_filtering();
+                $(modal_dlg).modal('hide');
+                swal("Got news for you", data.message, "success");
+            } else {
+                //alert( JSON.stringify(data.data,null,2));
+                swal("Got bad news for you", data.message, "error");
+            }
+        })
+
+    };
+    reader.readAsText(file)
+
+    return false;
+}
+
+function generate_events_sample_csv(){
+    csv_data = "event_date,event_tz,event_title,event_category,event_content,event_raw,event_source,event_assets,event_iocs,event_tags\n"
+    csv_data += '"2023-03-26T03:00:30.000","+00:00","An event","Unspecified","Event description","raw","source","","","defender|malicious"\n'
+    csv_data += '"2023-03-26T03:00:35.000","+00:00","An event","Legitimate","Event description","raw","source","","","defender|malicious"\n'
+    download_file("sample_events.csv", "text/csv", csv_data);
+}
+
+/* END_RS_CODE */
 
 /* Page is ready, fetch the assets of the case */
 $(document).ready(function(){

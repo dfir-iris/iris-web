@@ -237,11 +237,18 @@ def update_event_assets(event_id, caseid, assets_list, iocs_list, sync_iocs_asse
         CaseEventsAssets.case_id == caseid
     ).delete()
 
-    for asset in assets_list:
+    valid_assets = CaseAssets.query.with_entities(
+        CaseAssets.asset_id
+    ).filter(
+        CaseAssets.asset_id.in_(assets_list),
+        CaseAssets.case_id == caseid
+    ).all()
+
+    for asset in valid_assets:
         try:
 
             cea = CaseEventsAssets()
-            cea.asset_id = int(asset)
+            cea.asset_id = int(asset.asset_id)
             cea.event_id = event_id
             cea.case_id = caseid
 
@@ -250,14 +257,14 @@ def update_event_assets(event_id, caseid, assets_list, iocs_list, sync_iocs_asse
             if sync_iocs_assets:
                 for ioc in iocs_list:
                     link = IocAssetLink.query.filter(
-                        IocAssetLink.asset_id == int(asset),
+                        IocAssetLink.asset_id == int(asset.asset_id),
                         IocAssetLink.ioc_id == int(ioc)
                     ).first()
 
                     if link is None:
 
                         ial = IocAssetLink()
-                        ial.asset_id = int(asset)
+                        ial.asset_id = int(asset.asset_id)
                         ial.ioc_id = int(ioc)
 
                         db.session.add(ial)
@@ -276,11 +283,18 @@ def update_event_iocs(event_id, caseid, iocs_list):
         CaseEventsIoc.case_id == caseid
     ).delete()
 
-    for ioc in iocs_list:
+    valid_iocs = IocLink.query.with_entities(
+        IocLink.ioc_id
+    ).filter(
+        IocLink.ioc_id.in_(iocs_list),
+        IocLink.case_id == caseid
+    ).all()
+
+    for ioc in valid_iocs:
         try:
 
             cea = CaseEventsIoc()
-            cea.ioc_id = int(ioc)
+            cea.ioc_id = int(ioc.ioc_id)
             cea.event_id = event_id
             cea.case_id = caseid
 
@@ -370,3 +384,19 @@ def delete_event(event, caseid):
     update_timeline_state(caseid=caseid)
 
     db.session.commit()
+
+
+def get_category_by_name(cat_name):
+    return EventCategory.query.filter(
+        EventCategory.name  == cat_name,
+    ).first()
+
+
+def get_default_category():
+    return EventCategory.query.with_entities(
+        EventCategory.id,
+        EventCategory.name
+    ).filter(
+        EventCategory.name == "Unspecified"
+    ).first()
+

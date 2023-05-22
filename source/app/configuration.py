@@ -268,7 +268,7 @@ class Config:
     IRIS_VERSION = "v2.1.0"
 
     API_MIN_VERSION = "2.0.0"
-    API_MAX_VERSION = "2.0.1"
+    API_MAX_VERSION = "2.0.2"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.2.0'
@@ -298,6 +298,9 @@ class Config:
     PG_SERVER = PG_SERVER_
     PG_PORT = PG_PORT_
     PG_DB = PG_DB_
+
+    DB_RETRY_COUNT = config.load('DB', 'RETRY_COUNT', fallback=3)
+    DB_RETRY_DELAY = config.load('DB', 'RETRY_DELAY', fallback=0.5)
 
     DEMO_MODE_ENABLED = config.load('IRIS_DEMO', 'ENABLED', fallback=False)
     if DEMO_MODE_ENABLED == 'True':
@@ -404,7 +407,12 @@ class Config:
         LDAP_AUTHENTICATION_TYPE = config.load('LDAP', 'AUTHENTICATION_TYPE')
 
         LDAP_SEARCH_DN = config.load('LDAP', 'SEARCH_DN')
+        if authentication_create_user_if_not_exists and LDAP_SEARCH_DN is None:
+            raise Exception('LDAP enabled with user provisioning: LDAP_SEARCH_DN should be set')
         LDAP_ATTRIBUTE_IDENTIFIER = config.load('LDAP', 'ATTRIBUTE_IDENTIFIER')
+        if authentication_create_user_if_not_exists and LDAP_ATTRIBUTE_IDENTIFIER is None:
+            raise Exception('LDAP enabled with user provisioning: LDAP_ATTRIBUTE_IDENTIFIER should be set')
+
         LDAP_ATTRIBUTE_DISPLAY_NAME = config.load('LDAP', 'ATTRIBUTE_DISPLAY_NAME')
         LDAP_ATTRIBUTE_MAIL = config.load('LDAP', 'ATTRIBUTE_MAIL')
 

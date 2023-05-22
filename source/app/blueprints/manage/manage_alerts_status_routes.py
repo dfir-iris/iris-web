@@ -17,11 +17,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint, Response
+from flask import Blueprint, Response, request
 
-from app.datamgmt.alerts.alerts_db import get_alert_status_list, get_alert_status_by_id
+from app.datamgmt.alerts.alerts_db import get_alert_status_list, get_alert_status_by_id, search_alert_status_by_name
 from app.schema.marshables import AlertStatusSchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires, response_error
 from app.util import response_success
 
 manage_alerts_status_blueprint = Blueprint('manage_alerts_status',
@@ -62,3 +62,25 @@ def get_case_alert_status(classification_id: int, caseid: int) -> Response:
     schema = AlertStatusSchema()
 
     return response_success("", data=schema.dump(cl))
+
+
+@manage_alerts_status_blueprint.route('/manage/alert-status/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_alert_status(caseid):
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    alert_status = request.json.get('alert_status')
+    if alert_status is None:
+        return response_error("Invalid alert status. Got None")
+
+    exact_match = request.json.get('exact_match', False)
+
+    # Search for alerts status with a name that contains the specified search term
+    alert_status = search_alert_status_by_name(alert_status, exact_match=exact_match)
+    if not alert_status:
+        return response_error("No alert status found")
+
+    # Serialize the alert status and return them in a JSON response
+    schema = AlertStatusSchema(many=True)
+    return response_success("", data=schema.dump(alert_status))

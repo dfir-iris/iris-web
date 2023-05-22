@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from sqlalchemy import func
+
 from app import db
 from app.models.alerts import Severity
 
@@ -42,3 +44,20 @@ def get_severity_by_id(status_id: int) -> Severity:
         Severity: The severity object
     """
     return db.session.query(Severity).filter(Severity.severity_id == status_id).first()
+
+
+def search_severity_by_name(name: str, exact_match: bool = True) -> Severity:
+    """
+    Search for a severity by its name
+
+    args:
+        name (str): The name of the severity to search for
+        exact_match (bool): Whether to search for an exact match or not
+
+    returns:
+        Severity: The severity object
+    """
+    if exact_match:
+        return db.session.query(Severity).filter(func.lower(Severity.severity_name) == name.lower()).all()
+
+    return db.session.query(Severity).filter(Severity.severity_name.ilike(f'%{name}%')).all()

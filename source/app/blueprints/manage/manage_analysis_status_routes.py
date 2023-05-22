@@ -18,11 +18,13 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint
+from flask import Blueprint, request
 from werkzeug import Response
 
 from app.datamgmt.case.case_assets_db import get_compromise_status_dict, get_case_outcome_status_dict
+from app.datamgmt.manage.manage_case_objs import search_analysis_status_by_name
 from app.models.models import AnalysisStatus
+from app.schema.marshables import AnalysisStatusSchema
 from app.util import api_login_required, ac_api_requires
 from app.util import response_error
 from app.util import response_success
@@ -86,5 +88,26 @@ def view_anastatus(cur_id, caseid):
 
     return response_success("", data=lstatus._asdict())
 
+
+@manage_anastatus_blueprint.route('/manage/analysis-status/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_analysis_status(caseid):
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    analysis_status = request.json.get('analysis_status')
+    if analysis_status is None:
+        return response_error("Invalid analysis status. Got None")
+
+    exact_match = request.json.get('exact_match', False)
+
+    # Search for analysis status with a name that contains the specified search term
+    analysis_status = search_analysis_status_by_name(analysis_status, exact_match=exact_match)
+    if not analysis_status:
+        return response_error("No analysis status found")
+
+    # Serialize the analysis status and return them in a JSON response
+    schema = AnalysisStatusSchema(many=True)
+    return response_success("", data=schema.dump(analysis_status))
 
 # TODO : Add management of analysis status

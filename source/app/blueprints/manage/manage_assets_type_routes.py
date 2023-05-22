@@ -30,6 +30,7 @@ from flask import url_for
 
 from app import app
 from app import db
+from app.datamgmt.manage.manage_case_objs import search_asset_type_by_name
 from app.forms import AddAssetForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
@@ -211,3 +212,38 @@ def delete_assets(cur_id, caseid):
     track_activity("Deleted asset type ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)
 
     return response_success("Deleted asset type ID {cur_id} successfully".format(cur_id=cur_id))
+
+
+@manage_assets_blueprint.route('/manage/asset-types/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_assets_type(caseid):
+    """Searches for assets types in the database.
+
+    This function searches for assets types in the database with a name that contains the specified search term.
+    It returns a JSON response containing the matching assets types.
+
+    Args:
+        caseid: The ID of the case associated with the request.
+
+    Returns:
+        A JSON response containing the matching assets types.
+
+    """
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    asset_type = request.json.get('asset_type')
+    if asset_type is None:
+        return response_error("Invalid asset type. Got None")
+
+    exact_match = request.json.get('exact_match', False)
+
+    # Search for assets types with a name that contains the specified search term
+    assets_type = search_asset_type_by_name(asset_type, exact_match=exact_match)
+    if not assets_type:
+        return response_error("No asset types found")
+
+    # Serialize the assets types and return them in a JSON response
+    assetst_schema = AssetTypeSchema(many=True)
+    return response_success("", data=assetst_schema.dump(assets_type))
+

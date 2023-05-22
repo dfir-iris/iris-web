@@ -341,3 +341,16 @@ def delete_ioc_comment(ioc_id, comment_id):
     db.session.commit()
 
     return True, "Comment deleted"
+
+def get_ioc_by_value(ioc_value, caseid=None):
+    if caseid:
+        return IocLink.query.with_entities(
+            Ioc
+        ).filter(and_(
+            Ioc.ioc_value == ioc_value,
+            IocLink.case_id == caseid
+        )).join(
+            IocLink.ioc
+        ).first()
+
+    return Ioc.query.filter(Ioc.ioc_value == ioc_value).first()
