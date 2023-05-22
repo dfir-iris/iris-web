@@ -78,15 +78,24 @@ from app.iris_engine.demo_builder import create_demo_users
 log = app.logger
 
 # Get the database host and port from environment variables
-db_host = os.getenv('POSTGRES_SERVER')
-db_port = int(os.getenv('POSTGRES_PORT'))
+db_host = app.config.get('POSTGRES_SERVER')
+db_port = int(app.config.get('POSTGRES_PORT'))
 
 # Get the retry parameters from environment variables
-retry_count = int(os.getenv('DB_RETRY_COUNT', '3'))
-retry_delay = int(os.getenv('DB_RETRY_DELAY', '5'))
+retry_count = int(app.config.get('DB_RETRY_COUNT'))
+retry_delay = int(app.config.get('DB_RETRY_DELAY'))
 
 
-def connect_to_database(host, port):
+def connect_to_database(host: str, port: int) -> bool:
+    """Attempts to connect to a database at the specified host and port.
+
+    Args:
+        host: A string representing the hostname or IP address of the database server.
+        port: An integer representing the port number to connect to.
+
+    Returns:
+        A boolean value indicating whether the connection was successful.
+    """
     # Create a new socket object
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -98,11 +107,20 @@ def connect_to_database(host, port):
     except socket.error:
         # If the connection failed, close the socket and return False
         s.close()
-        return None
+        return False
+
 
 def run_post_init(development=False):
+    """Runs post-initiation steps for the IRIS application.
+
+    Args:
+        development: A boolean value indicating whether the application is running in development mode.
+    """
+    # Log the IRIS version and post-initiation steps
     log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
+
+    conn = None
 
     if os.getenv("IRIS_WORKER") is None:
         # Attempt to connect to the database with retries
@@ -116,8 +134,9 @@ def run_post_init(development=False):
             time.sleep(retry_delay)
         # If the connection is still not established, exit the script
         if conn is None:
-            log.inf("Failed to connect to database after " + str(retry_count) + " attempts.")
+            log.info("Failed to connect to database after " + str(retry_count) + " attempts.")
             exit(1)
+
         # Setup database before everything
         log.info("Adding pgcrypto extension")
         pg_add_pgcrypto_ext()
@@ -137,6 +156,7 @@ def run_post_init(development=False):
         alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
         command.upgrade(alembic_cfg, 'head')
 
+        # Create base server settings if they don't exist
         srv_settings = ServerSettings.query.first()
         if srv_settings is None:
             log.info("Creating base server settings")
@@ -145,6 +165,7 @@ def run_post_init(development=False):
 
         prevent_objects = srv_settings.prevent_post_objects_repush
 
+        # Create base languages, OS types, IOC types, attributes, report types, TLP, event categories, assets, analysis status, case classification, task status, severities, alert status, case states, and hooks
         log.info("Creating base languages")
         create_safe_languages()
 
@@ -194,6 +215,7 @@ def run_post_init(development=False):
         log.info("Creating base hooks")
         create_safe_hooks()
 
+        # Create initial authorization model, administrative user, and customer
         log.info("Creating initial authorisation model")
         def_org, gadm, ganalysts = create_safe_auth_model()
 
@@ -214,10 +236,11 @@ def run_post_init(development=False):
             groups=[gadm, ganalysts]
         )
 
-        # setup symlinks for custom_assets
+        # Setup symlinks for custom_assets
         log.info("Creating symlinks for custom asset icons")
         custom_assets_symlinks()
 
+        # If demo mode is enabled, create demo users and cases
         if app.config.get('DEMO_MODE_ENABLED') == 'True':
             log.warning("============================")
             log.warning("|  THIS IS DEMO INSTANCE   |")
@@ -233,22 +256,32 @@ def run_post_init(development=False):
                               cases_count=int(app.config.get('DEMO_CASES_COUNT', 20)),
                               clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
 
+        # Log completion message
         log.info("Post-init steps completed")
         log.warning("===============================")
         log.warning(f"| IRIS IS READY on port  {os.getenv('INTERFACE_HTTPS_PORT')} |")
         log.warning("===============================")
 
+        # If an administrative user was created, log their credentials
         if pwd is not None:
             log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<< '
                      f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
 
-
 def create_safe_db(db_name):
+    """Creates a new database with the specified name if it does not already exist.
+
+    Args:
+        db_name: A string representing the name of the database to create.
+    """
+    # Create a new engine object for the specified database
     engine = create_engine(app.config["SQALCHEMY_PIGGER_URI"] + db_name)
 
+    # Check if the database already exists
     if not database_exists(engine.url):
+        # If the database does not exist, create it
         create_database(engine.url)
 
+    # Dispose of the engine object
     engine.dispose()
 
 
@@ -487,12 +520,25 @@ def create_safe_hooks():
 
 
 def pg_add_pgcrypto_ext():
-    # Open a cursor to perform database operations.
+    """Adds the pgcrypto extension to the PostgreSQL database.
+
+    This extension provides cryptographic functions for PostgreSQL.
+
+    """
+    # Open a connection to the database
     with db.engine.connect() as con:
+        # Execute a SQL command to create the pgcrypto extension if it does not already exist
         con.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
 
 
 def create_safe_languages():
+    """Creates new Language objects if they do not already exist.
+
+    This function creates new Language objects with the specified name and code
+    if they do not already exist in the database.
+
+    """
+    # Create new Language objects for each language
     create_safe(db.session, Languages, name="french", code="FR")
     create_safe(db.session, Languages, name="english", code="EN")
     create_safe(db.session, Languages, name="german", code="DE")
@@ -538,6 +584,13 @@ def create_safe_languages():
 
 
 def create_safe_events_cats():
+    """Creates new EventCategory objects if they do not already exist.
+
+    This function creates new EventCategory objects with the specified name
+    if they do not already exist in the database.
+
+    """
+    # Create new EventCategory objects for each category
     create_safe(db.session, EventCategory, name="Unspecified")
     create_safe(db.session, EventCategory, name="Legitimate")
     create_safe(db.session, EventCategory, name="Remediation")
@@ -556,13 +609,24 @@ def create_safe_events_cats():
 
 
 def create_safe_classifications():
+    """Creates new CaseClassification objects if they do not already exist.
+
+    This function reads the MISP classification taxonomy from a JSON file and creates
+    new CaseClassification objects with the specified name, name_expanded, and description
+    if they do not already exist in the database.
+
+    """
+    # Read the MISP classification taxonomy from a JSON file
     log.info("Reading MISP classification taxonomy from resources/misp.classification.taxonomy.json")
     with open(Path(__file__).parent / 'resources' / 'misp.classification.taxonomy.json') as data_file:
         data = json.load(data_file)
+        # Iterate over each classification in the taxonomy
         for c in data.get('values'):
             predicate = c.get('predicate')
             entries = c.get('entry')
+            # Iterate over each entry in the classification
             for entry in entries:
+                # Create a new CaseClassification object with the specified name, name_expanded, and description
                 create_safe(db.session, CaseClassification,
                             name=f"{predicate}:{entry.get('value')}",
                             name_expanded=f"{predicate.title()}: {entry.get('expanded')}",
@@ -570,6 +634,13 @@ def create_safe_classifications():
 
 
 def create_safe_analysis_status():
+    """Creates new AnalysisStatus objects if they do not already exist.
+
+    This function creates new AnalysisStatus objects with the specified name
+    if they do not already exist in the database.
+
+    """
+    # Create new AnalysisStatus objects for each status
     create_safe(db.session, AnalysisStatus, name='Unspecified')
     create_safe(db.session, AnalysisStatus, name='To be done')
     create_safe(db.session, AnalysisStatus, name='Started')
@@ -579,6 +650,13 @@ def create_safe_analysis_status():
 
 
 def create_safe_task_status():
+    """Creates new TaskStatus objects if they do not already exist.
+
+    This function creates new TaskStatus objects with the specified status name,
+    status description, and Bootstrap color if they do not already exist in the database.
+
+    """
+    # Create new TaskStatus objects for each status
     create_safe(db.session, TaskStatus, status_name='To do', status_description="", status_bscolor="danger")
     create_safe(db.session, TaskStatus, status_name='In progress', status_description="", status_bscolor="warning")
     create_safe(db.session, TaskStatus, status_name='On hold', status_description="", status_bscolor="muted")
@@ -587,6 +665,13 @@ def create_safe_task_status():
 
 
 def create_safe_severities():
+    """Creates new Severity objects if they do not already exist.
+
+    This function creates new Severity objects with the specified severity name
+    and severity description if they do not already exist in the database.
+
+    """
+    # Create new Severity objects for each severity level
     create_safe(db.session, Severity, severity_name='Unspecified', severity_description="Unspecified")
     create_safe(db.session, Severity, severity_name='Informational', severity_description="Informational")
     create_safe(db.session, Severity, severity_name='Low', severity_description="Low")
@@ -596,6 +681,13 @@ def create_safe_severities():
 
 
 def create_safe_alert_status():
+    """Creates new AlertStatus objects if they do not already exist.
+
+    This function creates new AlertStatus objects with the specified status name
+    and status description if they do not already exist in the database.
+
+    """
+    # Create new AlertStatus objects for each status
     create_safe(db.session, AlertStatus, status_name='Unspecified', status_description="Unspecified")
     create_safe(db.session, AlertStatus, status_name='New', status_description="Alert is new and unassigned")
     create_safe(db.session, AlertStatus, status_name='Assigned', status_description="Alert is assigned to a user and pending "
@@ -608,6 +700,13 @@ def create_safe_alert_status():
 
 
 def create_safe_case_states():
+    """Creates new CaseState objects if they do not already exist.
+
+    This function creates new CaseState objects with the specified state name,
+    state description, and protected status if they do not already exist in the database.
+
+    """
+    # Create new CaseState objects for each state
     create_safe(db.session, CaseState, state_name='Unspecified', state_description="Unspecified", protected=True)
     create_safe(db.session, CaseState, state_name='In progress', state_description="Case is being investigated")
     create_safe(db.session, CaseState, state_name='Opened', state_description="Case is open", protected=True)
@@ -620,7 +719,13 @@ def create_safe_case_states():
 
 
 def create_safe_assets():
+    """Creates new AssetsType objects if they do not already exist.
 
+    This function creates new AssetsType objects with the specified asset name,
+    asset description, and asset icons if they do not already exist in the database.
+
+    """
+    # Create new AssetsType objects for each asset type
     get_by_value_or_create(db.session, AssetsType, "asset_name", asset_name="Account",
                            asset_description="Generic Account", asset_icon_not_compromised="user.png",
                            asset_icon_compromised="ioc_user.png")
@@ -683,6 +788,15 @@ def create_safe_assets():
 
 
 def create_safe_client():
+    """Creates a new Client object if it does not already exist.
+
+    This function creates a new Client object with the specified client name
+    and client description if it does not already exist in the database.
+
+    """
+    # Create a new Client object if it does not already exist
+    get_by_value_or_create(db.session, Client, "client_name", client_name="Default",
+                           client_description="Default client")
     client = get_or_create(db.session, Client,
                            name="IrisInitialClient")
 
@@ -690,12 +804,20 @@ def create_safe_client():
 
 
 def create_safe_auth_model():
+    """Creates new Organisation, Group, and User objects if they do not already exist.
 
+    This function creates a new Organisation object with the specified name and description,
+    and creates new Group objects with the specified name, description, auto-follow status,
+    auto-follow access level, and permissions if they do not already exist in the database.
+    It also updates the attributes of the existing Group objects if they have changed.
+
+    """
+    # Create new Organisation object
     def_org = get_or_create(db.session, Organisation, org_name="Default Org",
                             org_description="Default Organisation")
 
+    # Create new Administrator Group object
     try:
-
         gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators",
                              group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
                              group_permissions=ac_get_mask_full_permissions())
@@ -707,6 +829,7 @@ def create_safe_auth_model():
             Group.group_name == "Administrators"
         ).first()
 
+    # Update Administrator Group object attributes
     if gadm.group_permissions != ac_get_mask_full_permissions():
         gadm.group_permissions = ac_get_mask_full_permissions()
 
@@ -718,8 +841,8 @@ def create_safe_auth_model():
 
     db.session.commit()
 
+    # Create new Analysts Group object
     try:
-
         ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
                                   group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
                                   group_permissions=ac_get_mask_analyst())
@@ -731,6 +854,7 @@ def create_safe_auth_model():
             Group.group_name == "Analysts"
         ).first()
 
+    # Update Analysts Group object attributes
     if ganalysts.group_permissions != ac_get_mask_analyst():
         ganalysts.group_permissions = ac_get_mask_analyst()
 
@@ -746,6 +870,14 @@ def create_safe_auth_model():
 
 
 def create_safe_admin(def_org, gadm):
+    """Creates a new admin user if one does not already exist.
+
+    This function creates a new admin user with the specified username, email, and password
+    if one does not already exist in the database. If an admin user already exists, it updates
+    the email address of the existing user if it has changed.
+
+    """
+    # Get admin username and email from app config
     admin_username = app.config.get('IRIS_ADM_USERNAME')
     if admin_username is None:
         admin_username = 'administrator'
@@ -754,6 +886,7 @@ def create_safe_admin(def_org, gadm):
     if admin_email is None:
         admin_email = 'administrator@localhost'
 
+    # Check if admin user already exists
     user = User.query.filter(or_(
         User.user == admin_username,
         User.email == admin_email
@@ -761,12 +894,14 @@ def create_safe_admin(def_org, gadm):
     password = None
 
     if not user:
+        # Generate a new password if one was not provided in the app config
         password = app.config.get('IRIS_ADM_PASSWORD')
         if password is None:
             password = ''.join(random.choices(string.printable[:-6], k=16))
 
         log.info(f'Creating first admin user with username "{admin_username}"')
 
+        # Create new User object for admin user
         user = User(
             user=admin_username,
             name=admin_username,
@@ -775,6 +910,7 @@ def create_safe_admin(def_org, gadm):
             active=True
         )
 
+        # Generate a new API key if one was not provided in the app config
         api_key = app.config.get('IRIS_ADM_API_KEY')
         if api_key is None:
             api_key = secrets.token_urlsafe(nbytes=64)
@@ -782,12 +918,8 @@ def create_safe_admin(def_org, gadm):
         user.api_key = api_key
         db.session.add(user)
 
-        db.session.commit()
-
-        # Add user to admin group
+        # Add admin user to admin group and default organisation
         add_user_to_group(user_id=user.id, group_id=gadm.group_id)
-
-        # Add user to organisation
         add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
 
         log.warning(f">>> Administrator password: {password}")
@@ -800,6 +932,7 @@ def create_safe_admin(def_org, gadm):
             log.warning(">>> Administrator already exists")
 
         if user.email != admin_email:
+            # Update email address of existing admin user if it has changed
             log.warning(f'Email of administrator will be updated via config to {admin_email}')
             user.email = admin_email
             db.session.commit()
@@ -808,11 +941,20 @@ def create_safe_admin(def_org, gadm):
 
 
 def create_safe_case(user, client, groups):
+    """Creates a new case if one does not already exist for the specified client.
+
+    This function creates a new case with the specified name, description, SOC ID, user, and client
+    if one does not already exist in the database for the specified client. It also adds the specified
+    user and groups to the case with full access level.
+
+    """
+    # Check if a case already exists for the client
     case = Cases.query.filter(
         Cases.client_id == client.client_id
     ).first()
 
     if not case:
+        # Create a new case for the client
         case = Cases(
             name="Initial Demo",
             description="This is a demonstration.",
@@ -821,11 +963,13 @@ def create_safe_case(user, client, groups):
             client_id=client.client_id
         )
 
+        # Validate the case and save it to the database
         case.validate_on_build()
         case.save()
 
         db.session.commit()
 
+    # Add the specified user and groups to the case with full access level
     for group in groups:
         add_case_access_to_group(group=group,
                                  cases_list=[case.case_id],
@@ -833,15 +977,28 @@ def create_safe_case(user, client, groups):
         ac_add_user_effective_access(users_list=[user.id],
                                      case_id=1,
                                      access_level=CaseAccessLevel.full_access.value)
+
     return case
 
 
 def create_safe_report_types():
+    """Creates new ReportType objects if they do not already exist.
+
+    This function creates new ReportType objects with the specified names if they do not already
+    exist in the database.
+
+    """
     create_safe(db.session, ReportType, name="Investigation")
     create_safe(db.session, ReportType, name="Activities")
 
 
 def create_safe_attributes():
+    """Creates new Attribute objects if they do not already exist.
+
+    This function creates new Attribute objects with the specified display name, description,
+    object type, and content if they do not already exist in the database.
+
+    """
     create_safe_attr(db.session, attribute_display_name='IOC',
                      attribute_description='Defines default attributes for IOCs', attribute_for='ioc',
                      attribute_content={})

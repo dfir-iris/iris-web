@@ -299,6 +299,9 @@ class Config:
     PG_PORT = PG_PORT_
     PG_DB = PG_DB_
 
+    DB_RETRY_COUNT = config.load('DB', 'RETRY_COUNT', fallback=3)
+    DB_RETRY_DELAY = config.load('DB', 'RETRY_DELAY', fallback=0.5)
+
     DEMO_MODE_ENABLED = config.load('IRIS_DEMO', 'ENABLED', fallback=False)
     if DEMO_MODE_ENABLED == 'True':
         DEMO_DOMAIN = config.load('IRIS_DEMO', 'DOMAIN', fallback=None)
