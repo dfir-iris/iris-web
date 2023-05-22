@@ -19,6 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
+import csv
 import json
 import urllib.parse
 from datetime import datetime
@@ -34,8 +35,10 @@ from flask_wtf import FlaskForm
 from sqlalchemy import and_
 
 from app import db
+from app import app
 from app.blueprints.case.case_comments import case_comment_update
-from app.datamgmt.case.case_events_db import add_comment_to_event
+from app.datamgmt.case.case_assets_db import get_asset_by_name
+from app.datamgmt.case.case_events_db import add_comment_to_event, get_category_by_name, get_default_category
 from app.datamgmt.case.case_events_db import delete_event
 from app.datamgmt.case.case_events_db import delete_event_comment
 from app.datamgmt.case.case_events_db import get_case_assets_for_tm
@@ -52,6 +55,7 @@ from app.datamgmt.case.case_events_db import get_events_categories
 from app.datamgmt.case.case_events_db import save_event_category
 from app.datamgmt.case.case_events_db import update_event_assets
 from app.datamgmt.case.case_events_db import update_event_iocs
+from app.datamgmt.case.case_iocs_db import get_ioc_by_value
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_timeline_state
 from app.datamgmt.states import update_timeline_state
@@ -79,6 +83,7 @@ from app.util import add_obj_history_entry
 from app.util import response_error
 from app.util import response_success
 
+
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
 
 case_timeline_blueprint = Blueprint('case_timeline',
@@ -89,7 +94,6 @@ case_timeline_blueprint = Blueprint('case_timeline',
 @case_timeline_blueprint.route('/case/timeline', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_timeline(caseid, url_redir):
-
     if url_redir:
         return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
 
@@ -125,7 +129,6 @@ def case_comment_modal(cur_id, caseid, url_redir):
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comments_get(cur_id, caseid):
-
     event_comments = get_case_event_comments(cur_id, caseid=caseid)
     if event_comments is None:
         return response_error('Invalid event ID')
@@ -136,7 +139,6 @@ def case_comments_get(cur_id, caseid):
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_delete(cur_id, com_id, caseid):
-
     success, msg = delete_event_comment(cur_id, com_id)
     if not success:
         return response_error(msg)
@@ -150,7 +152,6 @@ def case_comment_delete(cur_id, com_id, caseid):
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_get(cur_id, com_id, caseid):
-
     comment = get_case_event_comment(cur_id, com_id, caseid=caseid)
     if not comment:
         return response_error("Invalid comment ID")
@@ -161,14 +162,12 @@ def case_comment_get(cur_id, com_id, caseid):
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_edit(cur_id, com_id, caseid):
-
     return case_comment_update(com_id, 'events', caseid)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_add(cur_id, caseid):
-
     try:
         event = get_case_event(event_id=cur_id, caseid=caseid)
         if not event:
@@ -216,7 +215,6 @@ def case_get_timeline_state(caseid):
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph_assets(caseid):
-
     assets_cache = CaseAssets.query.with_entities(
         CaseEventsAssets.event_id,
         CaseAssets.asset_name
@@ -225,11 +223,11 @@ def case_getgraph_assets(caseid):
     ).join(CaseEventsAssets.asset).all()
 
     timeline = CasesEvent.query.filter(and_(
-                CasesEvent.case_id == caseid,
-                CasesEvent.event_in_summary
-            )).order_by(
-            CasesEvent.event_date
-        ).all()
+        CasesEvent.case_id == caseid,
+        CasesEvent.event_in_summary
+    )).order_by(
+        CasesEvent.event_date
+    ).all()
 
     tim = []
     for row in timeline:
@@ -257,13 +255,12 @@ def case_getgraph_assets(caseid):
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-category', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph(caseid):
-
     timeline = CasesEvent.query.filter(and_(
-                CasesEvent.case_id == caseid,
-                CasesEvent.event_in_summary
-            )).order_by(
-            CasesEvent.event_date
-        ).all()
+        CasesEvent.case_id == caseid,
+        CasesEvent.event_in_summary
+    )).order_by(
+        CasesEvent.event_date
+    ).all()
 
     tim = []
     for row in timeline:
@@ -304,32 +301,32 @@ def case_gettimeline_api_nofilter(caseid):
 def case_gettimeline_api(asset_id, caseid):
     if asset_id:
         condition = and_(
-                CasesEvent.case_id == caseid,
-                CaseEventsAssets.asset_id == asset_id,
-                CaseEventsAssets.event_id == CasesEvent.event_id
+            CasesEvent.case_id == caseid,
+            CaseEventsAssets.asset_id == asset_id,
+            CaseEventsAssets.event_id == CasesEvent.event_id
         )
     else:
         condition = CasesEvent.case_id == caseid
 
     timeline = CasesEvent.query.with_entities(
-            CasesEvent.event_id,
-            CasesEvent.event_uuid,
-            CasesEvent.event_date,
-            CasesEvent.event_date_wtz,
-            CasesEvent.event_tz,
-            CasesEvent.event_title,
-            CasesEvent.event_color,
-            CasesEvent.event_tags,
-            CasesEvent.event_content,
-            CasesEvent.event_in_summary,
-            CasesEvent.event_in_graph,
-            EventCategory.name.label("category_name"),
-            EventCategory.id.label("event_category_id")
-        ).filter(condition).order_by(
-            CasesEvent.event_date
-        ).outerjoin(
-            CasesEvent.category
-        ).all()
+        CasesEvent.event_id,
+        CasesEvent.event_uuid,
+        CasesEvent.event_date,
+        CasesEvent.event_date_wtz,
+        CasesEvent.event_tz,
+        CasesEvent.event_title,
+        CasesEvent.event_color,
+        CasesEvent.event_tags,
+        CasesEvent.event_content,
+        CasesEvent.event_in_summary,
+        CasesEvent.event_in_graph,
+        EventCategory.name.label("category_name"),
+        EventCategory.id.label("event_category_id")
+    ).filter(condition).order_by(
+        CasesEvent.event_date
+    ).outerjoin(
+        CasesEvent.category
+    ).all()
 
     assets_cache = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
@@ -471,28 +468,28 @@ def case_filter_timeline(caseid):
                              EventCategory.name == category)
 
     timeline = CasesEvent.query.with_entities(
-            CasesEvent.event_id,
-            CasesEvent.event_uuid,
-            CasesEvent.event_date,
-            CasesEvent.event_date_wtz,
-            CasesEvent.event_tz,
-            CasesEvent.event_title,
-            CasesEvent.event_color,
-            CasesEvent.event_tags,
-            CasesEvent.event_content,
-            CasesEvent.event_in_summary,
-            CasesEvent.event_in_graph,
-            CasesEvent.event_is_flagged,
-            User.user,
-            CasesEvent.event_added,
-            EventCategory.name.label("category_name")
-        ).filter(condition).order_by(
-            CasesEvent.event_date
-        ).outerjoin(
-            CasesEvent.category
-        ).join(
-            CasesEvent.user
-        ).all()
+        CasesEvent.event_id,
+        CasesEvent.event_uuid,
+        CasesEvent.event_date,
+        CasesEvent.event_date_wtz,
+        CasesEvent.event_tz,
+        CasesEvent.event_title,
+        CasesEvent.event_color,
+        CasesEvent.event_tags,
+        CasesEvent.event_content,
+        CasesEvent.event_in_summary,
+        CasesEvent.event_in_graph,
+        CasesEvent.event_is_flagged,
+        User.user,
+        CasesEvent.event_added,
+        EventCategory.name.label("category_name")
+    ).filter(condition).order_by(
+        CasesEvent.event_date
+    ).outerjoin(
+        CasesEvent.category
+    ).join(
+        CasesEvent.user
+    ).all()
 
     assets_cache = CaseAssets.query.with_entities(
         CaseEventsAssets.event_id,
@@ -555,7 +552,8 @@ def case_filter_timeline(caseid):
         ras = row._asdict()
 
         ras['event_date'] = ras['event_date'].strftime('%Y-%m-%dT%H:%M:%S.%f')
-        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f') if ras['event_date_wtz'] else None
+        ras['event_date_wtz'] = ras['event_date_wtz'].strftime('%Y-%m-%dT%H:%M:%S.%f') if ras[
+            'event_date_wtz'] else None
         ras['event_added'] = ras['event_added'].strftime('%Y-%m-%dT%H:%M:%S')
 
         if row.event_id not in events_list:
@@ -630,7 +628,6 @@ def case_filter_timeline(caseid):
 @case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_event(cur_id, caseid):
-
     call_modules_hook('on_preload_event_delete', data=cur_id, caseid=caseid)
 
     event = get_case_event(event_id=cur_id, caseid=caseid)
@@ -662,7 +659,6 @@ def event_flag(cur_id, caseid):
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def event_view(cur_id, caseid):
-
     event = get_case_event(cur_id, caseid)
     if not event:
         return response_error("Invalid event ID for this case")
@@ -720,7 +716,6 @@ def event_view_modal(cur_id, caseid, url_redir):
 @case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_event(cur_id, caseid):
-
     try:
         event = get_case_event(cur_id, caseid)
         if not event:
@@ -736,7 +731,7 @@ def case_edit_event(cur_id, caseid):
         event.event_date, event.event_date_wtz = event_schema.validate_date(
             request_data.get(u'event_date'),
             request_data.get(u'event_tz')
-            )
+        )
 
         event.case_id = caseid
         add_obj_history_entry(event, 'updated')
@@ -774,7 +769,6 @@ def case_edit_event(cur_id, caseid):
 @case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_event_modal(caseid):
-
     event = CasesEvent()
     event.custom_attributes = get_default_custom_attributes('event')
     form = CaseEventForm()
@@ -802,7 +796,6 @@ def case_filter_help_modal(caseid, url_redir):
 @case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_event(caseid):
-
     try:
 
         event_schema = EventSchema()
@@ -826,7 +819,8 @@ def case_add_event(caseid):
         save_event_category(event.event_id, request_data.get('event_category_id'))
 
         setattr(event, 'event_category_id', request_data.get('event_category_id'))
-        sync_iocs_assets = request_data.get('event_sync_iocs_assets') if request_data.get('event_sync_iocs_assets') else False
+        sync_iocs_assets = request_data.get('event_sync_iocs_assets') if request_data.get(
+            'event_sync_iocs_assets') else False
 
         success, log = update_event_assets(event_id=event.event_id,
                                            caseid=caseid,
@@ -856,7 +850,6 @@ def case_add_event(caseid):
 @case_timeline_blueprint.route('/case/timeline/events/duplicate/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_duplicate_event(cur_id, caseid):
-
     call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
 
     try:
@@ -880,7 +873,7 @@ def case_duplicate_event(cur_id, caseid):
         event.user_id = current_user.id
         if event.event_title.startswith("[DUPLICATED] - ") is False:
             event.event_title = f"[DUPLICATED] - {event.event_title}"
-      
+
         db.session.add(event)
         update_timeline_state(caseid=caseid)
         db.session.commit()
@@ -920,7 +913,6 @@ def case_duplicate_event(cur_id, caseid):
 @case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_event_date_convert(caseid):
-
     jsdata = request.get_json()
 
     date_value = jsdata.get('date_value')
@@ -941,3 +933,179 @@ def case_event_date_convert(caseid):
     return response_error("Unable to find a matching date format")
 
 
+# BEGIN_RS_CODE
+@case_timeline_blueprint.route('/case/timeline/events/csv_upload', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_events_upload_csv(caseid):
+    event_schema = EventSchema()
+
+    jsdata = request.get_json()
+    app.logger.info("Starting CSV import")
+    event_fields = [
+        "event_date",
+        "event_tz",
+        "event_title",
+        "event_category",
+        "event_content",
+        "event_raw",
+        "event_source",
+        "event_assets",
+        "event_iocs",
+        "event_tags"
+    ]
+
+    csv_lines = jsdata["CSVData"].splitlines()
+
+    csv_options = jsdata.get('CSVOptions') if jsdata.get('CSVOptions') else {}
+
+    event_sync_iocs_assets = csv_options.get('event_sync_iocs_assets') if csv_options.get(
+        'event_sync_iocs_assets') else False
+    event_in_summary = csv_options.get('event_in_summary') if csv_options.get('event_in_summary') else False
+    event_in_graph = csv_options.get('event_in_graph') if csv_options.get('event_in_graph') else True
+    event_source = csv_options.get('event_source') if csv_options.get('event_source') else ''
+
+    csv_data = list(csv.DictReader(csv_lines, delimiter=','))
+    missing_fields = []
+    row0 = csv_data[0]
+    for fld in event_fields:
+        if row0.get(fld) is None:
+            missing_fields.append(fld)
+
+    if len(missing_fields) > 0:
+        csv_fields = list(row0.keys())
+        msg = f"Bad SCV Fields Mapping. Fields missing: [{','.join(missing_fields)}]"
+        data = {"error_code": "BAD_FIELDS_MAPPING", "expected": ','.join(event_fields), "found": ','.join(csv_fields),
+                "missing": ','.join(missing_fields)}
+        app.logger.warning(data)
+
+        return response_error(msg=msg, data=data)
+
+    DEFAULT_CAT_ID = get_default_category().id
+
+    # ==========================  checking data validity (assets, ioc, categories, etc... )  ==========================
+    line = 0
+    csv_lines = []
+    try:
+
+        for row in csv_data:
+            event_title = row.get('event_title')
+            event_assets = row.get('event_assets')
+            event_iocs = row.get('event_iocs')
+            event_tags = row.get('event_tags')
+            event_category_name = row.pop('event_category')
+
+            line += 1
+
+            if len(event_title) == 0:
+                return response_error(msg=f"Data error",
+                                      data={"Error": f"Event Title can not be empty.\nrow number: {line}"}, status=400)
+
+            assets = []
+            for asset_name in event_assets.split(";"):
+                if asset_name == '':
+                    continue
+                asset = get_asset_by_name(asset_name, caseid)
+                if asset:
+                    assets.append(asset.asset_id)
+                else:
+                    return response_error(msg=f"Data error", data={
+                        "Error": f"Asset not recognized : {asset_name}.\nrow number: {line}"})
+
+            row['event_assets'] = assets
+
+            iocs = []
+            for ioc_value in event_iocs.split("|"):
+                if ioc_value == '':
+                    continue
+                ioc = get_ioc_by_value(ioc_value, caseid)
+                if ioc:
+                    iocs.append(ioc.ioc_id)
+                else:
+                    return response_error(msg=f"Data error",
+                                          data={"Error": f"IoC not recognized : {ioc_value}.\nrow number: {line}"})
+            row['event_iocs'] = iocs
+
+            if (event_category_name is not None) and (event_category_name != ''):
+                event_category = get_category_by_name(event_category_name)
+                if event_category:
+                    row['event_category_id'] = event_category.id
+                else:
+                    return response_error(msg=f"Data error", data={
+                        "Error": f"event_category not recognized : {event_category}.\nrow number: {line}"})
+            else:
+                row['event_category_id'] = DEFAULT_CAT_ID
+
+            if event_tags:
+                row['event_tags'] = ','.join(event_tags.split('|'))
+
+            row['event_in_summary'] = event_in_summary
+            row['event_in_graph'] = event_in_graph
+            row['event_source'] = event_source
+
+            csv_lines.append(row)
+    except Exception as e:
+        return response_error(msg=f"Data error", data={"Exception": f"Unhandled error {e}.\nrow number: {line}"})
+
+    # ========================== begin saving data ============================
+    session = db.session.begin_nested()
+    line = 0
+    try:
+        for row in csv_lines:
+            if row is None:
+                continue
+            line += 1
+
+            request_data = call_modules_hook('on_preload_event_create', data=row, caseid=caseid)
+            event = event_schema.load(request_data)
+            event.event_date, event.event_date_wtz = event_schema.validate_date(request_data.get(u'event_date'),
+                                                                                request_data.get(u'event_tz'))
+            event.case_id = caseid
+            event.event_added = datetime.utcnow()
+            event.user_id = current_user.id
+
+            add_obj_history_entry(event, 'created')
+
+            db.session.add(event)
+            update_timeline_state(caseid=caseid)
+
+            save_event_category(event.event_id, request_data.get('event_category_id'))
+
+            setattr(event, 'event_category_id', request_data.get('event_category_id'))
+
+            success, log = update_event_assets(event_id=event.event_id,
+                                               caseid=caseid,
+                                               assets_list=request_data.get('event_assets'),
+                                               iocs_list=request_data.get('event_iocs'),
+                                               sync_iocs_assets=event_sync_iocs_assets)
+            if not success:
+                raise Exception(f'Error while saving linked assets\nlog:{log}')
+
+            success, log = update_event_iocs(event_id=event.event_id,
+                                             caseid=caseid,
+                                             iocs_list=request_data.get('event_iocs'))
+            if not success:
+                raise Exception(f'Error while saving linked iocs\nlog:{log}')
+
+            setattr(event, 'event_category_id', request_data.get('event_category_id'))
+
+            event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
+
+            track_activity("added event {}".format(event.event_id), caseid=caseid)
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.normalized_messages())
+
+    except Exception as e:
+        return response_error(msg=f"Data error", data={"Error": f"{e}"})
+
+    # db.session.commit()
+    try:
+        session.commit()
+    except:
+        pass
+
+    app.logger.info("======================== END_CSV_IMPORT ==========================================")
+
+    return response_success(msg="Events added (CSV File)")
+
+# END_RS_CODE

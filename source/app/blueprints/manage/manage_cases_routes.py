@@ -205,7 +205,7 @@ def api_delete_case(cur_id, caseid):
 
                 call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
 
-                track_activity("case {} deleted successfully".format(cur_id), caseid=cur_id)
+                track_activity("case {} deleted successfully".format(cur_id), ctx_less=True)
                 return response_success("Case successfully deleted")
 
             else:

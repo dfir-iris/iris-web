@@ -370,3 +370,19 @@ def delete_event(event, caseid):
     update_timeline_state(caseid=caseid)
 
     db.session.commit()
+
+
+def get_category_by_name(cat_name):
+    return EventCategory.query.filter(
+        EventCategory.name  == cat_name,
+    ).first()
+
+
+def get_default_category():
+    return EventCategory.query.with_entities(
+        EventCategory.id,
+        EventCategory.name
+    ).filter(
+        EventCategory.name == "Unspecified"
+    ).first()
+

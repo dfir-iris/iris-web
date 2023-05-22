@@ -24,6 +24,6 @@ venv1/
 nohup.out
 celerybeat-schedule.db
 .scannerwork/
-
+source/app/static/assets/dist/
 source/app/static/assets/img/graph/*
 !source/app/static/assets/img/graph/*.png
