@@ -532,35 +532,30 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
     # Link the alert to the case
     alert.cases.append(case)
 
-    ioc_schema = IocSchema()
-    asset_schema = CaseAssetsSchema()
     ioc_links = []
     asset_links = []
 
     # Add the IOCs to the case
     for ioc_uuid in iocs_list:
         for alert_ioc in alert.iocs:
-            if alert_ioc.ioc_uuid == ioc_uuid:
-                alert_ioc['ioc_tags'] = ','.join(alert_ioc['ioc_tags'])
+            if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
-                ioc = ioc_schema.load(alert_ioc, session=db.session)
-                ioc, existed = add_ioc(ioc, current_user.id, case.case_id)
+                ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
                 add_ioc_link(ioc.ioc_id, case.case_id)
                 ioc_links.append(ioc.ioc_id)
 
     # Add the assets to the case
     for asset_uuid in assets_list:
         for alert_asset in alert.assets:
-            if alert_asset.asset_uuid == asset_uuid:
-                alert_asset.asset_tags = ','.join(alert_asset['asset_tags'])
+            if str(alert_asset.asset_uuid) == asset_uuid:
+
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
 
-                asset = asset_schema.load(alert_asset, session=db.session)
-
-                asset = create_asset(asset=asset,
+                asset = create_asset(asset=alert_asset,
                                      caseid=case.case_id,
                                      user_id=current_user.id
                                      )
+
                 set_ioc_links(ioc_links, asset.asset_id)
                 asset_links.append(asset.asset_id)
 
@@ -606,7 +601,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
                           caseid=case.case_id,
                           iocs_list=ioc_links)
 
-        db.session.commit()
+    db.session.commit()
 
 
 def unmerge_alert_from_case(alert: Alert, case: Cases):
