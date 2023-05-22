@@ -966,6 +966,12 @@ class AnalysisStatusSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
 
+class EventCategorySchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = EventCategory
+        load_instance = True
+
+
 class AlertSchema(ma.SQLAlchemyAutoSchema):
     severity = ma.Nested(SeveritySchema)
     status = ma.Nested(AlertStatusSchema)

@@ -19,7 +19,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from sqlalchemy import func
 
-from app.models import AnalysisStatus, IocType, AssetsType
+from app.models import AnalysisStatus, IocType, AssetsType, EventCategory
 
 
 def search_analysis_status_by_name(name: str, exact_match: bool = False) -> AnalysisStatus:
@@ -68,3 +68,19 @@ def search_asset_type_by_name(name: str, exact_match: bool = False) -> AssetsTyp
         return AssetsType.query.filter(func.lower(AssetsType.asset_name) == name.lower()).all()
 
     return AssetsType.query.filter(AssetsType.asset_name.ilike(f'%{name}%')).all()
+
+
+def search_event_category_by_name(name: str, exact_match: bool = False) -> AssetsType:
+    """
+    Search an event category by its name
+
+    args:
+        name: the name of the event category
+        exact_match: if True, the name must be exactly the same as the one in the database
+
+    return: the event category
+    """
+    if exact_match:
+        return EventCategory.query.filter(func.lower(EventCategory.name) == name.lower()).all()
+
+    return EventCategory.query.filter(EventCategory.name.ilike(f'%{name}%')).all()
