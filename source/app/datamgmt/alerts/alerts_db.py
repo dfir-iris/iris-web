@@ -646,6 +646,19 @@ def get_alert_status_by_id(status_id: int) -> AlertStatus:
     return db.session.query(AlertStatus).filter(AlertStatus.status_id == status_id).first()
 
 
+def search_alert_status_by_name(status_name: str) -> AlertStatus:
+    """
+    Get an alert status from the database from its name
+
+    args:
+        status_name (str): The name of the alert status
+
+    returns:
+        AlertStatus: The alert status that was retrieved from the database
+    """
+    return db.session.query(AlertStatus).filter(AlertStatus.status_name.ilike(f"%{status_name}%")).all()
+
+
 def cache_similar_alert(customer_id, assets, iocs, alert_id, creation_date):
     """
     Cache similar alerts

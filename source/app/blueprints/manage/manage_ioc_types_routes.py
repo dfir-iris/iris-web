@@ -162,3 +162,35 @@ def update_ioc(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
     return response_error("Unexpected error server-side. Nothing updated", data=ioc_type)
+
+
+@manage_ioc_type_blueprint.route('/manage/ioc-types/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_ioc_type(caseid):
+    """Searches for IOC types in the database.
+
+    This function searches for IOC types in the database with a name that contains the specified search term.
+    It returns a JSON response containing the matching IOC types.
+
+    Args:
+        caseid: The ID of the case associated with the request.
+
+    Returns:
+        A JSON response containing the matching IOC types.
+
+    """
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    ioc_type = request.json.get('ioc_type')
+    if not ioc_type:
+        return response_error("Invalid ioc type. Got None")
+    
+    # Search for IOC types with a name that contains the specified search term
+    ioc_type = IocType.query.filter(IocType.type_name.ilike("%{}%".format(ioc_type))).all()
+    if not ioc_type:
+        return response_error("No ioc types found")
+    
+    # Serialize the IOC types and return them in a JSON response
+    ioct_schema = IocTypeSchema(many=True)
+    return response_success("", data=ioct_schema.dump(ioc_type))
