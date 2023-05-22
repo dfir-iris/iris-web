@@ -26,6 +26,8 @@ import os
 import random
 import secrets
 import string
+import socket
+import time
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, exc, or_
@@ -75,12 +77,47 @@ from app.iris_engine.demo_builder import create_demo_users
 
 log = app.logger
 
+# Get the database host and port from environment variables
+db_host = os.getenv('POSTGRES_SERVER')
+db_port = int(os.getenv('POSTGRES_PORT'))
+
+# Get the retry parameters from environment variables
+retry_count = int(os.getenv('DB_RETRY_COUNT', '3'))
+retry_delay = int(os.getenv('DB_RETRY_DELAY', '5'))
+
+
+def connect_to_database(host, port):
+    # Create a new socket object
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        # Try to connect to the database
+        s.connect((host, port))
+        # If the connection was successful, close the socket and return True
+        s.close()
+        return True
+    except socket.error:
+        # If the connection failed, close the socket and return False
+        s.close()
+        return None
 
 def run_post_init(development=False):
     log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
 
     if os.getenv("IRIS_WORKER") is None:
+        # Attempt to connect to the database with retries
+        log.info("Attempting to connect to the database...")
+        for i in range(retry_count):
+            log.info("Connecting to database, attempt " + str(i+1) + "/" + str(retry_count))
+            conn = connect_to_database(db_host,db_port)
+            if conn is not None:
+                break
+            log.info("Retrying in " + str(retry_delay) + "seconds...")
+            time.sleep(retry_delay)
+        # If the connection is still not established, exit the script
+        if conn is None:
+            log.inf("Failed to connect to database after " + str(retry_count) + " attempts.")
+            exit(1)
         # Setup database before everything
         log.info("Adding pgcrypto extension")
         pg_add_pgcrypto_ext()
