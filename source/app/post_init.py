@@ -78,8 +78,8 @@ from app.iris_engine.demo_builder import create_demo_users
 log = app.logger
 
 # Get the database host and port from environment variables
-db_host = app.config.get('POSTGRES_SERVER')
-db_port = int(app.config.get('POSTGRES_PORT'))
+db_host = app.config.get('PG_SERVER')
+db_port = int(app.config.get('PG_PORT'))
 
 # Get the retry parameters from environment variables
 retry_count = int(app.config.get('DB_RETRY_COUNT'))
@@ -795,8 +795,6 @@ def create_safe_client():
 
     """
     # Create a new Client object if it does not already exist
-    get_by_value_or_create(db.session, Client, "client_name", client_name="Default",
-                           client_description="Default client")
     client = get_or_create(db.session, Client,
                            name="IrisInitialClient")
 
@@ -917,6 +915,8 @@ def create_safe_admin(def_org, gadm):
 
         user.api_key = api_key
         db.session.add(user)
+
+        db.session.commit()
 
         # Add admin user to admin group and default organisation
         add_user_to_group(user_id=user.id, group_id=gadm.group_id)
