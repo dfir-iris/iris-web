@@ -970,6 +970,7 @@ function show_timeline_filter_help() {
 function fire_upload_csv_events() {
     $('#modal_upload_csv_events').modal('show');
 }
+
 function upload_csv_events() {
     const api_path =  '/case/timeline/events/csv_upload';
     const modal_dlg = '#modal_upload_csv_events'
@@ -1009,6 +1010,14 @@ function upload_csv_events() {
 
     return false;
 }
+
+function generate_events_sample_csv(){
+    csv_data = "event_date,event_tz,event_title,event_category,event_content,event_raw,event_source,event_assets,event_iocs,event_tags\n"
+    csv_data += '"2015-12-12T00:00:00","+00:00","An event","Category","Event description","raw","source","","", "defender|malicious","",""\n'
+    csv_data += '"2015-12-12T00:00:00","+00:00","An event","Category","Event description","raw","source","","", "defender|malicious","",""\n'
+    download_file("sample_events.csv", "text/csv", csv_data);
+}
+
 /* END_RS_CODE */
 
 /* Page is ready, fetch the assets of the case */
