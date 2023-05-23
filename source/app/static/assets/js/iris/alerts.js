@@ -746,6 +746,16 @@ function renderAlert(alert, expanded=false) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
   const alert_color = alertStatusToColor(alert.status.status_name);
 
+  if (alert.owner !== null) {
+      alert.owner.user_name = filterXSS(alert.owner.user_name);
+  }
+  alert.alert_title = filterXSS(alert.alert_title);
+  alert.alert_description = filterXSS(alert.alert_description);
+  alert.alert_source = filterXSS(alert.alert_source);
+  alert.alert_source_link = filterXSS(alert.alert_source_link);
+  alert.alert_source_ref = filterXSS(alert.alert_source_ref);
+  alert.alert_note = filterXSS(alert.alert_note);
+
   return `
 <div class="card alert-card full-height alert-card-selectable ${alert_color}" id="alertCard-${alert.alert_id}">
   <div class="card-body">
@@ -887,8 +897,8 @@ function renderAlert(alert, expanded=false) {
                                              ${Object.entries(alert.alert_context)
                                   .map(
                                       ([key, value]) =>
-                                          `<dt class="col-sm-3">${key}</dt>
-                                                    <dd class="col-sm-9">${value}</dd>`
+                                          `<dt class="col-sm-3">${filterXSS(key)}</dt>
+                                                    <dd class="col-sm-9">${filterXSS(value)}</dd>`
                                   )
                                   .join('')}
                                            </dl>`
@@ -967,11 +977,11 @@ function renderAlert(alert, expanded=false) {
                               .map(
                                   (ioc) => `
                                                  <tr>
-                                                   <td>${ioc.ioc_value}</td>
-                                                   <td>${ioc.ioc_description}</td>
-                                                   <td>${ioc.ioc_type ? ioc.ioc_type.type_name : '-'}</td>
-                                                   <td>${ioc.ioc_tlp ? ioc.ioc_tlp : '-'}</td>
-                                                   <td>${ioc.ioc_tags ? ioc.ioc_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
+                                                   <td>${filterXSS(ioc.ioc_value)}</td>
+                                                   <td>${filterXSS(ioc.ioc_description)}</td>
+                                                   <td>${ioc.ioc_type ? filterXSS(ioc.ioc_type.type_name) : '-'}</td>
+                                                   <td>${filterXSS(ioc.ioc_tlp) ? ioc.ioc_tlp : '-'}</td>
+                                                   <td>${ioc.ioc_tags ? ioc.ioc_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') : ''}</td>
                                                    <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
                                                       View Enrichment
                                                     </button>` : ''}
@@ -1007,12 +1017,12 @@ function renderAlert(alert, expanded=false) {
                   .map(
                       (asset) => `
                                      <tr>
-                                       <td>${asset.asset_name ? asset.asset_name : '-'}</td>
-                                       <td>${asset.asset_description ? asset.asset_description : '-'}</td>
-                                       <td>${asset.asset_type ? asset.asset_type.asset_name : '-'}</td>
-                                       <td>${asset.asset_domain ? asset.asset_domain : '-'}</td>
-                                       <td>${asset.asset_ip ? asset.asset_ip : '-'}</td>
-                                       <td>${asset.asset_tags ? asset.asset_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') : ''}</td>
+                                       <td>${asset.asset_name ? filterXSS(asset.asset_name) : '-'}</td>
+                                       <td>${asset.asset_description ? filterXSS(asset.asset_description) : '-'}</td>
+                                       <td>${asset.asset_type ? filterXSS(asset.asset_type.asset_name) : '-'}</td>
+                                       <td>${asset.asset_domain ? filterXSS(asset.asset_domain) : '-'}</td>
+                                       <td>${asset.asset_ip ? filterXSS(asset.asset_ip) : '-'}</td>
+                                       <td>${asset.asset_tags ? asset.asset_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') : ''}</td>
                                        <td>${asset.asset_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(asset.asset_enrichment).replace(/"/g, '&quot;')})">
                                           View Enrichment
                                         </button>` : ''}
@@ -1032,7 +1042,7 @@ function renderAlert(alert, expanded=false) {
                            <button class="btn btn-sm btn-outline-dark" type="button" data-toggle="collapse" data-target="#rawAlert-${alert.alert_id}" 
                            aria-expanded="false" aria-controls="rawAlert-${alert.alert_id}">Toggle Raw Alert</button>
                            <div class="collapse mt-3" id="rawAlert-${alert.alert_id}">
-                             <pre class="pre-scrollable">${JSON.stringify(alert.alert_source_content, null, 2)}</pre>
+                             <pre class="pre-scrollable">${filterXSS(JSON.stringify(alert.alert_source_content, null, 2))}</pre>
                            </div>`
               : ""
       }
@@ -1060,11 +1070,11 @@ function renderAlert(alert, expanded=false) {
                 <span title="Alert severity"><b class="ml-3"><i class="fa-solid fa-bolt"></i></b>
                   <small class="text-muted ml-1" id="alertSeverity-${alert.alert_id}" data-severity-id="${alert.severity.severity_id}">${alert.severity.severity_name}</small></span>
                 <span title="Alert source"><b class="ml-3"><i class="fa-solid fa-cloud-arrow-down"></i></b>
-                  <small class="text-muted ml-1">${alert.alert_source || 'Unspecified'}</small></span>
+                  <small class="text-muted ml-1">${filterXSS(alert.alert_source) || 'Unspecified'}</small></span>
                 <span title="Alert client"><b class="ml-3"><i class="fa-regular fa-circle-user"></i></b>
-                  <small class="text-muted ml-1 mr-2">${alert.customer.customer_name || 'Unspecified'}</small></span>
-                ${alert.classification && alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification" id="alertClassification-${alert.alert_id}" data-classification-id="${alert.classification.id}"><i class="fa-solid fa-shield-virus mr-1"></i>${alert.classification.name_expanded}</span>`: ''}
-                ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${tag}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${alert.alert_tags}</div>` : ''}
+                  <small class="text-muted ml-1 mr-2">${filterXSS(alert.customer.customer_name) || 'Unspecified'}</small></span>
+                ${alert.classification && alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification" id="alertClassification-${alert.alert_id}" data-classification-id="${alert.classification.id}"><i class="fa-solid fa-shield-virus mr-1"></i>${filterXSS(alert.classification.name_expanded)}</span>`: ''}
+                ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${filterXSS(alert.alert_tags)}</div>` : ''}
                 
               </div>
 
