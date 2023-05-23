@@ -68,12 +68,12 @@ function appendLabels(list, items, itemType) {
         const input = $('<input>').attr({
             type: 'checkbox',
             name: itemType,
-            value: item[itemType + '_name'] || item[itemType + '_value'],
+            value: filterXSS(item[itemType + '_name'] || item[itemType + '_value']),
             id: item[itemType + '_uuid'],
             checked: true,
         });
         label.append(input);
-        label.append(` ${item[itemType + '_name'] || item[itemType + '_value']}`);
+        label.append(`${filterXSS(item[itemType + '_name'] || item[itemType + '_value'])}`);
         list.append(label);
     });
 }
@@ -1364,7 +1364,7 @@ async function editAlert(alert_id, close=false) {
         confirmAlertEdition.text('Save')
     }
 
-    fetchSelectOptions('editAlertClassification', selectsConfig['alertClassificationFilter']).then(() => {
+    fetchSelectOptions('editAlertClassification', selectsConfig['alert_classification_id']).then(() => {
       $('#editAlertClassification').val($(`#alertClassification-${alert_id}`).data('classification-id'));
     }).catch(error => {
       console.error(error);
