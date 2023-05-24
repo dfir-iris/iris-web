@@ -245,7 +245,7 @@ def get_unspecified_event_category():
 
 
 def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_list: List[str], case_title: str,
-                            note: str, import_as_event: bool, case_tags: str) -> Cases:
+                            note: str, import_as_event: bool, case_tags: str, template_id: int) -> Cases:
     """
     Create a case from multiple alerts
 
@@ -257,6 +257,7 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
         import_as_event (bool): Whether to import the alert as an event
         case_tags (str): The tags to add to the case
         case_title (str): The title of the case
+        template_id (int): The ID of the template to use
 
     returns:
         Cases: The case that was created from the alert
@@ -266,9 +267,16 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
+    if template_id is not None and template_id != 0 and template_id != '':
+        case_template = get_case_template_by_id(template_id)
+        if case_template:
+            case_template_title_prefix = case_template.title_prefix
+
     # Create the case
     case = Cases(
-        name=case_title if case_title else f"Merge of alerts {', '.join([str(alert.alert_id) for alert in alerts])}",
+        name=f"[ALERT]{case_template_title_prefix} "
+             f"Merge of alerts {', '.join([str(alert.alert_id) for alert in alerts])}" if not case_title else
+             f"{case_template_title_prefix} {case_title}",
         description=f"*Alerts escalated by {current_user.name}*\n\n{escalation_note}"
                     f"[Alerts link](/alerts?alert_ids={','.join([str(alert.alert_id) for alert in alerts])})",
         soc_id='',
@@ -298,8 +306,6 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
         for ioc_uuid in iocs_list:
             for alert_ioc in alert.iocs:
                 if str(alert_ioc.ioc_uuid) == ioc_uuid:
-                    # TODO: Transform the ioc-enrichment to a custom attribute in the ioc
-                    # del alert_ioc['ioc_enrichment']
 
                     ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
                     add_ioc_link(ioc.ioc_id, case.case_id)
@@ -310,9 +316,6 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
             for alert_asset in alert.assets:
                 if str(alert_asset.asset_uuid) == asset_uuid:
                     alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
-
-                    # TODO: Transform the asset-enrichment to a custom attribute in the asset if possible
-                    # del alert_asset['asset_enrichment']
 
                     asset = create_asset(asset=alert_asset,
                                          caseid=case.case_id,
@@ -362,6 +365,9 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
             update_event_iocs(event_id=event.event_id,
                               caseid=case.case_id,
                               iocs_list=ioc_links)
+
+    if template_id is not None and template_id != 0 and template_id != '':
+        case, logs = case_template_post_modifier(case, template_id)
 
     db.session.commit()
 
