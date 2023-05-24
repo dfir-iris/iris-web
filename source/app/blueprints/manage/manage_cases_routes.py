@@ -250,7 +250,7 @@ def api_reopen_case(cur_id, caseid):
 
                 db.session.add(alert)
     
-    case = call_modules_hook('on_postload_case_info_update', data=case, caseid=caseid)
+    case = call_modules_hook('on_postload_case_update', data=case, caseid=caseid)
 
     add_obj_history_entry(case, 'case reopened')
     track_activity("reopened case ID {}".format(cur_id), caseid=caseid)
@@ -287,7 +287,7 @@ def api_case_close(cur_id, caseid):
 
                 db.session.add(alert)
     
-    case = call_modules_hook('on_postload_case_info_update', data=case, caseid=caseid)
+    case = call_modules_hook('on_postload_case_update', data=case, caseid=caseid)
 
     add_obj_history_entry(case, 'case closed')
     track_activity("closed case ID {}".format(cur_id), caseid=caseid, ctx_less=False)
@@ -380,7 +380,7 @@ def update_case_info(cur_id, caseid):
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
         save_case_tags(request_data.get('case_tags'), case_i)
 
-        case = call_modules_hook('on_postload_case_info_update', data=case, caseid=caseid)
+        case = call_modules_hook('on_postload_case_update', data=case, caseid=caseid)
 
         add_obj_history_entry(case_i, 'case info updated')
         track_activity("case updated {case_name}".format(case_name=case.name), caseid=cur_id)

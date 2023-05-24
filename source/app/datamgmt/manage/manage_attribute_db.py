@@ -21,7 +21,7 @@ import json
 import logging as logger
 from sqlalchemy.orm.attributes import flag_modified
 
-from app import db
+from app import db, app
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
 from app.models import CaseTasks
@@ -57,11 +57,11 @@ def update_all_attributes(object_type, previous_attribute, partial_overwrite=Fal
 
     target_attr = get_default_custom_attributes(object_type)
 
-    print(f'Migrating {len(obj_list)} objects of type {object_type}')
+    app.logger.info(f'Migrating {len(obj_list)} objects of type {object_type}')
     for obj in obj_list:
 
         if complete_overwrite or obj.custom_attributes is None:
-            print('Achieving complete overwrite')
+            app.logger.info('Achieving complete overwrite')
             obj.custom_attributes = target_attr
             flag_modified(obj, "custom_attributes")
             db.session.commit()
@@ -70,14 +70,14 @@ def update_all_attributes(object_type, previous_attribute, partial_overwrite=Fal
         for tab in target_attr:
 
             if obj.custom_attributes.get(tab) is None or partial_overwrite:
-                print(f'Migrating {tab}')
+                app.logger.info(f'Migrating {tab}')
                 flag_modified(obj, "custom_attributes")
                 obj.custom_attributes[tab] = target_attr[tab]
 
             else:
                 for element in target_attr[tab]:
                     if element not in obj.custom_attributes[tab]:
-                        print(f'Migrating {element}')
+                        app.logger.info(f'Migrating {element}')
                         flag_modified(obj, "custom_attributes")
                         obj.custom_attributes[tab][element] = target_attr[tab][element]
 
@@ -220,12 +220,12 @@ def merge_custom_attributes(data, obj_id, object_type, overwrite=False):
         default_attr = get_default_custom_attributes(object_type)
         for tab in data:
             if default_attr.get(tab) is None:
-                print(f'Missing tab {tab} in {object_type} default attribute')
+                app.logger.info(f'Missing tab {tab} in {object_type} default attribute')
                 continue
 
             for field in data[tab]:
                 if field not in default_attr[tab]:
-                    print(f'Missing field {field} in {object_type} default attribute')
+                    app.logger.info(f'Missing field {field} in {object_type} default attribute')
 
                 else:
                     default_attr[tab][field]['value'] = data[tab][field]
