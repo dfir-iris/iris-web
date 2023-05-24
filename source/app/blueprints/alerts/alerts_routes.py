@@ -438,7 +438,7 @@ def alerts_batch_delete_route(caseid: int) -> Response:
     if not success:
         return response_error(logs)
     
-    alert = call_modules_hook('on_postload_alert_delete', data=f'{alert_ids: alert_ids}', caseid=caseid)
+    alert = call_modules_hook('on_postload_alert_delete', data=f'alert_ids: {alert_ids}', caseid=caseid)
 
     track_activity(f"deleted alerts #{','.join(str(alert_id) for alert_id in alert_ids)}", ctx_less=True)
 
@@ -757,6 +757,7 @@ def alerts_batch_escalate_route(caseid) -> Response:
     case_tags = data.get('case_tags')
     case_title = data.get('case_title')
     alerts_list = []
+    case_template_id: int = data.get('case_template_id', None)
 
     try:
         # Merge the alerts into a case
@@ -776,7 +777,7 @@ def alerts_batch_escalate_route(caseid) -> Response:
         # Merge alerts in the case
         case = create_case_from_alerts(alerts_list, iocs_list=iocs_import_list, assets_list=assets_import_list,
                                        note=note, import_as_event=import_as_event, case_tags=case_tags,
-                                       case_title=case_title)
+                                       case_title=case_title, template_id=case_template_id)
 
         if not case:
             return response_error('Failed to create case from alert')

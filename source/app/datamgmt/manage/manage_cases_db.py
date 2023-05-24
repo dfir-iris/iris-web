@@ -28,7 +28,7 @@ from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus
+from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee, TaskComments
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
@@ -224,6 +224,7 @@ def get_case_details_rt(case_id):
             Cases.case_id,
             Cases.case_uuid,
             Client.name.label('customer_name'),
+            Cases.client_id.label('customer_id'),
             Cases.user_id.label('open_by_user_id'),
             user_alias.user.label('open_by_user'),
             Cases.owner_id,
@@ -322,7 +323,11 @@ def delete_case(case_id):
     NotesGroupLink.query.filter(NotesGroupLink.case_id == case_id).delete()
     NotesGroup.query.filter(NotesGroup.group_case_id == case_id).delete()
     Notes.query.filter(Notes.note_case_id == case_id).delete()
-    CaseTasks.query.filter(CaseTasks.task_case_id == case_id).delete()
+
+    tasks = CaseTasks.query.filter(CaseTasks.task_case_id == case_id).all()
+    for task in tasks:
+        TaskAssignee.query.filter(TaskAssignee.task_id == task.id).delete()
+        CaseTasks.query.filter(CaseTasks.id == task.id).delete()
 
     da = CasesEvent.query.with_entities(CasesEvent.event_id).filter(CasesEvent.case_id == case_id).all()
     for event in da:

@@ -102,8 +102,6 @@ def dim_hooks_call(caseid):
     logs = []
     js_data = request.json
 
-    print(js_data)
-
     if not js_data:
         return response_error('Invalid data')
 

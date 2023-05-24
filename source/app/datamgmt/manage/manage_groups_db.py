@@ -80,6 +80,11 @@ def get_group(group_id):
     return group
 
 
+def get_group_by_name(group_name):
+    groups = Group.query.filter(Group.group_name == group_name)
+    return groups.first()
+
+
 def get_group_with_members(group_id):
     group = get_group(group_id)
     if not group:

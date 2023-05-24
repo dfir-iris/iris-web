@@ -50,7 +50,7 @@ function refresh_cases_list_audit() {
             });
             data_select = [];
             for (caseid in data.data) {
-                label = `${data.data[caseid].case_name}`;
+                label = `${sanitizeHTML(data.data[caseid].case_name)}`;
                 $("#cases_audit_select").append('<option value="'+data.data[caseid].case_id+'">'+label+'</option>');
             }
             $("#cases_audit_select").selectpicker("refresh");

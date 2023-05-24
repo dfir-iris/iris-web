@@ -171,7 +171,7 @@
                                 </div>
                                  <div class="row">
                                      <div class="col-xs-12 col-6">
-                                        <div class="input-group mb-2">
+                                        <div class="input-group mb-4">
                                             <div class="input-group-prepend fix-label-item">
                                                 <span class="input-group-text">State</span>
                                             </div>
@@ -184,7 +184,7 @@
                                         </div>
                                     </div>
                                     <div class="col-xs-12 col-6">
-                                        <div class="input-group mb-2">
+                                        <div class="input-group mb-4">
                                             <div class="input-group-prepend fix-label-item">
                                                 <span class="input-group-text">Outcome</span>
                                             </div>
@@ -198,6 +198,21 @@
                                         </div>
                                     </div>
                                  </div>
+                                 <div class="row">
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-2">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Customer</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_customer" name="case_customer">
+                                                {% for cst in customers %}
+                                                    <option value="{{ cst.customer_id }}" {% if data.customer_id == cst.customer_id %}selected{% endif %} class="badge-text">{{ cst.customer_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="form-group px-0">
                                     <label for="asset_tags">Case tags
                                     </label>
@@ -366,6 +381,11 @@
     $('#case_quick_status').selectpicker({
         liveSearch: true,
         title: "Outcome",
+        style: "btn-outline-white"
+    });
+    $('#case_quick_customer').selectpicker({
+        liveSearch: true,
+        title: "Customer",
         style: "btn-outline-white"
     });
 

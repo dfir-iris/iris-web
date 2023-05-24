@@ -275,7 +275,7 @@ function do_list_users(list_users, cur_assignees_id_list) {
     });
 
     for (user in list_users) {
-        $('#task_assignees_id').append(new Option(`${list_users[user].user_login} (${list_users[user].user_name})`,
+        $('#task_assignees_id').append(new Option(`${filterXSS(list_users[user].user_login)} (${filterXSS(list_users[user].user_name)})`,
                                                     list_users[user].user_id));
     }
 
