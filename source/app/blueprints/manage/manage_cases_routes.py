@@ -40,6 +40,7 @@ from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import register_case_protagonists
 from app.datamgmt.case.case_db import save_case_tags
+from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -128,11 +129,13 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, s
     res = get_case_details_rt(cur_id)
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
+    customers = get_client_list()
+
     form = FlaskForm()
 
     if res:
         return render_template("modal_case_info_from_case.html", data=res, form=form, protagnists=None,
-                               case_classifications=case_classifications, case_states=case_states)
+                               case_classifications=case_classifications, case_states=case_states, customers=customers)
 
     else:
         return response_error("Unknown case")
@@ -160,14 +163,14 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
     res = get_case_details_rt(cur_id)
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
-
+    customers = get_client_list()
     protagonists = get_case_protagonists(cur_id)
 
     form = FlaskForm()
 
     if res:
         return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
-                               case_classifications=case_classifications, case_states=case_states)
+                               case_classifications=case_classifications, case_states=case_states, customers=customers)
 
     else:
         return response_error("Unknown case")
@@ -368,7 +371,7 @@ def update_case_info(cur_id, caseid):
         request_data = request.get_json()
 
         request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name')}"
-        request_data['case_customer'] = case_i.client_id
+        request_data['case_customer'] = case_i.client_id if request_data.get('case_customer') is None else request_data.get('case_customer')
 
         case = case_schema.load(request_data, instance=case_i, partial=True)
 

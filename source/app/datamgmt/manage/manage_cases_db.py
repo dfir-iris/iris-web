@@ -224,6 +224,7 @@ def get_case_details_rt(case_id):
             Cases.case_id,
             Cases.case_uuid,
             Client.name.label('customer_name'),
+            Cases.client_id.label('customer_id'),
             Cases.user_id.label('open_by_user_id'),
             user_alias.user.label('open_by_user'),
             Cases.owner_id,
