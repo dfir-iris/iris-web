@@ -366,6 +366,7 @@ class Config:
 
     AUTHENTICATION_TYPE = authentication_type
     AUTHENTICATION_CREATE_USER_IF_NOT_EXIST = (authentication_create_user_if_not_exists == "True")
+    IRIS_NEW_USERS_DEFAULT_GROUP = config.load('IRIS', 'NEW_USERS_DEFAULT_GROUP', fallback='Analysts')
 
     if authentication_type == 'oidc_proxy':
         AUTHENTICATION_LOGOUT_URL = authentication_logout_url

@@ -30,7 +30,7 @@ from app import app
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import add_user_to_group
-from app.iris_engine.access_control.utils import ac_get_group_analysts
+from app.datamgmt.manage.manage_groups_db import get_group_by_name
 
 log = app.logger
 
@@ -75,8 +75,8 @@ def _provision_user(connection, user_login):
     # TODO It seems email unicity is required (a fixed email causes a problem at the second account creation)
     #      The email either comes from the ldap or is forged from the login to ensure unicity
     user = create_user(user_name, user_login, password, user_email, True)
-    ganalysts = ac_get_group_analysts()
-    add_user_to_group(user.id, ganalysts.group_id)
+    initial_group = get_group_by_name(app.config.get('IRIS_NEW_USERS_DEFAULT_GROUP'))
+    add_user_to_group(user.id, initial_group.group_id)
 
 
 def ldap_authenticate(ldap_user_name, ldap_user_pwd):

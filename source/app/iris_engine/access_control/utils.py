@@ -63,12 +63,6 @@ def ac_combine_groups_access(groups_list):
     return users
 
 
-def ac_get_group_analysts():
-    return Group.query.filter(
-        Group.group_name == "Analysts"
-    ).first()
-
-
 def ac_get_mask_analyst():
     """
     Return a standard access mask for analysts
