@@ -316,7 +316,7 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_case_delete',
                 hook_description='Triggered on case deletion, after commit in DB')
     
-    create_safe(db.session, IrisHook, hook_name='on_postload_case_info_update',
+    create_safe(db.session, IrisHook, hook_name='on_postload_case_update',
                 hook_description='Triggered on case update, after commit in DB')
     
     create_safe(db.session, IrisHook, hook_name='on_manual_trigger_case',

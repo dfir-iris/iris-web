@@ -62,7 +62,7 @@ function refresh_users_list_audit() {
             });
             data_select = [];
             for (user in data.data) {
-                label = `${data.data[user].user_login} (${data.data[user].user_name} - ${data.data[user].user_email})`;
+                label = `${sanitizeHTML(data.data[user].user_login)} (${sanitizeHTML(data.data[user].user_name)} - ${sanitizeHTML(data.data[user].user_email)})`;
                 $("#users_audit_select").append('<option value="'+data.data[user].user_id+'">'+label+'</option>');
             }
             $("#users_audit_select").selectpicker("refresh");
