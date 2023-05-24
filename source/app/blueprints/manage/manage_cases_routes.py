@@ -370,7 +370,7 @@ def update_case_info(cur_id, caseid):
 
         request_data = request.get_json()
 
-        request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name')}"
+        request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name').split(' - ')[-1]}"
         request_data['case_customer'] = case_i.client_id if request_data.get('case_customer') is None else request_data.get('case_customer')
 
         case = case_schema.load(request_data, instance=case_i, partial=True)

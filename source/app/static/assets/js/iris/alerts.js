@@ -870,7 +870,11 @@ function renderAlert(alert, expanded=false) {
                       </div>` : ''}
                       ${alert.alert_source_link ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Link:</b></div>
-                        <div class="col-md-9"><a href="${alert.alert_source_link}">${alert.alert_source_link}</a></div>
+                        <div class="col-md-9">${
+                            alert.alert_source_link && alert.alert_source_link.startsWith('http') 
+                            ? `<a href="${alert.alert_source_link}">${alert.alert_source_link}</a>` 
+                            : 'No valid link provided'
+                          }</div>
                       </div>` : ''}
                       ${alert.alert_source_ref ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Reference:</b></div>
