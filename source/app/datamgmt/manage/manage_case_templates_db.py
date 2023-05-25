@@ -178,7 +178,7 @@ def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
             mapped_task_template = {
                 "task_title": task_template['title'],
                 "task_description": task_template['description'] if task_template.get('description') else "",
-                "task_tags": ",".join(tag for tag in task_template["tags"]) if task_template.get('description') else "",
+                "task_tags": ",".join(tag for tag in task_template["tags"]) if task_template.get('tags') else "",
                 "task_status_id": 1
             }
 
