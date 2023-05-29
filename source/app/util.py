@@ -263,9 +263,20 @@ def log_exception_and_error(e):
 def handle_no_cid_required(request, no_cid_required):
     if no_cid_required:
         js_d = request.get_json(silent=True)
-        caseid = js_d.get('cid') if type(js_d) == dict else None
-        if caseid:
-            request.json.pop('cid')
+        caseid = None
+
+        try:
+
+            if type(js_d) == str:
+                js_d = json.loads(js_d)
+
+            caseid = js_d.get('cid') if type(js_d) == dict else None
+            if caseid and 'cid' in request.json:
+                request.json.pop('cid')
+
+        except Exception:
+            return False, None, False
+
         return False, caseid, True
 
     return False, None, False

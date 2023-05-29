@@ -121,6 +121,13 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
 
 
 def delete_asset(asset_id, caseid):
+    case_asset = get_asset(asset_id, caseid)
+
+    if case_asset.case_id and case_asset.alerts is not None:
+        case_asset.case_id = None
+        db.session.commit()
+        return
+
     with db.session.begin_nested():
         delete_ioc_asset_link(asset_id)
 
