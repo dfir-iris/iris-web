@@ -544,7 +544,7 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
           node_type = selectedNodeId.split('_')[0];
           node_id = selectedNodeId.split('_')[1];
 
-          if (node_type === 'alert' || node_type === 'case') {
+          if (node_type === 'alert' || node_type === 'case' || node_type === 'asset' || node_type === 'ioc') {
               // Get the offset of the container element.
               const containerOffset = getAlertOffset(container);
 
@@ -560,7 +560,11 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
 
               $('#view-alert').data('node-id', node_id);
               $('#view-alert').data('node-type', node_type);
-              $('#view-alert-text').text(`View ${node_type} #${node_id}`);
+              if (node_type === 'alert' || node_type === 'case') {
+                  $('#view-alert-text').text(`View on ${node_type} #${node_id}`);
+              } else {
+                    $('#view-alert-text').text(`Pivot on ${node_type} ${node_id}`);
+              }
               contextMenu.show();
           }
       }
@@ -586,7 +590,11 @@ function viewAlertGraph() {
     if (node_type === 'alert') {
         window.open(`/alerts?alert_ids=${node_id}&cid=${get_caseid()}`);
     } else if (node_type === 'case') {
-        window.open(`/case?cid=${node_id}`);
+        window.open(`/case?cid=${node_id}`);Ï
+    } else if (node_type === 'asset') {
+        window.open(`/alerts?alert_assets=${node_id}&cid=${get_caseid()}`);
+    } else if (node_type === 'ioc') {
+        window.open(`/alerts?alert_iocs=${node_id}&cid=${get_caseid()}`);
     }
 }
 

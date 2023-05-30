@@ -1163,7 +1163,7 @@ def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
     except Exception as e:
         db.session.rollback()
         app.logger.exception(str(e))
-        return False, str(e)
+        return False, "Server side error"
 
     return True, ""
 
