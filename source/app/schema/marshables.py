@@ -72,6 +72,7 @@ from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.cases import CaseState
+from app.models import IrisModule
 from app.util import file_sha256sum, str_to_bool
 from app.util import stream_sha256sum
 
@@ -995,3 +996,8 @@ class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         include_relationships = True
 
+
+class IrisModuleSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = IrisModule
+        load_instance = True

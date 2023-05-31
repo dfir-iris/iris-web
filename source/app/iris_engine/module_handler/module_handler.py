@@ -257,25 +257,25 @@ def register_module(module_name):
 
     if not module_name:
         log.error("Provided module has no names")
-        return None, ["Module has no names"]
+        return None, "Module has no names"
 
     try:
 
         mod_inst, _ = instantiate_module_from_name(module_name=module_name)
         if not mod_inst:
             log.error("Module could not be instantiated")
-            return None, ["Module could not be instantiated"]
+            return None, "Module could not be instantiated"
 
         if iris_module_exists(module_name=module_name):
             log.warning("Module already exists in Iris")
-            return None, ["Module already exists in Iris"]
+            return None, "Module already exists in Iris"
 
         # Auto parse the configuration and fill with default
         log.info('Parsing configuration')
         mod_config = preset_init_mod_config(mod_inst.get_init_configuration())
 
         log.info('Adding module')
-        modu_id = iris_module_add(module_name=module_name,
+        module = iris_module_add(module_name=module_name,
                                   module_human_name=mod_inst.get_module_name(),
                                   module_description=mod_inst.get_module_description(),
                                   module_config=mod_config,
@@ -286,16 +286,16 @@ def register_module(module_name):
                                   module_type=mod_inst.get_module_type()
                                   )
 
-        if not modu_id:
-            return None, ["Unable to register module"]
+        if module is None:
+            return None, "Unable to register module"
 
         if mod_inst.get_module_type() == 'module_processor':
-            mod_inst.register_hooks(module_id=modu_id)
+            mod_inst.register_hooks(module_id=module.id)
 
     except Exception as e:
-        return None, ["Fatal - {}".format(e.__str__())]
+        return None, "Fatal - {}".format(e.__str__())
 
-    return modu_id, ["Module registered"]
+    return module, "Module registered"
 
 
 def iris_update_hooks(module_name, module_id):
