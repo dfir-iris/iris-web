@@ -418,10 +418,10 @@ function mergeAlertCasesSelectOption(data) {
 }
 
 function fetchSmartRelations(alert_id) {
-    $('input[value="open_alerts"]').prop('checked', true);
-    $('input[value="closed_alerts"]').prop('checked', false);
-    $('input[value="open_cases"]').prop('checked', false);
-    $('input[value="closed_cases"]').prop('checked', false);
+    $(`input[name="open_alerts_${alert_id}"]`).prop('checked', true);
+    $(`input[name="closed_alerts_${alert_id}"]`).prop('checked', false);
+    $(`input[name="open_cases_${alert_id}"]`).prop('checked', false);
+    $(`input[name="closed_cases_${alert_id}"]`).prop('checked', false);
 
     fetchSimilarAlerts(alert_id, false, true, false,
         false, false);
@@ -927,19 +927,19 @@ function renderAlert(alert, expanded=false) {
                         <div class="row ml-1">
                             <div class="selectgroup selectgroup-pills mt-4">
                                 <label class="selectgroup-item">
-                                    <input type="checkbox" name="value" value="open_alerts" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id});">
+                                    <input type="checkbox" name="open_alerts_${alert.alert_id}" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id});">
                                     <span class="selectgroup-button">Show open alerts</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="checkbox" name="value" value="closed_alerts" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id})">
+                                    <input type="checkbox" name="closed_alerts_${alert.alert_id}" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id})">
                                     <span class="selectgroup-button">Show closed alerts</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="checkbox" name="value" value="open_cases" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id})">
+                                    <input type="checkbox" name="open_cases_${alert.alert_id}" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id})">
                                     <span class="selectgroup-button">Show open cases</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="checkbox" name="value" value="closed_cases" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id})">
+                                    <input type="checkbox" name="closed_cases_${alert.alert_id}" class="selectgroup-input filter-graph-alert-checkbox" onclick="refreshAlertRelationships(${alert.alert_id})">
                                     <span class="selectgroup-button">Show closed cases</span>
                                 </label>
                             </div>
@@ -1809,10 +1809,10 @@ function updateAlertBadge() {
 
 function refreshAlertRelationships(alertId) {
     // Get the checked status of each checkbox
-    let fetch_open_alerts = $('input[value="open_alerts"]').prop('checked');
-    let fetch_closed_alerts = $('input[value="closed_alerts"]').prop('checked');
-    let fetch_open_cases = $('input[value="open_cases"]').prop('checked');
-    let fetch_closed_cases = $('input[value="closed_cases"]').prop('checked');
+    let fetch_open_alerts = $(`input[name="open_alerts_${alertId}"]`).prop('checked');
+    let fetch_closed_alerts = $(`input[name="closed_alerts_${alertId}"]`).prop('checked');
+    let fetch_open_cases = $(`input[name="open_cases_${alertId}"]`).prop('checked');
+    let fetch_closed_cases = $(`input[name="closed_cases_${alertId}"]`).prop('checked');
 
     console.log("fetch_open_alerts: " + fetch_open_alerts)
 
