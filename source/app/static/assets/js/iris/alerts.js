@@ -757,9 +757,9 @@ function renderAlert(alert, expanded=false) {
   if (alert.owner !== null) {
       alert.owner.user_name = filterXSS(alert.owner.user_name);
   }
-  alert.alert_title = filterXSS(alert.alert_title);
-  alert.alert_description = filterXSS(alert.alert_description);
-  alert.alert_source = filterXSS(alert.alert_source);
+  alert.alert_title = filterXSS(alert.alert_title) ? alert.alert_title : 'No title provided';
+  alert.alert_description = filterXSS(alert.alert_description) ? alert.alert_description : 'No description provided';
+  alert.alert_source = filterXSS(alert.alert_source) ? alert.alert_source : 'No source provided';
   alert.alert_source_link = filterXSS(alert.alert_source_link);
   alert.alert_source_ref = filterXSS(alert.alert_source_ref);
   alert.alert_note = filterXSS(alert.alert_note);
@@ -872,8 +872,7 @@ function renderAlert(alert, expanded=false) {
                 <div class="card-no-pd mt-2">
                     <div class="card-body">
                     <h3 class="title mb-3"><strong>General info</strong></h3>  
-                      <div class="row">
-                        ${alert.alert_source ? `<div class="col-md-3"><b>Source:</b></div>
+                        ${alert.alert_source ? `<div class="row"><div class="col-md-3"><b>Source:</b></div>
                         <div class="col-md-9">${alert.alert_source}</div>
                       </div>` : ''}
                       ${alert.alert_source_link ? `<div class="row mt-2">
