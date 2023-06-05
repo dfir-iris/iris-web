@@ -1,10 +1,8 @@
-# Iris Web
-
-Iris is a web collaborative platform aiming to help incident responders sharing technical details during investigations.
-
-## Prerequisites    
-- Kubernetes 1.26+     
+# Prerequisites    
+- Kubernetes cluster must be on the running stage (Kubernetes 1.26+)     
 - Helm 3.1.0      
+
+# Installing the Charts    
 
 ## Installing Nginx Ingress Controller 
 
@@ -14,9 +12,9 @@ The Ingress resource supports the following features:
 
 ⦿  Content-based routing:
 
-`Host-based routing:` For example, routing requests with the host header foo.example.com to one group of services and the host header bar.example.com to another group.
+- `Host-based routing:` For example, routing requests with the host header foo.example.com to one group of services and the host header bar.example.com to another group.
 
-`Path-based routing:` For example, routing requests with the URI that starts with /serviceA to service A and requests with the URI that starts with /serviceB to service B.
+- `Path-based routing:` For example, routing requests with the URI that starts with /serviceA to service A and requests with the URI that starts with /serviceB to service B.
 
 ⦿ **TLS/SSL** termination for each hostname, such as foo.example.com.
 
@@ -26,8 +24,8 @@ helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.
 ```
 > **Info**: `my-release` is the name that you choose
 
+## Installing Iris Web
 
-## Installing the Chart      
 Clone this Repository       
 ```bash     
 $ git clone https://github.com/dfir-iris/iris-web.git      
@@ -36,22 +34,22 @@ $ git clone https://github.com/dfir-iris/iris-web.git
 
 To install the chart with the release name `my-release`:      
 ```bash    
-$ helm install my-release iris-web/ --values iris-web/values.yaml  -n <Name_Space>  
+$ helm install my-release charts/ --values charts/values.yaml  -n <Name_Space>  
 ```      
 The command deploys **iris-web** on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.      
 
 > **Tip**: List all releases using `helm list`       
 
-## Uninstalling the Chart    
+# Uninstalling the Charts    
 
 To uninstall/delete the `my-release` deployment:      
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.      
 
 ```bash     
-$ helm delete my-release      
+$ helm delete my-release -n <Name_Space>   
 ```      
-## Parameters    
+# Parameters    
 
 ### Common parameters       
 | Name | Description | Value |     
