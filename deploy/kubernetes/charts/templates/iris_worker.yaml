@@ -66,5 +66,4 @@ spec:
           emptyDir: {}
         - name: server-data 
           emptyDir: {}
-
 ---

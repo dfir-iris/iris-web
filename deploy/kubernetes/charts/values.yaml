@@ -66,10 +66,4 @@ irisworker:
    POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
    DOCKERIZED: 1
    IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
-   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither 
-
-
-   
-
-
-   
+   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
