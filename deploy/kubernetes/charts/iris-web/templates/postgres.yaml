@@ -1,0 +1,104 @@
+---    
+# Here I have used a hostpath
+# Local volumes can only be used as a statically created PersistentVolume. Dynamic provisioning is not supported.
+# If you need to go with Dynamic volumes you may choose AWS EBS or EFS
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres-pv-volume
+  labels:
+    app: {{ .Values.postgres.app }}
+spec:
+  storageClassName: pv
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /var/lib/data
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgres-pv-claim
+  labels:
+    app: {{ .Values.postgres.app }}
+spec:
+  storageClassName: pv
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.postgres.name }}
+spec:
+  replicas: {{ .Values.postgres.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.postgres.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.postgres.app }}
+    spec:
+      containers:
+        - name: {{ .Values.postgres.name }}
+          image: "{{ .Values.postgres.image}}:{{ .Values.postgres.tag }}"
+          imagePullPolicy: "{{ .Values.postgres.imagePullPolicy }}"
+
+          env:
+                
+          - name: POSTGRES_DB  # Setting Database name 
+            value: {{ .Values.postgres.POSTGRES_DB | quote }}
+
+          - name: POSTGRES_USER  # Setting Database username 
+            value: {{ .Values.postgres.POSTGRES_ADMIN_USER | quote }}
+
+          - name:  POSTGRES_PASSWORDD # Setting Database password 
+            value: {{ .Values.postgres.POSTGRES_PASSWORD | quote }}
+
+          - name:  POSTGRES_ADMIN_USER # Setting Database admin user 
+            value: {{ .Values.postgres.POSTGRES_ADMIN_USER | quote }}
+
+          - name:  POSTGRES_ADMIN_PASSWORD # Setting Database admin password 
+            value: {{ .Values.postgres.POSTGRES_ADMIN_PASSWORD | quote }}    
+
+          - name:  POSTGRES_PORT # Setting Database port
+            value: {{ .Values.postgres.POSTGRES_PORT | quote }}   
+
+          - name: POSTGRES_HOST_AUTH_METHOD
+            value: trust  
+
+          ports:
+            - containerPort: 5432
+
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgredb
+      volumes:
+        - name: postgredb
+          persistentVolumeClaim:
+            claimName: postgres-pv-claim  
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.name }}
+  labels:
+    app: {{ .Values.postgres.app }}
+spec:
+  type: ClusterIP
+  ports:
+   - port: {{ .Values.postgres.service.port }}
+  selector:
+   app: {{ .Values.postgres.app }}
+---  

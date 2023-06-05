@@ -1,0 +1,75 @@
+rabbitmq:
+   app: rabbitmq
+   name: rabbitmq
+   image: rabbitmq
+   tag: 3-management-alpine
+   imagePullPolicy: "IfNotPresent"
+   replicaCount: 1
+   
+
+postgres:
+   app: postgres
+   name: postgres
+   image: <postgres_image>
+   tag: <tag>
+   imagePullPolicy: "IfNotPresent"
+   replicaCount: 1
+
+   service:
+    port: 5432
+
+   POSTGRES_USER: postgres
+   POSTGRES_PASSWORD: postgres
+   POSTGRES_ADMIN_USER: raptor
+   POSTGRES_ADMIN_PASSWORD: postgres
+   POSTGRES_DB: iris_db
+   POSTGRES_PORT: 5432
+
+
+irisapp:
+   app: iriswebapp-app
+   name: iriswebapp-app
+   image: <irisapp_image>
+   tag: <tag>
+   imagePullPolicy: "IfNotPresent"
+   replicaCount: 1
+
+   service:
+     port: 80 
+    
+   type: LoadBalancer  
+
+   POSTGRES_USER: raptor
+   POSTGRES_PASSWORD: postgres
+   POSTGRES_ADMIN_USER: raptor
+   POSTGRES_ADMIN_PASSWORD: postgres
+   POSTGRES_PORT: 5432
+   POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
+   DOCKERIZED: 1
+   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
+   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+
+
+irisworker:    
+   app: iriswebapp-worker
+   name: iriswebapp-worker
+   image: <irisworker_image>
+   tag: <tag>
+   imagePullPolicy: "IfNotPresent"
+   replicaCount: 1
+
+   POSTGRES_USER: raptor
+   POSTGRES_PASSWORD: postgres
+   POSTGRES_ADMIN_USER: raptor
+   POSTGRES_ADMIN_PASSWORD: postgres
+   POSTGRES_PORT: 5432
+   POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
+   DOCKERIZED: 1
+   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
+   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither 
+
+
+   
+
+
+   
