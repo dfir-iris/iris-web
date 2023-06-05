@@ -23,7 +23,6 @@ The Ingress resource supports the following features:
 Before installing Iris-web install the Nginx ingress controller
 ```
 helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.17.1 -n <Name_space>
-
 ```
 > **Info**: `my-release` is the name that you choose
 
