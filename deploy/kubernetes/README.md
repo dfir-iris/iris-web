@@ -65,6 +65,9 @@ $ helm delete my-release -n <Name_Space>
 
 
 ### Image parameters     
+Using Dockerfile or Docker compose create images for Iris and apply image to their respective yaml file.
+> **Note**: For kubernetes  use modified Dockerfile.k8s file to create an images
+
 | Name | Description | Value |      
 | --| -- | -- |      
 | `image.repository` | Iris image repository | `string` |       
