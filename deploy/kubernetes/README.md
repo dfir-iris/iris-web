@@ -20,7 +20,8 @@ The Ingress resource supports the following features:
 
 Before installing Iris-web install the Nginx ingress controller
 ```
-helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.17.1 -n <Name_space>
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm install my-release ingress-nginx/ingress-nginx -n <Name_Space>
 ```
 > **Info**: `my-release` is the name that you choose
 

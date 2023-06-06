@@ -37,7 +37,7 @@ irisapp:
    service:
      port: 80 
     
-   type: LoadBalancer  
+   type: ClusterIP  
 
    POSTGRES_USER: raptor
    POSTGRES_PASSWORD: postgres
