@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from typing import Any, Dict, List, Optional, Tuple, Union
 import uuid
 
 import datetime
@@ -40,6 +41,7 @@ from marshmallow import ValidationError
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
 from sqlalchemy import func
+from werkzeug.datastructures import FileStorage
 
 from app import app
 from app import db
@@ -72,7 +74,7 @@ from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.cases import CaseState
-from app.util import file_sha256sum, str_to_bool
+from app.util import file_sha256sum, str_to_bool, assert_type_mml
 from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
@@ -80,18 +82,50 @@ ALLOWED_EXTENSIONS = {'png', 'svg'}
 log = app.logger
 
 
-def allowed_file_icon(filename):
+
+def allowed_file_icon(filename: str):
+    """
+    Checks if the file extension of the given filename is allowed.
+
+    Args:
+        filename (str): The name of the file to check.
+
+    Returns:
+        bool: True if the filename has an extension and the extension is in the ALLOWED_EXTENSIONS set, False otherwise.
+    """
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def get_random_string(length):
+def get_random_string(length: int) -> str:
+    """
+    Generates a random string of lowercase letters.
+
+    Args:
+        length (int): The length of the string to generate.
+
+    Returns:
+        str: A random string of lowercase letters with the given length.
+    """
     letters = string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
 
 
 def store_icon(file):
+    """Stores an icon file.
+
+    This function stores an icon file in the asset store path and creates a symlink to it in the asset show path.
+    The file is saved with a randomly generated filename. If the file is not valid or its filetype is not allowed,
+    the function returns an error message.
+
+    Args:
+        file: The icon file to store.
+
+    Returns:
+        A tuple containing the filename of the stored file (or None if an error occurred) and a message.
+
+    """
     if not file:
         return None, 'Icon file is not valid'
 
@@ -101,7 +135,6 @@ def store_icon(file):
     filename = get_random_string(18)
 
     try:
-
         store_fullpath = os.path.join(app.config['ASSET_STORE_PATH'], filename)
         show_fullpath = os.path.join(app.config['APP_PATH'], 'app',
                                      app.config['ASSET_SHOW_PATH'].strip(os.path.sep),
@@ -116,10 +149,16 @@ def store_icon(file):
 
 
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
-    csrf_token = fields.String(required=False)
-    group_id = fields.Integer()
-    group_uuid = fields.UUID()
-    group_title = fields.String()
+    """Schema for serializing and deserializing CaseNote objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseNote objects.
+    It includes fields for the CSRF token, group ID, group UUID, and group title.
+
+    """
+    csrf_token: str = fields.String(required=False)
+    group_id: int = fields.Integer()
+    group_uuid: uuid.UUID = fields.UUID()
+    group_title: str = fields.String()
 
     class Meta:
         model = Notes
@@ -127,14 +166,41 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseAddNoteSchema(ma.Schema):
-    note_id = fields.Integer(required=False)
-    note_title = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
-    note_content = fields.String(required=False)
-    group_id = fields.Integer(required=True)
-    csrf_token = fields.String(required=False)
-    custom_attributes = fields.Dict(required=False)
+    """Schema for serializing and deserializing CaseNote objects.
 
-    def verify_group_id(self, data, **kwargs):
+    This schema defines the fields to include when serializing and deserializing CaseNote objects.
+    It includes fields for the note ID, note title, note content, group ID, CSRF token, and custom attributes.
+    It also includes a method for verifying the group ID and a post-load method for merging custom attributes.
+
+    """
+    note_id: int = fields.Integer(required=False)
+    note_title: str = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
+    note_content: str = fields.String(required=False)
+    group_id: int = fields.Integer(required=True)
+    csrf_token: str = fields.String(required=False)
+    custom_attributes: Dict[str, Any] = fields.Dict(required=False)
+
+    def verify_group_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the group ID is valid.
+
+        This method verifies that the group ID specified in the data is valid for the case ID specified in kwargs.
+        If the group ID is valid, it returns the data. Otherwise, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments, including the case ID.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the group ID is invalid.
+
+        """
+        assert_type_mml(input_var=data.get('group_id'),
+                        field_name="group_id",
+                        type=int)
+
         group = NotesGroup.query.filter(
             NotesGroup.group_id == data.get('group_id'),
             NotesGroup.group_case_id == kwargs.get('caseid')
@@ -146,33 +212,86 @@ class CaseAddNoteSchema(ma.Schema):
                                                      field_name="group_id")
 
     @post_load
-    def custom_attributes_merge(self, data, **kwargs):
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes.
+
+        This method merges any custom attributes specified in the data with the existing custom attributes for the note.
+        If there are no custom attributes specified, it returns the data unchanged.
+
+        Args:
+            data: The data to merge.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The merged data.
+
+        """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
+
+            assert_type_mml(input_var=data.get('note_id'),
+                            field_name="note_id",
+                            type=int)
+
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
 
         return data
 
 
 class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing NotesGroup objects.
+
+    This schema defines the fields to include when serializing and deserializing NotesGroup objects.
+    It includes fields for the group ID, group UUID, group title, and the notes associated with the group.
+
+    """
+    group_id: int = fields.Integer()
+    group_uuid: uuid.UUID = fields.UUID()
+    group_title: str = fields.String()
+    notes: List[CaseNoteSchema] = fields.Nested(CaseNoteSchema, many=True)
+
     class Meta:
         model = NotesGroup
         load_instance = True
 
 
 class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
-    csrf_token = fields.String(required=False)
-    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
-    asset_description = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
-    asset_icon_compromised = auto_field('asset_icon_compromised')
-    asset_icon_not_compromised = auto_field('asset_icon_not_compromised')
+    """Schema for serializing and deserializing AssetsType objects.
+
+    This schema defines the fields to include when serializing and deserializing AssetsType objects.
+    It includes fields for the CSRF token, asset name, asset description, and asset icons for both compromised and
+    not compromised states. It also includes a method for verifying that the asset name is unique and a method for
+    loading and storing asset icons.
+
+    """
+    csrf_token: str = fields.String(required=False)
+    asset_name: str = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
+    asset_description: str = auto_field('asset_description', required=True, validate=Length(min=2), allow_none=False)
+    asset_icon_compromised: str = auto_field('asset_icon_compromised')
+    asset_icon_not_compromised: str = auto_field('asset_icon_not_compromised')
 
     class Meta:
         model = AssetsType
         load_instance = True
 
     @post_load
-    def verify_unique(self, data, **kwargs):
+    def verify_unique(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the asset name is unique.
+
+        This method verifies that the asset name specified in the data is unique. If the asset name is not unique,
+        it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the asset name is not unique.
+
+        """
         client = AssetsType.query.filter(
             func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
             AssetsType.asset_id != data.asset_id
@@ -185,7 +304,23 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
-    def load_store_icon(self, file_storage, field_type):
+    def load_store_icon(self, file_storage: Any, field_type: str) -> Optional[str]:
+        """Loads and stores an asset icon.
+
+        This method loads and stores an asset icon from the specified file storage. If the file storage is not valid
+        or its filetype is not allowed, it raises a validation error.
+
+        Args:
+            file_storage: The file storage containing the asset icon.
+            field_type: The type of asset icon to load and store.
+
+        Returns:
+            The filename of the stored asset icon, or None if an error occurred.
+
+        Raises:
+            ValidationError: If the file storage is not valid or its filetype is not allowed.
+
+        """
         if not file_storage.filename:
             return None
 
@@ -203,10 +338,18 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
-    asset_name = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
-    ioc_links = fields.List(fields.Integer, required=False)
-    asset_enrichment = auto_field('asset_enrichment', required=False)
-    asset_type = ma.Nested(AssetTypeSchema, required=False)
+    """Schema for serializing and deserializing CaseAssets objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseAssets objects.
+    It includes fields for the asset name, IOC links, asset enrichment, asset type, and custom attributes.
+    It also includes methods for verifying the asset type ID and analysis status ID, and for merging custom attributes.
+
+    """
+    asset_name: str = auto_field('asset_name', required=True, validate=Length(min=2), allow_none=False)
+    ioc_links: List[int] = fields.List(fields.Integer, required=False)
+    asset_enrichment: str = auto_field('asset_enrichment', required=False)
+    asset_type: AssetTypeSchema = ma.Nested(AssetTypeSchema, required=False)
+    custom_attributes: Dict[str, Any] = fields.Dict(required=False)
 
     class Meta:
         model = CaseAssets
@@ -214,11 +357,35 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
     @pre_load
-    def verify_data(self, data, **kwargs):
+    def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies the asset type ID and analysis status ID.
+
+        This method verifies that the asset type ID and analysis status ID specified in the data are valid.
+        If either ID is invalid, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If either ID is invalid.
+
+        """
+        assert_type_mml(input_var=data.get('asset_type_id'),
+                        field_name="asset_type_id",
+                        type=int)
+
         asset_type = AssetsType.query.filter(AssetsType.asset_id == data.get('asset_type_id')).count()
         if not asset_type:
             raise marshmallow.exceptions.ValidationError("Invalid asset type ID",
                                                          field_name="asset_type_id")
+
+        assert_type_mml(input_var=data.get('analysis_status_id'),
+                        field_name="analysis_status_id", type=int,
+                        allow_none=True)
 
         if data.get('analysis_status_id'):
             status = AnalysisStatus.query.filter(AnalysisStatus.id == data.get('analysis_status_id')).count()
@@ -229,29 +396,70 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         return data
 
     @post_load
-    def custom_attributes_merge(self, data, **kwargs):
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes.
+
+        This method merges any custom attributes specified in the data with the existing custom attributes for the asset.
+        If there are no custom attributes specified, it returns the data unchanged.
+
+        Args:
+            data: The data to merge.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The merged data.
+
+        """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
+            assert_type_mml(input_var=data.get('asset_id'),
+                            field_name="asset_id", type=int,
+                            allow_none=True)
+
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('asset_id'), 'asset')
 
         return data
 
 
 class CaseTemplateSchema(ma.Schema):
-    id = fields.Integer(dump_only=True)
-    created_by_user_id = fields.Integer(required=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    name = fields.String(required=True)
-    display_name = fields.String(allow_none=True, missing="")
-    description = fields.String(allow_none=True, missing="")
-    author = fields.String(allow_none=True, validate=Length(max=128), missing="")
-    title_prefix = fields.String(allow_none=True, validate=Length(max=32), missing="")
-    summary = fields.String(allow_none=True, missing="")
-    tags = fields.List(fields.String(), allow_none=True, missing=[])
-    classification = fields.String(allow_none=True, missing="")
+    """Schema for serializing and deserializing CaseTemplate objects.
 
-    def validate_string_or_list(value):
+    This schema defines the fields to include when serializing and deserializing CaseTemplate objects.
+    It includes fields for the template ID, the user ID of the user who created the template, the creation and update
+    timestamps, the name, display name, description, author, title prefix, summary, tags, and classification of the
+    template. It also includes fields for the tasks and note groups associated with the template, and methods for
+    validating the format of the tasks and note groups.
+
+    """
+    id: int = fields.Integer(dump_only=True)
+    created_by_user_id: int = fields.Integer(required=True)
+    created_at: datetime = fields.DateTime(dump_only=True)
+    updated_at: datetime = fields.DateTime(dump_only=True)
+    name: str = fields.String(required=True)
+    display_name: Optional[str] = fields.String(allow_none=True, missing="")
+    description: Optional[str] = fields.String(allow_none=True, missing="")
+    author: Optional[str] = fields.String(allow_none=True, validate=Length(max=128), missing="")
+    title_prefix: Optional[str] = fields.String(allow_none=True, validate=Length(max=32), missing="")
+    summary: Optional[str] = fields.String(allow_none=True, missing="")
+    tags: Optional[List[str]] = fields.List(fields.String(), allow_none=True, missing=[])
+    classification: Optional[str] = fields.String(allow_none=True, missing="")
+
+    def validate_string_or_list(value: Union[str, List[str]]) -> Union[str, List[str]]:
+        """Validates that a value is a string or a list of strings.
+
+        This method validates that a value is either a string or a list of strings. If the value is a list, it also
+        validates that all items in the list are strings.
+
+        Args:
+            value: The value to validate.
+
+        Returns:
+            The validated value.
+
+        Raises:
+            ValidationError: If the value is not a string or a list of strings.
+
+        """
         if not isinstance(value, (str, list)):
             raise ValidationError('Value must be a string or a list of strings')
         if isinstance(value, list):
@@ -260,7 +468,22 @@ class CaseTemplateSchema(ma.Schema):
                     raise ValidationError('All items in list must be strings')
         return value
 
-    def validate_string_or_list_of_dict(value):
+    def validate_string_or_list_of_dict(value: Union[str, List[Dict[str, str]]]) -> Union[str, List[Dict[str, str]]]:
+        """Validates that a value is a string or a list of dictionaries with string values.
+
+        This method validates that a value is either a string or a list of dictionaries with string values. If the value
+        is a list, it also validates that all items in the list are dictionaries with string values.
+
+        Args:
+            value: The value to validate.
+
+        Returns:
+            The validated value.
+
+        Raises:
+            ValidationError: If the value is not a string or a list of dictionaries with string values.
+
+        """
         if not isinstance(value, (str, list)):
             raise ValidationError('Value must be a string or a list of strings')
         if isinstance(value, list):
@@ -272,29 +495,57 @@ class CaseTemplateSchema(ma.Schema):
                         raise ValidationError('All items in dict must be str')
         return value
 
-    tasks = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list]))
-                        , allow_none=True, missing=[])
-    note_groups = fields.List(fields.Dict(keys=fields.Str(),
-                                          values=fields.Raw(validate=[validate_string_or_list_of_dict]))
-                              , allow_none=True, missing=[])
+    tasks: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
+        fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list])),
+        allow_none=True,
+        missing=[]
+    )
+    note_groups: Optional[List[Dict[str, Union[str, List[Dict[str, str]]]]]] = fields.List(
+        fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list_of_dict])),
+        allow_none=True,
+        missing=[]
+    )
 
 
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
-    type_name = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
-    type_description = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
-    type_taxonomy = auto_field('type_taxonomy')
-    type_validation_regex = auto_field('type_validation_regex')
-    type_validation_expect = auto_field('type_validation_expect')
+    """Schema for serializing and deserializing IocType objects.
+
+    This schema defines the fields to include when serializing and deserializing IocType objects.
+    It includes fields for the IOC type name, description, taxonomy, validation regex, and validation expectation.
+    It also includes a method for verifying that the IOC type name is unique.
+
+    """
+    type_name: str = auto_field('type_name', required=True, validate=Length(min=2), allow_none=False)
+    type_description: str = auto_field('type_description', required=True, validate=Length(min=2), allow_none=False)
+    type_taxonomy: Optional[str] = auto_field('type_taxonomy')
+    type_validation_regex: Optional[str] = auto_field('type_validation_regex')
+    type_validation_expect: Optional[str] = auto_field('type_validation_expect')
 
     class Meta:
         model = IocType
         load_instance = True
 
     @post_load
-    def verify_unique(self, data, **kwargs):
+    def verify_unique(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the IOC type name is unique.
+
+        This method verifies that the IOC type name specified in the data is unique.
+        If the name is not unique, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the IOC type name is not unique.
+
+        """
         client = IocType.query.filter(
-            func.lower(IocType.type_name) == func.lower(data.type_name),
-            IocType.type_id != data.type_id
+            func.lower(IocType.type_name) == func.lower(data['type_name']),
+            IocType.type_id != data['type_id']
         ).first()
         if client:
             raise marshmallow.exceptions.ValidationError(
@@ -306,9 +557,16 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
 
 
 class IocSchema(ma.SQLAlchemyAutoSchema):
-    ioc_value = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
-    ioc_enrichment = auto_field('ioc_enrichment', required=False)
-    ioc_type = ma.Nested(IocTypeSchema, required=False)
+    """Schema for serializing and deserializing IOC objects.
+
+    This schema defines the fields to include when serializing and deserializing IOC objects.
+    It includes fields for the IOC value, enrichment data, and the IOC type associated with the IOC.
+    It also includes methods for verifying the format of the IOC value and merging custom attributes.
+
+    """
+    ioc_value: str = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
+    ioc_enrichment: Optional[Dict[str, Any]] = auto_field('ioc_enrichment', required=False)
+    ioc_type: Optional[IocTypeSchema] = ma.Nested(IocTypeSchema, required=False)
 
     class Meta:
         model = Ioc
@@ -316,46 +574,88 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
 
     @pre_load
-    def verify_data(self, data, **kwargs):
+    def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies the format of the IOC value and associated IOC type.
+
+        This method verifies that the IOC value specified in the data matches the expected format for the associated
+        IOC type. If the value does not match the expected format, it raises a validation error. It also verifies that
+        the specified IOC type ID and TLP ID are valid.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the IOC value does not match the expected format or if the specified IOC type ID or
+            TLP ID are invalid.
+
+        """
+        assert_type_mml(input_var=data.get('ioc_type_id'), field_name="ioc_type_id", type=int)
+
         ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
         if not ioc_type:
-            raise marshmallow.exceptions.ValidationError("Invalid ioc type ID",
-                                                         field_name="ioc_type_id")
+            raise marshmallow.exceptions.ValidationError("Invalid ioc type ID", field_name="ioc_type_id")
+
+        assert_type_mml(input_var=data.get('ioc_tlp_id'), field_name="ioc_tlp_id", type=int)
 
         tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
         if not tlp_id:
-            raise marshmallow.exceptions.ValidationError("Invalid TLP ID",
-                                                         field_name="ioc_tlp_id")
+            raise marshmallow.exceptions.ValidationError("Invalid TLP ID", field_name="ioc_tlp_id")
 
         if ioc_type.type_validation_regex:
             if not re.fullmatch(ioc_type.type_validation_regex, data.get('ioc_value'), re.IGNORECASE):
                 error = f"The input doesn\'t match the expected format " \
                         f"(expected: {ioc_type.type_validation_expect or ioc_type.type_validation_regex})"
-                raise marshmallow.exceptions.ValidationError(error,
-                                                             field_name="ioc_ioc_value")
+                raise marshmallow.exceptions.ValidationError(error, field_name="ioc_ioc_value")
 
         return data
 
     @post_load
-    def custom_attributes_merge(self, data, **kwargs):
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes with the IOC data.
+
+        This method merges any custom attributes specified in the data with the IOC data. If no custom attributes are
+        specified, it returns the original data.
+
+        Args:
+            data: The data to merge.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The merged data.
+
+        """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
+
+            assert_type_mml(input_var=data.get('ioc_id'), field_name="ioc_id", type=int)
+
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
 
         return data
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
-    user_roles_str = fields.List(fields.String, required=False)
-    user_name = auto_field('name', required=True, validate=Length(min=2))
-    user_login = auto_field('user', required=True, validate=Length(min=2))
-    user_email = auto_field('email', required=True, validate=Length(min=2))
-    user_password = auto_field('password', required=False)
-    user_isadmin = fields.Boolean(required=True)
-    csrf_token = fields.String(required=False)
-    user_id = fields.Integer(required=False)
-    user_primary_organisation_id = fields.Integer(required=False)
-    user_is_service_account = auto_field('is_service_account', required=False)
+    """Schema for serializing and deserializing User objects.
+
+    This schema defines the fields to include when serializing and deserializing User objects.
+    It includes fields for the user's name, login, email, password, admin status, CSRF token, ID, primary organization ID,
+    and service account status. It also includes methods for verifying the username, email, and password.
+
+    """
+    user_roles_str: List[str] = fields.List(fields.String, required=False)
+    user_name: str = auto_field('name', required=True, validate=Length(min=2))
+    user_login: str = auto_field('user', required=True, validate=Length(min=2))
+    user_email: str = auto_field('email', required=True, validate=Length(min=2))
+    user_password: Optional[str] = auto_field('password', required=False)
+    user_isadmin: bool = fields.Boolean(required=True)
+    csrf_token: Optional[str] = fields.String(required=False)
+    user_id: Optional[int] = fields.Integer(required=False)
+    user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
+    user_is_service_account: Optional[bool] = auto_field('is_service_account', required=False)
 
     class Meta:
         model = User
@@ -364,9 +664,29 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
 
     @pre_load()
-    def verify_username(self, data, **kwargs):
+    def verify_username(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the username is not already taken.
+
+        This method verifies that the specified username is not already taken by another user. If the username is already
+        taken, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the username is already taken.
+
+        """
         user = data.get('user_login')
         user_id = data.get('user_id')
+
+        assert_type_mml(input_var=user_id, field_name="user_id", type=int)
+        assert_type_mml(input_var=user, field_name="user_login", type=str)
+
         luser = User.query.filter(
             User.user == user
         ).all()
@@ -378,9 +698,29 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         return data
 
     @pre_load()
-    def verify_email(self, data, **kwargs):
+    def verify_email(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the email is not already taken.
+
+        This method verifies that the specified email is not already taken by another user. If the email is already
+        taken, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the email is already taken.
+
+        """
         email = data.get('user_email')
         user_id = data.get('user_id')
+
+        assert_type_mml(input_var=user_id, field_name="user_id", type=int)
+        assert_type_mml(input_var=email, field_name="user_email", type=str)
+
         luser = User.query.filter(
             User.email == email
         ).all()
@@ -392,7 +732,23 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         return data
 
     @pre_load()
-    def verify_password(self, data, **kwargs):
+    def verify_password(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the password meets the server's password policy.
+
+        This method verifies that the specified password meets the server's password policy. If the password does not
+        meet the policy, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the password does not meet the server's password policy.
+
+        """
         server_settings = ServerSettings.query.first()
         password = data.get('user_password')
 
@@ -432,7 +788,16 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CommentSchema(ma.SQLAlchemyAutoSchema):
-    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    """Schema for serializing and deserializing Comment objects.
+
+    This schema defines the fields to include when serializing and deserializing Comment objects.
+    It includes fields for the comment ID, the user who made the comment, the comment text, and the timestamp of the comment.
+
+    """
+    comment_id: int = fields.Integer()
+    user: UserSchema = fields.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    comment_text: str = fields.String()
+    comment_timestamp: datetime = fields.DateTime()
 
     class Meta:
         model = Comments
@@ -441,39 +806,76 @@ class CommentSchema(ma.SQLAlchemyAutoSchema):
 
 
 class EventSchema(ma.SQLAlchemyAutoSchema):
-    event_title = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
-    event_assets = fields.List(fields.Integer, required=True, allow_none=False)
-    event_iocs = fields.List(fields.Integer, required=True, allow_none=False)
-    event_date = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=True, allow_none=False)
-    event_tz = fields.String(required=True, allow_none=False)
-    event_category_id = fields.Integer(required=True, allow_none=False)
-    event_date_wtz = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
-    modification_history = auto_field('modification_history', required=False, readonly=True)
-    event_comments_map = fields.List(fields.Integer, required=False, allow_none=True)
-    event_sync_iocs_assets = fields.Boolean(required=False)
+    """Schema for serializing and deserializing Event objects.
+
+    This schema defines the fields to include when serializing and deserializing Event objects.
+    It includes fields for the event ID, event title, assets associated with the event, IOCs associated with the event,
+    the date and time of the event, the time zone of the event, the category ID of the event, and the modification history
+    of the event.
+
+    """
+    event_title: str = auto_field('event_title', required=True, validate=Length(min=2), allow_none=False)
+    event_assets: List[int] = fields.List(fields.Integer, required=True, allow_none=False)
+    event_iocs: List[int] = fields.List(fields.Integer, required=True, allow_none=False)
+    event_date: datetime = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=True, allow_none=False)
+    event_tz: str = fields.String(required=True, allow_none=False)
+    event_category_id: int = fields.Integer(required=True, allow_none=False)
+    event_date_wtz: datetime = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
+    modification_history: str = auto_field('modification_history', required=False, readonly=True)
+    event_comments_map: List[int] = fields.List(fields.Integer, required=False, allow_none=True)
+    event_sync_iocs_assets: bool = fields.Boolean(required=False)
 
     class Meta:
         model = CasesEvent
         load_instance = True
         include_fk = True
 
-    def validate_date(self, event_date, event_tz):
+    def validate_date(self, event_date: str, event_tz: str):
+        """Validates the date and time of the event.
+
+        This method validates the date and time of the event by parsing the date and time string and time zone string
+        and returning the parsed date and time as datetime objects.
+
+        Args:
+            event_date: The date and time of the event as a string.
+            event_tz: The time zone of the event as a string.
+
+        Returns:
+            A tuple containing the parsed date and time as datetime objects.
+
+        Raises:
+            ValidationError: If the date and time string or time zone string are invalid.
+
+        """
         date_time = "{}{}".format(event_date, event_tz)
         date_time_wtz = "{}".format(event_date)
 
         try:
-
             self.event_date = dateutil.parser.isoparse(date_time)
             self.event_date_wtz = dateutil.parser.isoparse(date_time_wtz)
-
         except Exception as e:
-            raise marshmallow.exceptions.ValidationError("Invalid date time",
-                                                         field_name="event_date")
+            raise marshmallow.exceptions.ValidationError("Invalid date time", field_name="event_date")
 
         return self.event_date, self.event_date_wtz
 
     @pre_load
-    def verify_data(self, data, **kwargs):
+    def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies the data for the event.
+
+        This method verifies that the data for the event is valid by checking that all required fields are present and
+        that the specified asset and IOC IDs are valid.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the data is invalid.
+
+        """
         if data is None:
             raise marshmallow.exceptions.ValidationError("Received empty data")
 
@@ -481,41 +883,72 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             if field not in data:
                 raise marshmallow.exceptions.ValidationError(f"Missing field {field}", field_name=field)
 
-        if not isinstance(int(data.get('event_category_id')), int):
-            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
-                                                         field_name="event_category_id")
+        assert_type_mml(int(data.get('event_category_id')), 'event_category_id', int)
 
         event_cat = EventCategory.query.filter(EventCategory.id == int(data.get('event_category_id'))).count()
         if not event_cat:
-            raise marshmallow.exceptions.ValidationError("Invalid event category ID",
-                                                         field_name="event_category_id")
+            raise marshmallow.exceptions.ValidationError("Invalid event category ID", field_name="event_category_id")
+        
+        assert_type_mml(data.get('event_assets'), 'event_assets', list)
 
         for asset in data.get('event_assets'):
+            
+            assert_type_mml(int(asset), 'event_assets', int)
+
             ast = CaseAssets.query.filter(CaseAssets.asset_id == asset).count()
             if not ast:
-                raise marshmallow.exceptions.ValidationError("Invalid assets ID",
-                                                             field_name="event_assets")
+                raise marshmallow.exceptions.ValidationError("Invalid assets ID", field_name="event_assets")
 
+        assert_type_mml(data.get('event_iocs'), 'event_iocs', list)
+        
         for ioc in data.get('event_iocs'):
+
+            assert_type_mml(int(ioc), 'event_iocs', int)
             ast = Ioc.query.filter(Ioc.ioc_id == ioc).count()
             if not ast:
-                raise marshmallow.exceptions.ValidationError("Invalid IOC ID",
-                                                             field_name="event_assets")
+                raise marshmallow.exceptions.ValidationError("Invalid IOC ID", field_name="event_assets")
+
         if data.get('event_color') and data.get('event_color') not in ['#fff', '#1572E899', '#6861CE99', '#48ABF799',
                                                                        '#31CE3699', '#F2596199', '#FFAD4699']:
             data['event_color'] = ''
+
         return data
 
     @post_load
-    def custom_attributes_merge(self, data, **kwargs):
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes with the event data.
+
+        This method merges any custom attributes specified in the data with the event data. If no custom attributes are
+        specified, it returns the original data.
+
+        Args:
+            data: The data to merge.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The merged data.
+
+        """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
+            assert_type_mml(data.get('event_id'), 'event_id', int)
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
 
 
 class DSPathSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing DataStorePath objects.
+
+    This schema defines the fields to include when serializing and deserializing DataStorePath objects.
+    It includes fields for the data store path ID, the data store ID, the path name, and the path description.
+
+    """
+    ds_path_id: int = fields.Integer()
+    data_store_id: int = fields.Integer()
+    path_name: str = fields.String()
+    path_description: str = fields.String()
+
     class Meta:
         model = DataStorePath
         load_instance = True
@@ -523,17 +956,41 @@ class DSPathSchema(ma.SQLAlchemyAutoSchema):
 
 
 class DSFileSchema(ma.SQLAlchemyAutoSchema):
-    csrf_token = fields.String(required=False)
-    file_original_name = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
-    file_description = auto_field('file_description', allow_none=False)
-    file_content = fields.Raw(required=False)
+    """Schema for serializing and deserializing DataStoreFile objects.
+
+    This schema defines the fields to include when serializing and deserializing DataStoreFile objects.
+    It includes fields for the file ID, the original file name, the file description, and the file content.
+
+    """
+    csrf_token: Optional[str] = fields.String(required=False)
+    file_original_name: str = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
+    file_description: str = auto_field('file_description', allow_none=False)
+    file_content: Optional[bytes] = fields.Raw(required=False)
 
     class Meta:
         model = DataStoreFile
         include_fk = True
         load_instance = True
 
-    def ds_store_file_b64(self, filename, file_content, dsp, cid):
+    def ds_store_file_b64(self, filename: str, file_content: bytes, dsp: DataStorePath, cid: int) -> Tuple[DataStoreFile, bool]:
+        """Stores a file in the data store.
+
+        This method stores a file in the data store. If the file already exists in the data store, it returns the
+        existing file. Otherwise, it creates a new file and returns it.
+
+        Args:
+            filename: The name of the file.
+            file_content: The content of the file.
+            dsp: The data store path where the file should be stored.
+            cid: The ID of the case associated with the file.
+
+        Returns:
+            A tuple containing the DataStoreFile object and a boolean indicating whether the file already existed.
+
+        Raises:
+            ValidationError: If there is an error storing the file.
+
+        """
         try:
             filename = filename.rstrip().replace('\t', '').replace('\n', '').replace('\r', '')
             file_hash = stream_sha256sum(file_content)
@@ -578,7 +1035,26 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
         return dsf, exists
 
-    def ds_store_file(self, file_storage, location, is_ioc, password):
+    def ds_store_file(self, file_storage: FileStorage, location: Path, is_ioc: bool, password: Optional[str]) -> Tuple[str, int, str]:
+        """Stores a file in the data store.
+
+        This method stores a file in the data store. If the file is an IOC and no password is provided, it uses a default
+        password. If a password is provided, it encrypts the file with the password. It returns the path, size, and hash
+        of the stored file.
+
+        Args:
+            file_storage: The file to store.
+            location: The location where the file should be stored.
+            is_ioc: Whether the file is an IOC.
+            password: The password to use for encrypting the file.
+
+        Returns:
+            A tuple containing the path, size, and hash of the stored file.
+
+        Raises:
+            ValidationError: If there is an error storing the file.
+
+        """
         if file_storage is None:
             raise marshmallow.exceptions.ValidationError(
                 "No file provided",
@@ -638,12 +1114,18 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         setattr(self, 'file_local_path', str(location))
 
         return file_path, file_size, file_hash
-
+    
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
-    http_proxy = auto_field('http_proxy', required=False, allow_none=False)
-    https_proxy = auto_field('https_proxy', required=False, allow_none=False)
-    prevent_post_mod_repush = auto_field('prevent_post_mod_repush', required=False)
+    """Schema for serializing and deserializing ServerSettings objects.
+
+    This schema defines the fields to include when serializing and deserializing ServerSettings objects.
+    It includes fields for the HTTP proxy, HTTPS proxy, and whether to prevent post-modification repush.
+
+    """
+    http_proxy: Optional[str] = fields.String(required=False, allow_none=False)
+    https_proxy: Optional[str] = fields.String(required=False, allow_none=False)
+    prevent_post_mod_repush: Optional[bool] = fields.Boolean(required=False)
 
     class Meta:
         model = ServerSettings
@@ -651,13 +1133,19 @@ class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
 
 
 class ContactSchema(ma.SQLAlchemyAutoSchema):
-    contact_name = auto_field('contact_name', required=True, validate=Length(min=2), allow_none=False)
-    contact_email = auto_field('contact_email', required=False, allow_none=False)
-    contact_work_phone = auto_field('contact_work_phone', required=False, allow_none=False)
-    contact_mobile_phone = auto_field('contact_mobile_phone', required=False, allow_none=False)
-    contact_role = auto_field('contact_role', required=False, allow_none=False)
-    contact_note = auto_field('contact_note', required=False, allow_none=False)
-    client_id = auto_field('client_id', required=True)
+    """Schema for serializing and deserializing Contact objects.
+
+    This schema defines the fields to include when serializing and deserializing Contact objects.
+    It includes fields for the contact name, email, work phone, mobile phone, role, note, and client ID.
+
+    """
+    contact_name: str = auto_field('contact_name', required=True, validate=Length(min=2), allow_none=False)
+    contact_email: Optional[str] = auto_field('contact_email', required=False, allow_none=False)
+    contact_work_phone: Optional[str] = auto_field('contact_work_phone', required=False, allow_none=False)
+    contact_mobile_phone: Optional[str] = auto_field('contact_mobile_phone', required=False, allow_none=False)
+    contact_role: Optional[str] = auto_field('contact_role', required=False, allow_none=False)
+    contact_note: Optional[str] = auto_field('contact_note', required=False, allow_none=False)
+    client_id: int = auto_field('client_id', required=True)
 
     class Meta:
         model = Contact
@@ -665,9 +1153,15 @@ class ContactSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
-    name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
-    name_expanded = auto_field('name_expanded', required=True, validate=Length(min=2), allow_none=False)
-    description = auto_field('description', required=True, validate=Length(min=2), allow_none=False)
+    """Schema for serializing and deserializing CaseClassification objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseClassification objects.
+    It includes fields for the classification name, expanded name, and description.
+
+    """
+    name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    name_expanded: str = auto_field('name_expanded', required=True, validate=Length(min=2), allow_none=False)
+    description: str = auto_field('description', required=True, validate=Length(min=2), allow_none=False)
 
     class Meta:
         model = CaseClassification
@@ -675,6 +1169,20 @@ class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
 
     @post_load
     def verify_unique(self, data, **kwargs):
+        """Verifies that the classification name is unique.
+
+        This method verifies that the classification name is unique. If the name is not unique, it raises a validation error.
+
+        Args:
+            data: The data to load.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the classification name is not unique.
+
+        """
         client = CaseClassification.query.filter(
             func.lower(CaseClassification.name) == func.lower(data.name),
             CaseClassification.id != data.id
