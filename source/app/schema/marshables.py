@@ -292,6 +292,16 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the asset name is not unique.
 
         """
+        
+        assert_type_mml(input_var=data.asset_name,
+                        field_name="asset_name",
+                        type=str)
+        
+
+        assert_type_mml(input_var=data.asset_id,
+                        field_name="asset_id",
+                        type=int)
+
         client = AssetsType.query.filter(
             func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
             AssetsType.asset_id != data.asset_id
@@ -593,13 +603,17 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
             TLP ID are invalid.
 
         """
-        assert_type_mml(input_var=data.get('ioc_type_id'), field_name="ioc_type_id", type=int)
+        assert_type_mml(input_var=data.get('ioc_type_id'), 
+                        field_name="ioc_type_id", 
+                        type=int)
 
         ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
         if not ioc_type:
             raise marshmallow.exceptions.ValidationError("Invalid ioc type ID", field_name="ioc_type_id")
 
-        assert_type_mml(input_var=data.get('ioc_tlp_id'), field_name="ioc_tlp_id", type=int)
+        assert_type_mml(input_var=data.get('ioc_tlp_id'), 
+                        field_name="ioc_tlp_id", 
+                        type=int)
 
         tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
         if not tlp_id:
@@ -631,7 +645,9 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
 
-            assert_type_mml(input_var=data.get('ioc_id'), field_name="ioc_id", type=int)
+            assert_type_mml(input_var=data.get('ioc_id'), 
+                            field_name="ioc_id", 
+                            type=int)
 
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
 
@@ -684,8 +700,13 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         user = data.get('user_login')
         user_id = data.get('user_id')
 
-        assert_type_mml(input_var=user_id, field_name="user_id", type=int)
-        assert_type_mml(input_var=user, field_name="user_login", type=str)
+        assert_type_mml(input_var=user_id, 
+                        field_name="user_id", 
+                        type=int)
+        
+        assert_type_mml(input_var=user, 
+                        field_name="user_login", 
+                        type=str)
 
         luser = User.query.filter(
             User.user == user
@@ -718,8 +739,13 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         email = data.get('user_email')
         user_id = data.get('user_id')
 
-        assert_type_mml(input_var=user_id, field_name="user_id", type=int)
-        assert_type_mml(input_var=email, field_name="user_email", type=str)
+        assert_type_mml(input_var=user_id, 
+                        field_name="user_id", 
+                        type=int)
+        
+        assert_type_mml(input_var=email, 
+                        field_name="user_email", 
+                        type=str)
 
         luser = User.query.filter(
             User.email == email
@@ -883,27 +909,38 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             if field not in data:
                 raise marshmallow.exceptions.ValidationError(f"Missing field {field}", field_name=field)
 
-        assert_type_mml(int(data.get('event_category_id')), 'event_category_id', int)
+        assert_type_mml(input_var=int(data.get('event_category_id')), 
+                        field_name='event_category_id', 
+                        type=int)
 
         event_cat = EventCategory.query.filter(EventCategory.id == int(data.get('event_category_id'))).count()
         if not event_cat:
             raise marshmallow.exceptions.ValidationError("Invalid event category ID", field_name="event_category_id")
         
-        assert_type_mml(data.get('event_assets'), 'event_assets', list)
+        assert_type_mml(input_var=data.get('event_assets'), 
+                        field_name='event_assets', 
+                        type=list)
 
         for asset in data.get('event_assets'):
             
-            assert_type_mml(int(asset), 'event_assets', int)
+            assert_type_mml(input_var=int(asset), 
+                            field_name='event_assets', 
+                            type=int)
 
             ast = CaseAssets.query.filter(CaseAssets.asset_id == asset).count()
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid assets ID", field_name="event_assets")
 
-        assert_type_mml(data.get('event_iocs'), 'event_iocs', list)
+        assert_type_mml(input_var=data.get('event_iocs'), 
+                        field_name='event_iocs', 
+                        type=list)
         
         for ioc in data.get('event_iocs'):
 
-            assert_type_mml(int(ioc), 'event_iocs', int)
+            assert_type_mml(input_var=int(ioc),
+                            field_name='event_iocs',
+                            type=int)
+            
             ast = Ioc.query.filter(Ioc.ioc_id == ioc).count()
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid IOC ID", field_name="event_assets")
@@ -931,7 +968,11 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
-            assert_type_mml(data.get('event_id'), 'event_id', int)
+
+            assert_type_mml(input_var=data.get('event_id'),
+                            field_name='event_id',
+                            type=int)
+            
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
@@ -1197,16 +1238,23 @@ class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseSchema(ma.SQLAlchemyAutoSchema):
-    case_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
-    case_description = auto_field('description', required=True, validate=Length(min=2))
-    case_soc_id = auto_field('soc_id', required=True)
-    case_customer = auto_field('client_id', required=True)
-    case_organisations = fields.List(fields.Integer, required=False)
-    protagonists = fields.List(fields.Dict, required=False)
-    case_tags = fields.String(required=False)
-    csrf_token = fields.String(required=False)
-    initial_date = auto_field('initial_date', required=False)
-    classification_id = auto_field('classification_id', required=False, allow_none=True)
+    """Schema for serializing and deserializing Case objects.
+
+    This schema defines the fields to include when serializing and deserializing Case objects.
+    It includes fields for the case name, description, SOC ID, customer ID, organizations, protagonists, tags, CSRF token,
+    initial date, and classification ID.
+
+    """
+    case_name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    case_description: str = auto_field('description', required=True, validate=Length(min=2))
+    case_soc_id: int = auto_field('soc_id', required=True)
+    case_customer: int = auto_field('client_id', required=True)
+    case_organisations: List[int] = fields.List(fields.Integer, required=False)
+    protagonists: List[Dict[str, Any]] = fields.List(fields.Dict, required=False)
+    case_tags: Optional[str] = fields.String(required=False)
+    csrf_token: Optional[str] = fields.String(required=False)
+    initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
+    classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
 
     class Meta:
         model = Cases
@@ -1215,14 +1263,46 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
         exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date']
 
     @pre_load
-    def classification_filter(self, data, **kwargs):
+    def classification_filter(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Filters out empty classification IDs.
+
+        This method filters out empty classification IDs from the data.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The filtered data.
+
+        """
         if data.get('classification_id') == "":
             del data['classification_id']
 
         return data
 
     @pre_load
-    def verify_customer(self, data, **kwargs):
+    def verify_customer(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the customer ID is valid.
+
+        This method verifies that the customer ID specified in the data is valid.
+        If the ID is not valid, it raises a validation error.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the customer ID is not valid.
+
+        """
+        assert_type_mml(input_var=data.get('case_customer'), 
+                        field_name='case_customer', 
+                        type=int)
+        
         client = Client.query.filter(Client.client_id == data.get('case_customer')).first()
         if client:
             return data
@@ -1231,8 +1311,30 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
                                                      field_name="case_customer")
 
     @post_load
-    def custom_attributes_merge(self, data, **kwargs):
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes.
+
+        This method merges the custom attributes specified in the data with the existing custom attributes.
+        If there are no custom attributes specified, it returns the original data.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data with merged custom attributes.
+
+        """
         new_attr = data.get('custom_attributes')
+
+        assert_type_mml(input_var=new_attr, 
+                        field_name='custom_attributes', 
+                        type=dict)
+        
+        assert_type_mml(input_var=data.get('case_id'), 
+                        field_name='case_id', 
+                        type=int)
+
         if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('case_id'), 'case')
 
@@ -1240,16 +1342,33 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseStateSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing CaseState objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseState objects.
+    It includes fields for the case state ID, the case ID, the state name, and the state description.
+
+    """
+    case_state_id: int = fields.Integer()
+    case_id: int = fields.Integer()
+    state_name: str = fields.String()
+    state_description: str = fields.String()
+
     class Meta:
         model = CaseState
         load_instance = True
 
 
 class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
-    task_id = auto_field('id')
-    task_assignee_id = auto_field('task_assignee_id', required=True, allow_None=False)
-    task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
-    csrf_token = fields.String(required=False)
+    """Schema for serializing and deserializing GlobalTasks objects.
+
+    This schema defines the fields to include when serializing and deserializing GlobalTasks objects.
+    It includes fields for the task ID, assignee ID, task title, and CSRF token.
+
+    """
+    task_id: int = auto_field('id')
+    task_assignee_id: int = auto_field('task_assignee_id', required=True, allow_none=False)
+    task_title: str = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
+    csrf_token: Optional[str] = fields.String(required=False)
 
     class Meta:
         model = GlobalTasks
@@ -1258,12 +1377,35 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
         exclude = ['id']
 
     @pre_load
-    def verify_data(self, data, **kwargs):
+    def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the assignee ID and task status ID are valid.
+
+        This method verifies that the assignee ID and task status ID specified in the data are valid.
+        If either ID is not valid, it raises a validation error.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the assignee ID or task status ID is not valid.
+
+        """
+        assert_type_mml(input_var=data.get('task_assignee_id'), 
+                        field_name='task_assignee_id', 
+                        type=int)
+        
         user = User.query.filter(User.id == data.get('task_assignee_id')).count()
         if not user:
             raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
                                                          field_name="task_assignees_id")
 
+        assert_type_mml(input_var=data.get('task_status_id'), 
+                        field_name='task_status_id', 
+                        type=int)
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
             raise marshmallow.exceptions.ValidationError("Invalid task status ID",
@@ -1273,11 +1415,17 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
-    customer_name = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
-    customer_description = auto_field('description', allow_none=True)
-    customer_sla = auto_field('sla', allow_none=True)
-    customer_id = auto_field('client_id')
-    csrf_token = fields.String(required=False)
+    """Schema for serializing and deserializing Customer objects.
+
+    This schema defines the fields to include when serializing and deserializing Customer objects.
+    It includes fields for the customer name, description, SLA, customer ID, and CSRF token.
+
+    """
+    customer_name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    customer_description: Optional[str] = auto_field('description', allow_none=True)
+    customer_sla: Optional[str] = auto_field('sla', allow_none=True)
+    customer_id: int = auto_field('client_id')
+    csrf_token: Optional[str] = fields.String(required=False)
 
     class Meta:
         model = Client
@@ -1285,7 +1433,30 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
         exclude = ['name', 'client_id', 'description', 'sla']
 
     @post_load
-    def verify_unique(self, data, **kwargs):
+    def verify_unique(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the customer name is unique.
+
+        This method verifies that the customer name is unique. If the name is not unique, it raises a validation error.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the customer name is not unique.
+
+        """
+        assert_type_mml(input_var=data.name, 
+                        field_name='customer_name', 
+                        type=str)
+        
+        assert_type_mml(input_var=data.client_id, 
+                        field_name='customer_id', 
+                        type=int)
+
         client = Client.query.filter(
             func.upper(Client.name) == data.name.upper(),
             Client.client_id != data.client_id
@@ -1299,8 +1470,30 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
         return data
 
     @post_load
-    def custom_attributes_merge(self, data, **kwargs):
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes.
+
+        This method merges the custom attributes specified in the data with the existing custom attributes.
+        If there are no custom attributes specified, it returns the original data.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data with merged custom attributes.
+
+        """
         new_attr = data.get('custom_attributes')
+
+        assert_type_mml(input_var=new_attr, 
+                        field_name='custom_attributes', 
+                        type=dict)
+        
+        assert_type_mml(input_var=data.get('client_id'), 
+                        field_name='customer_id', 
+                        type=int)
+
         if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('client_id'), 'client')
 
@@ -1308,15 +1501,31 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
 
 
 class TaskLogSchema(ma.Schema):
-    log_content = fields.String(required=False, validate=Length(min=1))
-    csrf_token = fields.String(required=False)
+    """Schema for serializing and deserializing TaskLog objects.
+
+    This schema defines the fields to include when serializing and deserializing TaskLog objects.
+    It includes fields for the log content and CSRF token.
+
+    """
+    log_content: Optional[str] = fields.String(required=False, validate=Length(min=1))
+    csrf_token: Optional[str] = fields.String(required=False)
+
+    class Meta:
+        load_instance = True
 
 
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
-    task_title = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
-    task_status_id = auto_field('task_status_id', required=True)
-    task_assignees_id = fields.List(fields.Integer, required=False, allow_none=True)
-    task_assignees = fields.List(fields.Dict, required=False, allow_none=True)
+    """Schema for serializing and deserializing CaseTask objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseTask objects.
+    It includes fields for the task title, task status ID, task assignees ID, task assignees, and CSRF token.
+
+    """
+    task_title: str = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
+    task_status_id: int = auto_field('task_status_id', required=True)
+    task_assignees_id: Optional[List[int]] = fields.List(fields.Integer, required=False, allow_none=True)
+    task_assignees: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
+    csrf_token: Optional[str] = fields.String(required=False)
 
     class Meta:
         model = CaseTasks
@@ -1324,7 +1533,27 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
 
     @pre_load
-    def verify_data(self, data, **kwargs):
+    def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the task status ID is valid.
+
+        This method verifies that the task status ID specified in the data is valid.
+        If the ID is not valid, it raises a validation error.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the task status ID is not valid.
+
+        """
+        assert_type_mml(input_var=data.get('task_status_id'), 
+                        field_name='task_status_id', 
+                        type=int)
+
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
             raise marshmallow.exceptions.ValidationError("Invalid task status ID",
@@ -1333,8 +1562,30 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
         return data
 
     @post_load
-    def custom_attributes_merge(self, data, **kwargs):
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes.
+
+        This method merges the custom attributes specified in the data with the existing custom attributes.
+        If there are no custom attributes specified, it returns the original data.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data with merged custom attributes.
+
+        """
         new_attr = data.get('custom_attributes')
+
+        assert_type_mml(input_var=new_attr, 
+                        field_name='custom_attributes', 
+                        type=dict)
+        
+        assert_type_mml(input_var=data.get('id'), 
+                        field_name='task_id', 
+                        type=int)
+
         if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'task')
 
@@ -1342,15 +1593,44 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
-    filename = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
+    """Schema for serializing and deserializing CaseEvidence objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseEvidence objects.
+    It includes fields for the filename and CSRF token.
+
+    """
+    filename: str = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
+    csrf_token: Optional[str] = fields.String(required=False)
 
     class Meta:
         model = CaseReceivedFile
         load_instance = True
 
     @post_load
-    def custom_attributes_merge(self, data, **kwargs):
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes.
+
+        This method merges the custom attributes specified in the data with the existing custom attributes.
+        If there are no custom attributes specified, it returns the original data.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data with merged custom attributes.
+
+        """
         new_attr = data.get('custom_attributes')
+
+        assert_type_mml(input_var=new_attr, 
+                        field_name='custom_attributes', 
+                        type=dict)
+        
+        assert_type_mml(input_var=data.get('id'), 
+                        field_name='evidence_id', 
+                        type=int)
+
         if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'evidence')
 
@@ -1358,16 +1638,43 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
 
 
 class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
-    group_name = auto_field('group_name', required=True, validate=Length(min=2), allow_none=False)
-    group_description = auto_field('group_description', required=True, validate=Length(min=2))
-    group_auto_follow_access_level = auto_field('group_auto_follow_access_level', required=False, default=False)
+    """Schema for serializing and deserializing AuthorizationGroup objects.
+
+    This schema defines the fields to include when serializing and deserializing AuthorizationGroup objects.
+    It includes fields for the group name, group description, group auto follow access level, and group permissions.
+
+    """
+    group_name: str = auto_field('group_name', required=True, validate=Length(min=2), allow_none=False)
+    group_description: str = auto_field('group_description', required=True, validate=Length(min=2))
+    group_auto_follow_access_level: Optional[bool] = auto_field('group_auto_follow_access_level', required=False, default=False)
+    group_permissions: int = fields.Integer(required=False)
 
     class Meta:
         model = Group
         load_instance = True
 
     @pre_load
-    def verify_unique(self, data, **kwargs):
+    def verify_unique(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the group name is unique.
+
+        This method verifies that the group name specified in the data is unique.
+        If the name is not unique, it raises a validation error.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the group name is not unique.
+
+        """
+        assert_type_mml(input_var=data.get('group_name'), 
+                        field_name='group_name', 
+                        type=str)
+
         groups = Group.query.filter(
             func.upper(Group.group_name) == data.get('group_name').upper()
         ).all()
@@ -1382,7 +1689,20 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
         return data
 
     @pre_load
-    def parse_permissions(self, data, **kwargs):
+    def parse_permissions(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Parses the group permissions.
+
+        This method parses the group permissions specified in the data and converts them to an access control mask.
+        If no permissions are specified, it sets the mask to 0.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data with the access control mask.
+
+        """
         permissions = data.get('group_permissions')
         if type(permissions) != list and not isinstance(permissions, type(None)):
             permissions = [permissions]
@@ -1397,15 +1717,41 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
 
 
 class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
-    org_name = auto_field('org_name', required=True, validate=Length(min=2), allow_none=False)
-    org_description = auto_field('org_description', required=True, validate=Length(min=2))
+    """Schema for serializing and deserializing AuthorizationOrganisation objects.
+
+    This schema defines the fields to include when serializing and deserializing AuthorizationOrganisation objects.
+    It includes fields for the organization name and description.
+
+    """
+    org_name: str = auto_field('org_name', required=True, validate=Length(min=2), allow_none=False)
+    org_description: str = auto_field('org_description', required=True, validate=Length(min=2))
 
     class Meta:
         model = Organisation
         load_instance = True
 
     @pre_load
-    def verify_unique(self, data, **kwargs):
+    def verify_unique(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the organization name is unique.
+
+        This method verifies that the organization name specified in the data is unique.
+        If the name is not unique, it raises a validation error.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the organization name is not unique.
+
+        """
+        assert_type_mml(input_var=data.get('org_name'), 
+                        field_name='org_name', 
+                        type=str)
+
         organisations = Organisation.query.filter(
             func.upper(Organisation.org_name) == data.get('org_name').upper()
         ).all()
@@ -1419,14 +1765,19 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
-
 class BasicUserSchema(ma.SQLAlchemyAutoSchema):
-    user_id = auto_field('id', required=False)
-    user_uuid = auto_field('uuid', required=False)
-    user_name = auto_field('name', required=True, validate=Length(min=2))
-    user_login = auto_field('user', required=True, validate=Length(min=2))
-    user_email = auto_field('email', required=True, validate=Length(min=2))
-    has_deletion_confirmation = auto_field('has_deletion_confirmation', required=False, default=False)
+    """Schema for serializing and deserializing basic User objects.
+
+    This schema defines the fields to include when serializing and deserializing basic User objects.
+    It includes fields for the user name, login, and email.
+
+    """
+    user_id: Optional[int] = auto_field('id', required=False)
+    user_uuid: Optional[str] = auto_field('uuid', required=False)
+    user_name: str = auto_field('name', required=True, validate=Length(min=2))
+    user_login: str = auto_field('user', required=True, validate=Length(min=2))
+    user_email: str = auto_field('email', required=True, validate=Length(min=2))
+    has_deletion_confirmation: Optional[bool] = auto_field('has_deletion_confirmation', required=False, default=False)
 
     class Meta:
         model = User
@@ -1436,58 +1787,133 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
 
 
 
-def validate_ioc_type(type_id):
+def validate_ioc_type(type_id: int) -> None:
+    """Validates the IOC type ID.
+
+    This function validates the IOC type ID by checking if it exists in the database.
+    If the ID is invalid, it raises a validation error.
+
+    Args:
+        type_id: The IOC type ID to validate.
+
+    Raises:
+        ValidationError: If the IOC type ID is invalid.
+
+    """
     if not IocType.query.get(type_id):
         raise ValidationError("Invalid ioc_type ID")
 
 
-def validate_ioc_tlp(tlp_id):
+def validate_ioc_tlp(tlp_id: int) -> None:
+    """Validates the IOC TLP ID.
+
+    This function validates the IOC TLP ID by checking if it exists in the database.
+    If the ID is invalid, it raises a validation error.
+
+    Args:
+        tlp_id: The IOC TLP ID to validate.
+
+    Raises:
+        ValidationError: If the IOC TLP ID is invalid.
+
+    """
     if not Tlp.query.get(tlp_id):
         raise ValidationError("Invalid ioc_tlp ID")
 
 
-def validate_asset_type(asset_id):
+def validate_asset_type(asset_id: int) -> None:
+    """Validates the asset type ID.
+
+    This function validates the asset type ID by checking if it exists in the database.
+    If the ID is invalid, it raises a validation error.
+
+    Args:
+        asset_id: The asset type ID to validate.
+
+    Raises:
+        ValidationError: If the asset type ID is invalid.
+
+    """
     if not AssetsType.query.get(asset_id):
         raise ValidationError("Invalid asset_type ID")
 
 
-def validate_asset_tlp(tlp_id):
+def validate_asset_tlp(tlp_id: int) -> None:
+    """Validates the asset TLP ID.
+
+    This function validates the asset TLP ID by checking if it exists in the database.
+    If the ID is invalid, it raises a validation error.
+
+    Args:
+        tlp_id: The asset TLP ID to validate.
+
+    Raises:
+        ValidationError: If the asset TLP ID is invalid.
+
+    """
     if not Tlp.query.get(tlp_id):
         raise ValidationError("Invalid asset_tlp ID")
 
 
 class SeveritySchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing Severity objects.
+
+    This schema defines the fields to include when serializing and deserializing Severity objects.
+    It includes fields for the severity name and severity value.
+
+    """
+
     class Meta:
         model = Severity
         load_instance = True
 
 
 class AlertStatusSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing AlertStatus objects.
+
+    This schema defines the fields to include when serializing and deserializing AlertStatus objects.
+    It includes fields for the alert status name and alert status value.
+
+    """
+
     class Meta:
         model = AlertStatus
         load_instance = True
 
 
 class AnalysisStatusSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing AnalysisStatus objects.
+
+    This schema defines the fields to include when serializing and deserializing AnalysisStatus objects.
+    It includes fields for the analysis status name and analysis status value.
+
+    """
+
     class Meta:
         model = AnalysisStatus
         load_instance = True
 
 
 class EventCategorySchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing EventCategory objects.
+
+    This schema defines the fields to include when serializing and deserializing EventCategory objects.
+    It includes fields for the event category name and event category value.
+
+    """
+
     class Meta:
         model = EventCategory
         load_instance = True
 
 
 class AlertSchema(ma.SQLAlchemyAutoSchema):
-    severity = ma.Nested(SeveritySchema)
-    status = ma.Nested(AlertStatusSchema)
-    customer = ma.Nested(CustomerSchema)
-    classification = ma.Nested(CaseClassificationSchema)
-    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
-    iocs = ma.Nested(IocSchema, many=True)
-    assets = ma.Nested(CaseAssetsSchema, many=True)
+    """Schema for serializing and deserializing Alert objects.
+
+    This schema defines the fields to include when serializing and deserializing Alert objects.
+    It includes fields for the alert severity, status, customer, classification, owner, IOCs, and assets.
+
+    """
 
     class Meta:
         model = Alert
@@ -1497,9 +1923,13 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
 
 
 class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing SavedFilter objects.
+
+    This schema defines the fields to include when serializing and deserializing SavedFilter objects.
+
+    """
     class Meta:
         model = SavedFilter
         load_instance = True
         include_fk = True
         include_relationships = True
-

@@ -811,7 +811,7 @@ def str_to_bool(value):
     return value.lower() in ['true', '1', 'yes', 'y', 't']
 
 
-def assert_type_mml(input_var: any, type: type, field_name: str = None, allow_none: bool = False):
+def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bool = False):
     if input_var is None and allow_none is False:
         raise marshmallow.ValidationError("Invalid type",
                                           field_name=field_name if field_name else "type")
