@@ -1,23 +1,54 @@
+## @section rabbitmq Configuration
+##
 rabbitmq:
+   ## @param rabbitmq.app App name for rabbitmq
+   ##
    app: rabbitmq
+   ## @param rabbitmq.name Name for rabbitmq
+   ##
    name: rabbitmq
+   ## @param rabbitmq.image Image rabbitmq deployment
+   ##
    image: rabbitmq
+   ## @param rabbitmq.tag Tag for rabbitmq
+   ##
    tag: 3-management-alpine
+   ## @param rabbitmq.imagePullPolicy Policy for rabbitmq
+   ##
    imagePullPolicy: "IfNotPresent"
+   ## @param rabbitmq.replicaCount ReplicaCount for rabbitmq
+   ##
    replicaCount: 1
    
 
+## @section PostgreSQL Configuration
+##
 postgres:
+   ## @param postgres.app PostgreSQL App
+   ##
    app: postgres
+   ## @param postgres.name PostgreSQL Name
+   ##
    name: postgres
+   ## @param postgres.image PostgreSQL Image
+   ##
    image: <postgres_image>
+   ## @param postgres.tag PostgreSQL Tag
    tag: <tag>
+   ## @param postgres.imagePullPolicy PostgreSQL PullPolicy
+   ##
    imagePullPolicy: "IfNotPresent"
+   ## @param postgres.replicaCount PostgreSQL ReplicaCount
+   ##
    replicaCount: 1
-
+   
+   ## @param postgres.service PostgreSQL Service
+   ##
    service:
     port: 5432
 
+   ## @param  PostgreSQL Environments
+   ##
    POSTGRES_USER: postgres
    POSTGRES_PASSWORD: postgres
    POSTGRES_ADMIN_USER: raptor
@@ -26,19 +57,39 @@ postgres:
    POSTGRES_PORT: 5432
 
 
+## @section Iris Frontend Configuration
+##
 irisapp:
+   ## @param irisapp.app Iris Frontend App
+   ##
    app: iriswebapp-app
+   ## @param irisapp.name Iris Frontend Name
+   ##
    name: iriswebapp-app
+   ## @param irisapp.image Iris Frontend Image
+   ##
    image: <irisapp_image>
+   ## @param irisapp.tag Iris Frontend Tag
+   ##
    tag: <tag>
+   ## @param irisapp.imagePullPolicy Iris Frontend imagePullPolicy
+   ##
    imagePullPolicy: "IfNotPresent"
+   ## @param irisapp.replicaCount Iris Frontend replicaCount
+   ##
    replicaCount: 1
 
+   ## @param irisapp.service Iris Frontend Service
+   ##
    service:
      port: 80 
     
+   ## @param irisapp.type Iris Frontend Service type
+   ##
    type: ClusterIP  
 
+   ## @param  Iris Frontend Environments
+   ##
    POSTGRES_USER: raptor
    POSTGRES_PASSWORD: postgres
    POSTGRES_ADMIN_USER: raptor
@@ -49,15 +100,30 @@ irisapp:
    IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
    IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
 
-
-irisworker:    
+## @section Iris Backend Configuration
+##
+irisworker:
+   ## @param irisworker.app Iris Backend App
+   ##    
    app: iriswebapp-worker
+   ## @param irisworker.name Iris Backend Name
+   ##
    name: iriswebapp-worker
+   ## @param irisworker.image Iris Backend Image
+   ##
    image: <irisworker_image>
+   ## @param irisworker.tag Iris Backend Tag
+   ##
    tag: <tag>
+   ## @param irisworker.imagePullPolicy Iris Backend imagePullPolicy
+   ##
    imagePullPolicy: "IfNotPresent"
+   ## @param irisworker.replicaCount Iris Backend replicaCount
+   ##
    replicaCount: 1
 
+   ## @param  Iris Backend Environments
+   ##
    POSTGRES_USER: raptor
    POSTGRES_PASSWORD: postgres
    POSTGRES_ADMIN_USER: raptor
@@ -67,3 +133,16 @@ irisworker:
    DOCKERIZED: 1
    IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
    IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+
+## @section Nginx Ingress Configuration
+##
+ingress:
+  enabled: true
+  name: iris-ingress
+  className: nginx
+  hostname: <host_name>
+#   hosts:
+#     - host: iris.cmcloudlab1576.info 
+#       paths:
+#         - path: /
+#           pathType: Prefix
