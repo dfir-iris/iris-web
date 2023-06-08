@@ -83,6 +83,7 @@ irisapp:
    ##
    service:
      port: 80 
+     targetPort: 8000
     
    ## @param irisapp.type Iris Frontend Service type
    ##
@@ -140,9 +141,19 @@ ingress:
   enabled: true
   name: iris-ingress
   className: nginx
-  hostname: <host_name>
-#   hosts:
-#     - host: iris.cmcloudlab1576.info 
-#       paths:
-#         - path: /
-#           pathType: Prefix
+  annotations:
+    # Add any annotations specific to your Ingress controller
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: <host_name>
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: iriswebapp-app
+          servicePort: 80
+  tls:
+    - secretName: iris-ingress-tls-secret
+      hosts:
+        - <host_name>        

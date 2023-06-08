@@ -79,7 +79,7 @@ spec:
   type: {{ .Values.irisapp.type }}
   ports:
    - port: {{ .Values.irisapp.service.port }}
-     targetPort: 8000
+     targetPort: {{ .Values.irisapp.service.targetPort }}
   selector:
    app: {{ .Values.irisapp.app }}
 ---  

@@ -1,0 +1,28 @@
+Release Name: {{ .Release.Name }}
+Chart Name: {{ .Chart.Name }}
+Chart Version: {{ .Chart.Version }}
+Chart Description: {{ .Chart.Description }}
+
+The following Kubernetes resources have been deployed:
+
+{{- if .Values.ingress.enabled }}
+Ingress:
+- Name: {{ .Release.Name }}-ingress
+  Host: {{ index .Values.ingress.hosts 0 "host" }}
+  Path: {{ index .Values.ingress.hosts 0 "paths" 0 "path" }}
+  Service Name: {{ index .Values.ingress.hosts 0 "paths" 0 "serviceName" }}
+  Service Port: {{ index .Values.ingress.hosts 0 "paths" 0 "servicePort" }}
+{{- end }}
+
+{{- if eq .Values.ingress.enabled true }}
+To access your application, ensure that the necessary configurations are set up in your cluster.
+
+- If you have DNS set up:
+  - Access your application using the configured domain: http://{{ index .Values.ingress.hosts 0 "host" }}
+{{- else }}
+No Ingress resources deployed.
+{{- end }}
+
+Ensure that your application service ({{ index .Values.ingress.hosts 0 "paths" 0 "serviceName" }}) is up and running on port {{ index .Values.ingress.hosts 0 "paths" 0 "servicePort" }}.
+
+Happy exploring!
