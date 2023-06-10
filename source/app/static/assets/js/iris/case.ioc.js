@@ -314,8 +314,8 @@ $(document).ready(function(){
           {
             "data": "ioc_value",
             "render": function (data, type, row, meta) {
-              if (type === 'display') {
-                datak= ellipsis_field(data, 64);
+              if (type === 'display' && data !== null) {
+                let datak= ellipsis_field(data, 64);
 
                 if (isWhiteSpace(data)) {
                     datak = '#' + row['ioc_id'];
