@@ -314,11 +314,14 @@ $(document).ready(function(){
           {
             "data": "ioc_value",
             "render": function (data, type, row, meta) {
-              if (type === 'display' && data !== null) {
-                let datak= ellipsis_field(data, 64);
+              if (type === 'display') {
+                
+                let datak = '';
 
-                if (isWhiteSpace(data)) {
+                if (isWhiteSpace(data) || data === null) {
                     datak = '#' + row['ioc_id'];
+                } else {
+                    datak= ellipsis_field(data, 64);
                 }
 
                 share_link = buildShareLink(row['ioc_id']);

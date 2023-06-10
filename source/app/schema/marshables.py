@@ -647,7 +647,8 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 
             assert_type_mml(input_var=data.get('ioc_id'), 
                             field_name="ioc_id", 
-                            type=int)
+                            type=int, 
+                            allow_none=True)
 
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
 
