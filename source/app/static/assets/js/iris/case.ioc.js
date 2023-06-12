@@ -83,8 +83,6 @@ function add_ioc() {
                         if (data.status == 'success') {
                                 reload_iocs();
                                 notify_success(data.message);
-                                console.log(index);
-                                console.log(iocs_list.length);
                                 if (index == (iocs_list.length - 1)) {
                                     $('#modal_add_ioc').modal('hide');
                                 }
