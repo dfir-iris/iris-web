@@ -49,7 +49,57 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ```bash     
 $ helm delete my-release -n <Name_Space>   
-```      
+```  
+# Makefile
+To run the Makefile for Helm, please follow the instructions below.
+Before proceeding, ensure you have the following dependencies installed:
+
+- [Helm](https://helm.sh/)
+- [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/)
+
+## Installation:
+
+To install Helm, run the following command:
+
+```bash
+make install-helm
+```
+
+To install kubectl, run the following command:
+
+```
+make install-kubectl
+```
+
+## Checking Dependencies
+
+To check if Helm and kubectl are installed, run the following command:
+
+```
+make check-dependencies
+```
+If any of the dependencies are missing, the corresponding installation command will be executed automatically.
+
+## Installing Iris
+To install Iris, run the following command:
+```
+make install-iris
+```
+
+This will upgrade or install the Iris application using Helm. The installation uses the provided charts/values.yaml file and installs it in the specified namespace.
+
+Replace `<name_space>` with the desired namespace for the Iris application.
+
+## Deleting Iris
+To delete the Iris application, run the following command:
+```
+make delete-iris
+```
+This will delete the Iris application using Helm. The application will be removed from the specified namespace.
+
+Replace `<name_space>` with the namespace where the Iris application is installed.
+
+
 # Parameters    
 
 ### Common parameters       

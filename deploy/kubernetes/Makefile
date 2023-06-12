@@ -18,9 +18,9 @@ install-kubectl:
 	@rm kubectl
 
 install-iris:
-	@helm upgrade --install iris charts/ --values charts/values.yaml -n test
+	@helm upgrade --install iris charts/ --values charts/values.yaml -n <name_space>
 
 delete-iris:
-	@helm delete iris -n test
+	@helm delete iris -n <name_space>
 
 check-dependencies: check-helm check-kubectl
