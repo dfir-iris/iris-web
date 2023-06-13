@@ -6,18 +6,21 @@
 $('#case_customer').selectpicker({
     liveSearch: true,
     title: "Select customer *",
-    style: "btn-outline-white"
+    style: "btn-outline-white",
+    size: 8
 });
 $('#case_template_id').selectpicker({
     liveSearch: true,
     title: "Select case template",
-    style: "btn-outline-white"
+    style: "btn-outline-white",
+    size: 8
 });
 $('#case_template_id').prepend(new Option('', ''));
 $('#classification_id').selectpicker({
     liveSearch: true,
     title: "Select classification",
-    style: "btn-outline-white"
+    style: "btn-outline-white",
+    size: 8
 });
 $('#classification_id').prepend(new Option('', ''));
 
