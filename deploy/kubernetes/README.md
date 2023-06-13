@@ -37,39 +37,7 @@ To install the chart with the release name `my-release`:
 ```bash    
 $ helm install my-release charts/ --values charts/values.yaml  -n <Name_Space>  
 ```      
-The command deploys **iris-web** on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.      
-
-> **Tip**: List all releases using `helm list`       
-
-# Uninstalling the Charts    
-
-To uninstall/delete the `my-release` deployment:      
-
-The command removes all the Kubernetes components associated with the chart and deletes the release.      
-
-```bash     
-$ helm delete my-release -n <Name_Space>   
-```  
-# Makefile
-To run the Makefile for Helm, please follow the instructions below.
-Before proceeding, ensure you have the following dependencies installed:
-
-- [Helm](https://helm.sh/)
-- [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/)
-
-## Installation:
-
-To install Helm, run the following command:
-
-```bash
-make install-helm
-```
-
-To install kubectl, run the following command:
-
-```
-make install-kubectl
-```
+The command deploys **iris-web** on the Kubernetes cluster in the default configuration.  
 
 ## Checking Dependencies
 
@@ -99,8 +67,19 @@ This will delete the Iris application using Helm. The application will be remove
 
 Replace `<name_space>` with the namespace where the Iris application is installed.
 
+> **Tip**: List all releases using `helm list`  
 
+# Uninstalling the Charts    
+
+To uninstall/delete the `my-release` deployment:      
+
+The command removes all the Kubernetes components associated with the chart and deletes the release.      
+
+```bash     
+$ helm delete my-release -n <Name_Space>   
+``` 
 # Parameters    
+The [Parameters](#parameters) section lists the parameters that can be configured during installation.
 
 ### Common parameters       
 | Name | Description | Value |     
