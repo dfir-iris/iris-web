@@ -849,7 +849,7 @@ function do_md_filter_xss(html) {
                 code: [], pre: [], em: [], strong: [],
                 blockquote: [], del: [],
                 input: ['type', 'checked', 'disabled', 'class'],
-                table: ['class'], thead: [], tbody: [], tr: [], th: [], td: []
+                table: ['class'], thead: [], tbody: [], tr: [], th: [], td: [], br: []
             },
         onTagAttr: function (tag, name, value, isWhiteAttr) {
             if (tag === "i" && name === "class") {
