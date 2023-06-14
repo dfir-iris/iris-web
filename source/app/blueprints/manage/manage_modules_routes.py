@@ -52,6 +52,7 @@ from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from app.schema.marshables import IrisModuleSchema
 
 manage_modules_blueprint = Blueprint(
     'manage_module',
@@ -124,14 +125,15 @@ def add_module(caseid):
             return response_error("Cannot import module. Health check didn't pass. Please check logs below", data=logs)
 
         # Registers into Iris DB for further calls
-        mod_id, logs = register_module(module_name)
-        if mod_id is None:
+        module, message = register_module(module_name)
+        if module is None:
             track_activity(f"addition of IRIS module {module_name} was attempted and failed",
                            caseid=caseid, ctx_less=True)
-            return response_error("Unable to register module", data=logs)
+            return response_error(f'Unable to register module: {message}')
 
         track_activity(f"IRIS module {module_name} was added", caseid=caseid, ctx_less=True)
-        return response_success("", data=logs)
+        module_schema = IrisModuleSchema()
+        return response_success(message, data=module_schema.dump(module))
 
     except Exception as e:
         traceback.print_exc()
