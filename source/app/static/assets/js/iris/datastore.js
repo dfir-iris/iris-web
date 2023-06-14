@@ -110,8 +110,8 @@ function build_ds_tree(data, tree_node) {
                       <i class="fa-regular fa-circle ds-file-selector" style="cursor:pointer;display:none;" onclick="ds_file_select('${node}');"></i>
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="get_link_ds_file('${node}');return false;"><small class="fa fa-link mr-2"></small>Link</a>
-                                <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${btoa(data[node].file_original_name)}', '${icn_content}', '${has_password}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
-                                <a href="#" class="dropdown-item" onclick="download_ds_file('${node}', '${sanitizeHTML(data[node].file_original_name)}');return false;"><small class="fa-solid fa-download mr-2"></small>Download</a>
+                                <a href="#" class="dropdown-item" onclick="get_mk_link_ds_file('${node}', '${toBinary64(data[node].file_original_name)}', '${icn_content}', '${has_password}');return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown link</a>
+                                <a href="#" class="dropdown-item" onclick="download_ds_file('${node}');return false;"><small class="fa-solid fa-download mr-2"></small>Download</a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item" onclick="info_ds_file('${node}');return false;"><small class="fa fa-eye mr-2"></small>Info</a>
                                 <a href="#" class="dropdown-item" onclick="edit_ds_file('${node}');return false;"><small class="fa fa-pencil mr-2"></small>Edit</a>
@@ -524,9 +524,10 @@ function build_dsfile_view_link(file_id) {
 
 function get_mk_link_ds_file(file_id, filename, file_icon, has_password) {
 
-   link = build_dsfile_view_link(file_id);
+   let link = build_dsfile_view_link(file_id);
 
-   filename = atob(filename);
+   filename = sanitizeHTML(fromBinary64(filename));
+
 
    if (has_password == 'false' && ['png', 'svg', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'].includes(filename.split('.').pop())) {
         mk_link = `![${filename}](${link} =40%x40%)`;
@@ -544,8 +545,8 @@ function get_mk_link_ds_file(file_id, filename, file_icon, has_password) {
 
 }
 
-function download_ds_file(file_id, filename) {
-    link = build_dsfile_view_link(file_id);
+function download_ds_file(file_id) {
+    let link = build_dsfile_view_link(file_id);
     downloadURI(link, name);
 }
 
