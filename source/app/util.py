@@ -24,6 +24,7 @@ import datetime
 import decimal
 import hashlib
 import logging as log
+import marshmallow
 import pickle
 import random
 import shutil
@@ -810,4 +811,25 @@ def str_to_bool(value):
     return value.lower() in ['true', '1', 'yes', 'y', 't']
 
 
+def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bool = False):
+    if input_var is None:
+        if  allow_none is False:
+            raise marshmallow.ValidationError("Invalid data - non null expected",
+                                            field_name=field_name if field_name else "type")
+        else:
+            return True
+    
+    if isinstance(input_var, type):
+        return True
+    
+    try:
 
+        if isinstance(type(input_var), type):
+            return True
+
+    except Exception as e:
+        log.error(e)
+        print(e)
+        
+    raise marshmallow.ValidationError("Invalid data type",
+                                      field_name=field_name if field_name else "type")

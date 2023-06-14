@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 
 from flask_login import current_user
 from operator import and_
-from sqlalchemy import desc, asc, func, tuple_
+from sqlalchemy import desc, asc, func, tuple_, or_
 from sqlalchemy.orm import joinedload
 from typing import List, Tuple
 
@@ -793,10 +793,11 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     alert_status_filter = []
 
     conditions = and_(SimilarAlertsCache.customer_id == customer_id,
-                      tuple_(SimilarAlertsCache.asset_name,SimilarAlertsCache.asset_type_id).in_(asset_names)
-                      |
-                      tuple_(SimilarAlertsCache.ioc_value, SimilarAlertsCache.ioc_type_id).in_(ioc_values)
-                      )
+                      or_(
+                        tuple_(SimilarAlertsCache.asset_name,SimilarAlertsCache.asset_type_id).in_(asset_names)
+                        ,
+                        tuple_(SimilarAlertsCache.ioc_value, SimilarAlertsCache.ioc_type_id).in_(ioc_values)
+                      ))
 
     if open_alerts:
         open_alert_status_ids = AlertStatus.query.with_entities(
@@ -821,7 +822,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
         .outerjoin(asset_type_alias, SimilarAlertsCache.asset_type_id == asset_type_alias.asset_id)
         .filter(conditions)
-        .filter(SimilarAlertsCache.created_at >= func.now() - timedelta(days=days_back))
+        .filter(SimilarAlertsCache.created_at >= (func.now() - timedelta(days=days_back)))
         .limit(number_of_results)
         .all()
 

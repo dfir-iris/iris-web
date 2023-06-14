@@ -167,6 +167,22 @@ def add_asset_modal(caseid):
     return render_template("modal_add_case_asset.html", form=form, asset=None, ioc=ioc, attributes=attributes)
 
 
+@case_assets_blueprint.route('/case/assets/add-multi/modal', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def add_asset_multi_modal(caseid):
+    form = AssetBasicForm()
+
+    form.asset_type_id.choices = get_assets_types()
+    form.analysis_status_id.choices = get_analysis_status_list()
+    form.asset_compromise_status_id.choices = get_compromise_status_list()
+
+    # Get IoCs from the case
+    ioc = get_iocs(caseid)
+    attributes = get_default_custom_attributes('asset')
+
+    return render_template("modal_add_case_multi_asset.html", form=form, asset=None, ioc=ioc, attributes=attributes)
+
+
 @case_assets_blueprint.route('/case/assets/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def add_asset(caseid):
