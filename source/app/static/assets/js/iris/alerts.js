@@ -395,7 +395,7 @@ function mergeAlertCasesSelectOption(data) {
     if(notify_auto_api(data, true)) {
         $('#mergeAlertCaseSelect').empty();
 
-        $('#mergeAlertCaseSelect').append('<optgroup label="Opened" id="switchMergeAlertCasesOpen"></optgroup>');
+        $('#mergeAlertCaseSelect').append('<optgroup label="Open" id="switchMergeAlertCasesOpen"></optgroup>');
         $('#mergeAlertCaseSelect').append('<optgroup label="Closed" id="switchMergeAlertCasesClose"></optgroup>');
         ocs = data.data;
         ret_data = [];
@@ -750,7 +750,7 @@ function getFiltersFromUrl() {
     return Object.fromEntries(formData.entries());
 }
 
-function renderAlert(alert, expanded=false) {
+function renderAlert(alert, expanded=false, modulesOptionsReq) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
   const alert_color = alertStatusToColor(alert.status.status_name);
 
@@ -763,6 +763,18 @@ function renderAlert(alert, expanded=false) {
   alert.alert_source_link = filterXSS(alert.alert_source_link);
   alert.alert_source_ref = filterXSS(alert.alert_source_ref);
   alert.alert_note = filterXSS(alert.alert_note);
+
+  let menuOptionsHtml = '';
+  const menuOptions = modulesOptionsReq;
+  if (menuOptions.length !== 0) {
+
+      menuOptionsHtml = '<div class="dropdown-divider"></div>';
+      for (let index in menuOptions) {
+        let opt = menuOptions[index];
+        menuOptionsHtml += `<a class="dropdown-item" href="javascript:void(0);" onclick='init_module_processing_alert(${alert.alert_id}, "${opt.hook_name}",`+
+                    `"${opt.manual_hook_ui_name}","${opt.module_name}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+      }
+  }
 
   return `
 <div class="card alert-card full-height alert-card-selectable ${alert_color}" id="alertCard-${alert.alert_id}">
@@ -819,9 +831,10 @@ function renderAlert(alert, expanded=false) {
                                 <button class="btn bg-transparent mt--4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                   <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                                 </button>
-                                <div class="dropdown-menu" role="menu">
+                                <div class="dropdown-menu" role="menu" data-alert-id="${alert.alert_id}">
                                   <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
                                   <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
+                                  ${menuOptionsHtml}
                                   <div class="dropdown-divider"></div>
                                   <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
                                 </div>
@@ -1103,6 +1116,21 @@ function renderAlert(alert, expanded=false) {
 
 }
 
+function init_module_processing_alert(alert_id, hook_name, hook_ui_name, module_name, data_type) {
+    let data = Object();
+    data['hook_name'] = hook_name;
+    data['module_name'] = module_name;
+    data['hook_ui_name'] = hook_ui_name;
+    data['csrf_token'] = $('#csrf_token').val();
+    data['type'] = 'alert';
+    data['targets'] = [alert_id];
+
+    post_request_api("/dim/hooks/call", JSON.stringify(data), true)
+    .done(function (data){
+        notify_auto_api(data)
+    });
+}
+
 async function refreshAlert(alertId, alertData, expanded=false) {
     if (alertData === undefined) {
         const alertDataReq = await fetchAlert(alertId);
@@ -1115,6 +1143,12 @@ async function refreshAlert(alertId, alertData, expanded=false) {
     const alertElement = $(`#alertCard-${alertId}`);
     const alertHtml = renderAlert(alertData, expanded);
     alertElement.replaceWith(alertHtml);
+}
+
+async function fetchModulesOptions() {
+    const response = get_request_api('/dim/hooks/options/alert/list');
+
+    return await response;
 }
 
 async function updateAlerts(page, per_page, filters = {}, paging=false){
@@ -1134,6 +1168,12 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
     return;
   }
   const alerts = data.data.alerts;
+
+  const modulesOptionsReq = await fetchModulesOptions();
+
+  if (!notify_auto_api(modulesOptionsReq, true)) {
+    return;
+  }
 
   // Check if the selection mode is active
    const selectionModeActive = $('body').hasClass('selection-mode');
@@ -1157,7 +1197,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
       alerts.forEach((alert) => {
           const alertElement = $('<div></div>');
 
-          const alertHtml = renderAlert(alert, isExpanded);
+          const alertHtml = renderAlert(alert, isExpanded, modulesOptionsReq.data);
           alertElement.html(alertHtml);
           alertsContainer.append(alertElement);
       });

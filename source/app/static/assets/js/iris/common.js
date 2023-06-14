@@ -1223,7 +1223,7 @@ function context_data_parser(data) {
     if(notify_auto_api(data, true)) {
         $('#user_context').empty();
 
-        $('#user_context').append('<optgroup label="Opened" id="switch_case_opened_opt"></optgroup>');
+        $('#user_context').append('<optgroup label="Open" id="switch_case_opened_opt"></optgroup>');
         $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
         ocs = data.data;
         ret_data = [];

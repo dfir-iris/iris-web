@@ -49,7 +49,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath
+from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -245,10 +245,6 @@ class CaseGroupNoteSchema(ma.SQLAlchemyAutoSchema):
     It includes fields for the group ID, group UUID, group title, and the notes associated with the group.
 
     """
-    group_id: int = fields.Integer()
-    group_uuid: uuid.UUID = fields.UUID()
-    group_title: str = fields.String()
-    notes: List[CaseNoteSchema] = fields.Nested(CaseNoteSchema, many=True)
 
     class Meta:
         model = NotesGroup
@@ -359,7 +355,6 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     ioc_links: List[int] = fields.List(fields.Integer, required=False)
     asset_enrichment: str = auto_field('asset_enrichment', required=False)
     asset_type: AssetTypeSchema = ma.Nested(AssetTypeSchema, required=False)
-    custom_attributes: Dict[str, Any] = fields.Dict(required=False)
 
     class Meta:
         model = CaseAssets
@@ -821,10 +816,8 @@ class CommentSchema(ma.SQLAlchemyAutoSchema):
     It includes fields for the comment ID, the user who made the comment, the comment text, and the timestamp of the comment.
 
     """
-    comment_id: int = fields.Integer()
-    user: UserSchema = fields.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
-    comment_text: str = fields.String()
-    comment_timestamp: datetime = fields.DateTime()
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+
 
     class Meta:
         model = Comments
@@ -986,10 +979,6 @@ class DSPathSchema(ma.SQLAlchemyAutoSchema):
     It includes fields for the data store path ID, the data store ID, the path name, and the path description.
 
     """
-    ds_path_id: int = fields.Integer()
-    data_store_id: int = fields.Integer()
-    path_name: str = fields.String()
-    path_description: str = fields.String()
 
     class Meta:
         model = DataStorePath
@@ -1915,6 +1904,13 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     It includes fields for the alert severity, status, customer, classification, owner, IOCs, and assets.
 
     """
+    severity = ma.Nested(SeveritySchema)
+    status = ma.Nested(AlertStatusSchema)
+    customer = ma.Nested(CustomerSchema)
+    classification = ma.Nested(CaseClassificationSchema)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    iocs = ma.Nested(IocSchema, many=True)
+    assets = ma.Nested(CaseAssetsSchema, many=True)
 
     class Meta:
         model = Alert
@@ -1934,3 +1930,17 @@ class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         include_relationships = True
+
+
+class ModuleHooksSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing ModuleHooks objects.
+
+    This schema defines the fields to include when serializing and deserializing ModuleHooks objects.
+
+    """
+    class Meta:
+        model = IrisModuleHook
+        load_instance = True
+        include_fk = True
+        include_relationships = True
+

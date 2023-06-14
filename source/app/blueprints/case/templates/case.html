@@ -26,7 +26,7 @@
                                 <h2 class="text-white pb-2 fw-bold case-name"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
                                 </h2>
                             </div>
-                            <h5 class="text-white op-7 mb-1"><b>Opened on</b> {{ case.open_date }} by {{ case.user.name }}</h5>
+                            <h5 class="text-white op-7 mb-1"><b>Open on</b> {{ case.open_date }} by {{ case.user.name }}</h5>
                             <h5 class="text-white op-7 mb-3"><b>Owned by</b> {{ case.owner.name }}</h5>
                             {% if case.close_date %}
                             <h5 class="text-warning  mb-1">Closed on {{ case.close_date }}</h5>
