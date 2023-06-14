@@ -813,7 +813,7 @@ def str_to_bool(value):
 
 def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bool = False):
     if input_var is None:
-        if  allow_none is False:
+        if allow_none is False:
             raise marshmallow.ValidationError("Invalid data - non null expected",
                                             field_name=field_name if field_name else "type")
         else:

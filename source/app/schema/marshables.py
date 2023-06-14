@@ -232,7 +232,8 @@ class CaseAddNoteSchema(ma.Schema):
 
             assert_type_mml(input_var=data.get('note_id'),
                             field_name="note_id",
-                            type=int)
+                            type=int,
+                            allow_none=True)
 
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
 
@@ -532,7 +533,7 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
     @post_load
-    def verify_unique(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+    def verify_unique(self, data: IocType, **kwargs: Any) -> IocType:
         """Verifies that the IOC type name is unique.
 
         This method verifies that the IOC type name specified in the data is unique.
@@ -550,8 +551,8 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
 
         """
         client = IocType.query.filter(
-            func.lower(IocType.type_name) == func.lower(data['type_name']),
-            IocType.type_id != data['type_id']
+            func.lower(IocType.type_name) == func.lower(data.type_name),
+            IocType.type_id != data.type_id
         ).first()
         if client:
             raise marshmallow.exceptions.ValidationError(
@@ -966,7 +967,8 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
 
             assert_type_mml(input_var=data.get('event_id'),
                             field_name='event_id',
-                            type=int)
+                            type=int,
+                            allow_none=True)
             
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
@@ -1290,9 +1292,10 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the customer ID is not valid.
 
         """
-        assert_type_mml(input_var=data.get('case_customer'), 
+        assert_type_mml(input_var=data.get('case_customer'),
                         field_name='case_customer', 
-                        type=int)
+                        type=int,
+                        allow_none=True)
         
         client = Client.query.filter(Client.client_id == data.get('case_customer')).first()
         if client:
@@ -1320,11 +1323,13 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
 
         assert_type_mml(input_var=new_attr, 
                         field_name='custom_attributes', 
-                        type=dict)
+                        type=dict,
+                        allow_none=True)
         
         assert_type_mml(input_var=data.get('case_id'), 
                         field_name='case_id', 
-                        type=int)
+                        type=int,
+                        allow_none=True)
 
         if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('case_id'), 'case')
@@ -1424,7 +1429,7 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
         exclude = ['name', 'client_id', 'description', 'sla']
 
     @post_load
-    def verify_unique(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+    def verify_unique(self, data: Client, **kwargs: Any) -> Client:
         """Verifies that the customer name is unique.
 
         This method verifies that the customer name is unique. If the name is not unique, it raises a validation error.
@@ -1444,9 +1449,10 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
                         field_name='customer_name', 
                         type=str)
         
-        assert_type_mml(input_var=data.client_id, 
-                        field_name='customer_id', 
-                        type=int)
+        assert_type_mml(input_var=data.client_id,
+                        field_name='customer_id',
+                        type=int,
+                        allow_none=True)
 
         client = Client.query.filter(
             func.upper(Client.name) == data.name.upper(),
@@ -1479,13 +1485,16 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
 
         assert_type_mml(input_var=new_attr, 
                         field_name='custom_attributes', 
-                        type=dict)
-        
-        assert_type_mml(input_var=data.get('client_id'), 
-                        field_name='customer_id', 
-                        type=int)
+                        type=dict,
+                        allow_none=True)
 
         if new_attr is not None:
+
+            assert_type_mml(input_var=data.get('client_id'),
+                            field_name='customer_id',
+                            type=int,
+                            allow_none=True)
+
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('client_id'), 'client')
 
         return data
@@ -1571,11 +1580,13 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
 
         assert_type_mml(input_var=new_attr, 
                         field_name='custom_attributes', 
-                        type=dict)
+                        type=dict,
+                        allow_none=True)
         
         assert_type_mml(input_var=data.get('id'), 
                         field_name='task_id', 
-                        type=int)
+                        type=int,
+                        allow_none=True)
 
         if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'task')
@@ -1616,13 +1627,16 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
 
         assert_type_mml(input_var=new_attr, 
                         field_name='custom_attributes', 
-                        type=dict)
-        
-        assert_type_mml(input_var=data.get('id'), 
-                        field_name='evidence_id', 
-                        type=int)
+                        type=dict,
+                        allow_none=True)
 
         if new_attr is not None:
+
+            assert_type_mml(input_var=data.get('id'),
+                            field_name='evidence_id',
+                            type=int,
+                            allow_none=True)
+
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'evidence')
 
         return data
