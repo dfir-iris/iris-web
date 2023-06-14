@@ -1457,7 +1457,7 @@ def register_default_modules():
 
         module, logs = register_module(module_name)
         if module is None:
-            log.info("Attempted to add {mod}. Got {err}".format(mod=module_name, err=",".join(logs)))
+            log.info("Attempted to add {mod}. Got {err}".format(mod=module_name, err=logs))
 
         else:
             iris_module_disable_by_id(module.id)
