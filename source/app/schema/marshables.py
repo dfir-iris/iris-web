@@ -1653,10 +1653,14 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
     group_description: str = auto_field('group_description', required=True, validate=Length(min=2))
     group_auto_follow_access_level: Optional[bool] = auto_field('group_auto_follow_access_level', required=False, default=False)
     group_permissions: int = fields.Integer(required=False)
+    group_members: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
+    group_permissions_list: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
+    group_cases_access: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
 
     class Meta:
         model = Group
         load_instance = True
+        include_fk = True
 
     @pre_load
     def verify_unique(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
