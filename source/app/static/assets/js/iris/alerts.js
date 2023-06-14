@@ -750,7 +750,8 @@ function getFiltersFromUrl() {
     return Object.fromEntries(formData.entries());
 }
 
-function renderAlert(alert, expanded=false, modulesOptionsReq) {
+function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
+                     modulesOptionsIocReq, modulesOptionsAssetReq) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
   const alert_color = alertStatusToColor(alert.status.status_name);
 
@@ -764,14 +765,14 @@ function renderAlert(alert, expanded=false, modulesOptionsReq) {
   alert.alert_source_ref = filterXSS(alert.alert_source_ref);
   alert.alert_note = filterXSS(alert.alert_note);
 
-  let menuOptionsHtml = '';
-  const menuOptions = modulesOptionsReq;
+  let menuOptionsHtmlAlert = '';
+  const menuOptions = modulesOptionsAlertReq;
   if (menuOptions.length !== 0) {
 
-      menuOptionsHtml = '<div class="dropdown-divider"></div>';
+      menuOptionsHtmlAlert = '<div class="dropdown-divider"></div>';
       for (let index in menuOptions) {
         let opt = menuOptions[index];
-        menuOptionsHtml += `<a class="dropdown-item" href="javascript:void(0);" onclick='init_module_processing_alert(${alert.alert_id}, "${opt.hook_name}",`+
+        menuOptionsHtmlAlert += `<a class="dropdown-item" href="javascript:void(0);" onclick='init_module_processing_alert(${alert.alert_id}, "${opt.hook_name}",`+
                     `"${opt.manual_hook_ui_name}","${opt.module_name}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
       }
   }
@@ -831,10 +832,10 @@ function renderAlert(alert, expanded=false, modulesOptionsReq) {
                                 <button class="btn bg-transparent mt--4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                   <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                                 </button>
-                                <div class="dropdown-menu" role="menu" data-alert-id="${alert.alert_id}">
+                                <div class="dropdown-menu" role="menu">
                                   <a href="javascript:void(0)" class="dropdown-item" onclick="copyAlertLink(${alert.alert_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
                                   <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
-                                  ${menuOptionsHtml}
+                                  ${menuOptionsHtmlAlert}
                                   <div class="dropdown-divider"></div>
                                   <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
                                 </div>
@@ -994,6 +995,7 @@ function renderAlert(alert, expanded=false, modulesOptionsReq) {
                                                <th>TLP</th>
                                                <th>Tags</th>
                                                <th>Enrichment</th>
+                                               <th></th>
                                              </tr>
                                            </thead>
                                            <tbody>
@@ -1009,6 +1011,16 @@ function renderAlert(alert, expanded=false, modulesOptionsReq) {
                                                    <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
                                                       View Enrichment
                                                     </button>` : ''}
+                                                    </td>
+                                                    <td>
+                                                       <button class="btn bg-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                          <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                                                        </button>
+                                                        <div class="dropdown-menu" role="menu">
+                                                          ${ modulesOptionsIocReq.map((opt) => `
+                                                                <a class="dropdown-item" href="javascript:void(0);" onclick='init_module_processing([${ioc.ioc_id}], "${opt.hook_name}","${opt.manual_hook_ui_name}","${opt.module_name}", "ioc");return false;'><i class="fas fa-rocket mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+                                                            ).join('')} 
+                                                        </div>
                                                     </td>
                                                  </tr>`
                               )
@@ -1145,11 +1157,24 @@ async function refreshAlert(alertId, alertData, expanded=false) {
     alertElement.replaceWith(alertHtml);
 }
 
-async function fetchModulesOptions() {
+async function fetchModulesOptionsAlert() {
     const response = get_request_api('/dim/hooks/options/alert/list');
 
     return await response;
 }
+
+async function fetchModulesOptionsIoc() {
+    const response = get_request_api('/dim/hooks/options/ioc/list');
+
+    return await response;
+}
+
+async function fetchModulesOptionsAsset() {
+    const response = get_request_api('/dim/hooks/options/asset/list');
+
+    return await response;
+}
+
 
 async function updateAlerts(page, per_page, filters = {}, paging=false){
   if (sortOrder === undefined) { sortOrder = 'desc'; }
@@ -1169,9 +1194,19 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   }
   const alerts = data.data.alerts;
 
-  const modulesOptionsReq = await fetchModulesOptions();
+  const modulesOptionsAlertReq = await fetchModulesOptionsAlert();
+  const modulesOptionsIocReq = await fetchModulesOptionsIoc();
+  const modulesOptionsAssetReq = await fetchModulesOptionsAsset();
 
-  if (!notify_auto_api(modulesOptionsReq, true)) {
+  if (!notify_auto_api(modulesOptionsAlertReq, true)) {
+    return;
+  }
+
+  if (!notify_auto_api(modulesOptionsIocReq, true)) {
+    return;
+  }
+
+  if (!notify_auto_api(modulesOptionsAssetReq, true)) {
     return;
   }
 
@@ -1197,7 +1232,9 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
       alerts.forEach((alert) => {
           const alertElement = $('<div></div>');
 
-          const alertHtml = renderAlert(alert, isExpanded, modulesOptionsReq.data);
+          const alertHtml = renderAlert(alert, isExpanded, modulesOptionsAlertReq.data,
+                                               modulesOptionsIocReq.data,
+                                               modulesOptionsAssetReq.data);
           alertElement.html(alertHtml);
           alertsContainer.append(alertElement);
       });
