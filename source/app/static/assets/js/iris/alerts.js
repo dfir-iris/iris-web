@@ -751,7 +751,7 @@ function getFiltersFromUrl() {
 }
 
 function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
-                     modulesOptionsIocReq, modulesOptionsAssetReq) {
+                     modulesOptionsIocReq) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
   const alert_color = alertStatusToColor(alert.status.status_name);
 
@@ -1017,9 +1017,11 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                                           <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                                                         </button>
                                                         <div class="dropdown-menu" role="menu">
-                                                          ${ modulesOptionsIocReq.map((opt) => `
+                                                        ${ modulesOptionsIocReq.length === 0 ? `<a class="dropdown-item" href="javascript:void(0);"><i class="fas fa-rocket mr-2"></i> No module available</a>` :
+                                                          modulesOptionsIocReq.map((opt) => `
                                                                 <a class="dropdown-item" href="javascript:void(0);" onclick='init_module_processing([${ioc.ioc_id}], "${opt.hook_name}","${opt.manual_hook_ui_name}","${opt.module_name}", "ioc");return false;'><i class="fas fa-rocket mr-2"></i> ${opt.manual_hook_ui_name}</a>`
-                                                            ).join('')} 
+                                                            ).join('')
+                                                        }
                                                         </div>
                                                     </td>
                                                  </tr>`
@@ -1143,6 +1145,9 @@ function init_module_processing_alert(alert_id, hook_name, hook_ui_name, module_
     });
 }
 
+let modulesOptionsAlertReq = null;
+let modulesOptionsIocReq = null;
+
 async function refreshAlert(alertId, alertData, expanded=false) {
     if (alertData === undefined) {
         const alertDataReq = await fetchAlert(alertId);
@@ -1152,8 +1157,21 @@ async function refreshAlert(alertId, alertData, expanded=false) {
         alertData = alertDataReq.data;
     }
 
+      if (modulesOptionsAlertReq === null) {
+    modulesOptionsAlertReq = await fetchModulesOptionsAlert();
+    if (!notify_auto_api(modulesOptionsAlertReq, true)) {
+        return;
+    }
+  }
+  if (modulesOptionsIocReq === null) {
+    modulesOptionsIocReq = await fetchModulesOptionsIoc();
+    if (!notify_auto_api(modulesOptionsIocReq, true)) {
+        return;
+    }
+  }
+
     const alertElement = $(`#alertCard-${alertId}`);
-    const alertHtml = renderAlert(alertData, expanded);
+    const alertHtml = renderAlert(alertData, expanded, modulesOptionsAlertReq.data, modulesOptionsIocReq.data);
     alertElement.replaceWith(alertHtml);
 }
 
@@ -1194,20 +1212,17 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   }
   const alerts = data.data.alerts;
 
-  const modulesOptionsAlertReq = await fetchModulesOptionsAlert();
-  const modulesOptionsIocReq = await fetchModulesOptionsIoc();
-  const modulesOptionsAssetReq = await fetchModulesOptionsAsset();
-
-  if (!notify_auto_api(modulesOptionsAlertReq, true)) {
-    return;
+  if (modulesOptionsAlertReq === null) {
+    modulesOptionsAlertReq = await fetchModulesOptionsAlert();
+    if (!notify_auto_api(modulesOptionsAlertReq, true)) {
+        return;
+    }
   }
-
-  if (!notify_auto_api(modulesOptionsIocReq, true)) {
-    return;
-  }
-
-  if (!notify_auto_api(modulesOptionsAssetReq, true)) {
-    return;
+  if (modulesOptionsIocReq === null) {
+    modulesOptionsIocReq = await fetchModulesOptionsIoc();
+    if (!notify_auto_api(modulesOptionsIocReq, true)) {
+        return;
+    }
   }
 
   // Check if the selection mode is active
@@ -1233,8 +1248,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
           const alertElement = $('<div></div>');
 
           const alertHtml = renderAlert(alert, isExpanded, modulesOptionsAlertReq.data,
-                                               modulesOptionsIocReq.data,
-                                               modulesOptionsAssetReq.data);
+                                               modulesOptionsIocReq.data);
           alertElement.html(alertHtml);
           alertsContainer.append(alertElement);
       });
