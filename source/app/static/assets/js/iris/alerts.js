@@ -463,7 +463,7 @@ function getAlertOffset(element) {
 function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, containerConfigureId) {
   const { nodes, edges } = relatedAlerts;
 
-  if (nodes.length === 0) {
+  if (nodes.length === 0 || nodes.length === undefined) {
       $(`#similarAlertsNotify-${alert_id}`).text(`No relationships found for this alert`);
      return;
   }
@@ -1797,7 +1797,7 @@ function fetchSelectOptions(selectElementId, configItem) {
         });
         resolve();
       });
-  });
+  });Ï
 }
 
 function getBatchAlerts() {
@@ -1903,8 +1903,6 @@ function refreshAlertRelationships(alertId) {
     let fetch_closed_alerts = $(`input[name="closed_alerts_${alertId}"]`).prop('checked');
     let fetch_open_cases = $(`input[name="open_cases_${alertId}"]`).prop('checked');
     let fetch_closed_cases = $(`input[name="closed_cases_${alertId}"]`).prop('checked');
-
-    console.log("fetch_open_alerts: " + fetch_open_alerts)
 
     fetchSimilarAlerts(alertId, true, fetch_open_alerts, fetch_closed_alerts,
         fetch_open_cases, fetch_closed_cases);

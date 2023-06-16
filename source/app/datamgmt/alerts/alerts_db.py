@@ -780,10 +780,10 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     returns:
         dict: The details of the related alerts with matched assets and/or IOCs
     """
-    if not assets or not iocs:
+    if not assets and not iocs:
         return {
-            'nodes': {},
-            'edges': {}
+            'nodes': [],
+            'edges': []
         }
 
     asset_names = [(asset.asset_name, asset.asset_type_id) for asset in assets]
