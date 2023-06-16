@@ -184,7 +184,7 @@ function load_comments(element_id, element_type, comment_id, do_notification, is
         silent_success = true;
     }
 
-    const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
+    const prefix = is_alert || element_type === 'alerts' ? '/alerts' : `/case/${element_type}`;
 
     get_request_api(`${prefix}/${element_id}/comments/list`)
     .done((data) => {
