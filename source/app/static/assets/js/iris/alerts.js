@@ -429,7 +429,7 @@ function fetchSmartRelations(alert_id) {
 
 function buildAlertLink(alert_id){
     const current_path = location.protocol + '//' + location.host
-    return current_path + '/alerts' + case_param() + '&alert_id=' + alert_id;
+    return current_path + '/alerts' + case_param() + '&alert_ids=' + alert_id;
 }
 
 function copyAlertLink(alert_id) {
