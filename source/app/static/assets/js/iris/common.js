@@ -849,7 +849,7 @@ function do_md_filter_xss(html) {
                 code: [], pre: [], em: [], strong: [],
                 blockquote: [], del: [],
                 input: ['type', 'checked', 'disabled', 'class'],
-                table: ['class'], thead: [], tbody: [], tr: [], th: [], td: []
+                table: ['class'], thead: [], tbody: [], tr: [], th: [], td: [], br: []
             },
         onTagAttr: function (tag, name, value, isWhiteAttr) {
             if (tag === "i" && name === "class") {
@@ -1223,7 +1223,7 @@ function context_data_parser(data) {
     if(notify_auto_api(data, true)) {
         $('#user_context').empty();
 
-        $('#user_context').append('<optgroup label="Opened" id="switch_case_opened_opt"></optgroup>');
+        $('#user_context').append('<optgroup label="Open" id="switch_case_opened_opt"></optgroup>');
         $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
         ocs = data.data;
         ret_data = [];
@@ -1417,6 +1417,23 @@ function do_deletion_prompt(message, force_prompt=false) {
             resolve(true);
         });
     }
+}
+
+function toBinary64(string) {
+  const codeUnits = new Uint16Array(string.length);
+  for (let i = 0; i < codeUnits.length; i++) {
+    codeUnits[i] = string.charCodeAt(i);
+  }
+  return btoa(String.fromCharCode(...new Uint8Array(codeUnits.buffer)));
+}
+
+function fromBinary64(encoded) {
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return String.fromCharCode(...new Uint16Array(bytes.buffer));
 }
 
 $(document).ready(function(){

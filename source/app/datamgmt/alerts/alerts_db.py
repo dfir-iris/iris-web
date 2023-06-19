@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 
 from flask_login import current_user
 from operator import and_
-from sqlalchemy import desc, asc, func, tuple_
+from sqlalchemy import desc, asc, func, tuple_, or_
 from sqlalchemy.orm import joinedload
 from typing import List, Tuple
 
@@ -464,14 +464,14 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         event_schema = EventSchema()
         event = event_schema.load({
             'event_title': f"[ALERT] {alert.alert_title}",
-            'event_content': alert.alert_description,
-            'event_source': alert.alert_source,
-            'event_raw': json.dumps(alert.alert_source_content, indent=4),
-            'event_date': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f"),
-            'event_date_wtz': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+            'event_content': alert.alert_description if alert.alert_description else "",
+            'event_source': alert.alert_source if alert.alert_source else "",
+            'event_raw': json.dumps(alert.alert_source_content, indent=4) if alert.alert_source_content else "",
+            'event_date': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f") if alert.alert_source_event_time else datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f"),
+            'event_date_wtz': alert.alert_source_event_time.strftime("%Y-%m-%dT%H:%M:%S.%f") if alert.alert_source_event_time else datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f"),
             'event_iocs': ioc_links,
             'event_assets': asset_links,
-            'event_tags': alert.alert_tags + ',alert',
+            'event_tags': alert.alert_tags + ',alert' if alert.alert_tags else "alert",
             'event_tz': '+00:00',
             'event_category_id': unspecified_cat.id,
             'event_in_graph': True,
@@ -780,10 +780,10 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     returns:
         dict: The details of the related alerts with matched assets and/or IOCs
     """
-    if not assets or not iocs:
+    if not assets and not iocs:
         return {
-            'nodes': {},
-            'edges': {}
+            'nodes': [],
+            'edges': []
         }
 
     asset_names = [(asset.asset_name, asset.asset_type_id) for asset in assets]
@@ -793,10 +793,11 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     alert_status_filter = []
 
     conditions = and_(SimilarAlertsCache.customer_id == customer_id,
-                      tuple_(SimilarAlertsCache.asset_name,SimilarAlertsCache.asset_type_id).in_(asset_names)
-                      |
-                      tuple_(SimilarAlertsCache.ioc_value, SimilarAlertsCache.ioc_type_id).in_(ioc_values)
-                      )
+                      or_(
+                        tuple_(SimilarAlertsCache.asset_name,SimilarAlertsCache.asset_type_id).in_(asset_names)
+                        ,
+                        tuple_(SimilarAlertsCache.ioc_value, SimilarAlertsCache.ioc_type_id).in_(ioc_values)
+                      ))
 
     if open_alerts:
         open_alert_status_ids = AlertStatus.query.with_entities(
@@ -821,7 +822,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
         .outerjoin(asset_type_alias, SimilarAlertsCache.asset_type_id == asset_type_alias.asset_id)
         .filter(conditions)
-        .filter(SimilarAlertsCache.created_at >= func.now() - timedelta(days=days_back))
+        .filter(SimilarAlertsCache.created_at >= (func.now() - timedelta(days=days_back)))
         .limit(number_of_results)
         .all()
 

@@ -245,18 +245,18 @@ def api_reopen_case(cur_id, caseid):
         for alert in case.alerts:
             if alert.alert_status_id != merged_status.status_id:
                 alert.alert_status_id = merged_status.status_id
-                track_activity(f"alert ID {alert.alert_id} status updated to merged due to case #{caseid} being reopened",
+                track_activity(f"alert ID {alert.alert_id} status updated to merged due to case #{caseid} being reopen",
                                caseid=caseid, ctx_less=False)
 
                 db.session.add(alert)
     
     case = call_modules_hook('on_postload_case_update', data=case, caseid=caseid)
 
-    add_obj_history_entry(case, 'case reopened')
-    track_activity("reopened case ID {}".format(cur_id), caseid=caseid)
+    add_obj_history_entry(case, 'case reopen')
+    track_activity("reopen case ID {}".format(cur_id), caseid=caseid)
     case_schema = CaseSchema()
 
-    return response_success("Case reopened successfully", data=case_schema.dump(res))
+    return response_success("Case reopen successfully", data=case_schema.dump(res))
 
 
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['POST'])

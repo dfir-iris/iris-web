@@ -63,7 +63,7 @@ def iris_module_add(module_name, module_human_name, module_description,
     except Exception:
         return None
 
-    return im.id
+    return im
 
 
 def is_mod_configured(mod_config):
