@@ -1512,7 +1512,7 @@ async function fetchSavedFilters() {
                 savedFiltersDropdown.empty();
 
                 let dropdownHtml = `
-                    <select class="selectpicker" data-style="btn-sm" data-live-search="true" title="Select preset filter" id="savedFilters">
+                    <select class="selectpicker ml-2" data-style="btn-sm" data-live-search="true" title="Select preset filter" id="savedFilters">
                 `;
 
                 data.data.forEach(filter => {
@@ -1952,10 +1952,6 @@ $(document).ready(function () {
     $('.tickbox input[type="checkbox"]').prop('checked', !allSelected);
     $(this).text(allSelected ? 'Select all' : 'Deselect all');
   });
-
-    $('#togglePresets').on('click', function() {
-        $('.preset-dropdown-container').toggle();
-    });
 
     socket.on('new_alert', function (data) {
         const badge = $('#newAlertsBadge');
