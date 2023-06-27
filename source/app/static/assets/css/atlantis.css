@@ -15820,6 +15820,10 @@ td.dt-nowrap { white-space: nowrap }
     overflow-y: auto;
 }
 
-.amsify-suggestags-input-area .amsify-select-tag {
+.bootstrap-select .dropdown-menu {
     border-radius: 0.6rem;
+}
+
+.amsify-suggestags-input-area .amsify-select-tag.col-bg {
+    border-radius: 0.4rem;
 }
