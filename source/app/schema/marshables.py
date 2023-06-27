@@ -298,7 +298,8 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
 
         assert_type_mml(input_var=data.asset_id,
                         field_name="asset_id",
-                        type=int)
+                        type=int,
+                        allow_none=True)
 
         client = AssetsType.query.filter(
             func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
