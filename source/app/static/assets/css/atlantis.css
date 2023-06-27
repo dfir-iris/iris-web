@@ -8294,10 +8294,10 @@ body .badge-danger {
     margin-left: 8%;
     margin-bottom: 0.8%;
     background: #ffffff;
-    border-radius: 18px;
+    border-radius: 1.5rem;
     padding: 18px;
     position: relative;
-    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.24);
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);
 }
 
 .timeline>li>.timeline-even {

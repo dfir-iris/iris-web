@@ -192,7 +192,8 @@
                                                   id="case_quick_status" name="status_id">
                                               <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
                                               <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
-                                              <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
+                                              <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive with impact</option>
+                                              <option value="4" {% if data.status_id == 4 %}selected{% endif %} class="badge-text">True Positive without impact</option>
                                               <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
                                           </select>
                                         </div>

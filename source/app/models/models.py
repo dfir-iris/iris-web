@@ -53,8 +53,9 @@ metadata = Base.metadata
 class CaseStatus(enum.Enum):
     unknown = 0x0
     false_positive = 0x1
-    true_positive = 0x2
+    true_positive_with_impact = 0x2
     not_applicable = 0x3
+    true_positive_without_impact = 0x4
 
 
 class CompromiseStatus(enum.Enum):
