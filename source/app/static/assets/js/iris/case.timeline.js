@@ -184,6 +184,7 @@ function edit_event(id) {
         preview_event_description(true);
         headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
         $('#event_edition_btn').append(headers);
+        edit_in_event_desc();
         
         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
