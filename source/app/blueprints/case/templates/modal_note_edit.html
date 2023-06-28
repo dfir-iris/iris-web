@@ -55,7 +55,7 @@
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="note_editor.insertSnippet('### ${1:$SELECTION}');note_editor.focus();">H3</div>
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="note_editor.insertSnippet('#### ${1:$SELECTION}');note_editor.focus();">H4</div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="note_editor.insertSnippet('```${1:$SELECTION}```');note_editor.focus();"><i class="fa-solid fa-code"></i></div>
-                        <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="note_editor.insertSnippet('[New link](${1:$SELECTION})');note_editor.focus();"><i class="fa-solid fa-link"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="note_editor.insertSnippet('[${1:$SELECTION}](url)');note_editor.focus();"><i class="fa-solid fa-link"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="note_editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');note_editor.focus();"><i class="fa-solid fa-table"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="note_editor.insertSnippet('\n- \n- \n- ');note_editor.focus();"><i class="fa-solid fa-list"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="note_editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');note_editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
