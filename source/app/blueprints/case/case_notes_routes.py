@@ -508,3 +508,9 @@ def get_message(data):
         return
 
     emit('pong-note', {"user": current_user.user}, room=data['channel'])
+
+
+@socket_io.on('disconnect')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def disconnect(data):
+    emit('disconnect', current_user.user, broadcast=True)

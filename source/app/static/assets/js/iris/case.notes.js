@@ -8,6 +8,7 @@ let just_cleared_buffer = null ;
 let from_sync = null;
 let is_typing = "";
 let ppl_viewing = new Map();
+let timer_socket = 0;
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -89,7 +90,7 @@ function Collaborator( session_id, note_id ) {
 
     this.collaboration_socket.on('join-note', function(data) {
         if ((data.user in ppl_viewing)) return;
-        ppl_viewing.set(data.user, 1);
+        ppl_viewing.set(data.user, 2);
         refresh_ppl_list(session_id, note_id);
         collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel });
     });
@@ -100,6 +101,21 @@ function Collaborator( session_id, note_id ) {
 
     this.collaboration_socket.on('pong-note', function(data) {
         ppl_viewing.set(data.user, 1);
+        for (let [key, value] of ppl_viewing) {
+            console.log(key + ' = ' + value);
+            console.log(key !== data.user);
+            if (key !== data.user) {
+                ppl_viewing.set(key, value-1);
+            }
+            if (value < 0) {
+                ppl_viewing.delete(key);
+            }
+        }
+        refresh_ppl_list(session_id, note_id);
+    });
+
+    this.collaboration_socket.on('disconnect', function(data) {
+        ppl_viewing.delete(data.user);
         refresh_ppl_list(session_id, note_id);
     });
 
@@ -447,6 +463,10 @@ function note_detail(id, cid) {
             handle_note_close(id);
         });
 
+        timer_socket = setInterval( function() {
+            collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel });
+        }, 3000);
+
     });
 }
 
@@ -460,6 +480,10 @@ function handle_note_close(id) {
 
     if (ppl_viewing) {
         ppl_viewing.clear();
+    }
+
+    if (timer_socket) {
+        clearTimeout(timer_socket);
     }
 }
 
