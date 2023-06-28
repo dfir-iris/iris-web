@@ -564,7 +564,7 @@ def ac_socket_requires(*access_level):
             else:
                 chan_id = args[0].get('channel')
                 if chan_id:
-                    case_id = int(chan_id.replace('case-', ''))
+                    case_id = int(chan_id.replace('case-', '').split('-')[0])
                 else:
                     return ac_return_access_denied(caseid=0)
 

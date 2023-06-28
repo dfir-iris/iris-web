@@ -15827,3 +15827,16 @@ td.dt-nowrap { white-space: nowrap }
 .amsify-suggestags-input-area .amsify-select-tag.col-bg {
     border-radius: 0.4rem;
 }
+
+.writing-tag {
+    padding: 0.5em 0.8em 0.5em;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 0.6rem;
+    background-color: #949494;
+    background: linear-gradient(45deg, rgb(140, 140, 140), rgba(94, 94, 94, 0.76));
+    color: rgb(255, 255, 255);
+    position: relative;
+    transform: none;
+}

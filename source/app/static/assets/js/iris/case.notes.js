@@ -1,4 +1,14 @@
 /* Defines the kanban board */
+let note_editor;
+let session_id = null ;
+let collaborator = null ;
+let buffer_dumped = false ;
+let last_applied_change = null ;
+let just_cleared_buffer = null ;
+let from_sync = null;
+let is_typing = "";
+let ppl_viewing = [];
+
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
     return false;
@@ -43,8 +53,67 @@ var boardNotes = {
     }
 };
 
+function Collaborator( session_id, note_id ) {
+    this.collaboration_socket = io.connect() ;
+
+    this.channel = "case-" + session_id + "-note-" + note_id ;
+    this.collaboration_socket.emit('join-note', { 'channel': this.channel });
+
+    this.collaboration_socket.on( "change-note", function(data) {
+        let delta = JSON.parse( data.delta ) ;
+        last_applied_change = delta ;
+        $("#content_typing").text(data.last_change + " is typing..");
+        note_editor.getSession().getDocument().applyDeltas( [delta] ) ;
+    }.bind() ) ;
+
+    this.collaboration_socket.on( "clear_buffer-note", function() {
+        just_cleared_buffer = true ;
+        console.log( "setting editor empty" ) ;
+        note_editor.setValue( "" ) ;
+    }.bind() ) ;
+
+    this.collaboration_socket.on( "save-note", function(data) {
+        sync_note(note_id)
+            .then(function () {
+                $("#content_last_saved_by").text("Last saved by " + data.last_saved);
+                $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
+                $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+            });
+
+    }.bind());
+
+    this.collaboration_socket.on('leave-note', function(data) {
+        console.l
+    });
+}
+
+Collaborator.prototype.change = function( delta ) {
+    this.collaboration_socket.emit( "change-note", { 'delta': delta, 'channel': this.channel } ) ;
+}
+
+Collaborator.prototype.clear_buffer = function() {
+    this.collaboration_socket.emit( "clear_buffer-note", { 'channel': this.channel } ) ;
+}
+
+Collaborator.prototype.save = function() {
+    this.collaboration_socket.emit( "save-note", { 'channel': this.channel } ) ;
+}
+
+Collaborator.prototype.close = function() {
+    this.collaboration_socket.emit( "leave-note", { 'channel': this.channel } ) ;
+}
+
+function auto_remove_typing() {
+    if ($("#content_typing").text() == is_typing) {
+        $("#content_typing").text("");
+    } else {
+        is_typing = $("#content_typing").text();
+    }
+}
+
 /* Generates a global sequence id for subnotes */
-var current_id = 0;
+let current_id = 0;
 
 function nextSubNote(element, _item, title) {
     var newElement = element.clone();
@@ -64,6 +133,26 @@ function nextSubNote(element, _item, title) {
 
 /* Generates a global sequence id for groups */
 var current_gid = 0;
+
+async function get_remote_note(note_id) {
+    get_request_api("/case/notes/" + note_id)
+    .then(function (data) {
+        if (notify_auto_api(data, true)) {
+            return data.data;
+        }
+    });
+}
+
+async function sync_note(node_id) {
+    let note = await get_remote_note(node_id);
+    if (note == null) {
+        return;
+    }
+
+    let note_content = note.content;
+    note_editor.setValue(note_content);
+    return note;
+}
 
 function nextGroupNote(title="", rid=0) {
 
@@ -275,7 +364,7 @@ function list_notes() {
 function edit_note(event) {
 
     var nval = $(event).find('iris_note').attr('id');
-
+    collaborator = null;
     note_detail(nval);
 
 }
@@ -287,7 +376,7 @@ $('#modal_note_detail').on('hidden.bs.modal', function (e) {
     }
   })
 
-var note_editor;
+
 /* Fetch the edit modal with content from server */
 function note_detail(id, cid) {
     if (cid === undefined ) {
@@ -313,18 +402,44 @@ function note_detail(id, cid) {
             }
             timer = setTimeout(save_note, timeout);
         });
+
+        collaborator = new Collaborator( get_caseid(), id );
+
         note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function() {
             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
             $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
         }, save_note);
 
-        //edit_innote();
         note_editor.focus();
+
+        note_editor.on( "change", function( e ) {
+            // TODO, we could make things more efficient and not likely to conflict by keeping track of change IDs
+            if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
+                collaborator.change( JSON.stringify(e) ) ;
+            }
+            }, false
+        );
+        last_applied_change = null ;
+        just_cleared_buffer = false ;
 
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
         $('#modal_note_detail').modal({ show: true, backdrop: 'static', keyboard: false });
+
+        $('#modal_note_detail').on("hidden.bs.modal", function () {
+            handle_note_close(id);
+        });
+
     });
+}
+
+function handle_note_close(id) {
+    if (collaborator) {
+        collaborator.close();
+    }
+    if (note_editor) {
+        note_editor.destroy();
+    }
 }
 
 function handle_ed_paste(event) {
@@ -411,6 +526,7 @@ function save_note(this_item, cid) {
     clear_api_error();
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
+
     var data_sent = $('#form_note').serializeObject();
     data_sent['note_content'] = $('#note_content').val();
     ret = get_custom_attributes_fields();
@@ -430,7 +546,9 @@ function save_note(this_item, cid) {
         if (data.status == 'success') {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+             $("#content_last_saved_by").text('Last saved by you');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+            collaborator.save();
         }
     });
 }
@@ -493,4 +611,6 @@ $(document).ready(function(){
     if (shared_id) {
         note_detail(shared_id);
     }
+    setInterval(auto_remove_typing, 1500);
+
 });

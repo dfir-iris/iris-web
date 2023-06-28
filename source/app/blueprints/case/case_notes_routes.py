@@ -27,9 +27,10 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
+from flask_socketio import emit, join_room, leave_room
 from flask_wtf import FlaskForm
 
-from app import db
+from app import db, socket_io
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
@@ -58,7 +59,7 @@ from app.schema.marshables import CaseAddNoteSchema
 from app.schema.marshables import CaseGroupNoteSchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, ac_socket_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
@@ -432,3 +433,55 @@ def case_comment_note_delete(cur_id, com_id, caseid):
 
     track_activity(f"comment {com_id} on note {cur_id} deleted", caseid=caseid)
     return response_success(msg)
+
+
+@socket_io.on('change-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_summary_onchange(data):
+    if not current_user.is_authenticated:
+        return
+
+    data['last_change'] = current_user.user
+    emit('change-note', data, to=data['channel'], skip_sid=request.sid, room=data['channel'])
+
+
+@socket_io.on('save-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_summary_onsave(data):
+    if not current_user.is_authenticated:
+        return
+
+    data['last_saved'] = current_user.user
+    emit('save-note', data, to=data['channel'], skip_sid=request.sid, room=data['channel'])
+
+
+@socket_io.on('clear_buffer-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_summary_onchange(message):
+    if not current_user.is_authenticated:
+        return
+
+    emit('clear_buffer-note', message, room=message['channel'])
+
+
+@socket_io.on('join-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def get_message(data):
+    if not current_user.is_authenticated:
+        return
+
+    room = data['channel']
+    join_room(room=room)
+    emit('join-note', {'message': f"{current_user.user} just joined"}, room=room)
+
+
+@socket_io.on('leave-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def get_message(data):
+    if not current_user.is_authenticated:
+        return
+
+    room = data['channel']
+    leave_room(room=room)
+    emit('leave-note', {'message': f"{current_user.user} leaved"}, room=room)
+
