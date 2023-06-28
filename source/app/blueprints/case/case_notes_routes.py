@@ -472,7 +472,11 @@ def get_message(data):
 
     room = data['channel']
     join_room(room=room)
-    emit('join-note', {'message': f"{current_user.user} just joined"}, room=room)
+
+    emit('join-note', {
+        'message': f"{current_user.user} just joined",
+        "user": current_user.user
+    }, room=room)
 
 
 @socket_io.on('leave-note')
@@ -483,5 +487,24 @@ def get_message(data):
 
     room = data['channel']
     leave_room(room=room)
-    emit('leave-note', {'message': f"{current_user.user} leaved"}, room=room)
+    emit('leave-note', {'message': f"{current_user.user} leaved", "user": current_user.user}, room=room)
 
+
+@socket_io.on('leave-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def get_message(data):
+    if not current_user.is_authenticated:
+        return
+
+    room = data['channel']
+    leave_room(room=room)
+    emit('leave-note', {'message': f"{current_user.user} leaved", "user": current_user.user}, room=room)
+
+
+@socket_io.on('ping-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def get_message(data):
+    if not current_user.is_authenticated:
+        return
+
+    emit('pong-note', {"user": current_user.user}, room=data['channel'])

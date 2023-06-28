@@ -3571,7 +3571,7 @@ body {
 }
 
 .avatar-xs .avatar-title {
-    font-size: 12px;
+    font-size: 8px;
 }
 
 .avatar-xs.avatar-online::before,
@@ -3693,13 +3693,18 @@ body {
     }
 }
 
-.avatar-group {
+.avatar-group,
+.avatar-group-note {
     display: inline-flex;
 }
 
 .avatar-group .avatar + .avatar {
    margin-left: -1.5rem;
    margin-top: 1.1rem;
+}
+
+.avatar-group-note .avatar + .avatar {
+   margin-left: -0.8rem;
 }
 
 
@@ -3722,6 +3727,11 @@ body {
 .avatar-group .avatar:hover {
     z-index: 1;
 }
+
+.avatar-group-note .avatar:hover {
+    z-index: 1;
+}
+
 
 .border-dark {
     border-color: #202940 !important;

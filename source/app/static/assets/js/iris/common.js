@@ -865,8 +865,9 @@ function do_md_filter_xss(html) {
 
 const avatarCache = {};
 
-function get_avatar_initials(name, small, onClickFunction) {
-    const av_size = small ? 'avatar-sm' : 'avatar';
+function get_avatar_initials(name, small, onClickFunction, xsmall) {
+    let av_size = small ? 'avatar-sm' : 'avatar';
+    av_size = xsmall ? 'avatar-xs' : av_size;
     const onClick = onClickFunction ? `onclick="${onClickFunction}"` : '';
 
     if (avatarCache[name] && avatarCache[name][small ? 'small' : 'large']) {

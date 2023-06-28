@@ -7,7 +7,7 @@ let last_applied_change = null ;
 let just_cleared_buffer = null ;
 let from_sync = null;
 let is_typing = "";
-let ppl_viewing = [];
+let ppl_viewing = new Map();
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -68,7 +68,6 @@ function Collaborator( session_id, note_id ) {
 
     this.collaboration_socket.on( "clear_buffer-note", function() {
         just_cleared_buffer = true ;
-        console.log( "setting editor empty" ) ;
         note_editor.setValue( "" ) ;
     }.bind() ) ;
 
@@ -84,8 +83,26 @@ function Collaborator( session_id, note_id ) {
     }.bind());
 
     this.collaboration_socket.on('leave-note', function(data) {
-        console.l
+        ppl_viewing.delete(data.user);
+        refresh_ppl_list(session_id, note_id);
     });
+
+    this.collaboration_socket.on('join-note', function(data) {
+        if ((data.user in ppl_viewing)) return;
+        ppl_viewing.set(data.user, 1);
+        refresh_ppl_list(session_id, note_id);
+        collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel });
+    });
+
+    this.collaboration_socket.on('ping-note', function(data) {
+        collaborator.collaboration_socket.emit('pong-note', { 'channel': collaborator.channel });
+    });
+
+    this.collaboration_socket.on('pong-note', function(data) {
+        ppl_viewing.set(data.user, 1);
+        refresh_ppl_list(session_id, note_id);
+    });
+
 }
 
 Collaborator.prototype.change = function( delta ) {
@@ -439,6 +456,17 @@ function handle_note_close(id) {
     }
     if (note_editor) {
         note_editor.destroy();
+    }
+
+    if (ppl_viewing) {
+        ppl_viewing.clear();
+    }
+}
+
+function refresh_ppl_list() {
+    $('#ppl_list_viewing').empty();
+    for (let [key, value] of ppl_viewing) {
+        $('#ppl_list_viewing').append(get_avatar_initials(key, false, undefined, true));
     }
 }
 
