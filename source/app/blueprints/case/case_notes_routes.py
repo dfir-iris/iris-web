@@ -510,6 +510,15 @@ def get_message(data):
     emit('pong-note', {"user": current_user.user}, room=data['channel'])
 
 
+@socket_io.on('overview-map-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def get_message(data):
+    if not current_user.is_authenticated:
+        return
+
+    emit('overview-map-note', {"user": current_user.user, "note": data['note_id']}, room=data['channel'])
+
+
 @socket_io.on('disconnect')
 @ac_socket_requires(CaseAccessLevel.full_access)
 def disconnect(data):

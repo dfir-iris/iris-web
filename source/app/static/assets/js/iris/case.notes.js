@@ -2,6 +2,7 @@
 let note_editor;
 let session_id = null ;
 let collaborator = null ;
+let collaborator_socket = null ;
 let buffer_dumped = false ;
 let last_applied_change = null ;
 let just_cleared_buffer = null ;
@@ -55,7 +56,7 @@ var boardNotes = {
 };
 
 function Collaborator( session_id, note_id ) {
-    this.collaboration_socket = io.connect() ;
+    this.collaboration_socket = collaborator_socket;
 
     this.channel = "case-" + session_id + "-note-" + note_id ;
     this.collaboration_socket.emit('join-note', { 'channel': this.channel });
@@ -90,7 +91,7 @@ function Collaborator( session_id, note_id ) {
 
     this.collaboration_socket.on('join-note', function(data) {
         if ((data.user in ppl_viewing)) return;
-        ppl_viewing.set(data.user, 2);
+        ppl_viewing.set(data.user, 1);
         refresh_ppl_list(session_id, note_id);
         collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel });
     });
@@ -102,8 +103,6 @@ function Collaborator( session_id, note_id ) {
     this.collaboration_socket.on('pong-note', function(data) {
         ppl_viewing.set(data.user, 1);
         for (let [key, value] of ppl_viewing) {
-            console.log(key + ' = ' + value);
-            console.log(key !== data.user);
             if (key !== data.user) {
                 ppl_viewing.set(key, value-1);
             }
@@ -467,6 +466,8 @@ function note_detail(id, cid) {
             collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel });
         }, 3000);
 
+        collaborator_socket.emit('overview-map-note', { 'channel': `case-${id}`, "note_id": id });
+
     });
 }
 
@@ -663,6 +664,13 @@ $(document).ready(function(){
     if (shared_id) {
         note_detail(shared_id);
     }
+
+    collaborator_socket = io.connect();
+
+    collaborator_socket.on('overview-map_note', function(data) {
+        console.log(data);
+    });
+
     setInterval(auto_remove_typing, 1500);
 
 });
