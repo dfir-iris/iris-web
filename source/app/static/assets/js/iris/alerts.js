@@ -590,7 +590,7 @@ function viewAlertGraph() {
     if (node_type === 'alert') {
         window.open(`/alerts?alert_ids=${node_id}&cid=${get_caseid()}`);
     } else if (node_type === 'case') {
-        window.open(`/case?cid=${node_id}`);Ï
+        window.open(`/case?cid=${node_id}`);
     } else if (node_type === 'asset') {
         window.open(`/alerts?alert_assets=${node_id}&cid=${get_caseid()}`);
     } else if (node_type === 'ioc') {
@@ -1797,7 +1797,7 @@ function fetchSelectOptions(selectElementId, configItem) {
         });
         resolve();
       });
-  });Ï
+  });
 }
 
 function getBatchAlerts() {

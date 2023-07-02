@@ -799,6 +799,7 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
             let target = document.getElementById(target_anchor);
             let converter = get_showdown_convert();
             let html = converter.makeHtml(editor.getSession().getValue());
+            console.log(html);
             target.innerHTML = do_md_filter_xss(html);
 
         });
@@ -823,7 +824,7 @@ function createSanitizeExtensionForImg() {
         if (match.startsWith('<img')) {
           return match.replace(/on\w+="[^"]*"/gi, '');
         }
-        return '';
+        return match;
       },
     },
   ];
@@ -838,7 +839,10 @@ function get_showdown_convert() {
         smoothLivePreview: true,
         strikethrough: true,
         tasklists: true,
-        extensions: ['bootstrap-tables', createSanitizeExtensionForImg()]
+        ghCodeBlocks: true,
+        backslashEscapesHTMLTags: true,
+        splitAdjacentBlockquotes: true,
+        extensions: ['bootstrap-tables', createSanitizeExtensionForImg]
     });
 }
 
