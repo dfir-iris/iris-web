@@ -13,6 +13,7 @@ let timer_socket = 0;
 let note_id = null;
 let map_notes = Object();
 let last_ping = 0;
+let forceModalClose = false;
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -476,8 +477,12 @@ function note_detail(id, cid) {
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
         $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
 
-        $('#modal_note_detail').on("hidden.bs.modal", function (e) {
+        $('#modal_note_detail').on("hide.bs.modal", function (e) {
             return handle_note_close(id, e);
+        });
+
+        $('#modal_note_detail').on('hidden.bs.modal', function () {
+            forceModalClose = false;
         });
 
         collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
@@ -485,16 +490,47 @@ function note_detail(id, cid) {
     });
 }
 
+
 function handle_note_close(id, e) {
     note_id = null;
 
-    if ($('#btn_save_note').text() === "Unsaved") {
-        alert('You have unsaved changes, please save them before closing the note');
-        $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
-        return false;
+    if ($('#btn_save_note').text() === "Unsaved" && !forceModalClose) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        swal({
+            title: "Are you sure?",
+            text: "You have unsaved changes!",
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancel",
+                    value: null,
+                    visible: true,
+                },
+                confirm: {
+                    text: "Discard changes",
+                    value: true,
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            allowOutsideClick: false,
+            allowEnterKey: false
+        })
+        .then((willDiscard) => {
+            if (willDiscard) {
+                // The user chose to discard the changes, so let's hide the modal now
+                forceModalClose = true;
+                $('#modal_note_detail').modal('hide');
+                return true;
+            } else {
+                return false;
+            }
+        })
 
     } else {
-
+        forceModalClose = false;
         if (collaborator) {
             collaborator.close();
         }
