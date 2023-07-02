@@ -437,9 +437,7 @@ def case_comment_note_delete(cur_id, com_id, caseid):
 
 @socket_io.on('change-note')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def socket_summary_onchange(data):
-    if not current_user.is_authenticated:
-        return
+def socket_change_note(data):
 
     data['last_change'] = current_user.user
     emit('change-note', data, to=data['channel'], skip_sid=request.sid, room=data['channel'])
@@ -447,9 +445,7 @@ def socket_summary_onchange(data):
 
 @socket_io.on('save-note')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def socket_summary_onsave(data):
-    if not current_user.is_authenticated:
-        return
+def socket_save_note(data):
 
     data['last_saved'] = current_user.user
     emit('save-note', data, to=data['channel'], skip_sid=request.sid, room=data['channel'])
@@ -457,69 +453,59 @@ def socket_summary_onsave(data):
 
 @socket_io.on('clear_buffer-note')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def socket_summary_onchange(message):
-    if not current_user.is_authenticated:
-        return
+def socket_clear_buffer_note(message):
 
     emit('clear_buffer-note', message, room=message['channel'])
 
 
-@socket_io.on('join-note')
+@socket_io.on('join-notes')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def get_message(data):
-    if not current_user.is_authenticated:
-        return
+def socket_join_note(data):
 
     room = data['channel']
     join_room(room=room)
 
-    emit('join-note', {
+    emit('join-notes', {
         'message': f"{current_user.user} just joined",
         "user": current_user.user
     }, room=room)
 
 
-@socket_io.on('leave-note')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def get_message(data):
-    if not current_user.is_authenticated:
-        return
-
-    room = data['channel']
-    leave_room(room=room)
-    emit('leave-note', {'message': f"{current_user.user} leaved", "user": current_user.user}, room=room)
-
-
-@socket_io.on('leave-note')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def get_message(data):
-    if not current_user.is_authenticated:
-        return
-
-    room = data['channel']
-    leave_room(room=room)
-    emit('leave-note', {'message': f"{current_user.user} leaved", "user": current_user.user}, room=room)
-
-
 @socket_io.on('ping-note')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def get_message(data):
-    if not current_user.is_authenticated:
-        return
+def socket_ping_note(data):
 
-    emit('pong-note', {"user": current_user.user}, room=data['channel'])
+    emit('ping-note', {"user": current_user.name, "note_id": data['note_id']}, room=data['channel'])
+
+
+@socket_io.on('pong-note')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_ping_note(data):
+
+    emit('pong-note', {"user": current_user.name, "note_id": data['note_id']}, room=data['channel'])
 
 
 @socket_io.on('overview-map-note')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def get_message(data):
-    if not current_user.is_authenticated:
-        return
+def socket_overview_map_note(data):
 
-    emit('overview-map-note', {"user": current_user.user, "note": data['note_id']}, room=data['channel'])
+    emit('overview-map-note', {"user": current_user.user, "note_id": data['note_id']}, room=data['channel'])
+
+
+@socket_io.on('join-notes-overview')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_join_overview(data):
+
+    room = data['channel']
+    join_room(room=room)
+
+    emit('join-notes-overview', {
+        'message': f"{current_user.user} just joined",
+        "user": current_user.user
+    }, room=room)
 
 
 @socket_io.on('disconnect')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def disconnect(data):
+def socket_disconnect(data):
     emit('disconnect', current_user.user, broadcast=True)

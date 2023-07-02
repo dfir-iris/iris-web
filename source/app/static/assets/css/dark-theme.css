@@ -3,6 +3,26 @@ body {
 	background: #121622
 }
 
+.btn-primary {
+  background: #004eb3 !important;
+  border-color: #004eb3 !important;
+}
+
+.selectgroup.selectgroup-primary .selectgroup-input:checked + .selectgroup-button {
+  border-color: #004eb3;
+  color: #ffffff;
+  background: #004eb3;
+}
+
+.btn-success {
+  background: #004eb3 !important;
+  border-color: #004eb3 !important;
+}
+
+.sidebar.sidebar-style-2 .nav.nav-primary > .nav-item.active > a {
+  background: #05408c !important;
+}
+
 body .main-header {
     box-shadow: 0px 0px 5px #010409;
 }

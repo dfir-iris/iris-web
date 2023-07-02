@@ -3732,6 +3732,11 @@ body {
     z-index: 1;
 }
 
+.kanban-badge {
+    margin-left: -1rem;
+    margin-top: 0.3rem;
+}
+
 
 .border-dark {
     border-color: #202940 !important;

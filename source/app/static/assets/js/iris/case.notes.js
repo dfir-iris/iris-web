@@ -10,6 +10,9 @@ let from_sync = null;
 let is_typing = "";
 let ppl_viewing = new Map();
 let timer_socket = 0;
+let note_id = null;
+let map_notes = Object();
+let last_ping = 0;
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -58,10 +61,10 @@ var boardNotes = {
 function Collaborator( session_id, note_id ) {
     this.collaboration_socket = collaborator_socket;
 
-    this.channel = "case-" + session_id + "-note-" + note_id ;
-    this.collaboration_socket.emit('join-note', { 'channel': this.channel });
+    this.channel = "case-" + session_id + "-notes";
 
     this.collaboration_socket.on( "change-note", function(data) {
+        if ( data.note_id !== note_id ) return ;
         let delta = JSON.parse( data.delta ) ;
         last_applied_change = delta ;
         $("#content_typing").text(data.last_change + " is typing..");
@@ -69,11 +72,13 @@ function Collaborator( session_id, note_id ) {
     }.bind() ) ;
 
     this.collaboration_socket.on( "clear_buffer-note", function() {
+        if ( data.note_id !== note_id ) return ;
         just_cleared_buffer = true ;
         note_editor.setValue( "" ) ;
     }.bind() ) ;
 
     this.collaboration_socket.on( "save-note", function(data) {
+        if ( data.note_id !== note_id ) return ;
         sync_note(note_id)
             .then(function () {
                 $("#content_last_saved_by").text("Last saved by " + data.last_saved);
@@ -90,27 +95,16 @@ function Collaborator( session_id, note_id ) {
     });
 
     this.collaboration_socket.on('join-note', function(data) {
+        if ( data.note_id !== note_id ) return ;
         if ((data.user in ppl_viewing)) return;
-        ppl_viewing.set(data.user, 1);
+        ppl_viewing.set(filterXSS(data.user), 1);
         refresh_ppl_list(session_id, note_id);
-        collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel });
+        collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel, 'note_id': note_id });
     });
 
     this.collaboration_socket.on('ping-note', function(data) {
-        collaborator.collaboration_socket.emit('pong-note', { 'channel': collaborator.channel });
-    });
-
-    this.collaboration_socket.on('pong-note', function(data) {
-        ppl_viewing.set(data.user, 1);
-        for (let [key, value] of ppl_viewing) {
-            if (key !== data.user) {
-                ppl_viewing.set(key, value-1);
-            }
-            if (value < 0) {
-                ppl_viewing.delete(key);
-            }
-        }
-        refresh_ppl_list(session_id, note_id);
+        if ( data.note_id !== note_id ) return ;
+        collaborator.collaboration_socket.emit('pong-note', { 'channel': collaborator.channel, 'note_id': note_id });
     });
 
     this.collaboration_socket.on('disconnect', function(data) {
@@ -120,20 +114,48 @@ function Collaborator( session_id, note_id ) {
 
 }
 
-Collaborator.prototype.change = function( delta ) {
-    this.collaboration_socket.emit( "change-note", { 'delta': delta, 'channel': this.channel } ) ;
+function set_notes_follow(data) {
+
+    if (data.note_id !== null) {
+        if (data.note_id in map_notes ) {
+            map_notes[data.note_id][data.user] = 2;
+        } else {
+            map_notes[data.note_id] = Object();
+            map_notes[data.note_id][data.user] = 2;
+        }
+    }
+
+    for (let notid in map_notes) {
+        for (let key in map_notes[notid]) {
+            if (key !== data.user && data.note_id !== note_id || data.note_id === null) {
+                map_notes[notid][key] -= 1;
+            }
+            if (map_notes[notid][key] < 0) {
+                delete map_notes[notid][key];
+            }
+        }
+        $(`#badge_${notid}`).empty();
+        for (let key in map_notes[notid]) {
+            $(`#badge_${notid}`).append(get_avatar_initials(filterXSS(key), false, undefined, true));
+        }
+    }
+
 }
 
-Collaborator.prototype.clear_buffer = function() {
-    this.collaboration_socket.emit( "clear_buffer-note", { 'channel': this.channel } ) ;
+Collaborator.prototype.change = function( delta, note_id ) {
+    this.collaboration_socket.emit( "change-note", { 'delta': delta, 'channel': this.channel, 'note_id': note_id } ) ;
 }
 
-Collaborator.prototype.save = function() {
-    this.collaboration_socket.emit( "save-note", { 'channel': this.channel } ) ;
+Collaborator.prototype.clear_buffer = function( note_id ) {
+    this.collaboration_socket.emit( "clear_buffer-note", { 'channel': this.channel, 'note_id': note_id } ) ;
 }
 
-Collaborator.prototype.close = function() {
-    this.collaboration_socket.emit( "leave-note", { 'channel': this.channel } ) ;
+Collaborator.prototype.save = function( note_id ) {
+    this.collaboration_socket.emit( "save-note", { 'channel': this.channel, 'note_id': note_id } ) ;
+}
+
+Collaborator.prototype.close = function( note_id ) {
+    this.collaboration_socket.emit( "leave-note", { 'channel': this.channel, 'note_id': note_id } ) ;
 }
 
 function auto_remove_typing() {
@@ -225,12 +247,12 @@ function nextGroupNote(title="", rid=0) {
 function add_subnote(_item, tr=0, title='', last_up, user) {
 
     if (tr != 0) {
-        element = $('#_subnote_');
+        let element = $('#_subnote_');
         var newElement = element.clone();
         var id = tr;
         current_id = id;
 
-        info = user + " on " + last_up.replace('GMT', '');
+        let info = user + " on " + last_up.replace('GMT', '');
 
         newElement.attr("id", element.attr("id").split("_")[0] + "_" + id);
         var field = $(newElement).attr("id");
@@ -240,7 +262,7 @@ function add_subnote(_item, tr=0, title='', last_up, user) {
         $(newElement).find('iris_note').text(title);
         $(newElement).find('a.kanban-title').text(title);
         $(newElement).find('small.kanban-info').text(info);
-        $(newElement).find('div.kanban-badges').remove();
+        $(newElement).find('div.kanban-badge').attr('id', 'badge_' + id);
         newElement.appendTo($('#group-' + _item + "-main"));
         newElement.show();
     }
@@ -253,8 +275,7 @@ function add_groupnote(title="", rid=0) {
 
 /* Add a remote note to a group */
 function add_remote_note(group_id) {
-        caseid = get_caseid();
-        var data = Object();
+        let data = Object();
         data['note_title'] = "Untitled note";
         data['note_content'] = "";
 
@@ -276,7 +297,7 @@ function add_remote_note(group_id) {
 
 /* Add a group note remotely */
 function add_remote_groupnote() {
-    var data = Object();
+    let data = Object();
     data['csrf_token'] = $('#csrf_token').val();
 
     post_request_api('/case/notes/groups/add', JSON.stringify(data), false)
@@ -426,14 +447,16 @@ function note_detail(id, cid) {
              return false;
         }
 
-        var timer;
-        var timeout = 10000;
+        let timer;
+        let timeout = 10000;
         $('#form_note').keyup(function(){
             if(timer) {
                  clearTimeout(timer);
             }
             timer = setTimeout(save_note, timeout);
         });
+
+        note_id = id;
 
         collaborator = new Collaborator( get_caseid(), id );
 
@@ -448,7 +471,7 @@ function note_detail(id, cid) {
         note_editor.on( "change", function( e ) {
             // TODO, we could make things more efficient and not likely to conflict by keeping track of change IDs
             if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
-                collaborator.change( JSON.stringify(e) ) ;
+                collaborator.change( JSON.stringify(e), id ) ;
             }
             }, false
         );
@@ -462,16 +485,13 @@ function note_detail(id, cid) {
             handle_note_close(id);
         });
 
-        timer_socket = setInterval( function() {
-            collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel });
-        }, 3000);
-
-        collaborator_socket.emit('overview-map-note', { 'channel': `case-${id}`, "note_id": id });
+        collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
 
     });
 }
 
 function handle_note_close(id) {
+    note_id = null;
     if (collaborator) {
         collaborator.close();
     }
@@ -483,9 +503,7 @@ function handle_note_close(id) {
         ppl_viewing.clear();
     }
 
-    if (timer_socket) {
-        clearTimeout(timer_socket);
-    }
+    collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': null });
 }
 
 function refresh_ppl_list() {
@@ -496,7 +514,7 @@ function refresh_ppl_list() {
 }
 
 function handle_ed_paste(event) {
-    filename = null;
+    let filename = null;
     const { items } = event.originalEvent.clipboardData;
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
@@ -601,7 +619,7 @@ function save_note(this_item, cid) {
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
              $("#content_last_saved_by").text('Last saved by you');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
-            collaborator.save();
+            collaborator.save(n_id);
         }
     });
 }
@@ -659,17 +677,49 @@ function draw_kanban() {
     });
 }
 
+function note_interval_pinger() {
+    if (new Date() - last_ping > 2000) {
+        collaborator_socket.emit('ping-note',
+            { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
+        last_ping = new Date();
+    }
+}
+
 $(document).ready(function(){
     shared_id = getSharedLink();
     if (shared_id) {
         note_detail(shared_id);
     }
 
+    let cid = get_caseid();
     collaborator_socket = io.connect();
+    collaborator_socket.emit('join-notes-overview', { 'channel': 'case-' + cid + '-notes' });
 
-    collaborator_socket.on('overview-map_note', function(data) {
-        console.log(data);
+    collaborator_socket.on('ping-note', function(data) {
+        last_ping = new Date();
+        console.log(data, note_id);
+        if ( data.note_id === null || data.note_id !== note_id) {
+            set_notes_follow(data);
+            return;
+        }
+
+        ppl_viewing.set(data.user, 1);
+        for (let [key, value] of ppl_viewing) {
+            if (key !== data.user) {
+                ppl_viewing.set(key, value-1);
+            }
+            if (value < 0) {
+                ppl_viewing.delete(key);
+            }
+        }
+        refresh_ppl_list(session_id, note_id);
     });
+
+    timer_socket = setInterval( function() {
+        note_interval_pinger();
+    }, 2000);
+
+    collaborator_socket.emit('ping-note', { 'channel': 'case-' + cid + '-notes', 'note_id': note_id });
 
     setInterval(auto_remove_typing, 1500);
 
