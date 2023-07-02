@@ -780,6 +780,14 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
         }
     });
 
+    editor.commands.addCommand({
+        name: 'link',
+        bindKey: {win: "Ctrl-K", "mac": "Cmd-K"},
+        exec: function(editor) {
+            editor.insertSnippet('[${1:$SELECTION}](url)');
+        }
+    });
+
     if (live_preview === undefined || live_preview === true) {
         let textarea = $('#'+content_anchor);
         editor.getSession().on("change", function () {
