@@ -1172,10 +1172,10 @@ function modal_maximize() {
 }
 
 function modal_minimized(id, title) {
-    $("#" + id).modal("hide");
     $("#minimized_modal_title").text(title);
     $('#minimized_modal_box').data('target-id',id);
     $("#minimized_modal_box").show();
+    $("#" + id).modal("hide");
 }
 
 function hide_minimized_modal_box() {

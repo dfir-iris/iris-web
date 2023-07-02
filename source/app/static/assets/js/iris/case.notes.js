@@ -14,6 +14,7 @@ let note_id = null;
 let map_notes = Object();
 let last_ping = 0;
 let forceModalClose = false;
+let wasMiniNote = false;
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -494,6 +495,13 @@ function note_detail(id, cid) {
 function handle_note_close(id, e) {
     note_id = null;
 
+    if ($("#minimized_modal_box").is(":visible")) {
+        forceModalClose = true;
+        wasMiniNote = true;
+        save_note(null, get_caseid());
+    }
+
+
     if ($('#btn_save_note').text() === "Unsaved" && !forceModalClose) {
         e.preventDefault();
         e.stopPropagation();
@@ -520,10 +528,7 @@ function handle_note_close(id, e) {
         })
         .then((willDiscard) => {
             if (willDiscard) {
-                // The user chose to discard the changes, so let's hide the modal now
-                forceModalClose = true;
-                $('#modal_note_detail').modal('hide');
-                return true;
+                location.reload();
             } else {
                 return false;
             }
@@ -531,18 +536,21 @@ function handle_note_close(id, e) {
 
     } else {
         forceModalClose = false;
-        if (collaborator) {
-            collaborator.close();
-        }
-        if (note_editor) {
-            note_editor.destroy();
-        }
+        if (!wasMiniNote) {
+            if (collaborator) {
+                collaborator.close();
+            }
+            if (note_editor) {
+                note_editor.destroy();
+            }
 
-        if (ppl_viewing) {
-            ppl_viewing.clear();
+            if (ppl_viewing) {
+                ppl_viewing.clear();
+            }
         }
 
         collaborator_socket.emit('ping-note', {'channel': 'case-' + get_caseid() + '-notes', 'note_id': null});
+        wasMiniNote = false;
 
         return true;
     }
