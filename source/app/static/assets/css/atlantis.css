@@ -6720,10 +6720,21 @@ body .badge-danger {
 
 .dropdown-menu {
     border: 0px;
-    border-radius: 3px;
+    border-radius: 0.5rem;
     box-shadow: 0 1px 11px rgba(0, 0, 0, 0.15) !important;
     padding-bottom: 8px;
     margin-top: 3px;
+}
+
+.dropdown-item:focus, .dropdown-item:hover {
+  color: #16181b;
+  text-decoration: none;
+  background-color: #e7e7e8;
+  margin-left: 9px;
+  padding-left: 15px;
+  border-radius: 0.5rem;
+  margin-right: 12px;
+  width: 88%;
 }
 
 
@@ -7549,15 +7560,15 @@ body .badge-danger {
 }
 
 .btn-success {
-    background: #31CE36 !important;
-    border-color: #31CE36 !important;
+    background: #43A646 !important;
+    border-color: #43A646 !important;
 }
 
 .btn-success:hover,
 .btn-success:focus,
 .btn-success:disabled {
-    background: #31CE36 !important;
-    border-color: #31CE36 !important;
+    background: #38b73d !important;
+    border-color: #38b73d !important;
 }
 
 .btn-warning {
@@ -8319,7 +8330,7 @@ body .badge-danger {
 }
 
 .timeline>li>.timeline-even {
-    background: rgba(181, 181, 181, 0.1);
+    background: rgba(177, 177, 177, 0.29);
 }
 
 .timeline>li.timeline-inverted+li:not(.timeline-inverted) {
@@ -15489,6 +15500,7 @@ div.dataTables_processing { z-index: 1; }
     min-width: 250px;
     z-index: 10;
     margin: 0 auto;
+    border-radius: 0.5rem;
     box-shadow: 1px 1px 1px 1px rgba(122, 128, 134, 0.178), 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
 }
 
@@ -15742,7 +15754,7 @@ td.dt-nowrap { white-space: nowrap }
 .md_description_field {
     min-height: 73px;
     border: 1px solid #ebedf2;
-    border-radius: 0.25rem;
+    border-radius: 0.5rem;
     padding: 0rem 0rem 0.6rem;
     transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
