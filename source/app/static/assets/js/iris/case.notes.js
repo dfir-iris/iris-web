@@ -422,13 +422,6 @@ function edit_note(event) {
 
 }
 
-/* On modal close, refresh */
-$('#modal_note_detail').on('hidden.bs.modal', function (e) {
-    if (window.location.pathname.includes('/case/notes')) {
-        draw_kanban();
-    }
-  })
-
 
 /* Fetch the edit modal with content from server */
 function note_detail(id, cid) {
@@ -453,7 +446,9 @@ function note_detail(id, cid) {
             if(timer) {
                  clearTimeout(timer);
             }
-            timer = setTimeout(save_note, timeout);
+            if (ppl_viewing.size <= 1) {
+                timer = setTimeout(save_note, timeout);
+            }
         });
 
         note_id = id;
@@ -479,10 +474,10 @@ function note_detail(id, cid) {
         just_cleared_buffer = false ;
 
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
-        $('#modal_note_detail').modal({ show: true, backdrop: 'static', keyboard: false });
+        $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
 
-        $('#modal_note_detail').on("hidden.bs.modal", function () {
-            handle_note_close(id);
+        $('#modal_note_detail').on("hidden.bs.modal", function (e) {
+            return handle_note_close(id, e);
         });
 
         collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
@@ -490,20 +485,31 @@ function note_detail(id, cid) {
     });
 }
 
-function handle_note_close(id) {
+function handle_note_close(id, e) {
     note_id = null;
-    if (collaborator) {
-        collaborator.close();
-    }
-    if (note_editor) {
-        note_editor.destroy();
-    }
 
-    if (ppl_viewing) {
-        ppl_viewing.clear();
-    }
+    if ($('#btn_save_note').text() === "Unsaved") {
+        alert('You have unsaved changes, please save them before closing the note');
+        $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
+        return false;
 
-    collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': null });
+    } else {
+
+        if (collaborator) {
+            collaborator.close();
+        }
+        if (note_editor) {
+            note_editor.destroy();
+        }
+
+        if (ppl_viewing) {
+            ppl_viewing.clear();
+        }
+
+        collaborator_socket.emit('ping-note', {'channel': 'case-' + get_caseid() + '-notes', 'note_id': null});
+
+        return true;
+    }
 }
 
 function refresh_ppl_list() {
@@ -697,7 +703,6 @@ $(document).ready(function(){
 
     collaborator_socket.on('ping-note', function(data) {
         last_ping = new Date();
-        console.log(data, note_id);
         if ( data.note_id === null || data.note_id !== note_id) {
             set_notes_follow(data);
             return;
