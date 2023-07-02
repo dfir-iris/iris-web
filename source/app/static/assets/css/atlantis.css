@@ -3737,6 +3737,9 @@ body {
     margin-top: 0.3rem;
 }
 
+.shortcut_modal {
+    z-index: 2000;
+}
 
 .border-dark {
     border-color: #202940 !important;

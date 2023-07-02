@@ -154,8 +154,6 @@ def case_pipelines_modal(caseid, url_redir):
 @socket_io.on('change')
 @ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onchange(data):
-    if not current_user.is_authenticated:
-        return
 
     data['last_change'] = current_user.user
     emit('change', data, to=data['channel'], skip_sid=request.sid)
@@ -164,8 +162,6 @@ def socket_summary_onchange(data):
 @socket_io.on('save')
 @ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onsave(data):
-    if not current_user.is_authenticated:
-        return
 
     data['last_saved'] = current_user.user
     emit('save', data, to=data['channel'], skip_sid=request.sid)
@@ -174,8 +170,6 @@ def socket_summary_onsave(data):
 @socket_io.on('clear_buffer')
 @ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onchange(message):
-    if not current_user.is_authenticated:
-        return
 
     emit('clear_buffer', message)
 
@@ -183,8 +177,6 @@ def socket_summary_onchange(message):
 @socket_io.on('join')
 @ac_socket_requires(CaseAccessLevel.full_access)
 def get_message(data):
-    if not current_user.is_authenticated:
-        return
 
     room = data['channel']
     join_room(room=room)
@@ -403,4 +395,8 @@ def case_update_status(caseid):
     return response_success("Case status updated", data=case.status_id)
 
 
+@case_blueprint.route('/case/md-helper', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_md_helper(caseid, url_redir):
 
+    return render_template('case_md_helper.html')

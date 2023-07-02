@@ -62,12 +62,13 @@
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="note_editor.insertSnippet('## ${1:$SELECTION}');note_editor.focus();">H2</div>
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="note_editor.insertSnippet('### ${1:$SELECTION}');note_editor.focus();">H3</div>
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="note_editor.insertSnippet('#### ${1:$SELECTION}');note_editor.focus();">H4</div>
-                        <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="note_editor.insertSnippet('```${1:$SELECTION}```');note_editor.focus();"><i class="fa-solid fa-code"></i></div>
-                        <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="note_editor.insertSnippet('[${1:$SELECTION}](url)');note_editor.focus();"><i class="fa-solid fa-link"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL+\`" onclick="note_editor.insertSnippet('```${1:$SELECTION}```');note_editor.focus();"><i class="fa-solid fa-code"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL-K" onclick="note_editor.insertSnippet('[${1:$SELECTION}](url)');note_editor.focus();"><i class="fa-solid fa-link"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="note_editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');note_editor.focus();"><i class="fa-solid fa-table"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="note_editor.insertSnippet('\n- \n- \n- ');note_editor.focus();"><i class="fa-solid fa-list"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="note_editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');note_editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
-                        <div class="btn btn-sm btn-light mr-1" id="btn_max_editor" title="Toggle editor expansion" onclick="toggle_max_editor();"><i class="fa-solid fa-maximize"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="Toggle editor expansion" onclick="toggle_max_editor();"><i class="fa-solid fa-maximize"></i></div>
+                        <div class="btn btn-sm btn-transparent mr-1" title="Help" onclick="get_md_helper_modal();"><i class="fa-solid fa-question-circle"></i></div>
                 </div>
                 <div class="col">
                     <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();"></button>

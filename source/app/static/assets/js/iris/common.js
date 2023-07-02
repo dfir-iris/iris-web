@@ -788,6 +788,14 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
         }
     });
 
+    editor.commands.addCommand({
+        name: 'code',
+        bindKey: {win: "Ctrl-`", "mac": "Cmd-`"},
+        exec: function(editor) {
+            editor.insertSnippet('```${1:$SELECTION}```')
+        }
+    });
+
     if (live_preview === undefined || live_preview === true) {
         let textarea = $('#'+content_anchor);
         editor.getSession().on("change", function () {
@@ -947,11 +955,13 @@ function get_editor_headers(editor_instance, save, edition_btn) {
                 <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="${editor_instance}.insertSnippet`+"('## ${1:$SELECTION}')"+`;${editor_instance}.focus();">H2</div>
                 <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="${editor_instance}.insertSnippet`+"('### ${1:$SELECTION}');"+`${editor_instance}.focus();">H3</div>
                 <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="${editor_instance}.insertSnippet`+"('#### ${1:$SELECTION}');"+`${editor_instance}.focus();">H4</div>
-                <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="${editor_instance}.insertSnippet`+"('```${1:$SELECTION}```');"+`${editor_instance}.focus();"><i class="fa-solid fa-code"></i></div>
-                <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="${editor_instance}.insertSnippet`+"('[${1:$SELECTION}](URL)');"+`${editor_instance}.focus();"><i class="fa-solid fa-link"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL+\`" onclick="${editor_instance}.insertSnippet`+"('```${1:$SELECTION}```');"+`${editor_instance}.focus();"><i class="fa-solid fa-code"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-K" onclick="${editor_instance}.insertSnippet`+"('[${1:$SELECTION}](URL)');"+`${editor_instance}.focus();"><i class="fa-solid fa-link"></i></div>
                 <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="${editor_instance}.insertSnippet`+"('|\\t|\\t|\\t|\\n|--|--|--|\\n|\\t|\\t|\\t|\\n|\\t|\\t|\\t|');"+`${editor_instance}.focus();"><i class="fa-solid fa-table"></i></div>
                 <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="${editor_instance}.insertSnippet`+"('\\n- \\n- \\n- ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list"></i></div>
                 <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="${editor_instance}.insertSnippet`+"('\\n1. a  \\n2. b  \\n3. c  ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list-ol"></i></div>
+                <div class="btn btn-sm btn-transparent mr-1" title="Help" onclick="get_md_helper_modal();"><i class="fa-solid fa-question-circle"></i></div>
+
     `
     return header;
 }
@@ -1270,6 +1280,16 @@ function focus_on_input_chg_case(){
              return false;
         }
   });
+}
+
+function get_md_helper_modal() {
+    $('#modal_md_helper').load('/case/md-helper?cid=' + get_caseid(), function (response, status, xhr) {
+         if (status !== "success") {
+             ajax_notify_error(xhr, '/case/md-helper?cid=' + get_caseid());
+             return false;
+            }
+         $('#shortcutModal').modal("show");
+    });
 }
 
 function split_bool(split_str) {
