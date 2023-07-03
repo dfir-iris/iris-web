@@ -134,11 +134,8 @@ def index(caseid, url_redir):
 
     # Retrieve the dashboard data from multiple sources.
     # Quite fast as it is only counts.
-    user_open_case = UserActivity.query.with_entities(
-        distinct(Cases.case_id)
-    ).filter(
-        UserActivity.user_id == current_user.id,
-        UserActivity.case_id == Cases.case_id,
+    user_open_case = Cases.query.filter(
+        Cases.owner_id == current_user.id,
         Cases.close_date == None
     ).count()
 
