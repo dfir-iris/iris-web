@@ -1141,7 +1141,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
               `).join('') + '</div>' : '<div class="mb-4"></div>'}
             
               <div class="">  
-                ${alert_resolution} 
+                ${alert_resolution === undefined ? "": alert_resolution} 
                 ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-3">${alert.status.status_name}</span>` : ''}                    
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                 <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>

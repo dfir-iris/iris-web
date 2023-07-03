@@ -229,16 +229,18 @@
           <div class="form-group">
               <label class="form-label">Resolution status</label><br>
               <div class="selectgroup ml-auto mr-auto">
-
                 <label class="selectgroup-item">
-                  <input type="radio" name="resolutionStatus" value="false_positive" class="selectgroup-input" checked="">
+                  <input type="radio" name="resolutionStatus" value="not_applicable" class="selectgroup-input" checked="">
+                  <span class="selectgroup-button">Not applicable</span>
+                </label>
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="false_positive" class="selectgroup-input">
                   <span class="selectgroup-button">False positive</span>
                 </label>
                 <label class="selectgroup-item selectgroup-warning">
                   <input type="radio" name="resolutionStatus" value="true_positive_without_impact" class="selectgroup-input">
                   <span class="selectgroup-button">True positive without impact</span>
                 </label>
-
                 <label class="selectgroup-item">
                   <input type="radio" name="resolutionStatus" value="true_positive_with_impact" class="selectgroup-input">
                   <span class="selectgroup-button">True positive with impact</span>
