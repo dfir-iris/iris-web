@@ -769,10 +769,25 @@ function getFiltersFromUrl() {
     return Object.fromEntries(formData.entries());
 }
 
+function alertResolutionToARC(resolution) {
+    if (resolution === null) {
+        return '';
+    }
+    switch (resolution.resolution_status_name) {
+        case 'True Positive With Impact':
+            return `<span class="badge alert-bade-status badge-pill badge-danger mr-2">TP with impact</span>`
+        case 'True Positive Without Impact':
+            return `<span class="badge alert-bade-status badge-pill badge-warning mr-2">TP without impact</span>`
+        case 'False Positive':
+            return `<span class="badge alert-bade-status badge-pill badge-success mr-2">FP</span>`
+    }
+}
+
 function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                      modulesOptionsIocReq) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
   const alert_color = alertStatusToColor(alert.status.status_name);
+  const alert_resolution = alertResolutionToARC(alert.resolution_status);
 
   if (alert.owner !== null) {
       alert.owner.user_name = filterXSS(alert.owner.user_name);
@@ -1121,6 +1136,8 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
               `).join('') + '</div>' : '<div class="mb-4"></div>'}
             
               <div class="">
+               
+                ${alert_resolution} 
                 ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-3">${alert.status.status_name}</span>` : ''}                    
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                 <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>

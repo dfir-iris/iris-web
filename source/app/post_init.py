@@ -299,6 +299,12 @@ def create_safe_hooks():
     
     create_safe(db.session, IrisHook, hook_name='on_postload_alert_update',
                 hook_description='Triggered on alert update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_resolution_update',
+                hook_description='Triggered on alert resolution update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_status_update',
+                hook_description='Triggered on alert status update, after commit in DB')
     
     create_safe(db.session, IrisHook, hook_name='on_postload_alert_escalate',
                 hook_description='Triggered on alert escalation, after commit in DB')
