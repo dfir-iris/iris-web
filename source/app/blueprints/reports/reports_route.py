@@ -96,8 +96,6 @@ def download_case_activity(report_id, caseid):
 @reports_blueprint.route("/case/report/generate-investigation/<int:report_id>", methods=['GET'])
 @ac_api_requires()
 def _gen_report(report_id, caseid):
-    if not current_user.is_authenticated:
-        return redirect(not_authenticated_redirection_url())
 
     safe_mode = False
 

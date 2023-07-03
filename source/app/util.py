@@ -24,6 +24,7 @@ import datetime
 import decimal
 import hashlib
 import logging as log
+import marshmallow
 import pickle
 import random
 import shutil
@@ -458,11 +459,11 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
         return False
 
 
-def not_authenticated_redirection_url():
+def not_authenticated_redirection_url(request_url: str):
     redirection_mapper = {
         "oidc_proxy": lambda: app.config.get("AUTHENTICATION_PROXY_LOGOUT_URL"),
-        "local": lambda: url_for('login.login'),
-        "ldap": lambda: url_for('login.login')
+        "local": lambda: url_for('login.login', next=request_url),
+        "ldap": lambda: url_for('login.login', next=request_url)
     }
 
     return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
@@ -537,7 +538,7 @@ def ac_case_requires(*access_level):
         @wraps(f)
         def wrap(*args, **kwargs):
             if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url())
+                return redirect(not_authenticated_redirection_url(request.full_path))
 
             else:
                 redir, caseid, has_access = get_case_access(request, access_level)
@@ -558,7 +559,7 @@ def ac_socket_requires(*access_level):
         @wraps(f)
         def wrap(*args, **kwargs):
             if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url())
+                return redirect(not_authenticated_redirection_url(request_url=request.full_path))
 
             else:
                 chan_id = args[0].get('channel')
@@ -583,7 +584,7 @@ def ac_requires(*permissions, no_cid_required=False):
         def wrap(*args, **kwargs):
 
             if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url())
+                return redirect(not_authenticated_redirection_url(request_url=request.full_path))
 
             else:
                 redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
@@ -810,4 +811,25 @@ def str_to_bool(value):
     return value.lower() in ['true', '1', 'yes', 'y', 't']
 
 
+def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bool = False):
+    if input_var is None:
+        if allow_none is False:
+            raise marshmallow.ValidationError("Invalid data - non null expected",
+                                            field_name=field_name if field_name else "type")
+        else:
+            return True
+    
+    if isinstance(input_var, type):
+        return True
+    
+    try:
 
+        if isinstance(type(input_var), type):
+            return True
+
+    except Exception as e:
+        log.error(e)
+        print(e)
+        
+    raise marshmallow.ValidationError("Invalid data type",
+                                      field_name=field_name if field_name else "type")

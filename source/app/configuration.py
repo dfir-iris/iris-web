@@ -206,12 +206,12 @@ class AuthenticationType(Enum):
 
 
 authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
-                                     config.get('AUTHENTICATION', 'AUTHENTICATION_TYPE', fallback="local"))
+                                     config.get('IRIS', 'AUTHENTICATION_TYPE', fallback="local"))
 
 authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST')
 
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
-                             config.get('AUTHENTICATION', 'TLS_ROOT_CA', fallback=None))
+                             config.get('IRIS', 'TLS_ROOT_CA', fallback=None))
 
 authentication_logout_url = None
 authentication_account_service_url = None
@@ -265,7 +265,7 @@ class CeleryConfig:
 # --------- APP ---------
 class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.2.2"
+    IRIS_VERSION = "v2.2.3"
 
     API_MIN_VERSION = "2.0.0"
     API_MAX_VERSION = "2.0.2"
@@ -370,6 +370,7 @@ class Config:
     AUTHENTICATION_TYPE = authentication_type
     AUTHENTICATION_CREATE_USER_IF_NOT_EXIST = (authentication_create_user_if_not_exists == "True")
     IRIS_NEW_USERS_DEFAULT_GROUP = config.load('IRIS', 'NEW_USERS_DEFAULT_GROUP', fallback='Analysts')
+    AUTHENTICATION_LOCAL_FALLBACK = config.load('IRIS', 'AUTHENTICATION_LOCAL_FALLBACK', fallback="True") == "True"
 
     if authentication_type == 'oidc_proxy':
         AUTHENTICATION_LOGOUT_URL = authentication_logout_url

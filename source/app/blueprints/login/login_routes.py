@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from urllib.parse import urlsplit
 
 # IMPORTS ------------------------------------------------
 
@@ -28,6 +29,7 @@ from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
+from werkzeug.urls import url_parse
 
 from app import app
 from app import bc
@@ -70,9 +72,15 @@ def _render_template_login(form, msg):
                            login_banner=login_banner, ptfm_contact=ptfm_contact)
 
 
-def _authenticate_ldap(form, username, password):
+def _authenticate_ldap(form, username, password, local_fallback=True):
     try:
         if ldap_authenticate(username, password) is False:
+            if local_fallback is True:
+                track_activity("wrong login password for user '{}' using LDAP auth - falling back to local based on settings".format(username),
+                                 ctx_less=True, display_in_ui=False)
+                
+                return _authenticate_password(form, username, password)
+            
             track_activity("wrong login password for user '{}' using LDAP auth".format(username),
                            ctx_less=True, display_in_ui=False)
             return _render_template_login(form, 'Wrong credentials. Please try again.')
@@ -121,7 +129,7 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
         password = request.form.get('password', '', type=str)
 
         if is_authentication_ldap() is True:
-            return _authenticate_ldap(form, username, password)
+            return _authenticate_ldap(form, username, password, app.config.get('AUTHENTICATION_LOCAL_FALLBACK'))
 
         return _authenticate_password(form, username, password)
 
@@ -146,4 +154,9 @@ def wrap_login_user(user):
     }
 
     track_activity("user '{}' successfully logged-in".format(user), ctx_less=True, display_in_ui=False)
-    return redirect(url_for('index.index', cid=user.ctx_case))
+
+    next_url = request.args.get('next')
+    if not next_url or urlsplit(next_url).netloc != '':
+        next_url = url_for('index.index')
+
+    return redirect(next_url)

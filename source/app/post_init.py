@@ -305,6 +305,10 @@ def create_safe_hooks():
     
     create_safe(db.session, IrisHook, hook_name='on_postload_alert_unmerge',
                 hook_description='Triggered on alert unmerge, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_manual_trigger_alert',
+                hook_description='Triggered upon user action')
+
     
     # --- Case
     create_safe(db.session, IrisHook, hook_name='on_preload_case_create',
@@ -1443,21 +1447,21 @@ def register_default_modules():
     modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module',
                'iris_webhooks_module', 'iris_intelowl_module']
 
-    for module in modules:
-        class_, _ = instantiate_module_from_name(module)
+    for module_name in modules:
+        class_, _ = instantiate_module_from_name(module_name)
         is_ready, logs = check_module_health(class_)
 
         if not is_ready:
-            log.info("Attempted to initiate {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+            log.info("Attempted to initiate {mod}. Got {err}".format(mod=module_name, err=",".join(logs)))
             return False
 
-        mod_id, logs = register_module(module)
-        if mod_id is None:
-            log.info("Attempted to add {mod}. Got {err}".format(mod=module, err=",".join(logs)))
+        module, logs = register_module(module_name)
+        if module is None:
+            log.info("Attempted to add {mod}. Got {err}".format(mod=module_name, err=logs))
 
         else:
-            iris_module_disable_by_id(mod_id)
-            log.info('Successfully registered {mod}'.format(mod=module))
+            iris_module_disable_by_id(module.id)
+            log.info('Successfully registered {mod}'.format(mod=module_name))
 
 def custom_assets_symlinks():
     try:

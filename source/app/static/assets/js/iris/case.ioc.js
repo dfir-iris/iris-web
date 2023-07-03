@@ -63,31 +63,68 @@ function add_ioc() {
             data['custom_attributes'] = attributes;
 
             id = $('#ioc_id').val();
+            
+            if ($('#ioc_one_per_line').is(':checked')) {
+                let iocs_values = $('#ioc_value').val();
+                let iocs_list = iocs_values.split(/\r?\n/);
+                for (let index in iocs_list) {
+                    if (iocs_list[index] === '' || iocs_list[index] === '\n') {
+                        continue;
+                    }
 
-            post_request_api('ioc/add', JSON.stringify(data), true, function () {
-                    $('#submit_new_ioc').text('Saving data..')
-                        .attr("disabled", true)
-                        .removeClass('bt-outline-success')
-                        .addClass('btn-success', 'text-dark');
-                })
-            .done((data) => {
-                if (data.status == 'success') {
-                        reload_iocs();
-                        notify_success(data.message);
-                        $('#modal_add_ioc').modal('hide');
-
-                } else {
-                    $('#submit_new_ioc').text('Save again');
-                    swal("Oh no !", data.message, "error")
+                    data['ioc_value'] = iocs_list[index];
+                    post_request_api('ioc/add', JSON.stringify(data), true, function () {
+                        $('#submit_new_ioc').text('Saving data..')
+                            .attr("disabled", true)
+                            .removeClass('bt-outline-success')
+                            .addClass('btn-success', 'text-dark');
+                    })
+                    .done((data) => {
+                        if (data.status == 'success') {
+                                reload_iocs();
+                                notify_success(data.message);
+                                if (index == (iocs_list.length - 1)) {
+                                    $('#modal_add_ioc').modal('hide');
+                                }
+                        } else {
+                            $('#submit_new_ioc').text('Save again');
+                            swal("Oh no !", data.message, "error")
+                        }
+                    })
+                    .always(function () {
+                        $('#submit_new_ioc')
+                            .attr("disabled", false)
+                            .addClass('bt-outline-success')
+                            .removeClass('btn-success', 'text-dark');
+                    })
                 }
-            })
-            .always(function () {
-                $('#submit_new_ioc')
-                    .attr("disabled", false)
-                    .addClass('bt-outline-success')
-                    .removeClass('btn-success', 'text-dark');
-            })
+            }
 
+            else {
+                post_request_api('ioc/add', JSON.stringify(data), true, function () {
+                        $('#submit_new_ioc').text('Saving data..')
+                            .attr("disabled", true)
+                            .removeClass('bt-outline-success')
+                            .addClass('btn-success', 'text-dark');
+                    })
+                .done((data) => {
+                    if (data.status == 'success') {
+                            reload_iocs();
+                            notify_success(data.message);
+                            $('#modal_add_ioc').modal('hide');
+
+                    } else {
+                        $('#submit_new_ioc').text('Save again');
+                        swal("Oh no !", data.message, "error")
+                    }
+                })
+                .always(function () {
+                    $('#submit_new_ioc')
+                        .attr("disabled", false)
+                        .addClass('bt-outline-success')
+                        .removeClass('btn-success', 'text-dark');
+                })
+            }
             return false;
         });
 
@@ -315,10 +352,13 @@ $(document).ready(function(){
             "data": "ioc_value",
             "render": function (data, type, row, meta) {
               if (type === 'display') {
-                datak= ellipsis_field(data, 64);
+                
+                let datak = '';
 
-                if (isWhiteSpace(data)) {
+                if (isWhiteSpace(data) || data === null) {
                     datak = '#' + row['ioc_id'];
+                } else {
+                    datak= ellipsis_field(data, 64);
                 }
 
                 share_link = buildShareLink(row['ioc_id']);
