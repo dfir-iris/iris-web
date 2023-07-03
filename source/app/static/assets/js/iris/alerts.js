@@ -46,6 +46,7 @@ const selectsConfig = {
 };
 
 let alertStatusList = {};
+let alertResolutionList = {};
 
 function getAlertStatusList() {
     get_request_api('/manage/alert-status/list')
@@ -57,9 +58,24 @@ function getAlertStatusList() {
         });
 }
 
+function getAlertResolutionList() {
+    get_request_api('/manage/alert-resolutions/list')
+        .then((data) => {
+            if (!notify_auto_api(data, true)) {
+                return;
+            }
+            alertResolutionList = data.data;
+        });
+}
+
 function getAlertStatusId(statusName) {
     const status = alertStatusList.find((status) => status.status_name === statusName);
     return status ? status.status_id : undefined;
+}
+
+function getAlertResolutionId(resolutionName) {
+    const resolution = alertResolutionList.find((resolution) => resolution.resolution_name === resolutionName);
+    return resolution ? resolution.resolution_id : undefined;
 }
 
 function appendLabels(list, items, itemType) {
@@ -1487,6 +1503,7 @@ async function editAlert(alert_id, close=false) {
         let data = {
           alert_note: alert_note,
           alert_tags: alert_tags,
+          alert_resolution_status_id: getAlertResolutionStatusId($("input[type='radio'][name='resolutionStatus']:checked").val()),
           alert_classification_id: $('#editAlertClassification').val(),
           alert_severity_id: $('#editAlertSeverity').val()
         };

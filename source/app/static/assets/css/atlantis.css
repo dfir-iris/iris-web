@@ -8591,6 +8591,7 @@ body .badge-danger {
 .selectgroup {
     display: -ms-inline-flexbox;
     display: inline-flex;
+    border-radius: 0.5rem;
 }
 
 .selectgroup-item {
@@ -8629,7 +8630,7 @@ body .badge-danger {
     padding: 0.375rem 1rem;
     position: relative;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 0.4rem;
     color: #9aa0ac;
     -webkit-user-select: none;
     -moz-user-select: none;

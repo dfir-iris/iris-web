@@ -19,8 +19,9 @@
 
 from flask import Blueprint, Response, request
 
-from app.datamgmt.alerts.alerts_db import get_alert_status_list, get_alert_status_by_id, search_alert_status_by_name
-from app.schema.marshables import AlertStatusSchema
+from app.datamgmt.alerts.alerts_db import get_alert_status_list, get_alert_status_by_id, search_alert_status_by_name, \
+    get_alert_resolution_by_id, get_alert_resolution_list, search_alert_resolution_by_name
+from app.schema.marshables import AlertStatusSchema, AlertResolutionSchema
 from app.util import ac_api_requires, response_error
 from app.util import response_success
 
@@ -84,3 +85,59 @@ def search_alert_status(caseid):
     # Serialize the alert status and return them in a JSON response
     schema = AlertStatusSchema(many=True)
     return response_success("", data=schema.dump(alert_status))
+
+
+@manage_alerts_status_blueprint.route('/manage/alert-resolution/list', methods=['GET'])
+@ac_api_requires(no_cid_required=True)
+def list_alert_resolution(caseid: int) -> Response:
+    """
+    Get the list of alert resolution
+
+    Args:
+        caseid (int): case id
+
+    Returns:
+        Flask Response object
+    """
+    l_cl = get_alert_resolution_list()
+    schema = AlertResolutionSchema()
+
+    return response_success("", data=schema.dump(l_cl, many=True))
+
+
+@manage_alerts_status_blueprint.route('/manage/alert-resolution/<int:resolution_id>', methods=['GET'])
+@ac_api_requires(no_cid_required=True)
+def get_case_alert_resolution(resolution_id: int, caseid: int) -> Response:
+    """
+    Get the alert resolution
+
+    Args:
+        resolution_id (int): resolution id
+        caseid (int): case id
+    """
+    cl = get_alert_resolution_by_id(resolution_id)
+    schema = AlertResolutionSchema()
+
+    return response_success("", data=schema.dump(cl))
+
+
+@manage_alerts_status_blueprint.route('/manage/alert-resolution/search', methods=['POST'])
+@ac_api_requires(no_cid_required=True)
+def search_alert_resolution(caseid):
+    if not request.is_json:
+        return response_error("Invalid request")
+
+    alert_resolution = request.json.get('alert_resolution_name')
+    if alert_resolution is None:
+        return response_error("Invalid alert resolution. Got None")
+
+    exact_match = request.json.get('exact_match', False)
+
+    # Search for alerts resolution with a name that contains the specified search term
+    alert_res = search_alert_resolution_by_name(alert_resolution, exact_match=exact_match)
+    if not alert_res:
+        return response_error("No alert resolution found")
+
+    # Serialize the alert_res and return them in a JSON response
+    schema = AlertResolutionSchema(many=True)
+    return response_success("", data=schema.dump(alert_res))

@@ -222,6 +222,27 @@
       <div class="modal-body">
         <form>
           <div class="form-group">
+              <label class="form-label">Resolution status</label><br>
+              <div class="selectgroup ml-auto mr-auto">
+
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="false_positive" class="selectgroup-input" checked="">
+                  <span class="selectgroup-button">False positive</span>
+                </label>
+                <label class="selectgroup-item selectgroup-warning">
+                  <input type="radio" name="resolutionStatus" value="true_positive_without_impact" class="selectgroup-input">
+                  <span class="selectgroup-button">True positive without impact</span>
+                </label>
+
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="true_positive_with_impact" class="selectgroup-input">
+                  <span class="selectgroup-button">True positive with impact</span>
+                </label>
+
+              </div>
+          </div>
+          <div class="form-group">
+
             <label for="editAlertNote">Note</label>
             <textarea class="form-control" id="editAlertNote" rows="3"></textarea>
           </div>
@@ -229,6 +250,7 @@
             <label for="editAlertTags">Tags</label>
             <input type="text" class="form-control" id="editAlertTags">
           </div>
+
         </form>
           <div class="form-group alert-edition-part">
             <label for="editAlertClassification">Classification</label>

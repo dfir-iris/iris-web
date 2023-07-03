@@ -69,7 +69,7 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models.alerts import Alert, Severity, AlertStatus
+from app.models.alerts import Alert, Severity, AlertStatus, AlertResolutionStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -1889,6 +1889,19 @@ class AlertStatusSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = AlertStatus
+        load_instance = True
+
+
+class AlertResolutionSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing AlertResolution objects.
+
+    This schema defines the fields to include when serializing and deserializing AlertStatus objects.
+    It includes fields for the alert status name and alert status value.
+
+    """
+
+    class Meta:
+        model = AlertResolutionStatus
         load_instance = True
 
 

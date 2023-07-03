@@ -40,7 +40,7 @@ from app.datamgmt.manage.manage_case_templates_db import case_template_pre_modif
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
     alert_iocs_association, Ioc, IocLink
-from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache
+from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus
 from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
 from app.util import add_obj_history_entry
 
@@ -667,6 +667,48 @@ def search_alert_status_by_name(status_name: str, exact_match: False) -> AlertSt
         return db.session.query(AlertStatus).filter(func.lower(AlertStatus.status_name) == status_name.lower()).first()
 
     return db.session.query(AlertStatus).filter(AlertStatus.status_name.ilike(f"%{status_name}%")).all()
+
+
+def get_alert_resolution_list():
+    """
+    Get a list of alert resolutions
+
+    returns:
+        list: A list of alert resolutions
+    """
+    return db.session.query(AlertResolutionStatus).distinct().all()
+
+
+def get_alert_resolution_by_id(resolution_id: int) -> AlertResolutionStatus:
+    """
+    Get an alert resolution from the database
+
+    args:
+        resolution_id (int): The ID of the alert resolution
+
+    returns:
+        Alertresolution: The alert resolution that was retrieved from the database
+    """
+    return db.session.query(AlertResolutionStatus).filter(AlertResolutionStatus.resolution_id == resolution_id).first()
+
+
+def search_alert_resolution_by_name(resolution_status_name: str, exact_match: False) -> AlertResolutionStatus:
+    """
+    Get an alert resolution from the database from its name
+
+    args:
+        resolution_name (str): The name of the alert resolution
+        exact_match (bool): Whether to perform an exact match or not
+
+    returns:
+        Alertresolution: The alert resolution that was retrieved from the database
+    """
+    if exact_match:
+        return db.session.query(AlertResolutionStatus).filter(func.lower(
+            AlertResolutionStatus.resolution_status_name) == resolution_status_name.lower()).first()
+
+    return db.session.query(AlertResolutionStatus).filter(
+        AlertResolutionStatus.resolution_status_name.ilike(f"%{resolution_status_name}%")).all()
 
 
 def cache_similar_alert(customer_id, assets, iocs, alert_id, creation_date):
