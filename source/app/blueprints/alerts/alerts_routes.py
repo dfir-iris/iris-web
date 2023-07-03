@@ -128,7 +128,8 @@ def alerts_list_route(caseid) -> Response:
         per_page=per_page,
         sort=request.args.get('sort'),
         assets=alert_assets,
-        iocs=alert_iocs
+        iocs=alert_iocs,
+        resolution_status=request.args.get('alert_resolution_id', type=int)
     )
 
     if filtered_data is None:

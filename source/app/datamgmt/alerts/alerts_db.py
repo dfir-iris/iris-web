@@ -70,6 +70,7 @@ def get_filtered_alerts(
         alert_ids: List[int] = None,
         assets: List[str] = None,
         iocs: List[str] = None,
+        resolution_status: int = None,
         page: int = 1,
         per_page: int = 10,
         sort: str = 'desc'
@@ -93,6 +94,7 @@ def get_filtered_alerts(
         alert_ids (int): The alert ids
         assets (list): The assets of the alert
         iocs (list): The iocs of the alert
+        resolution_status (int): The resolution status of the alert
         page (int): The page number
         per_page (int): The number of alerts per page
         sort (str): The sort order
@@ -117,6 +119,9 @@ def get_filtered_alerts(
 
     if severity is not None:
         conditions.append(Alert.alert_severity_id == severity)
+
+    if resolution_status is not None:
+        conditions.append(Alert.alert_resolution_status_id == resolution_status)
 
     if owner is not None:
         if owner == -1:

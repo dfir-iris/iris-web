@@ -42,6 +42,11 @@ const selectsConfig = {
         url: '/manage/users/list',
         id: 'user_id',
         name: 'user_name'
+    },
+    alert_resolution_id: {
+        url: '/manage/alert-resolutions/list',
+        id: 'resolution_status_id',
+        name: 'resolution_status_name'
     }
 };
 
@@ -1135,8 +1140,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                 </div>
               `).join('') + '</div>' : '<div class="mb-4"></div>'}
             
-              <div class="">
-               
+              <div class="">  
                 ${alert_resolution} 
                 ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-3">${alert.status.status_name}</span>` : ''}                    
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
@@ -1452,7 +1456,6 @@ function resetSavedFilters(queryParams = null, replaceState = true) {
     if (replaceState) {
         window.history.replaceState(null, null, `?${queryParams.toString()}`);
     }
-    $('.preset-dropdown-container').hide();
     $('#savedFilters').selectpicker('val', '');
 
     return queryParams;
