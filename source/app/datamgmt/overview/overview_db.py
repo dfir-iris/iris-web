@@ -18,6 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
+from sqlalchemy import and_
 
 from app.datamgmt.case.case_tasks_db import get_tasks_cases_mapping
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
@@ -27,10 +28,15 @@ from app.models.authorization import User
 from app.models.cases import CaseState
 
 
-def get_overview_db(user_id):
+def get_overview_db(user_id, show_full):
     """
     Get overview data from the database
     """
+    condition = and_(Cases.case_id.in_(user_list_cases_view(user_id)))
+
+    if not show_full:
+        condition = and_(condition, Cases.close_date == None)
+
     open_cases = Cases.query.with_entities(
         Cases.case_id,
         Cases.case_uuid,
@@ -41,8 +47,7 @@ def get_overview_db(user_id):
         CaseClassification.name.label('classification'),
         CaseState.state_name.label('state')
     ).filter(
-        Cases.close_date == None,
-        Cases.case_id.in_(user_list_cases_view(user_id))
+       condition
     ).join(
         Cases.owner,
         Cases.client

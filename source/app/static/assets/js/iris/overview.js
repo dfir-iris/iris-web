@@ -125,8 +125,8 @@ var OverviewTable = $("#overview_table").DataTable({
         }
     });
 
-function get_cases_overview(silent) {
-    get_request_api('overview/filter')
+function get_cases_overview(silent, show_full=false) {
+    get_raw_request_api('/overview/filter?cid=' + get_caseid() + (show_full ? '&show_closed=true' : ''))
     .done((data) => {
         if(notify_auto_api(data, silent)) {
             overview_list = data.data;
