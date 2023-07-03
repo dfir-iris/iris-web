@@ -152,3 +152,17 @@ def get_task_status(task_status_id):
     ).first()
 
     return ret
+
+
+def list_user_cases(show_all=False):
+    if show_all:
+        return Cases.query.filter(
+            Cases.owner_id == current_user.id
+        ).all()
+
+    return Cases.query.filter(
+        Cases.owner_id == current_user.id,
+        Cases.close_date == None
+    ).all()
+
+

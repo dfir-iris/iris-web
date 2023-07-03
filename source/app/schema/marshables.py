@@ -49,7 +49,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook
+from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -1775,6 +1775,7 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+
 class BasicUserSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing basic User objects.
 
@@ -1968,4 +1969,28 @@ class ModuleHooksSchema(ma.SQLAlchemyAutoSchema):
         model = IrisModuleHook
         load_instance = True
         include_fk = True
+        include_relationships = True
+
+
+class TagsSchema(ma.SQLAlchemyAutoSchema):
+
+    class Meta:
+        model = Tags
+        load_instance = True
+        include_fk = True
+        include_relationships = True
+
+
+class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing Case objects in details."""
+    client = ma.Nested(CustomerSchema)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    classification = ma.Nested(CaseClassificationSchema)
+    state = ma.Nested(CaseStateSchema)
+    tags = ma.Nested(TagsSchema, many=True)
+
+    class Meta:
+        model = Cases
+        include_fk = True
+        load_instance = True
         include_relationships = True

@@ -35,7 +35,7 @@ from sqlalchemy import distinct
 
 from app import app
 from app import db
-from app.datamgmt.dashboard.dashboard_db import get_global_task
+from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
@@ -48,7 +48,7 @@ from app.models.models import CaseTasks
 from app.models.models import GlobalTasks
 from app.models.models import TaskStatus
 from app.models.models import UserActivity
-from app.schema.marshables import CaseTaskSchema
+from app.schema.marshables import CaseTaskSchema, CaseSchema, CaseDetailsSchema
 from app.schema.marshables import GlobalTasksSchema
 from app.util import ac_api_requires
 from app.util import ac_requires
@@ -168,6 +168,17 @@ def get_gtasks(caseid):
     }
 
     return response_success("", data=ret)
+
+
+@dashboard_blueprint.route('/user/cases/list', methods=['GET'])
+@ac_api_requires()
+def list_own_cases(caseid):
+
+    cases = list_user_cases(
+        request.args.get('show_closed', 'false', type=str).lower() == 'true'
+    )
+
+    return response_success("", data=CaseDetailsSchema(many=True).dump(cases))
 
 
 @dashboard_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
