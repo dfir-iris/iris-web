@@ -1945,6 +1945,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     iocs = ma.Nested(IocSchema, many=True)
     assets = ma.Nested(CaseAssetsSchema, many=True)
+    resolution_status = ma.Nested(AlertResolutionSchema)
 
     class Meta:
         model = Alert

@@ -87,7 +87,7 @@ def search_alert_status(caseid):
     return response_success("", data=schema.dump(alert_status))
 
 
-@manage_alerts_status_blueprint.route('/manage/alert-resolution/list', methods=['GET'])
+@manage_alerts_status_blueprint.route('/manage/alert-resolutions/list', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
 def list_alert_resolution(caseid: int) -> Response:
     """
@@ -105,7 +105,7 @@ def list_alert_resolution(caseid: int) -> Response:
     return response_success("", data=schema.dump(l_cl, many=True))
 
 
-@manage_alerts_status_blueprint.route('/manage/alert-resolution/<int:resolution_id>', methods=['GET'])
+@manage_alerts_status_blueprint.route('/manage/alert-resolutions/<int:resolution_id>', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
 def get_case_alert_resolution(resolution_id: int, caseid: int) -> Response:
     """
@@ -121,7 +121,7 @@ def get_case_alert_resolution(resolution_id: int, caseid: int) -> Response:
     return response_success("", data=schema.dump(cl))
 
 
-@manage_alerts_status_blueprint.route('/manage/alert-resolution/search', methods=['POST'])
+@manage_alerts_status_blueprint.route('/manage/alert-resolutions/search', methods=['POST'])
 @ac_api_requires(no_cid_required=True)
 def search_alert_resolution(caseid):
     if not request.is_json:

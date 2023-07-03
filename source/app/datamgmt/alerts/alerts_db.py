@@ -689,7 +689,7 @@ def get_alert_resolution_by_id(resolution_id: int) -> AlertResolutionStatus:
     returns:
         Alertresolution: The alert resolution that was retrieved from the database
     """
-    return db.session.query(AlertResolutionStatus).filter(AlertResolutionStatus.resolution_id == resolution_id).first()
+    return db.session.query(AlertResolutionStatus).filter(AlertResolutionStatus.resolution_status_id == resolution_id).first()
 
 
 def search_alert_resolution_by_name(resolution_status_name: str, exact_match: False) -> AlertResolutionStatus:

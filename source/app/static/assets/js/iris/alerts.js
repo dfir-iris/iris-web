@@ -74,8 +74,11 @@ function getAlertStatusId(statusName) {
 }
 
 function getAlertResolutionId(resolutionName) {
-    const resolution = alertResolutionList.find((resolution) => resolution.resolution_name === resolutionName);
-    return resolution ? resolution.resolution_id : undefined;
+    if (alertResolutionList.length === undefined) {
+        getAlertResolutionList();
+    }
+    const resolution = alertResolutionList.find((resolution) => resolution.resolution_status_name.toLowerCase().replaceAll(' ', '_') === resolutionName);
+    return resolution ? resolution.resolution_status_id : undefined;
 }
 
 function appendLabels(list, items, itemType) {
@@ -1500,10 +1503,12 @@ async function editAlert(alert_id, close=false) {
         let alert_note = $('#editAlertNote').val();
         let alert_tags = alertTag.val();
 
+        console.log(getAlertResolutionId($("input[type='radio'][name='resolutionStatus']:checked").val()));
+
         let data = {
           alert_note: alert_note,
           alert_tags: alert_tags,
-          alert_resolution_status_id: getAlertResolutionStatusId($("input[type='radio'][name='resolutionStatus']:checked").val()),
+          alert_resolution_status_id: getAlertResolutionId($("input[type='radio'][name='resolutionStatus']:checked").val()),
           alert_classification_id: $('#editAlertClassification').val(),
           alert_severity_id: $('#editAlertSeverity').val()
         };
@@ -1938,6 +1943,7 @@ $(document).ready(function () {
             setFormValuesFromUrl();
         });
     getAlertStatusList();
+    getAlertResolutionList();
 
     // Connect to socket.io alerts namespace
     const socket = io.connect('/alerts');
