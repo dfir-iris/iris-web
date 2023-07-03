@@ -47,12 +47,14 @@ class Alert(db.Model):
     modification_history = Column(JSON)
     alert_customer_id = Column(ForeignKey('client.client_id'), nullable=False)
     alert_classification_id = Column(ForeignKey('case_classification.id'))
+    alert_resolution_status_id = Column(ForeignKey('alert_resolution_status.resolution_status_id'), nullable=True)
 
     owner = relationship('User', foreign_keys=[alert_owner_id])
     severity = relationship('Severity')
     status = relationship('AlertStatus')
     customer = relationship('Client')
     classification = relationship('CaseClassification')
+    resolution_status = relationship('AlertResolutionStatus')
 
     cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')
     comments = relationship('Comments', back_populates='alert', cascade='all, delete-orphan')
@@ -75,6 +77,14 @@ class AlertStatus(db.Model):
     status_id = Column(Integer, primary_key=True)
     status_name = Column(Text, nullable=False, unique=True)
     status_description = Column(Text)
+
+
+class AlertResolutionStatus(db.Model):
+    __tablename__ = 'alert_resolution_status'
+
+    resolution_status_id = Column(Integer, primary_key=True)
+    resolution_status_name = Column(Text, nullable=False, unique=True)
+    resolution_status_description = Column(Text)
 
 
 class SimilarAlertsCache(db.Model):

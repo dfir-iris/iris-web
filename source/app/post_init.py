@@ -51,7 +51,7 @@ from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
 from app.models import create_safe_limited
-from app.models.alerts import Severity, AlertStatus
+from app.models.alerts import Severity, AlertStatus, AlertResolutionStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
@@ -208,6 +208,9 @@ def run_post_init(development=False):
 
         log.info("Creating base alert status")
         create_safe_alert_status()
+
+        log.info("Creating base alert resolution status")
+        create_safe_alert_resolution_status()
 
         if not prevent_objects:
             log.info("Creating base case states")
@@ -702,6 +705,22 @@ def create_safe_alert_status():
     create_safe(db.session, AlertStatus, status_name='Closed', status_description="Alert closed, no action taken")
     create_safe(db.session, AlertStatus, status_name='Merged', status_description="Alert merged into an existing case")
     create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
+
+
+def create_safe_alert_resolution_status():
+    """Creates new AlertResolutionStatus objects if they do not already exist.
+
+    This function creates new AlertResolutionStatus objects with the specified resolution_status_name
+    and resolution_status_description if they do not already exist in the database.
+
+    """
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='False Positive',
+                resolution_status_description="The alert was a false positive")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='True Positive With Impact',
+                resolution_status_description="The alert was a true positive and had an impact")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='True Positive Without Impact',
+                resolution_status_description="The alert was a true positive but had no impact")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='Not Applicable',resolution_status_description="The alert is not applicable")
 
 
 def create_safe_case_states():

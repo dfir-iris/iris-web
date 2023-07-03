@@ -15870,3 +15870,12 @@ td.dt-nowrap { white-space: nowrap }
     position: relative;
     transform: none;
 }
+
+.alert-card .card-body {
+    padding: 0.9rem;
+}
+
+.alert-card .flex-1 {
+    margin-left: 0.9rem !important;
+    margin-right: 0.9rem !important;
+}
