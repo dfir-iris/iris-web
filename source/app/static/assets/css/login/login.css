@@ -16,7 +16,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(-45deg, #05316A, #0963D5) !important;
+    background: radial-gradient(#013479, #011d40) !important;
 }
 
 .login__right_part {

@@ -726,7 +726,8 @@ def create_safe_alert_resolution_status():
                 resolution_status_description="The alert was a true positive and had an impact")
     create_safe(db.session, AlertResolutionStatus, resolution_status_name='True Positive Without Impact',
                 resolution_status_description="The alert was a true positive but had no impact")
-    create_safe(db.session, AlertResolutionStatus, resolution_status_name='Not Applicable',resolution_status_description="The alert is not applicable")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='Not Applicable',
+                resolution_status_description="The alert is not applicable")
 
 
 def create_safe_case_states():
