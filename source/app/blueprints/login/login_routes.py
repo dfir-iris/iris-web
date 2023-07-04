@@ -17,7 +17,6 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask_restx.inputs import url
 from urllib.parse import urlsplit
 
 # IMPORTS ------------------------------------------------
@@ -30,7 +29,6 @@ from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
-from werkzeug.urls import url_parse
 
 from app import app
 from app import bc
@@ -41,7 +39,6 @@ from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.models.authorization import User
 from app.util import is_authentication_ldap
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 
