@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: iris-web
+  name: iris-app-service
+  labels:
+    site: iris
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: '/login'
+spec:
+  selector:
+    app: iris-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: ClusterIP
