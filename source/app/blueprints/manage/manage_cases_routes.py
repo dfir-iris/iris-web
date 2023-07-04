@@ -48,7 +48,7 @@ from app.datamgmt.manage.manage_case_classifications_db import get_case_classifi
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list, get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, case_template_pre_modifier, \
     case_template_post_modifier
-from app.datamgmt.manage.manage_cases_db import close_case
+from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
@@ -282,6 +282,7 @@ def api_case_close(cur_id, caseid):
         for alert in case.alerts:
             if alert.alert_status_id != close_status.status_id:
                 alert.alert_status_id = close_status.status_id
+                alert.alert_resolution_status_id = map_alert_resolution_to_case_status(case.status_id)
                 track_activity(f"closing alert ID {alert.alert_id} due to case #{caseid} being closed",
                                caseid=caseid, ctx_less=False)
 

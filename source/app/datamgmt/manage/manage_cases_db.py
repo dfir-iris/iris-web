@@ -24,6 +24,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import aliased, contains_eager, subqueryload
 
 from app import db
+from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
@@ -177,6 +178,20 @@ def close_case(case_id):
         return res
 
     return None
+
+
+def map_alert_resolution_to_case_status(case_status_id):
+
+    if case_status_id == CaseStatus.false_positive.value:
+        return search_alert_resolution_by_name('False Positive', exact_match=True)
+
+    if case_status_id == CaseStatus.true_positive_with_impact.value:
+        return search_alert_resolution_by_name('True Positive With Impact', exact_match=True)
+
+    if case_status_id == CaseStatus.true_positive_without_impact.value:
+        return search_alert_resolution_by_name('True Positive Without Impact', exact_match=True)
+
+    return search_alert_resolution_by_name('Not Applicable', exact_match=True)
 
 
 def reopen_case(case_id):
