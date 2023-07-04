@@ -876,6 +876,8 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                   <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                                   ${menuOptionsHtmlAlert}
                                   <div class="dropdown-divider"></div>
+                                  <a href="javascript:void(0)" class="dropdown-item" onclick="showAlertHistory(${alert.alert_id});return false;"><small class="fa fa-clock-rotate-left mr-2"></small>History</a>
+                                  <div class="dropdown-divider"></div>
                                   <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
                                 </div>
                             </div>
@@ -1187,6 +1189,25 @@ function init_module_processing_alert(alert_id, hook_name, hook_ui_name, module_
 
 let modulesOptionsAlertReq = null;
 let modulesOptionsIocReq = null;
+
+async function showAlertHistory(alertId) {
+    const alertDataReq = await fetchAlert(alertId);
+    if (!notify_auto_api(alertDataReq, true)) {
+        return;
+    }
+    let alertData = alertDataReq.data;
+    let entryDiv = $('#modal_alert_history_content');
+
+    for (let entry in alertData.modification_history)  {
+        let date = new Date(Math.floor(entry) * 1000);
+        let dateStr = date.toLocaleString();
+        let entryStr = alertData.modification_history[entry];
+        entryDiv.append('<div class="row"><div class="col-3">' + dateStr + '</div><div class="col-3">' + entryStr.user + '</div><div class="col-6">'+ entryStr.action +'</div></div>');
+
+    }
+
+    $('#modal_alert_history').modal('show');
+}
 
 async function refreshAlert(alertId, alertData, expanded=false) {
     if (alertData === undefined) {
