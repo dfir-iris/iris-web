@@ -201,7 +201,7 @@ function edit_rfiles(rfiles_id) {
         load_menu_mod_options_modal(rfiles_id, 'evidence', $("#evidence_modal_quick_actions"));
         
         $('#modal_add_rfiles').modal({ show: true });
-
+        edit_in_evidence_desc();
     });
 }
 

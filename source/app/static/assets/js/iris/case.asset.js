@@ -190,6 +190,7 @@ function asset_details(asset_id) {
         g_asset_desc_editor.setOption("minLines", "10");
         preview_asset_description(true);
         headers = get_editor_headers('g_asset_desc_editor', null, 'asset_edition_btn');
+
         $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
@@ -202,9 +203,12 @@ function asset_details(asset_id) {
 
         load_menu_mod_options_modal(asset_id, 'asset', $("#asset_modal_quick_actions"));
         $('.dtr-modal').hide();
+
+        $('#modal_add_asset').modal({ show: true });
+        edit_in_asset_desc();
     });
 
-    $('#modal_add_asset').modal({ show: true });
+
     return false;
 }
 

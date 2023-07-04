@@ -201,8 +201,10 @@ function edit_ioc(ioc_id) {
 
         load_menu_mod_options_modal(ioc_id, 'ioc', $("#ioc_modal_quick_actions"));
         $('.dtr-modal').hide();
+        $('#modal_add_ioc').modal({ show: true });
+        edit_in_ioc_desc();
     });
-    $('#modal_add_ioc').modal({ show: true });
+
 }
 
 function preview_ioc_description(no_btn_update) {
