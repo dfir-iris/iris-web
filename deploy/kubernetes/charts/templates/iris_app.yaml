@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.irisapp.name }}
+spec:
+  replicas: {{ .Values.irisapp.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.irisapp.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.irisapp.app }}
+    spec:
+      containers:
+        - name: {{ .Values.irisapp.name }}
+          image: "{{ .Values.irisapp.image}}:{{ .Values.irisapp.tag }}"
+          imagePullPolicy: "{{ .Values.irisapp.imagePullPolicy }}"
+          command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
+
+          env:
+                
+          - name: DOCKERIZED  # Setting Database name 
+            value: {{ .Values.irisapp.DOCKERIZED | quote }}
+
+          - name: POSTGRES_USER  # Setting Database username 
+            value: {{ .Values.irisapp.POSTGRES_USER| quote }}
+
+          - name:  POSTGRES_PASSWORDD # Setting Database password 
+            value: {{ .Values.irisapp.POSTGRES_PASSWORD | quote }}
+
+          - name:  POSTGRES_ADMIN_USER # Setting Database admin user 
+            value: {{ .Values.irisapp.POSTGRES_ADMIN_USER | quote }}
+
+          - name:  POSTGRES_ADMIN_PASSWORD # Setting Database admin password 
+            value: {{ .Values.irisapp.POSTGRES_ADMIN_PASSWORD | quote }}    
+
+          - name:  POSTGRES_PORT # Setting Database port
+            value: {{ .Values.irisapp.POSTGRES_PORT | quote }}   
+
+          - name:  POSTGRES_SERVER # Setting Database server
+            value: {{ .Values.irisapp.POSTGRES_SERVER | quote }}  
+
+          - name:  IRIS_SECRET_KEY 
+            value: {{ .Values.irisapp.IRIS_SECRET_KEY | quote }}
+
+          - name:  IRIS_SECURITY_PASSWORD_SALT 
+            value: {{ .Values.irisapp.IRIS_SECURITY_PASSWORD_SALT | quote }}         
+  
+
+          ports:
+            - containerPort: 8000
+
+          volumeMounts:
+            - mountPath: /home/iris/downloads
+              name: iris-downloads  
+            - mountPath: /home/iris/user_templates
+              name: user-templates
+            - mountPath: /home/iris/server_data
+              name: server-data
+      volumes:
+        - name: iris-downloads
+          emptyDir: {}  
+        - name: user-templates
+          emptyDir: {}
+        - name: server-data 
+          emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.irisapp.name }}
+  labels:
+    app: {{ .Values.irisapp.app }}
+spec:
+  type: {{ .Values.irisapp.type }}
+  ports:
+   - port: {{ .Values.irisapp.service.port }}
+     targetPort: {{ .Values.irisapp.service.targetPort }}
+  selector:
+   app: {{ .Values.irisapp.app }}
+---  

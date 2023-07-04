@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.irisworker.name }}
+spec:
+  replicas: {{ .Values.irisworker.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.irisworker.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.irisworker.app }}
+    spec:
+      containers:
+        - name: {{ .Values.irisworker.name }}
+          image: "{{ .Values.irisworker.image}}:{{ .Values.irisworker.tag }}"
+          imagePullPolicy: "{{ .Values.irisworker.imagePullPolicy }}"
+          command: ['./wait-for-iriswebapp.sh', 'iriswebapp-app.test.svc.cluster.local:8000', './iris-entrypoint.sh', 'iris-worker']
+
+          env:
+                
+          - name: DOCKERIZED  
+            value: {{ .Values.irisworker.DOCKERIZED | quote }}
+
+          - name: POSTGRES_USER  
+            value: {{ .Values.irisworker.POSTGRES_USER | quote }}
+
+          - name:  POSTGRES_PASSWORDD 
+            value: {{ .Values.irisworker.POSTGRES_PASSWORD | quote }}
+
+          - name:  POSTGRES_ADMIN_USER 
+            value: {{ .Values.irisworker.POSTGRES_ADMIN_USER | quote }}
+
+          - name:  POSTGRES_ADMIN_PASSWORD 
+            value: {{ .Values.irisworker.POSTGRES_ADMIN_PASSWORD | quote }}    
+
+          - name:  POSTGRES_PORT 
+            value: {{ .Values.irisworker.POSTGRES_PORT | quote }}   
+
+          - name:  POSTGRES_SERVER 
+            value: {{ .Values.irisworker.POSTGRES_SERVER | quote }}  
+
+          - name:  IRIS_SECRET_KEY 
+            value: {{ .Values.irisworker.IRIS_SECRET_KEY | quote }}
+
+          - name:  IRIS_SECURITY_PASSWORD_SALT 
+            value: {{ .Values.irisworker.IRIS_SECURITY_PASSWORD_SALT | quote }}          
+  
+
+          ports:
+            - containerPort: 80
+
+          volumeMounts:
+            - mountPath: /home/iris/downloads
+              name: iris-downloads  
+            - mountPath: /home/iris/user_templates
+              name: user-templates
+            - mountPath: /home/iris/server_data
+              name: server-data
+      volumes:
+        - name: iris-downloads
+          emptyDir: {}  
+        - name: user-templates
+          emptyDir: {}
+        - name: server-data 
+          emptyDir: {}
+---
