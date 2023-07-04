@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from flask_restx.inputs import url
 from urllib.parse import urlsplit
 
 # IMPORTS ------------------------------------------------
@@ -155,8 +156,8 @@ def wrap_login_user(user):
 
     track_activity("user '{}' successfully logged-in".format(user), ctx_less=True, display_in_ui=False)
 
-    next_url = request.args.get('next')
+    next_url = request.args.get('next') if 'cid=' in request.args.get('next') else request.args.get('next') + '?cid=' + str(user.ctx_case) if request.args.get('next') else None
     if not next_url or urlsplit(next_url).netloc != '':
-        next_url = url_for('index.index')
+        next_url = url_for('index.index', cid=user.ctx_case)
 
     return redirect(next_url)
