@@ -1010,7 +1010,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Lookback (days)</span>
                                     </div>
-                                    <input type="number" name="value" value="7" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
+                                    <input type="number" name="value" value="30" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
                                 </div>
                             </div>  
                         </div>

@@ -809,7 +809,7 @@ def get_related_alerts(customer_id, assets, iocs, details=False):
 
 
 def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_alerts, open_cases, closed_cases,
-                               days_back=7, number_of_results=200):
+                               days_back=30, number_of_results=200):
     """
     Get the details of the related alerts
 
