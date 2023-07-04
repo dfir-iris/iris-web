@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: iris-web
+  name: app-data
+data:
+  POSTGRES_SERVER: iris-psql-service

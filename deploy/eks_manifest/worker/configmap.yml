@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: iris-web
+  name: worker-data
+data:
+  POSTGRES_SERVER: iris-psql-service
+  CELERY_BROKER: amqp://iris-rabbitmq-service
+  IRIS_WORKER: iris-worker-service
