@@ -279,10 +279,17 @@ def api_case_close(cur_id, caseid):
     # Close the related alerts
     if case.alerts:
         close_status = get_alert_status_by_name('Closed')
+        case_status_id_mapped = map_alert_resolution_to_case_status(case.status_id)
+
         for alert in case.alerts:
             if alert.alert_status_id != close_status.status_id:
                 alert.alert_status_id = close_status.status_id
-                alert.alert_resolution_status_id = map_alert_resolution_to_case_status(case.status_id)
+                alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=caseid)
+
+            if alert.alert_resolution_status_id != case_status_id_mapped:
+                alert.alert_resolution_status_id = case_status_id_mapped
+                alert = call_modules_hook('on_postload_alert_resolution_update', data=alert, caseid=caseid)
+
                 track_activity(f"closing alert ID {alert.alert_id} due to case #{caseid} being closed",
                                caseid=caseid, ctx_less=False)
 
