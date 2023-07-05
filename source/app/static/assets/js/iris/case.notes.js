@@ -460,7 +460,7 @@ function note_detail(id, cid) {
         note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function() {
             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-            $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
+            $('#btn_save_note').text("Save").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
         }, save_note);
 
         note_editor.focus();
@@ -502,7 +502,7 @@ function handle_note_close(id, e) {
     }
 
 
-    if ($('#btn_save_note').text() === "Unsaved" && !forceModalClose) {
+    if ($('#btn_save_note').text() === "Save" && !forceModalClose) {
         e.preventDefault();
         e.stopPropagation();
 

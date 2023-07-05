@@ -788,6 +788,18 @@ function alertResolutionToARC(resolution) {
     }
 }
 
+function renderNestedObject(obj) {
+    let output = '';
+    Object.entries(obj).forEach(([key, value]) => {
+        if (typeof value === 'object' && value !== null) {
+            output += `<dt class="col-sm-3">${filterXSS(key)}:</dt><dd class="col-sm-9"><br /><dl class="row">${renderNestedObject(value)}</dl></dd>`;
+        } else {
+            output += `<dt class="col-sm-3">${filterXSS(key)}:</dt><dd class="col-sm-9">${filterXSS(value)}</dd>`;
+        }
+    });
+    return output;
+}
+
 function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                      modulesOptionsIocReq) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
@@ -918,7 +930,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                       <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
                       `}
                 </div>
-                <span class="mt-4">${alert.alert_description}</span>
+                <span class="mt-4">${alert.alert_description.replaceAll('\n', '<br/>').replaceAll('\t', '  ')}</span>
 
                 
 
@@ -957,18 +969,12 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                     
                     <!-- Alert Context section -->
                     ${
-                          alert.alert_context && Object.keys(alert.alert_context).length > 0
-                              ? `<div class="separator-solid"></div><h3 class="title mt-3 mb-3"><strong>Context</strong></h3>
-                                           <dl class="row">
-                                             ${Object.entries(alert.alert_context)
-                                  .map(
-                                      ([key, value]) =>
-                                          `<dt class="col-sm-3">${filterXSS(key)}</dt>
-                                                    <dd class="col-sm-9">${filterXSS(value)}</dd>`
-                                  )
-                                  .join('')}
-                                           </dl>`
-                              : ''
+                        alert.alert_context && Object.keys(alert.alert_context).length > 0
+                            ? `<div class="separator-solid"></div><h3 class="title mt-3 mb-3"><strong>Context</strong></h3>
+                                <dl class="row">
+                                ${renderNestedObject(alert.alert_context)}
+                                </dl>`
+                            : ''
                       }
                     
                     <div class="separator-solid"></div>
