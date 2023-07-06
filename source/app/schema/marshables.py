@@ -699,13 +699,15 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         user = data.get('user_login')
         user_id = data.get('user_id')
 
-        assert_type_mml(input_var=user_id, 
+        assert_type_mml(input_var=user_id,
                         field_name="user_id", 
-                        type=int)
+                        type=int,
+                        allow_none=True)
         
         assert_type_mml(input_var=user, 
                         field_name="user_login", 
-                        type=str)
+                        type=str,
+                        allow_none=True)
 
         luser = User.query.filter(
             User.user == user
@@ -738,13 +740,15 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         email = data.get('user_email')
         user_id = data.get('user_id')
 
-        assert_type_mml(input_var=user_id, 
-                        field_name="user_id", 
-                        type=int)
-        
-        assert_type_mml(input_var=email, 
-                        field_name="user_email", 
-                        type=str)
+        assert_type_mml(input_var=user_id,
+                        field_name="user_id",
+                        type=int,
+                        allow_none=True)
+
+        assert_type_mml(input_var=email,
+                        field_name="user_email",
+                        type=str,
+                        allow_none=True)
 
         luser = User.query.filter(
             User.email == email
