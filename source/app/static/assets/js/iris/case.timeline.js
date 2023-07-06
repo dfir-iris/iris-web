@@ -570,6 +570,7 @@ function build_timeline(data) {
 
         title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
         raw_content = do_md_filter_xss(evt.event_content); // Raw markdown content
+        formatted_content = converter.makeHtml(raw_content); // Convert markdown to HTML
 
         const wordLimit = 30; // Define your word limit
 
@@ -664,7 +665,7 @@ function build_timeline(data) {
                         <div class="timeline-body text-faded" >
                             <div id="drop_${evt.event_id}" class="collapse" aria-labelledby="dropa_${evt.event_id}" style="">
                                 <div class="card-body">
-                                ${content_parsed}
+                                ${formatted_content}
                                 </div>
                                 <div class="bottom-hour mt-2">
                                     <span class="float-right">${tags}${asset} </span>
