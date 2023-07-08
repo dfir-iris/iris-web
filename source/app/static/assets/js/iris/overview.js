@@ -170,9 +170,13 @@ var OverviewTable = $("#overview_table").DataTable({
         }
     });
 
-OverviewTable.searchBuilder.container().prependTo(OverviewTable.table().container());
+OverviewTable.searchBuilder.container().appendTo($('#table_buttons'));
 
 function get_cases_overview(silent, show_full=false) {
+    show_full = show_full || $('#overviewLoadClosedCase').prop('checked');
+
+     $('#overviewTableTitle').text(show_full ? 'All cases' : 'Open cases');
+
     get_raw_request_api('/overview/filter?cid=' + get_caseid() + (show_full ? '&show_closed=true' : ''))
     .done((data) => {
         if(notify_auto_api(data, silent)) {
@@ -184,11 +188,15 @@ function get_cases_overview(silent, show_full=false) {
                 var index = $(this).index() + 1;
                 $('table tr td:nth-child(' + index  + ')').toggleClass("truncate");
             });
-            $('#overviewLoadClosedCase').prop('checked', show_full);
         }
     });
 }
 
 $(document).ready(function() {
     get_cases_overview(true);
+
+
+    $('#overviewLoadClosedCase').change(function() {
+        get_cases_overview(true, this.checked);
+    });
 });

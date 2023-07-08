@@ -23,25 +23,30 @@
                         <div class="card-header">
                             <div class="row">
                                 <div class="col">
-                                    <div class="card-title">Open cases overview</div>
+                                    <div class="card-title" id="overviewTableTitle">Open cases</div>
                                 </div>
                                 <div class="col">
                                     <button type="button" class="btn btn-sm btn-outline-black float-right" onclick="get_cases_overview(false);">
                                         Refresh
                                     </button>
-                                    <button type="button" id="overviewLoadClosedCase" class="btn btn-sm btn-outline-black float-right mr-2" onclick="get_cases_overview(false, true);">
-                                        Load closed cases
-                                    </button>
 
+                              <div class="selectgroup float-right mt--1">
+                                    <div class="form-check float-right">
+                                         <label class="form-check-label">
+                                             <input class="form-check-input" type="checkbox" id="overviewLoadClosedCase">
+                                                 <span class="form-check-sign"> Load closed cases
+                                                 </span>
+                                         </label>
+                                    </div>
+
+                                </div>
                                 </div>
                             </div>
                         </div>
                         <div class="card-body">
-
                             <div class="table-responsive" id="overview_table_wrapper">
-                                <div class="selectgroup">
-                                    <span id="table_buttons"></span>
-                                </div>
+
+                                                                    <span id="table_buttons"></span>
                                 <table class="table display wrap col-border table-striped table-hover" width="100%"
                                         cellspacing="0" id="overview_table">
                                     <thead>
