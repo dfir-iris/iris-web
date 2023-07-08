@@ -826,10 +826,6 @@ body {
     font-size: 20px;
 }
 
-.sidebar .nav>.nav-item.active  a i[class^="flaticon-"],
-.sidebar[data-background-color="white"] .nav>.nav-item a i[class^="flaticon-"] {
-    color: #fff;
-}
 
 
 .sidebar .nav>.nav-item a p,
@@ -7449,7 +7445,7 @@ body .badge-danger {
     margin-right: 0px !important;
 }
 
-.btn-sm {
+.btn-sm, .dtsb-button {
     font-size: 11px;
     padding: 7px 13px;
 }

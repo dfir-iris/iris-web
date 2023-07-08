@@ -9,6 +9,7 @@
     <link href="/static/assets/css/dataTables.contextualActions.min.css" rel="stylesheet">
     <link href="/static/assets/css/dataTables.select.min.css" rel="stylesheet">
     <link href="/static/assets/css/dataTables.responsive.css" rel="stylesheet">
+    <link href="/static/assets/css/dataTables.searchBuilder.css" rel="stylesheet">
 
 {% endblock stylesheets %}
 
@@ -28,8 +29,8 @@
                                     <button type="button" class="btn btn-sm btn-outline-black float-right" onclick="get_cases_overview(false);">
                                         Refresh
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-black float-right mr-2" onclick="get_cases_overview(false, true);">
-                                        Show closed cases
+                                    <button type="button" id="overviewLoadClosedCase" class="btn btn-sm btn-outline-black float-right mr-2" onclick="get_cases_overview(false, true);">
+                                        Load closed cases
                                     </button>
 
                                 </div>
@@ -49,6 +50,7 @@
                                             <th>Customer</th>
                                             <th>Classification</th>
                                             <th>State</th>
+                                            <th>Tags</th>
                                             <th>Open since</th>
                                             <th>Open date</th>
                                             <th>Tasks</th>
@@ -61,6 +63,7 @@
                                             <th>Customer</th>
                                             <th>Classification</th>
                                             <th>State</th>
+                                            <th>Tags</th>
                                             <th>Open since</th>
                                             <th>Open date</th>
                                             <th>Tasks</th>
@@ -81,6 +84,9 @@
 
     <script src="/static/assets/js/iris/datatablesUtils.js"></script>
     <script src="/static/assets/js/plugin/datatables/dataTables.responsive.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.searchBuilder.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.dateTime.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.searchBuilder.bs4.js"></script>
     <script src="/static/assets/js/iris/overview.js"></script>
 
 {% endblock javascripts %}
