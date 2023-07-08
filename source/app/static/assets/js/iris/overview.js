@@ -211,37 +211,20 @@ function get_cases_overview(silent, show_full=false) {
 
 function show_case_view(row_index) {
     let case_data = OverviewTable.row(row_index).data();
-    console.log('show_case_view', case_data);
     $('#caseViewModal').find('.modal-title').text(case_data.name);
     $('#caseViewModal').find('.modal-subtitle').text(case_data.case_uuid);
 
     let body = $('#caseViewModal').find('.modal-body .container');
     body.empty();
 
-
     // Owner Card
     let owner_card = $('<div/>').addClass('card mb-3');
     let owner_body = $('<div/>').addClass('card-body');
-    owner_body.append($('<h5/>').addClass('card-title').text('Metadata'));
+    owner_body.append($('<h2/>').addClass('card-title mb-2').text('Metadata'));
 
     let owner_row = $('<div/>').addClass('row');
     let owner_col1 = $('<div/>').addClass('col-md-6');
     let owner_col2 = $('<div/>').addClass('col-md-6');
-
-    let owner_dl1 = $('<dl/>');
-    owner_dl1.append($('<dt/>').text('Open Date'));
-    owner_dl1.append($('<dd/>').text(case_data.open_date));
-    if (case_data.close_date != null) {
-        owner_dl1.append($('<dt/>').text('Close Date'));
-        owner_dl1.append($('<dd/>').text(case_data.close_date))
-    }
-    owner_dl1.append($('<dt/>').text('State'));
-    owner_dl1.append($('<dd/>').text(case_data.state.state_description));
-    owner_dl1.append($('<dt/>').text('Owner'));
-    owner_dl1.append($('<dd/>').text(case_data.owner.user_name));
-    owner_dl1.append($('<dt/>').text('Opening User'));
-    owner_dl1.append($('<dd/>').text(case_data.user.user_name));
-    owner_col1.append(owner_dl1);
 
     let modifications = case_data.modification_history;
     let timestamps = Object.keys(modifications).map(parseFloat);
@@ -264,6 +247,36 @@ function show_case_view(row_index) {
         timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInDays)} days ago`;
     }
 
+    let tagsStr = '';
+    for (let index in case_data.tags) {
+        let tag = sanitizeHTML(case_data.tags[index].tag_title);
+        tagsStr += `<span class="badge badge-pill badge-light">${tag}</span> `;
+    }
+
+    let owner_dl1 = $('<dl/>');
+    owner_dl1.append($('<dt/>').text('Owner'));
+    owner_dl1.append($('<dd/>').text(case_data.owner.user_name));
+    owner_dl1.append($('<dt/>').text('Opening User'));
+    owner_dl1.append($('<dd/>').text(case_data.user.user_name));
+    owner_dl1.append($('<dt/>').text('Open Date'));
+    owner_dl1.append($('<dd/>').text(case_data.open_date));
+
+    if (case_data.close_date != null) {
+        owner_dl1.append($('<dt/>').text('Close Date'));
+        owner_dl1.append($('<dd/>').text(case_data.close_date))
+    }
+    owner_dl1.append($('<dt/>').text('Tags'));
+    owner_dl1.append($('<dd/>').html(tagsStr));
+    owner_dl1.append($('<dt/>').text('State'));
+    owner_dl1.append($('<dd/>').text(case_data.state.state_description));
+    owner_dl1.append($('<dt/>').text('Last update'));
+    owner_dl1.append($('<dd/>').text(timeSinceLastUpdateStr));
+
+
+    owner_col1.append(owner_dl1);
+
+
+
     let owner_dl2 = $('<dl/>');
     owner_dl2.append($('<dt/>').text('Customer Name'));
     owner_dl2.append($('<dd/>').text(case_data.client.customer_name));
@@ -271,21 +284,33 @@ function show_case_view(row_index) {
     owner_dl2.append($('<dd/>').text(case_data.classification.name));
     owner_dl2.append($('<dt/>').text('SOC ID'));
     owner_dl2.append($('<dd/>').text(case_data.soc_id));
-    owner_dl2.append($('<dt/>').text('Last updated'));
-    owner_dl2.append($('<dd/>').text(timeSinceLastUpdateStr));
+    owner_dl2.append($('<dt/>').text('Related alerts'));
+    owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+    owner_dl2.append($('<dt/>').text('Tasks'));
+    if (case_data.tasks_status != null) {
+        owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+    } else {
+        owner_dl2.append($('<dd/>').text('No tasks'));
+    }
+
     owner_col2.append(owner_dl2);
 
     owner_row.append(owner_col1);
     owner_row.append(owner_col2);
     owner_body.append(owner_row);
+    owner_body.append('<a type="button" class="btn btn-sm btn-dark" target="_blank" rel="noopener" href=\'/case?cid=${case_data.case_id}\'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>');
+
     owner_card.append(owner_body);
     body.append(owner_card);
 
     // Description Card
     let desc_card = $('<div/>').addClass('card mb-3');
     let desc_body = $('<div/>').addClass('card-body');
-    desc_body.append($('<h5/>').addClass('card-title').text('Description'));
-    desc_body.append($('<p/>').addClass('card-text').text(case_data.description));
+    desc_body.append($('<h2/>').addClass('card-title mb-3').text('Summary'));
+    let converter = get_showdown_convert();
+    let html = converter.makeHtml(case_data.description);
+    desc_body.append($('<div/>').addClass('card-text').html(html));
+
     desc_card.append(desc_body);
     body.append(desc_card);
 
