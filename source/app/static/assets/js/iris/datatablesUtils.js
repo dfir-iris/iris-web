@@ -16,12 +16,16 @@ function addFilterFields(tableId){
 }
 
 /* callback function to activate filtering on a datatable */
-function tableFiltering(api, table_anchor) {
+function tableFiltering(api, table_anchor, exclude_columns=[]) {
     // For each column
     api
         .columns()
         .eq(0)
         .each(function (colIdx) {
+            // Ignore columns that should not be filtered
+            if (exclude_columns.includes(colIdx)) {
+                return;
+            }
             // Set the header cell to contain the input element
             var cell = $('#'+table_anchor+' .filters th').eq(
                 $(api.column(colIdx).header()).index()

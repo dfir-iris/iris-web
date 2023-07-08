@@ -2006,6 +2006,7 @@ class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
     classification = ma.Nested(CaseClassificationSchema)
     state = ma.Nested(CaseStateSchema)
     tags = ma.Nested(TagsSchema, many=True)
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
 
     class Meta:
         model = Cases

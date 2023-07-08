@@ -6,6 +6,17 @@ var OverviewTable = $("#overview_table").DataTable({
     aaData: [],
     aoColumns: [
       {
+          data: "case_id",
+            render: function (data, type, row, meta) {
+                if (type === 'display') {
+                    data = `<button class="btn bg-transparent btn-quick-view" data-index="${meta.row}" ><i class="fa-solid fa-eye"></i></button>`;
+                } else if (type === 'sort' || type === 'filter') {
+                    data = parseInt(row['case_id']);
+                }
+                return data;
+            }
+        },
+      {
         "data": "name",
         "render": function (data, type, row, meta) {
           if (type === 'display') {
@@ -168,7 +179,7 @@ var OverviewTable = $("#overview_table").DataTable({
     },
     select: true,
     initComplete: function () {
-            tableFiltering(this.api(), 'overview_table');
+            tableFiltering(this.api(), 'overview_table', [0]);
         }
     });
 
@@ -190,8 +201,96 @@ function get_cases_overview(silent, show_full=false) {
                 var index = $(this).index() + 1;
                 $('table tr td:nth-child(' + index  + ')').toggleClass("truncate");
             });
+
+            $('.btn-quick-view').on('click', function() {
+                show_case_view($(this).data('index'));
+            });
         }
     });
+}
+
+function show_case_view(row_index) {
+    let case_data = OverviewTable.row(row_index).data();
+    console.log('show_case_view', case_data);
+    $('#caseViewModal').find('.modal-title').text(case_data.name);
+    $('#caseViewModal').find('.modal-subtitle').text(case_data.case_uuid);
+
+    let body = $('#caseViewModal').find('.modal-body .container');
+    body.empty();
+
+
+    // Owner Card
+    let owner_card = $('<div/>').addClass('card mb-3');
+    let owner_body = $('<div/>').addClass('card-body');
+    owner_body.append($('<h5/>').addClass('card-title').text('Metadata'));
+
+    let owner_row = $('<div/>').addClass('row');
+    let owner_col1 = $('<div/>').addClass('col-md-6');
+    let owner_col2 = $('<div/>').addClass('col-md-6');
+
+    let owner_dl1 = $('<dl/>');
+    owner_dl1.append($('<dt/>').text('Open Date'));
+    owner_dl1.append($('<dd/>').text(case_data.open_date));
+    if (case_data.close_date != null) {
+        owner_dl1.append($('<dt/>').text('Close Date'));
+        owner_dl1.append($('<dd/>').text(case_data.close_date))
+    }
+    owner_dl1.append($('<dt/>').text('State'));
+    owner_dl1.append($('<dd/>').text(case_data.state.state_description));
+    owner_dl1.append($('<dt/>').text('Owner'));
+    owner_dl1.append($('<dd/>').text(case_data.owner.user_name));
+    owner_dl1.append($('<dt/>').text('Opening User'));
+    owner_dl1.append($('<dd/>').text(case_data.user.user_name));
+    owner_col1.append(owner_dl1);
+
+    let modifications = case_data.modification_history;
+    let timestamps = Object.keys(modifications).map(parseFloat);
+    let lastUpdatedTimestamp = Math.max(...timestamps);
+
+    let currentTime = Date.now() / 1000; // convert to seconds
+    let timeSinceLastUpdate = currentTime - lastUpdatedTimestamp;
+    let timeSinceLastUpdateInSeconds = currentTime - lastUpdatedTimestamp;
+
+    let timeSinceLastUpdateInMinutes = timeSinceLastUpdate / 60;
+    let timeSinceLastUpdateInHours = timeSinceLastUpdateInMinutes / 60;
+    let timeSinceLastUpdateInDays = timeSinceLastUpdateInHours / 24;
+
+    let timeSinceLastUpdateStr = '';
+    if (timeSinceLastUpdateInSeconds < 60) {
+        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInSeconds)} seconds ago`;
+    } else if (timeSinceLastUpdateInHours < 24) {
+        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInHours)} hours ago`;
+    } else {
+        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInDays)} days ago`;
+    }
+
+    let owner_dl2 = $('<dl/>');
+    owner_dl2.append($('<dt/>').text('Customer Name'));
+    owner_dl2.append($('<dd/>').text(case_data.client.customer_name));
+    owner_dl2.append($('<dt/>').text('Classification'));
+    owner_dl2.append($('<dd/>').text(case_data.classification.name));
+    owner_dl2.append($('<dt/>').text('SOC ID'));
+    owner_dl2.append($('<dd/>').text(case_data.soc_id));
+    owner_dl2.append($('<dt/>').text('Last updated'));
+    owner_dl2.append($('<dd/>').text(timeSinceLastUpdateStr));
+    owner_col2.append(owner_dl2);
+
+    owner_row.append(owner_col1);
+    owner_row.append(owner_col2);
+    owner_body.append(owner_row);
+    owner_card.append(owner_body);
+    body.append(owner_card);
+
+    // Description Card
+    let desc_card = $('<div/>').addClass('card mb-3');
+    let desc_body = $('<div/>').addClass('card-body');
+    desc_body.append($('<h5/>').addClass('card-title').text('Description'));
+    desc_body.append($('<p/>').addClass('card-text').text(case_data.description));
+    desc_card.append(desc_body);
+    body.append(desc_card);
+
+
+    $('#caseViewModal').modal('show');
 }
 
 $(document).ready(function() {
@@ -201,4 +300,5 @@ $(document).ready(function() {
     $('#overviewLoadClosedCase').change(function() {
         get_cases_overview(true, this.checked);
     });
+
 });

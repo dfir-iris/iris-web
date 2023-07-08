@@ -51,6 +51,7 @@
                                         cellspacing="0" id="overview_table">
                                     <thead>
                                         <tr>
+                                            <th></th>
                                             <th>Title</th>
                                             <th>Customer</th>
                                             <th>Classification</th>
@@ -64,6 +65,7 @@
                                     </thead>
                                     <tfoot>
                                         <tr>
+                                            <th></th>
                                             <th>Title</th>
                                             <th>Customer</th>
                                             <th>Classification</th>
@@ -82,7 +84,34 @@
                 </div>
             </div>
         </div>
+        <div class="modal modal-case-focus" tabindex="-1" role="dialog" id="caseViewModal" data-backdrop="true">
+            <div class="modal-xl modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="col md-12">
+                            <div class="row">
+                                <div class="col align-self-center">
+                                    <h4 class="modal-title mr-4">Case</h4>
+                                    <small><a class="text-muted modal-subtitle"></a></small>
+                                </div>
+                                <div class="col">
+                                    <div class="row float-right">
+                                        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                                            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
+                    </div>
+                    <div class="modal-body">
+                        <div class="container col-md-12">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 {% endblock content %}
 
 {% block javascripts %}
