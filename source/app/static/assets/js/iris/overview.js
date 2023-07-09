@@ -288,7 +288,7 @@ function show_case_view(row_index) {
     owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     owner_dl2.append($('<dt/>').text('Tasks'));
     if (case_data.tasks_status != null) {
-        owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+        owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     } else {
         owner_dl2.append($('<dd/>').text('No tasks'));
     }
