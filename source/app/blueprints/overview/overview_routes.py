@@ -18,7 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint
+from flask import Blueprint, request
 from flask import render_template
 from flask import url_for
 from flask_login import current_user
@@ -57,6 +57,7 @@ def get_overview_filter(caseid):
     """
     Return an overview of the cases
     """
-    overview = get_overview_db(current_user.id)
+    show_full = request.args.get('show_closed', 'false') == 'true'
+    overview = get_overview_db(current_user.id, show_full)
 
     return response_success('', data=overview)

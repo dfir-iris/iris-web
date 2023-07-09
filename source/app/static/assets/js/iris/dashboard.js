@@ -1,3 +1,6 @@
+let UserReviewsTable;
+let UserCasesTable;
+let UserTaskTable;
 function check_page_update(){
     update_gtasks_list();
     update_utasks_list();
@@ -14,9 +17,42 @@ function task_status(id) {
     });
 }
 
-function update_utasks_list() {
+async function update_ucases_list(show_all=false) {
+    $('#ucases_list').empty();
+    get_raw_request_api("/user/cases/list" + case_param() + "&show_closed=" + show_all)
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            UserCasesTable.clear();
+            UserCasesTable.rows.add(data.data);
+            UserCasesTable.columns.adjust().draw();
+            UserCasesTable.buttons().container().appendTo($('#ucases_table_info'));
+            $('[data-toggle="popover"]').popover();
+            $('#ucases_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
+        }
+    });
+}
+
+async function update_ureviews_list() {
+    get_raw_request_api("/user/reviews/list" + case_param())
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            if (data.data.length == 0) {
+                $('#rowPendingCasesReview').hide();
+                return;
+            }
+            UserReviewsTable.clear();
+            UserReviewsTable.rows.add(data.data);
+            UserReviewsTable.columns.adjust().draw();
+            $('[data-toggle="popover"]').popover();
+            $('#ureviews_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
+            $('#rowPendingCasesReview').show();
+        }
+    });
+}
+
+async function update_utasks_list() {
     $('#utasks_list').empty();
-    get_request_api("/user/tasks/list")
+    return get_request_api("/user/tasks/list")
     .done((data) => {
         if (notify_auto_api(data, true)) {
             UserTaskTable.MakeCellsEditable("destroy");
@@ -156,10 +192,10 @@ function edit_gtask(id) {
 
 
 /* Fetch and draw the tasks */
-function update_gtasks_list() {
+async function update_gtasks_list() {
     $('#gtasks_list').empty();
 
-    get_request_api("/global/tasks/list")
+    return get_request_api("/global/tasks/list")
     .done((data) => {
         if(notify_auto_api(data, true)) {
             Table.MakeCellsEditable("destroy");
@@ -188,102 +224,214 @@ function update_gtasks_list() {
 
 $(document).ready(function() {
 
-    UserTaskTable = $("#utasks_table").DataTable({
-    dom: 'Blfrtip',
-    aaData: [],
-    aoColumns: [
-      {
-        "data": "task_title",
-        "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            if (isWhiteSpace(data)) {
-                data = '#' + row['task_id'];
-            } else {
-                data = sanitizeHTML(data);
-            }
-            data = '<a href="case/tasks?cid='+ row['case_id'] + '&shared=' + row['task_id'] + '">' + data +'</a>';
-          }
-          return data;
-        }
-      },
-      { "data": "task_description",
-       "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            data = sanitizeHTML(data);
-            datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+        UserReviewsTable = $("#ureview_table").DataTable({
+            dom: 'frtip',
+            aaData: [],
+            aoColumns: [
+              {
+                  "data": "name",
+                  "render": function (data, type, row, meta) {
+                    if (type === 'display') {
+                        data = `<a  href="/case?cid=${row['case_id']}">${sanitizeHTML(data)}</a>`;
+                    }
+                    return data;
+                    }
+                },
+                {
+                    "data": "status_name",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = `<span class="badge badge-light">${sanitizeHTML(data)}</span>`;
+                        }
+                        return data;
+                    }
+                }
+            ],
+            ordering: false,
+            processing: true,
+            retrieve: true,
+            lengthChange: false,
+            pageLength: 10,
+            order: [[ 1, "asc" ]],
+            select: true
+        });
 
-            if (data.length > 70) {
-                datas += ' (..)</span>';
-            } else {
-                datas += '</span>';
-            }
-            return datas;
-          }
-          return data;
-        }
-      },
-      {
-        "data": "task_status_id",
-        "render": function(data, type, row, meta) {
-           if (type === 'display') {
-              data = sanitizeHTML(data);
-              data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
-          }
-          return data;
-        }
-      },
-      {
-        "data": "task_case",
-        "render": function (data, type, row, meta) {
-            if (type === 'display') {
-                data = sanitizeHTML(data);
-                data = '<a href="/case?cid='+ row['case_id'] +'">' + data +'</a>';
-            }
-            return data;
-          }
-      },
-      {
-        "data": "task_last_update",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              data = sanitizeHTML(data);
-              data = data.replace(/GMT/g, "");
-          }
-          return data;
-        }
-      },
-      { "data": "task_tags",
-        "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              tags = "";
-              de = data.split(',');
-              for (tag in de) {
-                tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+        UserCasesTable = $("#ucases_table").DataTable({
+            dom: 'Blfrtip',
+            aaData: [],
+            aoColumns: [
+              {
+                "data": "name",
+                "render": function (data, type, row, meta) {
+                  if (type === 'display') {
+                    data = `<a rel="noopener" target="_blank" href="/case?cid=${row['case_id']}">${sanitizeHTML(data)}</a>`;
+                  }
+                  return data;
+                }
+              },
+              {
+                 "data": "description",
+                  "render": function (data, type, row, meta) {
+                    if (type === 'display') {
+                        data = sanitizeHTML(data);
+                        datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+
+                        if (data.length > 70) {
+                            datas += ' (..)</span>';
+                        } else {
+                            datas += '</span>';
+                        }
+                        return datas;
+                  }
+                  return data;
+                }
+              },
+              {
+                "data": "client",
+                "render": function(data, type, row, meta) {
+                   if (type === 'display') {
+                      //data = sanitizeHTML(data);
+                      data = sanitizeHTML(row['client']['customer_name']);
+                  }
+                  return data;
+                }
+              },
+              {
+                "data": "open_date",
+                "render": function (data, type, row, meta) {
+                    if (type === 'display') {
+                        data = sanitizeHTML(data);
+                    }
+                    return data;
+                  }
+              },
+              {
+                "data": "tags",
+                "render": function (data, type, row, meta) {
+                  if (type === 'display' && data != null) {
+                    datas = '';
+                    for (index in data) {
+                        datas += '<span class="badge badge-primary">' + sanitizeHTML(data[index]['tag_title']) + '</span> ';
+                    }
+                    return datas;
+                  }
+                  return data;
+                }
               }
-              return tags;
+        ],
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true,
+        retrieve: true,
+        lengthChange: false,
+        pageLength: 10,
+        order: [[ 2, "asc" ]],
+        buttons: [
+            { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+            { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+        ],
+        select: true
+    });
+
+    $("#ucases_table").css("font-size", 12);
+
+    UserTaskTable = $("#utasks_table").DataTable({
+        dom: 'Blfrtip',
+        aaData: [],
+        aoColumns: [
+          {
+            "data": "task_title",
+            "render": function (data, type, row, meta) {
+              if (type === 'display') {
+                if (isWhiteSpace(data)) {
+                    data = '#' + row['task_id'];
+                } else {
+                    data = sanitizeHTML(data);
+                }
+                data = '<a target="_blank" rel="noopener" href="case/tasks?cid='+ row['case_id'] + '&shared=' + row['task_id'] + '">' + data +'</a>';
+              }
+              return data;
+            }
+          },
+          { "data": "task_description",
+           "render": function (data, type, row, meta) {
+              if (type === 'display') {
+                data = sanitizeHTML(data);
+                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
+
+                if (data.length > 70) {
+                    datas += ' (..)</span>';
+                } else {
+                    datas += '</span>';
+                }
+                return datas;
+              }
+              return data;
+            }
+          },
+          {
+            "data": "task_status_id",
+            "render": function(data, type, row, meta) {
+               if (type === 'display') {
+                  data = sanitizeHTML(data);
+                  data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
+              }
+              return data;
+            }
+          },
+          {
+            "data": "task_case",
+            "render": function (data, type, row, meta) {
+                if (type === 'display') {
+                    data = sanitizeHTML(data);
+                    data = '<a href="/case?cid='+ row['case_id'] +'">' + data +'</a>';
+                }
+                return data;
+              }
+          },
+          {
+            "data": "task_last_update",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+                  data = sanitizeHTML(data);
+                  data = data.replace(/GMT/g, "");
+              }
+              return data;
+            }
+          },
+          { "data": "task_tags",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' && data != null) {
+                  tags = "";
+                  de = data.split(',');
+                  for (tag in de) {
+                    tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+                  }
+                  return tags;
+              }
+              return data;
+            }
           }
-          return data;
-        }
-      }
-    ],
-    rowCallback: function (nRow, data) {
-        data = sanitizeHTML(data);
-        nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
-    },
-    filter: true,
-    info: true,
-    ordering: true,
-    processing: true,
-    retrieve: true,
-    lengthChange: false,
-    pageLength: 10,
-    order: [[ 2, "asc" ]],
-    buttons: [
-        { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-        { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
-    ],
-    select: true
-});
+        ],
+        rowCallback: function (nRow, data) {
+            data = sanitizeHTML(data);
+            nRow = '<span class="badge ml-2 badge-'+ sanitizeHTML(data['status_bscolor']) +'">' + sanitizeHTML(data['status_name']) + '</span>';
+        },
+        filter: true,
+        info: true,
+        ordering: true,
+        processing: true,
+        retrieve: true,
+        lengthChange: false,
+        pageLength: 10,
+        order: [[ 2, "asc" ]],
+        buttons: [
+            { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+            { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+        ],
+        select: true
+    });
     $("#utasks_table").css("font-size", 12);
 
     Table = $("#gtasks_table").DataTable({
@@ -380,7 +528,8 @@ $(document).ready(function() {
     });
     $("#gtasks_table").css("font-size", 12);
 
-    update_gtasks_list();
     update_utasks_list();
+    update_ucases_list();
+    update_ureviews_list();
     setInterval(check_page_update,30000);
 });

@@ -42,10 +42,16 @@ const selectsConfig = {
         url: '/manage/users/list',
         id: 'user_id',
         name: 'user_name'
+    },
+    alert_resolution_id: {
+        url: '/manage/alert-resolutions/list',
+        id: 'resolution_status_id',
+        name: 'resolution_status_name'
     }
 };
 
 let alertStatusList = {};
+let alertResolutionList = {};
 
 function getAlertStatusList() {
     get_request_api('/manage/alert-status/list')
@@ -57,9 +63,27 @@ function getAlertStatusList() {
         });
 }
 
+function getAlertResolutionList() {
+    get_request_api('/manage/alert-resolutions/list')
+        .then((data) => {
+            if (!notify_auto_api(data, true)) {
+                return;
+            }
+            alertResolutionList = data.data;
+        });
+}
+
 function getAlertStatusId(statusName) {
     const status = alertStatusList.find((status) => status.status_name === statusName);
     return status ? status.status_id : undefined;
+}
+
+function getAlertResolutionId(resolutionName) {
+    if (alertResolutionList.length === undefined) {
+        getAlertResolutionList();
+    }
+    const resolution = alertResolutionList.find((resolution) => resolution.resolution_status_name.toLowerCase().replaceAll(' ', '_') === resolutionName);
+    return resolution ? resolution.resolution_status_id : undefined;
 }
 
 function appendLabels(list, items, itemType) {
@@ -590,7 +614,7 @@ function viewAlertGraph() {
     if (node_type === 'alert') {
         window.open(`/alerts?alert_ids=${node_id}&cid=${get_caseid()}`);
     } else if (node_type === 'case') {
-        window.open(`/case?cid=${node_id}`);Ï
+        window.open(`/case?cid=${node_id}`);
     } else if (node_type === 'asset') {
         window.open(`/alerts?alert_assets=${node_id}&cid=${get_caseid()}`);
     } else if (node_type === 'ioc') {
@@ -750,10 +774,37 @@ function getFiltersFromUrl() {
     return Object.fromEntries(formData.entries());
 }
 
+function alertResolutionToARC(resolution) {
+    if (resolution === null) {
+        return '';
+    }
+    switch (resolution.resolution_status_name) {
+        case 'True Positive With Impact':
+            return `<span class="badge alert-bade-status badge-pill badge-danger mr-2">True Positive with impact</span>`
+        case 'True Positive Without Impact':
+            return `<span class="badge alert-bade-status badge-pill badge-warning mr-2">True Positive without impact</span>`
+        case 'False Positive':
+            return `<span class="badge alert-bade-status badge-pill badge-success mr-2">False Positive</span>`
+    }
+}
+
+function renderNestedObject(obj) {
+    let output = '';
+    Object.entries(obj).forEach(([key, value]) => {
+        if (typeof value === 'object' && value !== null) {
+            output += `<dt class="col-sm-3">${filterXSS(key)}:</dt><dd class="col-sm-9"><br /><dl class="row">${renderNestedObject(value)}</dl></dd>`;
+        } else {
+            output += `<dt class="col-sm-3">${filterXSS(key)}:</dt><dd class="col-sm-9">${filterXSS(value)}</dd>`;
+        }
+    });
+    return output;
+}
+
 function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                      modulesOptionsIocReq) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
   const alert_color = alertStatusToColor(alert.status.status_name);
+  const alert_resolution = alertResolutionToARC(alert.resolution_status);
 
   if (alert.owner !== null) {
       alert.owner.user_name = filterXSS(alert.owner.user_name);
@@ -837,6 +888,8 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                   <a href="javascript:void(0)" class="dropdown-item" onclick="copyMDAlertLink(${alert.alert_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
                                   ${menuOptionsHtmlAlert}
                                   <div class="dropdown-divider"></div>
+                                  <a href="javascript:void(0)" class="dropdown-item" onclick="showAlertHistory(${alert.alert_id});return false;"><small class="fa fa-clock-rotate-left mr-2"></small>History</a>
+                                  <div class="dropdown-divider"></div>
                                   <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="delete_alert(${alert.alert_id});"><small class="fa fa-trash mr-2"></small>Delete alert</a>
                                 </div>
                             </div>
@@ -877,7 +930,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                       <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="changeStatusAlert(${alert.alert_id}, 'Closed');">Close</button>
                       `}
                 </div>
-                <span class="mt-4">${alert.alert_description}</span>
+                <span class="mt-4">${alert.alert_description.replaceAll('\n', '<br/>').replaceAll('\t', '  ')}</span>
 
                 
 
@@ -916,18 +969,12 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                     
                     <!-- Alert Context section -->
                     ${
-                          alert.alert_context && Object.keys(alert.alert_context).length > 0
-                              ? `<div class="separator-solid"></div><h3 class="title mt-3 mb-3"><strong>Context</strong></h3>
-                                           <dl class="row">
-                                             ${Object.entries(alert.alert_context)
-                                  .map(
-                                      ([key, value]) =>
-                                          `<dt class="col-sm-3">${filterXSS(key)}</dt>
-                                                    <dd class="col-sm-9">${filterXSS(value)}</dd>`
-                                  )
-                                  .join('')}
-                                           </dl>`
-                              : ''
+                        alert.alert_context && Object.keys(alert.alert_context).length > 0
+                            ? `<div class="separator-solid"></div><h3 class="title mt-3 mb-3"><strong>Context</strong></h3>
+                                <dl class="row">
+                                ${renderNestedObject(alert.alert_context)}
+                                </dl>`
+                            : ''
                       }
                     
                     <div class="separator-solid"></div>
@@ -969,7 +1016,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Lookback (days)</span>
                                     </div>
-                                    <input type="number" name="value" value="7" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
+                                    <input type="number" name="value" value="30" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
                                 </div>
                             </div>  
                         </div>
@@ -1101,7 +1148,8 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                 </div>
               `).join('') + '</div>' : '<div class="mb-4"></div>'}
             
-              <div class="">
+              <div class="">  
+                ${alert_resolution === undefined ? "": alert_resolution} 
                 ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-3">${alert.status.status_name}</span>` : ''}                    
                 <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
                 <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
@@ -1147,6 +1195,25 @@ function init_module_processing_alert(alert_id, hook_name, hook_ui_name, module_
 
 let modulesOptionsAlertReq = null;
 let modulesOptionsIocReq = null;
+
+async function showAlertHistory(alertId) {
+    const alertDataReq = await fetchAlert(alertId);
+    if (!notify_auto_api(alertDataReq, true)) {
+        return;
+    }
+    let alertData = alertDataReq.data;
+    let entryDiv = $('#modal_alert_history_content');
+
+    for (let entry in alertData.modification_history)  {
+        let date = new Date(Math.floor(entry) * 1000);
+        let dateStr = date.toLocaleString();
+        let entryStr = alertData.modification_history[entry];
+        entryDiv.append('<div class="row"><div class="col-3">' + dateStr + '</div><div class="col-3">' + entryStr.user + '</div><div class="col-6">'+ entryStr.action +'</div></div>');
+
+    }
+
+    $('#modal_alert_history').modal('show');
+}
 
 async function refreshAlert(alertId, alertData, expanded=false) {
     if (alertData === undefined) {
@@ -1416,7 +1483,6 @@ function resetSavedFilters(queryParams = null, replaceState = true) {
     if (replaceState) {
         window.history.replaceState(null, null, `?${queryParams.toString()}`);
     }
-    $('.preset-dropdown-container').hide();
     $('#savedFilters').selectpicker('val', '');
 
     return queryParams;
@@ -1484,9 +1550,12 @@ async function editAlert(alert_id, close=false) {
         let alert_note = $('#editAlertNote').val();
         let alert_tags = alertTag.val();
 
+        console.log(getAlertResolutionId($("input[type='radio'][name='resolutionStatus']:checked").val()));
+
         let data = {
           alert_note: alert_note,
           alert_tags: alert_tags,
+          alert_resolution_status_id: getAlertResolutionId($("input[type='radio'][name='resolutionStatus']:checked").val()),
           alert_classification_id: $('#editAlertClassification').val(),
           alert_severity_id: $('#editAlertSeverity').val()
         };
@@ -1512,7 +1581,7 @@ async function fetchSavedFilters() {
                 savedFiltersDropdown.empty();
 
                 let dropdownHtml = `
-                    <select class="selectpicker" data-style="btn-sm" data-live-search="true" title="Select preset filter" id="savedFilters">
+                    <select class="selectpicker ml-2" data-style="btn-sm" data-live-search="true" title="Select preset filter" id="savedFilters">
                 `;
 
                 data.data.forEach(filter => {
@@ -1797,7 +1866,7 @@ function fetchSelectOptions(selectElementId, configItem) {
         });
         resolve();
       });
-  });Ï
+  });
 }
 
 function getBatchAlerts() {
@@ -1921,6 +1990,7 @@ $(document).ready(function () {
             setFormValuesFromUrl();
         });
     getAlertStatusList();
+    getAlertResolutionList();
 
     // Connect to socket.io alerts namespace
     const socket = io.connect('/alerts');
@@ -1952,10 +2022,6 @@ $(document).ready(function () {
     $('.tickbox input[type="checkbox"]').prop('checked', !allSelected);
     $(this).text(allSelected ? 'Select all' : 'Deselect all');
   });
-
-    $('#togglePresets').on('click', function() {
-        $('.preset-dropdown-container').toggle();
-    });
 
     socket.on('new_alert', function (data) {
         const badge = $('#newAlertsBadge');

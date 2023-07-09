@@ -551,7 +551,7 @@ function capitalizeFirstLetter(string) {
 }
 
 function copy_object_link_md(data_type, node_id){
-    link = `[<i class="fa-solid fa-tag"></i> ${capitalizeFirstLetter(data_type)} #${node_id}](${buildShareLink(node_id)})`
+    let link = `[<i class="fa-solid fa-tag"></i> ${capitalizeFirstLetter(data_type)} #${node_id}](${buildShareLink(node_id)})`
     navigator.clipboard.writeText(link).then(function() {
         notify_success('MD link copied');
     }, function(err) {
@@ -780,6 +780,22 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
         }
     });
 
+    editor.commands.addCommand({
+        name: 'link',
+        bindKey: {win: "Ctrl-K", "mac": "Cmd-K"},
+        exec: function(editor) {
+            editor.insertSnippet('[${1:$SELECTION}](url)');
+        }
+    });
+
+    editor.commands.addCommand({
+        name: 'code',
+        bindKey: {win: "Ctrl-`", "mac": "Cmd-`"},
+        exec: function(editor) {
+            editor.insertSnippet('```${1:$SELECTION}```')
+        }
+    });
+
     if (live_preview === undefined || live_preview === true) {
         let textarea = $('#'+content_anchor);
         editor.getSession().on("change", function () {
@@ -815,7 +831,7 @@ function createSanitizeExtensionForImg() {
         if (match.startsWith('<img')) {
           return match.replace(/on\w+="[^"]*"/gi, '');
         }
-        return '';
+        return match;
       },
     },
   ];
@@ -830,7 +846,10 @@ function get_showdown_convert() {
         smoothLivePreview: true,
         strikethrough: true,
         tasklists: true,
-        extensions: ['bootstrap-tables', createSanitizeExtensionForImg()]
+        ghCodeBlocks: true,
+        backslashEscapesHTMLTags: true,
+        splitAdjacentBlockquotes: true,
+        extensions: ['bootstrap-tables', createSanitizeExtensionForImg]
     });
 }
 
@@ -865,8 +884,9 @@ function do_md_filter_xss(html) {
 
 const avatarCache = {};
 
-function get_avatar_initials(name, small, onClickFunction) {
-    const av_size = small ? 'avatar-sm' : 'avatar';
+function get_avatar_initials(name, small, onClickFunction, xsmall) {
+    let av_size = small ? 'avatar-sm' : 'avatar';
+    av_size = xsmall ? 'avatar-xs' : av_size;
     const onClick = onClickFunction ? `onclick="${onClickFunction}"` : '';
 
     if (avatarCache[name] && avatarCache[name][small ? 'small' : 'large']) {
@@ -934,11 +954,13 @@ function get_editor_headers(editor_instance, save, edition_btn) {
                 <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="${editor_instance}.insertSnippet`+"('## ${1:$SELECTION}')"+`;${editor_instance}.focus();">H2</div>
                 <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="${editor_instance}.insertSnippet`+"('### ${1:$SELECTION}');"+`${editor_instance}.focus();">H3</div>
                 <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="${editor_instance}.insertSnippet`+"('#### ${1:$SELECTION}');"+`${editor_instance}.focus();">H4</div>
-                <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="${editor_instance}.insertSnippet`+"('```${1:$SELECTION}```');"+`${editor_instance}.focus();"><i class="fa-solid fa-code"></i></div>
-                <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="${editor_instance}.insertSnippet`+"('[New link](${1:$SELECTION})');"+`${editor_instance}.focus();"><i class="fa-solid fa-link"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL+\`" onclick="${editor_instance}.insertSnippet`+"('```${1:$SELECTION}```');"+`${editor_instance}.focus();"><i class="fa-solid fa-code"></i></div>
+                <div class="btn btn-sm btn-light mr-1" title="CTRL-K" onclick="${editor_instance}.insertSnippet`+"('[${1:$SELECTION}](URL)');"+`${editor_instance}.focus();"><i class="fa-solid fa-link"></i></div>
                 <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="${editor_instance}.insertSnippet`+"('|\\t|\\t|\\t|\\n|--|--|--|\\n|\\t|\\t|\\t|\\n|\\t|\\t|\\t|');"+`${editor_instance}.focus();"><i class="fa-solid fa-table"></i></div>
                 <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="${editor_instance}.insertSnippet`+"('\\n- \\n- \\n- ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list"></i></div>
                 <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="${editor_instance}.insertSnippet`+"('\\n1. a  \\n2. b  \\n3. c  ');"+`${editor_instance}.focus();"><i class="fa-solid fa-list-ol"></i></div>
+                <div class="btn btn-sm btn-transparent mr-1" title="Help" onclick="get_md_helper_modal();"><i class="fa-solid fa-question-circle"></i></div>
+
     `
     return header;
 }
@@ -1171,10 +1193,10 @@ function modal_maximize() {
 }
 
 function modal_minimized(id, title) {
-    $("#" + id).modal("hide");
     $("#minimized_modal_title").text(title);
     $('#minimized_modal_box').data('target-id',id);
     $("#minimized_modal_box").show();
+    $("#" + id).modal("hide");
 }
 
 function hide_minimized_modal_box() {
@@ -1257,6 +1279,16 @@ function focus_on_input_chg_case(){
              return false;
         }
   });
+}
+
+function get_md_helper_modal() {
+    $('#modal_md_helper').load('/case/md-helper?cid=' + get_caseid(), function (response, status, xhr) {
+         if (status !== "success") {
+             ajax_notify_error(xhr, '/case/md-helper?cid=' + get_caseid());
+             return false;
+            }
+         $('#shortcutModal').modal("show");
+    });
 }
 
 function split_bool(split_str) {

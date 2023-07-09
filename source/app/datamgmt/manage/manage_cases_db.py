@@ -24,6 +24,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import aliased, contains_eager, subqueryload
 
 from app import db
+from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
@@ -53,6 +54,7 @@ from app.models import UserActivity
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.cases import CaseProtagonist, CaseTags, CaseState
+from app.schema.marshables import CaseDetailsSchema
 
 
 def list_cases_id():
@@ -179,6 +181,26 @@ def close_case(case_id):
     return None
 
 
+def map_alert_resolution_to_case_status(case_status_id):
+
+    if case_status_id == CaseStatus.false_positive.value:
+        ares = search_alert_resolution_by_name('False Positive', exact_match=True)
+
+    elif case_status_id == CaseStatus.true_positive_with_impact.value:
+        ares = search_alert_resolution_by_name('True Positive With Impact', exact_match=True)
+
+    elif case_status_id == CaseStatus.true_positive_without_impact.value:
+        ares = search_alert_resolution_by_name('True Positive Without Impact', exact_match=True)
+
+    else:
+        ares = search_alert_resolution_by_name('Not Applicable', exact_match=True)
+
+    if ares:
+        return ares.resolution_status_id
+
+    return None
+
+
 def reopen_case(case_id):
     res = Cases.query.filter(
         Cases.case_id == case_id
@@ -212,9 +234,11 @@ def get_case_protagonists(case_id):
 
 
 def get_case_details_rt(case_id):
-    if Cases.query.filter(Cases.case_id == case_id).first():
+    case = Cases.query.filter(Cases.case_id == case_id).first()
+    if case:
         owner_alias = aliased(User)
         user_alias = aliased(User)
+        review_alias = aliased(User)
 
         res = db.session.query(Cases, Client, user_alias, owner_alias).with_entities(
             Cases.name.label('case_name'),
@@ -236,13 +260,17 @@ def get_case_details_rt(case_id):
             Cases.modification_history,
             Cases.initial_date,
             Cases.classification_id,
-            CaseClassification.name.label('classification')
+            CaseClassification.name.label('classification'),
+            Cases.reviewer_id,
+            review_alias.name.label('reviewer'),
         ).filter(and_(
             Cases.case_id == case_id
         )).join(
             user_alias, and_(Cases.user_id == user_alias.id)
         ).outerjoin(
             owner_alias, and_(Cases.owner_id == owner_alias.id)
+        ).outerjoin(
+            review_alias, and_(Cases.reviewer_id == review_alias.id)
         ).join(
             Cases.client,
         ).outerjoin(
@@ -254,6 +282,7 @@ def get_case_details_rt(case_id):
             return None
 
         res = res._asdict()
+
         res['case_tags'] = ",".join(get_case_tags(case_id))
         res['status_name'] = CaseStatus(res['status_id']).name.replace("_", " ").title()
 

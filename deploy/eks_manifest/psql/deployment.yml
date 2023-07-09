@@ -1,0 +1,58 @@
+# deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: iris-web
+  name: iris-psql-db-deployment
+  labels:
+    app: iris-psql
+    site: iris
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iris-psql
+  template:
+    metadata:
+      labels:
+        app: iris-psql
+    spec:
+      containers:
+      - name: iris-psql-db
+        image: iriswebapp_db:v2.2.2
+        ports:
+        - containerPort: 5432
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: iris-psql-secrets
+                key: POSTGRES_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: iris-psql-secrets
+                key: POSTGRES_PASSWORD
+          - name: POSTGRES_ADMIN_USER
+            valueFrom:
+              secretKeyRef:
+                name: iris-psql-secrets
+                key: POSTGRES_ADMIN_USER
+          - name: POSTGRES_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: iris-psql-secrets
+                key: POSTGRES_ADMIN_PASSWORD
+          - name: POSTGRES_DB
+            valueFrom:
+              secretKeyRef:
+                name: iris-psql-secrets
+                key: POSTGRES_DB
+        volumeMounts:
+        - name: persistent-storage
+          mountPath: /var/lib/postgresql/data
+          subPath: psqldata
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: iris-psql-claim

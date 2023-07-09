@@ -51,14 +51,14 @@ from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
 from app.models import create_safe_limited
-from app.models.alerts import Severity, AlertStatus
+from app.models.alerts import Severity, AlertStatus, AlertResolutionStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.cases import Cases, CaseState
 from app.models.cases import Client
-from app.models.models import AnalysisStatus, CaseClassification
+from app.models.models import AnalysisStatus, CaseClassification, ReviewStatus, ReviewStatusList
 from app.models.models import AssetsType
 from app.models.models import EventCategory
 from app.models.models import IocType
@@ -209,9 +209,15 @@ def run_post_init(development=False):
         log.info("Creating base alert status")
         create_safe_alert_status()
 
+        log.info("Creating base alert resolution status")
+        create_safe_alert_resolution_status()
+
         if not prevent_objects:
             log.info("Creating base case states")
             create_safe_case_states()
+
+        log.info("Creating base review status")
+        create_safe_review_status()
 
         log.info("Creating base hooks")
         create_safe_hooks()
@@ -296,6 +302,12 @@ def create_safe_hooks():
     
     create_safe(db.session, IrisHook, hook_name='on_postload_alert_update',
                 hook_description='Triggered on alert update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_resolution_update',
+                hook_description='Triggered on alert resolution update, after commit in DB')
+
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_status_update',
+                hook_description='Triggered on alert status update, after commit in DB')
     
     create_safe(db.session, IrisHook, hook_name='on_postload_alert_escalate',
                 hook_description='Triggered on alert escalation, after commit in DB')
@@ -704,6 +716,23 @@ def create_safe_alert_status():
     create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
 
 
+def create_safe_alert_resolution_status():
+    """Creates new AlertResolutionStatus objects if they do not already exist.
+
+    This function creates new AlertResolutionStatus objects with the specified resolution_status_name
+    and resolution_status_description if they do not already exist in the database.
+
+    """
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='False Positive',
+                resolution_status_description="The alert was a false positive")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='True Positive With Impact',
+                resolution_status_description="The alert was a true positive and had an impact")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='True Positive Without Impact',
+                resolution_status_description="The alert was a true positive but had no impact")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='Not Applicable',
+                resolution_status_description="The alert is not applicable")
+
+
 def create_safe_case_states():
     """Creates new CaseState objects if they do not already exist.
 
@@ -721,6 +750,19 @@ def create_safe_case_states():
     create_safe(db.session, CaseState, state_name='Post-Incident', state_description="Post-incident phase")
     create_safe(db.session, CaseState, state_name='Reporting', state_description="Reporting is in progress")
     create_safe(db.session, CaseState, state_name='Closed', state_description="Case is closed", protected=True)
+
+
+def create_safe_review_status():
+    """Creates new ReviewStatus objects if they do not already exist.
+
+    This function creates new ReviewStatus objects with the specified status name
+    if they do not already exist in the database.
+    """
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.no_review_required)
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.not_reviewed)
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.pending_review)
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.review_in_progress)
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.reviewed)
 
 
 def create_safe_assets():

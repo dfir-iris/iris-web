@@ -23,88 +23,8 @@ function edit_in_asset_desc() {
 }
 
 /* Fetch a modal that is compatible with the requested asset type */
-function add_asset() {
+function add_assets() {
     url = 'assets/add/modal' + case_param();
-    $('#modal_add_asset_content').load(url, function (response, status, xhr) {
-        hide_minimized_modal_box();
-        if (status !== "success") {
-             ajax_notify_error(xhr, url);
-             return false;
-        }
-
-        g_asset_desc_editor = get_new_ace_editor('asset_description', 'asset_desc_content', 'target_asset_desc',
-                            function() {
-                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
-                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                            }, null);
-        g_asset_desc_editor.setOption("minLines", "10");
-        edit_in_asset_desc();
-
-        headers = get_editor_headers('g_asset_desc_editor', null, 'asset_edition_btn');
-        $('#asset_edition_btn').append(headers);
-
-        $('#ioc_links').select2({});
-
-        $('#submit_new_asset').on("click", function () {
-            if(!$('form#form_new_asset').valid()) {
-                return false;
-            }
-
-            var data = $('#form_new_asset').serializeObject();
-            data['csrf_token'] = $('#csrf_token').val();
-            if (typeof data["ioc_links"] == "string") {
-                data["ioc_links"] = [data["ioc_links"]]
-            }
-            data['asset_tags'] = $('#asset_tags').val();
-            data['asset_description'] = g_asset_desc_editor.getValue();
-            ret = get_custom_attributes_fields();
-            has_error = ret[0].length > 0;
-            attributes = ret[1];
-
-            if (has_error){return false;}
-
-            data['custom_attributes'] = attributes;
-
-            post_request_api('assets/add', JSON.stringify(data), true, function() {
-                    $('#submit_new_asset').text('Saving data..')
-                    .attr("disabled", true)
-                    .removeClass('bt-outline-success')
-                    .addClass('btn-success', 'text-dark');
-            })
-            .done((data) => {
-                if (data.status == 'success') {
-                    reload_assets();
-                    $('#modal_add_asset').modal('hide');
-                    notify_success("Asset created");
-                } else {
-                    $('#submit_new_asset').text('Save again');
-                    swal("Oh no !", data.message, "error")
-                }
-            })
-            .always(function () {
-                $('#submit_new_asset')
-                    .attr("disabled", false)
-                    .addClass('bt-outline-success')
-                    .removeClass('btn-success', 'text-dark');
-            })
-            .fail(function (error) {
-                $('#submit_new_asset').text('Save');
-                propagate_form_api_errors(error.responseJSON.data);
-            })
-
-            return false;
-        })
-
-        $('#modal_add_asset').modal({ show: true });
-        $('#asset_name').focus();
-
-    });
-
-    $('.dtr-modal').hide();
-}
-
-function add_multi_assets() {
-    url = 'assets/add-multi/modal' + case_param();
     $('#modal_add_asset_content').load(url, function (response, status, xhr) {
         hide_minimized_modal_box();
         if (status !== "success") {
@@ -270,6 +190,7 @@ function asset_details(asset_id) {
         g_asset_desc_editor.setOption("minLines", "10");
         preview_asset_description(true);
         headers = get_editor_headers('g_asset_desc_editor', null, 'asset_edition_btn');
+
         $('#asset_edition_btn').append(headers);
 
         $('#ioc_links').select2({});
@@ -282,9 +203,12 @@ function asset_details(asset_id) {
 
         load_menu_mod_options_modal(asset_id, 'asset', $("#asset_modal_quick_actions"));
         $('.dtr-modal').hide();
+
+        $('#modal_add_asset').modal({ show: true });
+        edit_in_asset_desc();
     });
 
-    $('#modal_add_asset').modal({ show: true });
+
     return false;
 }
 

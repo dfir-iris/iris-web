@@ -184,6 +184,7 @@ function edit_event(id) {
         preview_event_description(true);
         headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
         $('#event_edition_btn').append(headers);
+        edit_in_event_desc();
         
         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
@@ -392,6 +393,15 @@ function events_bulk_delete() {
     });
 }
 
+function toggleSeeMore(element) {
+    let ariaExpanded = element.getAttribute('aria-expanded');
+    if (ariaExpanded === 'false') {
+        element.innerHTML = '&gt; See less';
+    } else {
+        element.innerHTML = '&gt; See more';
+    }
+}
+
 function build_timeline(data) {
     var compact = is_timeline_compact_view();
     var is_i = false;
@@ -559,30 +569,49 @@ function build_timeline(data) {
         }
 
         title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
-        content_parsed = converter.makeHtml(do_md_filter_xss(evt.event_content));
-        content_parsed = filterXSS(content_parsed);
+        raw_content = do_md_filter_xss(evt.event_content); // Raw markdown content
+        formatted_content = converter.makeHtml(raw_content); // Convert markdown to HTML
+
+        const wordLimit = 30; // Define your word limit
 
         if (!compact) {
-            content_split = content_parsed.split('<br/>');
-            lines = content_split.length;
-            if (content_parsed.length > 150 || lines > 2) {
-                if (lines > 2) {
-                    short_content = match_replace_ioc(content_split.slice(0,2).join('<br/>'), reap);
-                    long_content = match_replace_ioc(content_split.slice(2).join('<br/>'), reap);
-                } else {
-                    offset = content_parsed.slice(150).indexOf(' ');
-                    short_content = match_replace_ioc(content_parsed.slice(0, 150 + offset), reap);
-                    long_content = match_replace_ioc(content_parsed.slice(150 + offset), reap);
+            let paragraphs = raw_content.split('\n\n');
+            let short_content, long_content;
+
+            if (paragraphs.join(' ').split(' ').length > wordLimit || paragraphs.length > 2) {
+                let temp_content = '';
+                let i = 0;
+                let wordCount = 0;
+
+                // Loop until the content length is more than wordLimit or paragraph count is more than 2
+                while(wordCount <= wordLimit && i < 2 && i < paragraphs.length){
+                    let words = paragraphs[i].split(' ');
+                    if (wordCount + words.length > wordLimit && wordCount != 0) {
+                        break;
+                    }
+                    temp_content += paragraphs[i] + '\n\n';
+                    wordCount += words.length;
+                    i++;
                 }
+
+                short_content = converter.makeHtml(temp_content); // Convert markdown to HTML
+                short_content = match_replace_ioc(filterXSS(short_content), reap);
+                temp_content = paragraphs.slice(i).join('\n\n');
+                long_content = converter.makeHtml(temp_content); // Convert markdown to HTML
+                long_content = match_replace_ioc(filterXSS(long_content), reap);
+
                 formatted_content = short_content + `<div class="collapse" id="collapseContent-${evt.event_id}">
                 ${long_content}
                 </div>
-                <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent">&gt; See more</a>`;
-                formatted_content = formatted_content;
+                <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent" onclick="toggleSeeMore(this)">&gt; See more</a>`;
             } else {
+                content_parsed = converter.makeHtml(raw_content); // Convert markdown to HTML
+                content_parsed = filterXSS(content_parsed);
                 formatted_content = match_replace_ioc(content_parsed, reap);
             }
         }
+
+
 
         shared_link = buildShareLink(evt.event_id);
 
@@ -636,7 +665,7 @@ function build_timeline(data) {
                         <div class="timeline-body text-faded" >
                             <div id="drop_${evt.event_id}" class="collapse" aria-labelledby="dropa_${evt.event_id}" style="">
                                 <div class="card-body">
-                                ${content_parsed}
+                                ${formatted_content}
                                 </div>
                                 <div class="bottom-hour mt-2">
                                     <span class="float-right">${tags}${asset} </span>

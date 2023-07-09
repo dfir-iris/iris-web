@@ -23,8 +23,7 @@
                     <div class="card-subtitle mt-2">
                         <div class="d-flex">
                             <button class="btn btn-sm" href="#filterCardBody" title="Filter" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="filterCardBody">Filter</button>
-                            <button type="button" class="btn btn-sm ml-2" id="togglePresets">Presets</button>
-                            <div class="preset-dropdown-container" style="display: none;">
+                            <div class="preset-dropdown-container">
                                 <div id="savedFiltersDropdown" class="dropdown"></div>
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-dark ml-2" id="resetFilters" style="display: none;">Clear Filters</button>
@@ -161,11 +160,16 @@
                         <select class="form-control" id="alert_owner_id" name="alert_owner_id">
                         </select>
                     </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_resolution_id">Resolution Status</label>
+                            <select class="form-control" id="alert_resolution_id" name="alert_resolution_id">
+                            </select>
+                    </div>
                 </div>
                 <div class="form-row mt-3">
                     <div class="col centered">
                         <button type="submit" class="btn btn-sm btn-primary">Apply Filters</button>
-                        <button type="button" class="btn btn-sm btn-outline-success float-right" id="saveFilters">Save Filters</button>
+                        <button type="button" class="btn btn-sm btn-outline-success float-right" id="saveFilters">Save as filter</button>
                     </div>
                 </div>
             </form>
@@ -211,6 +215,21 @@
         </div>
     </div>
 </div>
+<div class="modal" role="dialog" tabindex="-1" id="modal_alert_history">
+    <div class="modal-lg modal-dialog" role="document">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+              <h5 class="modal-title">Alert history</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <div class="modal-body" id="modal_alert_history_content">
+
+        </div>
+        </div>
+    </div>
+</div>
 <div class="modal" id="editAlertModal" tabindex="-1" role="dialog" aria-labelledby="closeAlertModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
@@ -223,6 +242,29 @@
       <div class="modal-body">
         <form>
           <div class="form-group">
+              <label class="form-label">Resolution status</label><br>
+              <div class="selectgroup ml-auto mr-auto">
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="not_applicable" class="selectgroup-input" checked="">
+                  <span class="selectgroup-button">Not applicable</span>
+                </label>
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="false_positive" class="selectgroup-input">
+                  <span class="selectgroup-button">False positive</span>
+                </label>
+                <label class="selectgroup-item selectgroup-warning">
+                  <input type="radio" name="resolutionStatus" value="true_positive_without_impact" class="selectgroup-input">
+                  <span class="selectgroup-button">True positive without impact</span>
+                </label>
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="true_positive_with_impact" class="selectgroup-input">
+                  <span class="selectgroup-button">True positive with impact</span>
+                </label>
+
+              </div>
+          </div>
+          <div class="form-group">
+
             <label for="editAlertNote">Note</label>
             <textarea class="form-control" id="editAlertNote" rows="3"></textarea>
           </div>
@@ -230,6 +272,7 @@
             <label for="editAlertTags">Tags</label>
             <input type="text" class="form-control" id="editAlertTags">
           </div>
+
         </form>
           <div class="form-group alert-edition-part">
             <label for="editAlertClassification">Classification</label>

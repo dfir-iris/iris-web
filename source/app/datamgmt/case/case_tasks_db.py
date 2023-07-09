@@ -322,9 +322,11 @@ def delete_task_comment(task_id, comment_id):
     return True, "Comment deleted"
 
 
-def get_tasks_cases_mapping():
+def get_tasks_cases_mapping(open_cases_only=False):
+    condition = Cases.close_date == None if open_cases_only else True
+
     return CaseTasks.query.filter(
-        Cases.close_date == None
+        condition
     ).with_entities(
         CaseTasks.task_case_id,
         CaseTasks.task_status_id

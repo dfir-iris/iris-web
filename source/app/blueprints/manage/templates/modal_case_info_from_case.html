@@ -103,6 +103,18 @@
                                 <label>Owner :</label>
                                 <span type="text" class="">{{ data.owner }}</span>
                             </div>
+                            {% if data.reviewer %}
+                                <div class="form-group mt--3">
+                                    <label>Reviewer :</label>
+                                    <span type="text" class="">{{ data.reviewer }}</span>
+                                </div>
+                            {% endif %}
+                            {% if data.review_status %}
+                                <div class="form-group mt--3">
+                                    <label>Reviewer :</label>
+                                    <span type="text" class="">{{ data.review_status.status_name }}</span>
+                                </div>
+                            {% endif %}
                             {% if data.close_date %}
                                 <div class="form-group mt--3">
                                     <label>Close date :</label>
@@ -192,7 +204,8 @@
                                                   id="case_quick_status" name="status_id">
                                               <option value="0" {% if data.status_id == 0 %}selected{% endif %} class="badge-text">Unknown</option>
                                               <option value="1" {% if data.status_id == 1 %}selected{% endif %} class="badge-text">False Positive</option>
-                                              <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive</option>
+                                              <option value="2" {% if data.status_id == 2 %}selected{% endif %} class="badge-text">True Positive with impact</option>
+                                              <option value="4" {% if data.status_id == 4 %}selected{% endif %} class="badge-text">True Positive without impact</option>
                                               <option value="3" {% if data.status_id == 3 %}selected{% endif %} class="badge-text">Not applicable</option>
                                           </select>
                                         </div>
@@ -210,6 +223,16 @@
                                                     <option value="{{ cst.customer_id }}" {% if data.customer_id == cst.customer_id %}selected{% endif %} class="badge-text">{{ cst.customer_name }}</option>
                                                 {% endfor %}
                                             </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Reviewer</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_reviewer" name="reviewer_id">
+                                           </select>
                                         </div>
                                     </div>
                                 </div>
@@ -373,6 +396,11 @@
         title: "Owner",
         style: "btn-outline-white"
     });
+    $('#case_quick_reviewer').selectpicker({
+        liveSearch: true,
+        title: "Reviewer",
+        style: "btn-outline-white"
+    });
     $('#case_state').selectpicker({
         liveSearch: true,
         title: "Case state",
@@ -389,5 +417,5 @@
         style: "btn-outline-white"
     });
 
-    access_case_info_reload('{{ data.case_id }}', '{{ data.owner_id }}');
+    access_case_info_reload('{{ data.case_id }}', '{{ data.owner_id }}', '{{ data.reviewer_id }}');
 </script>

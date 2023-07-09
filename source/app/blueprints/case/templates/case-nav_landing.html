@@ -24,8 +24,12 @@
                                                                                     <span aria-hidden="true"><i class="fa-solid fa-upload mr-1"></i>Pipelines</span>
                                                 </button>
                                         </li>
-
                                         <li class="nav-item ml-auto">
+                                                                                    {% if case.review_status.status_name == "Not reviewed" or not case.review_status %}
+                                                <button class="btn btn-sm btn-light float-left ml-2" id="request_review">
+                                                                                    <span aria-hidden="true"><i class="fa-solid fa-clipboard-check mr-1"></i>Request review</span>
+                                                </button>
+                                        {% endif %}
                                             <btn href="#" onclick="report_template_selector();" class="btn btn-dark btn-sm float-right ml-2">
                                               <span class="btn-label">
                                                 <i class="fa fa-file-arrow-down"></i>

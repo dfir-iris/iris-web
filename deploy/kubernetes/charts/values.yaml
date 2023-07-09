@@ -1,0 +1,159 @@
+## @section rabbitmq Configuration
+##
+rabbitmq:
+   ## @param rabbitmq.app App name for rabbitmq
+   ##
+   app: rabbitmq
+   ## @param rabbitmq.name Name for rabbitmq
+   ##
+   name: rabbitmq
+   ## @param rabbitmq.image Image rabbitmq deployment
+   ##
+   image: rabbitmq
+   ## @param rabbitmq.tag Tag for rabbitmq
+   ##
+   tag: 3-management-alpine
+   ## @param rabbitmq.imagePullPolicy Policy for rabbitmq
+   ##
+   imagePullPolicy: "IfNotPresent"
+   ## @param rabbitmq.replicaCount ReplicaCount for rabbitmq
+   ##
+   replicaCount: 1
+   
+
+## @section PostgreSQL Configuration
+##
+postgres:
+   ## @param postgres.app PostgreSQL App
+   ##
+   app: postgres
+   ## @param postgres.name PostgreSQL Name
+   ##
+   name: postgres
+   ## @param postgres.image PostgreSQL Image
+   ##
+   image: <postgres_image>
+   ## @param postgres.tag PostgreSQL Tag
+   tag: <tag>
+   ## @param postgres.imagePullPolicy PostgreSQL PullPolicy
+   ##
+   imagePullPolicy: "IfNotPresent"
+   ## @param postgres.replicaCount PostgreSQL ReplicaCount
+   ##
+   replicaCount: 1
+   
+   ## @param postgres.service PostgreSQL Service
+   ##
+   service:
+    port: 5432
+
+   ## @param  PostgreSQL Environments
+   ##
+   POSTGRES_USER: postgres
+   POSTGRES_PASSWORD: postgres
+   POSTGRES_ADMIN_USER: raptor
+   POSTGRES_ADMIN_PASSWORD: postgres
+   POSTGRES_DB: iris_db
+   POSTGRES_PORT: 5432
+
+
+## @section Iris Frontend Configuration
+##
+irisapp:
+   ## @param irisapp.app Iris Frontend App
+   ##
+   app: iriswebapp-app
+   ## @param irisapp.name Iris Frontend Name
+   ##
+   name: iriswebapp-app
+   ## @param irisapp.image Iris Frontend Image
+   ##
+   image: <irisapp_image>
+   ## @param irisapp.tag Iris Frontend Tag
+   ##
+   tag: <tag>
+   ## @param irisapp.imagePullPolicy Iris Frontend imagePullPolicy
+   ##
+   imagePullPolicy: "IfNotPresent"
+   ## @param irisapp.replicaCount Iris Frontend replicaCount
+   ##
+   replicaCount: 1
+
+   ## @param irisapp.service Iris Frontend Service
+   ##
+   service:
+     port: 80 
+     targetPort: 8000
+    
+   ## @param irisapp.type Iris Frontend Service type
+   ##
+   type: ClusterIP  
+
+   ## @param  Iris Frontend Environments
+   ##
+   POSTGRES_USER: raptor
+   POSTGRES_PASSWORD: postgres
+   POSTGRES_ADMIN_USER: raptor
+   POSTGRES_ADMIN_PASSWORD: postgres
+   POSTGRES_PORT: 5432
+   POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
+   DOCKERIZED: 1
+   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
+   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+
+## @section Iris Backend Configuration
+##
+irisworker:
+   ## @param irisworker.app Iris Backend App
+   ##    
+   app: iriswebapp-worker
+   ## @param irisworker.name Iris Backend Name
+   ##
+   name: iriswebapp-worker
+   ## @param irisworker.image Iris Backend Image
+   ##
+   image: <irisworker_image>
+   ## @param irisworker.tag Iris Backend Tag
+   ##
+   tag: <tag>
+   ## @param irisworker.imagePullPolicy Iris Backend imagePullPolicy
+   ##
+   imagePullPolicy: "IfNotPresent"
+   ## @param irisworker.replicaCount Iris Backend replicaCount
+   ##
+   replicaCount: 1
+
+   ## @param  Iris Backend Environments
+   ##
+   POSTGRES_USER: raptor
+   POSTGRES_PASSWORD: postgres
+   POSTGRES_ADMIN_USER: raptor
+   POSTGRES_ADMIN_PASSWORD: postgres
+   POSTGRES_PORT: 5432
+   POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
+   DOCKERIZED: 1
+   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
+   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+
+## @section Nginx Ingress Configuration
+##
+ingress:
+  enabled: true
+  name: iris-ingress
+  className: nginx
+  annotations:
+    # Add any annotations specific to your Ingress controller
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: <host_name>
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: iriswebapp-app
+          servicePort: 80
+  tls:
+    - secretName: iris-ingress-tls-secret
+      hosts:
+        - <host_name>        

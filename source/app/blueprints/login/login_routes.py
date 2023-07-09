@@ -29,7 +29,6 @@ from flask import session
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
-from werkzeug.urls import url_parse
 
 from app import app
 from app import bc
@@ -40,7 +39,6 @@ from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.models.authorization import User
 from app.util import is_authentication_ldap
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 
@@ -155,8 +153,11 @@ def wrap_login_user(user):
 
     track_activity("user '{}' successfully logged-in".format(user), ctx_less=True, display_in_ui=False)
 
-    next_url = request.args.get('next')
+    next_url = None
+    if request.args.get('next'):
+        next_url = request.args.get('next') if 'cid=' in request.args.get('next') else request.args.get('next') + '?cid=' + str(user.ctx_case)
+
     if not next_url or urlsplit(next_url).netloc != '':
-        next_url = url_for('index.index')
+        next_url = url_for('index.index', cid=user.ctx_case)
 
     return redirect(next_url)

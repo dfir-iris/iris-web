@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: iris-web
+  name: iris-rabbitmq-service
+  labels:
+    site: iris
+spec:
+  selector:
+    app: iris-rabbitmq
+  ports:
+  - protocol: TCP
+    port: 5672
+    targetPort: 5672
+  type: ClusterIP

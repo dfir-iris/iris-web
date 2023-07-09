@@ -1,0 +1,25 @@
+# deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: iris-web
+  name: iris-rabbitmq-deployment
+  labels:
+    app: iris-rabbitmq
+    site: iris
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iris-rabbitmq
+  template:
+    metadata:
+      labels:
+        app: iris-rabbitmq
+    spec:
+      containers:
+      - name: iris-rabbitmq
+        image: rabbitmq:3-management-alpine
+        ports:
+        - containerPort: 5672
+        

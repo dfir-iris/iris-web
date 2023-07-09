@@ -91,17 +91,50 @@
             </div>
         </div>
       </div>
+    <div class="row" id="rowPendingCasesReview" style="display: none;">
+      <div class="col-md-12">
+            <section class="card">
+                <div class="card-header">
+                  <div class="card-title">Attributed cases review
+                    <div class="text-faded float-right">
+                      <small id="ureviews_last_updated"></small>
+                      <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_ureviews_list();">Refresh
+                        </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" id="ureviews_table_wrapper">
+                      <table class="table display table-striped table-hover" width="100%" cellspacing="0" id="ureview_table" >
+                        <thead>
+                          <tr>
+                              <th>Case name</th>
+                              <th>Review Status</th>
+                          </tr>
+                        </thead>
+                        <tfoot>
+                          <tr>
+                              <th>Case name</th>
+                              <th>Review Status</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
     <div class="row">
       <div class="col-md-12">
             {{ form.hidden_tag() }}
             <section class="card">
                 <div class="card-header">
-                  <div class="card-title">Open tasks attributed to you
+                  <div class="card-title">Attributed open tasks
                     <div class="text-faded float-right">
                       <small id="utasks_last_updated"></small>
-                      <button type="button" class="btn btn-xs btn-icon btn-round btn-outline-default ml-2"
-                          onclick="update_utasks_list();">
-                          <i class="fas fa-sync rotate"></i>
+                      <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_utasks_list();">Refresh
                         </button>
                     </div>
                   </div>
@@ -134,7 +167,51 @@
                 </div>
             </section>
         </div>
-      </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <section class="card">
+                <div class="card-header">
+                  <div class="card-title">Attributed open cases
+                    <div class="text-faded float-right">
+                      <small id="ucases_last_updated"></small>
+                        <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_ucases_list(true);">Show closed cases
+                        </button>
+                      <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_ucases_list();">Refresh
+                        </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" id="ucases_table_wrapper">
+                      <table class="table display table-striped table-hover" width="100%" cellspacing="0" id="ucases_table" >
+                        <thead>
+                          <tr>
+                              <th>Title</th>
+                              <th>Description</th>
+                              <th>Client</th>
+                              <th>Opening date</th>
+                              <th>Tags</th>
+                          </tr>
+                        </thead>
+                        <tfoot>
+                          <tr>
+                              <th>Title</th>
+                              <th>Description</th>
+                              <th>Client</th>
+                              <th>Opening date</th>
+                              <th>Tags</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
 
       <div class="row">
           <div class="col-md-12">
@@ -144,13 +221,12 @@
                       <div class="card-title">Global tasks
                         <div class="text-faded float-right">
                           <small id="tasks_last_updated"></small>
-                            <button type="button" class="btn btn-xs btn-icon btn-round btn-outline-default ml-2"
+                            <button type="button" class="btn btn-xs btn-dark ml-2"
                               onclick="add_gtask();">
-                              <i class="fas fa-plus"></i>
+                              Add global task
                             </button>
-                          <button type="button" class="btn btn-xs btn-icon btn-round btn-outline-default ml-2"
-                              onclick="update_gtasks_list();">
-                              <i class="fas fa-sync rotate"></i>
+                            <button type="button" class="btn btn-xs btn-dark ml-2"
+                              onclick="update_gtasks_list();">Refresh
                             </button>
                         </div>
                       </div>

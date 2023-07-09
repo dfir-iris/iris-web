@@ -128,7 +128,8 @@ def alerts_list_route(caseid) -> Response:
         per_page=per_page,
         sort=request.args.get('sort'),
         assets=alert_assets,
-        iocs=alert_iocs
+        iocs=alert_iocs,
+        resolution_status=request.args.get('alert_resolution_id', type=int)
     )
 
     if filtered_data is None:
@@ -271,13 +272,13 @@ def alerts_similarities_route(caseid, alert_id) -> Response:
     open_cases = request.args.get('open-cases', 'false').lower() == 'true'
     closed_cases = request.args.get('closed-cases', 'false').lower() == 'true'
     closed_alerts = request.args.get('closed-alerts', 'false').lower() == 'true'
-    days_back = request.args.get('days-back', 7, type=int)
+    days_back = request.args.get('days-back', 30, type=int)
     number_of_results = request.args.get('number-of-nodes', 100, type=int)
 
     if number_of_results < 0:
         number_of_results = 100
     if days_back < 0:
-        days_back = 7
+        days_back = 30
 
     # Get similar alerts
     similar_alerts = get_related_alerts_details(alert.alert_customer_id, alert.assets, alert.iocs,
@@ -310,6 +311,9 @@ def alerts_update_route(alert_id, caseid) -> Response:
 
     alert_schema = AlertSchema()
 
+    do_resolution_hook = False
+    do_status_hook = False
+
     try:
         # Load the JSON data from the request
         data = request.get_json()
@@ -318,7 +322,18 @@ def alerts_update_route(alert_id, caseid) -> Response:
         for key, value in data.items():
             old_value = getattr(alert, key, None)
 
+            if type(old_value) == int:
+                old_value = str(old_value)
+
+            if type(value) == int:
+                value = str(value)
+
             if old_value != value:
+                if key == "alert_resolution_status_id":
+                    do_resolution_hook = True
+                if key == 'alert_status_id':
+                    do_status_hook = True
+
                 activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
 
         # Deserialize the JSON data into an Alert object
@@ -327,7 +342,13 @@ def alerts_update_route(alert_id, caseid) -> Response:
         # Save the changes
         db.session.commit()
 
-        alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=caseid)
+        updated_alert = call_modules_hook('on_postload_alert_update', data=updated_alert, caseid=caseid)
+
+        if do_resolution_hook:
+            updated_alert = call_modules_hook('on_postload_alert_resolution_update', data=updated_alert, caseid=caseid)
+
+        if do_status_hook:
+            updated_alert = call_modules_hook('on_postload_alert_status_update', data=updated_alert, caseid=caseid)
 
         if activity_data:
             track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", ctx_less=True)

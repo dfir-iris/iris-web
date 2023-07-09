@@ -18,6 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
+from sqlalchemy import and_
 
 from app.datamgmt.case.case_tasks_db import get_tasks_cases_mapping
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
@@ -25,33 +26,27 @@ from app.models import Cases, CaseClassification
 from app.models import Client
 from app.models.authorization import User
 from app.models.cases import CaseState
+from app.schema.marshables import CaseDetailsSchema
 
 
-def get_overview_db(user_id):
+def get_overview_db(user_id, show_full):
     """
     Get overview data from the database
     """
-    open_cases = Cases.query.with_entities(
-        Cases.case_id,
-        Cases.case_uuid,
-        Cases.name.label('case_title'),
-        Client.name.label('customer_name'),
-        Cases.open_date.label('case_open_date'),
-        User.name.label('owner'),
-        CaseClassification.name.label('classification'),
-        CaseState.state_name.label('state')
-    ).filter(
-        Cases.close_date == None,
-        Cases.case_id.in_(user_list_cases_view(user_id))
+    condition = and_(Cases.case_id.in_(user_list_cases_view(user_id)))
+
+    if not show_full:
+        condition = and_(condition, Cases.close_date == None)
+
+    open_cases = Cases.query.filter(
+       condition
     ).join(
         Cases.owner,
         Cases.client
-    ).outerjoin(
-        Cases.classification,
-        Cases.state
     ).all()
 
-    tasks_map = get_tasks_cases_mapping()
+    cases_list = []
+    tasks_map = get_tasks_cases_mapping(open_cases_only=not show_full)
     tmap = {}
     for task in tasks_map:
         if tmap.get(task.task_case_id) is None:
@@ -65,12 +60,11 @@ def get_overview_db(user_id):
         elif task.task_status_id == 4:
             tmap[task.task_case_id]['closed_tasks'] += 1
 
-    open_cases_list = []
+    # open_cases_list = []
     for case in open_cases:
-        c_case = case._asdict()
-        c_case['case_open_since_days'] = (datetime.date.today() - case.case_open_date).days
-        c_case['case_open_date'] = case.case_open_date.strftime('%d-%m-%Y')
+        c_case = CaseDetailsSchema().dump(case)
+        c_case['case_open_since_days'] = (datetime.date.today() - case.open_date).days
         c_case['tasks_status'] = tmap.get(case.case_id)
-        open_cases_list.append(c_case)
+        cases_list.append(c_case)
 
-    return open_cases_list
+    return cases_list

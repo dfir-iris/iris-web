@@ -170,6 +170,7 @@ function edit_task(id) {
 
         load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
         $('#modal_add_task').modal({show:true});
+        edit_in_task_desc();
   });
 }
 

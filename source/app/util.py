@@ -219,11 +219,14 @@ def get_caseid_from_request_data(request_data, no_cid_required):
     caseid = request_data.args.get('cid', default=None, type=int)
     redir = False
     has_access = True
+    js_d = None
 
     if not caseid and not no_cid_required:
+
         try:
 
-            js_d = request_data.get_json()
+            if request_data.content_type == 'application/json':
+                js_d = request_data.get_json()
 
             if js_d:
                 caseid = js_d.get('cid')
@@ -233,6 +236,7 @@ def get_caseid_from_request_data(request_data, no_cid_required):
                 redir, caseid, has_access = set_caseid_from_current_user()
 
         except Exception as e:
+            print(request_data.url)
             redir, caseid, has_access = handle_exception(e, request_data)
 
     return redir, caseid, has_access
@@ -564,7 +568,7 @@ def ac_socket_requires(*access_level):
             else:
                 chan_id = args[0].get('channel')
                 if chan_id:
-                    case_id = int(chan_id.replace('case-', ''))
+                    case_id = int(chan_id.replace('case-', '').split('-')[0])
                 else:
                     return ac_return_access_denied(caseid=0)
 

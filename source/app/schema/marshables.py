@@ -49,7 +49,8 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook
+from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
+    ReviewStatus
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -69,7 +70,7 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models.alerts import Alert, Severity, AlertStatus
+from app.models.alerts import Alert, Severity, AlertStatus, AlertResolutionStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -298,7 +299,8 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
 
         assert_type_mml(input_var=data.asset_id,
                         field_name="asset_id",
-                        type=int)
+                        type=int,
+                        allow_none=True)
 
         client = AssetsType.query.filter(
             func.lower(AssetsType.asset_name) == func.lower(data.asset_name),
@@ -698,13 +700,15 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         user = data.get('user_login')
         user_id = data.get('user_id')
 
-        assert_type_mml(input_var=user_id, 
+        assert_type_mml(input_var=user_id,
                         field_name="user_id", 
-                        type=int)
+                        type=int,
+                        allow_none=True)
         
         assert_type_mml(input_var=user, 
                         field_name="user_login", 
-                        type=str)
+                        type=str,
+                        allow_none=True)
 
         luser = User.query.filter(
             User.user == user
@@ -737,13 +741,15 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         email = data.get('user_email')
         user_id = data.get('user_id')
 
-        assert_type_mml(input_var=user_id, 
-                        field_name="user_id", 
-                        type=int)
-        
-        assert_type_mml(input_var=email, 
-                        field_name="user_email", 
-                        type=str)
+        assert_type_mml(input_var=user_id,
+                        field_name="user_id",
+                        type=int,
+                        allow_none=True)
+
+        assert_type_mml(input_var=email,
+                        field_name="user_email",
+                        type=str,
+                        allow_none=True)
 
         luser = User.query.filter(
             User.email == email
@@ -1248,6 +1254,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     csrf_token: Optional[str] = fields.String(required=False)
     initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
     classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
+    reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
 
     class Meta:
         model = Cases
@@ -1774,6 +1781,7 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+
 class BasicUserSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing basic User objects.
 
@@ -1890,6 +1898,19 @@ class AlertStatusSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
 
+class AlertResolutionSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing AlertResolution objects.
+
+    This schema defines the fields to include when serializing and deserializing AlertStatus objects.
+    It includes fields for the alert status name and alert status value.
+
+    """
+
+    class Meta:
+        model = AlertResolutionStatus
+        load_instance = True
+
+
 class AnalysisStatusSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing AnalysisStatus objects.
 
@@ -1930,6 +1951,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     iocs = ma.Nested(IocSchema, many=True)
     assets = ma.Nested(CaseAssetsSchema, many=True)
+    resolution_status = ma.Nested(AlertResolutionSchema)
 
     class Meta:
         model = Alert
@@ -1967,4 +1989,39 @@ class ModuleHooksSchema(ma.SQLAlchemyAutoSchema):
         model = IrisModuleHook
         load_instance = True
         include_fk = True
+        include_relationships = True
+
+
+class TagsSchema(ma.SQLAlchemyAutoSchema):
+
+    class Meta:
+        model = Tags
+        load_instance = True
+        include_fk = True
+        include_relationships = True
+
+
+class ReviewStatusSchema(ma.SQLAlchemyAutoSchema):
+        class Meta:
+            model = ReviewStatus
+            load_instance = True
+            include_fk = True
+            include_relationships = True
+
+
+class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing Case objects in details."""
+    client = ma.Nested(CustomerSchema)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    classification = ma.Nested(CaseClassificationSchema)
+    state = ma.Nested(CaseStateSchema)
+    tags = ma.Nested(TagsSchema, many=True)
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    reviewer = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    review_status = ma.Nested(ReviewStatusSchema)
+
+    class Meta:
+        model = Cases
+        include_fk = True
+        load_instance = True
         include_relationships = True

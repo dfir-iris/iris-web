@@ -53,8 +53,17 @@ metadata = Base.metadata
 class CaseStatus(enum.Enum):
     unknown = 0x0
     false_positive = 0x1
-    true_positive = 0x2
+    true_positive_with_impact = 0x2
     not_applicable = 0x3
+    true_positive_without_impact = 0x4
+
+
+class ReviewStatusList:
+    no_review_required = "No review required"
+    not_reviewed = "Not reviewed"
+    pending_review = "Pending review"
+    review_in_progress = "Review in progress"
+    reviewed = "Reviewed"
 
 
 class CompromiseStatus(enum.Enum):
@@ -891,6 +900,13 @@ class SavedFilter(db.Model):
     user = relationship('User', foreign_keys=[created_by])
 
 
+class ReviewStatus(db.Model):
+    __tablename__ = 'review_status'
+
+    id = Column(Integer, primary_key=True)
+    status_name = Column(Text, nullable=False)
+
+
 class CeleryTaskMeta(db.Model):
     __bind_key__ = 'iris_tasks'
     __tablename__ = 'celery_taskmeta'
@@ -930,3 +946,5 @@ def create_safe_attr(session, attribute_display_name, attribute_description, att
         session.add(instance)
         session.commit()
         return True
+
+

@@ -8,6 +8,8 @@
             {% include 'modals/modal_attributes_nav.html' %}
             <div class="col">
               <div class="row float-right">
+              <div class="avatar-group-note mt-2 float-right" id="ppl_list_viewing">
+             </div>
               <button class="btn bg-transparent pull-right" title="Toggle focus mode" id="focus_mode" onclick="toggle_focus_mode();return false;">
                   <span aria-hidden="true"><i class="fas fas fa-coffee"></i></span>
                 </button>
@@ -22,6 +24,7 @@
                       </button>
                       <div class="dropdown-menu pull-right" id="note_modal_quick_actions" aria-labelledby="dropdownMenuButton">
                           <a class="dropdown-item" href="#" onclick='copy_object_link({{ note.note_id }});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                          <a class="dropdown-item" href="#" onclick='copy_object_link_md("note",{{ note.note_id }});return false;'><i class="fa-brands fa-markdown mr-2"></i>Markdown Link</a>
                       </div>
                  </div>
                 <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_note_detail', '{{ note.title }}');"> <i class='fa fa-minus'></i> </button>
@@ -46,6 +49,12 @@
                 {{ note.note_title(class='form-control input') }}
             </div>
             <div class="row mb-1 mt-3">
+                <div class="col">
+                    <span class="badge badge-light" id="content_typing"></span>
+                    <span class="badge badge-light" id="content_last_saved_by"></span>
+                </div>
+            </div>
+            <div class="row mb-1 mt-3">
                 <div class="col-10" id="notes_edition_btn">
                         <div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="save_note( this );"><i class="fa-solid fa-file-circle-check"></i></div>
                         <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="note_editor.insertSnippet('**${1:$SELECTION}**');note_editor.focus();"><i class="fa-solid fa-bold"></i></div>
@@ -54,12 +63,13 @@
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="note_editor.insertSnippet('## ${1:$SELECTION}');note_editor.focus();">H2</div>
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="note_editor.insertSnippet('### ${1:$SELECTION}');note_editor.focus();">H3</div>
                         <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="note_editor.insertSnippet('#### ${1:$SELECTION}');note_editor.focus();">H4</div>
-                        <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="note_editor.insertSnippet('```${1:$SELECTION}```');note_editor.focus();"><i class="fa-solid fa-code"></i></div>
-                        <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="note_editor.insertSnippet('[New link](${1:$SELECTION})');note_editor.focus();"><i class="fa-solid fa-link"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL+\`" onclick="note_editor.insertSnippet('```${1:$SELECTION}```');note_editor.focus();"><i class="fa-solid fa-code"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="CTRL-K" onclick="note_editor.insertSnippet('[${1:$SELECTION}](url)');note_editor.focus();"><i class="fa-solid fa-link"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="note_editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');note_editor.focus();"><i class="fa-solid fa-table"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="note_editor.insertSnippet('\n- \n- \n- ');note_editor.focus();"><i class="fa-solid fa-list"></i></div>
                         <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="note_editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');note_editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
-                        <div class="btn btn-sm btn-light mr-1" id="btn_max_editor" title="Toggle editor expansion" onclick="toggle_max_editor();"><i class="fa-solid fa-maximize"></i></div>
+                        <div class="btn btn-sm btn-light mr-1" title="Toggle editor expansion" onclick="toggle_max_editor();"><i class="fa-solid fa-maximize"></i></div>
+                        <div class="btn btn-sm btn-transparent mr-1" title="Help" onclick="get_md_helper_modal();"><i class="fa-solid fa-question-circle"></i></div>
                 </div>
                 <div class="col">
                     <button type="button" class="float-right icon-note btn btn-circle btn-sm" onclick="edit_innote();"></button>
@@ -84,5 +94,5 @@
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-danger mr-auto" onclick="delete_note(this, {{ ncid }});">Delete note</button>
-    <button type="button" class="btn btn-default" onclick="save_note( this, {{ ncid }} );" id="btn_save_note">Save</button>
+    <button type="button" class="btn btn-default" onclick="save_note( this, {{ ncid }} );" id="btn_save_note">Save </button>
 </div>

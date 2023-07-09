@@ -68,17 +68,23 @@ class Cases(db.Model):
     case_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
                        nullable=False)
     classification_id = Column(ForeignKey('case_classification.id'))
+    reviewer_id = Column(ForeignKey('user.id'), nullable=True)
+    review_status_id = Column(ForeignKey('review_status.id'), nullable=True)
+
     modification_history = Column(JSON)
 
     client = relationship('Client')
     user = relationship('User', foreign_keys=[user_id])
     owner = relationship('User', foreign_keys=[owner_id])
     classification = relationship('CaseClassification')
+    reviewer = relationship('User', foreign_keys=[reviewer_id])
 
     alerts = relationship('Alert', secondary="alert_case_association", back_populates='cases', viewonly=True)
 
     tags = relationship('Tags', secondary="case_tags", back_populates='cases')
     state = relationship('CaseState', back_populates='cases')
+
+    review_status = relationship('ReviewStatus')
 
     def __init__(self,
                  name=None,

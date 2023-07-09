@@ -1,4 +1,21 @@
 /* Defines the kanban board */
+let note_editor;
+let session_id = null ;
+let collaborator = null ;
+let collaborator_socket = null ;
+let buffer_dumped = false ;
+let last_applied_change = null ;
+let just_cleared_buffer = null ;
+let from_sync = null;
+let is_typing = "";
+let ppl_viewing = new Map();
+let timer_socket = 0;
+let note_id = null;
+let map_notes = Object();
+let last_ping = 0;
+let forceModalClose = false;
+let wasMiniNote = false;
+
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
     return false;
@@ -43,8 +60,118 @@ var boardNotes = {
     }
 };
 
+function Collaborator( session_id, note_id ) {
+    this.collaboration_socket = collaborator_socket;
+
+    this.channel = "case-" + session_id + "-notes";
+
+    this.collaboration_socket.on( "change-note", function(data) {
+        if ( data.note_id !== note_id ) return ;
+        let delta = JSON.parse( data.delta ) ;
+        last_applied_change = delta ;
+        $("#content_typing").text(data.last_change + " is typing..");
+        if ( delta !== null && delta !== undefined ) {
+            note_editor.session.getDocument().applyDeltas([delta]);
+        }
+    }.bind()) ;
+
+    this.collaboration_socket.on( "clear_buffer-note", function() {
+        if ( data.note_id !== note_id ) return ;
+        just_cleared_buffer = true ;
+        note_editor.setValue( "" ) ;
+    }.bind() ) ;
+
+    this.collaboration_socket.on( "save-note", function(data) {
+        if ( data.note_id !== note_id ) return ;
+        sync_note(note_id)
+            .then(function () {
+                $("#content_last_saved_by").text("Last saved by " + data.last_saved);
+                $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
+                $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+            });
+
+    }.bind());
+
+    this.collaboration_socket.on('leave-note', function(data) {
+        ppl_viewing.delete(data.user);
+        refresh_ppl_list(session_id, note_id);
+    });
+
+    this.collaboration_socket.on('join-note', function(data) {
+        if ( data.note_id !== note_id ) return ;
+        if ((data.user in ppl_viewing)) return;
+        ppl_viewing.set(filterXSS(data.user), 1);
+        refresh_ppl_list(session_id, note_id);
+        collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel, 'note_id': note_id });
+    });
+
+    this.collaboration_socket.on('ping-note', function(data) {
+        if ( data.note_id !== note_id ) return ;
+        collaborator.collaboration_socket.emit('pong-note', { 'channel': collaborator.channel, 'note_id': note_id });
+    });
+
+    this.collaboration_socket.on('disconnect', function(data) {
+        ppl_viewing.delete(data.user);
+        refresh_ppl_list(session_id, note_id);
+    });
+
+}
+
+function set_notes_follow(data) {
+
+    if (data.note_id !== null) {
+        if (data.note_id in map_notes ) {
+            map_notes[data.note_id][data.user] = 2;
+        } else {
+            map_notes[data.note_id] = Object();
+            map_notes[data.note_id][data.user] = 2;
+        }
+    }
+
+    for (let notid in map_notes) {
+        for (let key in map_notes[notid]) {
+            if (key !== data.user && data.note_id !== note_id || data.note_id === null) {
+                map_notes[notid][key] -= 1;
+            }
+            if (map_notes[notid][key] < 0) {
+                delete map_notes[notid][key];
+            }
+        }
+        $(`#badge_${notid}`).empty();
+        for (let key in map_notes[notid]) {
+            $(`#badge_${notid}`).append(get_avatar_initials(filterXSS(key), false, undefined, true));
+        }
+    }
+
+}
+
+Collaborator.prototype.change = function( delta, note_id ) {
+    this.collaboration_socket.emit( "change-note", { 'delta': delta, 'channel': this.channel, 'note_id': note_id } ) ;
+}
+
+Collaborator.prototype.clear_buffer = function( note_id ) {
+    this.collaboration_socket.emit( "clear_buffer-note", { 'channel': this.channel, 'note_id': note_id } ) ;
+}
+
+Collaborator.prototype.save = function( note_id ) {
+    this.collaboration_socket.emit( "save-note", { 'channel': this.channel, 'note_id': note_id } ) ;
+}
+
+Collaborator.prototype.close = function( note_id ) {
+    this.collaboration_socket.emit( "leave-note", { 'channel': this.channel, 'note_id': note_id } ) ;
+}
+
+function auto_remove_typing() {
+    if ($("#content_typing").text() == is_typing) {
+        $("#content_typing").text("");
+    } else {
+        is_typing = $("#content_typing").text();
+    }
+}
+
 /* Generates a global sequence id for subnotes */
-var current_id = 0;
+let current_id = 0;
 
 function nextSubNote(element, _item, title) {
     var newElement = element.clone();
@@ -64,6 +191,15 @@ function nextSubNote(element, _item, title) {
 
 /* Generates a global sequence id for groups */
 var current_gid = 0;
+
+async function get_remote_note(note_id) {
+    return get_request_api("/case/notes/" + note_id);
+}
+
+async function sync_note(node_id) {
+
+    return;
+}
 
 function nextGroupNote(title="", rid=0) {
 
@@ -104,12 +240,12 @@ function nextGroupNote(title="", rid=0) {
 function add_subnote(_item, tr=0, title='', last_up, user) {
 
     if (tr != 0) {
-        element = $('#_subnote_');
+        let element = $('#_subnote_');
         var newElement = element.clone();
         var id = tr;
         current_id = id;
 
-        info = user + " on " + last_up.replace('GMT', '');
+        let info = user + " on " + last_up.replace('GMT', '');
 
         newElement.attr("id", element.attr("id").split("_")[0] + "_" + id);
         var field = $(newElement).attr("id");
@@ -119,7 +255,7 @@ function add_subnote(_item, tr=0, title='', last_up, user) {
         $(newElement).find('iris_note').text(title);
         $(newElement).find('a.kanban-title').text(title);
         $(newElement).find('small.kanban-info').text(info);
-        $(newElement).find('div.kanban-badges').remove();
+        $(newElement).find('div.kanban-badge').attr('id', 'badge_' + id);
         newElement.appendTo($('#group-' + _item + "-main"));
         newElement.show();
     }
@@ -132,8 +268,7 @@ function add_groupnote(title="", rid=0) {
 
 /* Add a remote note to a group */
 function add_remote_note(group_id) {
-        caseid = get_caseid();
-        var data = Object();
+        let data = Object();
         data['note_title'] = "Untitled note";
         data['note_content'] = "";
 
@@ -155,7 +290,7 @@ function add_remote_note(group_id) {
 
 /* Add a group note remotely */
 function add_remote_groupnote() {
-    var data = Object();
+    let data = Object();
     data['csrf_token'] = $('#csrf_token').val();
 
     post_request_api('/case/notes/groups/add', JSON.stringify(data), false)
@@ -275,19 +410,12 @@ function list_notes() {
 function edit_note(event) {
 
     var nval = $(event).find('iris_note').attr('id');
-
+    collaborator = null;
     note_detail(nval);
 
 }
 
-/* On modal close, refresh */
-$('#modal_note_detail').on('hidden.bs.modal', function (e) {
-    if (window.location.pathname.includes('/case/notes')) {
-        draw_kanban();
-    }
-  })
 
-var note_editor;
 /* Fetch the edit modal with content from server */
 function note_detail(id, cid) {
     if (cid === undefined ) {
@@ -305,30 +433,135 @@ function note_detail(id, cid) {
              return false;
         }
 
-        var timer;
-        var timeout = 10000;
+        let timer;
+        let timeout = 10000;
         $('#form_note').keyup(function(){
             if(timer) {
                  clearTimeout(timer);
             }
-            timer = setTimeout(save_note, timeout);
+            if (ppl_viewing.size <= 1) {
+                timer = setTimeout(save_note, timeout);
+            }
         });
+
+        note_id = id;
+
+        collaborator = new Collaborator( get_caseid(), id );
+
         note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function() {
             $('#last_saved').addClass('btn-danger').removeClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-            $('#btn_save_note').text("Unsaved").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
+            $('#btn_save_note').text("Save").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
         }, save_note);
 
-        //edit_innote();
         note_editor.focus();
 
+        note_editor.on( "change", function( e ) {
+            // TODO, we could make things more efficient and not likely to conflict by keeping track of change IDs
+            if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
+                collaborator.change( JSON.stringify(e), id ) ;
+            }
+            }, false
+        );
+        last_applied_change = null ;
+        just_cleared_buffer = false ;
+
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
-        $('#modal_note_detail').modal({ show: true, backdrop: 'static', keyboard: false });
+        $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
+
+        $('#modal_note_detail').on("hide.bs.modal", function (e) {
+            return handle_note_close(id, e);
+        });
+
+        $('#modal_note_detail').on('hidden.bs.modal', function () {
+            forceModalClose = false;
+        });
+
+        collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
+
     });
 }
 
+
+function handle_note_close(id, e) {
+    note_id = null;
+
+    if ($("#minimized_modal_box").is(":visible")) {
+        forceModalClose = true;
+        wasMiniNote = true;
+        save_note(null, get_caseid());
+    }
+
+
+    if ($('#btn_save_note').text() === "Save" && !forceModalClose) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        swal({
+            title: "Are you sure?",
+            text: "You have unsaved changes!",
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancel",
+                    value: null,
+                    visible: true,
+                },
+                confirm: {
+                    text: "Discard changes",
+                    value: true,
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            allowOutsideClick: false,
+            allowEnterKey: false
+        })
+        .then((willDiscard) => {
+            if (willDiscard) {
+                location.reload();
+            } else {
+                return false;
+            }
+        })
+
+    } else {
+        forceModalClose = false;
+        if (!wasMiniNote) {
+            if (collaborator) {
+                collaborator.close();
+            }
+            if (note_editor) {
+                note_editor.destroy();
+            }
+
+            if (ppl_viewing) {
+                ppl_viewing.clear();
+            }
+        }
+        collaborator_socket.off('save-note');
+        collaborator_socket.off('leave-note');
+        collaborator_socket.off('join-note');
+        collaborator_socket.off('ping-note');
+        collaborator_socket.off('disconnect');
+        collaborator_socket.off('clear_buffer-note');
+        collaborator_socket.off('change-note');
+        collaborator_socket.emit('ping-note', {'channel': 'case-' + get_caseid() + '-notes', 'note_id': null});
+        wasMiniNote = false;
+
+        return true;
+    }
+}
+
+function refresh_ppl_list() {
+    $('#ppl_list_viewing').empty();
+    for (let [key, value] of ppl_viewing) {
+        $('#ppl_list_viewing').append(get_avatar_initials(key, false, undefined, true));
+    }
+}
+
 function handle_ed_paste(event) {
-    filename = null;
+    let filename = null;
     const { items } = event.originalEvent.clipboardData;
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
@@ -411,6 +644,7 @@ function save_note(this_item, cid) {
     clear_api_error();
     var n_id = $("#info_note_modal_content").find('iris_notein').text();
 
+
     var data_sent = $('#form_note').serializeObject();
     data_sent['note_content'] = $('#note_content').val();
     ret = get_custom_attributes_fields();
@@ -430,7 +664,9 @@ function save_note(this_item, cid) {
         if (data.status == 'success') {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+             $("#content_last_saved_by").text('Last saved by you');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+            collaborator.save(n_id);
         }
     });
 }
@@ -488,9 +724,49 @@ function draw_kanban() {
     });
 }
 
+function note_interval_pinger() {
+    if (new Date() - last_ping > 2000) {
+        collaborator_socket.emit('ping-note',
+            { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
+        last_ping = new Date();
+    }
+}
+
 $(document).ready(function(){
     shared_id = getSharedLink();
     if (shared_id) {
         note_detail(shared_id);
     }
+
+    let cid = get_caseid();
+    collaborator_socket = io.connect();
+    collaborator_socket.emit('join-notes-overview', { 'channel': 'case-' + cid + '-notes' });
+
+    collaborator_socket.on('ping-note', function(data) {
+        last_ping = new Date();
+        if ( data.note_id === null || data.note_id !== note_id) {
+            set_notes_follow(data);
+            return;
+        }
+
+        ppl_viewing.set(data.user, 1);
+        for (let [key, value] of ppl_viewing) {
+            if (key !== data.user) {
+                ppl_viewing.set(key, value-1);
+            }
+            if (value < 0) {
+                ppl_viewing.delete(key);
+            }
+        }
+        refresh_ppl_list(session_id, note_id);
+    });
+
+    timer_socket = setInterval( function() {
+        note_interval_pinger();
+    }, 2000);
+
+    collaborator_socket.emit('ping-note', { 'channel': 'case-' + cid + '-notes', 'note_id': note_id });
+
+    setInterval(auto_remove_typing, 1500);
+
 });
