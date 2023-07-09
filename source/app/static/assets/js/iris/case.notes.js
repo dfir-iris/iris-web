@@ -70,8 +70,10 @@ function Collaborator( session_id, note_id ) {
         let delta = JSON.parse( data.delta ) ;
         last_applied_change = delta ;
         $("#content_typing").text(data.last_change + " is typing..");
-        note_editor.getSession().getDocument().applyDeltas( [delta] ) ;
-    }.bind() ) ;
+        if ( delta !== null && delta !== undefined ) {
+            note_editor.session.getDocument().applyDeltas([delta]);
+        }
+    }.bind()) ;
 
     this.collaboration_socket.on( "clear_buffer-note", function() {
         if ( data.note_id !== note_id ) return ;
@@ -191,23 +193,21 @@ function nextSubNote(element, _item, title) {
 var current_gid = 0;
 
 async function get_remote_note(note_id) {
-    get_request_api("/case/notes/" + note_id)
-    .then(function (data) {
-        if (notify_auto_api(data, true)) {
-            return data.data;
-        }
-    });
+    return get_request_api("/case/notes/" + note_id);
 }
 
 async function sync_note(node_id) {
-    let note = await get_remote_note(node_id);
-    if (note == null) {
-        return;
-    }
-
-    let note_content = note.content;
-    note_editor.setValue(note_content);
-    return note;
+    // return get_remote_note(node_id)
+    //     .then(function (data){
+    //     if (notify_auto_api(data, true)) {
+    //         let note_content = data.data.note_content;
+    //         console.log(note_content);
+    //         note_editor.setValue(note_content);
+    //         note_editor.clearSelection();
+    //         return data;
+    //     }
+    // });
+    return;
 }
 
 function nextGroupNote(title="", rid=0) {
@@ -548,7 +548,13 @@ function handle_note_close(id, e) {
                 ppl_viewing.clear();
             }
         }
-
+        collaborator_socket.off('save-note');
+        collaborator_socket.off('leave-note');
+        collaborator_socket.off('join-note');
+        collaborator_socket.off('ping-note');
+        collaborator_socket.off('disconnect');
+        collaborator_socket.off('clear_buffer-note');
+        collaborator_socket.off('change-note');
         collaborator_socket.emit('ping-note', {'channel': 'case-' + get_caseid() + '-notes', 'note_id': null});
         wasMiniNote = false;
 
