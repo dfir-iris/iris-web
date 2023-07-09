@@ -91,6 +91,40 @@
             </div>
         </div>
       </div>
+    <div class="row" id="rowPendingCasesReview" style="display: none;">
+      <div class="col-md-12">
+            <section class="card">
+                <div class="card-header">
+                  <div class="card-title">Attributed cases review
+                    <div class="text-faded float-right">
+                      <small id="ureviews_last_updated"></small>
+                      <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_ureviews_list();">Refresh
+                        </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" id="ureviews_table_wrapper">
+                      <table class="table display table-striped table-hover" width="100%" cellspacing="0" id="ureview_table" >
+                        <thead>
+                          <tr>
+                              <th>Case name</th>
+                              <th>Review Status</th>
+                          </tr>
+                        </thead>
+                        <tfoot>
+                          <tr>
+                              <th>Case name</th>
+                              <th>Review Status</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
     <div class="row">
       <div class="col-md-12">
             {{ form.hidden_tag() }}

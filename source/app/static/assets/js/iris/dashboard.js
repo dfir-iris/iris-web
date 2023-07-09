@@ -1,3 +1,6 @@
+let UserReviewsTable;
+let UserCasesTable;
+let UserTaskTable;
 function check_page_update(){
     update_gtasks_list();
     update_utasks_list();
@@ -14,7 +17,7 @@ function task_status(id) {
     });
 }
 
-function update_ucases_list(show_all=false) {
+async function update_ucases_list(show_all=false) {
     $('#ucases_list').empty();
     get_raw_request_api("/user/cases/list" + case_param() + "&show_closed=" + show_all)
     .done((data) => {
@@ -29,9 +32,27 @@ function update_ucases_list(show_all=false) {
     });
 }
 
-function update_utasks_list() {
+async function update_ureviews_list() {
+    get_raw_request_api("/user/reviews/list" + case_param())
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            if (data.data.length == 0) {
+                $('#rowPendingCasesReview').hide();
+                return;
+            }
+            UserReviewsTable.clear();
+            UserReviewsTable.rows.add(data.data);
+            UserReviewsTable.columns.adjust().draw();
+            $('[data-toggle="popover"]').popover();
+            $('#ureviews_last_updated').text("Last updated: " + new Date().toLocaleTimeString());
+            $('#rowPendingCasesReview').show();
+        }
+    });
+}
+
+async function update_utasks_list() {
     $('#utasks_list').empty();
-    get_request_api("/user/tasks/list")
+    return get_request_api("/user/tasks/list")
     .done((data) => {
         if (notify_auto_api(data, true)) {
             UserTaskTable.MakeCellsEditable("destroy");
@@ -171,10 +192,10 @@ function edit_gtask(id) {
 
 
 /* Fetch and draw the tasks */
-function update_gtasks_list() {
+async function update_gtasks_list() {
     $('#gtasks_list').empty();
 
-    get_request_api("/global/tasks/list")
+    return get_request_api("/global/tasks/list")
     .done((data) => {
         if(notify_auto_api(data, true)) {
             Table.MakeCellsEditable("destroy");
@@ -203,6 +224,38 @@ function update_gtasks_list() {
 
 $(document).ready(function() {
 
+        UserReviewsTable = $("#ureview_table").DataTable({
+            dom: 'frtip',
+            aaData: [],
+            aoColumns: [
+              {
+                  "data": "name",
+                  "render": function (data, type, row, meta) {
+                    if (type === 'display') {
+                        data = `<a  href="/case?cid=${row['case_id']}">${sanitizeHTML(data)}</a>`;
+                    }
+                    return data;
+                    }
+                },
+                {
+                    "data": "status_name",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = `<span class="badge badge-light">${sanitizeHTML(data)}</span>`;
+                        }
+                        return data;
+                    }
+                }
+            ],
+            ordering: false,
+            processing: true,
+            retrieve: true,
+            lengthChange: false,
+            pageLength: 10,
+            order: [[ 1, "asc" ]],
+            select: true
+        });
+
         UserCasesTable = $("#ucases_table").DataTable({
             dom: 'Blfrtip',
             aaData: [],
@@ -211,7 +264,7 @@ $(document).ready(function() {
                 "data": "name",
                 "render": function (data, type, row, meta) {
                   if (type === 'display') {
-                    data = `<a href="/case?cid=${row['case_id']}">${sanitizeHTML(data)}</a>`;
+                    data = `<a rel="noopener" target="_blank" href="/case?cid=${row['case_id']}">${sanitizeHTML(data)}</a>`;
                   }
                   return data;
                 }
@@ -297,7 +350,7 @@ $(document).ready(function() {
                 } else {
                     data = sanitizeHTML(data);
                 }
-                data = '<a href="case/tasks?cid='+ row['case_id'] + '&shared=' + row['task_id'] + '">' + data +'</a>';
+                data = '<a target="_blank" rel="noopener" href="case/tasks?cid='+ row['case_id'] + '&shared=' + row['task_id'] + '">' + data +'</a>';
               }
               return data;
             }
@@ -476,8 +529,8 @@ $(document).ready(function() {
     });
     $("#gtasks_table").css("font-size", 12);
 
-    update_gtasks_list();
     update_utasks_list();
     update_ucases_list();
+    update_ureviews_list();
     setInterval(check_page_update,30000);
 });

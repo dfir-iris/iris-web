@@ -35,7 +35,7 @@ from sqlalchemy import distinct
 
 from app import app
 from app import db
-from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases
+from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases, list_user_reviews
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
@@ -209,6 +209,21 @@ def get_utasks(caseid):
     }
 
     return response_success("", data=ret)
+
+
+@dashboard_blueprint.route('/user/reviews/list', methods=['GET'])
+@ac_api_requires()
+def get_reviews(caseid):
+
+    ct = list_user_reviews()
+
+    if ct:
+        output = [c._asdict() for c in ct]
+    else:
+        output = []
+
+
+    return response_success("", data=output)
 
 
 @dashboard_blueprint.route('/user/tasks/status/update', methods=['POST'])

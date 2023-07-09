@@ -58,7 +58,8 @@ from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_c
 from app.datamgmt.manage.manage_users_db import set_user_case_access
 from app.datamgmt.reporter.report_db import export_case_json
 from app.forms import PipelinesCaseForm
-from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_fast_check_current_user_has_case_access, \
+    ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_set_case_access_for_users
 from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.utils.tracker import track_activity
@@ -411,11 +412,11 @@ def case_review(caseid):
         return response_error('Invalid case ID')
 
     action = request.get_json().get('action')
-    review_name = ''
+    reviewer_id = request.get_json().get('reviewer_id')
 
     if action == 'start':
         review_name = ReviewStatusList.review_in_progress
-    elif action == 'cancel':
+    elif action == 'cancel' or action == 'request':
         review_name = ReviewStatusList.pending_review
     elif action == 'no_review':
         review_name = ReviewStatusList.no_review_required
@@ -427,6 +428,17 @@ def case_review(caseid):
         return response_error('Invalid action')
 
     case.review_status_id = get_review_id_from_name(review_name)
+    if reviewer_id:
+        try:
+            reviewer_id = int(reviewer_id)
+        except ValueError:
+            return response_error('Invalid reviewer ID')
+
+        if not ac_fast_check_user_has_case_access(reviewer_id, caseid, [CaseAccessLevel.full_access]):
+            return response_error('Invalid reviewer ID')
+
+        case.reviewer_id = reviewer_id
+
     db.session.commit()
 
     add_obj_history_entry(case, f'review status updated to {review_name}')

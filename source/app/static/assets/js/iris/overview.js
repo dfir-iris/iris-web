@@ -9,7 +9,7 @@ var OverviewTable = $("#overview_table").DataTable({
           data: "case_id",
             render: function (data, type, row, meta) {
                 if (type === 'display') {
-                    data = `<button class="btn bg-transparent btn-quick-view" data-index="${meta.row}" ><i class="fa-solid fa-binoculars"></i></button>`;
+                    data = `<span class="bg-transparent btn-quick-view" style="cursor: pointer;" data-index="${meta.row}" ><i class="fa-solid fa-file-contract"></i></span>`;
                 } else if (type === 'sort' || type === 'filter') {
                     data = parseInt(row['case_id']);
                 }
@@ -57,11 +57,18 @@ var OverviewTable = $("#overview_table").DataTable({
         "data": "state",
         "render": function (data, type, row, meta) {
             if (type === 'display' && data != null) {
-                data = sanitizeHTML(data.state_name);
+                let datar = sanitizeHTML(data.state_name);
+                let review_status = row['review_status'] ? row['review_status'].status_name : 'Not reviewed';
+                datar = `${datar} ${review_status === "Not reviewed"? '' : ' - ' + review_status}`;
+                if (data.state_name === 'Closed') {
+                    datar = `<span class="badge badge-light"> Closed - ${review_status}</span>`;
+                }
+                return datar;
             } else if (data != null && (type === 'sort' || type === 'filter')) {
-                data = sanitizeHTML(data.state_name);
+                return sanitizeHTML(data.state_name);
+            } else {
+                return data;
             }
-            return data;
         }
       },
      {
@@ -295,6 +302,10 @@ function show_case_view(row_index) {
     } else {
         owner_dl2.append($('<dd/>').text('No tasks'));
     }
+    owner_dl2.append($('<dt/>').text('Review'));
+    owner_dl2.append($('<dd/>').text(case_data.review_status.status_name));
+    owner_dl2.append($('<dt/>').text('Reviewer'));
+    owner_dl2.append($('<dd/>').text(case_data.reviewer.user_name));
 
     owner_col2.append(owner_dl2);
 

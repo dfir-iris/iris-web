@@ -427,7 +427,6 @@ def update_case_info(cur_id, caseid):
                 case.review_status_id = get_review_id_from_name(ReviewStatusList.not_reviewed)
             else:
                 track_activity("case reviewer changed", caseid=cur_id)
-                case.review_status_id = get_review_id_from_name(ReviewStatusList.pending_review)
 
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
         save_case_tags(request_data.get('case_tags'), case_i)

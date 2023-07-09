@@ -279,10 +279,13 @@ function case_pipeline_popup() {
     });
 }
 
-async function do_case_review(action) {
+async function do_case_review(action, reviewer_id) {
     let data = Object();
     data['csrf_token'] = $('#csrf_token').val();
     data['action'] = action;
+    if (reviewer_id) {
+        data['reviewer_id'] = reviewer_id;
+    }
 
     return post_request_api('/case/review/update', JSON.stringify(data));
 }
@@ -447,6 +450,61 @@ $(document).ready(function() {
                 location.reload();
             }
         });
+     });
+
+     $('#request_review').on('click', function(e){
+        let reviewer_id = $('#caseReviewState').data('reviewer-id');
+        let reviewer_name = $('#caseReviewState').data('reviewer-name');
+
+
+
+        if (reviewer_id !== "None") {
+            swal({
+                title: "Request review",
+                text: "Request a case review from " + reviewer_name + "?",
+                icon: "info",
+                buttons: true,
+                dangerMode: false,
+            }).then((willRequest) => {
+                if (willRequest) {
+                    do_case_review('request', reviewer_id).then(function (data) {
+                        if (notify_auto_api(data)) {
+                            location.reload();
+                        }
+                    });
+                }
+            });
+        } else {
+            $('#reviewer_id').selectpicker({
+                liveSearch: true,
+                size: 10,
+                width: '100%'
+            });
+            get_request_api('/case/users/list')
+            .done((data) => {
+                if (notify_auto_api(data)) {
+                    let users = data.data;
+                    let options = '';
+                    for (let i = 0; i < users.length; i++) {
+                        options += '<option value="' + users[i].user_id + '">' + filterXSS(users[i].user_name) + '</option>';
+                    }
+                    $('#reviewer_id').html(options);
+                    $('#reviewer_id').selectpicker('refresh');
+                    $('#modal_choose_reviewer').modal('show');
+
+                    $('#submit_set_reviewer').off('click').on('click', function(e){
+                        let reviewer_id = $('#reviewer_id').val();
+                        do_case_review('request', reviewer_id).then(function (data) {
+                            if (notify_auto_api(data)) {
+                                location.reload();
+                            }
+                        });
+                    });
+                }
+            });
+
+        }
+
      });
 
 });
