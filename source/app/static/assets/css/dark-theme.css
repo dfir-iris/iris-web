@@ -19,6 +19,12 @@ body {
   border-color: #004eb3 !important;
 }
 
+.btn-success:hover,
+.btn-success:focus {
+  background: #003981 !important;
+  border-color: #003981 !important;
+}
+
 .sidebar.sidebar-style-2 .nav.nav-primary > .nav-item.active > a {
   background: #05408c !important;
 }
@@ -932,4 +938,8 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 .btn-alert-success {
     background: #43a047 !important;
     border-color: #43a047 !important;
+}
+
+.bg-warning-gradient {
+    background: linear-gradient(-45deg, #FFAD46, #FFAD4630) !important;
 }
