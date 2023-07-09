@@ -279,6 +279,14 @@ function case_pipeline_popup() {
     });
 }
 
+async function do_case_review(action) {
+    let data = Object();
+    data['csrf_token'] = $('#csrf_token').val();
+    data['action'] = action;
+
+    return post_request_api('/case/review/update', JSON.stringify(data));
+}
+
 function case_detail(case_id, edit_mode=false) {
     url = '/case/details/' + case_id + case_param();
     $('#info_case_modal_content').load(url, function (response, status, xhr) {
@@ -395,6 +403,51 @@ $(document).ready(function() {
     body_loaded();
     sync_editor(true);
     setInterval(auto_remove_typing, 2000);
+
+    let review_state = $('#caseReviewState');
+    if (review_state.length > 0) {
+        let current_review_state = review_state.data('review-state');
+
+        if (current_review_state === 'Review in progress') {
+            $(".btn-start-review").hide();
+            $(".btn-confirm-review").show();
+            $(".btn-cancel-review").show();
+            $('#reviewSubtitle').text('You started this review. Press "Confirm review" when you are done.');
+        } else if (current_review_state === 'Review completed') {
+            $(".btn-start-review").hide();
+            $(".btn-confirm-review").hide();
+            $(".btn-cancel-review").hide();
+        } else if (current_review_state === 'Pending review') {
+            $(".btn-start-review").show();
+            $(".btn-confirm-review").hide();
+            $(".btn-cancel-review").hide();
+        }
+        $('.review-card').show();
+    }
+
+    $('.btn-start-review').on('click', function(e){
+        do_case_review('start').then(function(data) {
+            if (notify_auto_api(data)) {
+                location.reload();
+            }
+        });
+    });
+
+     $('.btn-confirm-review').on('click', function(e){
+        do_case_review('done').then(function(data) {
+            if (notify_auto_api(data)) {
+                location.reload();
+            }
+        });
+     });
+
+     $('.btn-cancel-review').on('click', function(e){
+        do_case_review('cancel').then(function(data) {
+            if (notify_auto_api(data)) {
+                location.reload();
+            }
+        });
+     });
 
 });
 

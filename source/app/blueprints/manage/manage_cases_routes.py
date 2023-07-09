@@ -37,7 +37,7 @@ from werkzeug import Response
 import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
-from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_db import get_case, get_review_id_from_name
 from app.datamgmt.case.case_db import register_case_protagonists
 from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.client.client_db import get_client_list
@@ -68,7 +68,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import AlertStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
-from app.models.models import Client
+from app.models.models import Client, ReviewStatusList
 from app.schema.marshables import CaseSchema
 from app.util import ac_api_case_requires, add_obj_history_entry
 from app.util import ac_api_requires
@@ -378,10 +378,12 @@ def update_case_info(cur_id, caseid):
 
         request_data = request.get_json()
         previous_case_state = case_i.state_id
+        case_previous_reviewer_id = case_i.reviewer_id
         closed_state_id = get_case_state_by_name('Closed').state_id
 
         request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')}"
         request_data['case_customer'] = case_i.client_id if request_data.get('case_customer') is None else request_data.get('case_customer')
+        request_data['reviewer_id'] = None if request_data.get('reviewer_id') == "" else request_data.get('reviewer_id')
 
         case = case_schema.load(request_data, instance=case_i, partial=True)
 
@@ -418,6 +420,14 @@ def update_case_info(cur_id, caseid):
                 res = reopen_case(cur_id)
                 if not res:
                     return response_error("Tried to re-open an non-existing case")
+
+        if case_previous_reviewer_id != case.reviewer_id:
+            if case.reviewer_id is None:
+                track_activity("case reviewer removed", caseid=cur_id)
+                case.review_status_id = get_review_id_from_name(ReviewStatusList.not_reviewed)
+            else:
+                track_activity("case reviewer changed", caseid=cur_id)
+                case.review_status_id = get_review_id_from_name(ReviewStatusList.pending_review)
 
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
         save_case_tags(request_data.get('case_tags'), case_i)

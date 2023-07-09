@@ -1254,6 +1254,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     csrf_token: Optional[str] = fields.String(required=False)
     initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
     classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
+    reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
 
     class Meta:
         model = Cases

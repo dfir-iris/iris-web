@@ -266,7 +266,7 @@ function set_case_access_via_group(case_id) {
 }
 
 
-function access_case_info_reload(case_id, owner_id) {
+function access_case_info_reload(case_id, owner_id, reviewer_id) {
     var req_users = [];
 
     get_request_api('/case/users/list')
@@ -325,21 +325,35 @@ function access_case_info_reload(case_id, owner_id) {
                     }
             });
         }
-        for (var i = 0; i < req_users.length; i++) {
+        let quick_owner = $('#case_quick_owner');
+        let quick_reviewer = $('#case_quick_reviewer');
+        quick_reviewer.append($('<option>'));
+
+
+        for (let i = 0; i < req_users.length; i++) {
             $('#username-list').append($('<option>', {
                 value: req_users[i].user_name
             }));
             $('#emails-list').append($('<option>', {
                 value: req_users[i].user_email
             }));
-            $('#case_quick_owner').append($('<option>', {
+
+            quick_owner.append($('<option>', {
                 value: req_users[i].user_id,
                 text: req_users[i].user_name
             }));
             if (req_users[i].user_id == owner_id) {
-                $('#case_quick_owner').val(req_users[i].user_id);
+                quick_owner.val(req_users[i].user_id);
             }
-            $('#case_quick_owner').selectpicker('refresh');
+            quick_owner.selectpicker('refresh');
+            quick_reviewer.append($('<option>', {
+                value: req_users[i].user_id,
+                text: req_users[i].user_name
+            }));
+            if (req_users[i].user_id == reviewer_id) {
+                quick_reviewer.val(req_users[i].user_id);
+            }
+            quick_reviewer.selectpicker('refresh');
         }
     });
 

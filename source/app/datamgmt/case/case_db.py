@@ -27,7 +27,7 @@ from app.models import Tags
 from app.models.cases import CaseProtagonist
 from app.models.cases import CaseTags
 from app.models.cases import Cases
-from app.models.models import CaseTemplateReport
+from app.models.models import CaseTemplateReport, ReviewStatus
 from app.models.models import Client
 from app.models.models import Languages
 from app.models.models import ReportType
@@ -201,3 +201,11 @@ def register_case_protagonists(case_id, protagonists):
         db.session.add(cp)
 
     db.session.commit()
+
+
+def get_review_id_from_name(review_name):
+    status = ReviewStatus.query.filter(ReviewStatus.status_name == review_name).first()
+    if status:
+        return status.id
+
+    return None

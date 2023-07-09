@@ -54,6 +54,7 @@ from app.models import UserActivity
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.cases import CaseProtagonist, CaseTags, CaseState
+from app.schema.marshables import CaseDetailsSchema
 
 
 def list_cases_id():
@@ -233,9 +234,11 @@ def get_case_protagonists(case_id):
 
 
 def get_case_details_rt(case_id):
-    if Cases.query.filter(Cases.case_id == case_id).first():
+    case = Cases.query.filter(Cases.case_id == case_id).first()
+    if case:
         owner_alias = aliased(User)
         user_alias = aliased(User)
+        review_alias = aliased(User)
 
         res = db.session.query(Cases, Client, user_alias, owner_alias).with_entities(
             Cases.name.label('case_name'),
@@ -257,13 +260,17 @@ def get_case_details_rt(case_id):
             Cases.modification_history,
             Cases.initial_date,
             Cases.classification_id,
-            CaseClassification.name.label('classification')
+            CaseClassification.name.label('classification'),
+            Cases.reviewer_id,
+            review_alias.name.label('reviewer'),
         ).filter(and_(
             Cases.case_id == case_id
         )).join(
             user_alias, and_(Cases.user_id == user_alias.id)
         ).outerjoin(
             owner_alias, and_(Cases.owner_id == owner_alias.id)
+        ).outerjoin(
+            review_alias, and_(Cases.reviewer_id == review_alias.id)
         ).join(
             Cases.client,
         ).outerjoin(
@@ -275,6 +282,7 @@ def get_case_details_rt(case_id):
             return None
 
         res = res._asdict()
+
         res['case_tags'] = ",".join(get_case_tags(case_id))
         res['status_name'] = CaseStatus(res['status_id']).name.replace("_", " ").title()
 

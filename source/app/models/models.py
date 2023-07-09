@@ -58,6 +58,14 @@ class CaseStatus(enum.Enum):
     true_positive_without_impact = 0x4
 
 
+class ReviewStatusList:
+    no_review_required = "No review required"
+    not_reviewed = "Not reviewed"
+    pending_review = "Pending review"
+    review_in_progress = "Review in progress"
+    reviewed = "Reviewed"
+
+
 class CompromiseStatus(enum.Enum):
     to_be_determined = 0x0
     compromised = 0x1

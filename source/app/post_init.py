@@ -58,7 +58,7 @@ from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.cases import Cases, CaseState
 from app.models.cases import Client
-from app.models.models import AnalysisStatus, CaseClassification, ReviewStatus
+from app.models.models import AnalysisStatus, CaseClassification, ReviewStatus, ReviewStatusList
 from app.models.models import AssetsType
 from app.models.models import EventCategory
 from app.models.models import IocType
@@ -758,11 +758,11 @@ def create_safe_review_status():
     This function creates new ReviewStatus objects with the specified status name
     if they do not already exist in the database.
     """
-    create_safe(db.session, ReviewStatus, status_name='No review required')
-    create_safe(db.session, ReviewStatus, status_name='Not reviewed')
-    create_safe(db.session, ReviewStatus, status_name='Pending review')
-    create_safe(db.session, ReviewStatus, status_name='Review in progress')
-    create_safe(db.session, ReviewStatus, status_name='Reviewed')
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.no_review_required)
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.not_reviewed)
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.pending_review)
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.review_in_progress)
+    create_safe(db.session, ReviewStatus, status_name=ReviewStatusList.reviewed)
 
 
 def create_safe_assets():

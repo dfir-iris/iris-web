@@ -44,7 +44,7 @@ from app.blueprints.case.case_notes_routes import case_notes_blueprint
 from app.blueprints.case.case_rfiles_routes import case_rfiles_blueprint
 from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
 from app.blueprints.case.case_timeline_routes import case_timeline_blueprint
-from app.datamgmt.case.case_db import case_exists
+from app.datamgmt.case.case_db import case_exists, get_review_id_from_name
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
@@ -62,11 +62,11 @@ from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.access_control.utils import ac_set_case_access_for_users
 from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.utils.tracker import track_activity
-from app.models import CaseStatus
+from app.models import CaseStatus, ReviewStatusList
 from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
-from app.schema.marshables import TaskLogSchema
+from app.schema.marshables import TaskLogSchema, CaseSchema
 from app.util import ac_api_case_requires, add_obj_history_entry
 from app.util import ac_case_requires
 from app.util import ac_socket_requires
@@ -400,3 +400,38 @@ def case_update_status(caseid):
 def case_md_helper(caseid, url_redir):
 
     return render_template('case_md_helper.html')
+
+
+@case_blueprint.route('/case/review/update', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_review(caseid):
+
+    case = get_case(caseid)
+    if not case:
+        return response_error('Invalid case ID')
+
+    action = request.get_json().get('action')
+    review_name = ''
+
+    if action == 'start':
+        review_name = ReviewStatusList.review_in_progress
+    elif action == 'cancel':
+        review_name = ReviewStatusList.pending_review
+    elif action == 'no_review':
+        review_name = ReviewStatusList.no_review_required
+    elif action == 'to_review':
+        review_name = ReviewStatusList.not_reviewed
+    elif action == 'done':
+        review_name = ReviewStatusList.reviewed
+    else:
+        return response_error('Invalid action')
+
+    case.review_status_id = get_review_id_from_name(review_name)
+    db.session.commit()
+
+    add_obj_history_entry(case, f'review status updated to {review_name}')
+    track_activity(f'review status updated to {review_name}', caseid)
+
+    db.session.commit()
+
+    return response_success("Case review updated", data=CaseSchema().dump(case))
