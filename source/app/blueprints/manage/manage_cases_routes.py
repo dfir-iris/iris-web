@@ -377,6 +377,8 @@ def update_case_info(cur_id, caseid):
     try:
 
         request_data = request.get_json()
+        previous_case_state = case_i.state_id
+        closed_state_id = get_case_state_by_name('Closed').state_id
 
         request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')}"
         request_data['case_customer'] = case_i.client_id if request_data.get('case_customer') is None else request_data.get('case_customer')
@@ -384,6 +386,38 @@ def update_case_info(cur_id, caseid):
         case = case_schema.load(request_data, instance=case_i, partial=True)
 
         db.session.commit()
+
+        if previous_case_state != case.state_id:
+            if case.state_id == closed_state_id:
+                track_activity("case closed", caseid=cur_id)
+                res = close_case(cur_id)
+                if not res:
+                    return response_error("Tried to close an non-existing case")
+
+                # Close the related alerts
+                if case.alerts:
+                    close_status = get_alert_status_by_name('Closed')
+                    case_status_id_mapped = map_alert_resolution_to_case_status(case.status_id)
+
+                    for alert in case.alerts:
+                        if alert.alert_status_id != close_status.status_id:
+                            alert.alert_status_id = close_status.status_id
+                            alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=caseid)
+
+                        if alert.alert_resolution_status_id != case_status_id_mapped:
+                            alert.alert_resolution_status_id = case_status_id_mapped
+                            alert = call_modules_hook('on_postload_alert_resolution_update', data=alert, caseid=caseid)
+
+                            track_activity(f"closing alert ID {alert.alert_id} due to case #{caseid} being closed",
+                                           caseid=caseid, ctx_less=False)
+
+                            db.session.add(alert)
+
+            elif previous_case_state == closed_state_id and case.state_id != closed_state_id:
+                track_activity("case re-opened", caseid=cur_id)
+                res = reopen_case(cur_id)
+                if not res:
+                    return response_error("Tried to re-open an non-existing case")
 
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
         save_case_tags(request_data.get('case_tags'), case_i)

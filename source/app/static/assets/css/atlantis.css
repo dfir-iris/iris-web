@@ -128,8 +128,8 @@ a:focus {
     color: #005fdb;
 }
 
-.btn:hover,
-.btn:focus {
+.btn.btn-dark:hover,
+.btn.btn-dark:focus {
     color: #ffffff;
 }
 
