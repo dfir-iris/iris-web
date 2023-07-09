@@ -197,16 +197,7 @@ async function get_remote_note(note_id) {
 }
 
 async function sync_note(node_id) {
-    // return get_remote_note(node_id)
-    //     .then(function (data){
-    //     if (notify_auto_api(data, true)) {
-    //         let note_content = data.data.note_content;
-    //         console.log(note_content);
-    //         note_editor.setValue(note_content);
-    //         note_editor.clearSelection();
-    //         return data;
-    //     }
-    // });
+
     return;
 }
 

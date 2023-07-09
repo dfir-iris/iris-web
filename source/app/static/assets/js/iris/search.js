@@ -176,7 +176,7 @@ function search() {
             else if (val == "notes") {
                 for (e in data.data) {
                     li = `<li class="list-group-item">
-                    <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_detail(${data.data[e]['note_id']}, ${data.data[e]['case_id']});">`+ sanitizeHTML(data.data[e]['note_title']) + ` - ` + sanitizeHTML(data.data[e]['case_name']) + ` - ` + sanitizeHTML(data.data[e]['client_name']) +`</span>
+                    <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_in_details(${data.data[e]['note_id']}, ${data.data[e]['case_id']});">`+ sanitizeHTML(data.data[e]['note_title']) + ` - ` + sanitizeHTML(data.data[e]['case_name']) + ` - ` + sanitizeHTML(data.data[e]['client_name']) +`</span>
                     </li>`
                     $('#notes_msearch_list').append(li);
                 }
@@ -197,6 +197,11 @@ function search() {
     .always(() => {
         $('#submit_search').text("Search");
     });
+}
+
+function note_in_details(note_id, case_id) {
+    window.open("/case/notes?cid=" + case_id + "&shared=" + note_id);
+
 }
 
 $(document).ready(function(){

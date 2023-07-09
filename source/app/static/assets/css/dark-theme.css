@@ -944,3 +944,18 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 .bg-warning-gradient {
     background: linear-gradient(-45deg, #FFAD46, #FFAD4630) !important;
 }
+
+.form-check [type="checkbox"]:not(:checked)+.form-check-sign:after,
+.form-check [type="checkbox"]:checked+.form-check-sign:after,
+.form-check [type="checkbox"]+.form-check-sign:after {
+    color: #77a0de;
+}
+
+.nav.nav-line.nav-color-primary .nav-link.active {
+  color: #77a0de;
+  border-color: #77a0de;
+}
+
+.selectgroup-input:checked + .selectgroup-button {
+   color: #77a0de;
+}
