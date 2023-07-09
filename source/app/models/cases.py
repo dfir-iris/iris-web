@@ -69,7 +69,7 @@ class Cases(db.Model):
                        nullable=False)
     classification_id = Column(ForeignKey('case_classification.id'))
     reviewer_id = Column(ForeignKey('user.id'), nullable=True)
-    review_status_id = Column(ForeignKey('review_status.id'), nullable=True, server_default=text("0"))
+    review_status_id = Column(ForeignKey('review_status.id'), nullable=True)
 
     modification_history = Column(JSON)
 
