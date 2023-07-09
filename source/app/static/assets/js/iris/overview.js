@@ -232,29 +232,32 @@ function show_case_view(row_index) {
     let owner_row = $('<div/>').addClass('row');
     let owner_col1 = $('<div/>').addClass('col-md-6');
     let owner_col2 = $('<div/>').addClass('col-md-6');
-
-    let modifications = case_data.modification_history;
-    let timestamps = Object.keys(modifications).map(parseFloat);
-    let lastUpdatedTimestamp = Math.max(...timestamps);
-
-    let currentTime = Date.now() / 1000; // convert to seconds
-    let timeSinceLastUpdate = currentTime - lastUpdatedTimestamp;
-    let timeSinceLastUpdateInSeconds = currentTime - lastUpdatedTimestamp;
-
-    let timeSinceLastUpdateInMinutes = timeSinceLastUpdate / 60;
-    let timeSinceLastUpdateInHours = timeSinceLastUpdateInMinutes / 60;
-    let timeSinceLastUpdateInDays = timeSinceLastUpdateInHours / 24;
-
     let timeSinceLastUpdateStr = '';
-    if (timeSinceLastUpdateInSeconds < 60) {
-        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInSeconds)} second(s) ago`;
-    } else if (timeSinceLastUpdateInMinutes < 60) {
-        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInMinutes)} minute(s) ago`;
-    }
-    else if (timeSinceLastUpdateInHours < 24) {
-        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInHours)} hour(s) ago`;
+    let modifications = case_data.modification_history;
+    if (modifications != null) {
+        let timestamps = Object.keys(modifications).map(parseFloat);
+        let lastUpdatedTimestamp = Math.max(...timestamps);
+
+        let currentTime = Date.now() / 1000; // convert to seconds
+        let timeSinceLastUpdate = currentTime - lastUpdatedTimestamp;
+        let timeSinceLastUpdateInSeconds = currentTime - lastUpdatedTimestamp;
+
+        let timeSinceLastUpdateInMinutes = timeSinceLastUpdate / 60;
+        let timeSinceLastUpdateInHours = timeSinceLastUpdateInMinutes / 60;
+        let timeSinceLastUpdateInDays = timeSinceLastUpdateInHours / 24;
+
+
+        if (timeSinceLastUpdateInSeconds < 60) {
+            timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInSeconds)} second(s) ago`;
+        } else if (timeSinceLastUpdateInMinutes < 60) {
+            timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInMinutes)} minute(s) ago`;
+        } else if (timeSinceLastUpdateInHours < 24) {
+            timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInHours)} hour(s) ago`;
+        } else {
+            timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInDays)} day(s) ago`;
+        }
     } else {
-        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInDays)} day(s) ago`;
+        timeSinceLastUpdateStr = 'Never';
     }
 
     let tagsStr = '';
@@ -278,7 +281,7 @@ function show_case_view(row_index) {
     owner_dl1.append($('<dt/>').text('Tags'));
     owner_dl1.append($('<dd/>').html(tagsStr));
     owner_dl1.append($('<dt/>').text('State'));
-    owner_dl1.append($('<dd/>').text(case_data.state.state_description));
+    owner_dl1.append($('<dd/>').text(case_data.state ? case_data.state.state_description: 'None'));
     owner_dl1.append($('<dt/>').text('Last update'));
     owner_dl1.append($('<dd/>').text(timeSinceLastUpdateStr));
 
@@ -290,8 +293,9 @@ function show_case_view(row_index) {
     let owner_dl2 = $('<dl/>');
     owner_dl2.append($('<dt/>').text('Customer Name'));
     owner_dl2.append($('<dd/>').text(case_data.client.customer_name));
+
     owner_dl2.append($('<dt/>').text('Classification'));
-    owner_dl2.append($('<dd/>').text(case_data.classification.name));
+    owner_dl2.append($('<dd/>').text(case_data.classification ? case_data.classification.name: 'None'));
     owner_dl2.append($('<dt/>').text('SOC ID'));
     owner_dl2.append($('<dd/>').text(case_data.soc_id));
     owner_dl2.append($('<dt/>').text('Related alerts'));
@@ -303,10 +307,17 @@ function show_case_view(row_index) {
         owner_dl2.append($('<dd/>').text('No tasks'));
     }
     owner_dl2.append($('<dt/>').text('Review'));
-    owner_dl2.append($('<dd/>').text(case_data.review_status.status_name));
+    if (case_data.review_status != null) {
+        owner_dl2.append($('<dd/>').text(case_data.review_status.status_name));
+    } else {
+        owner_dl2.append($('<dd/>').text('No review'));
+    }
     owner_dl2.append($('<dt/>').text('Reviewer'));
-    owner_dl2.append($('<dd/>').text(case_data.reviewer.user_name));
-
+    if (case_data.reviewer != null) {
+         owner_dl2.append($('<dd/>').text(case_data.reviewer.user_name));
+    } else {
+        owner_dl2.append($('<dd/>').text('No reviewer'));
+    }
     owner_col2.append(owner_dl2);
 
     owner_row.append(owner_col1);
