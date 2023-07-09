@@ -298,7 +298,7 @@ function show_case_view(row_index) {
     owner_row.append(owner_col1);
     owner_row.append(owner_col2);
     owner_body.append(owner_row);
-    owner_body.append('<a type="button" class="btn btn-sm btn-dark" target="_blank" rel="noopener" href=\'/case?cid=${case_data.case_id}\'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>');
+    owner_body.append('<a type="button" class="btn btn-sm btn-dark float-right" target="_blank" rel="noopener" href=\'/case?cid=${case_data.case_id}\'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>');
 
     owner_card.append(owner_body);
     body.append(owner_card);

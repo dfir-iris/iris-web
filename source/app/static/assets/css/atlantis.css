@@ -128,6 +128,11 @@ a:focus {
     color: #005fdb;
 }
 
+.btn:hover,
+.btn:focus {
+    color: #ffffff;
+}
+
 h1,
 .h1 {
     font-size: 1.725rem;
