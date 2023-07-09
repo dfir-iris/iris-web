@@ -3,9 +3,10 @@ body {
 	background: #121622
 }
 
-.btn-primary {
+.btn-border.btn-primary {
   background: #004eb3 !important;
   border-color: #004eb3 !important;
+  color: #fff !important;
 }
 
 .selectgroup.selectgroup-primary .selectgroup-input:checked + .selectgroup-button {
