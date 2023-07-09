@@ -9,7 +9,7 @@ var OverviewTable = $("#overview_table").DataTable({
           data: "case_id",
             render: function (data, type, row, meta) {
                 if (type === 'display') {
-                    data = `<button class="btn bg-transparent btn-quick-view" data-index="${meta.row}" ><i class="fa-solid fa-eye"></i></button>`;
+                    data = `<button class="btn bg-transparent btn-quick-view" data-index="${meta.row}" ><i class="fa-solid fa-binoculars"></i></button>`;
                 } else if (type === 'sort' || type === 'filter') {
                     data = parseInt(row['case_id']);
                 }
@@ -240,11 +240,14 @@ function show_case_view(row_index) {
 
     let timeSinceLastUpdateStr = '';
     if (timeSinceLastUpdateInSeconds < 60) {
-        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInSeconds)} seconds ago`;
-    } else if (timeSinceLastUpdateInHours < 24) {
-        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInHours)} hours ago`;
+        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInSeconds)} second(s) ago`;
+    } else if (timeSinceLastUpdateInMinutes < 60) {
+        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInMinutes)} minute(s) ago`;
+    }
+    else if (timeSinceLastUpdateInHours < 24) {
+        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInHours)} hour(s) ago`;
     } else {
-        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInDays)} days ago`;
+        timeSinceLastUpdateStr = `${Math.round(timeSinceLastUpdateInDays)} day(s) ago`;
     }
 
     let tagsStr = '';

@@ -892,6 +892,13 @@ class SavedFilter(db.Model):
     user = relationship('User', foreign_keys=[created_by])
 
 
+class ReviewStatus(db.Model):
+    __tablename__ = 'review_status'
+
+    id = Column(Integer, primary_key=True)
+    status_name = Column(Text, nullable=False)
+
+
 class CeleryTaskMeta(db.Model):
     __bind_key__ = 'iris_tasks'
     __tablename__ = 'celery_taskmeta'
@@ -931,3 +938,5 @@ def create_safe_attr(session, attribute_display_name, attribute_description, att
         session.add(instance)
         session.commit()
         return True
+
+

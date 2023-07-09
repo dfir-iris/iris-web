@@ -58,7 +58,7 @@ from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.cases import Cases, CaseState
 from app.models.cases import Client
-from app.models.models import AnalysisStatus, CaseClassification
+from app.models.models import AnalysisStatus, CaseClassification, ReviewStatus
 from app.models.models import AssetsType
 from app.models.models import EventCategory
 from app.models.models import IocType
@@ -215,6 +215,9 @@ def run_post_init(development=False):
         if not prevent_objects:
             log.info("Creating base case states")
             create_safe_case_states()
+
+        log.info("Creating base review status")
+        create_safe_review_status()
 
         log.info("Creating base hooks")
         create_safe_hooks()
@@ -747,6 +750,19 @@ def create_safe_case_states():
     create_safe(db.session, CaseState, state_name='Post-Incident', state_description="Post-incident phase")
     create_safe(db.session, CaseState, state_name='Reporting', state_description="Reporting is in progress")
     create_safe(db.session, CaseState, state_name='Closed', state_description="Case is closed", protected=True)
+
+
+def create_safe_review_status():
+    """Creates new ReviewStatus objects if they do not already exist.
+
+    This function creates new ReviewStatus objects with the specified status name
+    if they do not already exist in the database.
+    """
+    create_safe(db.session, ReviewStatus, status_name='No review required')
+    create_safe(db.session, ReviewStatus, status_name='Not reviewed')
+    create_safe(db.session, ReviewStatus, status_name='Pending review')
+    create_safe(db.session, ReviewStatus, status_name='Review in progress')
+    create_safe(db.session, ReviewStatus, status_name='Reviewed')
 
 
 def create_safe_assets():

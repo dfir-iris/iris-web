@@ -49,7 +49,8 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags
+from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
+    ReviewStatus
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -1999,6 +2000,14 @@ class TagsSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
 
 
+class ReviewStatusSchema(ma.SQLAlchemyAutoSchema):
+        class Meta:
+            model = ReviewStatus
+            load_instance = True
+            include_fk = True
+            include_relationships = True
+
+
 class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing Case objects in details."""
     client = ma.Nested(CustomerSchema)
@@ -2007,6 +2016,8 @@ class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
     state = ma.Nested(CaseStateSchema)
     tags = ma.Nested(TagsSchema, many=True)
     user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    reviewer = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    review_status = ma.Nested(ReviewStatusSchema)
 
     class Meta:
         model = Cases
