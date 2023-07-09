@@ -147,7 +147,7 @@ var OverviewTable = $("#overview_table").DataTable({
         "render": function (data, type, row, meta) {
           if (type === 'display' && data != null) {
               sdata = sanitizeHTML(data.user_name);
-              data = `<div class="row">${get_avatar_initials(sdata, false, null, true)} <span class="mt-2 ml-1">${sdata}</span></div>`;
+              data = `<div class="row">${get_avatar_initials(sdata, false, null, true)} <span class="ml-1">${sdata}</span></div>`;
           } else if (type === 'filter') {
                 data = data.user_name;
             }
