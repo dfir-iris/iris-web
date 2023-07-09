@@ -311,7 +311,6 @@ $(document).ready(function() {
                   if (type === 'display' && data != null) {
                     datas = '';
                     for (index in data) {
-                        console.log(index);
                         datas += '<span class="badge badge-primary">' + sanitizeHTML(data[index]['tag_title']) + '</span> ';
                     }
                     return datas;

@@ -31,8 +31,6 @@ function tableFiltering(api, table_anchor, exclude_columns=[]) {
                 $(api.column(colIdx).header()).index()
             );
 
-            console.log(cell)
-
             $(cell).html('<div class="form-group has-feedback"><input type="text" class="form-control" placeholder="Filter"><i class="fas fa-times-circle form-control-feedback" onclick="removeFilter(this);"></i></div>');
             // On every keypress in this input
             $(
