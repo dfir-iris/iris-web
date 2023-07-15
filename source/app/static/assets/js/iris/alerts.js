@@ -770,6 +770,32 @@ function generateDefinitionList(obj) {
   return html;
 }
 
+function addTagFilter(this_object) {
+    let tag_name = $(this_object).data('tag');
+    let filters = getFiltersFromUrl();
+
+    if (filters['alert_tags']) {
+        for (let tag of filters['alert_tags'].split(',')) {
+            if (tag === tag_name) {
+                return;
+            }
+        }
+        filters['alert_tags'] += `,${tag_name}`;
+    } else {
+        filters['alert_tags'] = tag_name;
+    }
+
+    const queryParams = new URLSearchParams(window.location.search);
+    let page_number = parseInt(queryParams.get('page'));
+    let per_page = parseInt(queryParams.get('per_page'));
+
+    updateAlerts(page_number, per_page, filters)
+        .then(() => {
+            notify_success('Refreshed');
+            $('#newAlertsBadge').text(0).hide();
+        });
+}
+
 function getFiltersFromUrl() {
     const formData = new FormData($('#alertFilterForm')[0]);
     return Object.fromEntries(formData.entries());
@@ -1161,7 +1187,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                 <span title="Alert client"><b class="ml-3"><i class="fa-regular fa-circle-user"></i></b>
                   <small class="text-muted ml-1 mr-2">${filterXSS(alert.customer.customer_name) || 'Unspecified'}</small></span>
                 ${alert.classification && alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification" id="alertClassification-${alert.alert_id}" data-classification-id="${alert.classification.id}"><i class="fa-solid fa-shield-virus mr-1"></i>${filterXSS(alert.classification.name_expanded)}</span>`: ''}
-                ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${filterXSS(alert.alert_tags)}</div>` : ''}
+                ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1" title="Add as filter" style="cursor: pointer;" data-tag="${filterXSS(tag)}" onclick="addTagFilter(this);"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${filterXSS(alert.alert_tags)}</div>` : ''}
                 
               </div>
 
