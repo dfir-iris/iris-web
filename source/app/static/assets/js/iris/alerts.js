@@ -202,7 +202,7 @@ function mergeMultipleAlertsModal() {
                                         templateSelect.html('');
                                         templateSelect.append('<option value="">Select a template</option>');
                                         for (let i = 0; i < dataTemplate.length; i++) {
-                                            templateSelect.append(`<option value="${dataTemplate[i].id}">${dataTemplate[i].display_name}</option>`);
+                                            templateSelect.append(`<option value="${dataTemplate[i].id}">${filterXSS(dataTemplate[i].display_name)}</option>`);
                                         }
                                         templateSelect.selectpicker('refresh');
 
@@ -278,9 +278,10 @@ function mergeAlertModal(alert_id) {
         .then((data) => {
             alertDataReq = data;
             notify_auto_api(data, true);
+            let alert_title = filterXSS(alertDataReq.data.alert_title);
 
             $("#modalAlertId").val(alert_id);
-            $("#modalAlertTitle").val(alertDataReq.data.alert_title);
+            $("#modalAlertTitle").val(alert_title);
 
             // Configure the modal for both escalation and merging
             $('#escalateModalLabel').html(`Merge alert #${alert_id} in a new case`);
@@ -288,7 +289,7 @@ function mergeAlertModal(alert_id) {
 
             $('#escalateModalExplanation').text('This alert will be escalated into a new case. Set a title and select the IOCs and Assets to escalate into the case.');
 
-            $('#modalEscalateCaseTitle').val(`[ALERT] ${alertDataReq.data.alert_title}`);
+            $('#modalEscalateCaseTitle').val(`[ALERT] ${alert_title}`);
             $('#modalEscalateCaseTitleContainer').show();
 
             escalateButton.attr("data-merge", false);
@@ -333,7 +334,7 @@ function mergeAlertModal(alert_id) {
                             templateSelect.html('');
                             templateSelect.append('<option value="">Select a template</option>');
                             for (let i = 0; i < data.length; i++) {
-                                templateSelect.append(`<option value="${data[i].id}">${data[i].display_name}</option>`);
+                                templateSelect.append(`<option value="${data[i].id}">${filterXSS(data[i].display_name)}</option>`);
                             }
                             templateSelect.selectpicker('refresh');
 
@@ -421,11 +422,11 @@ function mergeAlertCasesSelectOption(data) {
 
         $('#mergeAlertCaseSelect').append('<optgroup label="Open" id="switchMergeAlertCasesOpen"></optgroup>');
         $('#mergeAlertCaseSelect').append('<optgroup label="Closed" id="switchMergeAlertCasesClose"></optgroup>');
-        ocs = data.data;
-        ret_data = [];
+        let ocs = data.data;
+        let ret_data = [];
         for (index in ocs) {
-            case_name = sanitizeHTML(ocs[index].name);
-            cs_name = sanitizeHTML(ocs[index].customer_name);
+            let case_name = sanitizeHTML(ocs[index].name);
+            let cs_name = sanitizeHTML(ocs[index].customer_name);
             ret_data.push({
                         'value': ocs[index].case_id,
                         'text': `${case_name} (${cs_name}) ${ocs[index].access}`
