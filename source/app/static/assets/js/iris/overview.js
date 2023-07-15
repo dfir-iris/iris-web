@@ -266,57 +266,57 @@ function show_case_view(row_index) {
         tagsStr += `<span class="badge badge-pill badge-light">${tag}</span> `;
     }
 
-    let owner_dl1 = $('<dl/>');
-    owner_dl1.append($('<dt/>').text('Owner'));
-    owner_dl1.append($('<dd/>').text(case_data.owner.user_name));
-    owner_dl1.append($('<dt/>').text('Opening User'));
-    owner_dl1.append($('<dd/>').text(case_data.user.user_name));
-    owner_dl1.append($('<dt/>').text('Open Date'));
-    owner_dl1.append($('<dd/>').text(case_data.open_date));
+    let owner_dl1 = $('<dl class="row"/>');
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Owner'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.owner.user_name));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Opening User'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.user.user_name));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Open Date'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.open_date));
 
     if (case_data.close_date != null) {
-        owner_dl1.append($('<dt/>').text('Close Date'));
-        owner_dl1.append($('<dd/>').text(case_data.close_date))
+        owner_dl1.append($('<dt class="col-sm-3"/>').text('Close Date'));
+        owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.close_date))
     }
-    owner_dl1.append($('<dt/>').text('Tags'));
-    owner_dl1.append($('<dd/>').html(tagsStr));
-    owner_dl1.append($('<dt/>').text('State'));
-    owner_dl1.append($('<dd/>').text(case_data.state ? case_data.state.state_description: 'None'));
-    owner_dl1.append($('<dt/>').text('Last update'));
-    owner_dl1.append($('<dd/>').text(timeSinceLastUpdateStr));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Tags'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').html(tagsStr !== ''? tagsStr : 'No tags'));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('State'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.state ? case_data.state.state_description: 'None'));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Last update'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(timeSinceLastUpdateStr));
 
 
     owner_col1.append(owner_dl1);
 
 
 
-    let owner_dl2 = $('<dl/>');
-    owner_dl2.append($('<dt/>').text('Customer Name'));
-    owner_dl2.append($('<dd/>').text(case_data.client.customer_name));
+    let owner_dl2 = $('<dl class="row"/>');
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Customer Name'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.client.customer_name));
 
-    owner_dl2.append($('<dt/>').text('Classification'));
-    owner_dl2.append($('<dd/>').text(case_data.classification ? case_data.classification.name: 'None'));
-    owner_dl2.append($('<dt/>').text('SOC ID'));
-    owner_dl2.append($('<dd/>').text(case_data.soc_id));
-    owner_dl2.append($('<dt/>').text('Related alerts'));
-    owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
-    owner_dl2.append($('<dt/>').text('Tasks'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Classification'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.classification ? case_data.classification.name: 'None'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('SOC ID'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.soc_id));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Related alerts'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Tasks'));
     if (case_data.tasks_status != null) {
-        owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+        owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     } else {
-        owner_dl2.append($('<dd/>').text('No tasks'));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text('No tasks'));
     }
-    owner_dl2.append($('<dt/>').text('Review'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Review'));
     if (case_data.review_status != null) {
-        owner_dl2.append($('<dd/>').text(case_data.review_status.status_name));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.review_status.status_name));
     } else {
-        owner_dl2.append($('<dd/>').text('No review'));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text('No review'));
     }
-    owner_dl2.append($('<dt/>').text('Reviewer'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Reviewer'));
     if (case_data.reviewer != null) {
-         owner_dl2.append($('<dd/>').text(case_data.reviewer.user_name));
+         owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.reviewer.user_name));
     } else {
-        owner_dl2.append($('<dd/>').text('No reviewer'));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text('No reviewer'));
     }
     owner_col2.append(owner_dl2);
 
