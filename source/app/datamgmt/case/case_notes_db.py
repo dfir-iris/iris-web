@@ -225,7 +225,8 @@ def add_note_group(group_title, caseid, userid, creationdate):
     db.session.commit()
 
     if group_title == '':
-        ng.group_title = "Group {}".format(ng.group_id)
+        ng.group_title = "New notes group"
+
     db.session.commit()
 
     return ng

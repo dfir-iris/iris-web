@@ -84,7 +84,6 @@ ALLOWED_EXTENSIONS = {'png', 'svg'}
 log = app.logger
 
 
-
 def allowed_file_icon(filename: str):
     """
     Checks if the file extension of the given filename is allowed.
