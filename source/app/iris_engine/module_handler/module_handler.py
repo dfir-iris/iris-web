@@ -452,9 +452,10 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
         if isinstance(deser_data, list):
             _obj = []
             for dse_data in deser_data:
-                obj = db.session.merge(dse_data)
-                db.session.commit()
-                _obj.append(obj)
+                if not isinstance(dse_data, int):
+                    obj = db.session.merge(dse_data)
+                    db.session.commit()
+                    _obj.append(obj)
 
         elif isinstance(deser_data, str) or isinstance(deser_data, int):
             _obj = [deser_data]
