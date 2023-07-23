@@ -127,7 +127,7 @@ def dim_hooks_call(caseid):
     for target in js_data.get('targets'):
         if type(target) == str:
             try:
-                obj_targets.append(int(target))
+                target = int(target)
             except ValueError:
                 return response_error('Invalid target')
 
