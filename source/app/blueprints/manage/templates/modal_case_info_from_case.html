@@ -370,11 +370,11 @@
 </datalist>
 
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-danger mr-auto" onclick="remove_case('{{ data.case_id }}');"
+    <button type="button" class="btn btn-outline-danger " onclick="remove_case('{{ data.case_id }}');"
             id="delete_case_info">Delete case</button>
 
     {% if not data.close_date %}
-        <button type="button" class="btn btn-outline-warning" onclick="close_case('{{ data.case_id }}');"
+        <button type="button" class="btn btn-outline-warning mr-auto" onclick="close_case('{{ data.case_id }}');"
                 id="close_case_info">Close case</button>
     {% else %}
         <button type="button" class="btn btn-success" onclick="reopen_case('{{ data.case_id }}');"
