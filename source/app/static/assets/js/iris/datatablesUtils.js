@@ -1,8 +1,9 @@
 /* remove user provided filter */
 function removeFilter(clickedObject) {
+    console.log("removeFilter")
     let inputObject = $(clickedObject)
                             .parents("table")
-                            .find("input")[$(clickedObject).parents("th").index()] 
+                            .find("input")[$(clickedObject).parents("th").index()]
     inputObject.value=""; // Clear input
     $(inputObject).trigger("change"); // trigger change event
 }
@@ -22,14 +23,16 @@ function tableFiltering(api, table_anchor, exclude_columns=[]) {
         .columns()
         .eq(0)
         .each(function (colIdx) {
-            // Ignore columns that should not be filtered
-            if (exclude_columns.includes(colIdx)) {
-                return;
-            }
             // Set the header cell to contain the input element
             var cell = $('#'+table_anchor+' .filters th').eq(
                 $(api.column(colIdx).header()).index()
             );
+
+            if (exclude_columns.includes(colIdx)) {
+                $(cell).html('<div class="form-group has-feedback" style="display: none;"><input type="text" class="form-control" placeholder="Filter"><i class="fas fa-times-circle form-control-feedback" onclick="removeFilter(this);"></i></div>');
+
+                return;
+            }
 
             $(cell).html('<div class="form-group has-feedback"><input type="text" class="form-control" placeholder="Filter"><i class="fas fa-times-circle form-control-feedback" onclick="removeFilter(this);"></i></div>');
             // On every keypress in this input

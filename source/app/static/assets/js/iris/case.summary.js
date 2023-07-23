@@ -486,7 +486,9 @@ $(document).ready(function() {
                     let users = data.data;
                     let options = '';
                     for (let i = 0; i < users.length; i++) {
-                        options += '<option value="' + users[i].user_id + '">' + filterXSS(users[i].user_name) + '</option>';
+                        if (users[i].user_access_level === 4) {
+                            options += '<option value="' + users[i].user_id + '">' + filterXSS(users[i].user_name) + '</option>';
+                        }
                     }
                     $('#reviewer_id').html(options);
                     $('#reviewer_id').selectpicker('refresh');

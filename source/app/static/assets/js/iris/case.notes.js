@@ -215,7 +215,7 @@ function nextGroupNote(title="", rid=0) {
         title = "Untitled group";
     }
     newElement.attr("id", "group-" + rid);
-    newElement.attr("title", "Group ID #" + rid);
+    newElement.attr("title", "New group note");
 
     var fa = $(newElement).find('button')[0];
     var fb = $(newElement).find('button')[1];

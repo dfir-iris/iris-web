@@ -338,6 +338,8 @@ def alerts_update_route(alert_id, caseid) -> Response:
 
         # Deserialize the JSON data into an Alert object
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
+        if data.get('alert_owner_id') is None and updated_alert.alert_owner_id is None:
+            updated_alert.alert_owner_id = current_user.id
 
         # Save the changes
         db.session.commit()

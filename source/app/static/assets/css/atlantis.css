@@ -6695,7 +6695,7 @@ body .badge-success {
 
 .badge-warning {
     background: #FFAD46;
-    color: #ffffff !important;
+    color: #000 !important;
 }
 
 .badge-warning-event {
@@ -6706,7 +6706,7 @@ body .badge-success {
 
 body .badge-warning {
     background: #DF7D03A3;
-    color: #ffffff !important;
+    color: #000 !important;
 }
 
 .badge-danger {
@@ -6731,11 +6731,7 @@ body .badge-danger {
   color: #16181b;
   text-decoration: none;
   background-color: #e7e7e8;
-  margin-left: 9px;
-  padding-left: 15px;
   border-radius: 0.5rem;
-  margin-right: 12px;
-  width: 88%;
 }
 
 

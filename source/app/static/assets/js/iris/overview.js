@@ -9,7 +9,7 @@ var OverviewTable = $("#overview_table").DataTable({
           data: "case_id",
             render: function (data, type, row, meta) {
                 if (type === 'display') {
-                    data = `<span class="bg-transparent btn-quick-view" style="cursor: pointer;" data-index="${meta.row}" ><i class="fa-solid fa-file-contract"></i></span>`;
+                    data = `<span title="Quick look" class="bg-transparent btn-quick-view" style="cursor: pointer;" data-index="${meta.row}" ><i class="fa-solid fa-eye"></i></span>`;
                 } else if (type === 'sort' || type === 'filter') {
                     data = parseInt(row['case_id']);
                 }
@@ -65,7 +65,13 @@ var OverviewTable = $("#overview_table").DataTable({
                 }
                 return datar;
             } else if (data != null && (type === 'sort' || type === 'filter')) {
-                return sanitizeHTML(data.state_name);
+                let datar = sanitizeHTML(data.state_name);
+                let review_status = row['review_status'] ? row['review_status'].status_name : 'Not reviewed';
+                datar = `${datar} ${review_status === "Not reviewed"? '' : ' - ' + review_status}`;
+                if (data.state_name === 'Closed') {
+                    datar = `Closed - ${review_status}`;
+                }
+                return datar;
             } else {
                 return data;
             }
@@ -266,64 +272,64 @@ function show_case_view(row_index) {
         tagsStr += `<span class="badge badge-pill badge-light">${tag}</span> `;
     }
 
-    let owner_dl1 = $('<dl/>');
-    owner_dl1.append($('<dt/>').text('Owner'));
-    owner_dl1.append($('<dd/>').text(case_data.owner.user_name));
-    owner_dl1.append($('<dt/>').text('Opening User'));
-    owner_dl1.append($('<dd/>').text(case_data.user.user_name));
-    owner_dl1.append($('<dt/>').text('Open Date'));
-    owner_dl1.append($('<dd/>').text(case_data.open_date));
+    let owner_dl1 = $('<dl class="row"/>');
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Owner:'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.owner.user_name));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Opening User:'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.user.user_name));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Open Date:'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.open_date));
 
     if (case_data.close_date != null) {
-        owner_dl1.append($('<dt/>').text('Close Date'));
-        owner_dl1.append($('<dd/>').text(case_data.close_date))
+        owner_dl1.append($('<dt class="col-sm-3"/>').text('Close Date:'));
+        owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.close_date))
     }
-    owner_dl1.append($('<dt/>').text('Tags'));
-    owner_dl1.append($('<dd/>').html(tagsStr));
-    owner_dl1.append($('<dt/>').text('State'));
-    owner_dl1.append($('<dd/>').text(case_data.state ? case_data.state.state_description: 'None'));
-    owner_dl1.append($('<dt/>').text('Last update'));
-    owner_dl1.append($('<dd/>').text(timeSinceLastUpdateStr));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Tags:'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').html(tagsStr !== ''? tagsStr : 'No tags'));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('State:'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.state ? case_data.state.state_description: 'None'));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Last update:'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(timeSinceLastUpdateStr));
 
 
     owner_col1.append(owner_dl1);
 
 
 
-    let owner_dl2 = $('<dl/>');
-    owner_dl2.append($('<dt/>').text('Customer Name'));
-    owner_dl2.append($('<dd/>').text(case_data.client.customer_name));
+    let owner_dl2 = $('<dl class="row"/>');
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Customer Name:'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.client.customer_name));
 
-    owner_dl2.append($('<dt/>').text('Classification'));
-    owner_dl2.append($('<dd/>').text(case_data.classification ? case_data.classification.name: 'None'));
-    owner_dl2.append($('<dt/>').text('SOC ID'));
-    owner_dl2.append($('<dd/>').text(case_data.soc_id));
-    owner_dl2.append($('<dt/>').text('Related alerts'));
-    owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
-    owner_dl2.append($('<dt/>').text('Tasks'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Classification:'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.classification ? case_data.classification.name: 'None'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('SOC ID:'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.soc_id !== '' ? case_data.soc_id : 'None'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Related alerts:'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Tasks:'));
     if (case_data.tasks_status != null) {
-        owner_dl2.append($('<dd/>').html(`<a target="_blank" rel="noopener" href='/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+        owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     } else {
-        owner_dl2.append($('<dd/>').text('No tasks'));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text('No tasks'));
     }
-    owner_dl2.append($('<dt/>').text('Review'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Review:'));
     if (case_data.review_status != null) {
-        owner_dl2.append($('<dd/>').text(case_data.review_status.status_name));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.review_status.status_name));
     } else {
-        owner_dl2.append($('<dd/>').text('No review'));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text('No review'));
     }
-    owner_dl2.append($('<dt/>').text('Reviewer'));
+    owner_dl2.append($('<dt class="col-sm-3"/>').text('Reviewer:'));
     if (case_data.reviewer != null) {
-         owner_dl2.append($('<dd/>').text(case_data.reviewer.user_name));
+         owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.reviewer.user_name));
     } else {
-        owner_dl2.append($('<dd/>').text('No reviewer'));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text('No reviewer'));
     }
     owner_col2.append(owner_dl2);
 
     owner_row.append(owner_col1);
     owner_row.append(owner_col2);
     owner_body.append(owner_row);
-    owner_body.append('<a type="button" class="btn btn-sm btn-dark float-right" target="_blank" rel="noopener" href=\'/case?cid=${case_data.case_id}\'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>');
+    owner_body.append(`<a type="button" class="btn btn-sm btn-dark float-right" target="_blank" rel="noopener" href='/case?cid=${case_data.case_id}'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>`);
 
     owner_card.append(owner_body);
     body.append(owner_card);

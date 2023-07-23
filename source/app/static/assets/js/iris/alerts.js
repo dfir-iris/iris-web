@@ -202,7 +202,7 @@ function mergeMultipleAlertsModal() {
                                         templateSelect.html('');
                                         templateSelect.append('<option value="">Select a template</option>');
                                         for (let i = 0; i < dataTemplate.length; i++) {
-                                            templateSelect.append(`<option value="${dataTemplate[i].id}">${dataTemplate[i].display_name}</option>`);
+                                            templateSelect.append(`<option value="${dataTemplate[i].id}">${filterXSS(dataTemplate[i].display_name)}</option>`);
                                         }
                                         templateSelect.selectpicker('refresh');
 
@@ -278,9 +278,10 @@ function mergeAlertModal(alert_id) {
         .then((data) => {
             alertDataReq = data;
             notify_auto_api(data, true);
+            let alert_title = filterXSS(alertDataReq.data.alert_title);
 
             $("#modalAlertId").val(alert_id);
-            $("#modalAlertTitle").val(alertDataReq.data.alert_title);
+            $("#modalAlertTitle").val(alert_title);
 
             // Configure the modal for both escalation and merging
             $('#escalateModalLabel').html(`Merge alert #${alert_id} in a new case`);
@@ -288,7 +289,7 @@ function mergeAlertModal(alert_id) {
 
             $('#escalateModalExplanation').text('This alert will be escalated into a new case. Set a title and select the IOCs and Assets to escalate into the case.');
 
-            $('#modalEscalateCaseTitle').val(`[ALERT] ${alertDataReq.data.alert_title}`);
+            $('#modalEscalateCaseTitle').val(`[ALERT] ${alert_title}`);
             $('#modalEscalateCaseTitleContainer').show();
 
             escalateButton.attr("data-merge", false);
@@ -333,7 +334,7 @@ function mergeAlertModal(alert_id) {
                             templateSelect.html('');
                             templateSelect.append('<option value="">Select a template</option>');
                             for (let i = 0; i < data.length; i++) {
-                                templateSelect.append(`<option value="${data[i].id}">${data[i].display_name}</option>`);
+                                templateSelect.append(`<option value="${data[i].id}">${filterXSS(data[i].display_name)}</option>`);
                             }
                             templateSelect.selectpicker('refresh');
 
@@ -421,11 +422,11 @@ function mergeAlertCasesSelectOption(data) {
 
         $('#mergeAlertCaseSelect').append('<optgroup label="Open" id="switchMergeAlertCasesOpen"></optgroup>');
         $('#mergeAlertCaseSelect').append('<optgroup label="Closed" id="switchMergeAlertCasesClose"></optgroup>');
-        ocs = data.data;
-        ret_data = [];
+        let ocs = data.data;
+        let ret_data = [];
         for (index in ocs) {
-            case_name = sanitizeHTML(ocs[index].name);
-            cs_name = sanitizeHTML(ocs[index].customer_name);
+            let case_name = sanitizeHTML(ocs[index].name);
+            let cs_name = sanitizeHTML(ocs[index].customer_name);
             ret_data.push({
                         'value': ocs[index].case_id,
                         'text': `${case_name} (${cs_name}) ${ocs[index].access}`
@@ -767,6 +768,32 @@ function generateDefinitionList(obj) {
     }
   }
   return html;
+}
+
+function addTagFilter(this_object) {
+    let tag_name = $(this_object).data('tag');
+    let filters = getFiltersFromUrl();
+
+    if (filters['alert_tags']) {
+        for (let tag of filters['alert_tags'].split(',')) {
+            if (tag === tag_name) {
+                return;
+            }
+        }
+        filters['alert_tags'] += `,${tag_name}`;
+    } else {
+        filters['alert_tags'] = tag_name;
+    }
+
+    const queryParams = new URLSearchParams(window.location.search);
+    let page_number = parseInt(queryParams.get('page'));
+    let per_page = parseInt(queryParams.get('per_page'));
+
+    updateAlerts(page_number, per_page, filters)
+        .then(() => {
+            notify_success('Refreshed');
+            $('#newAlertsBadge').text(0).hide();
+        });
 }
 
 function getFiltersFromUrl() {
@@ -1160,7 +1187,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                 <span title="Alert client"><b class="ml-3"><i class="fa-regular fa-circle-user"></i></b>
                   <small class="text-muted ml-1 mr-2">${filterXSS(alert.customer.customer_name) || 'Unspecified'}</small></span>
                 ${alert.classification && alert.classification.name_expanded ? `<span class="badge badge-pill badge-light" title="Classification" id="alertClassification-${alert.alert_id}" data-classification-id="${alert.classification.id}"><i class="fa-solid fa-shield-virus mr-1"></i>${filterXSS(alert.classification.name_expanded)}</span>`: ''}
-                ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${filterXSS(alert.alert_tags)}</div>` : ''}
+                ${alert.alert_tags ? alert.alert_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1" title="Add as filter" style="cursor: pointer;" data-tag="${filterXSS(tag)}" onclick="addTagFilter(this);"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') + `<div style="display:none;" id="alertTags-${alert.alert_id}">${filterXSS(alert.alert_tags)}</div>` : ''}
                 
               </div>
 
@@ -1585,8 +1612,9 @@ async function fetchSavedFilters() {
                 `;
 
                 data.data.forEach(filter => {
+                    let filter_name = filterXSS(filter.filter_name);
                     dropdownHtml += `
-                                <option value="${filter.filter_id}" data-content='<div class="d-flex align-items-center"><span>${filter.filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><div class="trash-wrapper hidden-trash"><i class="fas fa-trash delete-filter text-danger" id="dropfilter-id-${filter.filter_id}" title="Delete filter"></i></div></div>'>${filter.filter_name}</option>
+                                <option value="${filter.filter_id}" data-content='<div class="d-flex align-items-center"><span>${filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><div class="trash-wrapper hidden-trash"><i class="fas fa-trash delete-filter text-danger" id="dropfilter-id-${filter.filter_id}" title="Delete filter"></i></div></div>'>${filter_name}</option>
                     `;
                 });
 
