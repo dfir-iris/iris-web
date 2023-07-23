@@ -9,7 +9,7 @@ var OverviewTable = $("#overview_table").DataTable({
           data: "case_id",
             render: function (data, type, row, meta) {
                 if (type === 'display') {
-                    data = `<span class="bg-transparent btn-quick-view" style="cursor: pointer;" data-index="${meta.row}" ><i class="fa-solid fa-file-contract"></i></span>`;
+                    data = `<span title="Quick look" class="bg-transparent btn-quick-view" style="cursor: pointer;" data-index="${meta.row}" ><i class="fa-solid fa-eye"></i></span>`;
                 } else if (type === 'sort' || type === 'filter') {
                     data = parseInt(row['case_id']);
                 }
@@ -65,7 +65,13 @@ var OverviewTable = $("#overview_table").DataTable({
                 }
                 return datar;
             } else if (data != null && (type === 'sort' || type === 'filter')) {
-                return sanitizeHTML(data.state_name);
+                let datar = sanitizeHTML(data.state_name);
+                let review_status = row['review_status'] ? row['review_status'].status_name : 'Not reviewed';
+                datar = `${datar} ${review_status === "Not reviewed"? '' : ' - ' + review_status}`;
+                if (data.state_name === 'Closed') {
+                    datar = `Closed - ${review_status}`;
+                }
+                return datar;
             } else {
                 return data;
             }
@@ -297,7 +303,7 @@ function show_case_view(row_index) {
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Classification:'));
     owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.classification ? case_data.classification.name: 'None'));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('SOC ID:'));
-    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.soc_id));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.soc_id !== '' ? case_data.soc_id : 'None'));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Related alerts:'));
     owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Tasks:'));
@@ -310,7 +316,7 @@ function show_case_view(row_index) {
     if (case_data.review_status != null) {
         owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.review_status.status_name));
     } else {
-        owner_dl2.append($('<dd class="col-sm-8"/>').text('No review:'));
+        owner_dl2.append($('<dd class="col-sm-8"/>').text('No review'));
     }
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Reviewer:'));
     if (case_data.reviewer != null) {
