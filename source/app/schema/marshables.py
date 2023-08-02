@@ -1113,17 +1113,22 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
             if passwd is not None:
                 try:
-                    with tempfile.NamedTemporaryFile() as tmp:
+                    with tempfile.NamedTemporaryFile(delete=False) as tmp:
                         file_storage.save(tmp)
-                        file_hash = file_sha256sum(tmp.name)
-                        file_size = os.stat(tmp.name).st_size
+                        file_storage.close()
 
-                        file_path = location.as_posix() + '.zip'
+                        fn = tmp
 
-                        shutil.copyfile(tmp.name, Path(tmp.name).parent / file_hash)
+                    file_hash = file_sha256sum(fn.name)
+                    file_size = os.stat(fn.name).st_size
 
-                        pyminizip.compress((Path(tmp.name).parent / file_hash).as_posix(), None, file_path, passwd, 0)
-                        os.unlink(Path(tmp.name).parent / file_hash)
+                    file_path = location.as_posix() + '.zip'
+
+                    shutil.copyfile(fn.name, Path(fn.name).parent / file_hash)
+
+                    pyminizip.compress((Path(fn.name).parent / file_hash).as_posix(), None, file_path, passwd, 0)
+                    os.unlink(Path(tmp.name).parent / file_hash)
+                    os.unlink(fn.name)
 
                 except Exception as e:
                     log.exception(e)
@@ -1134,6 +1139,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
             else:
                 file_storage.save(location)
+                file_storage.close()
                 file_path = location.as_posix()
                 file_size = location.stat().st_size
                 file_hash = file_sha256sum(file_path)
