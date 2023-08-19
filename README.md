@@ -112,3 +112,7 @@ Iris is still in its early stage. It can already be used in production, but plea
 ## License
 The contents of this repository is available under [LGPL3 license](LICENSE.txt).
 
+## Sponsoring
+Special thanks to Deutsche Telekom Security GmbH for sponsoring us!
+
+
