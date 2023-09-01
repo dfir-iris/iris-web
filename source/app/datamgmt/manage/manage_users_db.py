@@ -50,7 +50,7 @@ def get_user_by_username(username):
     return user
 
 
-def get_user_by_mail(user_email):
+def get_user_by_email(user_email):
     return User.query.filter(User.email == user_email).first()
 
 
@@ -102,7 +102,7 @@ def get_user_details(user_id, include_api_key=False):
 
 def user_exists(user_name, user_email):
     user = get_user_by_username(user_name)
-    user_by_email = get_user_by_mail(user_email)
+    user_by_email = get_user_by_email(user_email)
 
     return user or user_by_email
 

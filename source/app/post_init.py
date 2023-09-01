@@ -41,7 +41,7 @@ from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_users_db import get_user_by_username
-from app.datamgmt.manage.manage_users_db import get_user_by_mail
+from app.datamgmt.manage.manage_users_db import get_user_by_email
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_add_user_effective_access
@@ -934,7 +934,7 @@ def create_safe_admin(def_org, gadm):
     # Check if admin user already exists
     user = get_user_by_username(admin_username)
     if not user:
-        user = get_user_by_mail(admin_email)
+        user = get_user_by_email(admin_email)
     password = None
 
     if not user:
