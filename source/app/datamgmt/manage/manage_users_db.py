@@ -62,6 +62,14 @@ def get_active_user_by_login(username):
     return user
 
 
+def get_active_user_by_api_key(api_key):
+    user = User.query.filter(
+        User.api_key == api_key,
+        User.active == True
+    ).first()
+    return user
+
+
 def get_user_details(user_id, include_api_key=False):
 
     user = get_user(user_id)
