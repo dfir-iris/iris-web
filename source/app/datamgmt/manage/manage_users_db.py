@@ -64,7 +64,7 @@ def get_active_user_by_login(username):
 
 def get_user_details(user_id, include_api_key=False):
 
-    user = User.query.filter(User.id == user_id).first()
+    user = get_user(user_id)
 
     if not user:
         return None
@@ -93,8 +93,8 @@ def get_user_details(user_id, include_api_key=False):
 
 
 def user_exists(user_name, user_email):
-    user = User.query.filter_by(user=user_name).first()
-    user_by_email = User.query.filter_by(email=user_email).first()
+    user = get_user_by_username(user_name)
+    user_by_email = get_user_by_mail(user_email)
 
     return user or user_by_email
 
