@@ -30,7 +30,7 @@ import socket
 import time
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, exc, or_
+from sqlalchemy import create_engine, exc
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
@@ -40,6 +40,8 @@ from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
+from app.datamgmt.manage.manage_users_db import get_user_by_username
+from app.datamgmt.manage.manage_users_db import get_user_by_mail
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_add_user_effective_access
@@ -930,10 +932,9 @@ def create_safe_admin(def_org, gadm):
         admin_email = 'administrator@localhost'
 
     # Check if admin user already exists
-    user = User.query.filter(or_(
-        User.user == admin_username,
-        User.email == admin_email
-    )).first()
+    user = get_user_by_username(admin_username)
+    if not user:
+        user = get_user_by_mail(admin_email)
     password = None
 
     if not user:
