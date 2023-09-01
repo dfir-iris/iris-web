@@ -49,6 +49,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_users_db import get_user_by_username
+from app.datamgmt.manage.manage_users_db import get_user_by_mail
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
     ReviewStatus
@@ -747,13 +748,10 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
                         type=str,
                         allow_none=True)
 
-        luser = User.query.filter(
-            User.email == email
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User email already taken',
-                                                             field_name="user_email")
+        usr = get_user_by_mail(email)
+        if usr and usr.id != user_id:
+            raise marshmallow.exceptions.ValidationError('User email already taken',
+                                                         field_name="user_email")
 
         return data
 
