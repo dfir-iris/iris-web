@@ -30,6 +30,7 @@ from app import db
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_notes_db import add_note
 from app.datamgmt.case.case_notes_db import add_note_group
+from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import create_user
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
@@ -84,7 +85,7 @@ class TestBurstDBInteraction(TestCase):
                 description=f"Testing case number {str(i)}",
                 soc_id=f"SOC{str(i)}",
                 gen_report=False,
-                user=(User.query.filter(User.id == random.randrange(1, users_nb)).first()),
+                user=(get_user(random.randrange(1, users_nb))),
                 client_name=f"client_{str(random.randrange(1, client_nb))}"
             )
 
