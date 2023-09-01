@@ -24,6 +24,7 @@ from sqlalchemy import desc, and_
 
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
 from app.models import CaseTasks, TaskAssignee
@@ -192,7 +193,7 @@ def update_task_assignees(task, task_assignee_list, caseid):
         if uid not in allowed_users:
             continue
 
-        user = User.query.filter(User.id == uid).first()
+        user = get_user(uid)
         if user:
             ta = TaskAssignee()
             ta.task_id = task.id
