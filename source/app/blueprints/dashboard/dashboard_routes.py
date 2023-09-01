@@ -39,6 +39,7 @@ from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
+from app.datamgmt.manage.manage_users_db import get_users_ordered_by_name
 from app.forms import CaseGlobalTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -267,7 +268,7 @@ def add_gtask_modal(caseid):
 
     form = CaseGlobalTaskForm()
 
-    form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
+    form.task_assignee_id.choices = [(user.id, user.name) for user in get_users_ordered_by_name()]
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     return render_template("modal_add_global_task.html", form=form, task=task, uid=current_user.id, user_name=None)
@@ -312,8 +313,7 @@ def add_gtask(caseid):
 def edit_gtask_modal(cur_id, caseid):
     form = CaseGlobalTaskForm()
     task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
-    form.task_assignee_id.choices = [(user.id, user.name) for user in
-                                     User.query.filter(User.active == True).order_by(User.name).all()]
+    form.task_assignee_id.choices = [(user.id, user.name) for user in get_users_ordered_by_name()]
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     # Render the task
@@ -331,7 +331,7 @@ def edit_gtask(cur_id, caseid):
 
     form = CaseGlobalTaskForm()
     task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
-    form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
+    form.task_assignee_id.choices = [(user.id, user.name) for user in get_users_ordered_by_name()]
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     if not task:

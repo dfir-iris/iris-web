@@ -122,6 +122,10 @@ def list_users_id():
     return users
 
 
+def get_users_ordered_by_name():
+    return User.query.filter(User.active == True).order_by(User.name).all()
+
+
 def get_users_list():
     users = User.query.all()
 
