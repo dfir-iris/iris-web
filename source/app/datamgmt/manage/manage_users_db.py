@@ -40,9 +40,13 @@ from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 
 
-def get_user(user_id, id_key: str = 'id'):
-    user = User.query.filter(getattr(User, id_key) == user_id).first()
+def get_user(user_id):
+    user = User.query.filter(User.id == user_id).first()
     return user
+
+
+def get_user_by_mail(user_email):
+    return User.query.filter(User.email == user_email).first()
 
 
 def get_active_user_by_login(username):
