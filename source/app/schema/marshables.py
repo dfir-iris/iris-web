@@ -50,6 +50,7 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_users_db import get_user_by_username
 from app.datamgmt.manage.manage_users_db import get_user_by_email
+from app.datamgmt.manage.manage_users_db import get_user
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
     ReviewStatus
@@ -1401,7 +1402,7 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
                         field_name='task_assignee_id', 
                         type=int)
         
-        user = User.query.filter(User.id == data.get('task_assignee_id')).count()
+        user = get_user(data.get('task_assignee_id'))
         if not user:
             raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
                                                          field_name="task_assignees_id")
