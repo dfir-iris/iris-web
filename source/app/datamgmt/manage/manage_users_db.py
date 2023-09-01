@@ -46,7 +46,7 @@ def get_user(user_id):
 
 
 def get_user_by_username(username):
-    user = User.query.filter(User.user == username).first()
+    user = User.query.filter(User.user.ilike(username)).first()
     return user
 
 
@@ -56,7 +56,7 @@ def get_user_by_email(user_email):
 
 def get_active_user_by_login(username):
     user = User.query.filter(
-        User.user == username,
+        User.user.ilike(username),
         User.active == True
     ).first()
     return user
