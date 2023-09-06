@@ -123,11 +123,6 @@ def delete_user(user_id):
     db.session.commit()
 
 
-def list_users_id():
-    users = User.query.with_entities(User.user_id).all()
-    return users
-
-
 def get_users_ordered_by_name():
     return User.query.filter(User.active == True).order_by(User.name).all()
 
