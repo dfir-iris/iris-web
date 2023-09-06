@@ -32,6 +32,7 @@ from flask_wtf import FlaskForm
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
+from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
@@ -205,10 +206,10 @@ def case_task_view_modal(cur_id, caseid, url_redir):
 
     form.task_title.render_kw = {'value': task.task_title}
     form.task_description.data = task.task_description
-    user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
+    user = get_user(task.task_userid_update)
     comments_map = get_case_tasks_comments_count([task.id])
 
-    return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
+    return render_template("modal_add_case_task.html", form=form, task=task, user_name=user.name,
                            comments_map=comments_map, attributes=task.custom_attributes)
 
 
