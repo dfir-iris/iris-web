@@ -45,6 +45,12 @@ def get_user(user_id):
     return user
 
 
+# TODO Isn't this doing the exact same thing as get_user?
+#      Replace all calls to get_user by calls to get_user_by_id and remove get_user?
+def get_user_by_id(user_id: int):
+    return User.query.get(user_id)
+
+
 def get_user_by_username(username):
     user = User.query.filter(User.user.ilike(username)).first()
     return user
