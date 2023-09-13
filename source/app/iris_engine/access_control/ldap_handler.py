@@ -33,10 +33,11 @@ from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_groups_db import get_group_by_name
 
 log = app.logger
+ldap_authentication_type = app.config.get('LDAP_AUTHENTICATION_TYPE')
 
 
 def _get_unique_identifier(user_login):
-    if app.config.get('LDAP_AUTHENTICATION_TYPE').lower() == 'ntlm':
+    if ldap_authentication_type.lower() == 'ntlm':
         return user_login[user_login.find('\\')+1:]
     return user_login
 
@@ -46,7 +47,7 @@ def _bind_user(server, ldap_user, ldap_user_pwd):
                             user=ldap_user,
                             password=ldap_user_pwd,
                             auto_referrals=False,
-                            authentication=app.config.get('LDAP_AUTHENTICATION_TYPE'))
+                            authentication=ldap_authentication_type)
 
     try:
         if not connection.bind():
@@ -100,7 +101,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     """
     Authenticate to the LDAP server
     """
-    if app.config.get('LDAP_AUTHENTICATION_TYPE').lower() != 'ntlm':
+    if ldap_authentication_type.lower() != 'ntlm':
         ldap_user_name = conv.escape_filter_chars(ldap_user_name)
         ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name.strip()}{ ','+app.config.get('LDAP_USER_SUFFIX') if app.config.get('LDAP_USER_SUFFIX') else ''}"
     else:
