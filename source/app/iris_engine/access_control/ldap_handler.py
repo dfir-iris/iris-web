@@ -42,7 +42,7 @@ def _get_unique_identifier(user_login):
     return user_login
 
 
-def _bind_user(server, ldap_user, ldap_user_pwd):
+def _connect(server, ldap_user, ldap_user_pwd):
     connection = Connection(server,
                             user=ldap_user,
                             password=ldap_user_pwd,
@@ -59,6 +59,12 @@ def _bind_user(server, ldap_user, ldap_user_pwd):
         return None
 
     return connection
+
+
+def _connect_bind_account(server):
+    ldap_bind_dn = app.config.get('LDAP_BIND_DN')
+    ldap_bind_password = app.config.get('LDAP_BIND_PASSWORD')
+    return _connect(server, ldap_bind_dn, ldap_bind_password)
 
 
 def _provision_user(connection, user_login):
@@ -124,11 +130,14 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
         server = Server(f'{app.config.get("LDAP_CONNECT_STRING")}',
                         use_ssl=app.config.get('LDAP_USE_SSL'))
 
-    connection = _bind_user(server, ldap_user, ldap_user_pwd)
+    connection = _connect(server, ldap_user, ldap_user_pwd)
     if not connection:
         return False
 
     if not get_active_user_by_login(ldap_user_name) and app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
+        connection = _connect_bind_account(server)
+        if not connection:
+            return False
         _provision_user(connection, ldap_user_name)
 
     log.info(f"Successful authenticated user")

@@ -408,6 +408,9 @@ class Config:
 
         LDAP_AUTHENTICATION_TYPE = config.load('LDAP', 'AUTHENTICATION_TYPE')
 
+        LDAP_BIND_DN = config.load('LDAP', 'BIND_DN')
+        LDAP_BIND_PASSWORD = config.load('LDAP', 'BIND_PASSWORD')
+
         LDAP_SEARCH_DN = config.load('LDAP', 'SEARCH_DN')
         if authentication_create_user_if_not_exists and LDAP_SEARCH_DN is None:
             raise Exception('LDAP enabled with user provisioning: LDAP_SEARCH_DN should be set')
