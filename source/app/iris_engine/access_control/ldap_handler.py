@@ -70,8 +70,8 @@ def _provision_user(connection, user_login):
     #      => should factor and reuse this code bit as a function
     #      => also, it should probably be more secure to use the secrets module (instead of random)
     password = ''.join(random.choices(string.printable[:-6], k=16))
-    # TODO It seems email unicity is required (a fixed email causes a problem at the second account creation)
-    #      The email either comes from the ldap or is forged from the login to ensure unicity
+    # TODO It seems email uniqueness is required (a fixed email causes a problem at the second account creation)
+    #      The email either comes from the ldap or is forged from the login to ensure uniqueness
     user = create_user(user_name, user_login, password, user_email, True)
     initial_group = get_group_by_name(app.config.get('IRIS_NEW_USERS_DEFAULT_GROUP'))
     add_user_to_group(user.id, initial_group.group_id)
