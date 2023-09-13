@@ -41,6 +41,25 @@ def _get_unique_identifier(user_login):
     return user_login
 
 
+def _bind_user(server, ldap_user, ldap_user_pwd):
+    connection = Connection(server,
+                            user=ldap_user,
+                            password=ldap_user_pwd,
+                            auto_referrals=False,
+                            authentication=app.config.get('LDAP_AUTHENTICATION_TYPE'))
+
+    try:
+        if not connection.bind():
+            log.error(f"Cannot bind to ldap server: {connection.last_error} ")
+            return None
+
+    except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
+        log.error(f'Wrong credentials. Error : {e.__str__()}')
+        return None
+
+    return connection
+
+
 def _provision_user(connection, user_login):
     search_base = app.config.get('LDAP_SEARCH_DN')
     attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
@@ -104,27 +123,12 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
         server = Server(f'{app.config.get("LDAP_CONNECT_STRING")}',
                         use_ssl=app.config.get('LDAP_USE_SSL'))
 
-    conn = Connection(server,
-                      user=ldap_user,
-                      password=ldap_user_pwd,
-                      auto_referrals=False,
-                      authentication=app.config.get('LDAP_AUTHENTICATION_TYPE'))
-
-    try:
-
-        if not conn.bind():
-            log.error(f"Cannot bind to ldap server: {conn.last_error} ")
-            return False
-
-        if not get_active_user_by_login(ldap_user_name) and app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
-            _provision_user(conn, ldap_user_name)
-
-    except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
-        log.error(f'Wrong credentials. Error : {e.__str__()}')
+    connection = _bind_user(server, ldap_user, ldap_user_pwd)
+    if not connection:
         return False
 
-    except Exception as e:
-        raise Exception(e.__str__())
+    if not get_active_user_by_login(ldap_user_name) and app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
+        _provision_user(connection, ldap_user_name)
 
     log.info(f"Successful authenticated user")
 
