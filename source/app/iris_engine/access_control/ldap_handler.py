@@ -42,8 +42,6 @@ def _get_unique_identifier(user_login):
 
 
 def _provision_user(connection, user_login):
-    if get_active_user_by_login(user_login):
-        return
     search_base = app.config.get('LDAP_SEARCH_DN')
     attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
     unique_identifier = conv.escape_filter_chars(_get_unique_identifier(user_login))
@@ -118,7 +116,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
             log.error(f"Cannot bind to ldap server: {conn.last_error} ")
             return False
 
-        if app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
+        if not get_active_user_by_login(ldap_user_name) and app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
             _provision_user(conn, ldap_user_name)
 
     except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
