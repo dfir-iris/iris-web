@@ -32,16 +32,15 @@ from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_groups_db import get_group_by_name
 
-# TODO should make them private, prefix with _
-log = app.logger
-ldap_authentication_type = app.config.get('LDAP_AUTHENTICATION_TYPE')
-attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
-attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
-attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
+_log = app.logger
+_ldap_authentication_type = app.config.get('LDAP_AUTHENTICATION_TYPE')
+_attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
+_attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
+_attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
 
 
 def _get_unique_identifier(user_login):
-    if ldap_authentication_type.lower() == 'ntlm':
+    if _ldap_authentication_type.lower() == 'ntlm':
         return user_login[user_login.find('\\')+1:]
     return user_login
 
@@ -51,15 +50,15 @@ def _connect(server, ldap_user, ldap_user_pwd):
                             user=ldap_user,
                             password=ldap_user_pwd,
                             auto_referrals=False,
-                            authentication=ldap_authentication_type)
+                            authentication=_ldap_authentication_type)
 
     try:
         if not connection.bind():
-            log.error(f"Cannot bind to ldap server: {connection.last_error} ")
+            _log.error(f"Cannot bind to ldap server: {connection.last_error} ")
             return None
 
     except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
-        log.error(f'Wrong credentials. Error : {e.__str__()}')
+        _log.error(f'Wrong credentials. Error : {e.__str__()}')
         return None
 
     return connection
@@ -75,25 +74,25 @@ def _search_user_in_ldap(connection, user_login):
     search_base = app.config.get('LDAP_SEARCH_DN')
     unique_identifier = conv.escape_filter_chars(_get_unique_identifier(user_login))
     attributes = ['memberOf']
-    if attribute_display_name:
-        attributes.append(attribute_display_name)
-    if attribute_mail:
-        attributes.append(attribute_mail)
-    connection.search(search_base, f'({attribute_unique_identifier}={unique_identifier})', attributes=attributes)
+    if _attribute_display_name:
+        attributes.append(_attribute_display_name)
+    if _attribute_mail:
+        attributes.append(_attribute_mail)
+    connection.search(search_base, f'({_attribute_unique_identifier}={unique_identifier})', attributes=attributes)
     return connection.entries[0]
 
 
 def _provision_user(user_login, ldap_user_entry):
-    if attribute_display_name:
-        user_name = ldap_user_entry[attribute_display_name].value
+    if _attribute_display_name:
+        user_name = ldap_user_entry[_attribute_display_name].value
     else:
         user_name = user_login
-    if attribute_mail:
-        user_email = ldap_user_entry[attribute_mail].value
+    if _attribute_mail:
+        user_email = ldap_user_entry[_attribute_mail].value
     else:
         user_email = f'{user_login}@ldap'
 
-    log.info(f'Provisioning user "{user_login}" which is present in LDAP but not yet in database.')
+    _log.info(f'Provisioning user "{user_login}" which is present in LDAP but not yet in database.')
     # TODO the user password is chosen randomly
     #      ideally it should be possible to create a user without providing any password
     # TODO to create the user password, we use the same code as the one to generate the administrator password in post_init.py
@@ -120,7 +119,7 @@ def _update_user_groups(user, ldap_user_entry):
         group_name = _parse_cn(ldap_group_name)
         group = get_group_by_name(group_name)
         if group is None:
-            log.warning(f'Ignoring group declared in LDAP which does not exist in DFIR-IRIS: \'{group_name}\'.')
+            _log.warning(f'Ignoring group declared in LDAP which does not exist in DFIR-IRIS: \'{group_name}\'.')
             continue
         groups.append(group.group_id)
     update_user_groups(user.id, groups)
@@ -130,7 +129,7 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     """
     Authenticate to the LDAP server
     """
-    if ldap_authentication_type.lower() != 'ntlm':
+    if _ldap_authentication_type.lower() != 'ntlm':
         ldap_user_name = conv.escape_filter_chars(ldap_user_name)
         ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name.strip()}{ ','+app.config.get('LDAP_USER_SUFFIX') if app.config.get('LDAP_USER_SUFFIX') else ''}"
     else:
@@ -167,6 +166,6 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
             user = _provision_user(ldap_user_name, ldap_user_entry)
         _update_user_groups(user, ldap_user_entry)
 
-    log.info(f"Successful authenticated user")
+    _log.info(f"Successful authenticated user")
 
     return True
