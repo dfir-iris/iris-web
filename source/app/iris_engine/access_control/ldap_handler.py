@@ -34,6 +34,7 @@ from app.datamgmt.manage.manage_groups_db import get_group_by_name
 
 log = app.logger
 ldap_authentication_type = app.config.get('LDAP_AUTHENTICATION_TYPE')
+attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
 
 
 def _get_unique_identifier(user_login):
@@ -69,7 +70,6 @@ def _connect_bind_account(server):
 
 def _provision_user(connection, user_login):
     search_base = app.config.get('LDAP_SEARCH_DN')
-    attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
     unique_identifier = conv.escape_filter_chars(_get_unique_identifier(user_login))
     attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
     attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
@@ -134,11 +134,12 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     if not connection:
         return False
 
-    if not get_active_user_by_login(ldap_user_name) and app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
+    if app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST'):
         connection = _connect_bind_account(server)
         if not connection:
             return False
-        _provision_user(connection, ldap_user_name)
+        if not get_active_user_by_login(ldap_user_name):
+            _provision_user(connection, ldap_user_name)
 
     log.info(f"Successful authenticated user")
 
