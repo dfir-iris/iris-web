@@ -87,6 +87,8 @@ class Group(db.Model):
                         server_default=text('gen_random_uuid()'), unique=True)
     group_name = Column(Text, nullable=False, unique=True)
     group_description = Column(Text)
+
+    # this is a mask of values defined in enum Permissions
     group_permissions = Column(BigInteger, nullable=False)
     group_auto_follow = Column(Boolean, nullable=False, default=False)
     group_auto_follow_access_level = Column(BigInteger, nullable=False, default=0)
