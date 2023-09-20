@@ -29,12 +29,15 @@ from ldap3.utils import conv
 from app import app
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 from app.datamgmt.manage.manage_users_db import create_user
-from app.datamgmt.manage.manage_users_db import add_user_to_group
+from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_groups_db import get_group_by_name
 
+# TODO should make them private, prefix with _
 log = app.logger
 ldap_authentication_type = app.config.get('LDAP_AUTHENTICATION_TYPE')
 attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
+attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
+attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
 
 
 def _get_unique_identifier(user_login):
@@ -68,24 +71,25 @@ def _connect_bind_account(server):
     return _connect(server, ldap_bind_dn, ldap_bind_password)
 
 
-def _provision_user(connection, user_login):
+def _search_user_in_ldap(connection, user_login):
     search_base = app.config.get('LDAP_SEARCH_DN')
     unique_identifier = conv.escape_filter_chars(_get_unique_identifier(user_login))
-    attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
-    attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
-    attributes = []
+    attributes = ['memberOf']
     if attribute_display_name:
         attributes.append(attribute_display_name)
     if attribute_mail:
         attributes.append(attribute_mail)
     connection.search(search_base, f'({attribute_unique_identifier}={unique_identifier})', attributes=attributes)
-    entry = connection.entries[0]
+    return connection.entries[0]
+
+
+def _provision_user(user_login, ldap_user_entry):
     if attribute_display_name:
-        user_name = entry[attribute_display_name].value
+        user_name = ldap_user_entry[attribute_display_name].value
     else:
         user_name = user_login
     if attribute_mail:
-        user_email = entry[attribute_mail].value
+        user_email = ldap_user_entry[attribute_mail].value
     else:
         user_email = f'{user_login}@ldap'
 
@@ -98,9 +102,28 @@ def _provision_user(connection, user_login):
     password = ''.join(random.choices(string.printable[:-6], k=16))
     # TODO It seems email uniqueness is required (a fixed email causes a problem at the second account creation)
     #      The email either comes from the ldap or is forged from the login to ensure uniqueness
-    user = create_user(user_name, user_login, password, user_email, True)
-    initial_group = get_group_by_name(app.config.get('IRIS_NEW_USERS_DEFAULT_GROUP'))
-    add_user_to_group(user.id, initial_group.group_id)
+    return create_user(user_name, user_login, password, user_email, True)
+
+
+def _parse_cn(distinguished_name):
+    relative_distinguished_names = distinguished_name.split(',')
+    common_name = relative_distinguished_names[0]
+    return common_name[len('cn='):]
+
+
+def _update_user_groups(user, ldap_user_entry):
+    ldap_group_names = ldap_user_entry['memberOf'].value
+    if isinstance(ldap_group_names, str):
+        ldap_group_names = [ldap_group_names]
+    groups = []
+    for ldap_group_name in ldap_group_names:
+        group_name = _parse_cn(ldap_group_name)
+        group = get_group_by_name(group_name)
+        if group is None:
+            log.warning(f'Ignoring group declared in LDAP which does not exist in DFIR-IRIS: \'{group_name}\'.')
+            continue
+        groups.append(group.group_id)
+    update_user_groups(user.id, groups)
 
 
 def ldap_authenticate(ldap_user_name, ldap_user_pwd):
@@ -138,8 +161,11 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
         connection = _connect_bind_account(server)
         if not connection:
             return False
-        if not get_active_user_by_login(ldap_user_name):
-            _provision_user(connection, ldap_user_name)
+        ldap_user_entry = _search_user_in_ldap(connection, ldap_user_name)
+        user = get_active_user_by_login(ldap_user_name)
+        if not user:
+            user = _provision_user(ldap_user_name, ldap_user_entry)
+        _update_user_groups(user, ldap_user_entry)
 
     log.info(f"Successful authenticated user")
 
