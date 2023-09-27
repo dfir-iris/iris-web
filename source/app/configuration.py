@@ -420,6 +420,8 @@ class Config:
         LDAP_ATTRIBUTE_DISPLAY_NAME = config.load('LDAP', 'ATTRIBUTE_DISPLAY_NAME')
         LDAP_ATTRIBUTE_MAIL = config.load('LDAP', 'ATTRIBUTE_MAIL')
 
+        LDAP_GROUP_BASE_DN = config.load('LDAP', 'GROUP_BASE_DN')
+
         LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
         LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
 

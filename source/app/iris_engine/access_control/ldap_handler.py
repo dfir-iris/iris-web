@@ -31,12 +31,14 @@ from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_groups_db import get_group_by_name
+from app.datamgmt.manage.manage_groups_db import create_group
 
 _log = app.logger
 _ldap_authentication_type = app.config.get('LDAP_AUTHENTICATION_TYPE')
 _attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
 _attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
 _attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
+_ldap_group_base_dn = app.config.get('LDAP_GROUP_BASE_DN')
 
 
 def _get_unique_identifier(user_login):
@@ -114,8 +116,11 @@ def _update_user_groups(user, ldap_user_entry):
     ldap_group_names = ldap_user_entry['memberOf'].value
     if isinstance(ldap_group_names, str):
         ldap_group_names = [ldap_group_names]
+
     groups = []
     for ldap_group_name in ldap_group_names:
+        if not ldap_group_name.endswith(_ldap_group_base_dn):
+            continue
         group_name = _parse_cn(ldap_group_name)
         group = get_group_by_name(group_name)
         if group is None:
