@@ -39,12 +39,8 @@ _attribute_unique_identifier = app.config.get('LDAP_ATTRIBUTE_IDENTIFIER')
 _attribute_display_name = app.config.get('LDAP_ATTRIBUTE_DISPLAY_NAME')
 _attribute_mail = app.config.get('LDAP_ATTRIBUTE_MAIL')
 _ldap_group_base_dn = app.config.get('LDAP_GROUP_BASE_DN')
-
-
-def _get_unique_identifier(user_login):
-    if _ldap_authentication_type.lower() == 'ntlm':
-        return user_login[user_login.find('\\')+1:]
-    return user_login
+_ldap_user_prefix = app.config.get('LDAP_USER_PREFIX')
+_ldap_user_suffix = app.config.get('LDAP_USER_SUFFIX')
 
 
 def _connect(server, ldap_user, ldap_user_pwd):
@@ -72,9 +68,18 @@ def _connect_bind_account(server):
     return _connect(server, ldap_bind_dn, ldap_bind_password)
 
 
+def _connect_user(server, ldap_user_name, ldap_user_pwd):
+    ldap_user = ldap_user_name.strip()
+    ldap_user = f'{_ldap_user_prefix}{ldap_user}'
+    # TODO idea: ldap_user_suffix could include the ',' so that we don't need to make a special case for ntlm
+    if _ldap_user_suffix and _ldap_authentication_type.lower() != 'ntlm':
+        ldap_user = f'{ldap_user},{_ldap_user_suffix}'
+    return _connect(server, ldap_user, ldap_user_pwd)
+
+
 def _search_user_in_ldap(connection, user_login):
     search_base = app.config.get('LDAP_SEARCH_DN')
-    unique_identifier = conv.escape_filter_chars(_get_unique_identifier(user_login))
+    unique_identifier = conv.escape_filter_chars(user_login)
     attributes = ['memberOf']
     if _attribute_display_name:
         attributes.append(_attribute_display_name)
@@ -134,12 +139,6 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     """
     Authenticate to the LDAP server
     """
-    if _ldap_authentication_type.lower() != 'ntlm':
-        ldap_user_name = conv.escape_filter_chars(ldap_user_name)
-        ldap_user = f"{app.config.get('LDAP_USER_PREFIX')}{ldap_user_name.strip()}{ ','+app.config.get('LDAP_USER_SUFFIX') if app.config.get('LDAP_USER_SUFFIX') else ''}"
-    else:
-        ldap_user = f"{ldap_user_name.strip()}"
-
     if app.config.get('LDAP_CUSTOM_TLS_CONFIG') is True:
         tls_configuration = Tls(validate=ssl.CERT_REQUIRED,
                                 version=app.config.get('LDAP_TLS_VERSION'),
@@ -157,7 +156,10 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
         server = Server(f'{app.config.get("LDAP_CONNECT_STRING")}',
                         use_ssl=app.config.get('LDAP_USE_SSL'))
 
-    connection = _connect(server, ldap_user, ldap_user_pwd)
+    if _ldap_authentication_type.lower() != 'ntlm':
+        ldap_user_name = conv.escape_filter_chars(ldap_user_name)
+
+    connection = _connect_user(server, ldap_user_name, ldap_user_pwd)
     if not connection:
         return False
 
