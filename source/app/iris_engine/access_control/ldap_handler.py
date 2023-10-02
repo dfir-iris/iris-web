@@ -119,6 +119,8 @@ def _parse_cn(distinguished_name):
 
 def _update_user_groups(user, ldap_user_entry):
     ldap_group_names = ldap_user_entry['memberOf'].value
+    if ldap_group_names is None:
+        ldap_group_names = []
     if isinstance(ldap_group_names, str):
         ldap_group_names = [ldap_group_names]
 
