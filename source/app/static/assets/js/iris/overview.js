@@ -193,6 +193,11 @@ var OverviewTable = $("#overview_table").DataTable({
     select: true,
     initComplete: function () {
             tableFiltering(this.api(), 'overview_table', [0]);
+        },
+    drawCallback: function () {
+            $('.btn-quick-view').off('click').on('click', function() {
+                    show_case_view($(this).data('index'));
+                });
         }
     });
 
@@ -215,9 +220,7 @@ function get_cases_overview(silent, show_full=false) {
                 $('table tr td:nth-child(' + index  + ')').toggleClass("truncate");
             });
 
-            $('.btn-quick-view').on('click', function() {
-                show_case_view($(this).data('index'));
-            });
+
         }
     });
 }
