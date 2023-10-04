@@ -154,7 +154,7 @@ var OverviewTable = $("#overview_table").DataTable({
           if (type === 'display' && data != null) {
               sdata = sanitizeHTML(data.user_name);
               data = `<div class="row">${get_avatar_initials(sdata, false, null, true)} <span class="ml-1">${sdata}</span></div>`;
-          } else if (type === 'filter') {
+          } else if (type === 'filter' || type === 'sort') {
                 data = data.user_name;
             }
           return data;
