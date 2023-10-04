@@ -27,7 +27,7 @@ var OverviewTable = $("#overview_table").DataTable({
             }
             data = '<a rel="noopener" title="Open case in new tab" target="_blank" href="case?cid='+ row['case_id'] + '">' + data +'</a>';
           } else if (type === 'sort' || type === 'filter') {
-            data = parseInt(row['case_id']);
+            data = sanitizeHTML(data);
           }
           return data;
         }
