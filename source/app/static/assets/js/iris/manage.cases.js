@@ -136,7 +136,7 @@ $('#cases_table').dataTable({
         {
             "render": function (data, type, row) {
                 data = sanitizeHTML(data);
-                return '<a href="#" onclick="case_detail(\'' + row['case_id'] + '\');">' + decodeURIComponent(data) + '</a>';
+                return '<a href="#" onclick="case_detail(\'' + row['case_id'] + '\');">' + data + '</a>';
             },
             "data": "case_name"
         },
