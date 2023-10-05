@@ -469,12 +469,9 @@ function note_detail(id, cid) {
         load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
         $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
 
-        $('#modal_note_detail').on("hide.bs.modal", function (e) {
-            return handle_note_close(id, e);
-        });
-
-        $('#modal_note_detail').on('hidden.bs.modal', function () {
+        $('#modal_note_detail').off('hide.bs.modal').on("hide.bs.modal", function (e) {
             forceModalClose = false;
+            return handle_note_close(id, e);
         });
 
         collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
@@ -483,7 +480,7 @@ function note_detail(id, cid) {
 }
 
 
-function handle_note_close(id, e) {
+async function handle_note_close(id, e) {
     note_id = null;
 
     if ($("#minimized_modal_box").is(":visible")) {
@@ -549,6 +546,7 @@ function handle_note_close(id, e) {
         collaborator_socket.emit('ping-note', {'channel': 'case-' + get_caseid() + '-notes', 'note_id': null});
         wasMiniNote = false;
 
+        await draw_kanban();
         return true;
     }
 }
@@ -677,17 +675,14 @@ function edit_innote() {
 }
 
 /* Load the kanban case data and build the board from it */
-function draw_kanban() {
+async function draw_kanban() {
     /* Empty board */
     $('#myKanban').empty();
     show_loader();
 
-    $.ajax({
-        url: '/case/notes/groups/list' + case_param(),
-        type: "GET",
-        dataType: 'JSON',
-        success: function (data) {
-            if (data.status == 'success') {
+    return get_request_api('/case/notes/groups/list')
+        .done((data) => {
+            if (notify_auto_api(data, true)) {
                 gidl = [];
                 if (data.data.groups.length > 0) {
                     $('#empty-set-notes').hide();
@@ -712,16 +707,10 @@ function draw_kanban() {
                 }
             set_last_state(data.data.state);
             hide_loader();
-            } else {
-                if (data.message != "No data to load for dashboard") {
-                    swal("Oh no !", data.message, "error");
-                }
             }
-        },
-        error: function (error) {
-            swal("Oh no !", error, "error");
-        }
-    });
+
+        });
+
 }
 
 function note_interval_pinger() {

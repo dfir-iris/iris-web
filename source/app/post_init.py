@@ -743,7 +743,7 @@ def create_safe_case_states():
     # Create new CaseState objects for each state
     create_safe(db.session, CaseState, state_name='Unspecified', state_description="Unspecified", protected=True)
     create_safe(db.session, CaseState, state_name='In progress', state_description="Case is being investigated")
-    create_safe(db.session, CaseState, state_name='Opened', state_description="Case is open", protected=True)
+    create_safe(db.session, CaseState, state_name='Open', state_description="Case is open", protected=True)
     create_safe(db.session, CaseState, state_name='Containment', state_description="Containment is in progress")
     create_safe(db.session, CaseState, state_name='Eradication', state_description="Eradication is in progress")
     create_safe(db.session, CaseState, state_name='Recovery', state_description="Recovery is in progress")

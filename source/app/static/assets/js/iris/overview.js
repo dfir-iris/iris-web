@@ -27,7 +27,7 @@ var OverviewTable = $("#overview_table").DataTable({
             }
             data = '<a rel="noopener" title="Open case in new tab" target="_blank" href="case?cid='+ row['case_id'] + '">' + data +'</a>';
           } else if (type === 'sort' || type === 'filter') {
-            data = parseInt(row['case_id']);
+            data = sanitizeHTML(data);
           }
           return data;
         }
@@ -154,7 +154,7 @@ var OverviewTable = $("#overview_table").DataTable({
           if (type === 'display' && data != null) {
               sdata = sanitizeHTML(data.user_name);
               data = `<div class="row">${get_avatar_initials(sdata, false, null, true)} <span class="ml-1">${sdata}</span></div>`;
-          } else if (type === 'filter') {
+          } else if (type === 'filter' || type === 'sort') {
                 data = data.user_name;
             }
           return data;
@@ -193,6 +193,11 @@ var OverviewTable = $("#overview_table").DataTable({
     select: true,
     initComplete: function () {
             tableFiltering(this.api(), 'overview_table', [0]);
+        },
+    drawCallback: function () {
+            $('.btn-quick-view').off('click').on('click', function() {
+                    show_case_view($(this).data('index'));
+                });
         }
     });
 
@@ -215,9 +220,7 @@ function get_cases_overview(silent, show_full=false) {
                 $('table tr td:nth-child(' + index  + ')').toggleClass("truncate");
             });
 
-            $('.btn-quick-view').on('click', function() {
-                show_case_view($(this).data('index'));
-            });
+
         }
     });
 }

@@ -898,7 +898,7 @@ function get_avatar_initials(name, small, onClickFunction, xsmall) {
     const initial = name.split(' ');
     let snum;
 
-    if (initial.length > 1) {
+    if (initial.length > 1 && initial[1][0] !== undefined) {
         snum = initial[0][0].charCodeAt(0) + initial[1][0].charCodeAt(0);
     } else {
         snum = initial[0][0].charCodeAt(0);

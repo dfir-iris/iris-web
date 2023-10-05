@@ -137,6 +137,7 @@ def create_demo_users(def_org, gadm, ganalystes, users_count, seed_user, adm_cou
 
     return users
 
+
 def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_count: int = 0):
 
     clients = []
@@ -196,7 +197,6 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
             name=f"Restricted Case {case_index}",
             description="This is a demonstration of a restricted case that shouldn't be visible to analyst",
             soc_id=f"SOC-RSTRCT-{case_index}",
-            gen_report=False,
             user=random.choice(users_data['admins']),
             client_id=random.choice(clients)
         )
@@ -225,6 +225,7 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
                                         access_level=CaseAccessLevel.full_access.value)
 
     log.info('Demo data created successfully')
+
 
 def demo_case_exists(name, soc_id):
     return db.session.query(Cases).filter(Cases.name.like(f'%{name}'),
