@@ -549,6 +549,7 @@ function handle_note_close(id, e) {
         collaborator_socket.emit('ping-note', {'channel': 'case-' + get_caseid() + '-notes', 'note_id': null});
         wasMiniNote = false;
 
+        location.reload();
         return true;
     }
 }
