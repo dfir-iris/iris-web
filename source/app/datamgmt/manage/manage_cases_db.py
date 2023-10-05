@@ -209,7 +209,7 @@ def reopen_case(case_id):
     if res:
         res.close_date = None
 
-        res.state_id = get_case_state_by_name('Opened').state_id
+        res.state_id = get_case_state_by_name('Open').state_id
 
         db.session.commit()
         return res
