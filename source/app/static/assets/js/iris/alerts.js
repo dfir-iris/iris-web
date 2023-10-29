@@ -39,7 +39,7 @@ const selectsConfig = {
         name: 'customer_name'
     },
     alert_owner_id: {
-        url: '/manage/users/list',
+        url: '/manage/users/restricted/list',
         id: 'user_id',
         name: 'user_name'
     },
@@ -1729,7 +1729,7 @@ function changeStatusAlert(alert_id, status_name) {
 
 async function changeAlertOwner(alertId) {
   // Fetch the user list from the endpoint
-  const usersReq = await get_request_api('/manage/users/list');
+  const usersReq = await get_request_api('/manage/users/restricted/list');
 
   if (!notify_auto_api(usersReq, true)) { return; };
 
@@ -1771,7 +1771,7 @@ async function changeBatchAlertOwner(alertId) {
     }
 
       // Fetch the user list from the endpoint
-      const usersReq = await get_request_api('/manage/users/list');
+      const usersReq = await get_request_api('/manage/users/restricted/list');
 
       if (!notify_auto_api(usersReq, true)) { return; };
 
