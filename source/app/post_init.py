@@ -121,20 +121,18 @@ def run_post_init(development=False):
     log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
 
-    conn = None
-
     if os.getenv("IRIS_WORKER") is None:
         # Attempt to connect to the database with retries
         log.info("Attempting to connect to the database...")
         for i in range(retry_count):
             log.info("Connecting to database, attempt " + str(i+1) + "/" + str(retry_count))
             conn = connect_to_database(db_host,db_port)
-            if conn is not None:
+            if conn:
                 break
             log.info("Retrying in " + str(retry_delay) + "seconds...")
             time.sleep(retry_delay)
         # If the connection is still not established, exit the script
-        if conn is None:
+        if not conn:
             log.info("Failed to connect to database after " + str(retry_count) + " attempts.")
             exit(1)
 
