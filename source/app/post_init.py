@@ -796,8 +796,8 @@ def create_safe_evidence_types():
 
     create_safe(db.session, EvidenceTypes, name="Executable - Windows (PE)", description="Generic Windows executable")
     create_safe(db.session, EvidenceTypes, name="Executable - Linux (ELF)", description="Generic Linux executable")
-    create_safe(db.session, EvidenceTypes, name="Executable - MacOS (MacO)", description="Generic MacOS executable")
     create_safe(db.session, EvidenceTypes, name="Executable - MacOS (Mach-O)", description="Generic MacOS executable")
+    create_safe(db.session, EvidenceTypes, name="Executable - Generic", description="Generic executable")
 
     create_safe(db.session, EvidenceTypes, name="Script - Generic", description="Generic script")
 
