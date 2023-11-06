@@ -40,19 +40,24 @@
                         <form method="post" action="" id="form_edit_rfile">
                             <div class="col-md-12 col-lg-12 col-sm-12">
                                 <div class="form-group">
-                                    <label for="rfile_filename" class="placeholder">Filename *</label>
-                                    <input class="form-control" placeholder="Filename" id="filename" required name="filename" value="{{ rfile.filename }}"/>
+                                    <label for="rfile_filename" class="placeholder">Name *</label>
+                                    <input class="form-control" placeholder="Name" id="filename" required name="filename" value="{{rfile.filename }}"/>
                                 </div>
                                 <div class="form-group">
-                                    <label for="rfile_size" class="placeholder">File size (bytes) *</label>
+                                    <label for="rfile_type" class="placeholder">Type </label>
+                                    <span style="display: none" data-file-type-id="{{rfile.type_id}}" id=store_type_id></span>
+                                    <select class="selectpicker form-control" id="file_type_id"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rfile_size" class="placeholder">Size (bytes)</label>
                                     <input class="form-control" placeholder="Size in bytes" id="file_size" name="file_size" value="{{ rfile.file_size }}"/>
                                 </div>
                                 <div class="form-group">
-                                    <label for="rfile_hash" class="placeholder">File Hash</label>
+                                    <label for="rfile_hash" class="placeholder">Hash</label>
                                     <input class="form-control" placeholder="Hash" id="file_hash" name="file_hash" value="{{ rfile.file_hash }}"/>
                                 </div>
                                 <div class="form-group">
-                                    <label for="rfile_desc" class="placeholder">File description</label>
+                                    <label for="rfile_desc" class="placeholder">Description</label>
                                      <div class="md_description_field">
                                         <div class="form-group mt--2">
                                             <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_evidence_desc();" >
@@ -76,7 +81,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <p>Automatically compute file information by selecting it below. The file will not be uploaded nor saved.</p>
+                                    <p>Locally compute file information by selecting it below. <span class="text-danger">The file is not be uploaded on the server nor saved.</span></p>
                                     <input id="input_autofill" type="file">
                                     <button class="btn btn-sm" type="button" onclick="get_hash()" id="btn_rfile_proc">Process</button>
                                 </div>

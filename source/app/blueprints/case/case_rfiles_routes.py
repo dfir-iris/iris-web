@@ -111,8 +111,8 @@ def case_add_rfile(caseid):
         evidence = evidence_schema.load(request_data)
 
         crf = add_rfile(evidence=evidence,
-                          user_id=current_user.id,
-                          caseid=caseid
+                        user_id=current_user.id,
+                        caseid=caseid
                          )
 
         crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=caseid)

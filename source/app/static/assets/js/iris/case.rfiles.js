@@ -49,7 +49,7 @@ function add_modal_rfile() {
              ajax_notify_error(xhr, url);
              return false;
         }
-        
+
         g_evidence_desc_editor = get_new_ace_editor('evidence_description', 'evidence_desc_content', 'target_evidence_desc',
                     function() {
                         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
@@ -58,8 +58,10 @@ function add_modal_rfile() {
         g_evidence_desc_editor.setOption("minLines", "10");
         edit_in_evidence_desc();
 
-        headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
+        let headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
         $('#evidence_edition_btn').append(headers);
+
+        load_evidence_type();
         
         $('#modal_add_rfiles').modal({ show: true });
         $('#filename').focus();
@@ -70,6 +72,7 @@ function add_rfile() {
     var data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['file_description'] = g_evidence_desc_editor.getValue();
+    data_sent['file_type_id'] = $('#file_type_id').val();
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];
@@ -182,8 +185,6 @@ function edit_rfiles(rfiles_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
-        
-        g_evidence_id = rfiles_id;
 
         g_evidence_desc_editor = get_new_ace_editor('evidence_description', 'evidence_desc_content', 'target_evidence_desc',
                             function() {
@@ -195,14 +196,41 @@ function edit_rfiles(rfiles_id) {
         g_evidence_desc_editor.setOption("minLines", "6");
         preview_evidence_description(true);
 
-        headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
+        let headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
         $('#evidence_edition_btn').append(headers);
         
         load_menu_mod_options_modal(rfiles_id, 'evidence', $("#evidence_modal_quick_actions"));
+
+        load_evidence_type();
         
         $('#modal_add_rfiles').modal({ show: true });
         edit_in_evidence_desc();
     });
+}
+
+function load_evidence_type() {
+    get_request_api('/manage/evidence-types/list')
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            let ftype = $('#file_type_id');
+            if (data.data != null) {
+                let options = data.data;
+                for (let idx in options) {
+                    ftype.append(`<option value="${options[idx].id}">${filterXSS(options[idx].name)}</option>`);
+                }
+                ftype.selectpicker({
+                    liveSearch: true,
+                    title: "Evidence type"
+                });
+                let stored_type_id = $('#store_type_id').data('file-type-id');
+                if (stored_type_id !== undefined || stored_type_id !== "") {
+                    ftype.selectpicker('val', stored_type_id);
+                    ftype.selectpicker('refresh');
+                }
+            }
+
+        }
+    })
 }
 
 function preview_evidence_description(no_btn_update) {
@@ -233,6 +261,7 @@ function preview_evidence_description(no_btn_update) {
 function update_rfile(rfiles_id) {
     var data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
+    data_sent['file_type_id'] = $('#file_type_id').val();
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];
@@ -246,6 +275,7 @@ function update_rfile(rfiles_id) {
     .done((data) => {
         notify_auto_api(data);
         reload_rfiles();
+
     });
 }
 

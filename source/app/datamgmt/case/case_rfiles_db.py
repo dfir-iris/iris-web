@@ -41,7 +41,11 @@ def get_rfiles(caseid):
         CaseReceivedFile.file_hash,
         CaseReceivedFile.file_description,
         CaseReceivedFile.file_size,
-        User.name.label('username')
+        User.name.label('username'),
+        CaseReceivedFile.acquisition_date,
+        CaseReceivedFile.chain_of_custody,
+        CaseReceivedFile.start_date,
+        CaseReceivedFile.end_date
     ).filter(
         CaseReceivedFile.case_id == caseid
     ).join(CaseReceivedFile.user).order_by(desc(CaseReceivedFile.date_added)).all()

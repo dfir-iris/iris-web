@@ -1658,6 +1658,7 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     """
     filename: str = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
     csrf_token: Optional[str] = fields.String(required=False)
+    file_type_id: str = auto_field('type_id', required=False)
 
     class Meta:
         model = CaseReceivedFile
