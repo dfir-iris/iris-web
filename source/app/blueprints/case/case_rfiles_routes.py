@@ -81,7 +81,7 @@ def case_list_rfiles(caseid):
     crf = get_rfiles(caseid)
 
     ret = {
-        "evidences": [row._asdict() for row in crf],
+        "evidences": CaseEvidenceSchema().dump(crf, many=True),
         "state": get_evidences_state(caseid=caseid)
     }
 

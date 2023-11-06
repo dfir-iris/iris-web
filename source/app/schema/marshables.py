@@ -1649,6 +1649,16 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class EvidenceTypeSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing EvidenceType objects
+
+    """
+
+    class Meta:
+        model = EvidenceTypes
+        load_instance = True
+
+
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseEvidence objects.
 
@@ -1658,11 +1668,14 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     """
     filename: str = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
     csrf_token: Optional[str] = fields.String(required=False)
-    file_type_id: str = auto_field('type_id', required=False)
+    type = ma.Nested(EvidenceTypeSchema)
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
 
     class Meta:
         model = CaseReceivedFile
         load_instance = True
+        include_relationships = True
+        include_fk = True
 
     @post_load
     def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:

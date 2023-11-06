@@ -72,7 +72,7 @@ function add_rfile() {
     var data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['file_description'] = g_evidence_desc_editor.getValue();
-    data_sent['file_type_id'] = $('#file_type_id').val();
+    data_sent['type_id'] = $('#file_type_id').val();
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];
@@ -261,7 +261,7 @@ function preview_evidence_description(no_btn_update) {
 function update_rfile(rfiles_id) {
     var data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
-    data_sent['file_type_id'] = $('#file_type_id').val();
+    data_sent['type_id'] = $('#file_type_id').val();
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];
@@ -275,7 +275,7 @@ function update_rfile(rfiles_id) {
     .done((data) => {
         notify_auto_api(data);
         reload_rfiles();
-
+        $('#modal_add_rfiles').modal("hide");
     });
 }
 
@@ -322,7 +322,19 @@ $(document).ready(function(){
               return data;
             }
           },
-          { "data": "date_added" },
+          { "data": "type_id",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' || type === 'sort' || type === 'filter') {
+
+                  if (row['type'] !== null && row['type'] !== undefined) {
+                      data = sanitizeHTML(row['type'].name)
+                  } else {
+                      data = 'Unspecified'
+                  }
+              }
+              return data;
+            }
+          },
           { "data": "file_hash",
             "render": function (data, type, row, meta) {
                 if (type === 'display') { data = sanitizeHTML(data);}
@@ -339,9 +351,11 @@ $(document).ready(function(){
                 if (type === 'display') { data = sanitizeHTML(data);}
                 return data;
               }},
-          { "data": "username",
+          { "data": "user",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display'|| type === 'sort' || type === 'filter') {
+                    data = sanitizeHTML(data.user_name);
+                }
                 return data;
               }}
         ],
