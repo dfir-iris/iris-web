@@ -50,7 +50,7 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
-    ReviewStatus
+    ReviewStatus, EvidenceTypes
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -1235,6 +1235,49 @@ class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
         if client:
             raise marshmallow.exceptions.ValidationError(
                 "Case classification name already exists",
+                field_name="name"
+            )
+
+        return data
+
+
+class EvidenceTypeSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing EvidenceType objects.
+
+    This schema defines the fields to include when serializing and deserializing EvidenceType objects.
+    It includes fields for the evidence type name, expanded name, and description.
+
+    """
+    name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    description: str = auto_field('description', required=True, allow_none=True)
+
+    class Meta:
+        model = EvidenceTypes
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        """Verifies that the evidence type name is unique.
+
+        This method verifies that the evidence type name is unique. If the name is not unique, it raises a validation error.
+
+        Args:
+            data: The data to load.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the evidence type name is not unique.
+
+        """
+        client = EvidenceTypes.query.filter(
+            func.lower(EvidenceTypes.name) == func.lower(data.name),
+            EvidenceTypes.id != data.id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "Evidence type already exists",
                 field_name="name"
             )
 

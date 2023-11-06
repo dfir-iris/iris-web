@@ -218,6 +218,18 @@ class CaseClassification(db.Model):
     created_by = relationship('User')
 
 
+class EvidenceTypes(db.Model):
+    __tablename__ = 'evidence_type'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    description = Column(Text)
+    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
+    created_by_id = Column(ForeignKey('user.id'), nullable=True)
+
+    created_by = relationship('User')
+
+
 class CaseTemplate(db.Model):
     __tablename__ = 'case_template'
 
