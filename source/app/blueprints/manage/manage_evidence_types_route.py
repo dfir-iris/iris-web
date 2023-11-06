@@ -58,7 +58,7 @@ def list_evidence_types(caseid: int) -> Response:
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/<int:evidence_type_id>', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
-def get_evidence_type_by_id(evidence_type_id: int, caseid: int) -> Response:
+def get_evidence_type(evidence_type_id: int, caseid: int) -> Response:
     """Get an evidence type
 
     Args:
@@ -103,11 +103,11 @@ def update_evidence_type_modal(evidence_type_id: int, caseid: int, url_redir: bo
     evidence_type_form.name.render_kw = {'value': evidence_type.name}
     evidence_type_form.description.render_kw = {'value': evidence_type.description}
 
-    return render_template("modal_evidence_classification.html", form=evidence_type_form,
+    return render_template("modal_evidence_types.html", form=evidence_type_form,
                            evidence_type=evidence_type)
 
 
-@manage_evidence_types_blueprint.route('/manage/cevidence-types/update/<int:evidence_type_id>',
+@manage_evidence_types_blueprint.route('/manage/evidence-types/update/<int:evidence_type_id>',
                                        methods=['POST'])
 @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def update_case_classification(evidence_type_id: int, caseid: int) -> Response:
@@ -131,7 +131,7 @@ def update_case_classification(evidence_type_id: int, caseid: int) -> Response:
 
     try:
 
-        ccls = ccl.load(request.get_json(), instance=EvidenceTypeSchema)
+        ccls = ccl.load(request.get_json(), instance=evidence_type)
 
         if ccls:
             track_activity(f"updated evidence type {ccls.id}", caseid=caseid)
