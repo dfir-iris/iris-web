@@ -551,7 +551,7 @@ function add_evidence_type() {
             post_request_api('/manage/evidence-types/add', JSON.stringify(form), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    refresh_evidences_table();
+                    refresh_evidence_table();
                     $('#modal_add_type').modal('hide');
                 }
             });
