@@ -191,6 +191,50 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header" >
+                    <div class="row">
+                        <div class="col col-heading collapsed" href="#collapse_evidence" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_evidence">
+                            <span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
+                            <div class="card-title">Evidence types</div>
+                        </div>
+                        <div class="col float-right">
+                            <button type="button" class="btn btn-sm btn-dark float-right ml-2" onclick="refresh_evidence_table();">
+                                Refresh
+                            </button>
+                            <button class="btn btn-sm btn-dark float-right ml-2" onclick="add_evidence_type();">Add new</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body collapse" id="collapse_evidence">
+                    <div class="table-responsive" id="evidence_table_wrapper">
+                        <div class="selectgroup">
+                            <span id="evidence_buttons"></span>
+                        </div>
+                        <table class="table display table table-striped table-hover" width="100%"
+                            cellspacing="0" id="evidence_table">
+                            <thead>
+                                <tr>
+
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
     <div class="modal" tabindex="-1"  id="modal_add_type" data-backdrop="true">
         <div class="modal-lg modal-dialog" role="document">

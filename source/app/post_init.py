@@ -211,7 +211,7 @@ def run_post_init(development=False):
         create_safe_alert_status()
 
         log.info("Creating base evidence types")
-        create_safe_evience_types()
+        create_safe_evidence_types()
 
         log.info("Creating base alert resolution status")
         create_safe_alert_resolution_status()
