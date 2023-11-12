@@ -57,20 +57,19 @@
                                     <input class="form-control" placeholder="Hash" id="file_hash" name="file_hash" value="{{ rfile.file_hash }}"/>
                                 </div>
                                 <div class="form-group" id="dates_details">
-                                    <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseAddDates" role="button" aria-expanded="false" aria-controls="collapseAddInfo">> Timestamps info</a>
-                                    <div class="collapse" id="collapseAddDates">
-                                        <label for="start_date" class="placeholder mt-2">Start date</label>
+                                    <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseAddDates" role="button" aria-expanded="false" aria-controls="collapseAddInfo">> Date time information</a>
+                                    <div class="collapse {% if (rfile.start_date or rfile.end_date) %}show{% endif %}" id="collapseAddDates">
+                                        <label for="start_date" class="placeholder mt-2">Evidence start date time (UTC)</label>
                                         <div class="row ml-1" id="start_date_inputs">
-                                                <input class="form-control col-5 mr-2" type="date" id="start_date">
+                                                <input class="form-control col-6 mr-2" type="date" id="start_date" {% if rfile.start_date %}value="{{ rfile.start_date.strftime('%Y-%m-%d') }}" {% endif %}>
                                                 <span></span>
-                                                <input class="form-control col-4" type="time" step="0.001" id="start_time" value="00:00:00.000">
+                                                <input class="form-control col-5 mr-2" type="time" step="0.001" id="start_time" {% if rfile.start_date %}value="{{ rfile.start_date.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
                                                 <span></span>
-                                                <input class="form-control col-2" type="text" id="start_tz" value="+00:00">
                                                 <button class="btn btn-sm btn-outline-white" type="button" onclick="show_x_time_converter('start');return false;"><i class="fas fa-magic"></i></button>
                                         </div>
                                         <div class="row ml-1" id="start_date_convert" style="display:none;">
                                             <div class="input-group ">
-                                                <input class="form-control col-9" type="text" id="start_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
+                                                <input class="form-control col-11" type="text" id="start_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
                                                 <div class="input-group-append">
                                                     <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter('start');return false;">Submit</button>
                                                     <button class="btn btn-sm btn-outline" type="button" onclick="hide_x_time_converter('start');return false;"><i class="fas fa-magic"></i></button>
@@ -78,18 +77,17 @@
                                             </div>
                                             <span id="convert_bad_feedback_start" class="text-danger"></span>
                                         </div>
-                                        <label for="end_date" class="placeholder mt-2">End date</label>
+                                        <label for="end_date" class="placeholder mt-2">Evidence end date time (UTC)</label>
                                         <div class="row ml-1" id="end_date_inputs">
-                                                <input class="form-control col-5 mr-2" type="date" id="end_date">
+                                                <input class="form-control col-6 mr-2" type="date" id="end_date" {% if rfile.end_date %}value="{{ rfile.end_date.strftime('%Y-%m-%d') }}" {% endif %}>
                                                 <span></span>
-                                                <input class="form-control col-4" type="time" step="0.001" id="end_time" value="00:00:00.000">
+                                                <input class="form-control col-5 mr-2" type="time" step="0.001" id="end_time" {% if rfile.end_date %}value="{{ rfile.end_date.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
                                                 <span></span>
-                                                <input class="form-control col-2" type="text" id="end_tz" value="+00:00">
                                                 <button class="btn btn-sm btn-outline-white" type="button" onclick="show_x_time_converter('end');return false;"><i class="fas fa-magic"></i></button>
                                         </div>
                                         <div class="row ml-1" id="end_date_convert" style="display:none;">
                                             <div class="input-group ">
-                                                <input class="form-control col-9" type="text" id="end_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
+                                                <input class="form-control col-11" type="text" id="end_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
                                                 <div class="input-group-append">
                                                     <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter('end');return false;">Submit</button>
                                                     <button class="btn btn-sm btn-outline" type="button" onclick="hide_x_time_converter('end');return false;"><i class="fas fa-magic"></i></button>
