@@ -69,13 +69,15 @@ function add_modal_rfile() {
 }
 
 function add_rfile() {
-    var data_sent = $('form#form_edit_rfile').serializeObject();
+    let data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['file_description'] = g_evidence_desc_editor.getValue();
     data_sent['type_id'] = $('#file_type_id').val();
-    ret = get_custom_attributes_fields();
-    has_error = ret[0].length > 0;
-    attributes = ret[1];
+    data_sent['start_date'] = `${$('#start_date').val()}T${$('#start_time').val()}`;
+    data_sent['end_date'] = `${$('#end_date').val()}T${$('#end_time').val()}`;
+    let ret = get_custom_attributes_fields();
+    let has_error = ret[0].length > 0;
+    let attributes = ret[1];
 
     if (has_error){return false;}
 
@@ -296,12 +298,25 @@ function preview_evidence_description(no_btn_update) {
 
 /* Update an rfiles */
 function update_rfile(rfiles_id) {
-    var data_sent = $('form#form_edit_rfile').serializeObject();
+    let data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['type_id'] = $('#file_type_id').val();
-    ret = get_custom_attributes_fields();
-    has_error = ret[0].length > 0;
-    attributes = ret[1];
+    let sd = $('#start_date').val();
+    let st = $('#start_time').val()
+    if (sd && st) {
+        data_sent['start_date'] = `${sd}T${st}`;
+    }
+
+    let ed = $('#end_date').val();
+    let et = $('#end_time').val();
+    if (ed && et) {
+        data_sent['end_date'] = `${ed}T${et}`;
+    }
+
+
+    let ret = get_custom_attributes_fields();
+    let has_error = ret[0].length > 0;
+    let attributes = ret[1];
 
     if (has_error){return false;}
 
