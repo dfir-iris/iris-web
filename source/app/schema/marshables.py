@@ -1649,16 +1649,6 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
-class EvidenceTypeSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing EvidenceType objects
-
-    """
-
-    class Meta:
-        model = EvidenceTypes
-        load_instance = True
-
-
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseEvidence objects.
 

@@ -204,9 +204,46 @@ function edit_rfiles(rfiles_id) {
         load_evidence_type();
         
         $('#modal_add_rfiles').modal({ show: true });
+
         edit_in_evidence_desc();
     });
 }
+
+function show_x_time_converter(item){
+    $(`#${item}_date_convert`).show();
+    $(`#${item}_date_convert_input`).focus();
+    $(`#${item}_date_inputs`).hide();
+}
+
+function hide_x_time_converter(item){
+    $(`#${item}_date_convert`).hide();
+    $(`#${item}_date_inputs`).show();
+    $(`#${item}_date`).focus();
+}
+
+
+function time_converter(item){
+    let date_val = $(`#${item}_date_convert_input`).val();
+
+    let data_sent = Object();
+    data_sent['date_value'] = date_val;
+    data_sent['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api('timeline/events/convert-date', JSON.stringify(data_sent))
+    .done(function(data) {
+        if(notify_auto_api(data)) {
+            $(`#${item}_date`).val(data.data.date);
+            $(`#${item}_time`).val(data.data.time);
+            $(`#${item}_tz`).val(data.data.tz);
+            hide_x_time_converter(item);
+            $(`#convert_bad_feedback_${item}`).text('');
+        }
+    })
+    .fail(function() {
+        $(`#convert_bad_feedback_${item}`).text('Unable to find a matching pattern for the date');
+    });
+}
+
 
 function load_evidence_type() {
     get_request_api('/manage/evidence-types/list')
