@@ -196,7 +196,7 @@ def manage_user_group_(cur_id, caseid):
     update_user_groups(user_id=cur_id,
                        groups=request.json.get('groups_membership'))
 
-    track_activity(f"groups membership of user {user.get('user')} updated", caseid=caseid,  ctx_less=True)
+    track_activity(f"groups membership of user {cur_id} updated", caseid=caseid,  ctx_less=True)
 
     return response_success("User groups updated", data=user)
 
@@ -223,11 +223,11 @@ def manage_user_customers_(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request", status=400)
 
-    if not request.json.get('groups_membership'):
+    if not request.json.get('customers_membership'):
         return response_error("Invalid request", status=400)
 
-    if type(request.json.get('groups_membership')) is not list:
-        return response_error("Expected list of groups ID", status=400)
+    if type(request.json.get('customers_membership')) is not list:
+        return response_error("Expected list of customers ID", status=400)
 
     user = get_user_details(cur_id)
     if not user:
@@ -236,7 +236,7 @@ def manage_user_customers_(cur_id, caseid):
     update_user_customers(user_id=cur_id,
                           customers=request.json.get('customers_membership'))
 
-    track_activity(f"customers membership of user {user.get('user')} updated", caseid=caseid,  ctx_less=True)
+    track_activity(f"customers membership of user {cur_id} updated", caseid=caseid,  ctx_less=True)
 
     return response_success("User customers updated", data=user)
 

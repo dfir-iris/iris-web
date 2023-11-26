@@ -140,6 +140,8 @@ def update_user_customers(user_id, customers):
         user_client = UserClient()
         user_client.user_id = user_id
         user_client.client_id = client_id
+        user_client.access_level = CaseAccessLevel.full_access.value
+        user_client.allow_alerts = True
         db.session.add(user_client)
 
     for client_id in customers_to_remove:
@@ -347,9 +349,9 @@ def get_user_clients(user_id: int) -> List[Client]:
     ).join(
         UserClient.client
     ).with_entities(
-        Client.client_id,
+        Client.client_id.label('customer_id'),
         Client.client_uuid,
-        Client.name
+        Client.name.label('customer_name')
     ).all()
 
     clients_out = [c._asdict() for c in clients]

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy import desc
 
 from app.models import Cases
@@ -71,7 +71,10 @@ def ctx_search_user_cases(search, user_id, max_results: int = 100):
         desc(Cases.case_id)
     ).filter(and_(
         UserCaseEffectiveAccess.user_id == user_id,
-        Cases.name.ilike('%{}%'.format(search))
+        or_(
+            Cases.name.ilike('%{}%'.format(search)),
+            Client.name.ilike('%{}%'.format(search))
+        )
     )
     ).limit(max_results).all()
 

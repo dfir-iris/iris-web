@@ -70,7 +70,7 @@ def manage_ac_audit_users_db():
     return ret
 
 
-def check_ua_case_client(user_id: int, case_id: int) -> bool:
+def check_ua_case_client(user_id: int, case_id: int) -> UserClient:
     """Check if a user is part of a client
 
     Args:
@@ -80,12 +80,11 @@ def check_ua_case_client(user_id: int, case_id: int) -> bool:
     Returns:
         bool: True if the user is part of the client
     """
-
-    result = db.session.query(UserClient, Cases) \
-        .join(Cases, UserClient.client_id == Cases.client_id) \
-        .filter(UserClient.user_id == user_id) \
-        .filter(Cases.case_id == case_id) \
-        .with_entities(UserClient.access_level) \
-        .first()
+    result = UserClient.query.filter(
+        UserClient.user_id == user_id,
+        Cases.case_id == case_id
+    ).join(Cases,
+           UserClient.client_id == Cases.client_id
+    ).first()
 
     return result

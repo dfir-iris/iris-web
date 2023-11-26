@@ -250,7 +250,6 @@ function manage_user_groups(user_id) {
 
 function update_customers_membership_modal(user_customers) {
     for (let index in current_customers_list) {
-        console.log(current_customers_list[index]);
         data_dc.push({
             label: current_customers_list[index].customer_name,
             value: current_customers_list[index].customer_id
