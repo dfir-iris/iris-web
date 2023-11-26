@@ -25,7 +25,7 @@ from werkzeug.utils import redirect
 from app import db
 from app.datamgmt.manage.manage_evidence_types_db import get_evidence_types_list, \
     get_evidence_type_by_id, \
-    get_evidence_type_by_name
+    get_evidence_type_by_name, verify_evidence_type_in_use
 from app.forms import CaseClassificationForm, EvidenceTypeForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
@@ -210,6 +210,9 @@ def delete_evidence_type(evidence_type_id: int, caseid: int) -> Response:
     Returns:
         Flask Response object
     """
+    if verify_evidence_type_in_use(evidence_type_id):
+        return response_error("Evidence type is in use. Please delete evidences using this type beforehand.")
+
     evidence_type = get_evidence_type_by_id(evidence_type_id)
     if not evidence_type:
         return response_error(f"Invalid evidence type ID {evidence_type_id}")

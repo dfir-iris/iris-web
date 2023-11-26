@@ -19,7 +19,7 @@
 from sqlalchemy import func
 from typing import List
 
-from app.models import EvidenceTypes
+from app.models import EvidenceTypes, CaseReceivedFile
 
 
 def get_evidence_types_list() -> List[dict]:
@@ -50,6 +50,22 @@ def get_evidence_type_by_id(cur_id: int) -> EvidenceTypes:
     """
     evidence_type = EvidenceTypes.query.filter_by(id=cur_id).first()
     return evidence_type
+
+
+def verify_evidence_type_in_use(cur_id: int) -> bool:
+    """Returns true if the evidence type is in use
+
+    Args:
+        cur_id (int): Evidence type id to check
+
+    Returns:
+        Bool: True if in us
+    """
+    exists = CaseReceivedFile.query.filter(
+        CaseReceivedFile.type_id == cur_id
+    ).first()
+
+    return exists is not None
 
 
 def get_evidence_type_by_name(cur_name: str) -> EvidenceTypes:
