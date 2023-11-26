@@ -640,6 +640,15 @@ def ac_get_user_cases_access(user_id):
         GroupCaseAccess.case
     ).all()
 
+    ccas = UserClient.query.with_entities(
+        UserClient.access_level,
+        Cases.case_id,
+    ).join(
+        Cases, UserClient.client_id == Cases.client_id
+    ).filter(
+        UserClient.user_id == user_id
+    ).all()
+
     ucas = UserCaseAccess.query.with_entities(
         Cases.case_id,
         UserCaseAccess.access_level
@@ -655,6 +664,9 @@ def ac_get_user_cases_access(user_id):
 
     for gca in gcas:
         effective_cases_access[gca.case_id] = gca.access_level
+
+    for cca in ccas:
+        effective_cases_access[cca.case_id] = cca.access_level
 
     for uca in ucas:
         effective_cases_access[uca.case_id] = uca.access_level

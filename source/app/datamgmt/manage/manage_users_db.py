@@ -150,6 +150,8 @@ def update_user_customers(user_id, customers):
             UserClient.client_id == client_id
         ).delete()
 
+    ac_auto_update_user_effective_access(user_id)
+
     db.session.commit()
 
 
