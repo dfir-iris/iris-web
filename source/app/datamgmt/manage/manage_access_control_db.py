@@ -88,3 +88,37 @@ def check_ua_case_client(user_id: int, case_id: int) -> UserClient:
     ).first()
 
     return result
+
+
+def get_client_users(client_id: int) -> list:
+    """Get users for a client
+
+    Args:
+        client_id (int): Client ID
+
+    Returns:
+        list: List of users
+    """
+    result = UserClient.query.filter(
+        UserClient.client_id == client_id
+    ).all()
+
+    return result
+
+
+def get_user_clients_id(user_id: int) -> list:
+    """Get clients for a user
+
+    Args:
+        user_id (int): User ID
+
+    Returns:
+        list: List of clients
+    """
+    result = UserClient.query.filter(
+        UserClient.user_id == user_id
+    ).with_entities(
+        UserClient.client_id
+    ).all()
+
+    return [r[0] for r in result]

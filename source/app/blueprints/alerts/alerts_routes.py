@@ -34,6 +34,7 @@ from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, 
     get_alert_comments, delete_alert_comment, get_alert_comment, delete_similar_alert_cache, delete_alerts, \
     create_case_from_alerts
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -129,7 +130,8 @@ def alerts_list_route(caseid) -> Response:
         sort=request.args.get('sort'),
         assets=alert_assets,
         iocs=alert_iocs,
-        resolution_status=request.args.get('alert_resolution_id', type=int)
+        resolution_status=request.args.get('alert_resolution_id', type=int),
+        current_user_id=current_user.id
     )
 
     if filtered_data is None:
@@ -178,6 +180,10 @@ def alerts_add_route(caseid) -> Response:
 
         # Deserialize the JSON data into an Alert object
         new_alert = alert_schema.load(data)
+
+        # Verify the user is entitled to create an alert for the client
+        if not check_ua_case_client(current_user.id, new_alert.alert_customer_id):
+            return response_error('User not entitled to create alerts for the client')
 
         new_alert.alert_creation_time = datetime.utcnow()
 
@@ -550,7 +556,7 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
         if not case:
             return response_error('Failed to create case from alert')
 
-        ac_set_new_case_access(None, case.case_id)
+        ac_set_new_case_access(None, case.case_id, case.client_id)
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
@@ -805,7 +811,7 @@ def alerts_batch_escalate_route(caseid) -> Response:
         if not case:
             return response_error('Failed to create case from alert')
 
-        ac_set_new_case_access(None, case.case_id)
+        ac_set_new_case_access(None, case.case_id, case.client_id)
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 

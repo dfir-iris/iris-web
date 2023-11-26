@@ -336,7 +336,7 @@ def api_add_case(caseid):
                 return response_error(msg=f"Unexpected error when loading template {case_template_id} to new case.",
                                       status=400)
 
-        ac_set_new_case_access(None, case.case_id, case.case_customer)
+        ac_set_new_case_access(None, case.case_id, case.client_id)
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 

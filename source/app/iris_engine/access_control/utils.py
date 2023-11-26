@@ -298,15 +298,14 @@ def ac_fast_check_user_has_case_access(user_id, cid, access_level):
     if not ucea:
         # The user has no direct access, check if he is part of the client
         cuacu = check_ua_case_client(user_id, cid)
+        if cuacu is None:
+            return None
         ac_set_case_access_for_user(user_id, cid, cuacu.access_level)
 
         return cuacu.access_level
 
     if ac_flag_match_mask(ucea[0], CaseAccessLevel.deny_all.value):
-        cuacu = check_ua_case_client(user_id, cid)
-        ac_set_case_access_for_user(user_id, cid, cuacu.access_level)
-
-        return cuacu.access_level
+        return None
 
     for acl in access_level:
         if ac_flag_match_mask(ucea[0], acl.value):
@@ -382,6 +381,27 @@ def ac_add_user_effective_access(users_list, case_id, access_level):
     db.session.commit()
 
 
+def ac_add_user_effective_access_from_map(users_map, case_id):
+    """
+    Directly add a set of effective user access
+    """
+    UserCaseEffectiveAccess.query.filter(
+        UserCaseEffectiveAccess.case_id == case_id,
+        UserCaseEffectiveAccess.user_id.in_(users_map.keys())
+    ).delete()
+
+    access_to_add = []
+    for user_id in users_map:
+        ucea = UserCaseEffectiveAccess()
+        ucea.user_id = user_id
+        ucea.case_id = case_id
+        ucea.access_level = users_map[user_id]
+        access_to_add.append(ucea)
+
+    db.session.add_all(access_to_add)
+    db.session.commit()
+
+
 def ac_set_new_case_access(org_members, case_id, customer_id = None):
     """
     Set a new case access
@@ -394,8 +414,10 @@ def ac_set_new_case_access(org_members, case_id, customer_id = None):
     users_full = User.query.with_entities(User.id).all()
     users_full_access = list(set([u.id for u in users_full]) - set(users.keys()))
 
+    # Default users case access - Full access
     ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.full_access.value)
 
+    # Add specific right for the user creating the case
     UserCaseAccess.query.filter(
         UserCaseAccess.case_id == case_id,
         UserCaseAccess.user_id == current_user.id
@@ -409,6 +431,17 @@ def ac_set_new_case_access(org_members, case_id, customer_id = None):
     db.session.commit()
 
     ac_add_user_effective_access([current_user.id], case_id, CaseAccessLevel.full_access.value)
+
+    # Add customer permissions for all users belonging to the customer
+    if customer_id:
+        users_client = UserClient.query.filter(
+            UserClient.client_id == customer_id
+        ).with_entities(
+            UserClient.user_id,
+            UserClient.access_level
+        ).all()
+        users_map = { u.user_id: u.access_level for u in users_client }
+        ac_add_user_effective_access_from_map(users_map, case_id)
 
 
 def ac_apply_autofollow_groups_access(case_id):

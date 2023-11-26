@@ -34,9 +34,11 @@ from app import db
 from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
 from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
+from app.datamgmt.manage.manage_access_control_db import get_user_clients_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import case_template_pre_modifier, get_case_template_by_id, \
     case_template_post_modifier
+from app.datamgmt.manage.manage_users_db import get_user_clients
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
     alert_iocs_association, Ioc, IocLink
@@ -73,7 +75,8 @@ def get_filtered_alerts(
         resolution_status: int = None,
         page: int = 1,
         per_page: int = 10,
-        sort: str = 'desc'
+        sort: str = 'desc',
+        current_user_id: int = None
 ):
     """
     Get a list of alerts that match the given filter conditions
@@ -98,6 +101,7 @@ def get_filtered_alerts(
         page (int): The page number
         per_page (int): The number of alerts per page
         sort (str): The sort order
+        current_user_id (int): The ID of the current user
 
     returns:
         list: A list of alerts that match the given filter conditions
@@ -155,6 +159,11 @@ def get_filtered_alerts(
     if iocs is not None:
         if isinstance(iocs, list):
             conditions.append(Alert.iocs.any(Ioc.ioc_value.in_(iocs)))
+
+    if current_user_id is not None:
+        clients_filters = get_user_clients_id(current_user_id)
+        if clients_filters is not None:
+            conditions.append(Alert.alert_customer_id.in_(clients_filters))
 
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
