@@ -1,5 +1,6 @@
 let current_users_list = [];
 let current_customers_list = [];
+let data_dc = [];
 
 function add_user() {
     url = 'users/add/modal' + case_param();

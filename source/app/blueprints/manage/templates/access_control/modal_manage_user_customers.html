@@ -26,7 +26,7 @@
     </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 <script>
-let data_dc = [];
+data_dc = [];
 if (current_customers_list.length === 0) {
     refresh_customers().then(function () {
         update_customers_membership_modal([{% for custo in  user.user_customers %} {{ custo.customer_id }}, {% endfor %}])
