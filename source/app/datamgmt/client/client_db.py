@@ -27,7 +27,7 @@ from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.models import Cases
 from app.models import Client
 from app.models import Contact
-from app.models.authorization import User
+from app.models.authorization import User, UserClient
 from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
 
@@ -198,3 +198,9 @@ def delete_client(client_id: int) -> None:
         raise ElementInUseException('A currently referenced customer cannot be deleted')
 
 
+def get_case_client(case_id: int) -> Client:
+    client = Cases.query.filter(case_id == case_id).with_entities(
+        Cases.client_id
+    ).first()
+
+    return client

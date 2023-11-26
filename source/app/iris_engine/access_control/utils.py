@@ -4,6 +4,7 @@ from sqlalchemy import and_
 
 import app
 from app import db
+from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
@@ -295,7 +296,8 @@ def ac_fast_check_user_has_case_access(user_id, cid, access_level):
     ).first()
 
     if not ucea:
-        return None
+        # The user has no direct access, check if he is part of the client
+        return check_ua_case_client(user_id, cid)
 
     if ac_flag_match_mask(ucea[0], CaseAccessLevel.deny_all.value):
         return None
@@ -390,6 +392,7 @@ def ac_recompute_effective_ac(user_id):
 
     return ac_auto_update_user_effective_access(user_id)
 
+
 def ac_add_users_multi_effective_access(users_list, cases_list, access_level):
     """
     Add multiple users to multiple cases with a specific access level
@@ -398,6 +401,7 @@ def ac_add_users_multi_effective_access(users_list, cases_list, access_level):
         ac_add_user_effective_access(users_list, case_id=case_id, access_level=access_level)
 
     return
+
 
 def ac_add_user_effective_access(users_list, case_id, access_level):
     """

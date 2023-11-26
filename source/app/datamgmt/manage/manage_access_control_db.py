@@ -16,8 +16,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from app import db
 from app.models import Cases
-from app.models.authorization import Group
+from app.models.authorization import Group, UserClient
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import OrganisationCaseAccess
@@ -69,3 +70,22 @@ def manage_ac_audit_users_db():
     return ret
 
 
+def check_ua_case_client(user_id: int, case_id: int) -> bool:
+    """Check if a user is part of a client
+
+    Args:
+        user_id (int): User ID
+        case_id (int): Case ID
+
+    Returns:
+        bool: True if the user is part of the client
+    """
+
+    result = db.session.query(UserClient, Cases) \
+        .join(Cases, UserClient.client_id == Cases.client_id) \
+        .filter(UserClient.user_id == user_id) \
+        .filter(Cases.case_id == case_id) \
+        .with_entities(UserClient.access_level) \
+        .first()
+
+    return result

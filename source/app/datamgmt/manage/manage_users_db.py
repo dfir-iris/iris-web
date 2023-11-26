@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from typing import List
+
 from flask_login import current_user
 from sqlalchemy import and_
 
@@ -29,8 +31,8 @@ from app.iris_engine.access_control.utils import ac_auto_update_user_effective_a
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.iris_engine.access_control.utils import ac_remove_case_access_from_user
 from app.iris_engine.access_control.utils import ac_set_case_access_for_user
-from app.models import Cases
-from app.models.authorization import CaseAccessLevel
+from app.models import Cases, Client
+from app.models.authorization import CaseAccessLevel, UserClient
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -120,6 +122,33 @@ def update_user_groups(user_id, groups):
     db.session.commit()
 
     ac_auto_update_user_effective_access(user_id)
+
+
+def update_user_customers(user_id, customers):
+    # Update the user's customers directly
+    cur_customers = UserClient.query.with_entities(
+        UserClient.client_id
+    ).filter(UserClient.user_id == user_id).all()
+
+    set_cur_customers = set([cust[0] for cust in cur_customers])
+    set_new_customers = set(int(cust) for cust in customers)
+
+    customers_to_add = set_new_customers - set_cur_customers
+    customers_to_remove = set_cur_customers - set_new_customers
+
+    for client_id in customers_to_add:
+        user_client = UserClient()
+        user_client.user_id = user_id
+        user_client.client_id = client_id
+        db.session.add(user_client)
+
+    for client_id in customers_to_remove:
+        UserClient.query.filter(
+            UserClient.user_id == user_id,
+            UserClient.client_id == client_id
+        ).delete()
+
+    db.session.commit()
 
 
 def update_user_orgs(user_id, orgs):
@@ -312,6 +341,22 @@ def get_user_cases_access(user_id):
     return user_cases_access
 
 
+def get_user_clients(user_id: int) -> List[Client]:
+    clients = UserClient.query.filter(
+        UserClient.user_id == user_id
+    ).join(
+        UserClient.client
+    ).with_entities(
+        Client.client_id,
+        Client.client_uuid,
+        Client.name
+    ).all()
+
+    clients_out = [c._asdict() for c in clients]
+
+    return clients_out
+
+
 def get_user_cases_fast(user_id):
 
     user_cases = UserCaseEffectiveAccess.query.with_entities(
@@ -425,6 +470,7 @@ def get_user_details(user_id, include_api_key=False):
     row['user_organisations'] = get_user_organisations(user_id)
     row['user_permissions'] = get_user_effective_permissions(user_id)
     row['user_cases_access'] = get_user_cases_access(user_id)
+    row['user_customers'] = get_user_clients(user_id)
 
     upg = get_user_primary_org(user_id)
     row['user_primary_organisation_id'] = upg.org_id if upg else 0

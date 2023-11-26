@@ -1,4 +1,6 @@
-var current_users_list = [];
+let current_users_list = [];
+let current_customers_list = [];
+
 function add_user() {
     url = 'users/add/modal' + case_param();
     $('#modal_access_control').load(url, function (response, status, xhr) {
@@ -219,7 +221,7 @@ function remove_member_from_group_wrap(group_id, user_id) {
 }
 
 function manage_user_groups(user_id) {
-    url = 'users/' + user_id + '/groups/modal' + case_param();
+    let url = 'users/' + user_id + '/groups/modal' + case_param();
     $('#modal_ac_additional').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -230,7 +232,7 @@ function manage_user_groups(user_id) {
         $('#save_user_groups_membership').on("click", function () {
             clear_api_error();
 
-            var data_sent = Object();
+            let data_sent = Object();
             data_sent['groups_membership'] = $('#user_groups_membership').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
@@ -243,6 +245,72 @@ function manage_user_groups(user_id) {
             });
         });
     });
+}
+
+function update_customers_membership_modal(user_customers) {
+    for (let index in current_customers_list) {
+        console.log(current_customers_list[index]);
+        data_dc.push({
+            label: current_customers_list[index].customer_name,
+            value: current_customers_list[index].customer_id
+        });
+    }
+
+    let us_customer = $('#user_customers_membership');
+
+    us_customer.multiselect({
+        buttonWidth: 400,
+        nonSelectedText: 'Select customers',
+        includeSelectAllOption: true,
+        enableFiltering: true,
+        enableCaseInsensitiveFiltering: true,
+        filterPlaceholder: 'Search',
+        filterBehavior: 'both',
+        widthSynchronizationMode: 'ifPopupIsSmaller'
+    });
+
+    us_customer.multiselect('dataprovider', data_dc );
+
+    us_customer.multiselect('select', user_customers);
+
+    us_customer.multiselect('refresh')
+}
+
+
+async function refresh_customers() {
+    await get_request_api('customers/list')
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            current_customers_list = data.data;
+        }
+    });
+}
+
+function manage_user_clients(user_id) {
+    let url = 'users/' + user_id + '/customers/modal' + case_param();
+    $('#modal_ac_additional').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+        $('#modal_ac_additional').modal({ show: true });
+
+        $('#save_user_customers_membership').on("click", function () {
+            clear_api_error();
+
+            let data_sent = Object();
+            data_sent['customers_membership'] = $('#user_customers_membership').val();
+            data_sent['csrf_token'] = $('#csrf_token').val();
+
+            post_request_api('/manage/users/' + user_id + '/customers/update', JSON.stringify(data_sent))
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    user_detail(user_id, 'user_clients_tab');
+                }
+            });
+        });
+    });
+
 }
 
 

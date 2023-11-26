@@ -30,10 +30,11 @@ from flask_login import current_user
 
 from app import app
 from app import db
+from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
-from app.datamgmt.manage.manage_users_db import add_case_access_to_user
+from app.datamgmt.manage.manage_users_db import add_case_access_to_user, update_user_customers
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import delete_user
 from app.datamgmt.manage.manage_users_db import get_user
@@ -198,6 +199,46 @@ def manage_user_group_(cur_id, caseid):
     track_activity(f"groups membership of user {user.get('user')} updated", caseid=caseid,  ctx_less=True)
 
     return response_success("User groups updated", data=user)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/customers/modal', methods=['GET'])
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
+def manage_user_customers_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_users.add_user', cid=caseid))
+
+    user = get_user_details(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    groups = get_client_list()
+
+    return render_template("modal_manage_user_customers.html", groups=groups, user=user)
+
+
+@manage_users_blueprint.route('/manage/users/<int:cur_id>/customers/update', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+def manage_user_customers_(cur_id, caseid):
+
+    if not request.is_json:
+        return response_error("Invalid request", status=400)
+
+    if not request.json.get('groups_membership'):
+        return response_error("Invalid request", status=400)
+
+    if type(request.json.get('groups_membership')) is not list:
+        return response_error("Expected list of groups ID", status=400)
+
+    user = get_user_details(cur_id)
+    if not user:
+        return response_error("Invalid user ID")
+
+    update_user_customers(user_id=cur_id,
+                          customers=request.json.get('customers_membership'))
+
+    track_activity(f"customers membership of user {user.get('user')} updated", caseid=caseid,  ctx_less=True)
+
+    return response_success("User customers updated", data=user)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/modal', methods=['GET'])

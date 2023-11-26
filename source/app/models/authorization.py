@@ -163,6 +163,21 @@ class UserGroup(db.Model):
     UniqueConstraint('user_id', 'group_id')
 
 
+class UserClient(db.Model):
+    __tablename__ = "user_client"
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
+    client_id = Column(BigInteger, ForeignKey('client.client_id'), nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+    allow_alerts = Column(Boolean, nullable=False)
+
+    user = relationship('User')
+    client = relationship('Client')
+
+    UniqueConstraint('user_id', 'client_id')
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
 

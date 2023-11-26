@@ -23,26 +23,22 @@ import base64
 import datetime
 import decimal
 import hashlib
+import json
+import jwt
 import logging as log
 import marshmallow
 import pickle
 import random
+import requests
 import shutil
 import string
 import traceback
 import uuid
 import weakref
-from flask_socketio import Namespace
-from functools import wraps
-from pathlib import Path
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
-from cryptography.exceptions import InvalidSignature
-
-import jwt
-import requests
 from flask import Request
-import json
 from flask import render_template
 from flask import request
 from flask import session
@@ -50,17 +46,18 @@ from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
 from flask_wtf import FlaskForm
+from functools import wraps
 from jwt import PyJWKClient
+from pathlib import Path
 from pyunpack import Archive
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
-from app import TEMPLATE_PATH, socket_io
+from app import TEMPLATE_PATH
 from app import app
 from app import db
-from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_users_db import get_user
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
