@@ -50,7 +50,7 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
-    ReviewStatus, EvidenceTypes
+    ReviewStatus, EvidenceTypes, CaseStatus
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -2071,6 +2071,12 @@ class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
     user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     reviewer = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     review_status = ma.Nested(ReviewStatusSchema)
+    severity = ma.Nested(SeveritySchema)
+
+    def get_status_name(self, obj):
+        return CaseStatus(obj.status_id).name
+
+    status_name = ma.Method("get_status_name")
 
     class Meta:
         model = Cases
