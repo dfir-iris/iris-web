@@ -46,6 +46,7 @@ from app.models import NotesGroup
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models.authorization import User
+from app.schema.marshables import CaseDetailsSchema
 
 
 def export_case_json(case_id):
@@ -197,28 +198,12 @@ def export_caseinfo_json(case_id):
 
     case = Cases.query.filter(
         Cases.case_id == case_id
-    ).with_entities(
-        Cases.name,
-        Cases.open_date,
-        Cases.description,
-        Cases.soc_id,
-        User.name.label('opened_by'),
-        Client.name.label('for_customer'),
-        Cases.close_date,
-        Cases.custom_attributes,
-        Cases.case_id,
-        Cases.case_uuid,
-        Cases.status_id
-    ).join(
-        Cases.user, Cases.client
     ).first()
 
     if not case:
         return None
 
-    case = case._asdict()
-
-    case['status_name'] = CaseStatus(case['status_id']).name
+    case = CaseDetailsSchema().dump(case)
 
     return case
 

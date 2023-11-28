@@ -3,7 +3,7 @@
     <div class="col md-12">
         <div class="row">
             <div class="col align-self-center">
-                <h4 class="modal-title mr-4">{{ data.case_name|unquote }}
+                <h4 class="modal-title mr-4">{{ data.name|unquote }}
                     {% if data.modification_history %}
                         <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
                                 title="Modifications history"
@@ -50,24 +50,24 @@
                         <div class="col-6 col-xs-12 col-md-6">
                             <div class="form-group">
                                 <label>Case name :</label>
-                                <span type="text" class="">{{ data.case_name|unquote }}</span>
+                                <span type="text" class="">{{ data.name|unquote }}</span>
                             </div>
                             <div class="form-group mt--3">
                                 <label>Case description :</label>
-                                <span type="text" class="">{{ data.case_description[0:50] }}</span>
+                                <span type="text" class="">{{ data.description[0:50] }}</span>
                             </div>
                             <div class="form-group mt--3">
                                 <label>Customer :</label>
-                                <span type="text" class="text-faded">{{ data.customer_name }}</span>
+                                <span type="text" class="text-faded">{{ data.client.customer_name }}</span>
                             </div>
                             <div class="form-group mt--3">
                                 <label>Case tags :</label>
-                                <span type="text" class="text-faded">{% if data.case_tags %} {% for tag in data.case_tags.split(',') %}
+                                <span type="text" class="text-faded">{% if data.tags %} {% for tag in data.case_tags %}
                                     <span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>{{ tag }}</span> {% endfor %}{% endif %}</span>
                             </div>
                             <div class="form-group mt--3">
                                 <label>SOC ID :</label>
-                                <span type="text" class="text-faded">{{ data.case_soc_id }}</span>
+                                <span type="text" class="text-faded">{{ data.soc_id }}</span>
                             </div>
                             <div class="form-group mt--3">
                                 <label>Case ID :</label>
@@ -82,14 +82,18 @@
                             <div class="form-group mt--3">
                                 <label>Classification :</label>
                                 {% if data.classification %}
-                                    <span type="text" class="text-faded">{{ data.classification }}</span>
+                                    <span type="text" class="text-faded">{{ data.classification.classification_name }}</span>
                                     {% else %}
                                     <span type="text" class="text-faded">Unknown</span>
                                 {% endif %}
                             </div>
                             <div class="form-group mt--3">
                                 <label>State :</label>
-                                <span type="text" class="text-faded">{{ data.state_name }}</span>
+                                <span type="text" class="text-faded">{{ data.state.state_name }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Severity :</label>
+                                <span type="text" class="text-faded">{{ data.severity.severity_name }}</span>
                             </div>
                             <div class="form-group mt--3">
                                 <label>Open date :</label>
@@ -97,16 +101,16 @@
                             </div>
                             <div class="form-group mt--3">
                                 <label>Opening user :</label>
-                                <span type="text" class="">{{ data.open_by_user }}</span>
+                                <span type="text" class="">{{ data.user.user_name }}</span>
                             </div>
                             <div class="form-group mt--3">
                                 <label>Owner :</label>
-                                <span type="text" class="">{{ data.owner }}</span>
+                                <span type="text" class="">{{ data.owner.user_name }}</span>
                             </div>
                             {% if data.reviewer %}
                                 <div class="form-group mt--3">
                                     <label>Reviewer :</label>
-                                    <span type="text" class="">{{ data.reviewer }}</span>
+                                    <span type="text" class="">{{ data.reviewer.user_name }}</span>
                                 </div>
                             {% endif %}
                             {% if data.review_status %}
@@ -144,7 +148,7 @@
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">Case name  <i class="ml-2">{{"#{} - ".format(data.case_id)}}</i></span>
                                             </div>
-                                             <input type="text" class="form-control" name="case_name" value="{{ data.case_name.replace('#{} - '.format(data.case_id), '')}}">
+                                             <input type="text" class="form-control" name="case_name" value="{{ data.name.replace('#{} - '.format(data.case_id), '')}}">
                                         </div>
                                     </div>
                                     <div class="col-xs-12 col-6">
@@ -152,7 +156,7 @@
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">SOC ticket ID</span>
                                             </div>
-                                            <input type="text" class="form-control" name="case_soc_id" value="{{ data.case_soc_id }}">
+                                            <input type="text" class="form-control" name="case_soc_id" value="{{ data.soc_id }}">
                                         </div>
                                     </div>
                                 </div>
@@ -220,7 +224,7 @@
                                             <select class="selectpicker form-control"
                                                   id="case_quick_customer" name="case_customer">
                                                 {% for cst in customers %}
-                                                    <option value="{{ cst.customer_id }}" {% if data.customer_id == cst.customer_id %}selected{% endif %} class="badge-text">{{ cst.customer_name }}</option>
+                                                    <option value="{{ cst.customer_id }}" {% if data.client_id == cst.customer_id %}selected{% endif %} class="badge-text">{{ cst.customer_name }}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>

@@ -160,7 +160,8 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
-    res = get_case_details_rt(cur_id)
+    res = get_case(cur_id)
+    res = CaseDetailsSchema().dump(res)
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
     customers = get_client_list()
@@ -195,7 +196,7 @@ def manage_case_filter(caseid) -> Response:
 
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
-    case_ids_str = request.args.get('case_ids', None, type=int)
+    case_ids_str = request.args.get('case_ids', None, type=str)
     if case_ids_str:
         try:
 
