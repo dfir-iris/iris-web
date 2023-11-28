@@ -54,6 +54,7 @@ from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
+from app.datamgmt.manage.manage_common import get_severities_list
 from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
@@ -165,13 +166,15 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
     customers = get_client_list()
+    severities = get_severities_list()
     protagonists = get_case_protagonists(cur_id)
 
     form = FlaskForm()
 
     if res:
         return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
-                               case_classifications=case_classifications, case_states=case_states, customers=customers)
+                               case_classifications=case_classifications, case_states=case_states, customers=customers,
+                               severities=severities)
 
     else:
         return response_error("Unknown case")

@@ -240,6 +240,24 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-2">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Severity</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_severity" name="severity_id">
+                                                {% for cst in severities %}
+                                                    <option value="{{ cst.severity_id }}" {% if data.severity_id == cst.severity_id %}selected{% endif %} class="badge-text">{{ cst.severity_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-6">
+
+                                    </div>
+                                </div>
                                 <div class="form-group px-0">
                                     <label for="asset_tags">Case tags
                                     </label>
@@ -420,6 +438,10 @@
         title: "Customer",
         style: "btn-outline-white"
     });
-
+    $('#case_quick_severity').selectpicker({
+        liveSearch: true,
+        title: "Severity",
+        style: "btn-outline-white"
+    });
     access_case_info_reload('{{ data.case_id }}', '{{ data.owner_id }}', '{{ data.reviewer_id }}');
 </script>
