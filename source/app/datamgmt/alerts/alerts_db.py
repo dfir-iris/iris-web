@@ -426,6 +426,8 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         tag = tag.save()
         case.tags.append(tag)
 
+    case.severity_id = alert.alert_severity_id
+
     db.session.commit()
 
     # Link the alert to the case
