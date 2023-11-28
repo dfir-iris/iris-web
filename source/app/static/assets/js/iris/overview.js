@@ -1,21 +1,10 @@
 $.each($.find("table"), function(index, element){
     addFilterFields($(element).attr("id"));
 });
-var OverviewTable = $("#overview_table").DataTable({
+let OverviewTable = $("#overview_table").DataTable({
     dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
     aaData: [],
     aoColumns: [
-      {
-          data: "case_id",
-            render: function (data, type, row, meta) {
-                if (type === 'display') {
-                    data = `<span title="Quick look" class="bg-transparent btn-quick-view" style="cursor: pointer;" data-index="${meta.row}" ><i class="fa-solid fa-eye"></i></span>`;
-                } else if (type === 'sort' || type === 'filter') {
-                    data = parseInt(row['case_id']);
-                }
-                return data;
-            }
-        },
       {
         "data": "name",
         "render": function (data, type, row, meta) {
@@ -25,10 +14,13 @@ var OverviewTable = $("#overview_table").DataTable({
             } else {
                 data = sanitizeHTML(data);
             }
-            data = '<a rel="noopener" title="Open case in new tab" target="_blank" href="case?cid='+ row['case_id'] + '">' + data +'</a>';
+
+            data = `<a title="Open in new tab" rel="noopener" target="_blank" class="mr-2" href="/case?cid=${row['case_id']}"><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></a><span data-index="${meta.row}"  class="btn-quick-view text-primary" style="cursor: pointer;" title="Quick view">${data}</span>`;
+
           } else if (type === 'sort' || type === 'filter') {
             data = sanitizeHTML(data);
           }
+
           return data;
         }
       },
@@ -220,7 +212,7 @@ function get_cases_overview(silent, show_full=false) {
                 $('table tr td:nth-child(' + index  + ')').toggleClass("truncate");
             });
 
-
+            hide_loader();
         }
     });
 }
@@ -353,6 +345,7 @@ function show_case_view(row_index) {
 }
 
 $(document).ready(function() {
+    show_loader();
     get_cases_overview(true);
 
 
