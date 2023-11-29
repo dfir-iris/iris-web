@@ -1283,7 +1283,7 @@ function load_context_switcher() {
     });
 }
 
-function context_data_parser(data) {
+function context_data_parser(data, fire_modal = true) {
     if(notify_auto_api(data, true)) {
         $('#user_context').empty();
 
@@ -1305,7 +1305,10 @@ function context_data_parser(data) {
             }
         }
 
-        $('#modal_switch_context').modal("show");
+        if (fire_modal) {
+            $('#modal_switch_context').modal("show");
+        }
+
         $('#user_context').selectpicker('refresh');
         $('#user_context').selectpicker('val', get_caseid());
         return ret_data;

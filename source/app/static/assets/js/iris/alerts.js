@@ -179,6 +179,9 @@ function mergeMultipleAlertsModal() {
                             type: 'GET',
                             dataType: 'json'
                         },
+                        minLength: 0,
+                        clearOnEmpty: false,
+                        emptyRequest: true,
                         locale: {
                             emptyTitle: 'Select and Begin Typing',
                             statusInitialized: '',
@@ -188,7 +191,7 @@ function mergeMultipleAlertsModal() {
                         },
                         preserveSelected: false
                     };
-                    get_raw_request_api('/context/search-cases')
+                    get_request_api('/context/search-cases')
                         .done((data) => {
                             if (notify_auto_api(data, true)) {
                                 mergeAlertCasesSelectOption(data);
@@ -310,12 +313,15 @@ function mergeAlertModal(alert_id) {
                     type: 'GET',
                     dataType: 'json'
                 },
+                minLength: 0,
+                clearOnEmpty: false,
+                emptyRequest: true,
                 locale: {
                     emptyTitle: 'Select and Begin Typing',
                     statusInitialized: '',
                 },
                 preprocessData: function (data) {
-                    return context_data_parser(data);
+                    return context_data_parser(data, false);
                 },
                 preserveSelected: false
             };
