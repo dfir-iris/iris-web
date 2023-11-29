@@ -384,6 +384,7 @@ def api_add_case(caseid):
 
         case = case_schema.load(request_data)
         case.owner_id = current_user.id
+        case.severity_id = 4
 
         if case_template_id and len(case_template_id) > 0:
             case = case_template_pre_modifier(case, case_template_id)

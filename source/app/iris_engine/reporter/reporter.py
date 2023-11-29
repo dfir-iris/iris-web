@@ -307,7 +307,7 @@ class IrisMakeDocReport(IrisReportMaker):
 
         name = "{}".format("{}.docx".format(report.naming_format))
         name = name.replace("%code_name%", case_info['doc_id'])
-        name = name.replace('%customer%', case_info['case'].get('for_customer'))
+        name = name.replace('%customer%', case_info['case']['client']['customer_name'])
         name = name.replace('%case_name%', case_info['case'].get('name'))
         name = name.replace('%date%', datetime.utcnow().strftime("%Y-%m-%d"))
         output_file_path = os.path.join(self._tmp, name)
