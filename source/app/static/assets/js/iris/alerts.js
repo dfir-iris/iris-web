@@ -1579,7 +1579,7 @@ async function editAlert(alert_id, close=false) {
       console.error(error);
     });
 
-   $(' #editAlertModal').modal('show');
+   $('#editAlertModal').modal('show');
 
     confirmAlertEdition.off('click').on('click', function () {
         let alert_note = $('#editAlertNote').val();
