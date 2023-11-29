@@ -394,6 +394,7 @@ $(document).ready(function(){
                     ret += datacontent;
                     ret += '"></i>';
                 }
+
                 return ret;
               }
               return data;
@@ -424,7 +425,10 @@ $(document).ready(function(){
           },
           { "data": "asset_ip",
              "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') {
+                    datas = sanitizeHTML(data);
+                    return datas;
+                }
                 return data;
               }
           },
