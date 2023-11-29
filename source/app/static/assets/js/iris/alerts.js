@@ -188,7 +188,7 @@ function mergeMultipleAlertsModal() {
                         },
                         preserveSelected: false
                     };
-                    get_request_api('/context/get-cases/100')
+                    get_raw_request_api('/context/search-cases')
                         .done((data) => {
                             if (notify_auto_api(data, true)) {
                                 mergeAlertCasesSelectOption(data);
@@ -320,7 +320,7 @@ function mergeAlertModal(alert_id) {
                 preserveSelected: false
             };
 
-            get_request_api('/context/get-cases/100')
+            get_request_api('/context/search-cases')
             .done((data) => {
                 if (notify_auto_api(data, true)) {
                     mergeAlertCasesSelectOption(data);

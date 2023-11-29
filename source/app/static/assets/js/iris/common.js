@@ -1266,6 +1266,9 @@ function load_context_switcher() {
                 emptyTitle: 'Select and Begin Typing',
                 statusInitialized: '',
         },
+        minLength: 0,
+        clearOnEmpty: false,
+        emptyRequest: true,
         preprocessData: function (data) {
             return context_data_parser(data);
         },
@@ -1273,7 +1276,7 @@ function load_context_switcher() {
     };
 
 
-    get_request_api('/context/get-cases/100')
+    get_request_api('/context/search-cases')
     .done((data) => {
         context_data_parser(data);
         $('#user_context').ajaxSelectPicker(options);
