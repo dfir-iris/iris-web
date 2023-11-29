@@ -15,7 +15,7 @@ let OverviewTable = $("#overview_table").DataTable({
                 data = sanitizeHTML(data);
             }
 
-            data = `<a title="Open in new tab" rel="noopener" target="_blank" class="mr-2" href="/case?cid=${row['case_id']}"><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></a><span data-index="${meta.row}"  class="btn-quick-view text-primary" style="cursor: pointer;" title="Quick view">${data}</span>`;
+            data = `<a title="Open in new tab" rel="noopener" target="_blank" class="mr-2" href="/case?cid=${row['case_id']}"><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></a><span data-index="${meta.row}"  class="btn-quick-view text-link" style="cursor: pointer;" title="Quick view">${data}</span>`;
 
           } else if (type === 'sort' || type === 'filter') {
             data = sanitizeHTML(data);

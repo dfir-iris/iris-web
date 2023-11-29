@@ -123,6 +123,10 @@ a {
     color: #05316a;
 }
 
+.text-link {
+    color: #05316a;
+}
+
 a:hover,
 a:focus {
     color: #005fdb;
