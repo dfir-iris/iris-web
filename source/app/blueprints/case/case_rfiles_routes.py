@@ -81,7 +81,7 @@ def case_list_rfiles(caseid):
     crf = get_rfiles(caseid)
 
     ret = {
-        "evidences": [row._asdict() for row in crf],
+        "evidences": CaseEvidenceSchema().dump(crf, many=True),
         "state": get_evidences_state(caseid=caseid)
     }
 
@@ -111,8 +111,8 @@ def case_add_rfile(caseid):
         evidence = evidence_schema.load(request_data)
 
         crf = add_rfile(evidence=evidence,
-                          user_id=current_user.id,
-                          caseid=caseid
+                        user_id=current_user.id,
+                        caseid=caseid
                          )
 
         crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=caseid)

@@ -17,30 +17,27 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from typing import Any, Dict, List, Optional, Tuple, Union
-import uuid
-
 import datetime
-import logging
+import dateutil.parser
+import marshmallow
 import os
+import pyminizip
 import random
 import re
 import shutil
 import string
 import tempfile
-from pathlib import Path
-
-import dateutil.parser
-import marshmallow
-import pyminizip
+import uuid
 from flask_login import current_user
-from marshmallow import fields, Schema, validate, ValidationError
+from marshmallow import ValidationError
+from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
-from marshmallow import ValidationError
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
+from pathlib import Path
 from sqlalchemy import func
+from typing import Any, Dict, List, Optional, Tuple, Union
 from werkzeug.datastructures import FileStorage
 
 from app import app
@@ -50,7 +47,7 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
-    ReviewStatus
+    ReviewStatus, EvidenceTypes, CaseStatus
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -65,6 +62,7 @@ from app.models import EventCategory
 from app.models import GlobalTasks
 from app.models import Ioc
 from app.models import IocType
+from app.models import IrisModule
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import ServerSettings
@@ -74,8 +72,7 @@ from app.models.alerts import Alert, Severity, AlertStatus, AlertResolutionStatu
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.models.cases import CaseState
-from app.models import IrisModule
+from app.models.cases import CaseState, CaseProtagonist
 from app.util import file_sha256sum, str_to_bool, assert_type_mml
 from app.util import stream_sha256sum
 
@@ -1241,6 +1238,49 @@ class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class EvidenceTypeSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing EvidenceType objects.
+
+    This schema defines the fields to include when serializing and deserializing EvidenceType objects.
+    It includes fields for the evidence type name, expanded name, and description.
+
+    """
+    name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    description: str = auto_field('description', required=True, allow_none=True)
+
+    class Meta:
+        model = EvidenceTypes
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        """Verifies that the evidence type name is unique.
+
+        This method verifies that the evidence type name is unique. If the name is not unique, it raises a validation error.
+
+        Args:
+            data: The data to load.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the evidence type name is not unique.
+
+        """
+        client = EvidenceTypes.query.filter(
+            func.lower(EvidenceTypes.name) == func.lower(data.name),
+            EvidenceTypes.id != data.id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "Evidence type already exists",
+                field_name="name"
+            )
+
+        return data
+
+
 class CaseSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing Case objects.
 
@@ -1615,10 +1655,14 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     """
     filename: str = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
     csrf_token: Optional[str] = fields.String(required=False)
+    type = ma.Nested(EvidenceTypeSchema)
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
 
     class Meta:
         model = CaseReceivedFile
         load_instance = True
+        include_relationships = True
+        include_fk = True
 
     @post_load
     def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
@@ -2014,16 +2058,47 @@ class ReviewStatusSchema(ma.SQLAlchemyAutoSchema):
             include_relationships = True
 
 
+class CaseProtagonistSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing CaseProtagonist objects."""
+    class Meta:
+        model = CaseProtagonist
+        load_instance = True
+        include_fk = True
+        include_relationships = True
+
+
 class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing Case objects in details."""
     client = ma.Nested(CustomerSchema)
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     classification = ma.Nested(CaseClassificationSchema)
     state = ma.Nested(CaseStateSchema)
-    tags = ma.Nested(TagsSchema, many=True)
+    tags = ma.Nested(TagsSchema, many=True, only=['tag_title', 'id'])
     user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     reviewer = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     review_status = ma.Nested(ReviewStatusSchema)
+    severity = ma.Nested(SeveritySchema)
+
+    def get_status_name(self, obj):
+        return CaseStatus(obj.status_id).name
+
+    def get_protagonists(self, obj):
+        cp = CaseProtagonist.query.with_entities(
+            CaseProtagonist.role,
+            CaseProtagonist.name,
+            CaseProtagonist.contact,
+            User.name.label('user_name'),
+            User.user.label('user_login')
+        ).filter(
+            CaseProtagonist.case_id == obj.case_id
+        ).outerjoin(
+            CaseProtagonist.user
+        ).all()
+        cp = CaseProtagonistSchema(many=True).dump(cp)
+        return cp
+
+    status_name = ma.Method("get_status_name")
+    protagonists = ma.Method("get_protagonists")
 
     class Meta:
         model = Cases

@@ -40,19 +40,66 @@
                         <form method="post" action="" id="form_edit_rfile">
                             <div class="col-md-12 col-lg-12 col-sm-12">
                                 <div class="form-group">
-                                    <label for="rfile_filename" class="placeholder">Filename *</label>
-                                    <input class="form-control" placeholder="Filename" id="filename" required name="filename" value="{{ rfile.filename }}"/>
+                                    <label for="rfile_filename" class="placeholder">Name *</label>
+                                    <input class="form-control" placeholder="Name" id="filename" required name="filename" value="{{rfile.filename }}"/>
                                 </div>
                                 <div class="form-group">
-                                    <label for="rfile_size" class="placeholder">File size (bytes) *</label>
+                                    <label for="rfile_type" class="placeholder">Type </label>
+                                    <span style="display: none" data-file-type-id="{{rfile.type_id}}" id=store_type_id></span>
+                                    <select class="selectpicker form-control" id="file_type_id"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rfile_size" class="placeholder">Size (bytes)</label>
                                     <input class="form-control" placeholder="Size in bytes" id="file_size" name="file_size" value="{{ rfile.file_size }}"/>
                                 </div>
                                 <div class="form-group">
-                                    <label for="rfile_hash" class="placeholder">File Hash</label>
+                                    <label for="rfile_hash" class="placeholder">Hash</label>
                                     <input class="form-control" placeholder="Hash" id="file_hash" name="file_hash" value="{{ rfile.file_hash }}"/>
                                 </div>
+                                <div class="form-group" id="dates_details">
+                                    <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseAddDates" role="button" aria-expanded="false" aria-controls="collapseAddInfo">> Date time information</a>
+                                    <div class="collapse {% if (rfile.start_date or rfile.end_date) %}show{% endif %}" id="collapseAddDates">
+                                        <label for="start_date" class="placeholder mt-2">Evidence start date time (UTC)</label>
+                                        <div class="row ml-1" id="start_date_inputs">
+                                                <input class="form-control col-6 mr-2" type="date" id="start_date" {% if rfile.start_date %}value="{{ rfile.start_date.strftime('%Y-%m-%d') }}" {% endif %}>
+                                                <span></span>
+                                                <input class="form-control col-5 mr-2" type="time" step="0.001" id="start_time" {% if rfile.start_date %}value="{{ rfile.start_date.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
+                                                <span></span>
+                                                <button class="btn btn-sm btn-outline-white" type="button" onclick="show_x_time_converter('start');return false;"><i class="fas fa-magic"></i></button>
+                                        </div>
+                                        <div class="row ml-1" id="start_date_convert" style="display:none;">
+                                            <div class="input-group ">
+                                                <input class="form-control col-11" type="text" id="start_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter('start');return false;">Submit</button>
+                                                    <button class="btn btn-sm btn-outline" type="button" onclick="hide_x_time_converter('start');return false;"><i class="fas fa-magic"></i></button>
+                                                </div>
+                                            </div>
+                                            <span id="convert_bad_feedback_start" class="text-danger"></span>
+                                        </div>
+                                        <label for="end_date" class="placeholder mt-2">Evidence end date time (UTC)</label>
+                                        <div class="row ml-1" id="end_date_inputs">
+                                                <input class="form-control col-6 mr-2" type="date" id="end_date" {% if rfile.end_date %}value="{{ rfile.end_date.strftime('%Y-%m-%d') }}" {% endif %}>
+                                                <span></span>
+                                                <input class="form-control col-5 mr-2" type="time" step="0.001" id="end_time" {% if rfile.end_date %}value="{{ rfile.end_date.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
+                                                <span></span>
+                                                <button class="btn btn-sm btn-outline-white" type="button" onclick="show_x_time_converter('end');return false;"><i class="fas fa-magic"></i></button>
+                                        </div>
+                                        <div class="row ml-1" id="end_date_convert" style="display:none;">
+                                            <div class="input-group ">
+                                                <input class="form-control col-11" type="text" id="end_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter('end');return false;">Submit</button>
+                                                    <button class="btn btn-sm btn-outline" type="button" onclick="hide_x_time_converter('end');return false;"><i class="fas fa-magic"></i></button>
+                                                </div>
+                                            </div>
+                                            <span id="convert_bad_feedback_end" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="form-group">
-                                    <label for="rfile_desc" class="placeholder">File description</label>
+                                    <label for="rfile_desc" class="placeholder">Description</label>
                                      <div class="md_description_field">
                                         <div class="form-group mt--2">
                                             <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_evidence_desc();" >
@@ -76,7 +123,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <p>Automatically compute file information by selecting it below. The file will not be uploaded nor saved.</p>
+                                    <p>Locally compute file information by selecting it below. <span class="text-danger">The file is not be uploaded on the server nor saved.</span></p>
                                     <input id="input_autofill" type="file">
                                     <button class="btn btn-sm" type="button" onclick="get_hash()" id="btn_rfile_proc">Process</button>
                                 </div>

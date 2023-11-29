@@ -23,47 +23,53 @@
                     <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
                         <div class="col">
                             <div class="row">
-                                <h2 class="text-white pb-2 fw-bold case-name"> <i class="icon-big flaticon-network mr-2"></i> {{ case.name|unquote }}
-                                </h2>
-                            </div>
-                            <h5 class="text-white op-7 mb-1"><b>Open on</b> {{ case.open_date }} by {{ case.user.name }}</h5>
-                            <h5 class="text-white op-7 mb-3"><b>Owned by</b> {{ case.owner.name }}</h5>
-                            {% if case.close_date %}
-                            <h5 class="text-warning  mb-1">Closed on {{ case.close_date }}</h5>
-                            {% endif %}
-
-                        </div>
-                        <div class="col mt-4">
-                            <div class="row">
-                                 <span title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret ml-auto btn-xs mr-2 mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
-                                    onclick="case_detail('{{ case.case_id }}', true);"
-                                 ><i class="fa-solid fa-group-arrows-rotate mr-2"></i>{{ case.status_name }}</span>
-                            </div>
-                            <div class="row">
-                                  <div class="ml-auto">
-                                    <div class="row">
-                                        <h5 class="text-white op-7 mb-2 float-right mr-4"><b>Customer</b> : {{ case.client.name }}</h5>
-                                    </div>
-                                      <div class="row">
-                                        {% if case.soc_id %} <h5 class="text-white op-7 mb-2 mr-4"><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
-                                      </div>
+                                <div class="col">
+                                    <h2 class="text-white pb-2 fw-bold case-name"> {{ case.name|unquote }}
+                                    </h2>
                                 </div>
                             </div>
+                             <div class="row">
+                                <div class="col">
+                                <h5 class="text-white op-7 mb-1"><b>Open on</b> {{ case.open_date }} by {{ case.user.name }}</h5>
+                                <h5 class="text-white op-7 mb-3"><b>Owned by</b> {{ case.owner.name }}</h5>
+                                {% if case.close_date %}
+                                <h5 class="text-warning  mb-1">Closed on {{ case.close_date }}</h5>
+                                {% endif %}
+                            </div>
+                                <div class="col mt-auto">
+                                <div class="row">
+                                    {% if case.severity %}<span onclick="case_detail('{{ case.case_id }}', true);" class="btn btn-rounded badge-pill hidden-caret btn-sm ml-2 mb-2 ml-auto {% if case.severity.severity_id > 4 %} badge-danger {% elif case.severity.severity_id == 4 %} bg-warning-gradient text-dark {% else %} btn-light {% endif %} ml-2" title="Case severity"><i class="fa-solid fa-bolt mr-1"></i> {{ case.severity.severity_name }}</span>{% endif %}
+                                     <span title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret btn-sm ml-2 mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
+                                        onclick="case_detail('{{ case.case_id }}', true);"
+                                     ><i class="fa-solid fa-group-arrows-rotate mr-2"></i>{{ case.status_name }}</span>
+                                </div>
+                                <div class="row">
+                                      <div class="ml-auto">
+                                        <div class="row">
+                                            <h5 class="text-white op-7 mb-2 float-right mr-4"><b>Customer</b> : {{ case.client.name }}</h5>
+                                        </div>
+                                          <div class="row">
+                                            {% if case.soc_id %} <h5 class="text-white op-7 mb-2 mr-4"><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
+                                          </div>
+                                    </div>
+                                </div>
+                            </div>
+                             </div>
                         </div>
                     </div>
                     <div class="row mt-2 mb--2">
 
                         <div class="ml-2 col">
                             <div class="row ml-1">
-                                {% if case.state %}<h5 title="Case state" onclick="case_detail('{{ case.case_id }}', true);" style="cursor:pointer;"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light"><i class="fa-solid fa-business-time  mr-1"></i> {{ case.state.state_name }}</span></h5>{% endif %}
+                                {% if case.state %}<h5 title="Case state" onclick="case_detail('{{ case.case_id }}', true);" style="cursor:pointer;"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light" title="Case state"><i class="fa-solid fa-business-time  mr-1"></i> {{ case.state.state_name }}</span></h5>{% endif %}
                                 {% if case.classification %}<h5 title="Classification" onclick="case_detail('{{ case.case_id }}', true);" style="cursor:pointer;"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light ml-2"><i class="fa-solid fa-shield-virus mr-1"></i>{{ case.classification.name_expanded }}</span></h5>{% endif %}
-                                {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 badge-warning" href="/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
+                                {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 bg-warning-gradient text-dark" href="/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
                                 {% if case.review_status.status_name == "Reviewed" %}
                                 <h5 title="Reviewed"> <a class="text-white btn-rounded badge-pill hidden-caret btn-sm ml-2 badge-success"><i class="fa-regular fa-circle-check mr-2"></i>Case reviewed by {% if case.reviewer.id == current_user.id %} you {% else %} {{ case.reviewer.name }} {% endif %}</a></h5>
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="col mr-2">
+                        <div class="col mr-1">
                             {% if case.case_tags %}
                             {% for tag in case.case_tags %}
                             <span class="badge badge-pill badge-light ml-1 pull-right"><i class="fa fa-tag mr-1"></i> {{ tag }}</span>

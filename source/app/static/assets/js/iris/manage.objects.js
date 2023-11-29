@@ -536,3 +536,118 @@ function delete_case_state(id) {
       }
     });
 }
+
+
+
+/***    Evidence types    ***/
+
+function add_evidence_type() {
+    var url = '/manage/evidence-types/add/modal' + case_param();
+    $('#modal_add_type_content').load(url, function () {
+
+        $('#submit_new_evidence_type').on("click", function () {
+            var form = $('form#form_new_evidence_type').serializeObject();
+
+            post_request_api('/manage/evidence-types/add', JSON.stringify(form), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_evidence_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+
+            return false;
+        })
+    });
+    $('#modal_add_type').modal({ show: true });
+}
+
+$('#evidence_table').dataTable({
+    "ajax": {
+      "url": "/manage/evidence-types/list" + case_param(),
+      "contentType": "application/json",
+      "type": "GET",
+      "data": function ( d ) {
+        if (d.status == 'success') {
+          return JSON.stringify( d.data );
+        } else {
+          return [];
+        }
+      }
+    },
+    "order": [[ 0, "asc" ]],
+    "autoWidth": false,
+    "columns": [
+        {
+            "data": "name",
+            "render": function ( data, type, row ) {
+                return '<a href="#" onclick="evidence_detail(\'' + row['id'] + '\');">' + sanitizeHTML(data) +'</a>';
+            }
+        },
+        {
+            "data": "description",
+            "render": function ( data, type, row ) {
+                if (type === 'display') { data = sanitizeHTML(data);}
+                return data;
+            }
+        }
+    ]
+ });
+
+function refresh_evidence_table() {
+  $('#evidence_table').DataTable().ajax.reload();
+  notify_success("Refreshed");
+}
+
+function evidence_detail(evidence_id) {
+    let url = '/manage/evidence-types/update/' + evidence_id + '/modal' + case_param();
+    $('#modal_add_type_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
+        $('#submit_new_evidence_type').on("click", function () {
+            var form = $('form#form_new_evidence_type').serializeObject();
+
+            post_request_api('/manage/evidence-types/update/' + evidence_id, JSON.stringify(form), true)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_evidence_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+
+            return false;
+        })
+
+
+    });
+    $('#modal_add_type').modal({ show: true });
+}
+function delete_evidence_type(id) {
+
+    swal({
+      title: "Are you sure?",
+      text: "You won't be able to revert this !",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    })
+    .then((willDelete) => {
+      if (willDelete) {
+            post_request_api('/manage/evidence-types/delete/' + id)
+            .done((data) => {
+                if(notify_auto_api(data)) {
+                    refresh_evidence_table();
+                    $('#modal_add_type').modal('hide');
+                }
+            });
+      } else {
+        swal("Pfew, that was close");
+      }
+    });
+}

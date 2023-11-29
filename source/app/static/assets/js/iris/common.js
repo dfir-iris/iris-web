@@ -560,6 +560,24 @@ function copy_object_link_md(data_type, node_id){
     });
 }
 
+function copy_text_clipboardb(data){
+    navigator.clipboard.writeText(fromBinary64(data)).then(function() {
+        notify_success('Copied!');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error(err);
+    });
+}
+
+function copy_text_clipboard(data){
+    navigator.clipboard.writeText(data).then(function() {
+        notify_success('Copied!');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error(err);
+    });
+}
+
 function load_case_activity(){
     get_request_api('/case/activities/list')
     .done((data) => {
@@ -692,8 +710,18 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
 }
 
 function get_row_id(row) {
-    ids_map = ["ioc_id","asset_id","task_id","id"];
-    for (id in ids_map) {
+    let ids_map = ["ioc_id","asset_id","task_id","id"];
+    for (let id in ids_map) {
+        if (row[ids_map[id]] !== undefined) {
+            return row[ids_map[id]];
+        }
+    }
+    return null;
+}
+
+function get_row_value(row, column) {
+    let ids_map = ["asset_name","ioc_value","filename","id"];
+    for (let id in ids_map) {
         if (row[ids_map[id]] !== undefined) {
             return row[ids_map[id]];
         }
@@ -1057,6 +1085,17 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                 });
 
                 actionOptions.items.push({
+                    type: 'option',
+                    title: 'Copy',
+                    multi: false,
+                    iconClass: 'fa-regular fa-copy',
+                    action: function(rows){
+                        row = rows[0];
+                        copy_text_clipboard(get_row_value(row));
+                    }
+                });
+
+                actionOptions.items.push({
                     type: 'divider'
                 });
                 jdata_menu_options = jsdata;
@@ -1227,6 +1266,9 @@ function load_context_switcher() {
                 emptyTitle: 'Select and Begin Typing',
                 statusInitialized: '',
         },
+        minLength: 0,
+        clearOnEmpty: false,
+        emptyRequest: true,
         preprocessData: function (data) {
             return context_data_parser(data);
         },
@@ -1234,14 +1276,14 @@ function load_context_switcher() {
     };
 
 
-    get_request_api('/context/get-cases/100')
+    get_request_api('/context/search-cases')
     .done((data) => {
         context_data_parser(data);
         $('#user_context').ajaxSelectPicker(options);
     });
 }
 
-function context_data_parser(data) {
+function context_data_parser(data, fire_modal = true) {
     if(notify_auto_api(data, true)) {
         $('#user_context').empty();
 
@@ -1263,7 +1305,10 @@ function context_data_parser(data) {
             }
         }
 
-        $('#modal_switch_context').modal("show");
+        if (fire_modal) {
+            $('#modal_switch_context').modal("show");
+        }
+
         $('#user_context').selectpicker('refresh');
         $('#user_context').selectpicker('val', get_caseid());
         return ret_data;

@@ -17,19 +17,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from pathlib import Path
-
 from datetime import datetime
-from sqlalchemy import and_
-from sqlalchemy.orm import aliased, contains_eager, subqueryload
+from pathlib import Path
+from sqlalchemy import and_, desc, asc
+from sqlalchemy.orm import aliased
+from sqlalchemy.util import reduce
 
-from app import db
+from app import db, app
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
-from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee, TaskComments
+from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
@@ -45,16 +44,15 @@ from app.models import IocLink
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
-from app.models.alerts import Alert, AlertCaseAssociation
+from app.models import UserActivity
+from app.models.alerts import AlertCaseAssociation
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import User
-from app.models import UserActivity
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.cases import CaseProtagonist, CaseTags, CaseState
-from app.schema.marshables import CaseDetailsSchema
 
 
 def list_cases_id():
@@ -191,6 +189,9 @@ def map_alert_resolution_to_case_status(case_status_id):
 
     elif case_status_id == CaseStatus.true_positive_without_impact.value:
         ares = search_alert_resolution_by_name('True Positive Without Impact', exact_match=True)
+
+    elif case_status_id == CaseStatus.unknown.value:
+        ares = search_alert_resolution_by_name('Unknown', exact_match=True)
 
     else:
         ares = search_alert_resolution_by_name('Not Applicable', exact_match=True)
@@ -373,3 +374,105 @@ def delete_case(case_id):
     db.session.commit()
 
     return True
+
+
+def get_filtered_cases(start_open_date: str = None,
+                       end_open_date: str = None,
+                       case_customer_id: int = None,
+                       case_ids: list = None,
+                       case_name: str = None,
+                       case_description: str = None,
+                       case_classification_id: int = None,
+                       case_owner_id: int = None,
+                       case_opening_user_id: int = None,
+                       case_severity_id: int = None,
+                       case_state_id: int = None,
+                       case_soc_id: str = None,
+                       sort: str = None,
+                       per_page: int = None,
+                       page: int = None,
+                       current_user_id = None
+                       ):
+    """
+    Get a list of cases from the database, filtered by the given parameters
+
+    args:
+        start_open_date (str): The start date of the open date range
+        end_open_date (str): The end date of the open date range
+        case_customer_id (int): The ID of the customer to filter by
+        case_ids (list): A list of case IDs to filter by
+        case_name (str): The name of the case to filter by
+        case_description (str): The description of the case to filter by
+        case_classification_id (int): The ID of the classification to filter by
+        case_owner_id (int): The ID of the owner to filter by
+        case_opening_user_id (int): The ID of the user who opened the case to filter by
+        case_severity_id (int): The ID of the severity to filter by
+        case_state_id (int): The ID of the state to filter by
+        case_soc_id (str): The ID of the SOC to filter by
+        sort (str): The sort order to use
+        per_page (int): The number of cases to return per page
+        page (int): The page number to return
+        current_user_id (int): The ID of the current user
+
+    returns:
+        list: A list of cases
+    """
+    conditions = []
+
+    if start_open_date is not None and end_open_date is not None:
+        conditions.append(Cases.open_date.between(start_open_date, end_open_date))
+
+    if case_customer_id is not None:
+        conditions.append(Cases.client_id == case_customer_id)
+
+    if case_ids is not None:
+        conditions.append(Cases.case_id.in_(case_ids))
+
+    if case_name is not None:
+        conditions.append(Cases.name.ilike(f'%{case_name}%'))
+
+    if case_description is not None:
+        conditions.append(Cases.description.ilike(f'%{case_description}%'))
+
+    if case_classification_id is not None:
+        conditions.append(Cases.classification_id == case_classification_id)
+
+    if case_owner_id is not None:
+        conditions.append(Cases.owner_id == case_owner_id)
+
+    if case_opening_user_id is not None:
+        conditions.append(Cases.user_id == case_opening_user_id)
+
+    if case_severity_id is not None:
+        conditions.append(Cases.severity_id == case_severity_id)
+
+    if case_state_id is not None:
+        conditions.append(Cases.state_id == case_state_id)
+
+    if case_soc_id is not None:
+        conditions.append(Cases.soc_id == case_soc_id)
+
+    if len(conditions) > 1:
+        conditions = [reduce(and_, conditions)]
+
+    # filter out cases the user doesn't have access to
+    conditions.append(Cases.case_id.in_(user_list_cases_view(current_user_id)))
+
+    order_func = desc if sort == "desc" else asc
+
+    try:
+
+        # Query the cases using the filter conditions
+        filtered_cases = db.session.query(
+            Cases
+        ).filter(
+            *conditions
+        ).order_by(
+            order_func(Cases.case_id)
+        ).paginate(page=page, per_page=per_page, error_out=False)
+
+    except Exception as e:
+        app.logger.exception(f"Error getting cases: {str(e)}")
+        return None
+
+    return filtered_cases

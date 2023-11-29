@@ -48,12 +48,13 @@ from app.datamgmt.manage.manage_case_classifications_db import get_case_classifi
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list, get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, case_template_pre_modifier, \
     case_template_post_modifier
-from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status
+from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status, get_filtered_cases
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
+from app.datamgmt.manage.manage_common import get_severities_list
 from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
@@ -69,7 +70,7 @@ from app.models.alerts import AlertStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.models.models import Client, ReviewStatusList
-from app.schema.marshables import CaseSchema
+from app.schema.marshables import CaseSchema, CaseDetailsSchema
 from app.util import ac_api_case_requires, add_obj_history_entry
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
@@ -160,17 +161,20 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
-    res = get_case_details_rt(cur_id)
+    res = get_case(cur_id)
+    res = CaseDetailsSchema().dump(res)
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
     customers = get_client_list()
+    severities = get_severities_list()
     protagonists = get_case_protagonists(cur_id)
 
     form = FlaskForm()
 
     if res:
         return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
-                               case_classifications=case_classifications, case_states=case_states, customers=customers)
+                               case_classifications=case_classifications, case_states=case_states, customers=customers,
+                               severities=severities)
 
     else:
         return response_error("Unknown case")
@@ -187,6 +191,70 @@ def get_case_api(cur_id, caseid):
         return response_success(data=res)
 
     return response_error(f'Case ID {cur_id} not found')
+
+
+@manage_cases_blueprint.route('/manage/cases/filter', methods=['GET'])
+@ac_api_requires(no_cid_required=True)
+def manage_case_filter(caseid) -> Response:
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    case_ids_str = request.args.get('case_ids', None, type=str)
+    if case_ids_str:
+        try:
+
+            if ',' in case_ids_str:
+                case_ids_str = [int(alert_id) for alert_id in case_ids_str.split(',')]
+
+            else:
+                case_ids_str = [int(case_ids_str)]
+
+        except ValueError:
+            return response_error('Invalid case id')
+
+    case_customer_id = request.args.get('case_customer_id', None, type=str)
+    case_name = request.args.get('case_name', None, type=str)
+    case_description = request.args.get('case_description', None, type=str)
+    case_classification_id = request.args.get('case_classification_id', None, type=int)
+    case_owner_id = request.args.get('case_owner_id', None, type=int)
+    case_opening_user_id = request.args.get('case_opening_user_id', None, type=int)
+    case_severity_id = request.args.get('case_severity_id', None, type=int)
+    case_state_id = request.args.get('case_state_id', None, type=int)
+    case_soc_id = request.args.get('case_soc_id', None, type=str)
+    sort = request.args.get('sort')
+    start_open_date = request.args.get('start_open_date', None, type=str)
+    end_open_date = request.args.get('end_open_date', None, type=str)
+
+    filtered_cases = get_filtered_cases(
+        case_ids=case_ids_str,
+        case_customer_id=case_customer_id,
+        case_name=case_name,
+        case_description=case_description,
+        case_classification_id=case_classification_id,
+        case_owner_id=case_owner_id,
+        case_opening_user_id=case_opening_user_id,
+        case_severity_id=case_severity_id,
+        case_state_id=case_state_id,
+        case_soc_id=case_soc_id,
+        sort=sort,
+        start_open_date=start_open_date,
+        end_open_date=end_open_date,
+        page=page,
+        per_page=per_page,
+        current_user_id=current_user.id
+    )
+    if filtered_cases is None:
+        return response_error('Filtering error')
+
+    cases = {
+        'total': filtered_cases.total,
+        'cases': CaseDetailsSchema().dump(filtered_cases.items, many=True),
+        'last_page': filtered_cases.pages,
+        'current_page': filtered_cases.page,
+        'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
+    }
+
+    return response_success(cases)
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])

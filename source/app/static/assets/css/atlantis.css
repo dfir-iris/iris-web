@@ -123,6 +123,10 @@ a {
     color: #05316a;
 }
 
+.text-link {
+    color: #05316a;
+}
+
 a:hover,
 a:focus {
     color: #005fdb;
@@ -14190,6 +14194,13 @@ table.dataTable.stripe tbody > tr.selected {
     background: linear-gradient(-45deg, #05316A, #05316a)  !important;
 }
 
+.bg-case-gradient{
+    background: #05316a !important;
+
+    background: -webkit-linear-gradient(legacy-direction(-45deg), #05316A, #05316a) !important;
+    background: linear-gradient(-45deg, #05316A, #05316a)  !important;
+}
+
 .bg-secondary-gradient {
     background: #6861CE !important;
     background: -webkit-linear-gradient(legacy-direction(-45deg), #2A20AC, #6861CE) !important;
@@ -15876,4 +15887,12 @@ td.dt-nowrap { white-space: nowrap }
 .alert-card .flex-1 {
     margin-left: 0.9rem !important;
     margin-right: 0.9rem !important;
+}
+
+.table-hover tbody tr:hover td > .copy-icon-l {
+    display: inline !important;
+}
+
+.copy-icon-l {
+    margin-left: 10px;
 }

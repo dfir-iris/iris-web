@@ -314,6 +314,12 @@ $(document).ready(function() {
                         datas += '<span class="badge badge-primary">' + sanitizeHTML(data[index]['tag_title']) + '</span> ';
                     }
                     return datas;
+                  } else if (type === 'sort' || type === 'filter') {
+                      datas = '';
+                      for (let index in data) {
+                         datas += ' '+ data[index]['tag_title'];
+                      }
+                      return datas;
                   }
                   return data;
                 }
