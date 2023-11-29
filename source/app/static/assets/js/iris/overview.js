@@ -171,7 +171,7 @@ let OverviewTable = $("#overview_table").DataTable({
         }
       }
     },
-    order: [[ 1, "asc" ]],
+    order: [[ 6, "asc" ]],
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
@@ -285,7 +285,8 @@ function show_case_view(row_index) {
     owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.state ? case_data.state.state_description: 'None'));
     owner_dl1.append($('<dt class="col-sm-3"/>').text('Last update:'));
     owner_dl1.append($('<dd class="col-sm-8"/>').text(timeSinceLastUpdateStr));
-
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Severity:'));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.severity.severity_name));
 
     owner_col1.append(owner_dl1);
 
