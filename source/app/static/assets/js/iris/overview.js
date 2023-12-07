@@ -184,7 +184,7 @@ let OverviewTable = $("#overview_table").DataTable({
     },
     select: true,
     initComplete: function () {
-            tableFiltering(this.api(), 'overview_table', [0]);
+            tableFiltering(this.api(), 'overview_table');
         },
     drawCallback: function () {
             $('.btn-quick-view').off('click').on('click', function() {
