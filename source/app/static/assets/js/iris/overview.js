@@ -187,7 +187,7 @@ let OverviewTable = $("#overview_table").DataTable({
       {
           "data": "severity",
             "render": function (data, type, row, meta) {
-                  if (type == 'filter'  || type === 'sort' || type === 'display' || type === 'search') {
+                  if (data != null && (type == 'filter'  || type === 'sort' || type === 'display' || type === 'search')) {
                     return data.severity_name;
                   }
                 return data;
