@@ -4,7 +4,39 @@ $.each($.find("table"), function(index, element){
 let OverviewTable = $("#overview_table").DataTable({
     dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
     aaData: [],
+    columnDefs: [
+        {
+            targets: [0], // column index
+            visible: false, // set visibility
+            searchable: true, // set searchable
+            data: "status_name" // field in data
+        },
+        {
+            targets: [1], // column index
+            visible: false, // set visibility
+            searchable: true, // set searchable
+            data: "case_id" // field in data
+        },
+        {
+            targets: [11], // column index
+            visible: false, // set visibility
+            searchable: true, // set searchable
+            data: "severity" // field in data
+        }
+    ],
     aoColumns: [
+        {
+          "data": "status_name",
+            "render": function (data, type, row, meta) {
+                return data;
+            }
+        },
+        {
+          "data": "case_id",
+            "render": function (data, type, row, meta) {
+                return data;
+            }
+        },
       {
         "data": "name",
         "render": function (data, type, row, meta) {
@@ -151,7 +183,16 @@ let OverviewTable = $("#overview_table").DataTable({
             }
           return data;
         }
-      }
+      },
+      {
+          "data": "severity",
+            "render": function (data, type, row, meta) {
+                  if (data != null && (type == 'filter'  || type === 'sort' || type === 'display' || type === 'search')) {
+                    return data.severity_name;
+                  }
+                return data;
+            }
+        }
     ],
     filter: true,
     info: true,
@@ -184,7 +225,7 @@ let OverviewTable = $("#overview_table").DataTable({
     },
     select: true,
     initComplete: function () {
-            tableFiltering(this.api(), 'overview_table', [0]);
+            tableFiltering(this.api(), 'overview_table');
         },
     drawCallback: function () {
             $('.btn-quick-view').off('click').on('click', function() {
@@ -287,6 +328,10 @@ function show_case_view(row_index) {
     owner_dl1.append($('<dd class="col-sm-8"/>').text(timeSinceLastUpdateStr));
     owner_dl1.append($('<dt class="col-sm-3"/>').text('Severity:'));
     owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.severity.severity_name));
+    owner_dl1.append($('<dt class="col-sm-3"/>').text('Outcome:'));
+    let statusName = case_data.status_name.replace(/_/g, ' ');
+    statusName = statusName.replace(/\b\w/g, function(l){ return l.toUpperCase() });
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(statusName));
 
     owner_col1.append(owner_dl1);
 
