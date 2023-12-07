@@ -549,11 +549,13 @@ class IrisMakeMdReport(IrisReportMaker):
 
         _, report_format = os.path.splitext(report.internal_reference)
 
+        case_info['case']['for_customer'] = f"{case_info['case'].get('client').get('customer_name')} (legacy::use client.customer_name)"
+
         # Prepare report name
         name = "{}".format(("{}" + str(report_format)).format(report.naming_format))
         name = name.replace("%code_name%", case_info['doc_id'])
         name = name.replace(
-            '%customer%', case_info['case'].get('for_customer'))
+            '%customer%', case_info['case'].get('client').get('customer_name'))
         name = name.replace('%case_name%', case_info['case'].get('name'))
         name = name.replace('%date%', datetime.utcnow().strftime("%Y-%m-%d"))
 
