@@ -285,16 +285,18 @@ def datastore_view_file(cur_id: int, caseid: int):
         return response_error('Unable to get requested file ID', data=dsf)
 
     if dsf.file_is_ioc or dsf.file_password:
-        dsf.file_original_name += ".zip"
+        destination_name = dsf.file_original_name + ".zip"
+    else:
+        destination_name = dsf.file_original_name
 
     if not Path(dsf.file_local_name).is_file():
         return response_error(f'File {dsf.file_local_name} does not exists on the server. '
                               f'Update or delete virtual entry')
 
     resp = send_file(dsf.file_local_name, as_attachment=True,
-                     download_name=dsf.file_original_name)
+                     download_name=destination_name)
 
-    track_activity(f"File \"{dsf.file_original_name}\" downloaded", caseid=caseid, display_in_ui=False)
+    track_activity(f"File \"{destination_name}\" downloaded", caseid=caseid, display_in_ui=False)
     return resp
 
 
