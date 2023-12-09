@@ -167,7 +167,7 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
     case_states = get_case_states_list()
     customers = get_client_list()
     severities = get_severities_list()
-    protagonists = get_case_protagonists(cur_id)
+    protagonists  = [r._asdict() for r in get_case_protagonists(cur_id)]
 
     form = FlaskForm()
 
