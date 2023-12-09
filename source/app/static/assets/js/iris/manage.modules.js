@@ -1,3 +1,8 @@
+const preventFormDefaultBehaviourOnSubmit = (event) => {
+    event.preventDefault();
+    return false;
+};
+
 $('#form_new_module').submit(function () {
 
     post_request_api('/manage/modules/add', $('form#form_new_module').serializeArray(), function() {
@@ -23,6 +28,7 @@ $('#form_new_module').submit(function () {
 function add_module() {
     url = 'modules/add/modal' + case_param();
     $('#modal_add_module_content').load(url, function (response, status, xhr) {
+        $('#form_new_module').on("submit", preventFormDefaultBehaviourOnSubmit);
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
