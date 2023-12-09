@@ -268,6 +268,7 @@ function import_mod_config(module_id){
 function update_param(module_id, param_name) {
     url = 'modules/get-parameter/' + decodeURIComponent(escape(window.btoa(param_name))) + case_param();
     $('#modal_update_param_content').load(url, function (response, status, xhr) {
+        $('#form_update_param').on("submit", preventFormDefaultBehaviourOnSubmit);
         if (status !== "success") {
              ajax_notify_error(xhr, url);
              return false;
