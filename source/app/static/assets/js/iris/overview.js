@@ -22,6 +22,12 @@ let OverviewTable = $("#overview_table").DataTable({
             visible: false, // set visibility
             searchable: true, // set searchable
             data: "severity" // field in data
+        },
+        {
+            targets: [2], // column index
+            visible: true, // set visibility
+            searchable: true, // set searchable
+            sType: 'integer'
         }
     ],
     aoColumns: [
@@ -35,25 +41,27 @@ let OverviewTable = $("#overview_table").DataTable({
           "data": "case_id",
             "render": function (data, type, row, meta) {
                 return data;
-            }
+          }
         },
       {
         "data": "name",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            if (isWhiteSpace(data)) {
-                data = '#' + row['case_id'];
-            } else {
-                data = sanitizeHTML(data);
+            if (type === 'display' || type === 'filter') {
+                if (isWhiteSpace(data)) {
+                    data = '#' + row['case_id'];
+                } else {
+                    data = sanitizeHTML(data);
+                }
+            } else if (type === 'sort') {
+                console.log(parseInt(row['case_id']));
+                return parseInt(row['case_id']);
             }
 
-            data = `<a title="Open in new tab" rel="noopener" target="_blank" class="mr-2" href="/case?cid=${row['case_id']}"><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></a><span data-index="${meta.row}"  class="btn-quick-view text-link" style="cursor: pointer;" title="Quick view">${data}</span>`;
+            if (type === 'display') {
+                data = `<a title="Open in new tab" rel="noopener" target="_blank" class="mr-2" href="/case?cid=${row['case_id']}"><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></a><span data-index="${meta.row}"  class="btn-quick-view text-link" style="cursor: pointer;" title="Quick view">${data}</span>`;
+            }
 
-          } else if (type === 'sort' || type === 'filter') {
-            data = sanitizeHTML(data);
-          }
-
-          return data;
+            return data;
         }
       },
       { "data": "client",
@@ -212,7 +220,7 @@ let OverviewTable = $("#overview_table").DataTable({
         }
       }
     },
-    order: [[ 6, "asc" ]],
+    order: [[ 7, "asc" ]],
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
