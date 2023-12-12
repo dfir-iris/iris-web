@@ -342,7 +342,7 @@ function show_case_view(row_index) {
     owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.client.customer_name));
 
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Classification:'));
-    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.classification ? case_data.classification.name: 'None'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.classification ? case_data.classification.name_expanded: 'None'));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('SOC ID:'));
     owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.soc_id !== '' ? case_data.soc_id : 'None'));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Related alerts:'));
