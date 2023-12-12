@@ -335,7 +335,7 @@ function show_case_view(row_index) {
     owner_dl1.append($('<dt class="col-sm-3"/>').text('Last update:'));
     owner_dl1.append($('<dd class="col-sm-8"/>').text(timeSinceLastUpdateStr));
     owner_dl1.append($('<dt class="col-sm-3"/>').text('Severity:'));
-    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.severity.severity_name));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.severity ? case_data.severity.severity_name: "Unspecified"));
     owner_dl1.append($('<dt class="col-sm-3"/>').text('Outcome:'));
     let statusName = case_data.status_name.replace(/_/g, ' ');
     statusName = statusName.replace(/\b\w/g, function(l){ return l.toUpperCase() });
