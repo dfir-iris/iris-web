@@ -55,7 +55,7 @@ function ellipsis_field( data, cutoff, wordbreak ) {
         return anchor.prop('outerHTML');
     }
 
-    var shortened = data.substr(0, cutoff-1);
+    let shortened = data.substr(0, cutoff-1);
 
     // Find the last white space character in the string
     if ( wordbreak ) {
@@ -68,6 +68,21 @@ function ellipsis_field( data, cutoff, wordbreak ) {
     anchor.title = data;
 
     return anchor.prop('outerHTML');
+}
+
+function ellipsis_field_raw( data, cutoff, wordbreak ) {
+
+    if (data.length <= cutoff) {
+        return data;
+    }
+
+    let shortened = data.substr(0, cutoff - 1);
+
+    if (wordbreak) {
+        shortened = shortened.replace(/\s([^\s]*)$/, '');
+    }
+
+    return shortened + '…';
 }
 
 function propagate_form_api_errors(data_error) {

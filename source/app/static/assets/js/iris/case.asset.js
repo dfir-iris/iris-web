@@ -463,7 +463,7 @@ $(document).ready(function(){
             "data": "ioc_links",
             "render": function (data, type, row, meta) {
                 if ((type === 'filter' || type === 'display') && data != null) {
-                    datas = "";
+                    let datas = "";
                     for (ds in data) {
                         datas += get_tag_from_data(data[ds]['ioc_value'], 'badge badge-light ml-2');
                     }

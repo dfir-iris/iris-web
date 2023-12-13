@@ -396,15 +396,15 @@ $(document).ready(function(){
           { "data": "ioc_description",
            "render": function (data, type, row, meta) {
               if (type === 'display') {
-              data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-                if (data.length > 70) {
-                    datas += ' (..)</span>';
-                } else {
-                    datas += '</span>';
-                }
-                return datas;
+              let anchor = $('<span>');
+              anchor.attr('data-toggle', 'popover')
+                    .attr('data-trigger', 'hover')
+                    .attr('title', 'Description')
+                    .attr('data-content', data)
+                    .attr('href', '#')
+                    .css('cursor', 'pointer')
+                    .text(ellipsis_field_raw(data, 64));
+                return anchor.prop('outerHTML');
               }
               return data;
             }
@@ -412,10 +412,10 @@ $(document).ready(function(){
           { "data": "ioc_tags",
             "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
-                  tags = "";
-                  de = data.split(',');
-                  for (tag in de) {
-                    tags += '<span class="badge badge-light ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+                  let tags = "";
+                  let de = data.split(',');
+                  for (let tag in de) {
+                      tags += get_tag_from_data(de[tag], 'badge badge-light ml-2');
                   }
                   return tags;
               }
