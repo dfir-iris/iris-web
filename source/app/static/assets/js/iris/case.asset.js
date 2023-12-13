@@ -457,7 +457,7 @@ $(document).ready(function(){
                 if ((type === 'filter' || type === 'display') && data != null) {
                     let datas = "";
                     for (ds in data) {
-                        datas += get_tag_from_data(data[ds]['ioc_value'], 'badge badge-light ml-2');
+                        datas += get_ioc_tag_from_data(data[ds]['ioc_value'], 'badge badge-light ml-2');
                     }
                     return datas;
                 } else if (type === 'export' && data != null) {

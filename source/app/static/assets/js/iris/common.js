@@ -83,9 +83,17 @@ function ret_obj_dt_description(data) {
     return anchor.prop('outerHTML');
 }
 
-function render_date(date) {
+function render_date(date, show_ms = false) {
     // Remove the timezone information and the ms
-    return date.replace('T', ' ').replace('Z', '').replace(/\.\d+/, '');
+    let date_str = date.replace('T', ' ').replace('Z', '');
+    if (!show_ms) {
+        date_str = date_str.split('.')[0];
+    } else {
+        // remove nanoseconds
+        date_str = date_str.split('.')[0] + '.' + date_str.split('.')[1].substr(0, 3);
+    }
+
+    return date_str;
 }
 
 function ellipsis_field_raw( data, cutoff, wordbreak ) {
@@ -178,6 +186,16 @@ function get_tag_from_data(data, classes) {
     let tag_anchor = $('<span>');
     tag_anchor.addClass(classes);
     tag_anchor.text(data);
+    tag_anchor.html('<i class="fa-solid fa-tag mr-1"></i> ' + tag_anchor.html());
+
+    return tag_anchor.prop('outerHTML');
+}
+
+function get_ioc_tag_from_data(data, classes) {
+    let tag_anchor = $('<span>');
+    tag_anchor.addClass(classes);
+    tag_anchor.text(data);
+    tag_anchor.html('<i class="fa-solid fa-virus"></i> ' + tag_anchor.html());
 
     return tag_anchor.prop('outerHTML');
 }
