@@ -465,7 +465,7 @@ $(document).ready(function(){
                 if ((type === 'filter' || type === 'display') && data != null) {
                     datas = "";
                     for (ds in data) {
-                        datas += '<span class="badge badge-light">' + sanitizeHTML(data[ds]['ioc_value']) + '</span>';
+                        datas += get_tag_from_data(data[ds]['ioc_value'], 'badge badge-light ml-2');
                     }
                     return datas;
                 } else if (type === 'export' && data != null) {
@@ -478,10 +478,10 @@ $(document).ready(function(){
           { "data": "asset_tags",
             "render": function (data, type, row, meta) {
               if (type === 'display' && data != null  ) {
-                  tags = "";
-                  de = data.split(',');
-                  for (tag in de) {
-                    tags += '<span class="badge badge-light ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+                  let tags = "";
+                  let de = data.split(',');
+                  for (let tag in de) {
+                      tags += get_tag_from_data(de[tag], 'badge badge-light ml-2');
                   }
                   return tags;
               }

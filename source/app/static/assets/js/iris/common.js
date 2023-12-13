@@ -114,7 +114,7 @@ function notify_error(message) {
     p.text(message);
     let data = "";
 
-    if (typeof (message) == typeof ([])) {
+    if (typeof (message) === typeof ([])) {
         for (element in message) {
             data += element
         }
@@ -139,6 +139,14 @@ function notify_error(message) {
             exit: 'animated fadeOut'
         }
     });
+}
+
+function get_tag_from_data(data, classes) {
+    let tag_anchor = $('<span>');
+    tag_anchor.addClass(classes);
+    tag_anchor.text(data);
+
+    return tag_anchor.prop('outerHTML');
 }
 
 function notify_success(message) {
