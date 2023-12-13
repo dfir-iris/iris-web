@@ -141,6 +141,14 @@ function get_case_assets() {
 
                 $('[data-toggle="popover"]').popover({html: true, container: 'body'});
 
+                document.addEventListener('click', function(event) {
+                    if(event.target.matches('.asset_details_link')) {
+                        event.preventDefault();
+                        let asset_id = event.target.dataset.asset_id;
+                        asset_details(asset_id);
+                    }
+                });
+
             } else {
                 Table.clear().draw();
                 swal("Oh no !", data.message, "error")
@@ -348,56 +356,71 @@ $(document).ready(function(){
             "data": "asset_name",
             "className": "dt-nowrap",
             "render": function (data, type, row, meta) {
-              if (type === 'display' || type === 'filter' || type === 'sort' || type === 'export') {
-                if (row['asset_domain']) {
-                    datak = sanitizeHTML(row['asset_domain'])+"\\"+ sanitizeHTML(data);
-                } else {
-                    datak = sanitizeHTML(data);
-                }
+                  if (type === 'display' || type === 'filter' || type === 'sort' || type === 'export') {
 
-                if (data.length > 60) {
-                    datak = data.slice(0, 60) + " (..)";
-                }
-                if (isWhiteSpace(data)) {
-                    datak = '#' + row['asset_id'];
-                }
-                share_link = buildShareLink(row['asset_id']);
-                if (row['asset_compromise_status_id'] == 1) {
-                    src_icon = row['asset_icon_compromised'];
-                } else {
-                    src_icon = row['asset_icon_not_compromised'];
-                }
-                ret = '<img class="mr-2" title="'+ sanitizeHTML(row['asset_type']) +'" style="width:1.5em;height:1.5em" src=\'/static/assets/img/graph/' + src_icon +
-                '\'> <a href="' + share_link + '" data-selector="true" title="Asset ID #'+ row['asset_id'] +
-                '" onclick="asset_details(\'' + row['asset_id'] + '\');return false;">' + datak +'</a>';
+                    // Create container element
+                    const container = document.createElement('div');
 
-                if (row.link.length > 0) {
-                    var has_compro = false;
-                    var datacontent = 'data-content="';
-                    for (idx in row.link) {
-                        if (row.link[idx]['asset_compromise_status_id'] == 1) {
-                            has_compro = true;
-                            datacontent += `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${row.link[idx]['case_id']}&shared=${row.link[idx]['asset_id']}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b> as <b class='text-danger'>compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></a></b> (${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
-                        } else {
-
-                            datacontent += `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${row.link[idx]['case_id']}&shared=${row.link[idx]['asset_id']}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b> as <b class='text-success'>not compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></a></b> (${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
-                        }
-                    }
-                    if (has_compro) {
-                       ret += `<a tabindex="0" class="fas fa-meteor ml-2 text-danger" style="cursor: pointer;" data-html="true"
-                            data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
+                    let datak = "";
+                    if (row['asset_domain']) {
+                        datak = row['asset_domain'] + "\\" + data;
                     } else {
-                        ret += `<a tabindex="0" class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
-                        data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
+                        datak = data;
+                    }
+                    if (data.length > 60) {
+                        datak = data.slice(0, 60) + " (..)";
+                    }
+                    if (isWhiteSpace(data)) {
+                        datak = '#' + row['asset_id'];
                     }
 
-                    ret += datacontent;
-                    ret += '"></i>';
-                }
+                    let compro = "";
 
-                return ret;
-              }
-              return data;
+                    if (row.link.length > 0) {
+                        let has_compro = false;
+                        let datacontent = 'data-content="';
+                        for (let idx in row.link) {
+                            if (row.link[idx]['asset_compromise_status_id'] === 1) {
+                                has_compro = true;
+                                datacontent += `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${row.link[idx]['case_id']}&shared=${row.link[idx]['asset_id']}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b> as <b class='text-danger'>compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></a></b> (${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
+                            } else {
+
+                                datacontent += `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${row.link[idx]['case_id']}&shared=${row.link[idx]['asset_id']}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b> as <b class='text-success'>not compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></a></b> (${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
+                            }
+                        }
+                        if (has_compro) {
+                           compro += `<a tabindex="0" class="fas fa-meteor ml-2 text-danger" style="cursor: pointer;" data-html="true"
+                                data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
+                        } else {
+                            compro += `<a tabindex="0" class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
+                            data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
+                        }
+
+                        compro += datacontent;
+                        compro += '"></i>';
+                    }
+
+                    const img = document.createElement('img');
+                    img.className = 'mr-2';
+                    img.style.width = '1.5em';
+                    img.style.height = '1.5em';
+                    img.src = '/static/assets/img/graph/' + (row['asset_compromise_status_id'] == 1 ? row['asset_icon_compromised'] : row['asset_icon_not_compromised']);
+                    img.title = row['asset_type'];
+                    container.appendChild(img);
+
+                    const link = document.createElement('a');
+                    link.href = 'javascript:void(0);';
+                    link.dataset.selector = 'true';
+                    link.title = 'Asset ID #' + row['asset_id'];
+                    link.textContent = datak;
+                    link.className = 'asset_details_link';
+                    // add a data-row attribute to the link
+                    link.dataset.asset_id = row['asset_id'];
+                    container.appendChild(link);
+
+                    return container.innerHTML + compro;
+                }
+                return data;
             }
           },
           {

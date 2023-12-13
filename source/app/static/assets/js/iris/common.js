@@ -506,9 +506,11 @@ var sanitizeHTML = function (str, options) {
     if (options) {
         return filterXSS(str, options);
     } else {
+        // Escape the html by default
         return filterXSS(str);
     }
 };
+
 
 function isWhiteSpace(s) {
   return /^\s+$/.test(s);
