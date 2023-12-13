@@ -141,12 +141,12 @@ function get_case_assets() {
 
                 $('[data-toggle="popover"]').popover({html: true, container: 'body'});
 
-                document.addEventListener('click', function(event) {
-                    if(event.target.matches('.asset_details_link')) {
-                        event.preventDefault();
-                        let asset_id = event.target.dataset.asset_id;
-                        asset_details(asset_id);
-                    }
+                $(document)
+                    .off('click', '.asset_details_link')
+                    .on('click', '.asset_details_link', function(event) {
+                    event.preventDefault();
+                    let asset_id = $(this).data('asset_id');
+                    asset_details(asset_id);
                 });
 
             } else {
@@ -400,25 +400,22 @@ $(document).ready(function(){
                         compro += '"></i>';
                     }
 
-                    const img = document.createElement('img');
-                    img.className = 'mr-2';
-                    img.style.width = '1.5em';
-                    img.style.height = '1.5em';
-                    img.src = '/static/assets/img/graph/' + (row['asset_compromise_status_id'] == 1 ? row['asset_icon_compromised'] : row['asset_icon_not_compromised']);
-                    img.title = row['asset_type'];
-                    container.appendChild(img);
+                    let img = $('<img>')
+                        .addClass('mr-2')
+                        .css({width: '1.5em', height: '1.5em'})
+                        .attr('src', '/static/assets/img/graph/' + (row['asset_compromise_status_id'] == 1 ? row['asset_icon_compromised'] : row['asset_icon_not_compromised']))
+                        .attr('title', row['asset_type']);
 
-                    const link = document.createElement('a');
-                    link.href = 'javascript:void(0);';
-                    link.dataset.selector = 'true';
-                    link.title = 'Asset ID #' + row['asset_id'];
-                    link.textContent = datak;
-                    link.className = 'asset_details_link';
-                    // add a data-row attribute to the link
-                    link.dataset.asset_id = row['asset_id'];
-                    container.appendChild(link);
+                    let link = $('<a>')
+                        .attr('href', 'javascript:void(0);')
+                        .attr('data-asset_id', row['asset_id'])
+                        .attr('title', 'Asset ID #' + row['asset_id'])
+                        .addClass('asset_details_link')
+                        .text(datak);
 
-                    return container.innerHTML + compro;
+                    let con = $('<div>').append(img, link);
+
+                    return con.html() + compro;
                 }
                 return data;
             }
