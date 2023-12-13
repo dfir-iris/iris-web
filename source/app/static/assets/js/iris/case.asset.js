@@ -139,8 +139,6 @@ function get_case_assets() {
                 hide_loader();
                 Table.responsive.recalc();
 
-                $('[data-toggle="popover"]').popover({html: true, container: 'body'});
-
                 $(document)
                     .off('click', '.asset_details_link')
                     .on('click', '.asset_details_link', function(event) {

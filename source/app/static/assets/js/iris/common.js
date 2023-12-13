@@ -48,9 +48,11 @@ function eraseCookie(name) {
 function ellipsis_field( data, cutoff, wordbreak ) {
 
     data = data.toString();
+    let anchor = $('<div>');
 
     if ( data.length <= cutoff ) {
-        return filterXSS( data );
+        anchor.text(data);
+        return anchor.prop('outerHTML');
     }
 
     var shortened = data.substr(0, cutoff-1);
@@ -60,10 +62,13 @@ function ellipsis_field( data, cutoff, wordbreak ) {
         shortened = shortened.replace(/\s([^\s]*)$/, '');
     }
 
-    shortened = filterXSS( shortened );
+    // Build a new anchor tag with the new target
+    anchor.text(shortened + '…');
+    anchor.className = 'ellipsis';
+    anchor.title = data;
 
-    return '<div class="ellipsis" title="'+filterXSS(data)+'">'+shortened+'&#8230;</div>';
-};
+    return anchor.prop('outerHTML');
+}
 
 function propagate_form_api_errors(data_error) {
 
@@ -105,8 +110,10 @@ function ajax_notify_error(jqXHR, url) {
 }
 
 function notify_error(message) {
+    let p = $('<p>')
+    p.text(message);
+    let data = "";
 
-    data = "";
     if (typeof (message) == typeof ([])) {
         for (element in message) {
             data += element
@@ -114,10 +121,10 @@ function notify_error(message) {
     } else {
         data = message;
     }
-    data = '<p>' + sanitizeHTML(data) + '</p>';
+    p.text(data)
     $.notify({
         icon: 'fas fa-triangle-exclamation',
-        message: data,
+        message: p.prop('outerHTML'),
         title: 'Error'
     }, {
         type: 'danger',
@@ -135,32 +142,13 @@ function notify_error(message) {
 }
 
 function notify_success(message) {
-    message = '<p>' + sanitizeHTML(message) + '</p>';
+    let p = $('<p>')
+    p.text(message);
     $.notify({
         icon: 'fas fa-check',
-        message: message
+        message: p.prop('outerHTML')
     }, {
         type: 'success',
-        placement: {
-            from: 'bottom',
-            align: 'left'
-        },
-        z_index: 2000,
-        timer: 2500,
-        animate: {
-            enter: 'animated fadeIn',
-            exit: 'animated fadeOut'
-        }
-    });
-}
-
-function notify_warning(message) {
-    message = '<p>' + sanitizeHTML(message) + '</p>';
-    $.notify({
-        icon: 'fas fa-exclamation',
-        message: message
-    }, {
-        type: 'warning',
         placement: {
             from: 'bottom',
             align: 'left'

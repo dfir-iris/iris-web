@@ -166,6 +166,15 @@ function get_case_ioc() {
                 hide_loader();
                 Table.responsive.recalc();
 
+                $(document)
+                    .off('click', '.ioc_details_link')
+                    .on('click', '.ioc_details_link', function(event) {
+                    event.preventDefault();
+                    let ioc_id = $(this).data('ioc_id');
+                    edit_ioc(ioc_id);
+                });
+
+
             } else {
                 Table.clear().draw();
                 swal("Oh no !", data.message, "error")
@@ -353,19 +362,25 @@ $(document).ready(function(){
           {
             "data": "ioc_value",
             "render": function (data, type, row, meta) {
-              if (type === 'display') {
-                
-                let datak = '';
+                if (type === 'display') {
 
-                if (isWhiteSpace(data) || data === null) {
-                    datak = '#' + row['ioc_id'];
-                } else {
-                    datak= ellipsis_field(data, 64);
+                    let datak = '';
+                    let anchor = $('<a>')
+                        .attr('href', 'javascript:void(0);')
+                        .attr('data-ioc_id', row['ioc_id'])
+                        .attr('title', `IOC ID #${row['ioc_id']} - ${data}`)
+                        .addClass('ioc_details_link')
+
+                    if (isWhiteSpace(data) || data === null) {
+                        datak = '#' + row['ioc_id'];
+                        anchor.text(datak);
+                    } else {
+                        datak= ellipsis_field(data, 64);
+                        anchor.html(datak);
+                    }
+
+                    return anchor.prop('outerHTML');
                 }
-
-                share_link = buildShareLink(row['ioc_id']);
-                data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
-              }
 
               return data;
             }
