@@ -264,7 +264,13 @@ $(document).ready(function() {
                 "data": "name",
                 "render": function (data, type, row, meta) {
                   if (type === 'display') {
-                    data = `<a rel="noopener" target="_blank" href="/case?cid=${row['case_id']}">${sanitizeHTML(data)}</a>`;
+                      let a_anchor = $('<a>');
+                        a_anchor.attr('href', '/case?cid='+ row['case_id']);
+                        a_anchor.attr('target', '_blank');
+                        a_anchor.attr('rel', 'noopener');
+                        a_anchor.title="Go to case";
+                        a_anchor.text(data);
+                    return a_anchor[0].outerHTML;
                   }
                   return data;
                 }
@@ -273,15 +279,7 @@ $(document).ready(function() {
                  "data": "description",
                   "render": function (data, type, row, meta) {
                     if (type === 'display') {
-                        data = sanitizeHTML(data);
-                        datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-                        if (data.length > 70) {
-                            datas += ' (..)</span>';
-                        } else {
-                            datas += '</span>';
-                        }
-                        return datas;
+                        return ret_obj_dt_description(data);
                   }
                   return data;
                 }
@@ -448,12 +446,18 @@ $(document).ready(function() {
             "data": "task_title",
             "render": function (data, type, row, meta) {
               if (type === 'display') {
+                  let a_anchor = $('<a>');
+                  a_anchor.attr('onclick', `edit_gtask(${row['task_id']});return false;`);
+                  a_anchor.attr('href', 'javascript:void(0);');
+                  a_anchor.title="Edit task";
+
                 if (isWhiteSpace(data)) {
                     data = '#' + row['task_id'];
-                } else {
-                    data = sanitizeHTML(data);
                 }
-                data = '<a href="#" onclick="edit_gtask(\'' + row['task_id'] + '\');">' + data +'</a>';
+
+                a_anchor.text(data);
+                return a_anchor[0].outerHTML;
+
               }
               return data;
             }
@@ -461,15 +465,7 @@ $(document).ready(function() {
           { "data": "task_description",
            "render": function (data, type, row, meta) {
               if (type === 'display') {
-                data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-                if (data.length > 70) {
-                    datas += ' (..)</span>';
-                } else {
-                    datas += '</span>';
-                }
-                return datas;
+                return ret_obj_dt_description(data);
               }
               return data;
             }
@@ -495,8 +491,7 @@ $(document).ready(function() {
             "data": "task_last_update",
             "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
-                  data = sanitizeHTML(data);
-                  data = data.replace(/GMT/g, "");
+                  return render_date(data);
               }
               return data;
             }
@@ -504,10 +499,10 @@ $(document).ready(function() {
           { "data": "task_tags",
             "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
-                  tags = "";
-                  de = data.split(',');
-                  for (tag in de) {
-                    tags += '<span class="badge badge-primary ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+                  let tags = "";
+                  let de = data.split(',');
+                  for (let tag in de) {
+                        tags += get_tag_from_data(de[tag], 'badge badge-primary ml-2');
                   }
                   return tags;
               }
@@ -537,5 +532,6 @@ $(document).ready(function() {
     update_utasks_list();
     update_ucases_list();
     update_ureviews_list();
+    update_gtasks_list();
     setInterval(check_page_update,30000);
 });

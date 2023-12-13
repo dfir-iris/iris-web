@@ -183,6 +183,9 @@ function notify_error(message) {
 }
 
 function get_tag_from_data(data, classes) {
+    if (data === undefined || data === null || data.length === 0) {
+        return '';
+    }
     let tag_anchor = $('<span>');
     tag_anchor.addClass(classes);
     tag_anchor.text(data);
