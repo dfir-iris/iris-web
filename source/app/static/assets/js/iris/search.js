@@ -16,12 +16,9 @@ Table_1 = $("#file_search_table_1").DataTable({
       { "data": "ioc_name",
        "render": function (data, type, row, meta) {
             if (type === 'display') {
-                data = sanitizeHTML(data);
-                if (row['ioc_misp'] != null) {
-                    jse = JSON.parse(row['ioc_misp']);
-                    data += `<i class="fas fa-exclamation-triangle ml-2 text-warning" style="cursor: pointer;" data-html="true"
-                       data-toggle="popover" data-trigger="hover" title="Seen on MISP" data-content="Has been seen on  <a href='` + row['misp_link'] + `/events/view/` + jse.misp_id +`'>this event</a><br/><br/><b>Description: </b>`+ jse.misp_desc +`"></i>`;
-                }
+                let span_anchor = $('<span>');
+                span_anchor.text(data);
+                return span_anchor.html();
             }
             return data;
           }
@@ -29,15 +26,7 @@ Table_1 = $("#file_search_table_1").DataTable({
       { "data": "ioc_description",
         "render": function (data, type, row, meta) {
             if (type === 'display') {
-                 data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover" style="cursor: pointer;" data-trigger="hover" title="Description" data-content="' + data + '">' + data.slice(0, 70);
-
-                if (data.length > 70) {
-                    datas += ' (..)</span>';
-                } else {
-                    datas += '</span>';
-                }
-                return datas;
+                return ret_obj_dt_description(data);
             }
             return data;
           }
@@ -50,8 +39,11 @@ Table_1 = $("#file_search_table_1").DataTable({
       { "data": "case_name",
          "render": function (data, type, row, meta) {
             if (type === 'display') {
-                data = sanitizeHTML(data);
-                data = '<a target="_blank" href="case?cid='+ row["case_id"] +'">' + data + '</a>';
+                let a_anchor = $('<a>');
+                a_anchor.attr('href', 'case?cid=' + row["case_id"]);
+                a_anchor.attr('target', '_blank');
+                a_anchor.text(data);
+                return a_anchor[0].outerHTML;
             }
             return data;
           }},
@@ -102,26 +94,18 @@ Table_comments = $("#comments_search_table").DataTable({
       { "data": "comment_text",
         "render": function (data, type, row, meta) {
             if (type === 'display') {
-                 data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover" style="cursor: pointer;" data-trigger="hover" title="Description" data-content="' + data + '">' + data.slice(0, 70);
-
-                if (data.length > 70) {
-                    datas += ' (..)</span>';
-                } else {
-                    datas += '</span>';
-                }
-                return datas;
+               return ret_obj_dt_description(data);
             }
             return data;
           }
       },
       { "data": "case_name",
          "render": function (data, type, row, meta) {
-            if (type === 'display') {
-                data = sanitizeHTML(data);
-                data = '<a target="_blank" href="case?cid='+ row["case_id"] +'">' + data + '</a>';
-            }
-            return data;
+            let a_anchor = $('<a>');
+            a_anchor.attr('href', 'case?cid=' + row["case_id"]);
+            a_anchor.attr('target', '_blank');
+            a_anchor.text(data);
+            return a_anchor[0].outerHTML;
           }},
       { "data": "customer_name",
          "render": function (data, type, row, meta) {
@@ -175,10 +159,17 @@ function search() {
             }
             else if (val == "notes") {
                 for (e in data.data) {
-                    li = `<li class="list-group-item">
-                    <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_in_details(${data.data[e]['note_id']}, ${data.data[e]['case_id']});">`+ sanitizeHTML(data.data[e]['note_title']) + ` - ` + sanitizeHTML(data.data[e]['case_name']) + ` - ` + sanitizeHTML(data.data[e]['client_name']) +`</span>
-                    </li>`
-                    $('#notes_msearch_list').append(li);
+                    let li_anchor = $('<i>');
+                    li_anchor.addClass('list-group-item');
+                    let span_anchor = $('<span>');
+                    span_anchor.addClass('name');
+                    span_anchor.attr('style', 'cursor:pointer');
+                    span_anchor.attr('title', 'Click to open note');
+                    span_anchor.attr('onclick', 'note_in_details(' + data.data[e]['note_id'] + ', ' + data.data[e]['case_id'] + ');');
+                    span_anchor.text(data.data[e]['note_title'] + ' - ' + data.data[e]['case_name'] + ' - ' + data.data[e]['client_name']);
+                    li_anchor.append(span_anchor);
+                    $('#notes_msearch_list').append(li_anchor);
+
                 }
                 $('#search_table_wrapper_2').show();
             } else if (val == "comments") {
