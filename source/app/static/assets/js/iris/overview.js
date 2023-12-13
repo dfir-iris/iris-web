@@ -49,16 +49,29 @@ let OverviewTable = $("#overview_table").DataTable({
             if (type === 'display' || type === 'filter') {
                 if (isWhiteSpace(data)) {
                     data = '#' + row['case_id'];
-                } else {
-                    data = sanitizeHTML(data);
                 }
             } else if (type === 'sort') {
-                console.log(parseInt(row['case_id']));
                 return parseInt(row['case_id']);
             }
 
             if (type === 'display') {
-                data = `<a title="Open in new tab" rel="noopener" target="_blank" class="mr-2" href="/case?cid=${row['case_id']}"><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></a><span data-index="${meta.row}"  class="btn-quick-view text-link" style="cursor: pointer;" title="Quick view">${data}</span>`;
+                let a_anchor = $('<a>');
+                a_anchor.attr('href', `/case?cid=${row['case_id']}`);
+                a_anchor.attr('target', '_blank');
+                a_anchor.attr('rel', 'noopener');
+                a_anchor.html("<i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-2 text-muted'></i>");
+
+                let span_anchor = $('<span>');
+                span_anchor.attr('data-index', meta.row);
+                span_anchor.addClass('btn-quick-view');
+                span_anchor.addClass('text-link');
+                span_anchor.addClass('mr-2');
+                span_anchor.attr('title', 'Quick view');
+                span_anchor.attr('style', 'cursor: pointer;');
+                span_anchor.text(data);
+                a_anchor.append(span_anchor);
+
+                return a_anchor.prop('outerHTML');
             }
 
             return data;
@@ -115,14 +128,13 @@ let OverviewTable = $("#overview_table").DataTable({
             if (type === 'display' && data != null) {
                 let output = '';
                 for (let index in data) {
-                    let tag = sanitizeHTML(data[index].tag_title);
-                    output += `<span class="badge badge-pill badge-light">${tag}</span> `;
+                    output += get_tag_from_data(data[index].tag_title, 'badge badge-pill badge-light');
                 }
                 return output;
             } else if (type === 'sort' || type === 'filter') {
                 let output = [];
                 for (let index in data) {
-                    let tag = sanitizeHTML(data[index].tag_title);
+                    let tag = data[index].tag_title;
                     output.push(tag);
                 }
                 return output;
