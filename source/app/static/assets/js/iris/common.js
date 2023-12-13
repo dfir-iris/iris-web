@@ -70,6 +70,24 @@ function ellipsis_field( data, cutoff, wordbreak ) {
     return anchor.prop('outerHTML');
 }
 
+function ret_obj_dt_description(data) {
+    let anchor = $('<span>');
+    anchor.attr('data-toggle', 'popover')
+        .attr('data-trigger', 'hover')
+        .attr('title', 'Description')
+        .attr('data-content', data)
+        .attr('href', '#')
+        .css('cursor', 'pointer')
+        .text(ellipsis_field_raw(data, 64));
+
+    return anchor.prop('outerHTML');
+}
+
+function render_date(date) {
+    // Remove the timezone information and the ms
+    return date.replace('T', ' ').replace('Z', '').replace(/\.\d+/, '');
+}
+
 function ellipsis_field_raw( data, cutoff, wordbreak ) {
 
     if (data.length <= cutoff) {

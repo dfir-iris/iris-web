@@ -134,7 +134,7 @@ function get_case_assets() {
                 Table.rows.add(jsdata.assets);
                 Table.columns.adjust().draw();
                 load_menu_mod_options('asset', Table, delete_asset);
-
+                $('[data-toggle="popover"]').popover();
                 set_last_state(jsdata.state);
                 hide_loader();
                 Table.responsive.recalc();
@@ -428,15 +428,7 @@ $(document).ready(function(){
           { "data": "asset_description",
            "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
-                data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover-click-close" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-                if (data.length > 70) {
-                    datas += ' (..)</span>';
-                } else {
-                    datas += '</span>';
-                }
-                return datas;
+                  return ret_obj_dt_description(data);
               }
               return data;
             }

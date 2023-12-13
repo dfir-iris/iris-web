@@ -160,11 +160,11 @@ function get_case_ioc() {
                     });
 
                 $('#ioc_table_wrapper').show();
-                $('[data-toggle="popover"]').popover();
                 Table.columns.adjust().draw();
                 load_menu_mod_options('ioc', Table, delete_ioc);
                 hide_loader();
                 Table.responsive.recalc();
+                $('[data-toggle="popover"]').popover();
 
                 $(document)
                     .off('click', '.ioc_details_link')
@@ -396,15 +396,7 @@ $(document).ready(function(){
           { "data": "ioc_description",
            "render": function (data, type, row, meta) {
               if (type === 'display') {
-              let anchor = $('<span>');
-              anchor.attr('data-toggle', 'popover')
-                    .attr('data-trigger', 'hover')
-                    .attr('title', 'Description')
-                    .attr('data-content', data)
-                    .attr('href', '#')
-                    .css('cursor', 'pointer')
-                    .text(ellipsis_field_raw(data, 64));
-                return anchor.prop('outerHTML');
+                  return ret_obj_dt_description(data);
               }
               return data;
             }
