@@ -258,6 +258,7 @@ let OverviewTable = $("#overview_table").DataTable({
 OverviewTable.searchBuilder.container().appendTo($('#table_buttons'));
 
 function get_cases_overview(silent, show_full=false) {
+    show_loader();
     show_full = show_full || $('#overviewLoadClosedCase').prop('checked');
 
      $('#overviewTableTitle').text(show_full ? 'All cases' : 'Open cases');
