@@ -435,9 +435,8 @@ $(document).ready(function(){
           },
           { "data": "asset_ip",
              "render": function (data, type, row, meta) {
-                if (type === 'display') {
-                    datas = sanitizeHTML(data);
-                    return datas;
+                if (type === 'display'  && data != null) {
+                    return ret_obj_dt_description(data);
                 }
                 return data;
               }

@@ -244,6 +244,7 @@ let OverviewTable = $("#overview_table").DataTable({
         }
     },
     select: true,
+    orderCellsTop: true,
     initComplete: function () {
             tableFiltering(this.api(), 'overview_table');
         },
