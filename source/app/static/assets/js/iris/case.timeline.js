@@ -507,8 +507,8 @@ function build_timeline(data) {
                 span_anchor.attr('style', 'cursor: pointer;');
                 span_anchor.attr('data-content', 'IOC - ' + evt.iocs[ioc].description);
                 span_anchor.attr('title', evt.iocs[ioc].name);
-                span_anchor.html('<i class="fa-solid fa-virus-covid"></i>');
-                span_anchor[0].innerText += ' ' + evt.iocs[ioc].name;
+                span_anchor.text(evt.iocs[ioc].name)
+                span_anchor.html('<i class="fa-solid fa-virus-covid mr-1"></i>' + span_anchor.html());
                 tags += span_anchor[0].outerHTML;
             }
         }
