@@ -106,9 +106,7 @@ def manage_index_cases(caseid, url_redir):
     return render_template('manage_cases.html', form=form, attributes=attributes)
 
 
-@manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
-@ac_requires(no_cid_required=True)
-def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, str]:
+def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
     """
     Get case details
 
@@ -123,41 +121,6 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, s
     if url_redir:
         return response_error("Invalid request")
 
-    if not ac_fast_check_user_has_case_access(current_user.id, cur_id, [CaseAccessLevel.read_only,
-                                                                        CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=cur_id)
-
-    res = get_case_details_rt(cur_id)
-    case_classifications = get_case_classifications_list()
-    case_states = get_case_states_list()
-    customers = get_client_list()
-
-    form = FlaskForm()
-
-    if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form, protagnists=None,
-                               case_classifications=case_classifications, case_states=case_states, customers=customers)
-
-    else:
-        return response_error("Unknown case")
-
-
-@manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
-@ac_requires(no_cid_required=True)
-def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
-    """ Returns the case details modal for a case from a case
-
-    Args:
-        cur_id (int): The case id
-        caseid (int): The case id
-        url_redir (bool): If the request is a url redirect
-
-    Returns:
-        Union[str, Response]: The case details modal
-    """
-    if url_redir:
-        return response_error("Invalid request")
-
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
@@ -167,7 +130,7 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
     case_states = get_case_states_list()
     customers = get_client_list()
     severities = get_severities_list()
-    protagonists = get_case_protagonists(cur_id)
+    protagonists  = [r._asdict() for r in get_case_protagonists(cur_id)]
 
     form = FlaskForm()
 
@@ -178,6 +141,18 @@ def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> U
 
     else:
         return response_error("Unknown case")
+
+
+@manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
+@ac_requires(no_cid_required=True)
+def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
+    return details_case(cur_id, caseid, url_redir)
+
+
+@manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
+@ac_requires(no_cid_required=True)
+def manage_details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, str]:
+    return details_case(cur_id, caseid, url_redir)
 
 
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])

@@ -22,6 +22,12 @@ let OverviewTable = $("#overview_table").DataTable({
             visible: false, // set visibility
             searchable: true, // set searchable
             data: "severity" // field in data
+        },
+        {
+            targets: [2], // column index
+            visible: true, // set visibility
+            searchable: true, // set searchable
+            sType: 'integer'
         }
     ],
     aoColumns: [
@@ -35,25 +41,40 @@ let OverviewTable = $("#overview_table").DataTable({
           "data": "case_id",
             "render": function (data, type, row, meta) {
                 return data;
-            }
+          }
         },
       {
         "data": "name",
         "render": function (data, type, row, meta) {
-          if (type === 'display') {
-            if (isWhiteSpace(data)) {
-                data = '#' + row['case_id'];
-            } else {
-                data = sanitizeHTML(data);
+            if (type === 'display' || type === 'filter') {
+                if (isWhiteSpace(data)) {
+                    data = '#' + row['case_id'];
+                }
+            } else if (type === 'sort') {
+                return parseInt(row['case_id']);
             }
 
-            data = `<a title="Open in new tab" rel="noopener" target="_blank" class="mr-2" href="/case?cid=${row['case_id']}"><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></a><span data-index="${meta.row}"  class="btn-quick-view text-link" style="cursor: pointer;" title="Quick view">${data}</span>`;
+            if (type === 'display') {
+                let a_anchor = $('<a>');
+                a_anchor.attr('href', `/case?cid=${row['case_id']}`);
+                a_anchor.attr('target', '_blank');
+                a_anchor.attr('rel', 'noopener');
+                a_anchor.html("<i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-2 text-muted'></i>");
 
-          } else if (type === 'sort' || type === 'filter') {
-            data = sanitizeHTML(data);
-          }
+                let span_anchor = $('<span>');
+                span_anchor.attr('data-index', meta.row);
+                span_anchor.addClass('btn-quick-view');
+                span_anchor.addClass('text-link');
+                span_anchor.addClass('mr-2');
+                span_anchor.attr('title', 'Quick view');
+                span_anchor.attr('style', 'cursor: pointer;');
+                span_anchor.text(data);
+                a_anchor.append(span_anchor);
 
-          return data;
+                return a_anchor.prop('outerHTML');
+            }
+
+            return data;
         }
       },
       { "data": "client",
@@ -107,14 +128,13 @@ let OverviewTable = $("#overview_table").DataTable({
             if (type === 'display' && data != null) {
                 let output = '';
                 for (let index in data) {
-                    let tag = sanitizeHTML(data[index].tag_title);
-                    output += `<span class="badge badge-pill badge-light">${tag}</span> `;
+                    output += get_tag_from_data(data[index].tag_title, 'badge badge-pill badge-light');
                 }
                 return output;
             } else if (type === 'sort' || type === 'filter') {
                 let output = [];
                 for (let index in data) {
-                    let tag = sanitizeHTML(data[index].tag_title);
+                    let tag = data[index].tag_title;
                     output.push(tag);
                 }
                 return output;
@@ -212,7 +232,7 @@ let OverviewTable = $("#overview_table").DataTable({
         }
       }
     },
-    order: [[ 6, "asc" ]],
+    order: [[ 7, "asc" ]],
     buttons: [
         { "extend": 'csvHtml5', "text":'Export',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
         { "extend": 'copyHtml5', "text":'Copy',"className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
@@ -224,6 +244,7 @@ let OverviewTable = $("#overview_table").DataTable({
         }
     },
     select: true,
+    orderCellsTop: true,
     initComplete: function () {
             tableFiltering(this.api(), 'overview_table');
         },
@@ -237,6 +258,7 @@ let OverviewTable = $("#overview_table").DataTable({
 OverviewTable.searchBuilder.container().appendTo($('#table_buttons'));
 
 function get_cases_overview(silent, show_full=false) {
+    show_loader();
     show_full = show_full || $('#overviewLoadClosedCase').prop('checked');
 
      $('#overviewTableTitle').text(show_full ? 'All cases' : 'Open cases');
@@ -327,7 +349,7 @@ function show_case_view(row_index) {
     owner_dl1.append($('<dt class="col-sm-3"/>').text('Last update:'));
     owner_dl1.append($('<dd class="col-sm-8"/>').text(timeSinceLastUpdateStr));
     owner_dl1.append($('<dt class="col-sm-3"/>').text('Severity:'));
-    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.severity.severity_name));
+    owner_dl1.append($('<dd class="col-sm-8"/>').text(case_data.severity ? case_data.severity.severity_name: "Unspecified"));
     owner_dl1.append($('<dt class="col-sm-3"/>').text('Outcome:'));
     let statusName = case_data.status_name.replace(/_/g, ' ');
     statusName = statusName.replace(/\b\w/g, function(l){ return l.toUpperCase() });
@@ -342,7 +364,7 @@ function show_case_view(row_index) {
     owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.client.customer_name));
 
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Classification:'));
-    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.classification ? case_data.classification.name: 'None'));
+    owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.classification ? case_data.classification.name_expanded: 'None'));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('SOC ID:'));
     owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.soc_id !== '' ? case_data.soc_id : 'None'));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Related alerts:'));

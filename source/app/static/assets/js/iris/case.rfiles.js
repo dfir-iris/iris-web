@@ -178,6 +178,14 @@ function get_case_rfiles() {
                 $('#rfiles_table_wrapper').show();
                 Table.responsive.recalc();
 
+                $(document)
+                    .off('click', '.evidence_details_link')
+                    .on('click', '.evidence_details_link', function(event) {
+                    event.preventDefault();
+                    let evidence_id = $(this).data('evidence_id');
+                    edit_rfiles(evidence_id);
+                });
+
             } else {
                 Table.clear().draw();
                 swal("Oh no !", data.message, "error")
@@ -374,13 +382,23 @@ $(document).ready(function(){
             "data": "filename",
             "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
-                if (isWhiteSpace(data)) {
-                    data = '#' + row['id'];
-                } else {
-                    data = sanitizeHTML(data);
-                }
-                share_link = buildShareLink(row['id']);
-                data = '<a data-toggle="tooltip" data-selector="true" href="' + share_link + '" title="Evidence ID #' + row['id'] + '" onclick="edit_rfiles(\'' + row['id'] + '\');return false;">' + data +'</a>';
+
+                    let datak = '';
+                    let anchor = $('<a>')
+                        .attr('href', 'javascript:void(0);')
+                        .attr('data-evidence_id', row['id'])
+                        .attr('title', `Evidence ID #${row['id']} - ${data}`)
+                        .addClass('evidence_details_link')
+
+                    if (isWhiteSpace(data)) {
+                        datak = '#' + row['id'];
+                        anchor.text(datak);
+                    } else {
+                        datak= ellipsis_field(data, 64);
+                        anchor.html(datak);
+                    }
+
+                    return anchor.prop('outerHTML');
               }
               return data;
             }
@@ -400,7 +418,7 @@ $(document).ready(function(){
           },
           { "data": "file_hash",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') { return ret_obj_dt_description(data);}
                 return data;
               }
           },
@@ -411,7 +429,7 @@ $(document).ready(function(){
               }},
           { "data": "file_description",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') { return ret_obj_dt_description(data);}
                 return data;
               }},
           { "data": "user",
