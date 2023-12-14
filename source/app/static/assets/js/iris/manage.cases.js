@@ -211,6 +211,7 @@ $('#cases_table').dataTable({
     pageLength: 25,
     select: true,
     sort: true,
+    orderCellsTop: true,
     responsive: {
         details: {
             display: $.fn.dataTable.Responsive.display.childRow,
