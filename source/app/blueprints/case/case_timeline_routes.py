@@ -57,6 +57,7 @@ from app.datamgmt.case.case_events_db import update_event_assets
 from app.datamgmt.case.case_events_db import update_event_iocs
 from app.datamgmt.case.case_iocs_db import get_ioc_by_value
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.states import get_timeline_state
 from app.datamgmt.states import update_timeline_state
 from app.forms import CaseEventForm
@@ -749,9 +750,9 @@ def event_view_modal(cur_id, caseid, url_redir):
     iocs_prefill = get_event_iocs_ids(cur_id, caseid)
     comments_map = get_case_events_comments_count([cur_id])
 
-    usr_name, = User.query.filter(User.id == event.user_id).with_entities(User.name).first()
+    user = get_user(event.user_id)
 
-    return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
+    return render_template("modal_add_case_event.html", form=form, event=event, user_name=user.name, tags=event_tags,
                            assets=assets, iocs=iocs, comments_map=comments_map,
                            assets_prefill=assets_prefill, iocs_prefill=iocs_prefill,
                            category=event.category, attributes=event.custom_attributes)

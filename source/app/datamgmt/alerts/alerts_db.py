@@ -1185,7 +1185,7 @@ def remove_case_alerts_by_ids(alert_ids: List[int]) -> None:
     db.session.commit()
 
 
-def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
+def delete_alerts(alert_ids: List[int]) -> Tuple[bool, str]:
     """
     Delete multiples alerts from the database
 

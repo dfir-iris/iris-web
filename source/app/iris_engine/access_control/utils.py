@@ -17,7 +17,15 @@ from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 
+
 log = app.app.logger
+
+
+# TODO Ideally this function should be pushed down into app.datamgmt.manage.manage_users_db.
+#      But right now, it would create a circular dependency which should be first resolved
+def get_users_ids():
+    users = User.query.with_entities(User.id).all()
+    return [user.id for user in users]
 
 
 def ac_flag_match_mask(flag, mask):
@@ -374,13 +382,9 @@ def ac_recompute_all_users_effective_ac():
     """
     Recompute all users effective access
     """
-    users = User.query.with_entities(
-        User.id
-    ).all()
-    for user_id in users:
-        ac_auto_update_user_effective_access(user_id[0])
-
-    return
+    all_users_ids = get_users_ids()
+    for user_id in all_users_ids:
+        ac_auto_update_user_effective_access(user_id)
 
 
 def ac_recompute_effective_ac(user_id):
@@ -430,8 +434,8 @@ def ac_set_new_case_access(org_members, case_id):
     if current_user.id in users.keys():
         del users[current_user.id]
 
-    users_full = User.query.with_entities(User.id).all()
-    users_full_access = list(set([u.id for u in users_full]) - set(users.keys()))
+    all_users_ids = get_users_ids()
+    users_full_access = list(set(all_users_ids) - set(users.keys()))
 
     ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.full_access.value)
 

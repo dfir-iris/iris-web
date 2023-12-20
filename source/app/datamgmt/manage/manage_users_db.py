@@ -40,22 +40,125 @@ from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 
 
-def get_user(user_id, id_key: str = 'id'):
-    user = User.query.filter(getattr(User, id_key) == user_id).first()
+def get_user(user_id):
+    user = User.query.filter(User.id == user_id).first()
     return user
+
+
+# TODO Isn't this doing the exact same thing as get_user?
+#      Replace all calls to get_user by calls to get_user_by_id and remove get_user?
+def get_user_by_id(user_id: int):
+    return User.query.get(user_id)
+
+
+def get_user_by_username(username):
+    user = User.query.filter(User.user.ilike(username)).first()
+    return user
+
+
+def get_user_by_email(user_email):
+    return User.query.filter(User.email == user_email).first()
 
 
 def get_active_user_by_login(username):
     user = User.query.filter(
-        User.user == username,
+        User.user.ilike(username),
         User.active == True
     ).first()
     return user
 
 
-def list_users_id():
-    users = User.query.with_entities(User.user_id).all()
-    return users
+def get_active_user_by_api_key(api_key):
+    user = User.query.filter(
+        User.api_key == api_key,
+        User.active == True
+    ).first()
+    return user
+
+
+def get_user_details(user_id, include_api_key=False):
+
+    user = get_user(user_id)
+
+    if not user:
+        return None
+
+    row = {}
+    row['user_id'] = user.id
+    row['user_uuid'] = user.uuid
+    row['user_name'] = user.name
+    row['user_login'] = user.user
+    row['user_email'] = user.email
+    row['user_active'] = user.active
+    row['user_is_service_account'] = user.is_service_account
+
+    if include_api_key:
+        row['user_api_key'] = user.api_key
+
+    row['user_groups'] = get_user_groups(user_id)
+    row['user_organisations'] = get_user_organisations(user_id)
+    row['user_permissions'] = get_user_effective_permissions(user_id)
+    row['user_cases_access'] = get_user_cases_access(user_id)
+
+    upg = get_user_primary_org(user_id)
+    row['user_primary_organisation_id'] = upg.org_id if upg else 0
+
+    return row
+
+
+def user_exists(user_name, user_email):
+    user = get_user_by_username(user_name)
+    user_by_email = get_user_by_email(user_email)
+
+    return user or user_by_email
+
+
+def delete_user(user_id):
+    UserCaseAccess.query.filter(UserCaseAccess.user_id == user_id).delete()
+    UserOrganisation.query.filter(UserOrganisation.user_id == user_id).delete()
+    UserGroup.query.filter(UserGroup.user_id == user_id).delete()
+    UserCaseEffectiveAccess.query.filter(UserCaseEffectiveAccess.user_id == user_id).delete()
+
+    User.query.filter(User.id == user_id).delete()
+    db.session.commit()
+
+
+def get_users_ordered_by_name():
+    return User.query.filter(User.active == True).order_by(User.name).all()
+
+
+def get_users_list():
+    users = User.query.all()
+
+    output = []
+    for user in users:
+        row = {}
+        row['user_id'] = user.id
+        row['user_uuid'] = user.uuid
+        row['user_name'] = user.name
+        row['user_login'] = user.user
+        row['user_email'] = user.email
+        row['user_active'] = user.active
+        row['user_is_service_account'] = user.is_service_account
+        output.append(row)
+
+    return output
+
+
+def get_users_list_restricted():
+    users = User.query.all()
+
+    output = []
+    for user in users:
+        row = {}
+        row['user_id'] = user.id
+        row['user_uuid'] = user.uuid
+        row['user_name'] = user.name
+        row['user_login'] = user.user
+        row['user_active'] = user.active
+        output.append(row)
+
+    return output
 
 
 def get_user_effective_permissions(user_id):
@@ -402,36 +505,6 @@ def set_user_case_access(user_id, case_id, access_level):
     return True, 'Case access set to {} for user {}'.format(access_level, user_id)
 
 
-def get_user_details(user_id, include_api_key=False):
-
-    user = User.query.filter(User.id == user_id).first()
-
-    if not user:
-        return None
-
-    row = {}
-    row['user_id'] = user.id
-    row['user_uuid'] = user.uuid
-    row['user_name'] = user.name
-    row['user_login'] = user.user
-    row['user_email'] = user.email
-    row['user_active'] = user.active
-    row['user_is_service_account'] = user.is_service_account
-
-    if include_api_key:
-        row['user_api_key'] = user.api_key
-
-    row['user_groups'] = get_user_groups(user_id)
-    row['user_organisations'] = get_user_organisations(user_id)
-    row['user_permissions'] = get_user_effective_permissions(user_id)
-    row['user_cases_access'] = get_user_cases_access(user_id)
-
-    upg = get_user_primary_org(user_id)
-    row['user_primary_organisation_id'] = upg.org_id if upg else 0
-
-    return row
-
-
 def add_case_access_to_user(user, cases_list, access_level):
     if not user:
         return None, "Invalid user"
@@ -462,45 +535,6 @@ def add_case_access_to_user(user, cases_list, access_level):
     ac_auto_update_user_effective_access(user.id)
 
     return user, "Updated"
-
-
-def get_user_by_username(username):
-    user = User.query.filter(User.user == username).first()
-    return user
-
-
-def get_users_list():
-    users = User.query.all()
-
-    output = []
-    for user in users:
-        row = {}
-        row['user_id'] = user.id
-        row['user_uuid'] = user.uuid
-        row['user_name'] = user.name
-        row['user_login'] = user.user
-        row['user_email'] = user.email
-        row['user_active'] = user.active
-        row['user_is_service_account'] = user.is_service_account
-        output.append(row)
-
-    return output
-
-
-def get_users_list_restricted():
-    users = User.query.all()
-
-    output = []
-    for user in users:
-        row = {}
-        row['user_id'] = user.id
-        row['user_uuid'] = user.uuid
-        row['user_name'] = user.name
-        row['user_login'] = user.user
-        row['user_active'] = user.active
-        output.append(row)
-
-    return output
 
 
 def get_users_view_from_user_id(user_id):
@@ -620,21 +654,3 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
     db.session.commit()
 
     return user
-
-
-def delete_user(user_id):
-    UserCaseAccess.query.filter(UserCaseAccess.user_id == user_id).delete()
-    UserOrganisation.query.filter(UserOrganisation.user_id == user_id).delete()
-    UserGroup.query.filter(UserGroup.user_id == user_id).delete()
-    UserCaseEffectiveAccess.query.filter(UserCaseEffectiveAccess.user_id == user_id).delete()
-
-    User.query.filter(User.id == user_id).delete()
-    db.session.commit()
-
-
-def user_exists(user_name, user_email):
-    user = User.query.filter_by(user=user_name).first()
-    user_by_email = User.query.filter_by(email=user_email).first()
-
-    return user or user_by_email
-

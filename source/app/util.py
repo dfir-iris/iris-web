@@ -62,7 +62,7 @@ from app import app
 from app import db
 from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import get_user_by_email
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
@@ -368,7 +368,7 @@ def _local_authentication_process(incoming_request: Request):
 
 
 def _authenticate_with_email(user_email):
-    user = get_user(user_email, id_key="email")
+    user = get_user_by_email(user_email)
     if not user:
         log.error(f'User with email {user_email} is not registered in the IRIS')
         return False

@@ -65,6 +65,8 @@ from app.blueprints.profile.profile_routes import profile_blueprint
 from app.blueprints.reports.reports_route import reports_blueprint
 from app.blueprints.search.search_routes import search_blueprint
 from app.models.authorization import User
+from app.datamgmt.manage.manage_users_db import get_user_by_id
+from app.datamgmt.manage.manage_users_db import get_active_user_by_api_key
 from app.post_init import run_post_init
 
 app.register_blueprint(dashboard_blueprint)
@@ -119,7 +121,7 @@ except Exception as e:
 # provide login manager with load_user callback
 @lm.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return get_user_by_id(int(user_id))
 
 
 @lm.request_loader
@@ -128,10 +130,7 @@ def load_user_from_request(request):
     # first, try to login using the api_key url arg
     api_key = request.args.get('api_key')
     if api_key:
-        user = User.query.filter(
-            User.api_key == api_key,
-            User.active == True
-        ).first()
+        user = get_active_user_by_api_key(api_key)
         if user:
             return user
 
@@ -140,10 +139,7 @@ def load_user_from_request(request):
     if api_key:
         api_key = api_key.replace('Bearer ', '', 1)
 
-        user = User.query.filter(
-            User.api_key == api_key,
-            User.active == True
-        ).first()
+        user = get_active_user_by_api_key(api_key)
 
         if user:
             return user

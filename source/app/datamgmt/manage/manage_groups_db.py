@@ -22,6 +22,7 @@ from sqlalchemy import and_
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_id
+from app.datamgmt.manage.manage_users_db import get_user
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list, ac_ldp_group_removal
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
@@ -168,7 +169,7 @@ def update_group_members(group, members):
     users_to_remove = set_cur_groups - set_members
 
     for uid in users_to_add:
-        user = User.query.filter(User.id == uid).first()
+        user = get_user(uid)
         if user:
             ug = UserGroup()
             ug.group_id = group.group_id
