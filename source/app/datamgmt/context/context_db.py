@@ -70,8 +70,6 @@ def ctx_search_user_cases(search, user_id, max_results: int = 100):
         else_=1
     ).label("user_priority")
 
-    print(search)
-
     conditions = []
     if not search:
         conditions.append(UserCaseEffectiveAccess.user_id == user_id)

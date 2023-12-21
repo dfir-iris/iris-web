@@ -660,7 +660,7 @@ def ac_get_user_cases_access(user_id):
 
     effective_cases_access = {}
     for oca in cases:
-        effective_cases_access[oca.case_id] = CaseAccessLevel.full_access.value
+        effective_cases_access[oca.case_id] = CaseAccessLevel.deny_all.value
 
     for gca in gcas:
         effective_cases_access[gca.case_id] = gca.access_level
@@ -724,14 +724,12 @@ def ac_trace_user_effective_cases_access_2(user_id):
         UserClient.user_id == user_id
     ).all()
 
-    print(ccas)
-
     # Organisation case access. Default access level
     for oca in cases:
         access = {
             'state': 'Effective',
-            'access_list': CaseAccessLevel.full_access.name,
-            'access_value': CaseAccessLevel.full_access.value,
+            'access_list': CaseAccessLevel.deny_all.name,
+            'access_value': CaseAccessLevel.deny_all.value,
             'inherited_from': {
                 'object_type': 'default_access_level',
                 'object_name': 'Default access level',
@@ -746,7 +744,7 @@ def ac_trace_user_effective_cases_access_2(user_id):
                 'case_id': oca.case_id
             },
             'user_access': [],
-            'user_effective_access': CaseAccessLevel.full_access.value
+            'user_effective_access': CaseAccessLevel.deny_all.value
         }
 
         effective_cases_access[oca.case_id]['user_access'].append(access)
