@@ -415,7 +415,7 @@ def ac_set_new_case_access(org_members, case_id, customer_id = None):
     users_full_access = list(set([u.id for u in users_full]) - set(users.keys()))
 
     # Default users case access - Full access
-    ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.full_access.value)
+    ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.deny_all.value)
 
     # Add specific right for the user creating the case
     UserCaseAccess.query.filter(
