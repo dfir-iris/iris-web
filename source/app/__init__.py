@@ -72,7 +72,8 @@ def ac_current_user_has_permission(*permissions):
     """
     for permission in permissions:
 
-        if session['permissions'] & permission.value == permission.value:
+        if ('permissions' in session and
+                session['permissions'] & permission.value == permission.value):
             return True
 
     return False

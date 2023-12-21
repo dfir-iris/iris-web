@@ -16,9 +16,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from app import db
+from app import db, ac_current_user_has_permission
 from app.models import Cases
-from app.models.authorization import Group, UserClient
+from app.models.authorization import Group, UserClient, Permissions
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import OrganisationCaseAccess
@@ -80,6 +80,9 @@ def check_ua_case_client(user_id: int, case_id: int) -> UserClient:
     Returns:
         bool: True if the user is part of the client
     """
+    if ac_current_user_has_permission(Permissions.server_administrator):
+        return True
+
     result = UserClient.query.filter(
         UserClient.user_id == user_id,
         Cases.case_id == case_id
@@ -115,8 +118,12 @@ def get_user_clients_id(user_id: int) -> list:
     Returns:
         list: List of clients
     """
+    filters = []
+    if not ac_current_user_has_permission(Permissions.server_administrator):
+        filters.append(UserClient.user_id == user_id)
+
     result = UserClient.query.filter(
-        UserClient.user_id == user_id
+        *filters
     ).with_entities(
         UserClient.client_id
     ).all()
