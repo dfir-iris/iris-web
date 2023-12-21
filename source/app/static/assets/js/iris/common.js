@@ -48,22 +48,68 @@ function eraseCookie(name) {
 function ellipsis_field( data, cutoff, wordbreak ) {
 
     data = data.toString();
+    let anchor = $('<div>');
 
     if ( data.length <= cutoff ) {
-        return filterXSS( data );
+        anchor.text(data);
+        return anchor.prop('outerHTML');
     }
 
-    var shortened = data.substr(0, cutoff-1);
+    let shortened = data.substr(0, cutoff-1);
 
     // Find the last white space character in the string
     if ( wordbreak ) {
         shortened = shortened.replace(/\s([^\s]*)$/, '');
     }
 
-    shortened = filterXSS( shortened );
+    // Build a new anchor tag with the new target
+    anchor.text(shortened + '…');
+    anchor.className = 'ellipsis';
+    anchor.title = data;
 
-    return '<div class="ellipsis" title="'+filterXSS(data)+'">'+shortened+'&#8230;</div>';
-};
+    return anchor.prop('outerHTML');
+}
+
+function ret_obj_dt_description(data) {
+    let anchor = $('<span>');
+    anchor.attr('data-toggle', 'popover')
+        .attr('data-trigger', 'hover')
+        .attr('title', 'Description')
+        .attr('data-content', data)
+        .attr('href', '#')
+        .css('cursor', 'pointer')
+        .text(ellipsis_field_raw(data, 64));
+
+    return anchor.prop('outerHTML');
+}
+
+function render_date(date, show_ms = false) {
+    // Remove the timezone information and the ms
+    let date_str = date.replace('T', ' ').replace('Z', '');
+    if (!show_ms) {
+        date_str = date_str.split('.')[0];
+    } else {
+        // remove nanoseconds
+        date_str = date_str.split('.')[0] + '.' + date_str.split('.')[1].substr(0, 3);
+    }
+
+    return date_str;
+}
+
+function ellipsis_field_raw( data, cutoff, wordbreak ) {
+
+    if (data.length <= cutoff) {
+        return data;
+    }
+
+    let shortened = data.substr(0, cutoff - 1);
+
+    if (wordbreak) {
+        shortened = shortened.replace(/\s([^\s]*)$/, '');
+    }
+
+    return shortened + '…';
+}
 
 function propagate_form_api_errors(data_error) {
 
@@ -105,19 +151,21 @@ function ajax_notify_error(jqXHR, url) {
 }
 
 function notify_error(message) {
+    let p = $('<p>')
+    p.text(message);
+    let data = "";
 
-    data = "";
-    if (typeof (message) == typeof ([])) {
+    if (typeof (message) === typeof ([])) {
         for (element in message) {
             data += element
         }
     } else {
         data = message;
     }
-    data = '<p>' + sanitizeHTML(data) + '</p>';
+    p.text(data)
     $.notify({
         icon: 'fas fa-triangle-exclamation',
-        message: data,
+        message: p.prop('outerHTML'),
         title: 'Error'
     }, {
         type: 'danger',
@@ -134,33 +182,35 @@ function notify_error(message) {
     });
 }
 
-function notify_success(message) {
-    message = '<p>' + sanitizeHTML(message) + '</p>';
-    $.notify({
-        icon: 'fas fa-check',
-        message: message
-    }, {
-        type: 'success',
-        placement: {
-            from: 'bottom',
-            align: 'left'
-        },
-        z_index: 2000,
-        timer: 2500,
-        animate: {
-            enter: 'animated fadeIn',
-            exit: 'animated fadeOut'
-        }
-    });
+function get_tag_from_data(data, classes) {
+    if (data === undefined || data === null || data.length === 0) {
+        return '';
+    }
+    let tag_anchor = $('<span>');
+    tag_anchor.addClass(classes);
+    tag_anchor.text(data);
+    tag_anchor.html('<i class="fa-solid fa-tag mr-1"></i> ' + tag_anchor.html());
+
+    return tag_anchor.prop('outerHTML');
 }
 
-function notify_warning(message) {
-    message = '<p>' + sanitizeHTML(message) + '</p>';
+function get_ioc_tag_from_data(data, classes) {
+    let tag_anchor = $('<span>');
+    tag_anchor.addClass(classes);
+    tag_anchor.text(data);
+    tag_anchor.html('<i class="fa-solid fa-virus"></i> ' + tag_anchor.html());
+
+    return tag_anchor.prop('outerHTML');
+}
+
+function notify_success(message) {
+    let p = $('<p>')
+    p.text(message);
     $.notify({
-        icon: 'fas fa-exclamation',
-        message: message
+        icon: 'fas fa-check',
+        message: p.prop('outerHTML')
     }, {
-        type: 'warning',
+        type: 'success',
         placement: {
             from: 'bottom',
             align: 'left'
@@ -506,9 +556,11 @@ var sanitizeHTML = function (str, options) {
     if (options) {
         return filterXSS(str, options);
     } else {
+        // Escape the html by default
         return filterXSS(str);
     }
 };
+
 
 function isWhiteSpace(s) {
   return /^\s+$/.test(s);
@@ -557,6 +609,24 @@ function copy_object_link_md(data_type, node_id){
     }, function(err) {
         notify_error('Can\'t copy link. I printed it in console.');
         console.error('Shared link', err);
+    });
+}
+
+function copy_text_clipboardb(data){
+    navigator.clipboard.writeText(fromBinary64(data)).then(function() {
+        notify_success('Copied!');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error(err);
+    });
+}
+
+function copy_text_clipboard(data){
+    navigator.clipboard.writeText(data).then(function() {
+        notify_success('Copied!');
+    }, function(err) {
+        notify_error('Can\'t copy link. I printed it in console.');
+        console.error(err);
     });
 }
 
@@ -692,8 +762,18 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
 }
 
 function get_row_id(row) {
-    ids_map = ["ioc_id","asset_id","task_id","id"];
-    for (id in ids_map) {
+    let ids_map = ["ioc_id","asset_id","task_id","id"];
+    for (let id in ids_map) {
+        if (row[ids_map[id]] !== undefined) {
+            return row[ids_map[id]];
+        }
+    }
+    return null;
+}
+
+function get_row_value(row, column) {
+    let ids_map = ["asset_name","ioc_value","filename","id"];
+    for (let id in ids_map) {
         if (row[ids_map[id]] !== undefined) {
             return row[ids_map[id]];
         }
@@ -1057,6 +1137,17 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                 });
 
                 actionOptions.items.push({
+                    type: 'option',
+                    title: 'Copy',
+                    multi: false,
+                    iconClass: 'fa-regular fa-copy',
+                    action: function(rows){
+                        row = rows[0];
+                        copy_text_clipboard(get_row_value(row));
+                    }
+                });
+
+                actionOptions.items.push({
                     type: 'divider'
                 });
                 jdata_menu_options = jsdata;
@@ -1227,6 +1318,9 @@ function load_context_switcher() {
                 emptyTitle: 'Select and Begin Typing',
                 statusInitialized: '',
         },
+        minLength: 0,
+        clearOnEmpty: false,
+        emptyRequest: true,
         preprocessData: function (data) {
             return context_data_parser(data);
         },
@@ -1234,14 +1328,14 @@ function load_context_switcher() {
     };
 
 
-    get_request_api('/context/get-cases/100')
+    get_request_api('/context/search-cases')
     .done((data) => {
         context_data_parser(data);
         $('#user_context').ajaxSelectPicker(options);
     });
 }
 
-function context_data_parser(data) {
+function context_data_parser(data, fire_modal = true) {
     if(notify_auto_api(data, true)) {
         $('#user_context').empty();
 
@@ -1263,7 +1357,10 @@ function context_data_parser(data) {
             }
         }
 
-        $('#modal_switch_context').modal("show");
+        if (fire_modal) {
+            $('#modal_switch_context').modal("show");
+        }
+
         $('#user_context').selectpicker('refresh');
         $('#user_context').selectpicker('val', get_caseid());
         return ret_data;

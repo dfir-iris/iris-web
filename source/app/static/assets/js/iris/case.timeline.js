@@ -499,15 +499,24 @@ function build_timeline(data) {
         }
         
         if (evt.iocs != null && evt.iocs.length > 0) {
-            for (ioc in evt.iocs) {
-                tags += `<span class="badge badge-warning-event float-right ml-1 mt-2" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="IOC - ${sanitizeHTML(evt.iocs[ioc].description)}"><i class="fa-solid fa-virus-covid"></i> ${sanitizeHTML(evt.iocs[ioc].name)}</span>`;
+            for (let ioc in evt.iocs) {
+                let span_anchor = $('<span>');
+                span_anchor.addClass('badge badge-warning-event float-right ml-1 mt-2');
+                span_anchor.attr('data-toggle', 'popover');
+                span_anchor.attr('data-trigger', 'hover');
+                span_anchor.attr('style', 'cursor: pointer;');
+                span_anchor.attr('data-content', 'IOC - ' + evt.iocs[ioc].description);
+                span_anchor.attr('title', evt.iocs[ioc].name);
+                span_anchor.text(evt.iocs[ioc].name)
+                span_anchor.html('<i class="fa-solid fa-virus-covid mr-1"></i>' + span_anchor.html());
+                tags += span_anchor[0].outerHTML;
             }
         }
 
         if (evt.event_tags != null && evt.event_tags.length > 0) {
             sp_tag = evt.event_tags.split(',');
             for (tag_i in sp_tag) {
-                    tags += `<span title="Tag" class="badge badge-light ml-1 float-right mt-2"><i class="fa-solid fa-tag mr-1"></i>${sanitizeHTML(sp_tag[tag_i])}</span>`;
+                    tags += get_tag_from_data(sp_tag[tag_i], 'badge badge-light ml-1 float-right mt-2');
                 }
         }
 
@@ -531,13 +540,23 @@ function build_timeline(data) {
         /* For every assets linked to the event, build a link tag */
         if (evt.assets != null) {
             for (ide in evt.assets) {
-                cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
+                let cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                 cpn = sanitizeHTML(cpn)
+                let span_anchor = $('<span>');
+                span_anchor.attr('data-toggle', 'popover');
+                span_anchor.attr('data-trigger', 'hover');
+                span_anchor.attr('style', 'cursor: pointer;');
+                span_anchor.attr('data-content', cpn);
+                span_anchor.attr('title', evt.assets[ide]["name"]);
+                span_anchor.text(evt.assets[ide]["name"]);
+
                 if (evt.assets[ide]["compromised"]) {
-                    asset += `<span class="badge badge-warning-event float-right ml-2 link_asset mt-2" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
+                    span_anchor.addClass('badge badge-warning-event float-right ml-1 mt-2');
                 } else {
-                    asset += `<span class="badge badge-light float-right ml-1 link_asset mt-2" data-toggle="popover" data-trigger="hover" style="cursor: pointer;" data-content="${cpn}" title="${sanitizeHTML(evt.assets[ide]["name"])}">${sanitizeHTML(evt.assets[ide]["name"])}</span>`;
+                    span_anchor.addClass('badge badge-light float-right ml-1 mt-2');
                 }
+
+                asset += span_anchor[0].outerHTML;
             }
         }
 
@@ -658,7 +677,7 @@ function build_timeline(data) {
                                 </div>
                             </div>
                             <div class="collapsed" id="dropa_${evt.event_id}" data-toggle="collapse" data-target="#drop_${evt.event_id}" aria-expanded="false" aria-controls="drop_${evt.event_id}" role="button" style="cursor: pointer;">
-                                <span class="text-muted text-sm float-left mb--2"><small>${evt.event_date}</small></span>
+                                <span class="text-muted text-sm float-left mb--2"><small>${render_date(evt.event_date, true)}</small></span>
                                 <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
                             </div>
                         </div>
@@ -719,8 +738,9 @@ function build_timeline(data) {
                             <div class="bottom-hour mt-2">
                                 <div class="row">
                                     <div class="col-4 d-flex">
-                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${evt.event_date}${ori_date}</small></span>
+                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${render_date(evt.event_date, true)}${ori_date}</small></span>
                                     </div>
+                                    
                                     <div class="col-8 ">
                                         <span class="float-right">${tags}${asset} </span>
                                     </div>

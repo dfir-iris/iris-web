@@ -67,7 +67,7 @@ from app.models import CaseStatus, ReviewStatusList
 from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
-from app.schema.marshables import TaskLogSchema, CaseSchema
+from app.schema.marshables import TaskLogSchema, CaseSchema, CaseDetailsSchema
 from app.util import ac_api_case_requires, add_obj_history_entry
 from app.util import ac_case_requires
 from app.util import ac_socket_requires
@@ -243,6 +243,13 @@ def activity_fetch(caseid):
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def export_case(caseid):
     return response_success('', data=export_case_json(caseid))
+
+
+@case_blueprint.route("/case/meta", methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def meta_case(caseid):
+    case_details = get_case(caseid)
+    return response_success('', data= CaseDetailsSchema().dump(case_details))
 
 
 @case_blueprint.route('/case/tasklog/add', methods=['POST'])

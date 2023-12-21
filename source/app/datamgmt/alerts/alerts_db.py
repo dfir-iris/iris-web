@@ -17,15 +17,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from functools import reduce
-
 import json
-
 from datetime import datetime, timedelta
-
 from flask_login import current_user
+from functools import reduce
 from operator import and_
 from sqlalchemy import desc, asc, func, tuple_, or_
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import joinedload
 from typing import List, Tuple
 
@@ -36,17 +34,15 @@ from app.datamgmt.case.case_events_db import update_event_assets, update_event_i
 from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
 from app.datamgmt.manage.manage_access_control_db import get_user_clients_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
-from app.datamgmt.manage.manage_case_templates_db import case_template_pre_modifier, get_case_template_by_id, \
+from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id, \
     case_template_post_modifier
 from app.datamgmt.manage.manage_users_db import get_user_clients
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
     alert_iocs_association, Ioc, IocLink
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus
-from app.schema.marshables import IocSchema, CaseAssetsSchema, EventSchema
+from app.schema.marshables import EventSchema
 from app.util import add_obj_history_entry
-
-from sqlalchemy.orm import aliased
 
 
 def db_list_all_alerts():
@@ -438,6 +434,8 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         tag = Tags(tag_title=tag)
         tag = tag.save()
         case.tags.append(tag)
+
+    case.severity_id = alert.alert_severity_id
 
     db.session.commit()
 

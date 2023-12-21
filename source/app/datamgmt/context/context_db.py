@@ -16,7 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from sqlalchemy import and_, or_
+
+from sqlalchemy import and_, case, or_, asc
 from sqlalchemy import desc
 
 from app.models import Cases
@@ -26,16 +27,22 @@ from app.models.authorization import UserCaseEffectiveAccess
 
 
 def ctx_get_user_cases(user_id, max_results: int = 100):
+    user_priority_sort = case(
+        [(Cases.owner_id == user_id, 0)],
+        else_=1
+    )
     uceas = UserCaseEffectiveAccess.query.with_entities(
         Cases.case_id,
         Cases.name,
         Client.name.label('customer_name'),
         Cases.close_date,
+        Cases.owner_id,
         UserCaseEffectiveAccess.access_level
     ).join(
         UserCaseEffectiveAccess.case,
         Cases.client
     ).order_by(
+        asc(user_priority_sort),
         desc(Cases.case_id)
     ).filter(
         UserCaseEffectiveAccess.user_id == user_id
@@ -58,25 +65,43 @@ def ctx_get_user_cases(user_id, max_results: int = 100):
 
 
 def ctx_search_user_cases(search, user_id, max_results: int = 100):
+    user_priority_sort = case(
+        [(Cases.owner_id == user_id, 0)],
+        else_=1
+    ).label("user_priority")
+
+    print(search)
+
+    conditions = []
+    if not search:
+        conditions.append(UserCaseEffectiveAccess.user_id == user_id)
+
+    else:
+        conditions.append(and_(
+            UserCaseEffectiveAccess.user_id == user_id,
+            or_(
+                Cases.name.ilike('%{}%'.format(search)),
+                Client.name.ilike('%{}%'.format(search))
+        )))
+
     uceas = UserCaseEffectiveAccess.query.with_entities(
         Cases.case_id,
         Cases.name,
+        Cases.owner_id,
         Client.name.label('customer_name'),
         Cases.close_date,
         UserCaseEffectiveAccess.access_level
     ).join(
-        UserCaseEffectiveAccess.case,
+        UserCaseEffectiveAccess.case
+    ).join(
         Cases.client
     ).order_by(
+        user_priority_sort,
         desc(Cases.case_id)
-    ).filter(and_(
-        UserCaseEffectiveAccess.user_id == user_id,
-        or_(
-            Cases.name.ilike('%{}%'.format(search)),
-            Client.name.ilike('%{}%'.format(search))
-        )
-    )
+    ).filter(
+        *conditions
     ).limit(max_results).all()
+
 
     results = []
     for ucea in uceas:

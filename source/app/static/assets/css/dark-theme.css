@@ -15,6 +15,10 @@ body {
   background: #004eb3;
 }
 
+.text-link {
+    color: #66aaff;
+}
+
 .btn-success {
   background: #004eb3 !important;
   border-color: #004eb3 !important;

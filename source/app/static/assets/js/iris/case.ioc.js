@@ -160,11 +160,20 @@ function get_case_ioc() {
                     });
 
                 $('#ioc_table_wrapper').show();
-                $('[data-toggle="popover"]').popover();
                 Table.columns.adjust().draw();
                 load_menu_mod_options('ioc', Table, delete_ioc);
                 hide_loader();
                 Table.responsive.recalc();
+                $('[data-toggle="popover"]').popover();
+
+                $(document)
+                    .off('click', '.ioc_details_link')
+                    .on('click', '.ioc_details_link', function(event) {
+                    event.preventDefault();
+                    let ioc_id = $(this).data('ioc_id');
+                    edit_ioc(ioc_id);
+                });
+
 
             } else {
                 Table.clear().draw();
@@ -353,19 +362,25 @@ $(document).ready(function(){
           {
             "data": "ioc_value",
             "render": function (data, type, row, meta) {
-              if (type === 'display') {
-                
-                let datak = '';
+                if (type === 'display') {
 
-                if (isWhiteSpace(data) || data === null) {
-                    datak = '#' + row['ioc_id'];
-                } else {
-                    datak= ellipsis_field(data, 64);
+                    let datak = '';
+                    let anchor = $('<a>')
+                        .attr('href', 'javascript:void(0);')
+                        .attr('data-ioc_id', row['ioc_id'])
+                        .attr('title', `IOC ID #${row['ioc_id']} - ${data}`)
+                        .addClass('ioc_details_link')
+
+                    if (isWhiteSpace(data) || data === null) {
+                        datak = '#' + row['ioc_id'];
+                        anchor.text(datak);
+                    } else {
+                        datak= ellipsis_field(data, 64);
+                        anchor.html(datak);
+                    }
+
+                    return anchor.prop('outerHTML');
                 }
-
-                share_link = buildShareLink(row['ioc_id']);
-                data = '<a href="' + share_link + '" data-selector="true" title="IOC ID #'+ row['ioc_id'] +'"  onclick="edit_ioc(\'' + row['ioc_id'] + '\');return false;">' + datak +'</a>';
-              }
 
               return data;
             }
@@ -381,15 +396,7 @@ $(document).ready(function(){
           { "data": "ioc_description",
            "render": function (data, type, row, meta) {
               if (type === 'display') {
-              data = sanitizeHTML(data);
-                datas = '<span data-toggle="popover" style="cursor: pointer;" title="Info" data-trigger="hover" href="#" data-content="' + data + '">' + data.slice(0, 70);
-
-                if (data.length > 70) {
-                    datas += ' (..)</span>';
-                } else {
-                    datas += '</span>';
-                }
-                return datas;
+                  return ret_obj_dt_description(data);
               }
               return data;
             }
@@ -397,10 +404,10 @@ $(document).ready(function(){
           { "data": "ioc_tags",
             "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
-                  tags = "";
-                  de = data.split(',');
-                  for (tag in de) {
-                    tags += '<span class="badge badge-light ml-2">' + sanitizeHTML(de[tag]) + '</span>';
+                  let tags = "";
+                  let de = data.split(',');
+                  for (let tag in de) {
+                      tags += get_tag_from_data(de[tag], 'badge badge-light ml-2');
                   }
                   return tags;
               }

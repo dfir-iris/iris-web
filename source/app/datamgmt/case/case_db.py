@@ -17,21 +17,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import datetime
 
 import binascii
 from sqlalchemy import and_
 
 from app import db
 from app.models import Tags
+from app.models.authorization import User
 from app.models.cases import CaseProtagonist
-from app.models.cases import CaseTags
 from app.models.cases import Cases
 from app.models.models import CaseTemplateReport, ReviewStatus
 from app.models.models import Client
 from app.models.models import Languages
 from app.models.models import ReportType
-from app.models.authorization import User
 
 
 def get_case_summary(caseid):

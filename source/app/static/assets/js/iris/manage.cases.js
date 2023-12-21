@@ -135,8 +135,11 @@ $('#cases_table').dataTable({
     "columns": [
         {
             "render": function (data, type, row) {
-                data = sanitizeHTML(data);
-                return '<a href="#" onclick="case_detail(\'' + row['case_id'] + '\');">' + data + '</a>';
+               let a_anchor = $('<a>');
+                a_anchor.attr('href', 'javascript:void(0);');
+                a_anchor.attr('onclick', 'case_detail(\'' + row['case_id'] + '\');');
+                a_anchor.text(data);
+                return a_anchor[0].outerHTML;
             },
             "data": "case_name"
         },
@@ -144,12 +147,7 @@ $('#cases_table').dataTable({
             "data": "case_description",
             "render": function (data, type, row) {
                 if (type === 'display' && data != null) {
-                    if (row["case_description"].length > 50){
-                        return sanitizeHTML(row["case_description"].slice(0,50)) + " ... " ;
-                    }
-                    else {
-                        return sanitizeHTML(row["case_description"]);
-                    }
+                    return ret_obj_dt_description(data);
                 }
                 return data;
             },
@@ -187,7 +185,11 @@ $('#cases_table').dataTable({
         {
             "data": "case_soc_id",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') {
+                    let span_anchor = $('<span>');
+                    span_anchor.text(data);
+                    return span_anchor.html();
+                }
                 return data;
               }
         },
@@ -209,6 +211,7 @@ $('#cases_table').dataTable({
     pageLength: 25,
     select: true,
     sort: true,
+    orderCellsTop: true,
     responsive: {
         details: {
             display: $.fn.dataTable.Responsive.display.childRow,
