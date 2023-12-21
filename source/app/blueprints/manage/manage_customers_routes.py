@@ -27,9 +27,11 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask_login import current_user
 from flask_wtf import FlaskForm
 from marshmallow import ValidationError
 
+from app import ac_current_user_has_permission
 from app.datamgmt.client.client_db import create_client
 from app.datamgmt.client.client_db import create_contact
 from app.datamgmt.client.client_db import delete_client
@@ -80,7 +82,9 @@ def manage_customers(caseid, url_redir):
 @manage_customers_blueprint.route('/manage/customers/list')
 @ac_api_requires(Permissions.customers_read, no_cid_required=True)
 def list_customers(caseid):
-    client_list = get_client_list()
+    user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
+    client_list = get_client_list(current_user_id=current_user.id,
+                                  is_server_administrator=user_is_server_administrator)
 
     return response_success("", data=client_list)
 

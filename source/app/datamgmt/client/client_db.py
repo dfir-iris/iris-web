@@ -18,7 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import marshmallow
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from typing import List
 
 from app import db
@@ -32,13 +32,24 @@ from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
 
 
-def get_client_list() -> List[Client]:
+def get_client_list(current_user_id: int = None,
+                    is_server_administrator: bool = False) -> List[Client]:
+    if not is_server_administrator:
+        filter = and_(
+            Client.client_id == UserClient.client_id,
+            UserClient.user_id == current_user_id
+        )
+    else:
+        filter = and_()
+
     client_list = Client.query.with_entities(
         Client.name.label('customer_name'),
         Client.client_id.label('customer_id'),
         Client.client_uuid.label('customer_uuid'),
         Client.description.label('customer_description'),
         Client.sla.label('customer_sla')
+    ).filter(
+        filter
     ).all()
 
     output = [c._asdict() for c in client_list]
