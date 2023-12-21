@@ -18,13 +18,13 @@ let OverviewTable = $("#overview_table").DataTable({
             data: "case_id" // field in data
         },
         {
-            targets: [11], // column index
+            targets: [2], // column index
             visible: false, // set visibility
             searchable: true, // set searchable
             data: "severity" // field in data
         },
         {
-            targets: [2], // column index
+            targets: [3], // column index
             visible: true, // set visibility
             searchable: true, // set searchable
             sType: 'integer'
@@ -43,6 +43,15 @@ let OverviewTable = $("#overview_table").DataTable({
                 return data;
           }
         },
+      {
+          "data": "severity",
+            "render": function (data, type, row, meta) {
+                  if (data != null && (type === 'filter'  || type === 'sort' || type === 'display' || type === 'search')) {
+                    return data.severity_name;
+                  }
+                return data;
+            }
+      },
       {
         "data": "name",
         "render": function (data, type, row, meta) {
@@ -195,24 +204,21 @@ let OverviewTable = $("#overview_table").DataTable({
       {
         "data": "owner",
         "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              sdata = sanitizeHTML(data.user_name);
-              data = `<div class="row">${get_avatar_initials(sdata, false, null, true)} <span class="ml-1">${sdata}</span></div>`;
-          } else if (type === 'filter' || type === 'sort') {
-                data = data.user_name;
+            let sdata;
+            if (type === 'display' && data != null) {
+                sdata = sanitizeHTML(data.user_name);
+                let div_anchor = $('<div>');
+                div_anchor.addClass('row');
+                div_anchor.append(get_avatar_initials(sdata, false, null, true));
+                div_anchor.append($('<span/>').addClass('ml-1').text(sdata));
+                return div_anchor.html();
+            }
+            if ((type === 'filter' || type === 'sort') && data !== null) {
+                return sanitizeHTML(data.user_name);
             }
           return data;
         }
-      },
-      {
-          "data": "severity",
-            "render": function (data, type, row, meta) {
-                  if (data != null && (type == 'filter'  || type === 'sort' || type === 'display' || type === 'search')) {
-                    return data.severity_name;
-                  }
-                return data;
-            }
-        }
+      }
     ],
     filter: true,
     info: true,
