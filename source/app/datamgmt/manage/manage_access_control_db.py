@@ -18,7 +18,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from app import db, ac_current_user_has_permission
 from app.models import Cases
-from app.models.authorization import Group, UserClient, Permissions
+from app.models.authorization import Group, UserClient, Permissions, CaseAccessLevel
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import OrganisationCaseAccess
@@ -81,7 +81,10 @@ def check_ua_case_client(user_id: int, case_id: int) -> UserClient:
         bool: True if the user is part of the client
     """
     if ac_current_user_has_permission(Permissions.server_administrator):
-        return True
+        # Return a dummy object
+        uc = UserClient()
+        uc.access_level = CaseAccessLevel.full_access.value
+        return uc
 
     result = UserClient.query.filter(
         UserClient.user_id == user_id,
@@ -129,3 +132,24 @@ def get_user_clients_id(user_id: int) -> list:
     ).all()
 
     return [r[0] for r in result]
+
+
+def user_has_client_access(user_id: int, client_id: int) -> bool:
+    """Check if a user has access to a client
+
+    Args:
+        user_id (int): User ID
+        client_id (int): Client ID
+
+    Returns:
+        bool: True if the user has access to the client
+    """
+    if ac_current_user_has_permission(Permissions.server_administrator):
+        return True
+
+    result = UserClient.query.filter(
+        UserClient.user_id == user_id,
+        UserClient.client_id == client_id
+    ).first()
+
+    return result is not None
