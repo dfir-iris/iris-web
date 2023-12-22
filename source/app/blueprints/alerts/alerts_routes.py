@@ -208,8 +208,7 @@ def alerts_add_route(caseid) -> Response:
 
         # Emit a socket io event
         app.socket_io.emit('new_alert', json.dumps({
-            'alert_id': new_alert.alert_id,
-            'alert_title': new_alert.alert_title
+            'alert_id': new_alert.alert_id
         }), namespace='/alerts')
 
         # Return the newly created alert as JSON
