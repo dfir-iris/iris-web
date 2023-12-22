@@ -15,56 +15,35 @@
                     {{ form.hidden_tag() }}
 
                     <div class="mt-4">
-                        <div class="row">
-                            <div class="col col-md-6 col-sm-12">
-                                <div class="input-group mb-4">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">Case name *</span>
-                                    </div>
-                                    {{ form.case_name(class="form-control", type="text") }}
-                                </div>
-                            </div>
-                            <div class="col col-md-6 col-sm-12">
-                                <div class="input-group mb-4">
-                                    {{ form.case_customer(class="selectpicker form-control") }}
-                                </div>
-                            </div>
+                        <div class="input-group mb-4">
+                            {{ form.case_customer(class="selectpicker form-control") }}
                         </div>
-                        <div class="row">
+                        <div class="input-group mb-4">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Case name *</span>
+                            </div>
+                            {{ form.case_name(class="form-control", type="text") }}
+                        </div>
 
+                        <div class="input-group mb-4">
+                            {{ form.case_template_id(class="selectpicker form-control", data_actions_box="true") }}
                         </div>
-                        <div class="row">
-                            <div class="col col-md-6 col-sm-12">
-                                <div class="input-group mb-4">
-                                    {{ form.case_template_id(class="selectpicker form-control", data_actions_box="true") }}
-                                </div>
-                            </div>
-                            <div class="col col-md-6 col-sm-12">
-                                <div class="input-group mb-4">
-                                    {{ form.classification_id(class="selectpicker form-control") }}
-                                </div>
-                            </div>
+                        <div class="input-group mb-4">
+                            {{ form.classification_id(class="selectpicker form-control") }}
                         </div>
-                        <div class="row">
-                            <div class="col col-md-9 col-sm-12">
-                                <div class="input-group mb-4">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">Short description *</span>
-                                    </div>
-                                    {{ form.case_description(class="form-control", type="text") }}
-                                </div>
+                        <div class="input-group mb-4">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Short description *</span>
                             </div>
-                            <div class="col col-md-3 col-sm-6">
-                                <div class="input-group mb-4">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">SOC ticket ID</span>
-                                    </div>
-                                    {{ form.case_soc_id(class="form-control", type="text") }}
-                                </div>
+                            {{ form.case_description(class="form-control", type="text") }}
+                        </div>
+                        <div class="input-group mb-4">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">SOC ticket ID</span>
                             </div>
+                            {{ form.case_soc_id(class="form-control", type="text") }}
                         </div>
                     </div>
-
                 </form>
             </div>
             <div class="col-12">
