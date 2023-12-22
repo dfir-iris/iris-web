@@ -347,6 +347,22 @@ def api_case_close(cur_id, caseid):
     return response_success("Case closed successfully", data=case_schema.dump(res))
 
 
+@manage_cases_blueprint.route('/manage/cases/add/modal', methods=['GET'])
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+def add_case_modal(caseid):
+
+    form = AddCaseForm()
+    form.case_customer.choices = [(c.client_id, c.name) for c in
+                                  Client.query.order_by(Client.name)]
+
+    form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
+    form.case_template_id.choices = [(ctp['id'], ctp['display_name']) for ctp in get_case_templates_list()]
+
+    attributes = get_default_custom_attributes('case')
+
+    return render_template('modal_add_case.html', form=form, attributes=attributes)
+
+
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])
 @ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_add_case(caseid):
