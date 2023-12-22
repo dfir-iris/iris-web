@@ -57,7 +57,8 @@ from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_common import get_severities_list
 from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
-from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access, \
+    ac_current_user_has_permission
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -128,9 +129,13 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Respon
     res = CaseDetailsSchema().dump(res)
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
-    customers = get_client_list()
+    user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
+
+    customers = get_client_list(current_user_id=current_user.id,
+                                is_server_administrator=user_is_server_administrator)
+
     severities = get_severities_list()
-    protagonists  = [r._asdict() for r in get_case_protagonists(cur_id)]
+    protagonists = [r._asdict() for r in get_case_protagonists(cur_id)]
 
     form = FlaskForm()
 

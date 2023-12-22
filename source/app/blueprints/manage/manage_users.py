@@ -48,7 +48,7 @@ from app.datamgmt.manage.manage_users_db import remove_cases_access_from_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.forms import AddUserForm
-from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_current_user_has_permission
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
@@ -211,7 +211,9 @@ def manage_user_customers_modal(cur_id, caseid, url_redir):
     if not user:
         return response_error("Invalid user ID")
 
-    groups = get_client_list()
+    user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
+    groups = get_client_list(current_user_id=current_user.id,
+                             is_server_administrator=user_is_server_administrator)
 
     return render_template("modal_manage_user_customers.html", groups=groups, user=user)
 
