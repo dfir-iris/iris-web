@@ -34,7 +34,7 @@ from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
-from app.datamgmt.manage.manage_users_db import add_case_access_to_user, update_user_customers
+from app.datamgmt.manage.manage_users_db import add_case_access_to_user, update_user_customers, get_filtered_users
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import delete_user
 from app.datamgmt.manage.manage_users_db import get_user
@@ -51,7 +51,7 @@ from app.forms import AddUserForm
 from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_current_user_has_permission
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
-from app.schema.marshables import UserSchema
+from app.schema.marshables import UserSchema, BasicUserSchema
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import ac_requires
@@ -76,6 +76,54 @@ def manage_users_list(caseid):
     users = get_users_list()
 
     return response_success('', data=users)
+
+
+@manage_users_blueprint.route('/manage/users/filter', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+def manage_users_filter(caseid):
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    user_ids_str = request.args.get('user_ids', None, type=str)
+    sort = request.args.get('sort', 'desc', type=str)
+
+
+    if user_ids_str:
+        try:
+
+            if ',' in user_ids_str:
+                user_ids_str = [int(user_id) for user_id in user_ids_str.split(',')]
+
+            else:
+                user_ids_str = [int(user_ids_str)]
+
+        except ValueError:
+            return response_error('Invalid user_ids parameter')
+
+    customer_id = request.args.get('customer_id', None, type=str)
+    user_name = request.args.get('user_name', None, type=str)
+    user_login = request.args.get('user_login', None, type=str)
+
+    filtered_users = get_filtered_users(user_ids=user_ids_str,
+                                        user_name=user_name,
+                                        user_login=user_login,
+                                        customer_id=customer_id,
+                                        page=page,
+                                        per_page=per_page,
+                                        sort=sort)
+
+    if filtered_users is None:
+        return response_error('Filtering error')
+
+    users = {
+        'total': filtered_users.total,
+        'users': BasicUserSchema().dump(filtered_users.items, many=True),
+        'last_page': filtered_users.pages,
+        'current_page': filtered_users.page,
+        'next_page': filtered_users.next_num if filtered_users.has_next else None
+    }
+
+    return response_success(users)
 
 
 @manage_users_blueprint.route('/manage/users/add/modal', methods=['GET'])

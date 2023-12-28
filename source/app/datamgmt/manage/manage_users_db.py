@@ -17,11 +17,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from sqlalchemy.util import reduce
 from typing import List
 
 from flask_login import current_user
-from sqlalchemy import and_
+from sqlalchemy import and_, desc, asc
 
+import app
 from app import bc
 from app import db
 from app.datamgmt.case.case_db import get_case
@@ -688,3 +690,53 @@ def user_exists(user_name, user_email):
 
     return user or user_by_email
 
+
+def get_filtered_users(user_ids: str = None,
+                       user_name: str = None,
+                       user_login: str = None,
+                       customer_id: int = None,
+                       page: int = None,
+                       per_page: int = None,
+                       sort: str =None):
+    """
+
+    """
+    conditions = []
+
+    if user_ids is not None:
+        conditions.append(User.id.in_(user_ids))
+
+    if user_name is not None:
+        conditions.append(User.name.ilike(user_name))
+
+    if user_login is not None:
+        conditions.append(User.user.ilike(user_login))
+
+    if customer_id is not None:
+        conditions.append(UserClient.client_id == customer_id)
+        conditions.append(UserClient.user_id == User.id)
+
+    if len(conditions) > 1:
+        conditions = [reduce(and_, conditions)]
+
+    order_func = desc if sort == 'desc' else asc
+
+    try:
+
+        filtered_users = db.session.query(
+            User
+        ).filter(
+            *conditions
+        ).order_by(
+            order_func(User.id)
+        ).paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
+    except Exception as e:
+        app.logger.exception(f'Error getting users: {str(e)}')
+        return None
+
+    return filtered_users
