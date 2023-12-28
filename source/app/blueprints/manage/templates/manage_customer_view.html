@@ -215,6 +215,46 @@
 						</div>
 					</div>
 				</div>
+				<div class="row">
+					<div class="col-12">
+						<div class="card">
+							<div class="card-header">
+								<div class="row">
+									<div class="col-12">
+										<div class="row">
+											<div class="col col-heading collapsed" href="#collapse_client_cases_view" title="Click to unfold"  data-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse_client_cases_view">
+												<span class="accicon float-left mr-3"><i class="fas fa-angle-right rotate-icon"></i></span>
+												<div class="card-title">Cases</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="card-body collapse" id="collapse_client_cases_view">
+								The cases below have been opened for this customer. Click on a case to view its details.
+								<div class="table-responsive" id="client_cases_table_wrapper">
+									<table class="table display table table-striped table-hover" width="100%"
+										   cellspacing="0" id="client_cases_table">
+										<thead>
+										<tr>
+											<th>Name</th>
+											<th>Opening date</th>
+											<th>Owner</th>
+										</tr>
+										</thead>
+										<tfoot>
+										<tr>
+											<th>Name</th>
+											<th>Opening date</th>
+											<th>Owner</th>
+										</tr>
+										</tfoot>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
     {% endif %}
 <div class="modal" tabindex="-1" role="dialog" id="modal_add_customer" data-backdrop="true">

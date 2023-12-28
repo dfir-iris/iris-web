@@ -1,4 +1,5 @@
 let users_table = null;
+let cases_table = null;
 
 function delete_contact(contact_id, customer_id) {
     post_request_api('/manage/customers/' + customer_id + '/contacts/' + contact_id + '/delete', null, true)
@@ -114,10 +115,20 @@ function refresh_client_users(customer_id) {
     get_raw_request_api(`/manage/users/filter?customer_id=${customer_id}`)
         .done((data) => {
             if (notify_auto_api(data, true)) {
-                console.log(data.data.users);
                 users_table.api().clear().rows.add(data.data.users).draw();
             }
         })
+}
+
+function refresh_client_cases(customer_id) {
+    get_raw_request_api(`/manage/cases/filter?customer_id=${customer_id}`)
+        .done((data) => {
+            if (notify_auto_api(data, true)) {
+                console.log(data.data.cases);
+                cases_table.api().clear().rows.add(data.data.cases).draw();
+            }
+        })
+
 }
 
 $(document).ready(function() {
@@ -127,6 +138,10 @@ $(document).ready(function() {
 
     $('#collapse_client_users_view').on('show.bs.collapse', function() {
         refresh_client_users(customer_id)
+    });
+
+    $('#collapse_client_cases_view').on('show.bs.collapse', function() {
+        refresh_client_cases(customer_id)
     });
 
 
@@ -160,6 +175,32 @@ $(document).ready(function() {
                 }
             }
         ]
-    })
+    });
+
+    cases_table = $('#client_cases_table').dataTable({
+        "order": [[ 1, "asc" ]],
+        "autoWidth": false,
+        "columns": [
+            {
+                "data": "name",
+                "render": function(data, type, row) {
+                    return data;
+                }
+            },
+            {
+                "data": "open_date",
+                "render": function(data, type, row) {
+                    return data;
+                }
+
+            },
+            {
+                "data": "owner",
+                "render": function(data, type, row) {
+                    return data.user_name;
+                }
+            }
+        ]
+    });
 
 });
