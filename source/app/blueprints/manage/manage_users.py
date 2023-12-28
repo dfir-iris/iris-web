@@ -123,7 +123,7 @@ def manage_users_filter(caseid):
         'next_page': filtered_users.next_num if filtered_users.has_next else None
     }
 
-    return response_success(users)
+    return response_success(data=users)
 
 
 @manage_users_blueprint.route('/manage/users/add/modal', methods=['GET'])

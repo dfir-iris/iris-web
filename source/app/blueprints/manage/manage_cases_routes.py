@@ -234,7 +234,7 @@ def manage_case_filter(caseid) -> Response:
         'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
     }
 
-    return response_success(cases)
+    return response_success(data=cases)
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])

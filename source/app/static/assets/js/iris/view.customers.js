@@ -1,3 +1,4 @@
+let users_table = null;
 
 function delete_contact(contact_id, customer_id) {
     post_request_api('/manage/customers/' + customer_id + '/contacts/' + contact_id + '/delete', null, true)
@@ -109,9 +110,56 @@ function load_customer_stats(customer_id) {
     });
 }
 
+function refresh_client_users(customer_id) {
+    get_raw_request_api(`/manage/users/filter?customer_id=${customer_id}`)
+        .done((data) => {
+            if (notify_auto_api(data, true)) {
+                console.log(data.data.users);
+                users_table.api().clear().rows.add(data.data.users).draw();
+            }
+        })
+}
+
 $(document).ready(function() {
 
-    customer_id = $('#customer_id').val();
+    let customer_id = $('#customer_id').val();
     load_customer_stats(customer_id);
+
+    $('#collapse_client_users_view').on('show.bs.collapse', function() {
+        refresh_client_users(customer_id)
+    });
+
+
+    users_table = $('#client_users_table').dataTable({
+        "order": [[ 1, "asc" ]],
+        "autoWidth": false,
+        "columns": [
+            {
+                "data": "user_id",
+                "render": function(data, type, row) {
+                    return data;
+                }
+            },
+            {
+                "data": "user_name",
+                "render": function(data, type, row) {
+                    return data;
+                }
+
+            },
+            {
+                "data": "user_login",
+                "render": function(data, type, row) {
+                    return data;
+                }
+            },
+            {
+                "data": "is_service_account",
+                "render": function(data, type, row) {
+                    return data;
+                }
+            }
+        ]
+    })
 
 });
