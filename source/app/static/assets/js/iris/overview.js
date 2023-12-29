@@ -64,6 +64,7 @@ let OverviewTable = $("#overview_table").DataTable({
             }
 
             if (type === 'display') {
+                let div_anchor = $('<div>');
                 let a_anchor = $('<a>');
                 a_anchor.attr('href', `/case?cid=${row['case_id']}`);
                 a_anchor.attr('target', '_blank');
@@ -78,9 +79,10 @@ let OverviewTable = $("#overview_table").DataTable({
                 span_anchor.attr('title', 'Quick view');
                 span_anchor.attr('style', 'cursor: pointer;');
                 span_anchor.text(data);
-                a_anchor.append(span_anchor);
+                div_anchor.append(a_anchor);
+                div_anchor.append(span_anchor);
 
-                return a_anchor.prop('outerHTML');
+                return div_anchor.prop('outerHTML');
             }
 
             return data;
