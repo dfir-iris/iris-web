@@ -194,7 +194,16 @@ $(document).ready(function() {
                 "render": function(data, type, row) {
                     return data;
                 }
-
+            },
+            {
+                "data": "state",
+                "render": function(data, type, row) {
+                    if (data !== null) {
+                        return data.state_name;
+                    } else {
+                        return 'Unknown';
+                    }
+                }
             },
             {
                 "data": "owner",

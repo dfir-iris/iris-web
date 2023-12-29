@@ -449,7 +449,16 @@ def get_filtered_cases(start_open_date: str = None,
         if sort_by == 'owner':
             data = data.join(User, Cases.owner_id == User.id).order_by(order_func(User.name))
 
-        else:
+        elif sort_by == 'opened_by':
+            data = data.join(User, Cases.user_id == User.id).order_by(order_func(User.name))
+
+        elif sort_by == 'customer_name':
+            data = data.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
+
+        elif sort_by == 'state':
+            data = data.join(CaseState, Cases.state_id == CaseState.state_id).order_by(order_func(CaseState.state_name))
+
+        elif hasattr(Cases, sort_by):
             data = data.order_by(order_func(getattr(Cases, sort_by)))
 
     try:
