@@ -1,5 +1,6 @@
 let users_table = null;
 let cases_table = null;
+let assets_table = null;
 
 function delete_contact(contact_id, customer_id) {
     post_request_api('/manage/customers/' + customer_id + '/contacts/' + contact_id + '/delete', null, true)
@@ -191,11 +192,17 @@ $(document).ready(function() {
             {
                 "data": "asset_type",
                 "render": function(data, type, row) {
+                    return data.asset_name;
+                }
+            },
+            {
+                "data": "asset_ip",
+                "render": function(data, type, row) {
                     return data;
                 }
             },
             {
-                "data": "seen_in_case",
+                "data": "case_id",
                 "render": function(data, type, row) {
                     return data;
                 }
@@ -209,7 +216,7 @@ $(document).ready(function() {
                 let page = Math.floor(d.start / d.length) + 1;
                 d.page = page;
                 d.per_page = d.length;
-                d.asset_customer_id = customer_id;
+                d.customer_id = customer_id;
                 d.order_by = d.columns[d.order[0].column].data;
                 d.sort_dir = d.order[0].dir;
             },
