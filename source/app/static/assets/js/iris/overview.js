@@ -91,7 +91,20 @@ let OverviewTable = $("#overview_table").DataTable({
       { "data": "client",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
-            data = sanitizeHTML(data.customer_name);
+            let div_anchor = $('<div>');
+            let a_anchor = $('<a>');
+            a_anchor.attr('href', `/manage/customers/${data.customer_id}/view`);
+            a_anchor.attr('target', '_blank');
+            a_anchor.attr('rel', 'noopener');
+            a_anchor.html("<i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-2 text-muted'></i>");
+
+            let span_anchor = $('<span>');
+            span_anchor.text(data.customer_name);
+            div_anchor.append(a_anchor);
+            div_anchor.append(span_anchor);
+
+            return div_anchor.prop('outerHTML');
+
           } else if (type === 'sort' || type === 'filter') {
             data = sanitizeHTML(data.customer_name);
           }
