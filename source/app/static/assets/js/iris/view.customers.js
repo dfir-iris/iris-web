@@ -171,6 +171,59 @@ $(document).ready(function() {
         ]
     });
 
+    assets_table = $('#client_assets_table').dataTable({
+        "order": [[ 1, "asc" ]],
+        "autoWidth": false,
+        "columns": [
+            {
+                "data": "asset_id",
+                "render": function(data, type, row) {
+                    return data;
+                }
+            },
+            {
+                "data": "asset_name",
+                "render": function(data, type, row) {
+                    return data;
+                }
+
+            },
+            {
+                "data": "asset_type",
+                "render": function(data, type, row) {
+                    return data;
+                }
+            },
+            {
+                "data": "seen_in_case",
+                "render": function(data, type, row) {
+                    return data;
+                }
+            }
+        ],
+        "serverSide": true,
+        "ajax": {
+            "url": "/manage/assets/filter",
+            "type": "GET",
+            "data": function (d) {
+                let page = Math.floor(d.start / d.length) + 1;
+                d.page = page;
+                d.per_page = d.length;
+                d.asset_customer_id = customer_id;
+                d.order_by = d.columns[d.order[0].column].data;
+                d.sort_dir = d.order[0].dir;
+            },
+            "dataSrc": function (json) {
+                json.recordsTotal = json.data.total;
+                json.recordsFiltered = json.data.total;
+                json.draw = json.data.draw
+                json.data = json.data.assets;
+
+                return json.data;
+            }
+        }
+    });
+
     cases_table = $('#client_cases_table').dataTable({
         "order": [[ 1, "asc" ]],
         "autoWidth": false,

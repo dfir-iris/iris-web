@@ -42,12 +42,12 @@ from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 
-manage_assets_blueprint = Blueprint('manage_assets',
-                                    __name__,
-                                    template_folder='templates')
+manage_assets_type_blueprint = Blueprint('manage_assets_type',
+                                         __name__,
+                                         template_folder='templates')
 
 
-@manage_assets_blueprint.route('/manage/asset-type/list')
+@manage_assets_type_blueprint.route('/manage/asset-type/list')
 @ac_api_requires(no_cid_required=True)
 def list_assets(caseid):
     # Get all assets
@@ -71,7 +71,7 @@ def list_assets(caseid):
     return response_success("", data=data)
 
 
-@manage_assets_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
+@manage_assets_type_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
 @ac_api_requires(no_cid_required=True)
 def view_asset_api(cur_id, caseid):
     # Get all assets
@@ -90,7 +90,7 @@ def view_asset_api(cur_id, caseid):
     return response_success("", data=asset_type._asdict())
 
 
-@manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])
+@manage_assets_type_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])
 @ac_requires(Permissions.server_administrator, no_cid_required=True)
 def view_assets_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -111,7 +111,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_asset_type.html", form=form, assettype=asset)
 
 
-@manage_assets_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
+@manage_assets_type_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def view_assets(cur_id, caseid):
     asset_type = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
@@ -142,7 +142,7 @@ def view_assets(cur_id, caseid):
     return response_error("Unexpected error server-side. Nothing updated")
 
 
-@manage_assets_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
+@manage_assets_type_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
 @ac_requires(Permissions.server_administrator, no_cid_required=True)
 def add_assets_modal(caseid, url_redir):
     if url_redir:
@@ -152,7 +152,7 @@ def add_assets_modal(caseid, url_redir):
     return render_template("modal_add_asset_type.html", form=form, assettype=None)
 
 
-@manage_assets_blueprint.route('/manage/asset-type/add', methods=['POST'])
+@manage_assets_type_blueprint.route('/manage/asset-type/add', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def add_assets(caseid):
 
@@ -183,7 +183,7 @@ def add_assets(caseid):
     return response_error("Unexpected error server-side. Nothing updated")
 
 
-@manage_assets_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['POST'])
+@manage_assets_type_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
 def delete_assets(cur_id, caseid):
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
@@ -214,7 +214,7 @@ def delete_assets(cur_id, caseid):
     return response_success("Deleted asset type ID {cur_id} successfully".format(cur_id=cur_id))
 
 
-@manage_assets_blueprint.route('/manage/asset-types/search', methods=['POST'])
+@manage_assets_type_blueprint.route('/manage/asset-types/search', methods=['POST'])
 @ac_api_requires(no_cid_required=True)
 def search_assets_type(caseid):
     """Searches for assets types in the database.
