@@ -204,7 +204,6 @@ def manage_case_filter(caseid) -> Response:
     case_severity_id = request.args.get('case_severity_id', None, type=int)
     case_state_id = request.args.get('case_state_id', None, type=int)
     case_soc_id = request.args.get('case_soc_id', None, type=str)
-    sort = request.args.get('sort')
     start_open_date = request.args.get('start_open_date', None, type=str)
     end_open_date = request.args.get('end_open_date', None, type=str)
     draw = request.args.get('draw', 1, type=int)
@@ -224,7 +223,6 @@ def manage_case_filter(caseid) -> Response:
         case_severity_id=case_severity_id,
         case_state_id=case_state_id,
         case_soc_id=case_soc_id,
-        sort=sort,
         start_open_date=start_open_date,
         end_open_date=end_open_date,
         search_value=search_value,
