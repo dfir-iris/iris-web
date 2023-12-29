@@ -17,7 +17,7 @@
 			<div class="mt-2 mb-4">
 				<div class="row ml-2 mr-2">
 					<h2 class="pb-2">
-						<a href="/manage/customers?cid={{ session['current_case'].case_id }}" class="text-dark">Customers</a> > {{ customer.customer_name }}</h2>
+						<a href="/manage/customers?cid={{ session['current_case'].case_id }}" class="text-dark">Customers</a> > {{ customer.customer_name }} (#{{customer.customer_id}})</h2>
 					<button class="btn btn-light btn-sm ml-auto" onclick="customer_detail('{{ customer.customer_id }}');">Edit customer</button>
 				</div>
 			</div>
