@@ -183,6 +183,14 @@ $(document).ready(function() {
             {
                 "data": "name",
                 "render": function(data, type, row) {
+                    if (type === 'display') {
+                        let a_anchor = $('<a></a>');
+                        a_anchor.attr('href', '/case?cid=' + row['case_id']);
+                        a_anchor.attr('target', '_blank');
+                        a_anchor.attr('rel', 'noopener');
+                        a_anchor.text(data);
+                        return a_anchor.prop('outerHTML');
+                    }
                     return data;
                 }
             },
