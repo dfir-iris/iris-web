@@ -180,6 +180,9 @@ def manage_case_filter(caseid) -> Response:
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     case_ids_str = request.args.get('case_ids', None, type=str)
+    order_by = request.args.get('order_by', type=str)
+    sort_dir = request.args.get('sort_dir', 'asc', type=str)
+
     if case_ids_str:
         try:
 
@@ -204,6 +207,11 @@ def manage_case_filter(caseid) -> Response:
     sort = request.args.get('sort')
     start_open_date = request.args.get('start_open_date', None, type=str)
     end_open_date = request.args.get('end_open_date', None, type=str)
+    draw = request.args.get('draw', 1, type=int)
+    search_value = request.args.get('search[value]', type=str)  # Get the search value from the request
+
+    if type(draw) is not int:
+        draw = 1
 
     filtered_cases = get_filtered_cases(
         case_ids=case_ids_str,
@@ -219,9 +227,12 @@ def manage_case_filter(caseid) -> Response:
         sort=sort,
         start_open_date=start_open_date,
         end_open_date=end_open_date,
+        search_value=search_value,
         page=page,
         per_page=per_page,
-        current_user_id=current_user.id
+        current_user_id=current_user.id,
+        sort_by=order_by,
+        sort_dir=sort_dir
     )
     if filtered_cases is None:
         return response_error('Filtering error')
@@ -232,6 +243,7 @@ def manage_case_filter(caseid) -> Response:
         'last_page': filtered_cases.pages,
         'current_page': filtered_cases.page,
         'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
+        'draw': draw
     }
 
     return response_success(data=cases)

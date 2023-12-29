@@ -139,11 +139,6 @@ $(document).ready(function() {
         refresh_client_users(customer_id)
     });
 
-    $('#collapse_client_cases_view').on('show.bs.collapse', function() {
-        refresh_client_cases(customer_id)
-    });
-
-
     users_table = $('#client_users_table').dataTable({
         "order": [[ 1, "asc" ]],
         "autoWidth": false,
@@ -207,7 +202,27 @@ $(document).ready(function() {
                     return data.user_name;
                 }
             }
-        ]
-    });
+        ],
+        "serverSide": true,
+        "ajax": {
+            "url": "/manage/cases/filter",
+            "type": "GET",
+            "data": function (d) {
+                let page = Math.floor(d.start / d.length) + 1;
+                d.page = page;
+                d.per_page = d.length;
+                d.case_customer_id = customer_id;
+                d.order_by = d.columns[d.order[0].column].data;
+                d.sort_dir = d.order[0].dir;
+            },
+            "dataSrc": function (json) {
+                json.recordsTotal = json.data.total;
+                json.recordsFiltered = json.data.total;
+                json.draw = json.data.draw
+                json.data = json.data.cases;
 
+                return json.data;
+            }
+        }
+    });
 });
