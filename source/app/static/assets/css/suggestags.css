@@ -59,10 +59,12 @@
 .amsify-suggestags-area .amsify-suggestags-list {
 	display: none;
 	position: absolute;
-	background: rgba(251, 251, 251, 0.98);
-	border: 1px solid #dededea1;
-	border-radius: 6px;
+	border-radius: 0.6rem;
+	border: 1px solid rgba(0,0,0,0.15);
+	box-shadow: 0 1px 11px rgba(0, 0, 0, 0.15) !important;
 	z-index: 1500;
+	color: #212529;
+	background-color: #fff;
 }
 
 .amsify-suggestags-area
