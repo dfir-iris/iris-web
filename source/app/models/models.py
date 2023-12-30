@@ -533,9 +533,23 @@ class Notes(db.Model):
     note_lastupdate = Column(DateTime)
     note_case_id = Column(ForeignKey('cases.case_id'))
     custom_attributes = Column(JSON)
+    directory_id = Column(ForeignKey('note_directory.id'), nullable=True)
 
     user = relationship('User')
     case = relationship('Cases')
+    directory = relationship('NoteDirectory', backref='notes')
+
+
+class NoteDirectory(db.Model):
+    __tablename__ = 'note_directory'
+
+    id = Column(BigInteger, primary_key=True)
+    name = Column(Text, nullable=False)
+    parent_id = Column(ForeignKey('note_directory.id'), nullable=True)
+    case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    parent = relationship('NoteDirectory', remote_side=[id], backref='subdirectories')
+    case = relationship('Cases', backref='note_directories')
 
 
 class NotesGroup(db.Model):
