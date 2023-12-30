@@ -640,13 +640,15 @@ class Tags(db.Model):
     id = Column(BigInteger, primary_key=True, nullable=False)
     tag_title = Column(Text, unique=True)
     tag_creation_date = Column(DateTime)
+    tag_namespace = Column(Text)
 
     cases = relationship('Cases', secondary="case_tags", back_populates='tags', viewonly=True)
 
-    def __init__(self, tag_title):
+    def __init__(self, tag_title, namespace=None):
         self.id = None
         self.tag_title = tag_title
         self.tag_creation_date = datetime.datetime.now()
+        self.tag_namespace = namespace
 
     def save(self):
         existing_tag = self.get_by_title(self.tag_title)
