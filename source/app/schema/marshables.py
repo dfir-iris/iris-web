@@ -227,7 +227,6 @@ class CaseAddNoteSchema(ma.Schema):
         """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
-
             assert_type_mml(input_var=data.get('note_id'),
                             field_name="note_id",
                             type=int,
@@ -288,11 +287,10 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the asset name is not unique.
 
         """
-        
+
         assert_type_mml(input_var=data.asset_name,
                         field_name="asset_name",
                         type=str)
-        
 
         assert_type_mml(input_var=data.asset_id,
                         field_name="asset_id",
@@ -398,6 +396,13 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
             if not status:
                 raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
                                                              field_name="analysis_status_id")
+
+        if data.get('asset_tags'):
+            for tag in data.get('asset_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="asset_tags")
+                add_db_tag(tag.strip())
 
         return data
 
@@ -599,16 +604,16 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
             TLP ID are invalid.
 
         """
-        assert_type_mml(input_var=data.get('ioc_type_id'), 
-                        field_name="ioc_type_id", 
+        assert_type_mml(input_var=data.get('ioc_type_id'),
+                        field_name="ioc_type_id",
                         type=int)
 
         ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
         if not ioc_type:
             raise marshmallow.exceptions.ValidationError("Invalid ioc type ID", field_name="ioc_type_id")
 
-        assert_type_mml(input_var=data.get('ioc_tlp_id'), 
-                        field_name="ioc_tlp_id", 
+        assert_type_mml(input_var=data.get('ioc_tlp_id'),
+                        field_name="ioc_tlp_id",
                         type=int)
 
         tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
@@ -647,10 +652,9 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
-
-            assert_type_mml(input_var=data.get('ioc_id'), 
-                            field_name="ioc_id", 
-                            type=int, 
+            assert_type_mml(input_var=data.get('ioc_id'),
+                            field_name="ioc_id",
+                            type=int,
                             allow_none=True)
 
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
@@ -705,12 +709,12 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         user_id = data.get('user_id')
 
         assert_type_mml(input_var=user_id,
-                        field_name="user_id", 
+                        field_name="user_id",
                         type=int,
                         allow_none=True)
-        
-        assert_type_mml(input_var=user, 
-                        field_name="user_login", 
+
+        assert_type_mml(input_var=user,
+                        field_name="user_login",
                         type=str,
                         allow_none=True)
 
@@ -830,7 +834,6 @@ class CommentSchema(ma.SQLAlchemyAutoSchema):
     """
     user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
 
-
     class Meta:
         model = Comments
         load_instance = True
@@ -915,38 +918,38 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             if field not in data:
                 raise marshmallow.exceptions.ValidationError(f"Missing field {field}", field_name=field)
 
-        assert_type_mml(input_var=int(data.get('event_category_id')), 
-                        field_name='event_category_id', 
+        assert_type_mml(input_var=int(data.get('event_category_id')),
+                        field_name='event_category_id',
                         type=int)
 
         event_cat = EventCategory.query.filter(EventCategory.id == int(data.get('event_category_id'))).count()
         if not event_cat:
             raise marshmallow.exceptions.ValidationError("Invalid event category ID", field_name="event_category_id")
-        
-        assert_type_mml(input_var=data.get('event_assets'), 
-                        field_name='event_assets', 
+
+        assert_type_mml(input_var=data.get('event_assets'),
+                        field_name='event_assets',
                         type=list)
 
         for asset in data.get('event_assets'):
-            
-            assert_type_mml(input_var=int(asset), 
-                            field_name='event_assets', 
+
+            assert_type_mml(input_var=int(asset),
+                            field_name='event_assets',
                             type=int)
 
             ast = CaseAssets.query.filter(CaseAssets.asset_id == asset).count()
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid assets ID", field_name="event_assets")
 
-        assert_type_mml(input_var=data.get('event_iocs'), 
-                        field_name='event_iocs', 
+        assert_type_mml(input_var=data.get('event_iocs'),
+                        field_name='event_iocs',
                         type=list)
-        
+
         for ioc in data.get('event_iocs'):
 
             assert_type_mml(input_var=int(ioc),
                             field_name='event_iocs',
                             type=int)
-            
+
             ast = Ioc.query.filter(Ioc.ioc_id == ioc).count()
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid IOC ID", field_name="event_assets")
@@ -954,6 +957,13 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         if data.get('event_color') and data.get('event_color') not in ['#fff', '#1572E899', '#6861CE99', '#48ABF799',
                                                                        '#31CE3699', '#F2596199', '#FFAD4699']:
             data['event_color'] = ''
+
+        if data.get('event_tags'):
+            for tag in data.get('event_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="event_tags")
+                add_db_tag(tag.strip())
 
         return data
 
@@ -974,12 +984,11 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
-
             assert_type_mml(input_var=data.get('event_id'),
                             field_name='event_id',
                             type=int,
                             allow_none=True)
-            
+
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
@@ -1016,7 +1025,8 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
 
-    def ds_store_file_b64(self, filename: str, file_content: bytes, dsp: DataStorePath, cid: int) -> Tuple[DataStoreFile, bool]:
+    def ds_store_file_b64(self, filename: str, file_content: bytes, dsp: DataStorePath, cid: int) -> Tuple[
+        DataStoreFile, bool]:
         """Stores a file in the data store.
 
         This method stores a file in the data store. If the file already exists in the data store, it returns the
@@ -1079,7 +1089,8 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
         return dsf, exists
 
-    def ds_store_file(self, file_storage: FileStorage, location: Path, is_ioc: bool, password: Optional[str]) -> Tuple[str, int, str]:
+    def ds_store_file(self, file_storage: FileStorage, location: Path, is_ioc: bool, password: Optional[str]) -> Tuple[
+        str, int, str]:
         """Stores a file in the data store.
 
         This method stores a file in the data store. If the file is an IOC and no password is provided, it uses a default
@@ -1164,7 +1175,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         setattr(self, 'file_local_path', str(location))
 
         return file_path, file_size, file_hash
-    
+
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing ServerSettings objects.
@@ -1353,10 +1364,10 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
 
         """
         assert_type_mml(input_var=data.get('case_customer'),
-                        field_name='case_customer', 
+                        field_name='case_customer',
                         type=int,
                         allow_none=True)
-        
+
         client = Client.query.filter(Client.client_id == data.get('case_customer')).first()
         if client:
             return data
@@ -1381,13 +1392,13 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
 
-        assert_type_mml(input_var=new_attr, 
-                        field_name='custom_attributes', 
+        assert_type_mml(input_var=new_attr,
+                        field_name='custom_attributes',
                         type=dict,
                         allow_none=True)
-        
-        assert_type_mml(input_var=data.get('case_id'), 
-                        field_name='case_id', 
+
+        assert_type_mml(input_var=data.get('case_id'),
+                        field_name='case_id',
                         type=int,
                         allow_none=True)
 
@@ -1450,17 +1461,17 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the assignee ID or task status ID is not valid.
 
         """
-        assert_type_mml(input_var=data.get('task_assignee_id'), 
-                        field_name='task_assignee_id', 
+        assert_type_mml(input_var=data.get('task_assignee_id'),
+                        field_name='task_assignee_id',
                         type=int)
-        
+
         user = User.query.filter(User.id == data.get('task_assignee_id')).count()
         if not user:
             raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
                                                          field_name="task_assignees_id")
 
-        assert_type_mml(input_var=data.get('task_status_id'), 
-                        field_name='task_status_id', 
+        assert_type_mml(input_var=data.get('task_status_id'),
+                        field_name='task_status_id',
                         type=int)
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
@@ -1505,10 +1516,10 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the customer name is not unique.
 
         """
-        assert_type_mml(input_var=data.name, 
-                        field_name='customer_name', 
+        assert_type_mml(input_var=data.name,
+                        field_name='customer_name',
                         type=str)
-        
+
         assert_type_mml(input_var=data.client_id,
                         field_name='customer_id',
                         type=int,
@@ -1543,13 +1554,12 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
 
-        assert_type_mml(input_var=new_attr, 
-                        field_name='custom_attributes', 
+        assert_type_mml(input_var=new_attr,
+                        field_name='custom_attributes',
                         type=dict,
                         allow_none=True)
 
         if new_attr is not None:
-
             assert_type_mml(input_var=data.get('client_id'),
                             field_name='customer_id',
                             type=int,
@@ -1610,14 +1620,21 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the task status ID is not valid.
 
         """
-        assert_type_mml(input_var=data.get('task_status_id'), 
-                        field_name='task_status_id', 
+        assert_type_mml(input_var=data.get('task_status_id'),
+                        field_name='task_status_id',
                         type=int)
 
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
             raise marshmallow.exceptions.ValidationError("Invalid task status ID",
                                                          field_name="task_status_id")
+
+        if data.get('task_tags'):
+            for tag in data.get('task_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="task_tags")
+                add_db_tag(tag.strip())
 
         return data
 
@@ -1638,13 +1655,13 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
 
-        assert_type_mml(input_var=new_attr, 
-                        field_name='custom_attributes', 
+        assert_type_mml(input_var=new_attr,
+                        field_name='custom_attributes',
                         type=dict,
                         allow_none=True)
-        
-        assert_type_mml(input_var=data.get('id'), 
-                        field_name='task_id', 
+
+        assert_type_mml(input_var=data.get('id'),
+                        field_name='task_id',
                         type=int,
                         allow_none=True)
 
@@ -1689,13 +1706,12 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
 
-        assert_type_mml(input_var=new_attr, 
-                        field_name='custom_attributes', 
+        assert_type_mml(input_var=new_attr,
+                        field_name='custom_attributes',
                         type=dict,
                         allow_none=True)
 
         if new_attr is not None:
-
             assert_type_mml(input_var=data.get('id'),
                             field_name='evidence_id',
                             type=int,
@@ -1715,7 +1731,8 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
     """
     group_name: str = auto_field('group_name', required=True, validate=Length(min=2), allow_none=False)
     group_description: str = auto_field('group_description', required=True, validate=Length(min=2))
-    group_auto_follow_access_level: Optional[bool] = auto_field('group_auto_follow_access_level', required=False, default=False)
+    group_auto_follow_access_level: Optional[bool] = auto_field('group_auto_follow_access_level', required=False,
+                                                                default=False)
     group_permissions: int = fields.Integer(required=False)
     group_members: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
     group_permissions_list: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
@@ -1744,8 +1761,8 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the group name is not unique.
 
         """
-        assert_type_mml(input_var=data.get('group_name'), 
-                        field_name='group_name', 
+        assert_type_mml(input_var=data.get('group_name'),
+                        field_name='group_name',
                         type=str)
 
         groups = Group.query.filter(
@@ -1821,8 +1838,8 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the organization name is not unique.
 
         """
-        assert_type_mml(input_var=data.get('org_name'), 
-                        field_name='org_name', 
+        assert_type_mml(input_var=data.get('org_name'),
+                        field_name='org_name',
                         type=str)
 
         organisations = Organisation.query.filter(
@@ -1858,7 +1875,6 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
                    'id', 'name', 'email', 'user', 'uuid']
-
 
 
 def validate_ioc_type(type_id: int) -> None:
@@ -2016,6 +2032,20 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
 
+    @pre_load
+    def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """
+        Verify that the alert tags are valid and save them if they don't exist
+        """
+        if data.get('alert_tags'):
+            for tag in data.get('alert_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="alert_tags")
+                add_db_tag(tag.strip())
+
+        return data
+
 
 class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing SavedFilter objects.
@@ -2023,6 +2053,7 @@ class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
     This schema defines the fields to include when serializing and deserializing SavedFilter objects.
 
     """
+
     class Meta:
         model = SavedFilter
         load_instance = True
@@ -2035,13 +2066,14 @@ class IrisModuleSchema(ma.SQLAlchemyAutoSchema):
         model = IrisModule
         load_instance = True
 
-        
+
 class ModuleHooksSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing ModuleHooks objects.
 
     This schema defines the fields to include when serializing and deserializing ModuleHooks objects.
 
     """
+
     class Meta:
         model = IrisModuleHook
         load_instance = True
@@ -2050,7 +2082,6 @@ class ModuleHooksSchema(ma.SQLAlchemyAutoSchema):
 
 
 class TagsSchema(ma.SQLAlchemyAutoSchema):
-
     class Meta:
         model = Tags
         load_instance = True
@@ -2059,15 +2090,16 @@ class TagsSchema(ma.SQLAlchemyAutoSchema):
 
 
 class ReviewStatusSchema(ma.SQLAlchemyAutoSchema):
-        class Meta:
-            model = ReviewStatus
-            load_instance = True
-            include_fk = True
-            include_relationships = True
+    class Meta:
+        model = ReviewStatus
+        load_instance = True
+        include_fk = True
+        include_relationships = True
 
 
 class CaseProtagonistSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseProtagonist objects."""
+
     class Meta:
         model = CaseProtagonist
         load_instance = True
