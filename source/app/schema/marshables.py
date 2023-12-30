@@ -45,6 +45,7 @@ from app import db
 from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
+from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
     ReviewStatus, EvidenceTypes, CaseStatus
@@ -619,6 +620,13 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
                 error = f"The input doesn\'t match the expected format " \
                         f"(expected: {ioc_type.type_validation_expect or ioc_type.type_validation_regex})"
                 raise marshmallow.exceptions.ValidationError(error, field_name="ioc_ioc_value")
+
+        if data.get('ioc_tags'):
+            for tag in data.get('ioc_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="ioc_tags")
+                add_db_tag(tag.strip())
 
         return data
 

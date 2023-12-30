@@ -1,10 +1,9 @@
-from flask_login import current_user
+from sqlalchemy import and_, desc, asc
 from sqlalchemy import and_, desc, asc
 from sqlalchemy.util import reduce
 
 import app
-from app.datamgmt.manage.manage_cases_db import user_list_cases_view
-from app.models import CaseAssets, Client, Cases, Tags
+from app.models import Tags
 
 
 def get_filtered_tags(tag_title=None,
@@ -56,3 +55,31 @@ def get_filtered_tags(tag_title=None,
         raise e
 
     return filtered_tags
+
+
+def add_db_tag(tag_title, tag_namespace=None):
+    """
+    Adds a tag to the database.
+
+    :param tag_title: Tag title
+    :param tag_namespace: Tag namespace
+    :return: Tag ID
+    """
+
+    tag = Tags(tag_title=tag_title, namespace=tag_namespace)
+
+    try:
+        # Only add the tag if it doesn't already exist
+        existing_tag = Tags.query.filter_by(tag_title=tag_title).first()
+        if existing_tag:
+            return existing_tag
+
+        tag.save()
+        app.db.session.commit()
+
+    except Exception as e:
+        app.logger.exception(f"Failed to add tag: {e}")
+        raise e
+
+    return tag
+
