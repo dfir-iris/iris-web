@@ -1551,10 +1551,7 @@ async function editAlert(alert_id, close=false) {
     const confirmAlertEdition = $('#confirmAlertEdition');
 
     alertTag.val($(`#alertTags-${alert_id}`).text())
-    alertTag.amsifySuggestags({
-     printValues: false,
-     suggestions: []
-    });
+    set_suggest_tags(`editAlertTags`);
     $('#editAlertNote').val($(`#alertNote-${alert_id}`).text());
 
     if (close) {
