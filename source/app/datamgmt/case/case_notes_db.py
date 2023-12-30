@@ -23,7 +23,7 @@ from sqlalchemy import and_
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
-from app.models import Comments
+from app.models import Comments, NoteDirectory
 from app.models import Notes
 from app.models import NotesComments
 from app.models import NotesGroup
@@ -372,3 +372,37 @@ def delete_note_comment(note_id, comment_id):
     db.session.commit()
 
     return True, "Comment deleted"
+
+
+def get_directories_with_note_count(case_id):
+    # Fetch all directories for the given case
+    directories = NoteDirectory.query.filter_by(case_id=case_id).all()
+
+    # Create a list to store the directories with note counts
+    directories_with_note_count = []
+
+    # For each directory, fetch the subdirectories, note count, and note titles
+    for directory in directories:
+        directory_with_note_count = get_directory_with_note_count(directory)
+        notes = [{'id': note.note_id, 'title': note.note_title} for note in directory.notes]
+        directory_with_note_count['notes'] = notes
+        directories_with_note_count.append(directory_with_note_count)
+
+    return directories_with_note_count
+
+
+def get_directory_with_note_count(directory):
+    note_count = Notes.query.filter_by(directory_id=directory.id).count()
+
+    directory_dict = {
+        'id': directory.id,
+        'name': directory.name,
+        'note_count': note_count,
+        'subdirectories': []
+    }
+
+    if directory.subdirectories:
+        for subdirectory in directory.subdirectories:
+            directory_dict['subdirectories'].append(get_directory_with_note_count(subdirectory))
+
+    return directory_dict

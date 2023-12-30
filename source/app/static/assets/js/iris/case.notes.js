@@ -558,46 +558,6 @@ function refresh_ppl_list() {
     }
 }
 
-function handle_ed_paste(event) {
-    let filename = null;
-    const { items } = event.originalEvent.clipboardData;
-    for (let i = 0; i < items.length; i += 1) {
-      const item = items[i];
-
-      if (item.kind === 'string') {
-        item.getAsString(function (s){
-            filename = $.trim(s.replace(/\t|\n|\r/g, '')).substring(0, 40);
-        });
-      }
-
-      if (item.kind === 'file') {
-        console.log(item.type);
-        const blob = item.getAsFile();
-
-        if (blob !== null) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                notify_success('The file is uploading in background. Don\'t leave the page');
-
-                if (filename === null) {
-                    filename = random_filename(25);
-                }
-
-                upload_interactive_data(e.target.result, filename, function(data){
-                    url = data.data.file_url + case_param();
-                    event.preventDefault();
-                    note_editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
-                });
-
-            };
-            reader.readAsDataURL(blob);
-        } else {
-            notify_error('Unsupported direct paste of this item. Use datastore to upload.');
-        }
-      }
-    }
-}
-
 /* Delete a group of the dashboard */
 function search_notes() {
     var data = Object();
@@ -674,10 +634,80 @@ function edit_innote() {
     return edit_inner_editor('notes_edition_btn', 'container_note_content', 'ctrd_notesum');
 }
 
+async function load_directories() {
+    return get_request_api('/case/notes/directories/filter')
+        .done((data) => {
+            if (notify_auto_api(data, true)) {
+                let directoriesListing = $('#directoriesListing');
+                directoriesListing.empty();
+
+                data.data.forEach(function(directory) {
+                    directoriesListing.append(createDirectoryListItem(directory));
+                });
+            }
+        });
+}
+
+function createDirectoryListItem(directory) {
+    // Create a list item for the directory
+    var listItem = $('<li></li>');
+    var link = $('<a></a>').attr('href', '#');
+    link.append($('<i></i>').addClass('fa-solid fa-folder'));
+    link.append(' ' + directory.name);
+    link.append($('<span></span>').addClass('badge badge-light float-right').text(directory.note_count));
+    listItem.append(link);
+
+    // Create a container for the subdirectories and notes
+    var container = $('<div></div>').addClass('directory-container');
+    listItem.append(container);
+
+    // If the directory has more than 5 elements, hide the container by default
+    if ((directory.subdirectories.length + directory.notes.length) > 5) {
+        container.hide();
+    }
+
+    // Add a click event listener to the directory to toggle the visibility of the container
+    link.on('click', function(e) {
+        e.preventDefault();
+        container.slideToggle();
+    });
+
+    // If the directory has subdirectories, create a list item for each subdirectory
+    if (directory.subdirectories && directory.subdirectories.length > 0) {
+        var subdirectoriesList = $('<ul></ul>').addClass('nav');
+        directory.subdirectories.forEach(function(subdirectory) {
+            subdirectoriesList.append(createDirectoryListItem(subdirectory));
+        });
+        container.append(subdirectoriesList);
+    }
+
+    // If the directory has notes, create a list item for each note
+    if (directory.notes && directory.notes.length > 0) {
+        var notesList = $('<ul></ul>').addClass('nav');
+        directory.notes.forEach(function(note) {
+            var noteListItem = $('<li></li>');
+            var noteLink = $('<a></a>').attr('href', '#');
+            noteLink.append($('<i></i>').addClass('fa-solid fa-file'));
+            noteLink.append(' ' + note.title);
+
+            // Add a click event listener to the note link that calls note_detail with the note ID
+            noteLink.on('click', function(e) {
+                e.preventDefault();
+                note_detail(note.id);
+            });
+
+            noteListItem.append(noteLink);
+            notesList.append(noteListItem);
+        });
+        container.append(notesList);
+    }
+
+    return listItem;
+}
+
 /* Load the kanban case data and build the board from it */
 async function draw_kanban() {
     /* Empty board */
-    $('#myKanban').empty();
     show_loader();
 
     return get_request_api('/case/notes/groups/list')
@@ -722,40 +752,41 @@ function note_interval_pinger() {
 }
 
 $(document).ready(function(){
-    shared_id = getSharedLink();
-    if (shared_id) {
-        note_detail(shared_id);
-    }
-
+    load_directories();
+    // shared_id = getSharedLink();
+    // if (shared_id) {
+    //     note_detail(shared_id);
+    // }
+    //
     let cid = get_caseid();
     collaborator_socket = io.connect();
     collaborator_socket.emit('join-notes-overview', { 'channel': 'case-' + cid + '-notes' });
-
-    collaborator_socket.on('ping-note', function(data) {
-        last_ping = new Date();
-        if ( data.note_id === null || data.note_id !== note_id) {
-            set_notes_follow(data);
-            return;
-        }
-
-        ppl_viewing.set(data.user, 1);
-        for (let [key, value] of ppl_viewing) {
-            if (key !== data.user) {
-                ppl_viewing.set(key, value-1);
-            }
-            if (value < 0) {
-                ppl_viewing.delete(key);
-            }
-        }
-        refresh_ppl_list(session_id, note_id);
-    });
-
-    timer_socket = setInterval( function() {
-        note_interval_pinger();
-    }, 2000);
-
-    collaborator_socket.emit('ping-note', { 'channel': 'case-' + cid + '-notes', 'note_id': note_id });
-
-    setInterval(auto_remove_typing, 1500);
+    //
+    // collaborator_socket.on('ping-note', function(data) {
+    //     last_ping = new Date();
+    //     if ( data.note_id === null || data.note_id !== note_id) {
+    //         set_notes_follow(data);
+    //         return;
+    //     }
+    //
+    //     ppl_viewing.set(data.user, 1);
+    //     for (let [key, value] of ppl_viewing) {
+    //         if (key !== data.user) {
+    //             ppl_viewing.set(key, value-1);
+    //         }
+    //         if (value < 0) {
+    //             ppl_viewing.delete(key);
+    //         }
+    //     }
+    //     refresh_ppl_list(session_id, note_id);
+    // });
+    //
+    // timer_socket = setInterval( function() {
+    //     note_interval_pinger();
+    // }, 2000);
+    //
+    // collaborator_socket.emit('ping-note', { 'channel': 'case-' + cid + '-notes', 'note_id': note_id });
+    //
+    // setInterval(auto_remove_typing, 1500);
 
 });

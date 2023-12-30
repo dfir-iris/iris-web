@@ -34,7 +34,7 @@ from app import db, socket_io
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_notes_db import add_comment_to_note
+from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count
 from app.datamgmt.case.case_notes_db import add_note
 from app.datamgmt.case.case_notes_db import add_note_group
 from app.datamgmt.case.case_notes_db import delete_note
@@ -85,7 +85,7 @@ def case_notes(caseid, url_redir):
         crc32 = None
         desc = None
 
-    return render_template('case_notes.html', case=case, form=form, th_desc=desc, crc=crc32)
+    return render_template('case_notes_v2.html', case=case, form=form, th_desc=desc, crc=crc32)
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>', methods=['GET'])
@@ -317,6 +317,18 @@ def case_get_notes_group(cur_id, caseid):
         return response_error(f"Group ID {cur_id} not found")
 
     return response_success("", data=group)
+
+
+@case_notes_blueprint.route('/case/notes/directories/filter', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_filter_notes_directories(caseid):
+
+    if not get_case(caseid=caseid):
+        return response_error("Invalid case ID")
+
+    directories = get_directories_with_note_count(caseid)
+
+    return response_success("", data=directories)
 
 
 @case_notes_blueprint.route('/case/notes/groups/update/<int:cur_id>', methods=['POST'])
