@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
 
 # IMPORTS ------------------------------------------------
 
@@ -23,9 +24,10 @@ from flask import Blueprint
 from flask import request
 from werkzeug import Response
 
+from app import app
 from app.datamgmt.manage.manage_tags_db import get_filtered_tags
 from app.schema.marshables import TagsSchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires, AlchemyEncoder
 from app.util import response_success
 
 manage_tags_blueprint = Blueprint('manage_tags',
@@ -48,6 +50,8 @@ def manage_tags_filter(caseid) -> Response:
     sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
     tag_title = request.args.get('tag_title', None, type=str)
+    if tag_title is None:
+        tag_title = request.args.get('term', None, type=str)
     tag_namespace = request.args.get('tag_namespace', None, type=str)
 
     draw = request.args.get('draw', 1, type=int)
@@ -72,3 +76,23 @@ def manage_tags_filter(caseid) -> Response:
     }
 
     return response_success('', data=tags)
+
+
+@manage_tags_blueprint.route('/manage/tags/suggest', methods=['GET'])
+@ac_api_requires(no_cid_required=True)
+def manage_tags_suggest(caseid) -> Response:
+    tag_title = request.args.get('term', None, type=str)
+    filtered_tags = get_filtered_tags(tag_title=tag_title,
+                                      tag_namespace=None,
+                                      page=1,
+                                      per_page=15,
+                                      sort_by='tage_title',
+                                      sort_dir='asc')
+
+    tags = {
+        "suggestions": [tag.tag_title for tag in filtered_tags.items]
+    }
+
+    return app.response_class(response=json.dumps(tags, cls=AlchemyEncoder),
+                              status=200,
+                              mimetype='application/json')

@@ -363,10 +363,7 @@ function access_case_info_reload(case_id, owner_id, reviewer_id) {
         }
     });
 
-    $('#case_tags').amsifySuggestags({
-        printValues: false,
-        suggestions: []
-    });
+    set_suggest_tags('case_tags');
 }
 
 

@@ -27,10 +27,10 @@ def get_filtered_tags(tag_title=None,
 
     conditions = []
     if tag_title:
-        conditions.append(CaseAssets.case_id == tag_title)
+        conditions.append(Tags.tag_title.ilike(f'%{tag_title}%'))
 
     if tag_namespace:
-        conditions.append(Client.client_id == tag_namespace)
+        conditions.append(Tags.tag_namespace.ilike(f'%{tag_namespace}%'))
 
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
@@ -43,7 +43,7 @@ def get_filtered_tags(tag_title=None,
         if sort_by == 'name':
             data = data.order_by(order_func(Tags.tag_title))
         elif sort_by == 'namespace':
-            data = data.order_by(order_func(Tags.namespace))
+            data = data.order_by(order_func(Tags.tag_namespace))
         else:
             data = data.order_by(order_func(Tags.tag_title))
 

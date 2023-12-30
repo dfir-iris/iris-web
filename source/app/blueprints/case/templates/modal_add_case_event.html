@@ -251,12 +251,8 @@
     </div>
 </div>
 <script>
-    $('#event_tags').amsifySuggestags({
-        printValues: true,
-        suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ],
-        whiteList: false,
-        selectOnHover: false,
-    });
+    set_suggest_tags('event_tags');
+
 $('[data-toggle="popover"]').popover();
 $('#event_category_id').selectpicker({
     width:"100%",

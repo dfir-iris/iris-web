@@ -103,15 +103,8 @@
 
         $('#toggle_file_password > i').attr('class', type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash');
     });
+    set_suggest_tags('file_tags');
 
-    $('#file_tags').amsifySuggestags({
-        printValues: true,
-        {% if file.file_tags %}
-            suggestions: [ {% for tag in file.file_tags %} '{{ tag }}', {% endfor %} ],
-        {% endif %}
-        whiteList: false,
-        selectOnHover: false,
-    });
     $("#input_upload_ds_file").on("change", function(e) {
         var file = e.target.files[0].name;
         $('#file_original_name').val(file);
