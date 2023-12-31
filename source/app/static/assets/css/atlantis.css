@@ -1493,6 +1493,7 @@ body {
 .page-with-aside .page-aside .aside-nav .nav>li {
     padding: 8px 22px;
     margin-bottom: 5px;
+    border-radius: 0.6rem;
 }
 
 .page-with-aside .page-aside .aside-nav .nav>li:hover,
@@ -1511,7 +1512,7 @@ body {
 }
 
 .page-with-aside .page-aside .aside-nav .nav>li>a {
-    color: #83848a;
+    color: #262626;
     display: flex;
     align-items: center;
     font-size: 12px;
@@ -1525,7 +1526,7 @@ body {
 .page-with-aside .page-aside .aside-nav .nav>li>a i {
     font-size: 20px;
     margin-right: 15px;
-    color: #a1a2a6;
+    color: #262626;
 }
 
 .page-with-aside .page-aside .aside-nav .label {
@@ -1541,6 +1542,12 @@ body {
 
 .page-with-aside .page-content {
     width: 100%;
+}
+
+.note-highlight {
+    margin-top: 4px;
+    background-color: #dbdbdb;
+    box-shadow: 2px 0px 15px 0px rgba(69, 65, 78, 0.17);
 }
 
 .footer {

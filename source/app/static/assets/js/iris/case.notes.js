@@ -660,7 +660,7 @@ function createDirectoryListItem(directory) {
     // Create a list item for the directory
     var listItem = $('<li></li>');
     var link = $('<a></a>').attr('href', '#');
-    var icon = $('<i></i>').addClass('fa-solid fa-folder');  // Create an icon for the directory
+    var icon = $('<i></i>').addClass('fa-regular fa-folder');  // Create an icon for the directory
     link.append(icon);
     link.append(' ' + directory.name);
     link.append($('<span></span>').addClass('badge badge-light float-right').text(directory.note_count));
@@ -696,15 +696,21 @@ function createDirectoryListItem(directory) {
     if (directory.notes && directory.notes.length > 0) {
         var notesList = $('<ul></ul>').addClass('nav');
         directory.notes.forEach(function(note) {
-            var noteListItem = $('<li></li>');
+            var noteListItem = $('<li></li>').attr('id', 'note-' + note.id).addClass('note');  // Add an id to the list item
             var noteLink = $('<a></a>').attr('href', '#');
-            noteLink.append($('<i></i>').addClass('fa-solid fa-file'));
+            noteLink.append($('<i></i>').addClass('fa-regular fa-file'));
             noteLink.append(' ' + note.title);
 
             // Add a click event listener to the note link that calls note_detail with the note ID
             noteLink.on('click', function(e) {
                 e.preventDefault();
                 note_detail(note.id);
+
+                // Remove the 'highlight' class from all notes
+                $('.note').removeClass('note-highlight');
+
+                // Add the 'highlight' class to the clicked note
+                noteListItem.addClass('note-highlight');
             });
 
             noteListItem.append(noteLink);
