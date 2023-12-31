@@ -16,6 +16,7 @@ let last_ping = 0;
 let forceModalClose = false;
 let wasMiniNote = false;
 let cid = null;
+let previousNoteTitle = null;
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -215,6 +216,7 @@ function note_detail(id) {
 
             note_editor.setValue(data.data.note_content, -1);
             $('#currentNoteTitle').text(data.data.note_title);
+            previousNoteTitle = data.data.note_title;
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
                 .data('note_id', data.data.note_id);
 
@@ -362,7 +364,8 @@ function save_note() {
 
 
     let data_sent = Object();
-    data_sent['note_title'] = $('#currentNoteTitle').text();
+    let currentNoteTitle = $('#currentNoteTitle').text();
+    data_sent['note_title'] = currentNoteTitle;
     data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['note_content'] = $('#note_content').val();
     let ret = get_custom_attributes_fields();
@@ -385,6 +388,10 @@ function save_note() {
              $("#content_last_saved_by").text('Last saved by you');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
             collaborator.save(n_id);
+            if (previousNoteTitle !== currentNoteTitle) {
+                load_directories();
+                previousNoteTitle = currentNoteTitle;
+            }
         }
     });
 }
@@ -488,12 +495,16 @@ function note_interval_pinger() {
 }
 
 $(document).ready(function(){
-    load_directories();
-    // shared_id = getSharedLink();
-    // if (shared_id) {
-    //     note_detail(shared_id);
-    // }
-    //
+    load_directories().then(
+        function() {
+            let shared_id = getSharedLink();
+            if (shared_id) {
+                note_detail(shared_id);
+            }
+        }
+    )
+
+
     cid = get_caseid();
     collaborator_socket = io.connect();
     collaborator_socket.emit('join-notes-overview', { 'channel': 'case-' + cid + '-notes' });
@@ -524,5 +535,19 @@ $(document).ready(function(){
     // collaborator_socket.emit('ping-note', { 'channel': 'case-' + cid + '-notes', 'note_id': note_id });
     //
     // setInterval(auto_remove_typing, 1500);
+
+    $(document).on('click', '#currentNoteTitle', function() {
+        var title = $(this).text();
+        $(this).replaceWith('<input id="currentNoteTitleInput" type="text" value="' + title + '">');
+        $('#currentNoteTitleInput').focus();
+    });
+
+    $(document).on('blur keyup', '#currentNoteTitleInput', function(e) {
+        if (e.type === 'blur' || e.key === 'Enter') {
+            var title = $(this).val();
+            $(this).replaceWith('<h4 class="page-title mb-0" id="currentNoteTitle">' + title + '</h4>');
+            save_note();
+        }
+    });
 
 });
