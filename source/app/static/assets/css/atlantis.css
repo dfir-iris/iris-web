@@ -1540,7 +1540,7 @@ body {
 }
 
 .page-with-aside .page-content {
-    width: calc(100% - 280px);
+    width: 100%;
 }
 
 .footer {
@@ -15897,3 +15897,11 @@ td.dt-nowrap { white-space: nowrap }
     margin-left: 10px;
 }
 
+#noteContentScroll {
+    overflow-y: auto;
+    height: 100vh; /* Adjust this value as needed */
+}
+
+.page-aside {
+    overflow: auto;
+}

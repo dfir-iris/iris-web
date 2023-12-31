@@ -424,58 +424,62 @@ function note_detail(id, cid) {
         cid = '?cid=' + cid;
     }
 
-    url = '/case/notes/' + id + "/modal" + cid;
-    $('#info_note_modal_content').load(url, function (response, status, xhr) {
-        $('#form_note').on("submit", preventFormDefaultBehaviourOnSubmit);
-        hide_minimized_modal_box();
-        if (status !== "success") {
-             ajax_notify_error(xhr, url);
-             return false;
+    let url = '/case/notes/' + id;
+    get_request_api(url)
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            let timer;
+            let timeout = 10000;
+            $('#form_note').keyup(function(){
+                if(timer) {
+                     clearTimeout(timer);
+                }
+                if (ppl_viewing.size <= 1) {
+                    timer = setTimeout(save_note, timeout);
+                }
+            });
+
+            note_id = id;
+
+            collaborator = new Collaborator( get_caseid(), id );
+
+            if (note_editor !== undefined || note_editor !== null) {
+                note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function () {
+                    $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                    $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                    $('#btn_save_note').text("Save").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
+                }, save_note);
+            }
+
+            note_editor.focus();
+
+            note_editor.setValue(data.data.note_content, -1);
+            $('#currentNoteTitle').text(data.data.note_title);
+            $('#currentNoteID').text(`#${data.data.note_id} - ${data.data.note_uuid}`);
+
+            note_editor.on( "change", function( e ) {
+                // TODO, we could make things more efficient and not likely to conflict by keeping track of change IDs
+                if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
+                    collaborator.change( JSON.stringify(e), id ) ;
+                }
+                }, false
+            );
+            last_applied_change = null ;
+            just_cleared_buffer = false ;
+
+            load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
+            $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
+
+            $('#modal_note_detail').off('hide.bs.modal').on("hide.bs.modal", function (e) {
+                forceModalClose = false;
+                return handle_note_close(id, e);
+            });
+
+            collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
+
+            $('#currentNoteContent').show();
+
         }
-
-        let timer;
-        let timeout = 10000;
-        $('#form_note').keyup(function(){
-            if(timer) {
-                 clearTimeout(timer);
-            }
-            if (ppl_viewing.size <= 1) {
-                timer = setTimeout(save_note, timeout);
-            }
-        });
-
-        note_id = id;
-
-        collaborator = new Collaborator( get_caseid(), id );
-
-        note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function() {
-            $('#last_saved').addClass('btn-danger').removeClass('btn-success');
-            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-            $('#btn_save_note').text("Save").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
-        }, save_note);
-
-        note_editor.focus();
-
-        note_editor.on( "change", function( e ) {
-            // TODO, we could make things more efficient and not likely to conflict by keeping track of change IDs
-            if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
-                collaborator.change( JSON.stringify(e), id ) ;
-            }
-            }, false
-        );
-        last_applied_change = null ;
-        just_cleared_buffer = false ;
-
-        load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
-        $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
-
-        $('#modal_note_detail').off('hide.bs.modal').on("hide.bs.modal", function (e) {
-            forceModalClose = false;
-            return handle_note_close(id, e);
-        });
-
-        collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
-
     });
 }
 
@@ -644,6 +648,10 @@ async function load_directories() {
                 data.data.forEach(function(directory) {
                     directoriesListing.append(createDirectoryListItem(directory));
                 });
+
+                $('.page-aside').resizable({
+                    handles: 'e, w'
+                });
             }
         });
 }
@@ -652,7 +660,8 @@ function createDirectoryListItem(directory) {
     // Create a list item for the directory
     var listItem = $('<li></li>');
     var link = $('<a></a>').attr('href', '#');
-    link.append($('<i></i>').addClass('fa-solid fa-folder'));
+    var icon = $('<i></i>').addClass('fa-solid fa-folder');  // Create an icon for the directory
+    link.append(icon);
     link.append(' ' + directory.name);
     link.append($('<span></span>').addClass('badge badge-light float-right').text(directory.note_count));
     listItem.append(link);
@@ -661,15 +670,17 @@ function createDirectoryListItem(directory) {
     var container = $('<div></div>').addClass('directory-container');
     listItem.append(container);
 
-    // If the directory has more than 5 elements, hide the container by default
+    // If the directory has more than 5 elements, hide the container by default and display the folded directory icon
     if ((directory.subdirectories.length + directory.notes.length) > 5) {
         container.hide();
+        icon.removeClass('fa-folder-open').addClass('fa-folder');  // Change the icon to a folded directory icon
     }
 
-    // Add a click event listener to the directory to toggle the visibility of the container
+    // Add a click event listener to the directory to toggle the visibility of the container and change the directory icon
     link.on('click', function(e) {
         e.preventDefault();
         container.slideToggle();
+        icon.toggleClass('fa-folder fa-folder-open');  // Toggle between the folded and non-folded directory icons
     });
 
     // If the directory has subdirectories, create a list item for each subdirectory
