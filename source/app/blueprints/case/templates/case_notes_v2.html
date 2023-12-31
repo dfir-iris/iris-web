@@ -30,44 +30,41 @@
 						</ul>
 					</div>
 				</div>
+				{{ form.csrf_token }}
 				<div class="page-content note-content" id="currentNoteContent" style="display: none;">
 					<div class="mt-2 ml-2 mr-2 d-lg-flex d-block">
 						<div class="col">
 							<h4 class="page-title mb-0" id="currentNoteTitle"></h4>
-							<small><i class="text-muted" id="currentNoteID"></i></small>
+							<small><i class="text-muted" id="currentNoteIDLabel"></i></small>
 						</div>
 						<div class="col">
-							  <div class="row float-right">
-							  <div class="avatar-group-note mt-2 float-right" id="ppl_list_viewing">
-							 </div>
-								<button type="button" class="btn bg-transparent btn-xs" onclick="comment_element(1, 'notes')" title="Comments">
-									<span class="btn-label">
-										<i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number"></span>
-									</span>
-								</button>
-								  <button type="button" class="btn bg-transparent btn-xs" onclick="copy_object_link();return false;" title="Copy link">
-									<span class="btn-label">
-										<i class="fa fa-share"></i>
-									</span>
-								</button>
-								  <button type="button" class="btn bg-transparent btn-xs" onclick="copy_object_link_md();return false;" title="Copy MD link">
-									<span class="btn-label">
-										<i class="fa-brands fa-markdown mr-2"></i>
-									</span>
-								</button>
-								</div>
-							</div>
+						  <div class="row float-right">
+						  	<div class="avatar-group-note mt-2 float-right" id="ppl_list_viewing">
+						 	</div>
+							<span class="float-right mr-2 mt-1" id="content_typing"></span>
+							<span class="float-right mr-2 mt-1" id="content_last_saved_by"></span>
+							<button type="button" class="btn bg-transparent btn-xs" onclick="comment_element(1, 'notes')" title="Comments">
+								<span class="btn-label">
+									<i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number"></span>
+								</span>
+							</button>
+						    <button type="button" class="btn bg-transparent btn-xs" onclick="copy_object_link();return false;" title="Copy link">
+								<span class="btn-label">
+									<i class="fa fa-share"></i>
+								</span>
+							</button>
+						    <button type="button" class="btn bg-transparent btn-xs" onclick="copy_object_link_md();return false;" title="Copy MD link">
+								<span class="btn-label">
+									<i class="fa-brands fa-markdown mr-2"></i>
+								</span>
+							</button>
+						  </div>
+						</div>
 					</div>
 					<div class="note-body">
-						<div class="row mb-1 mt-3">
-							<div class="col">
-								<span class="badge badge-light" id="content_typing"></span>
-								<span class="badge badge-light" id="content_last_saved_by"></span>
-							</div>
-						</div>
 						<div class="row mb-1 mt-3 ml-2">
 							<div class="col-10" id="notes_edition_btn">
-									<div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="save_note( this );"><i class="fa-solid fa-file-circle-check"></i></div>
+									<div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="save_note();"><i class="fa-solid fa-file-circle-check"></i></div>
 									<div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="note_editor.insertSnippet('**${1:$SELECTION}**');note_editor.focus();"><i class="fa-solid fa-bold"></i></div>
 									<div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="note_editor.insertSnippet('*${1:$SELECTION}*');note_editor.focus();"><i class="fa-solid fa-italic"></i></div>
 									<div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="note_editor.insertSnippet('# ${1:$SELECTION}');note_editor.focus();">H1</div>
@@ -84,15 +81,20 @@
 							</div>
 							<div class="col">
 								<button type="button" class="float-right icon-note btn btn-circle btn-sm mr-2" onclick="edit_innote();"></button>
+								<button type="button" class="float-right btn btn-sm mr-2" onclick="save_note();return false;" title="Save note">
+									<span class="btn-label">
+										<i class="fa fa-save mr-2"></i>Save note
+									</span>
+								</button>
 							</div>
 						</div>
 						<div class="row" id="noteContentScroll">
-							<div class="col-md-6" id="container_note_content">
+							<div class="col-md-12 col-lg-6" id="container_note_content">
 								<div style="display: none" id="fetched_crc"></div>
 								<div id="editor_detail" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
 								<textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
 							</div>
-							<div class="col-md-6" id="ctrd_notesum">
+							<div class="col-md-12 col-lg-6" id="ctrd_notesum">
 								<div id="targetDiv"></div>
 							</div>
 						</div>

@@ -15,50 +15,13 @@ let map_notes = Object();
 let last_ping = 0;
 let forceModalClose = false;
 let wasMiniNote = false;
+let cid = null;
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
     return false;
 };
 
-var boardNotes = {
-    init: function init() {
-        this.bindUIActions();
-    },
-    bindUIActions: function bindUIActions() {
-        // event handlers
-        this.handleBoardStyle();
-        this.handleSortable();
-    },
-    byId: function byId(id) {
-        return document.getElementById(id);
-    },
-    handleBoardStyle: function handleBoardStyle() {
-        $(document).on('mouseenter mouseleave', '.kanban-board-header', function (e) {
-            var isHover = e.type === 'mouseenter';
-            $(this).parent().toggleClass('hover', isHover);
-        });
-    },
-    handleSortable: function handleSortable() {
-        var board = this.byId('myKanban');
-        // Multi groups
-        Sortable.create(board, {
-            animation: 150,
-            draggable: '.kanban-board',
-            handle: '.kanban-board-header',
-            filter: '.ignore-sort',
-            forceFallback: true
-        });
-        [].forEach.call(board.querySelectorAll('.kanban-drag'), function (el) {
-            Sortable.create(el, {
-                group: 'tasks',
-                animation: 150,
-                filter: '.ignore-sort',
-                forceFallback: true
-            });
-        });
-    }
-};
 
 function Collaborator( session_id, note_id ) {
     this.collaboration_socket = collaborator_socket;
@@ -173,22 +136,6 @@ function auto_remove_typing() {
 /* Generates a global sequence id for subnotes */
 let current_id = 0;
 
-function nextSubNote(element, _item, title) {
-    var newElement = element.clone();
-    var id = current_id + 1;
-    current_id = id;
-    if (id < 10) id = "0" + id;
-    newElement.attr("id", element.attr("id").split("_")[0] + "_" + id);
-    var field = $(newElement).attr("id");
-    $(newElement).attr("id", field.split("_")[0] + "_" + id);
-    $(newElement).find('iris_note').attr('id', 'xqx'  + id + 'qxq');
-    $(newElement).find('iris_note').text("New note");
-    var va = $(newElement).find('a');
-    $(newElement).find(va[1]).attr("onclick", 'delete_note("_' + id + '")');
-    newElement.appendTo($('#group-' + _item + "_main"));
-    newElement.show();
-}
-
 /* Generates a global sequence id for groups */
 var current_gid = 0;
 
@@ -201,167 +148,6 @@ async function sync_note(node_id) {
     return;
 }
 
-function nextGroupNote(title="", rid=0) {
-
-    if (rid == 0) {
-        console.log("RID is needed to create group");
-        return;
-    }
-
-    var element = $('#group_');
-    var newElement = element.clone();
-
-    if (title == "") {
-        title = "Untitled group";
-    }
-    newElement.attr("id", "group-" + rid);
-    newElement.attr("title", "New group note");
-
-    var fa = $(newElement).find('button')[0];
-    var fb = $(newElement).find('button')[1];
-    var va = $(newElement).find('a');
-
-    $(newElement).find('div.kanban-title-board').text(title);
-    $(newElement).find('div.kanban-title-board').attr("onclick", 'edit_add_save(' + rid + ')');
-
-    $(newElement).find(fa).attr("onclick", 'edit_remote_groupnote(' + rid + ')');
-    $(newElement).find(fb).attr("onclick", 'add_remote_note(' + rid + ')');
-
-    $(newElement).find(va[0]).attr("onclick", 'delete_remote_groupnote(' + rid + ')');
-
-    $(newElement).find('main').attr("id", "group-" + rid + "-main");
-    newElement.appendTo($('#myKanban'));
-    newElement.show();
-
-    return rid;
-}
-
-/* Add a subnote to an item */
-function add_subnote(_item, tr=0, title='', last_up, user) {
-
-    if (tr != 0) {
-        let element = $('#_subnote_');
-        var newElement = element.clone();
-        var id = tr;
-        current_id = id;
-
-        let info = user + " on " + last_up.replace('GMT', '');
-
-        newElement.attr("id", element.attr("id").split("_")[0] + "_" + id);
-        var field = $(newElement).attr("id");
-        $(newElement).attr("id", field.split("_")[0] + "_" + id);
-        $(newElement).attr("title", 'Note #' + id);
-        $(newElement).find('iris_note').attr('id', tr);
-        $(newElement).find('iris_note').text(title);
-        $(newElement).find('a.kanban-title').text(title);
-        $(newElement).find('small.kanban-info').text(info);
-        $(newElement).find('div.kanban-badge').attr('id', 'badge_' + id);
-        newElement.appendTo($('#group-' + _item + "-main"));
-        newElement.show();
-    }
-}
-
-/* Add a group to the dashboard */
-function add_groupnote(title="", rid=0) {
-    return nextGroupNote(title, rid=rid);
-}
-
-/* Add a remote note to a group */
-function add_remote_note(group_id) {
-        let data = Object();
-        data['note_title'] = "Untitled note";
-        data['note_content'] = "";
-
-        data['group_id'] = group_id;
-        data['csrf_token'] = $('#csrf_token').val();
-
-        post_request_api('/case/notes/add', JSON.stringify(data), false)
-        .done((data) => {
-            if (data.status == 'success') {
-                draw_kanban();
-            } else {
-                if (data.message != "No data to load for dashboard") {
-                    swal("Oh no !", data.message, "error");
-                }
-            }
-        })
-
-}
-
-/* Add a group note remotely */
-function add_remote_groupnote() {
-    let data = Object();
-    data['csrf_token'] = $('#csrf_token').val();
-
-    post_request_api('/case/notes/groups/add', JSON.stringify(data), false)
-    .done((data) => {
-        if (data.status == 'success') {
-            nextGroupNote(data.data.group_title, data.data.group_id);
-            draw_kanban();
-        } else {
-            if (data.message != "No data to load for dashboard") {
-                swal("Oh no !", data.message, "error");
-            }
-        }
-    })
-}
-
-/* Delete a group of the dashboard */
-function delete_remote_groupnote(group_id) {
-
-    swal({
-      title: "Attention ",
-      text: "All the notes in this group will be deleted !\nThis cannot be reverted, notes will not be recoverable",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    })
-    .then((willDelete) => {
-      if (willDelete) {
-        var data = Object();
-        data['group_id'] = group_id;
-        data['csrf_token'] = $('#csrf_token').val();
-
-        post_request_api('/case/notes/groups/delete/'+ group_id)
-        .done((data) => {
-            if (data.status == 'success') {
-                swal("Done !", data.message, "success");
-                draw_kanban();
-            } else {
-                if (data.message != "No data to load for dashboard") {
-                    swal("Oh no !", data.message, "error");
-                }
-            }
-        })
-      } else {
-        swal("Pfew, that was close");
-      }
-    });
-
-}
-
-/* Add a button to save group name */
-function edit_add_save(group_id) {
-    btn = $("#group-" + group_id).find('button')[0];
-    $(btn).show();
-}
-
-/* Delete a group of the dashboard */
-function edit_remote_groupnote(group_id) {
-
-    var data = Object();
-    data['group_title'] = $("#group-" + group_id).find('div.kanban-title-board').text();
-    data["csrf_token"] = $('#csrf_token').val();
-
-    post_request_api('/case/notes/groups/update/'+ group_id, JSON.stringify(data))
-    .done((data) => {
-        notify_auto_api(data);
-        draw_kanban();
-    })
-}
 
 /* Delete a group of the dashboard */
 function delete_note(_item, cid) {
@@ -384,27 +170,6 @@ function delete_note(_item, cid) {
     });
 }
 
-/* List all the notes on the dashboard */
-function list_notes() {
-    output = {};
-    $("#myKanban").children().each(function () {
-
-        gid = $(this).attr('id');
-
-        output[gid] = [];
-
-        $(this).find('iris_note').each(function () {
-            output[gid].push(
-                [$(this).attr('id'),
-                $(this).text()
-            ]);
-        })
-
-    });
-
-    return output;
-
-}
 
 /* Edit one note */
 function edit_note(event) {
@@ -417,12 +182,7 @@ function edit_note(event) {
 
 
 /* Fetch the edit modal with content from server */
-function note_detail(id, cid) {
-    if (cid === undefined ) {
-        cid = case_param()
-    } else {
-        cid = '?cid=' + cid;
-    }
+function note_detail(id) {
 
     let url = '/case/notes/' + id;
     get_request_api(url)
@@ -455,10 +215,10 @@ function note_detail(id, cid) {
 
             note_editor.setValue(data.data.note_content, -1);
             $('#currentNoteTitle').text(data.data.note_title);
-            $('#currentNoteID').text(`#${data.data.note_id} - ${data.data.note_uuid}`);
+            $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
+                .data('note_id', data.data.note_id);
 
             note_editor.on( "change", function( e ) {
-                // TODO, we could make things more efficient and not likely to conflict by keeping track of change IDs
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
                     collaborator.change( JSON.stringify(e), id ) ;
                 }
@@ -468,12 +228,6 @@ function note_detail(id, cid) {
             just_cleared_buffer = false ;
 
             load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
-            $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
-
-            $('#modal_note_detail').off('hide.bs.modal').on("hide.bs.modal", function (e) {
-                forceModalClose = false;
-                return handle_note_close(id, e);
-            });
 
             collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
 
@@ -602,16 +356,18 @@ function toggle_max_editor() {
 }
 
 /* Save a note into db */
-function save_note(this_item, cid) {
+function save_note() {
     clear_api_error();
-    var n_id = $("#info_note_modal_content").find('iris_notein').text();
+    let n_id = $('#currentNoteIDLabel').data('note_id')
 
 
-    var data_sent = $('#form_note').serializeObject();
+    let data_sent = Object();
+    data_sent['note_title'] = $('#currentNoteTitle').text();
+    data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['note_content'] = $('#note_content').val();
-    ret = get_custom_attributes_fields();
-    has_error = ret[0].length > 0;
-    attributes = ret[1];
+    let ret = get_custom_attributes_fields();
+    let has_error = ret[0].length > 0;
+    let attributes = ret[1];
 
     if (has_error){return false;}
 
@@ -722,43 +478,6 @@ function createDirectoryListItem(directory) {
     return listItem;
 }
 
-/* Load the kanban case data and build the board from it */
-async function draw_kanban() {
-    /* Empty board */
-    show_loader();
-
-    return get_request_api('/case/notes/groups/list')
-        .done((data) => {
-            if (notify_auto_api(data, true)) {
-                gidl = [];
-                if (data.data.groups.length > 0) {
-                    $('#empty-set-notes').hide();
-                } else {
-                    $('#empty-set-notes').show();
-                }
-                for (idx in data.data.groups) {
-                    group = data.data.groups[idx];
-                    if (!gidl.includes(group.group_id)) {
-                        nextGroupNote(group.group_title, group.group_id);
-                        gidl.push(group.group_id);
-                    }
-                    for  (ikd in group.notes) {
-                        note = group.notes[ikd];
-                        add_subnote(group.group_id,
-                                note.note_id,
-                                note.note_title,
-                                note.note_lastupdate,
-                                note.user
-                            );
-                    }
-                }
-            set_last_state(data.data.state);
-            hide_loader();
-            }
-
-        });
-
-}
 
 function note_interval_pinger() {
     if (new Date() - last_ping > 2000) {
@@ -775,7 +494,7 @@ $(document).ready(function(){
     //     note_detail(shared_id);
     // }
     //
-    let cid = get_caseid();
+    cid = get_caseid();
     collaborator_socket = io.connect();
     collaborator_socket.emit('join-notes-overview', { 'channel': 'case-' + cid + '-notes' });
     //
