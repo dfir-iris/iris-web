@@ -103,32 +103,6 @@ def case_note_detail(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
-@case_notes_blueprint.route('/case/notes/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
-def case_note_detail_modal(cur_id, caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
-
-    form = CaseNoteForm()
-
-    note = get_note(cur_id, caseid)
-    ca = None
-
-    if note:
-        form.content = note.note_content
-        form.title = note.note_title
-        form.note_title.render_kw = {"value": note.note_title}
-        setattr(form, 'note_id', note.note_id)
-        setattr(form, 'note_uuid', note.note_uuid)
-        ca = note.custom_attributes
-        comments_map = get_case_notes_comments_count([cur_id])
-
-        return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca,
-                               ncid=note.note_case_id, comments_map=comments_map)
-
-    return response_error(f'Unable to find note ID {cur_id} for case {caseid}')
-
-
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_note_delete(cur_id, caseid):
@@ -190,25 +164,31 @@ def case_note_save(cur_id, caseid):
 def case_note_add(caseid):
     try:
         # validate before saving
-        addnote_schema = CaseAddNoteSchema()
+        addnote_schema = CaseNoteSchema()
+        request_data = request.get_json()
+
+        if request_data.get('group_id'):
+            return response_error('Group ID is deprecated, please use directory_id instead')
+
         request_data = call_modules_hook('on_preload_note_create', data=request.get_json(), caseid=caseid)
 
-        addnote_schema.verify_group_id(request_data, caseid=caseid)
-        addnote_schema.load(request_data)
+        addnote_schema.verify_directory_id(request_data, caseid=caseid)
 
-        note = add_note(request_data.get('note_title'),
-                        datetime.utcnow(),
-                        current_user.id,
-                        caseid,
-                        request_data.get('group_id'),
-                        note_content=request_data.get('note_content'))
+        new_note = addnote_schema.load(request_data)
 
-        note = call_modules_hook('on_postload_note_create', data=note, caseid=caseid)
+        new_note.note_creationdate = datetime.utcnow()
+        new_note.note_lastupdate = datetime.utcnow()
+        new_note.note_user = current_user.id
+        new_note.note_case_id = caseid
 
-        if note:
-            casenote_schema = CaseNoteSchema()
-            track_activity(f"added note \"{note.note_title}\"", caseid=caseid)
-            return response_success('Note added', data=casenote_schema.dump(note))
+        db.session.add(new_note)
+        db.session.commit()
+
+        new_note = call_modules_hook('on_postload_note_create', data=new_note, caseid=caseid)
+
+        if new_note:
+            track_activity(f"added note \"{new_note.note_title}\"", caseid=caseid)
+            return response_success('Note added', data=addnote_schema.dump(new_note))
 
         return response_error("Unable to create note for internal reasons")
 

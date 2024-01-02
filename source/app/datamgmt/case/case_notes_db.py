@@ -32,25 +32,10 @@ from app.models.authorization import User
 
 
 def get_note(note_id, caseid=None):
-    note = Notes.query.with_entities(
-        Notes.note_id,
-        Notes.note_uuid,
-        Notes.note_title,
-        Notes.note_content,
-        Notes.note_creationdate,
-        Notes.note_lastupdate,
-        NotesGroupLink.group_id,
-        NotesGroup.group_title,
-        NotesGroup.group_uuid,
-        Notes.custom_attributes,
-        Notes.note_case_id
-    ).filter(and_(
+    note = Notes.query.filter(and_(
         Notes.note_id == note_id,
         Notes.note_case_id == caseid
-    )).join(
-        NotesGroupLink.note,
-        NotesGroupLink.note_group
-    ).first()
+    )).first()
 
     return note
 
@@ -102,13 +87,14 @@ def update_note(note_content, note_title, update_date, user_id, note_id, caseid)
         return None
 
 
-def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=""):
+def add_note(note_title, creation_date, user_id, caseid, directory_id, note_content=""):
     note = Notes()
     note.note_title = note_title
     note.note_creationdate = note.note_lastupdate = creation_date
     note.note_content = note_content
     note.note_case_id = caseid
     note.note_user = user_id
+    note.directory_id = directory_id
 
     note.custom_attributes = get_default_custom_attributes('note')
     db.session.add(note)
@@ -116,19 +102,7 @@ def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=
     update_notes_state(caseid=caseid, userid=user_id)
     db.session.commit()
 
-    if note.note_id:
-        ngl = NotesGroupLink()
-        ngl.note_id = note.note_id
-        ngl.group_id = group_id
-        ngl.case_id = caseid
-
-        db.session.add(ngl)
-        db.session.commit()
-
-        return note
-
-    else:
-        return None
+    return note
 
 
 def get_groups_short(caseid):

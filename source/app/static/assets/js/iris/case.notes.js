@@ -433,6 +433,36 @@ async function load_directories() {
         });
 }
 
+function download_note() {
+    // Use directly the content of the note editor
+    let content = note_editor.getValue();
+    let filename = $('#currentNoteTitle').text() + '.md';
+    let blob = new Blob([content], {type: 'text/plain'});
+    let url = window.URL.createObjectURL(blob);
+
+    // Create a link to the file and click it to download it
+    let link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+}
+
+function add_note(directory_id) {
+    let data = Object();
+    data['directory_id'] = directory_id;
+    data['note_title'] = 'New note';
+    data['note_content'] = '';
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api('/case/notes/add', JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            note_detail(data.data.note_id);
+            load_directories();
+        }
+    });
+}
+
 function createDirectoryListItem(directory) {
     // Create a list item for the directory
     var listItem = $('<li></li>');
@@ -443,24 +473,46 @@ function createDirectoryListItem(directory) {
     link.append($('<span></span>').addClass('badge badge-light float-right').text(directory.note_count));
     listItem.append(link);
 
-    // Create a container for the subdirectories and notes
     var container = $('<div></div>').addClass('directory-container');
     listItem.append(container);
 
-    // If the directory has more than 5 elements, hide the container by default and display the folded directory icon
-    if ((directory.subdirectories.length + directory.notes.length) > 5) {
+    if ((directory.subdirectories.length + directory.notes.length) > 5 || directory.notes.length > 0) {
+        icon.removeClass('fa-folder').addClass('fa-folder-open');
+    } else {
         container.hide();
-        icon.removeClass('fa-folder-open').addClass('fa-folder');  // Change the icon to a folded directory icon
     }
 
-    // Add a click event listener to the directory to toggle the visibility of the container and change the directory icon
     link.on('click', function(e) {
         e.preventDefault();
         container.slideToggle();
-        icon.toggleClass('fa-folder fa-folder-open');  // Toggle between the folded and non-folded directory icons
+        icon.toggleClass('fa-folder fa-folder-open');
     });
 
-    // If the directory has subdirectories, create a list item for each subdirectory
+    link.on('contextmenu', function(e) {
+        e.preventDefault();
+
+        let menu = $('<div></div>').addClass('dropdown-menu show').css({
+            position: 'absolute',
+            left: e.pageX,
+            top: e.pageY
+        });
+
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Add note').on('click', function(e) {
+            e.preventDefault();
+            add_note(directory.id);
+        }));
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Rename').on('click', function(e) {
+            e.preventDefault();
+        }));
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Delete').on('click', function(e) {
+            e.preventDefault();
+        }));
+
+        $('body').append(menu).on('click', function() {
+            menu.remove();
+        });
+    });
+
     if (directory.subdirectories && directory.subdirectories.length > 0) {
         var subdirectoriesList = $('<ul></ul>').addClass('nav');
         directory.subdirectories.forEach(function(subdirectory) {
@@ -469,7 +521,7 @@ function createDirectoryListItem(directory) {
         container.append(subdirectoriesList);
     }
 
-    // If the directory has notes, create a list item for each note
+
     if (directory.notes && directory.notes.length > 0) {
         var notesList = $('<ul></ul>').addClass('nav');
         directory.notes.forEach(function(note) {
@@ -478,15 +530,12 @@ function createDirectoryListItem(directory) {
             noteLink.append($('<i></i>').addClass('fa-regular fa-file'));
             noteLink.append(' ' + note.title);
 
-            // Add a click event listener to the note link that calls note_detail with the note ID
             noteLink.on('click', function(e) {
                 e.preventDefault();
                 note_detail(note.id);
 
-                // Remove the 'highlight' class from all notes
                 $('.note').removeClass('note-highlight');
 
-                // Add the 'highlight' class to the clicked note
                 noteListItem.addClass('note-highlight');
             });
 

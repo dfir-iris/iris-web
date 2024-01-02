@@ -39,23 +39,28 @@
 						</div>
 						<div class="col">
 						  <div class="row float-right">
-						  	<div class="avatar-group-note mt-2 float-right" id="ppl_list_viewing">
-						 	</div>
 							<span class="float-right mr-2 mt-1" id="content_typing"></span>
 							<span class="float-right mr-2 mt-1" id="content_last_saved_by"></span>
-							<button type="button" class="btn bg-transparent btn-xs" onclick="comment_element(1, 'notes')" title="Comments">
+							<div class="avatar-group-note mt-1 mr-2 float-right" id="ppl_list_viewing">
+						 	</div>
+							  <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element(1, 'notes')" title="Comments">
 								<span class="btn-label">
-									<i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number"></span>
+									<i class="fa-solid fa-comments mr-2"></i><span class="notification" id="object_comments_number"></span>
 								</span>
 							</button>
-						    <button type="button" class="btn bg-transparent btn-xs" onclick="copy_object_link();return false;" title="Copy link">
+						    <button type="button" class="btn bg-transparent btn-xs" onclick="copy_object_link();return false;" title="Copy shared link">
 								<span class="btn-label">
-									<i class="fa fa-share"></i>
+									<i class="fa fa-share mr-2"></i>
 								</span>
 							</button>
 						    <button type="button" class="btn bg-transparent btn-xs" onclick="copy_object_link_md();return false;" title="Copy MD link">
 								<span class="btn-label">
 									<i class="fa-brands fa-markdown mr-2"></i>
+								</span>
+							</button>
+						  	<button type="button" class="btn bg-transparent btn-xs" onclick="download_note();return false;" title="Download as MD">
+								<span class="btn-label">
+									<i class="fa-solid fa-download mr-2"></i>
 								</span>
 							</button>
 						  </div>

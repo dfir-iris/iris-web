@@ -48,7 +48,7 @@ from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
-    ReviewStatus, EvidenceTypes, CaseStatus
+    ReviewStatus, EvidenceTypes, CaseStatus, NoteDirectory
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -155,13 +155,71 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
     """
     csrf_token: str = fields.String(required=False)
-    group_id: int = fields.Integer()
-    group_uuid: uuid.UUID = fields.UUID()
-    group_title: str = fields.String()
+    # group_id: int = fields.Integer()
+    # group_uuid: uuid.UUID = fields.UUID()
+    # group_title: str = fields.String()
 
     class Meta:
         model = Notes
         load_instance = True
+        include_fk = True
+
+    def verify_directory_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the directory ID is valid.
+
+        This method verifies that the directory ID specified in the data is valid for the case ID specified in kwargs.
+        If the group ID is valid, it returns the data. Otherwise, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments, including the case ID.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the directory ID is invalid.
+
+        """
+        assert_type_mml(input_var=data.get('directory_id'),
+                        field_name="directory_id",
+                        type=int)
+
+        directory = NoteDirectory.query.filter(
+            NoteDirectory.id == data.get('directory_id'),
+            NoteDirectory.case_id == kwargs.get('caseid')
+        ).first()
+        if directory:
+            return data
+
+        raise marshmallow.exceptions.ValidationError("Invalid directory id for the case",
+                                                     field_name="directory_id")
+
+    @post_load
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes.
+
+        This method merges any custom attributes specified in the data with the existing custom attributes for the note.
+        If there are no custom attributes specified, it returns the data unchanged.
+
+        Args:
+            data: The data to merge.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The merged data.
+
+        """
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            assert_type_mml(input_var=data.get('note_id'),
+                            field_name="note_id",
+                            type=int,
+                            allow_none=True)
+
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
+
+        return data
 
 
 class CaseAddNoteSchema(ma.Schema):
@@ -175,14 +233,14 @@ class CaseAddNoteSchema(ma.Schema):
     note_id: int = fields.Integer(required=False)
     note_title: str = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
     note_content: str = fields.String(required=False)
-    group_id: int = fields.Integer(required=True)
     csrf_token: str = fields.String(required=False)
     custom_attributes: Dict[str, Any] = fields.Dict(required=False)
 
-    def verify_group_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Verifies that the group ID is valid.
 
-        This method verifies that the group ID specified in the data is valid for the case ID specified in kwargs.
+    def verify_directory_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the directory ID is valid.
+
+        This method verifies that the directory ID specified in the data is valid for the case ID specified in kwargs.
         If the group ID is valid, it returns the data. Otherwise, it raises a validation error.
 
         Args:
@@ -193,22 +251,22 @@ class CaseAddNoteSchema(ma.Schema):
             The verified data.
 
         Raises:
-            ValidationError: If the group ID is invalid.
+            ValidationError: If the directory ID is invalid.
 
         """
-        assert_type_mml(input_var=data.get('group_id'),
-                        field_name="group_id",
+        assert_type_mml(input_var=data.get('directory_id'),
+                        field_name="directory_id",
                         type=int)
 
-        group = NotesGroup.query.filter(
-            NotesGroup.group_id == data.get('group_id'),
-            NotesGroup.group_case_id == kwargs.get('caseid')
+        directory = NoteDirectory.query.filter(
+            NoteDirectory.id == data.get('directory_id'),
+            NoteDirectory.case_id == kwargs.get('caseid')
         ).first()
-        if group:
+        if directory:
             return data
 
-        raise marshmallow.exceptions.ValidationError("Invalid group id for note",
-                                                     field_name="group_id")
+        raise marshmallow.exceptions.ValidationError("Invalid directory id for the case",
+                                                     field_name="directory_id")
 
     @post_load
     def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:

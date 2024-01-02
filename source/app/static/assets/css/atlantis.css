@@ -1512,7 +1512,7 @@ body {
 }
 
 .page-with-aside .page-aside .aside-nav .nav>li>a {
-    color: #262626;
+    color: #313131;
     display: flex;
     align-items: center;
     font-size: 12px;
@@ -1526,7 +1526,7 @@ body {
 .page-with-aside .page-aside .aside-nav .nav>li>a i {
     font-size: 20px;
     margin-right: 15px;
-    color: #262626;
+    color: #313131;
 }
 
 .page-with-aside .page-aside .aside-nav .label {
@@ -6732,7 +6732,7 @@ body .badge-danger {
 
 .dropdown-menu {
     border: 0px;
-    border-radius: 0.5rem;
+    border-radius: 0.5rem !important;
     box-shadow: 0 1px 11px rgba(0, 0, 0, 0.15) !important;
     padding-bottom: 8px;
     margin-top: 3px;
