@@ -49,6 +49,26 @@ def get_directory(directory_id, caseid):
     return directory
 
 
+def delete_directory(directory, caseid):
+    # Proceed to delete directory, but remove all associated notes and subdirectories recursively
+    if directory:
+        # Delete all notes in the directory
+        for note in directory.notes:
+            delete_note(note.note_id, caseid)
+
+        # Delete all subdirectories
+        for subdirectory in directory.subdirectories:
+            delete_directory(subdirectory.id, caseid)
+
+        # Delete the directory
+        db.session.delete(directory)
+        db.session.commit()
+
+        return True
+
+    return False
+
+
 def get_note_raw(note_id, caseid):
     note = Notes.query.filter(
         Notes.note_case_id == caseid,

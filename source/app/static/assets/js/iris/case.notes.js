@@ -504,6 +504,47 @@ function rename_folder_api(directory_id, newName) {
     });
 }
 
+function delete_folder_api(directory_id) {
+    let data = Object();
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api(`/case/notes/directories/delete/${directory_id}`,
+        JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            load_directories();
+        }
+    });
+}
+
+function delete_folder(directory_id) {
+    swal({
+        title: 'Delete folder',
+        text: 'Are you sure you want to delete this folder? All subfolders and notes will be deleted as well.',
+        icon: 'warning',
+        buttons: {
+            cancel: {
+                text: 'Cancel',
+                value: null,
+                visible: true,
+            },
+            confirm: {
+                text: 'Delete',
+                value: true,
+            }
+        },
+        dangerMode: true,
+        closeOnEsc: false,
+        allowOutsideClick: false,
+        allowEnterKey: false
+    })
+        .then((willDelete) => {
+            if (willDelete) {
+                delete_folder_api(directory_id);
+            }
+        });
+}
+
 function rename_folder(directory_id) {
 
     // Prompt the user for a new name
@@ -582,6 +623,7 @@ function createDirectoryListItem(directory, directoryMap) {
         }));
         menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Delete').on('click', function(e) {
             e.preventDefault();
+            delete_folder(directory.id);
         }));
 
         $('body').append(menu).on('click', function() {

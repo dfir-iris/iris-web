@@ -34,7 +34,8 @@ from app import db, socket_io
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count, get_directory
+from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count, get_directory, \
+    delete_directory
 from app.datamgmt.case.case_notes_db import add_note
 from app.datamgmt.case.case_notes_db import add_note_group
 from app.datamgmt.case.case_notes_db import delete_note
@@ -243,6 +244,27 @@ def case_directory_update(dir_id, caseid):
 
         track_activity(f"modified directory \"{new_directory.name}\"", caseid=caseid)
         return response_success('Directory modified', data=directory_schema.dump(new_directory))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@case_notes_blueprint.route('/case/notes/directories/delete/<dir_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_directory_delete(dir_id, caseid):
+    try:
+
+        directory = get_directory(dir_id, caseid)
+        if not directory:
+            return response_error(msg="Invalid directory ID")
+
+        # Proceed to delete directory, but remove all associated notes and subdirectories recursively
+        has_succeed = delete_directory(directory, caseid)
+        if has_succeed:
+            track_activity(f"deleted directory \"{directory.name}\"", caseid=caseid)
+            return response_success('Directory deleted')
+
+        return response_error('Unable to delete directory')
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
