@@ -522,33 +522,33 @@ $(document).ready(function(){
     cid = get_caseid();
     collaborator_socket = io.connect();
     collaborator_socket.emit('join-notes-overview', { 'channel': 'case-' + cid + '-notes' });
-    //
-    // collaborator_socket.on('ping-note', function(data) {
-    //     last_ping = new Date();
-    //     if ( data.note_id === null || data.note_id !== note_id) {
-    //         set_notes_follow(data);
-    //         return;
-    //     }
-    //
-    //     ppl_viewing.set(data.user, 1);
-    //     for (let [key, value] of ppl_viewing) {
-    //         if (key !== data.user) {
-    //             ppl_viewing.set(key, value-1);
-    //         }
-    //         if (value < 0) {
-    //             ppl_viewing.delete(key);
-    //         }
-    //     }
-    //     refresh_ppl_list(session_id, note_id);
-    // });
-    //
-    // timer_socket = setInterval( function() {
-    //     note_interval_pinger();
-    // }, 2000);
-    //
-    // collaborator_socket.emit('ping-note', { 'channel': 'case-' + cid + '-notes', 'note_id': note_id });
-    //
-    // setInterval(auto_remove_typing, 1500);
+
+    collaborator_socket.on('ping-note', function(data) {
+        last_ping = new Date();
+        if ( data.note_id === null || data.note_id !== note_id) {
+            set_notes_follow(data);
+            return;
+        }
+
+        ppl_viewing.set(data.user, 1);
+        for (let [key, value] of ppl_viewing) {
+            if (key !== data.user) {
+                ppl_viewing.set(key, value-1);
+            }
+            if (value < 0) {
+                ppl_viewing.delete(key);
+            }
+        }
+        refresh_ppl_list(session_id, note_id);
+    });
+
+    timer_socket = setInterval( function() {
+        note_interval_pinger();
+    }, 2000);
+
+    collaborator_socket.emit('ping-note', { 'channel': 'case-' + cid + '-notes', 'note_id': note_id });
+
+    setInterval(auto_remove_typing, 1500);
 
     $(document).on('click', '#currentNoteTitle', function() {
         var title = $(this).text();
