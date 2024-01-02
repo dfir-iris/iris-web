@@ -419,15 +419,28 @@ async function load_directories() {
     return get_request_api('/case/notes/directories/filter')
         .done((data) => {
             if (notify_auto_api(data, true)) {
+                data = data.data;
                 let directoriesListing = $('#directoriesListing');
                 directoriesListing.empty();
 
-                data.data.forEach(function(directory) {
-                    directoriesListing.append(createDirectoryListItem(directory));
+                let directoryMap = new Map();
+                data.forEach(function(directory) {
+                    directoryMap.set(directory.id, directory);
                 });
 
-                $('.page-aside').resizable({
-                    handles: 'e, w'
+                let subdirectoryIds = new Set();
+                data.forEach(function(directory) {
+                    directory.subdirectories.forEach(function(subdirectory) {
+                        subdirectoryIds.add(subdirectory.id);
+                    });
+                });
+
+                let directories = data.filter(function(directory) {
+                    return !subdirectoryIds.has(directory.id);
+                });
+
+                directories.forEach(function(directory) {
+                    directoriesListing.append(createDirectoryListItem(directory, directoryMap));
                 });
             }
         });
@@ -463,7 +476,21 @@ function add_note(directory_id) {
     });
 }
 
-function createDirectoryListItem(directory) {
+function add_folder(directory_id) {
+    let data = Object();
+    data['parent_id'] = directory_id;
+    data['name'] = 'New folder';
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api('/case/notes/directories/add', JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            load_directories();
+        }
+    });
+}
+
+function createDirectoryListItem(directory, directoryMap) {
     // Create a list item for the directory
     var listItem = $('<li></li>');
     var link = $('<a></a>').attr('href', '#');
@@ -501,6 +528,10 @@ function createDirectoryListItem(directory) {
             e.preventDefault();
             add_note(directory.id);
         }));
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Add folder').on('click', function(e) {
+            e.preventDefault();
+            add_folder(directory.id);
+        }));
         menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Rename').on('click', function(e) {
             e.preventDefault();
         }));
@@ -513,29 +544,35 @@ function createDirectoryListItem(directory) {
         });
     });
 
+    // If the directory has subdirectories, create a list item for each subdirectory
     if (directory.subdirectories && directory.subdirectories.length > 0) {
         var subdirectoriesList = $('<ul></ul>').addClass('nav');
         directory.subdirectories.forEach(function(subdirectory) {
-            subdirectoriesList.append(createDirectoryListItem(subdirectory));
+            // Look up the subdirectory in the directoryMap
+            var subdirectoryData = directoryMap.get(subdirectory.id);
+            if (subdirectoryData) {
+                subdirectoriesList.append(createDirectoryListItem(subdirectoryData, directoryMap));
+            }
         });
         container.append(subdirectoriesList);
     }
 
-
+    // If the directory has notes, create a list item for each note
     if (directory.notes && directory.notes.length > 0) {
         var notesList = $('<ul></ul>').addClass('nav');
         directory.notes.forEach(function(note) {
-            var noteListItem = $('<li></li>').attr('id', 'note-' + note.id).addClass('note');  // Add an id to the list item
+            var noteListItem = $('<li></li>').attr('id', 'note-' + note.id).addClass('note');
             var noteLink = $('<a></a>').attr('href', '#');
             noteLink.append($('<i></i>').addClass('fa-regular fa-file'));
             noteLink.append(' ' + note.title);
 
+            // Add a click event listener to the note link that calls note_detail with the note ID
             noteLink.on('click', function(e) {
                 e.preventDefault();
                 note_detail(note.id);
 
+                // Highlight the note in the directory
                 $('.note').removeClass('note-highlight');
-
                 noteListItem.addClass('note-highlight');
             });
 

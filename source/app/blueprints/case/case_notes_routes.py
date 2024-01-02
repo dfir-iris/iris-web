@@ -55,7 +55,7 @@ from app.forms import CaseNoteForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
-from app.schema.marshables import CaseAddNoteSchema
+from app.schema.marshables import CaseAddNoteSchema, CaseNoteDirectorySchema
 from app.schema.marshables import CaseGroupNoteSchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
@@ -191,6 +191,30 @@ def case_note_add(caseid):
             return response_success('Note added', data=addnote_schema.dump(new_note))
 
         return response_error("Unable to create note for internal reasons")
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@case_notes_blueprint.route('/case/notes/directories/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_directory_add(caseid):
+    try:
+
+        directory_schema = CaseNoteDirectorySchema()
+        request_data = request.get_json()
+
+        directory_schema.verify_parent_id(request_data['parent_id'],
+                                          case_id=caseid)
+
+        request_data['case_id'] = caseid
+        new_directory = directory_schema.load(request_data)
+
+        db.session.add(new_directory)
+        db.session.commit()
+
+        track_activity(f"added directory \"{new_directory.name}\"", caseid=caseid)
+        return response_success('Directory added', data=directory_schema.dump(new_directory))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)

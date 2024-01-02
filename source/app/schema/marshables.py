@@ -147,6 +147,66 @@ def store_icon(file):
     return filename, 'Saved'
 
 
+class CaseNoteDirectorySchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing CaseNoteDirectory objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseNoteDirectory objects.
+    It includes fields for the CSRF token, directory name, directory description, and directory ID.
+    It also includes a method for verifying the directory name.
+
+    """
+    csrf_token: str = fields.String(required=False)
+
+    class Meta:
+        model = NoteDirectory
+        load_instance = True
+        include_fk = True
+
+    def verify_parent_id(self, parent_id, case_id):
+        if parent_id is None:
+            raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
+                                                         field_name="parent_id")
+
+        directory = NoteDirectory.query.filter(
+            NoteDirectory.id == parent_id,
+            NoteDirectory.case_id == case_id
+        ).first()
+        if directory:
+            return parent_id
+
+        raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
+                                                     field_name="parent_id")
+
+    @pre_load
+    def verify_directory_name(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the directory name is unique.
+
+        This method verifies that the directory name specified in the data is unique. If the directory name is not
+        unique, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the directory name is not unique.
+
+        """
+        assert_type_mml(input_var=data.get('name'),
+                        field_name="name",
+                        type=str)
+
+        assert_type_mml(input_var=data.get('parent_id'),
+                        field_name="parent_id",
+                        type=int,
+                        allow_none=True)
+
+        return data
+
+
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseNote objects.
 
