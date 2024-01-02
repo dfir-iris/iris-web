@@ -40,6 +40,15 @@ def get_note(note_id, caseid=None):
     return note
 
 
+def get_directory(directory_id, caseid):
+    directory = NoteDirectory.query.filter(and_(
+        NoteDirectory.id == directory_id,
+        NoteDirectory.case_id == caseid
+    )).first()
+
+    return directory
+
+
 def get_note_raw(note_id, caseid):
     note = Notes.query.filter(
         Notes.note_case_id == caseid,
@@ -350,7 +359,9 @@ def delete_note_comment(note_id, comment_id):
 
 def get_directories_with_note_count(case_id):
     # Fetch all directories for the given case
-    directories = NoteDirectory.query.filter_by(case_id=case_id).all()
+    directories = NoteDirectory.query.filter_by(case_id=case_id).order_by(
+        NoteDirectory.name.asc()
+    ).all()
 
     # Create a list to store the directories with note counts
     directories_with_note_count = []
@@ -359,6 +370,8 @@ def get_directories_with_note_count(case_id):
     for directory in directories:
         directory_with_note_count = get_directory_with_note_count(directory)
         notes = [{'id': note.note_id, 'title': note.note_title} for note in directory.notes]
+        # Order by note title
+        notes = sorted(notes, key=lambda note: note['title'])
         directory_with_note_count['notes'] = notes
         directories_with_note_count.append(directory_with_note_count)
 

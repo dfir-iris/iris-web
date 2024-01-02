@@ -490,6 +490,50 @@ function add_folder(directory_id) {
     });
 }
 
+function rename_folder_api(directory_id, newName) {
+    let data = Object();
+    data['name'] = newName;
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api(`/case/notes/directories/update/${directory_id}`,
+        JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            load_directories();
+        }
+    });
+}
+
+function rename_folder(directory_id) {
+
+    // Prompt the user for a new name
+    swal({
+        title: 'Rename folder',
+        text: 'Enter a new name for the folder',
+        content: 'input',
+        buttons: {
+            cancel: {
+                text: 'Cancel',
+                value: null,
+                visible: true,
+            },
+            confirm: {
+                text: 'Rename',
+                value: true,
+            }
+        },
+        dangerMode: true,
+        closeOnEsc: false,
+        allowOutsideClick: false,
+        allowEnterKey: false
+    })
+        .then((newName) => {
+            if (newName) {
+                rename_folder_api(directory_id, newName);
+            }
+        });
+}
+
 function createDirectoryListItem(directory, directoryMap) {
     // Create a list item for the directory
     var listItem = $('<li></li>');
@@ -534,6 +578,7 @@ function createDirectoryListItem(directory, directoryMap) {
         }));
         menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Rename').on('click', function(e) {
             e.preventDefault();
+            rename_folder(directory.id);
         }));
         menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Delete').on('click', function(e) {
             e.preventDefault();
@@ -601,6 +646,10 @@ $(document).ready(function(){
             if (shared_id) {
                 note_detail(shared_id);
             }
+
+            $('.page-aside').resizable({
+                handles: 'e'
+            });
         }
     )
 
