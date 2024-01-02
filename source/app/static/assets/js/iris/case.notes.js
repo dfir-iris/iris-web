@@ -182,8 +182,18 @@ function edit_note(event) {
 }
 
 
+function setSharedLink(id) {
+    // Set the shared ID in the URL
+    let url = new URL(window.location.href);
+    url.searchParams.set('shared', id);
+    window.history.replaceState({}, '', url);
+}
+
 /* Fetch the edit modal with content from server */
 function note_detail(id) {
+
+    // Set teh shared ID in the URL
+    setSharedLink(id);
 
     let url = '/case/notes/' + id;
     get_request_api(url)
@@ -234,6 +244,10 @@ function note_detail(id) {
             collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
 
             $('#currentNoteContent').show();
+
+            // Highlight the note in the directory
+            $('.note').removeClass('note-highlight');
+            $('#note-' + id).addClass('note-highlight');
 
         }
     });
@@ -364,7 +378,7 @@ function save_note() {
 
 
     let data_sent = Object();
-    let currentNoteTitle = $('#currentNoteTitle').text();
+    let currentNoteTitle = $('#currentNoteTitle').text() ? $('#currentNoteTitle').text() : $('#currentNoteTitleInput').val();
     data_sent['note_title'] = currentNoteTitle;
     data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['note_content'] = $('#note_content').val();

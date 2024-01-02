@@ -1547,7 +1547,7 @@ body {
 .note-highlight {
     margin-top: 4px;
     background-color: #dbdbdb;
-    box-shadow: 2px 0px 15px 0px rgba(69, 65, 78, 0.17);
+    box-shadow: 1px 1px 5px 0px rgba(69, 65, 78, 0.10);
 }
 
 .footer {
