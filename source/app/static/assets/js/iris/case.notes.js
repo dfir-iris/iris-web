@@ -166,7 +166,7 @@ function delete_note(_item, cid) {
                                 note_detail(shared_id).then((data) => {
                                     if (!data) {
                                         setSharedLink(null);
-                                        $('#currentNoteContent').hide();
+                                        toggleNoteEditor(false);
                                     }
                                 });
                             }
@@ -178,6 +178,15 @@ function delete_note(_item, cid) {
     });
 }
 
+function toggleNoteEditor(show_editor) {
+    if (show_editor) {
+        $('#currentNoteContent').show();
+        $('#emptyNoteDisplay').hide();
+    } else {
+        $('#currentNoteContent').hide();
+        $('#emptyNoteDisplay').show();
+    }
+}
 
 /* Edit one note */
 function edit_note(event) {
@@ -250,13 +259,11 @@ async function note_detail(id) {
 
             collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
 
-            $('#currentNoteContent').show();
+            toggleNoteEditor(true);
 
-            // Highlight the note in the directory
             $('.note').removeClass('note-highlight');
             $('#note-' + id).addClass('note-highlight');
 
-            // Set the shared ID in the URL
             setSharedLink(id);
 
             return true;
