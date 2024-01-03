@@ -30,7 +30,7 @@ from flask_login import current_user
 from flask_socketio import emit, join_room, leave_room
 from flask_wtf import FlaskForm
 
-from app import db, socket_io
+from app import db, socket_io, app
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
@@ -233,11 +233,11 @@ def case_directory_update(dir_id, caseid):
         directory_schema = CaseNoteDirectorySchema()
         request_data = request.get_json()
 
-        if request_data.get('parent_id'):
-            directory_schema.verify_parent_id(request_data['parent_id'],
-                                              case_id=caseid)
-
         request_data['case_id'] = caseid
+        directory_schema.verify_parent_id(request_data['parent_id'],
+                                          case_id=caseid,
+                                          current_id=dir_id)
+
         new_directory = directory_schema.load(request_data, instance=directory, partial=True)
 
         db.session.commit()
@@ -247,6 +247,10 @@ def case_directory_update(dir_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+
+    except Exception as e:
+        app.logger.exception(f"Failed to update directory: {e}")
+        return response_error(msg="Internal error", status=500)
 
 
 @case_notes_blueprint.route('/case/notes/directories/delete/<dir_id>', methods=['POST'])

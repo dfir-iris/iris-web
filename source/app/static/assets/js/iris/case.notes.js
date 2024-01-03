@@ -520,13 +520,10 @@ function delete_folder_api(directory_id) {
 function move_folder(directory_id) {
     // Create a modal with a list of directories to move the folder to
     let modal = $('#moveFolderModal');
-    modal.find('.modal-body').empty();
 
-    let directoriesListing = $('<ul></ul>').addClass('nav');
-    modal.find('.modal-body').append(directoriesListing);
+    let directoriesListing = $('<ul></ul>');
+    $('#dirListingMove').empty().append(directoriesListing);
 
-
-    // Use the existing directory listing to create the list of directories
     let directoryMap = new Map();
     $('#directoriesListing').find('li').filter('.directory').each(function() {
         let directory = $(this).data('directory');
@@ -534,36 +531,51 @@ function move_folder(directory_id) {
     });
 
     let subdirectoryIds = new Set();
-    directoryMap.forEach(function(directory) {
+
+    function addSubdirectoryIds(directory) {
         directory.subdirectories.forEach(function(subdirectory) {
             subdirectoryIds.add(subdirectory.id);
+            let subdirectoryData = directoryMap.get(subdirectory.id);
+            if (subdirectoryData) {
+                addSubdirectoryIds(subdirectoryData);
+            }
         });
+    }
+
+    directoryMap.forEach(function(directory) {
+        addSubdirectoryIds(directory);
     });
 
     let directories = Array.from(directoryMap.values()).filter(function(directory) {
-
-        // Remove the directory being moved from the list of directories
-        if (directory.id === directory_id) {
-            return false;
-        }
-
-        // Remove subdirectories from the list of directories
-        if (subdirectoryIds.has(directory.id)) {
-            return false;
-        }
-
-        return true;
+        return directory_id !== directory.id;
     });
 
+    let listItem = $('<li></li>');
+    let link = $('<a></a>').attr('href', '#').text('Root');
+    listItem.append(link);
+
+    link.on('click', function(e) {
+        e.preventDefault();
+        move_folder_api(directory_id, null).then(function() {
+            modal.modal('hide');
+        });
+    });
+
+    directoriesListing.append(listItem);
+
     directories.forEach(function(directory) {
-        let listItem = $('<li></li>').addClass('nav-item');
-        let link = $('<a></a>').addClass('nav-link').attr('href', '#').text(directory.name);
+        let listItem = $('<li></li>');
+        let link = $('<a></a>').attr('href', '#');
+        link.append($('<i></i>').addClass('fa-regular fa-folder mr-2'));  // Add a folder icon
+        link.append(' ' + directory.name);
         listItem.append(link);
 
         link.on('click', function(e) {
             e.preventDefault();
-            move_folder_api(directory_id, directory.id);
-            modal.modal('hide');
+            move_folder_api(directory_id, directory.id).then(function() {
+                modal.modal('hide');
+
+            });
         });
 
         directoriesListing.append(listItem);
@@ -572,12 +584,12 @@ function move_folder(directory_id) {
     modal.modal('show');
 }
 
-function move_folder_api(directory_id, new_parent_id) {
+async function move_folder_api(directory_id, new_parent_id) {
     let data = Object();
     data['csrf_token'] = $('#csrf_token').val();
     data['parent_id'] = new_parent_id;
 
-    post_request_api(`/case/notes/directories/update/${directory_id}`,
+    return post_request_api(`/case/notes/directories/update/${directory_id}`,
         JSON.stringify(data))
     .done((data) => {
         if (notify_auto_api(data, true)) {

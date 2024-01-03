@@ -162,16 +162,22 @@ class CaseNoteDirectorySchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
-    def verify_parent_id(self, parent_id, case_id):
+    def verify_parent_id(self, parent_id, case_id, current_id=None):
         if parent_id is None:
             raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
                                                          field_name="parent_id")
 
+        if current_id is not None and int(parent_id) == int(current_id):
+            raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
+                                                         field_name="parent_id")
         directory = NoteDirectory.query.filter(
             NoteDirectory.id == parent_id,
             NoteDirectory.case_id == case_id
         ).first()
         if directory:
+            if current_id is not None and directory.parent_id == int(current_id):
+                raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
+                                                             field_name="parent_id")
             return parent_id
 
         raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
