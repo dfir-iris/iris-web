@@ -517,6 +517,75 @@ function delete_folder_api(directory_id) {
     });
 }
 
+function move_folder(directory_id) {
+    // Create a modal with a list of directories to move the folder to
+    let modal = $('#moveFolderModal');
+    modal.find('.modal-body').empty();
+
+    let directoriesListing = $('<ul></ul>').addClass('nav');
+    modal.find('.modal-body').append(directoriesListing);
+
+
+    // Use the existing directory listing to create the list of directories
+    let directoryMap = new Map();
+    $('#directoriesListing').find('li').filter('.directory').each(function() {
+        let directory = $(this).data('directory');
+        directoryMap.set(directory.id, directory);
+    });
+
+    let subdirectoryIds = new Set();
+    directoryMap.forEach(function(directory) {
+        directory.subdirectories.forEach(function(subdirectory) {
+            subdirectoryIds.add(subdirectory.id);
+        });
+    });
+
+    let directories = Array.from(directoryMap.values()).filter(function(directory) {
+
+        // Remove the directory being moved from the list of directories
+        if (directory.id === directory_id) {
+            return false;
+        }
+
+        // Remove subdirectories from the list of directories
+        if (subdirectoryIds.has(directory.id)) {
+            return false;
+        }
+
+        return true;
+    });
+
+    directories.forEach(function(directory) {
+        let listItem = $('<li></li>').addClass('nav-item');
+        let link = $('<a></a>').addClass('nav-link').attr('href', '#').text(directory.name);
+        listItem.append(link);
+
+        link.on('click', function(e) {
+            e.preventDefault();
+            move_folder_api(directory_id, directory.id);
+            modal.modal('hide');
+        });
+
+        directoriesListing.append(listItem);
+    });
+
+    modal.modal('show');
+}
+
+function move_folder_api(directory_id, new_parent_id) {
+    let data = Object();
+    data['csrf_token'] = $('#csrf_token').val();
+    data['parent_id'] = new_parent_id;
+
+    post_request_api(`/case/notes/directories/update/${directory_id}`,
+        JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            load_directories();
+        }
+    });
+}
+
 function delete_folder(directory_id) {
     swal({
         title: 'Delete folder',
@@ -577,7 +646,8 @@ function rename_folder(directory_id) {
 
 function createDirectoryListItem(directory, directoryMap) {
     // Create a list item for the directory
-    var listItem = $('<li></li>');
+    var listItem = $('<li></li>').attr('id', 'directory-' + directory.id).addClass('directory');
+    listItem.data('directory', directory);
     var link = $('<a></a>').attr('href', '#');
     var icon = $('<i></i>').addClass('fa-regular fa-folder');  // Create an icon for the directory
     link.append(icon);
@@ -617,10 +687,18 @@ function createDirectoryListItem(directory, directoryMap) {
             e.preventDefault();
             add_folder(directory.id);
         }));
+
+        menu.append($('<div></div>').addClass('dropdown-divider'));
         menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Rename').on('click', function(e) {
             e.preventDefault();
             rename_folder(directory.id);
         }));
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Move').on('click', function(e) {
+            e.preventDefault();
+            move_folder(directory.id);
+        }));
+
+        menu.append($('<div></div>').addClass('dropdown-divider'));
         menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Delete').on('click', function(e) {
             e.preventDefault();
             delete_folder(directory.id);

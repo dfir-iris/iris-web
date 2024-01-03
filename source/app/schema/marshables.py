@@ -197,7 +197,8 @@ class CaseNoteDirectorySchema(ma.SQLAlchemyAutoSchema):
         """
         assert_type_mml(input_var=data.get('name'),
                         field_name="name",
-                        type=str)
+                        type=str,
+                        allow_none=True)
 
         assert_type_mml(input_var=data.get('parent_id'),
                         field_name="parent_id",
