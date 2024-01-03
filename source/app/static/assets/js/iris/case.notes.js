@@ -151,6 +151,9 @@ async function sync_note(node_id) {
 
 
 function delete_note(_item, cid) {
+    if (_item === undefined || _item === null) {
+        _item = $('#currentNoteIDLabel').data('note_id')
+    }
 
     do_deletion_prompt("You are about to delete note #" + _item)
     .then((doDelete) => {
