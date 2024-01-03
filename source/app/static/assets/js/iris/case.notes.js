@@ -517,7 +517,16 @@ function delete_folder_api(directory_id) {
     });
 }
 
-function move_folder(directory_id) {
+function move_note_api(note_id, new_directory_id) {
+    let data = Object();
+    data['csrf_token'] = $('#csrf_token').val();
+    data['directory_id'] = new_directory_id;
+
+    return post_request_api(`/case/notes/update/${note_id}`,
+        JSON.stringify(data));
+}
+
+function move_item(item_id, item_type) {
     // Create a modal with a list of directories to move the folder to
     let modal = $('#moveFolderModal');
 
@@ -547,7 +556,7 @@ function move_folder(directory_id) {
     });
 
     let directories = Array.from(directoryMap.values()).filter(function(directory) {
-        return directory_id !== directory.id;
+        return item_type === 'folder' ? (item_id !== directory.id) : true;
     });
 
     let listItem = $('<li></li>');
@@ -556,9 +565,16 @@ function move_folder(directory_id) {
 
     link.on('click', function(e) {
         e.preventDefault();
-        move_folder_api(directory_id, null).then(function() {
-            modal.modal('hide');
-        });
+        if (item_type === 'note') {
+            move_note_api(item_id, null).then(function() {
+                modal.modal('hide');
+            });
+        }
+        else if (item_type === 'folder') {
+            move_folder_api(item_id, null).then(function () {
+                modal.modal('hide');
+            });
+        }
     });
 
     directoriesListing.append(listItem);
@@ -572,10 +588,24 @@ function move_folder(directory_id) {
 
         link.on('click', function(e) {
             e.preventDefault();
-            move_folder_api(directory_id, directory.id).then(function() {
-                modal.modal('hide');
-
-            });
+            if (item_type === 'note') {
+                move_note_api(item_id, directory.id).then(function() {
+                    // reload the directories
+                    load_directories()
+                    .then(function() {
+                        note_detail(item_id);
+                        modal.modal('hide');
+                    });
+                });
+            }
+            else if (item_type === 'folder') {
+                move_folder_api(item_id, directory.id).then(function () {
+                    load_directories()
+                    .then(function() {
+                        modal.modal('hide');
+                    });
+                });
+            }
         });
 
         directoriesListing.append(listItem);
@@ -707,7 +737,7 @@ function createDirectoryListItem(directory, directoryMap) {
         }));
         menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Move').on('click', function(e) {
             e.preventDefault();
-            move_folder(directory.id);
+            move_item(directory.id, 'folder');
         }));
 
         menu.append($('<div></div>').addClass('dropdown-divider'));
@@ -751,6 +781,33 @@ function createDirectoryListItem(directory, directoryMap) {
                 // Highlight the note in the directory
                 $('.note').removeClass('note-highlight');
                 noteListItem.addClass('note-highlight');
+            });
+
+            noteLink.on('contextmenu', function(e) {
+                e.preventDefault();
+
+                let menu = $('<div></div>').addClass('dropdown-menu show').css({
+                    position: 'absolute',
+                    left: e.pageX,
+                    top: e.pageY
+                });
+
+
+                menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Move').on('click', function (e) {
+                    e.preventDefault();
+                    move_item(note.id, 'note');
+                }));
+
+                menu.append($('<div></div>').addClass('dropdown-divider'));
+                menu.append($('<a></a>').addClass('dropdown-item text-danger').attr('href', '#').text('Delete').on('click', function (e) {
+                    e.preventDefault();
+                    delete_note(note.id, cid);
+                }));
+
+                $('body').append(menu).on('click', function() {
+                    menu.remove();
+                });
+
             });
 
             noteListItem.append(noteLink);

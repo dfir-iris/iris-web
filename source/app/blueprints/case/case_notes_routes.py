@@ -133,23 +133,29 @@ def case_note_save(cur_id, caseid):
 
     try:
         # validate before saving
-        addnote_schema = CaseAddNoteSchema()
+        addnote_schema = CaseNoteSchema()
+
+        note = get_note(cur_id, caseid=caseid)
+        if not note:
+            return response_error("Invalid note ID for this case")
 
         request_data = call_modules_hook('on_preload_note_update', data=request.get_json(), caseid=caseid)
 
         request_data['note_id'] = cur_id
-        addnote_schema.load(request_data, partial=['group_id'])
+        addnote_schema.load(request_data, partial=True, instance=note)
+        note.update_date = datetime.utcnow()
+        note.user_id = current_user.id
 
-        note = update_note(note_content=request_data.get('note_content'),
-                           note_title=request_data.get('note_title'),
-                           update_date=datetime.utcnow(),
-                           user_id=current_user.id,
-                           note_id=cur_id,
-                           caseid=caseid
-                           )
-        if not note:
-
-            return response_error("Invalid note ID for this case")
+        # note = update_note(note_content=request_data.get('note_content'),
+        #                    note_title=request_data.get('note_title'),
+        #                    update_date=datetime.utcnow(),
+        #                    user_id=current_user.id,
+        #                    note_id=cur_id,
+        #                    caseid=caseid
+        #                    )
+        # if not note:
+        #
+        #     return response_error("Invalid note ID for this case")
 
         note = call_modules_hook('on_postload_note_update', data=note, caseid=caseid)
 
