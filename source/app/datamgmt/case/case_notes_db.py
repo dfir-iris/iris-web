@@ -58,7 +58,7 @@ def delete_directory(directory, caseid):
 
         # Delete all subdirectories
         for subdirectory in directory.subdirectories:
-            delete_directory(subdirectory.id, caseid)
+            delete_directory(subdirectory, caseid)
 
         # Delete the directory
         db.session.delete(directory)

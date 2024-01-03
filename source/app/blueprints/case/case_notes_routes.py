@@ -205,8 +205,9 @@ def case_directory_add(caseid):
         directory_schema = CaseNoteDirectorySchema()
         request_data = request.get_json()
 
-        directory_schema.verify_parent_id(request_data['parent_id'],
-                                          case_id=caseid)
+        if request_data.get('parent_id') is not None:
+            directory_schema.verify_parent_id(request_data['parent_id'],
+                                              case_id=caseid)
 
         request_data['case_id'] = caseid
         new_directory = directory_schema.load(request_data)
@@ -234,9 +235,10 @@ def case_directory_update(dir_id, caseid):
         request_data = request.get_json()
 
         request_data['case_id'] = caseid
-        directory_schema.verify_parent_id(request_data['parent_id'],
-                                          case_id=caseid,
-                                          current_id=dir_id)
+        if request_data.get('parent_id') is not None:
+            directory_schema.verify_parent_id(request_data['parent_id'],
+                                              case_id=caseid,
+                                              current_id=dir_id)
 
         new_directory = directory_schema.load(request_data, instance=directory, partial=True)
 

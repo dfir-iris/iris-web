@@ -485,7 +485,7 @@ function add_folder(directory_id) {
     post_request_api('/case/notes/directories/add', JSON.stringify(data))
     .done((data) => {
         if (notify_auto_api(data, true)) {
-            load_directories();
+            rename_folder(data.data.id);
         }
     });
 }
@@ -498,7 +498,7 @@ function rename_folder_api(directory_id, newName) {
     post_request_api(`/case/notes/directories/update/${directory_id}`,
         JSON.stringify(data))
     .done((data) => {
-        if (notify_auto_api(data, true)) {
+        if (notify_auto_api(data)) {
             load_directories();
         }
     });
@@ -511,7 +511,7 @@ function delete_folder_api(directory_id) {
     post_request_api(`/case/notes/directories/delete/${directory_id}`,
         JSON.stringify(data))
     .done((data) => {
-        if (notify_auto_api(data, true)) {
+        if (notify_auto_api(data)) {
             load_directories();
         }
     });
@@ -592,7 +592,7 @@ async function move_folder_api(directory_id, new_parent_id) {
     return post_request_api(`/case/notes/directories/update/${directory_id}`,
         JSON.stringify(data))
     .done((data) => {
-        if (notify_auto_api(data, true)) {
+        if (notify_auto_api(data)) {
             load_directories();
         }
     });
@@ -626,11 +626,11 @@ function delete_folder(directory_id) {
         });
 }
 
-function rename_folder(directory_id) {
+function rename_folder(directory_id, new_directory=false) {
 
     // Prompt the user for a new name
     swal({
-        title: 'Rename folder',
+        title: new_directory?  'Rename directory': "Name the new folder",
         text: 'Enter a new name for the folder',
         content: 'input',
         buttons: {
@@ -640,7 +640,7 @@ function rename_folder(directory_id) {
                 visible: true,
             },
             confirm: {
-                text: 'Rename',
+                text: new_directory ? 'Ok' : 'Rename',
                 value: true,
             }
         },
@@ -711,7 +711,7 @@ function createDirectoryListItem(directory, directoryMap) {
         }));
 
         menu.append($('<div></div>').addClass('dropdown-divider'));
-        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Delete').on('click', function(e) {
+        menu.append($('<a></a>').addClass('dropdown-item text-danger').attr('href', '#').text('Delete').on('click', function(e) {
             e.preventDefault();
             delete_folder(directory.id);
         }));
