@@ -150,23 +150,30 @@ async function sync_note(node_id) {
 }
 
 
-/* Delete a group of the dashboard */
 function delete_note(_item, cid) {
 
-    var n_id = $("#info_note_modal_content").find('iris_notein').text();
-
-    do_deletion_prompt("You are about to delete note #" + n_id)
+    do_deletion_prompt("You are about to delete note #" + _item)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api('/case/notes/delete/' + n_id, null, null, cid)
+            post_request_api('/case/notes/delete/' + _item, null, null, cid)
             .done((data) => {
-               $('#modal_note_detail').modal('hide');
-               notify_auto_api(data);
+               if (notify_auto_api(data)) {
+                   load_directories()
+                       .then((data) =>
+                       {
+                           let shared_id = getSharedLink();
+                            if (shared_id) {
+                                note_detail(shared_id).then((data) => {
+                                    if (!data) {
+                                        setSharedLink(null);
+                                        $('#currentNoteContent').hide();
+                                    }
+                                });
+                            }
+                       }
+                   )
+               }
             })
-            .fail(function (error) {
-                draw_kanban();
-                swal( 'Oh no :(', error.message, 'error');
-            });
         }
     });
 }
@@ -185,20 +192,20 @@ function edit_note(event) {
 function setSharedLink(id) {
     // Set the shared ID in the URL
     let url = new URL(window.location.href);
-    url.searchParams.set('shared', id);
+    if (id !== undefined && id !== null) {
+        url.searchParams.set('shared', id);
+    } else {
+        url.searchParams.delete('shared');
+    }
     window.history.replaceState({}, '', url);
 }
 
 /* Fetch the edit modal with content from server */
-function note_detail(id) {
+async function note_detail(id) {
 
-    // Set teh shared ID in the URL
-    setSharedLink(id);
-
-    let url = '/case/notes/' + id;
-    get_request_api(url)
+    get_request_api('/case/notes/' + id)
     .done((data) => {
-        if (notify_auto_api(data, true)) {
+        if (notify_auto_api(data, true, true)) {
             let timer;
             let timeout = 10000;
             $('#form_note').keyup(function(){
@@ -249,7 +256,15 @@ function note_detail(id) {
             $('.note').removeClass('note-highlight');
             $('#note-' + id).addClass('note-highlight');
 
+            // Set the shared ID in the URL
+            setSharedLink(id);
+
+            return true;
+        } else {
+            setSharedLink();
+            return false;
         }
+
     });
 }
 
@@ -692,9 +707,10 @@ function createDirectoryListItem(directory, directoryMap) {
     listItem.data('directory', directory);
     var link = $('<a></a>').attr('href', '#');
     var icon = $('<i></i>').addClass('fa-regular fa-folder');  // Create an icon for the directory
+    icon.append($('<span></span>').addClass('notes-number').text(directory.note_count));
     link.append(icon);
     link.append(' ' + directory.name);
-    link.append($('<span></span>').addClass('badge badge-light float-right').text(directory.note_count));
+    //link.append($('<span></span>').addClass('badge badge-light float-right').text(directory.note_count));
     listItem.append(link);
 
     var container = $('<div></div>').addClass('directory-container');

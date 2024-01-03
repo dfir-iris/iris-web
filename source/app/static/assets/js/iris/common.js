@@ -224,7 +224,7 @@ function notify_success(message) {
     });
 }
 
-function notify_auto_api(data, silent_success) {
+function notify_auto_api(data, silent_success, silent_failure) {
     if (data.status === 'success') {
         if (silent_success === undefined || silent_success === false) {
             if (data.message.length === 0) {
@@ -237,7 +237,9 @@ function notify_auto_api(data, silent_success) {
         if (data.message.length === 0) {
             data.message = 'Operation failed';
         }
-        notify_error(data.message);
+        if (silent_failure === undefined || silent_failure === false) {
+            notify_error(data.message);
+        }
         return false;
     }
 }
@@ -265,16 +267,18 @@ function get_raw_request_api(uri, propagate_api_error, beforeSend_fn) {
         },
         error: function(jqXHR) {
             if (propagate_api_error) {
-                if(jqXHR.responseJSON && jqXHR.status == 400) {
+                if(jqXHR.responseJSON && jqXHR.status === 400) {
                     propagate_form_api_errors(jqXHR.responseJSON.data);
                 } else {
                     ajax_notify_error(jqXHR, this.url);
                 }
             } else {
-                if(jqXHR.responseJSON) {
-                    notify_error(jqXHR.responseJSON.message);
-                } else {
-                    ajax_notify_error(jqXHR, this.url);
+                if (jqXHR.status !== 400) {
+                    if(jqXHR.responseJSON) {
+                        notify_error(jqXHR.responseJSON.message);
+                    } else {
+                        ajax_notify_error(jqXHR, this.url);
+                    }
                 }
             }
         }

@@ -15912,3 +15912,19 @@ td.dt-nowrap { white-space: nowrap }
 .page-aside {
     overflow: auto;
 }
+
+.notes-number {
+      position: relative;
+      text-align: center;
+      border-radius: 10px;
+      min-width: 17px;
+      height: 17px;
+      font-size: 8px;
+      color: #5e5e5e;
+      background-color: #dcdcdc;
+      padding: 2px 4px;
+      line-height: 17px;
+      top: -14px;
+      right: 0px;
+      letter-spacing: -1px;
+}
