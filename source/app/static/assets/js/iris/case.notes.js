@@ -196,7 +196,7 @@ function proxy_copy_object_link() {
 function proxy_copy_object_link_md() {
     let note_id = $('#currentNoteIDLabel').data('note_id');
 
-    return copy_object_link_md(note_id);
+    return copy_object_link_md('note', note_id);
 }
 
 function toggleNoteEditor(show_editor) {
@@ -286,6 +286,10 @@ async function note_detail(id) {
             $('#note-' + id).addClass('note-highlight');
 
             $('#object_comments_number').text(data.data.comments.length);
+            $('#content_last_saved_by').text('');
+            $('#content_typing').text('');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
 
             setSharedLink(id);
 
