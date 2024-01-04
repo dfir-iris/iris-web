@@ -181,6 +181,24 @@ function delete_note(_item, cid) {
     });
 }
 
+function proxy_comment_element() {
+    let note_id = $('#currentNoteIDLabel').data('note_id');
+
+    return comment_element(note_id, 'notes');
+}
+
+function proxy_copy_object_link() {
+    let note_id = $('#currentNoteIDLabel').data('note_id');
+
+    return copy_object_link(note_id);
+}
+
+function proxy_copy_object_link_md() {
+    let note_id = $('#currentNoteIDLabel').data('note_id');
+
+    return copy_object_link_md(note_id);
+}
+
 function toggleNoteEditor(show_editor) {
     if (show_editor) {
         $('#currentNoteContent').show();
@@ -266,6 +284,8 @@ async function note_detail(id) {
 
             $('.note').removeClass('note-highlight');
             $('#note-' + id).addClass('note-highlight');
+
+            $('#object_comments_number').text(data.data.comments.length);
 
             setSharedLink(id);
 

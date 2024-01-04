@@ -222,6 +222,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     # group_id: int = fields.Integer()
     # group_uuid: uuid.UUID = fields.UUID()
     # group_title: str = fields.String()
+    comments = fields.Nested('CommentSchema', many=True)
 
     class Meta:
         model = Notes

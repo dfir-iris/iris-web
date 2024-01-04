@@ -27,7 +27,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
-from flask_socketio import emit, join_room, leave_room
+from flask_socketio import emit, join_room
 from flask_wtf import FlaskForm
 
 from app import db, socket_io, app
@@ -36,7 +36,6 @@ from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count, get_directory, \
     delete_directory
-from app.datamgmt.case.case_notes_db import add_note
 from app.datamgmt.case.case_notes_db import add_note_group
 from app.datamgmt.case.case_notes_db import delete_note
 from app.datamgmt.case.case_notes_db import delete_note_comment
@@ -44,20 +43,17 @@ from app.datamgmt.case.case_notes_db import delete_note_group
 from app.datamgmt.case.case_notes_db import find_pattern_in_notes
 from app.datamgmt.case.case_notes_db import get_case_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comments
-from app.datamgmt.case.case_notes_db import get_case_notes_comments_count
 from app.datamgmt.case.case_notes_db import get_group_details
 from app.datamgmt.case.case_notes_db import get_groups_short
 from app.datamgmt.case.case_notes_db import get_note
 from app.datamgmt.case.case_notes_db import get_notes_from_group
-from app.datamgmt.case.case_notes_db import update_note
 from app.datamgmt.case.case_notes_db import update_note_group
 from app.datamgmt.states import get_notes_state
-from app.forms import CaseNoteForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
-from app.schema.marshables import CaseAddNoteSchema, CaseNoteDirectorySchema
 from app.schema.marshables import CaseGroupNoteSchema
+from app.schema.marshables import CaseNoteDirectorySchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires, ac_socket_requires
@@ -96,9 +92,16 @@ def case_note_detail(cur_id, caseid):
         note = get_note(cur_id, caseid=caseid)
         if not note:
             return response_error(msg="Invalid note ID")
-        note_schema = CaseNoteSchema()
 
-        return response_success(data=note_schema.dump(note))
+        note_comments = get_case_note_comments(cur_id)
+
+        note_schema = CaseNoteSchema()
+        comments_schema = CommentSchema(many=True)
+
+        note = note_schema.dump(note)
+        note['comments'] = comments_schema.dump(note_comments)
+
+        return response_success(data=note)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
