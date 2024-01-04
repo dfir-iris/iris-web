@@ -933,7 +933,7 @@ function get_showdown_convert() {
         ghCodeBlocks: true,
         backslashEscapesHTMLTags: true,
         splitAdjacentBlockquotes: true,
-        extensions: ['bootstrap-tables', createSanitizeExtensionForImg]
+        extensions: [createSanitizeExtensionForImg, 'bootstrap-tables']
     });
 }
 
@@ -954,6 +954,7 @@ function do_md_filter_xss(html) {
                 input: ['type', 'checked', 'disabled', 'class'],
                 table: ['class'], thead: [], tbody: [], tr: [], th: [], td: [], br: []
             },
+
         onTagAttr: function (tag, name, value, isWhiteAttr) {
             if (tag === "i" && name === "class") {
                 if (iClassWhiteList.indexOf(value) === -1) {
@@ -1796,17 +1797,33 @@ $(document).ready(function(){
       return [{
         type: "output",
         filter: function (html, converter, options) {
-          // parse the html string
-          var liveHtml = $('<div></div>').html(html);
-          $('table', liveHtml).each(function(){
-            var table = $(this);
+            let parser = new DOMParser();
 
-            // table bootstrap classes
-            table.addClass('table table-striped table-bordered table-hover table-sm')
-            // make table responsive
-            .wrap('<div class="table-responsive"></div>');
-          });
-          return liveHtml.html();
+            html = '<div id="fsjpowefjdwe">' + html + '</div>';
+
+            let doc = parser.parseFromString(html, 'text/html');
+
+            let tables = doc.getElementsByTagName('table');
+
+            for (let i = 0; i < tables.length; i++) {
+                let table = tables[i];
+
+                table.classList.add('table', 'table-striped', 'table-bordered', 'table-hover', 'table-sm');
+
+                let div = doc.createElement('div');
+                div.classList.add('table-responsive');
+
+                table.parentNode.insertBefore(div, table);
+                div.appendChild(table);
+            }
+
+            let serializer = new XMLSerializer();
+            let newHtml = serializer.serializeToString(doc);
+
+            let innerHtml = doc.getElementById('fsjpowefjdwe').innerHTML;
+
+            return innerHtml;
+
         }
           }];
     });
