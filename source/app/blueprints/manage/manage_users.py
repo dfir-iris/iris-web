@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import secrets
 
 import marshmallow
 # IMPORTS ------------------------------------------------
@@ -51,7 +52,7 @@ from app.forms import AddUserForm
 from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_current_user_has_permission
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
-from app.schema.marshables import UserSchema, BasicUserSchema
+from app.schema.marshables import UserSchema, BasicUserSchema, UserFullSchema
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import ac_requires
@@ -503,6 +504,26 @@ def activate_user_api(cur_id, caseid):
 
     track_activity(f"user {user.user} activated", caseid=caseid, ctx_less=True)
     return response_success("User activated", data=user_schema.dump(user))
+
+
+@manage_users_blueprint.route('/manage/users/renew-api-key/<int:cur_id>', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+def renew_user_api_key(cur_id, caseid):
+
+    user = get_user(cur_id)
+    if not user:
+        return response_error("Invalid user ID for this case")
+
+    if protect_demo_mode_user(user):
+        return ac_api_return_access_denied(caseid=caseid)
+
+    user.api_key = secrets.token_urlsafe(nbytes=64)
+    db.session.commit()
+
+    user_schema = UserFullSchema()
+
+    track_activity(f"API key of user {user.user} renewed", caseid=caseid, ctx_less=True)
+    return response_success(f"API key of user {user.user} renewed", data=user_schema.dump(user))
 
 
 if is_authentication_local():

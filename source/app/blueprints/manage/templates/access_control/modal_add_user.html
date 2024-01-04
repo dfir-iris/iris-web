@@ -115,8 +115,13 @@
                                             <input autocomplete="off" class="form-control" type="text" value="{{ user.user_uuid }}" disabled>
                                         </div>
                                         <div class="form-group mt-3">
-                                            <label for="user_uuid" class="placeholder">User API Key</label>
-                                            <input autocomplete="off" class="form-control" type="text" value="{{ user.user_api_key }}" disabled>
+                                            <label for="userApiKey" class="placeholder">User API Key</label>
+                                            <div class="input-group">
+                                                <input autocomplete="off" class="form-control" type="text" value="{{ user.user_api_key }}" id="userApiKey" disabled>
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-sm btn-dark" type="button" onclick="renew_api_for_user({{ user.user_id }})">Renew</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     {% endif %}
                                 </div>

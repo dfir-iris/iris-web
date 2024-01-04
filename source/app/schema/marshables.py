@@ -784,6 +784,21 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+class UserFullSchema(ma.SQLAlchemyAutoSchema):
+    """
+    Schema for serializing and deserializing User objects.
+
+    This schema defines the fields to include when serializing and deserializing User objects.
+    It includes fields for the user's name, login, email, password, admin status, CSRF token, ID, primary organization ID,
+    and service account status. It also includes methods for verifying the username, email, and password.
+    """
+
+    class Meta:
+        model = User
+        load_instance = True
+        include_fk = True
+        exclude = ['password', 'ctx_case', 'ctx_human_case']
+
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing User objects.
