@@ -96,6 +96,12 @@ spec:
           - name:  INTERFACE_HTTPS_PORT
             value: {{ .Values.irisapp.INTERFACE_HTTPS_PORT | quote }}
 
+          - name:  IRIS_ADM_USERNAME
+            value: {{ .Values.irisapp.IRIS_ADM_USERNAME | quote }}
+
+          - name:  IRIS_ADM_PASSWORD
+            value: {{ .Values.irisapp.IRIS_ADM_PASSWORD | quote }}
+
           ports:
             - containerPort: 8000
 
