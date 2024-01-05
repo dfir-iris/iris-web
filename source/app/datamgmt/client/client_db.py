@@ -33,7 +33,7 @@ from app.schema.marshables import CustomerSchema
 
 
 def get_client_list(current_user_id: int = None,
-                    is_server_administrator: bool = False) -> List[Client]:
+                    is_server_administrator: bool = False) -> List[dict]:
     if not is_server_administrator:
         filter = and_(
             Client.client_id == UserClient.client_id,

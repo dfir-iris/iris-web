@@ -367,8 +367,12 @@ def api_case_close(cur_id, caseid):
 def add_case_modal(caseid):
 
     form = AddCaseForm()
-    form.case_customer.choices = [(c.client_id, c.name) for c in
-                                  Client.query.order_by(Client.name)]
+    # Show only clients that the user has access to
+    client_list = get_client_list(current_user_id=current_user.id,
+                                  is_server_administrator=ac_current_user_has_permission(
+                                     Permissions.server_administrator))
+
+    form.case_customer.choices = [(c['customer_id'], c['customer_name']) for c in client_list]
 
     form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
     form.case_template_id.choices = [(ctp['id'], ctp['display_name']) for ctp in get_case_templates_list()]
