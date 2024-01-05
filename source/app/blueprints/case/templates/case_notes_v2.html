@@ -18,6 +18,11 @@
 							<div class="col">
 								<div class="input-group">
 									<input type="text" placeholder="Search in notes" class="form-control" id="search-input">
+									  <div class="input-group-append">
+										<button class="btn btn-sm btn-light" type="button" id="clear-search">
+										  &times;
+										</button>
+									  </div>
 								</div>
 							</div>
 						</div>
@@ -100,7 +105,7 @@
 									<div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="note_editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');note_editor.focus();"><i class="fa-solid fa-table"></i></div>
 									<div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="note_editor.insertSnippet('\n- \n- \n- ');note_editor.focus();"><i class="fa-solid fa-list"></i></div>
 									<div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="note_editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');note_editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
-									<div class="btn btn-sm btn-light mr-1" title="Toggle editor expansion" onclick="toggle_max_editor();"><i class="fa-solid fa-maximize"></i></div>
+									<div class="btn btn-sm btn-light mr-1" title="Toggle editor expansion" onclick="toggle_max_editor();" id="btn_max_editor"><i class="fa-solid fa-maximize"></i></div>
 									<div class="btn btn-sm btn-transparent mr-1" title="Help" onclick="get_md_helper_modal();"><i class="fa-solid fa-question-circle"></i></div>
 							</div>
 							<div class="col">

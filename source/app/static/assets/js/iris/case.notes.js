@@ -408,16 +408,14 @@ function search_notes() {
 }
 
 function toggle_max_editor() {
-    if ($('#container_note_content').hasClass('col-md-12')) {
-        $('#container_note_content').removeClass('col-md-12').addClass('col-md-6');
-        $('#ctrd_notesum').removeClass('d-none');
-        $('#btn_max_editor').html('<i class="fa-solid fa-minimize"></i>');
-    } else {
-        $('#container_note_content').removeClass('col-md-6').addClass('col-md-12');
-        $('#ctrd_notesum').addClass('d-none');
+    $('#ctrd_notesum').toggle();
+    if ($('#ctrd_notesum').is(':visible')) {
         $('#btn_max_editor').html('<i class="fa-solid fa-maximize"></i>');
+        $('#container_note_content').removeClass('col-md-12 col-lg-12').addClass('col-md-12 col-lg-6');
+    } else {
+        $('#btn_max_editor').html('<i class="fa-solid fa-minimize"></i>');
+        $('#container_note_content').removeClass('col-md-12 col-lg-6').addClass('col-md-12 col-lg-12');
     }
-
 }
 
 /* Save a note into db */
@@ -452,7 +450,10 @@ function save_note() {
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
             collaborator.save(n_id);
             if (previousNoteTitle !== currentNoteTitle) {
-                load_directories();
+                load_directories().then(function() {
+                    $('.note').removeClass('note-highlight');
+                    $('#note-' + n_id).addClass('note-highlight');
+                });
                 previousNoteTitle = currentNoteTitle;
             }
         }
@@ -461,7 +462,14 @@ function save_note() {
 
 /* Span for note edition */
 function edit_innote() {
-    return edit_inner_editor('notes_edition_btn', 'container_note_content', 'ctrd_notesum');
+    $('#container_note_content').toggle();
+    if ($('#container_note_content').is(':visible')) {
+        $('#notes_edition_btn').show(100);
+        $('#ctrd_notesum').removeClass('col-md-11 col-lg-11 ml-4').addClass('col-md-6 col-lg-6');
+    } else {
+        $('#notes_edition_btn').hide(100);
+        $('#ctrd_notesum').removeClass('col-md-6 col-lg-6').addClass('col-md-11 col-lg-11 ml-4');
+    }
 }
 
 async function load_directories() {
@@ -967,11 +975,20 @@ $(document).ready(function(){
         }
     });
 
-    document.getElementById('search-input').addEventListener('keypress', function(event) {
+    $('#search-input').keypress(function(event) {
         if (event.key === 'Enter') {
-            var searchInput = this.value;
+            var searchInput = $(this).val();
             fetchNotes(searchInput);
         }
-});
+    });
+
+    $('#clear-search').on('click', function() {
+        // Clear the search input field
+        $('#search-input').val('');
+
+        $('.directory-container').find('li').show();
+        $('.directory').show();
+        $('.note').show();
+    });
 
 });
