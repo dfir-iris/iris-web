@@ -29,6 +29,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_socketio import emit, join_room
 from flask_wtf import FlaskForm
+from sqlalchemy import or_, and_
 
 from app import db, socket_io, app
 from app.blueprints.case.case_comments import case_comment_update
@@ -51,6 +52,7 @@ from app.datamgmt.case.case_notes_db import update_note_group
 from app.datamgmt.states import get_notes_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models import Notes
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseGroupNoteSchema
 from app.schema.marshables import CaseNoteDirectorySchema
@@ -323,22 +325,21 @@ def case_notes_state(caseid):
         return response_error('No notes state for this case.')
 
 
-@case_notes_blueprint.route('/case/notes/search', methods=['POST'])
+@case_notes_blueprint.route('/case/notes/search', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_search_notes(caseid):
+    search_input = request.args.get('search_input')
 
-    if request.is_json:
-        search = request.json.get('search_term')
-        ns = []
-        if search:
-            search = "%{}%".format(search)
-            ns = find_pattern_in_notes(search, caseid)
+    notes = Notes.query.filter(
+        and_(Notes.note_case_id == caseid,
+        or_(Notes.note_title.ilike(f'%{search_input}%'),
+            Notes.note_content.ilike(f'%{search_input}%')))
+    ).all()
 
-            ns = [row._asdict() for row in ns]
+    note_schema = CaseNoteSchema(many=True)
+    serialized_notes = note_schema.dump(notes)
 
-        return response_success("", data=ns)
-
-    return response_error("Invalid request")
+    return response_success(data=serialized_notes)
 
 
 @case_notes_blueprint.route('/case/notes/groups/add', methods=['POST'])

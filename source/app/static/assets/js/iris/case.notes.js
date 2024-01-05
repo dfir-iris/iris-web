@@ -520,7 +520,10 @@ function add_note(directory_id) {
     .done((data) => {
         if (notify_auto_api(data, true)) {
             note_detail(data.data.note_id);
-            load_directories();
+            load_directories().then(function() {
+                $('.note').removeClass('note-highlight');
+                $('#note-' + data.data.note_id).addClass('note-highlight');
+            });
         }
     });
 }
@@ -536,6 +539,15 @@ function add_folder(directory_id) {
         if (notify_auto_api(data, true)) {
             rename_folder(data.data.id);
         }
+    });
+}
+
+function refresh_folders() {
+    load_directories().then(function() {
+        notify_success('Folders refreshed');
+        let note_id = $('#currentNoteIDLabel').data('note_id');
+        $('.note').removeClass('note-highlight');
+        $('#note-' + note_id).addClass('note-highlight');
     });
 }
 
@@ -735,6 +747,24 @@ function rename_folder(directory_id, new_directory=false) {
         });
 }
 
+function fetchNotes(searchInput) {
+    // Send a GET request to the server with the search input as a parameter
+    get_raw_request_api('/case/notes/search?search_input=' + encodeURIComponent(searchInput) + '&cid=' + get_caseid())
+        .done(data => {
+            if (notify_auto_api(data, true)) {
+                $('.directory-container').find('li').hide();
+                $('.directory').hide();
+                $('.note').hide();
+
+                data.data.forEach(note => {
+                    // Show the appropriate directory
+                    $('#directory-' + note.directory_id).show();
+                    $('#note-' + note.note_id).show();
+                });
+            }
+        });
+}
+
 function createDirectoryListItem(directory, directoryMap) {
     // Create a list item for the directory
     var listItem = $('<li></li>').attr('id', 'directory-' + directory.id).addClass('directory');
@@ -744,7 +774,6 @@ function createDirectoryListItem(directory, directoryMap) {
     icon.append($('<span></span>').addClass('notes-number').text(directory.note_count));
     link.append(icon);
     link.append(' ' + directory.name);
-    //link.append($('<span></span>').addClass('badge badge-light float-right').text(directory.note_count));
     listItem.append(link);
 
     var container = $('<div></div>').addClass('directory-container');
@@ -937,5 +966,12 @@ $(document).ready(function(){
             save_note();
         }
     });
+
+    document.getElementById('search-input').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            var searchInput = this.value;
+            fetchNotes(searchInput);
+        }
+});
 
 });

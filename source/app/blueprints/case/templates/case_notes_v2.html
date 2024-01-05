@@ -13,20 +13,25 @@
         <div class="page-inner page-inner-fill">
             <div class="page-with-aside  bg-white">
                 <div class="page-aside bg-grey1">
-                    <div class="aside-header">
-						<form action="#" class="ml-auto">
-							<div class="input-group">
-								<div class="input-group-prepend">
-									<button class="btn btn-sm" title="Add directory" onclick="add_folder();return false;">
-										<i class="fa fa-folder-plus"></i>
-									</button>
-									<span class="input-group-text">
-										<i class="fa fa-search search-icon"></i>
-									</span>
+                    <div class="aside-header mt--2">
+						<div class="row mt-1">
+							<div class="col">
+								<div class="input-group">
+									<input type="text" placeholder="Search in notes" class="form-control" id="search-input">
 								</div>
-								<input type="text" placeholder="Search notes" class="form-control">
 							</div>
-						</form>
+						</div>
+						<div class="row mt-2">
+							<div class="col">
+								<button class="btn btn-sm" title="Add directory" onclick="add_folder();return false;">
+									<i class="fa fa-folder-plus"></i>
+								</button>
+								<button class="btn btn-sm" title="Refresh list" onclick="refresh_folders();return false;">
+									<i class="fa fa-refresh"></i>
+								</button>
+							</div>
+						</div>
+
                     </div>
 					<div class="aside-nav" id="notes-nav">
 						<ul class="nav" id="directoriesListing">
