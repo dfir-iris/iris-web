@@ -22,7 +22,7 @@ import re
 
 from sqlalchemy import desc
 
-from app.datamgmt.case.case_notes_db import get_notes_from_group
+from app.datamgmt.case.case_notes_db import get_notes_from_group, get_case_note_comments
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.models import AnalysisStatus, CompromiseStatus, TaskAssignee, NotesGroupLink
 from app.models import AssetsType
@@ -46,7 +46,7 @@ from app.models import NotesGroup
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models.authorization import User
-from app.schema.marshables import CaseDetailsSchema
+from app.schema.marshables import CaseDetailsSchema, CommentSchema, CaseNoteSchema
 
 
 def export_case_json(case_id):
@@ -235,33 +235,26 @@ def export_case_evidences_json(case_id):
 
 
 def export_case_notes_json(case_id):
-    res = Notes.query.join(
-        NotesGroupLink, NotesGroupLink.note_id == Notes.note_id
-    ).join(
-        NotesGroup, NotesGroup.group_id == NotesGroupLink.group_id
-    ).with_entities(
-        Notes.note_title,
-        Notes.note_content,
-        Notes.note_creationdate,
-        Notes.note_lastupdate,
-        Notes.custom_attributes,
-        Notes.note_id,
-        Notes.note_uuid,
-        NotesGroup.group_title,
-        NotesGroup.group_id,
-        NotesGroup.group_user
-    ).filter(
+    # Fetch all notes associated with the case
+    notes = Notes.query.filter(
         Notes.note_case_id == case_id
     ).all()
 
-    return_notes = []
-    if res:
-        for note in res:
-            note = note._asdict()
-            note["note_content"] = process_md_images_links_for_report(note["note_content"])
-            return_notes.append(note)
+    # Initialize the schemas
+    note_schema = CaseNoteSchema()
+    comments_schema = CommentSchema(many=True)
 
-    return return_notes
+    # Serialize the notes and their comments
+    serialized_notes = []
+    for note in notes:
+        note_comments = get_case_note_comments(note.note_id)
+        serialized_note = note_schema.dump(note)
+        serialized_note['comments'] = comments_schema.dump(note_comments)
+        serialized_note["note_content"] = process_md_images_links_for_report(serialized_note["note_content"])
+
+        serialized_notes.append(serialized_note)
+
+    return serialized_notes
 
 
 def export_case_tm_json(case_id):

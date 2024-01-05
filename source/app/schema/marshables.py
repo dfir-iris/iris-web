@@ -219,10 +219,8 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
     """
     csrf_token: str = fields.String(required=False)
-    # group_id: int = fields.Integer()
-    # group_uuid: uuid.UUID = fields.UUID()
-    # group_title: str = fields.String()
     comments = fields.Nested('CommentSchema', many=True)
+    directory = fields.Nested('CaseNoteDirectorySchema', many=False)
 
     class Meta:
         model = Notes
@@ -783,6 +781,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
 
         return data
+
 
 class UserFullSchema(ma.SQLAlchemyAutoSchema):
     """
