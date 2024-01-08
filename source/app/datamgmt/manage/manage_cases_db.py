@@ -28,7 +28,7 @@ from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee
+from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee, NoteDirectory
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
@@ -350,9 +350,12 @@ def delete_case(case_id):
     alerts_to_update.update({CaseAssets.case_id: None}, synchronize_session='fetch')
     db.session.commit()
 
+    # Legacy code
     NotesGroupLink.query.filter(NotesGroupLink.case_id == case_id).delete()
     NotesGroup.query.filter(NotesGroup.group_case_id == case_id).delete()
+
     Notes.query.filter(Notes.note_case_id == case_id).delete()
+    NoteDirectory.query.filter(NoteDirectory.case_id == case_id).delete()
 
     tasks = CaseTasks.query.filter(CaseTasks.task_case_id == case_id).all()
     for task in tasks:
