@@ -58,7 +58,7 @@ from app.schema.marshables import CaseGroupNoteSchema
 from app.schema.marshables import CaseNoteDirectorySchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires, ac_socket_requires
+from app.util import ac_api_case_requires, ac_socket_requires, endpoint_deprecated
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
@@ -150,17 +150,6 @@ def case_note_save(cur_id, caseid):
         addnote_schema.load(request_data, partial=True, instance=note)
         note.update_date = datetime.utcnow()
         note.user_id = current_user.id
-
-        # note = update_note(note_content=request_data.get('note_content'),
-        #                    note_title=request_data.get('note_title'),
-        #                    update_date=datetime.utcnow(),
-        #                    user_id=current_user.id,
-        #                    note_id=cur_id,
-        #                    caseid=caseid
-        #                    )
-        # if not note:
-        #
-        #     return response_error("Invalid note ID for this case")
 
         note = call_modules_hook('on_postload_note_update', data=note, caseid=caseid)
 
@@ -288,31 +277,10 @@ def case_directory_delete(dir_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/list', methods=['GET'])
+@endpoint_deprecated('Use /case/notes/directories/filter', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_load_notes_groups(caseid):
-
-    if not get_case(caseid=caseid):
-        return response_error("Invalid case ID")
-
-    groups_short = get_groups_short(caseid)
-
-    sta = []
-
-    for group in groups_short:
-        notes = get_notes_from_group(caseid=caseid, group_id=group.group_id)
-        group_d = group._asdict()
-        group_d['notes'] = [note._asdict() for note in notes]
-
-        sta.append(group_d)
-
-    sta = sorted(sta, key=lambda i: i['group_id'])
-
-    ret = {
-        'groups': sta,
-        'state': get_notes_state(caseid=caseid)
-    }
-
-    return response_success("", data=ret)
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/state', methods=['GET'])
@@ -343,50 +311,24 @@ def case_search_notes(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/add', methods=['POST'])
+@endpoint_deprecated('Use /case/notes/directories/add', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_notes_groups(caseid):
-    title = ''
-    if request.is_json:
-        title = request.json.get('group_title') or ''
-
-        ng = add_note_group(group_title=title,
-                            caseid=caseid,
-                            userid=current_user.id,
-                            creationdate=datetime.utcnow())
-
-        if ng.group_id:
-            group_schema = CaseGroupNoteSchema()
-            track_activity(f"added group note \"{ng.group_title}\"", caseid=caseid)
-
-            return response_success("Notes group added", data=group_schema.dump(ng))
-
-        else:
-            return response_error("Unable to add a new group")
-
-    return response_error("Invalid request")
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/groups/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('Use /case/notes/directories/delete/<ID>', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_notes_groups(cur_id, caseid):
-
-    if not delete_note_group(cur_id, caseid):
-        return response_error("Invalid group ID")
-
-    track_activity("deleted group note ID {}".format(cur_id), caseid=caseid)
-
-    return response_success("Group ID {} deleted".format(cur_id))
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/groups/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('Use /case/notes/directories/<ID>', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_notes_group(cur_id, caseid):
-
-    group = get_group_details(cur_id, caseid)
-    if not group:
-        return response_error(f"Group ID {cur_id} not found")
-
-    return response_success("", data=group)
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/directories/filter', methods=['GET'])
@@ -402,26 +344,10 @@ def case_filter_notes_directories(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/groups/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('Use /case/notes/directories/update/<ID>', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_notes_groups(cur_id, caseid):
-
-    js_data = request.get_json()
-    if not js_data:
-        return response_error("Invalid data")
-
-    group_title = js_data.get('group_title')
-    if not group_title:
-        return response_error("Missing field group_title")
-
-    ng = update_note_group(group_title, cur_id, caseid)
-
-    if ng:
-        # Note group has been properly found and updated in db
-        track_activity("updated group note \"{}\"".format(group_title), caseid=caseid)
-        group_schema = CaseGroupNoteSchema()
-        return response_success("Updated title of group ID {}".format(cur_id), data=group_schema.dump(ng))
-
-    return response_error("Group ID {} not found".format(cur_id))
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/modal', methods=['GET'])
