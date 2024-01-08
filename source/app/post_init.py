@@ -979,7 +979,7 @@ def create_safe_auth_model():
     # Create new Analysts Group object
     try:
         ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
-                                  group_auto_follow=True,
+                                  group_auto_follow=False,
                                   group_auto_follow_access_level=CaseAccessLevel.full_access.value,
                                   group_permissions=ac_get_mask_analyst())
 
@@ -992,8 +992,8 @@ def create_safe_auth_model():
     if ganalysts.group_permissions != ac_get_mask_analyst():
         ganalysts.group_permissions = ac_get_mask_analyst()
 
-    if ganalysts.group_auto_follow is not True:
-        ganalysts.group_auto_follow = True
+    if ganalysts.group_auto_follow is not False:
+        ganalysts.group_auto_follow = False
 
     if ganalysts.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
         ganalysts.group_auto_follow_access_level = CaseAccessLevel.full_access.value
