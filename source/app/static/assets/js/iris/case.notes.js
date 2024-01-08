@@ -302,78 +302,6 @@ async function note_detail(id) {
     });
 }
 
-
-async function handle_note_close(id, e) {
-    note_id = null;
-
-    if ($("#minimized_modal_box").is(":visible")) {
-        forceModalClose = true;
-        wasMiniNote = true;
-        save_note(null, get_caseid());
-    }
-
-
-    if ($('#btn_save_note').text() === "Save" && !forceModalClose) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        swal({
-            title: "Are you sure?",
-            text: "You have unsaved changes!",
-            icon: "warning",
-            buttons: {
-                cancel: {
-                    text: "Cancel",
-                    value: null,
-                    visible: true,
-                },
-                confirm: {
-                    text: "Discard changes",
-                    value: true,
-                }
-            },
-            dangerMode: true,
-            closeOnEsc: false,
-            allowOutsideClick: false,
-            allowEnterKey: false
-        })
-        .then((willDiscard) => {
-            if (willDiscard) {
-                location.reload();
-            } else {
-                return false;
-            }
-        })
-
-    } else {
-        forceModalClose = false;
-        if (!wasMiniNote) {
-            if (collaborator) {
-                collaborator.close();
-            }
-            if (note_editor) {
-                note_editor.destroy();
-            }
-
-            if (ppl_viewing) {
-                ppl_viewing.clear();
-            }
-        }
-        collaborator_socket.off('save-note');
-        collaborator_socket.off('leave-note');
-        collaborator_socket.off('join-note');
-        collaborator_socket.off('ping-note');
-        collaborator_socket.off('disconnect');
-        collaborator_socket.off('clear_buffer-note');
-        collaborator_socket.off('change-note');
-        collaborator_socket.emit('ping-note', {'channel': 'case-' + get_caseid() + '-notes', 'note_id': null});
-        wasMiniNote = false;
-
-        await draw_kanban();
-        return true;
-    }
-}
-
 function refresh_ppl_list() {
     $('#ppl_list_viewing').empty();
     for (let [key, value] of ppl_viewing) {
@@ -773,21 +701,45 @@ function fetchNotes(searchInput) {
         });
 }
 
+function getNotesInfo(directory, directoryMap, currentNoteID) {
+    let totalNotes = directory.notes.length;
+    let hasMoreThanFiveNotes = directory.notes.length > 5;
+    let dirContainsCurrentNote = directory.notes.some(note => note.id == currentNoteID);
+
+    for (let i = 0; i < directory.subdirectories.length; i++) {
+        let subdirectoryId = directory.subdirectories[i].id;
+        let subdirectory = directoryMap.get(subdirectoryId);
+        if (subdirectory) {
+            let subdirectoryInfo = getNotesInfo(subdirectory, directoryMap, currentNoteID);
+            totalNotes += subdirectoryInfo.totalNotes;
+            hasMoreThanFiveNotes = hasMoreThanFiveNotes || subdirectoryInfo.hasMoreThanFiveNotes;
+            dirContainsCurrentNote = dirContainsCurrentNote || subdirectoryInfo.dirContainsCurrentNote;
+        }
+    }
+
+    return { totalNotes, hasMoreThanFiveNotes, dirContainsCurrentNote };
+}
+
+
+
 function createDirectoryListItem(directory, directoryMap) {
     // Create a list item for the directory
     var listItem = $('<li></li>').attr('id', 'directory-' + directory.id).addClass('directory');
     listItem.data('directory', directory);
     var link = $('<a></a>').attr('href', '#');
     var icon = $('<i></i>').addClass('fa-regular fa-folder');  // Create an icon for the directory
-    icon.append($('<span></span>').addClass('notes-number').text(directory.note_count));
     link.append(icon);
     link.append(' ' + directory.name);
     listItem.append(link);
 
+    let currentNoteID = getSharedLink();
+
     var container = $('<div></div>').addClass('directory-container');
     listItem.append(container);
 
-    if ((directory.subdirectories.length + directory.notes.length) > 5 || directory.notes.length > 0) {
+    let notesInfo = getNotesInfo(directory, directoryMap, currentNoteID);
+    icon.append($('<span></span>').addClass('notes-number').text(notesInfo.totalNotes));
+    if (!notesInfo.hasMoreThanFiveNotes || notesInfo.dirContainsCurrentNote) {
         icon.removeClass('fa-folder').addClass('fa-folder-open');
     } else {
         container.hide();
