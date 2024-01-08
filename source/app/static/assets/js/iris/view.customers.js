@@ -177,13 +177,13 @@ $(document).ready(function() {
         "autoWidth": false,
         "columns": [
             {
-                "data": "asset_id",
+                "data": "asset_name",
                 "render": function(data, type, row) {
                     return data;
                 }
             },
             {
-                "data": "asset_name",
+                "data": "asset_description",
                 "render": function(data, type, row) {
                     return data;
                 }
@@ -204,6 +204,14 @@ $(document).ready(function() {
             {
                 "data": "case_id",
                 "render": function(data, type, row) {
+                    if (type === 'display' && data !== null) {
+                        let a_anchor = $('<a></a>');
+                        a_anchor.attr('href', '/case?cid=' + data);
+                        a_anchor.attr('target', '_blank');
+                        a_anchor.attr('rel', 'noopener');
+                        a_anchor.text('#' + data);
+                        return a_anchor.prop('outerHTML');
+                    }
                     return data;
                 }
             }
