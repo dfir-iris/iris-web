@@ -77,7 +77,9 @@ def get_assets(caseid):
     ).filter(
         CaseAssets.case_id == caseid,
     ).join(
-        CaseAssets.asset_type, CaseAssets.analysis_status
+        CaseAssets.asset_type
+    ).join(
+        CaseAssets.analysis_status
     ).all()
 
     return assets
