@@ -92,19 +92,7 @@ def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
 
-    form = AddCaseForm()
-    # Fill select form field customer with the available customers in DB
-    form.case_customer.choices = [(c.client_id, c.name) for c in
-                                  Client.query.order_by(Client.name)]
-
-    form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in
-                                       get_user_organisations(current_user.id)]
-    form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
-    form.case_template_id.choices = [(ctp['id'], ctp['display_name']) for ctp in get_case_templates_list()]
-
-    attributes = get_default_custom_attributes('case')
-
-    return render_template('manage_cases.html', form=form, attributes=attributes)
+    return render_template('manage_cases.html')
 
 
 def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
