@@ -1,6 +1,6 @@
+from functools import reduce
+
 from sqlalchemy import and_, desc, asc
-from sqlalchemy import and_, desc, asc
-from sqlalchemy.util import reduce
 
 import app
 from app.models import Tags

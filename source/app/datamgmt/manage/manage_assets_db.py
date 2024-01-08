@@ -1,6 +1,6 @@
 from flask_login import current_user
 from sqlalchemy import and_, desc, asc
-from sqlalchemy.util import reduce
+from functools import reduce
 
 import app
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view

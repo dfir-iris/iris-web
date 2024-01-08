@@ -342,10 +342,7 @@ def get_case_notes_comments_count(notes_list):
 
 
 def get_case_note_comment(note_id, comment_id):
-    return NotesComments.query.filter(
-        NotesComments.comment_note_id == note_id,
-        NotesComments.comment_id == comment_id
-    ).with_entities(
+    return db.session.query(
         Comments.comment_id,
         Comments.comment_text,
         Comments.comment_date,
@@ -354,8 +351,14 @@ def get_case_note_comment(note_id, comment_id):
         User.name,
         User.user
     ).join(
-        NotesComments.comment,
-        Comments.user
+        NotesComments,
+        Comments.comment_id == NotesComments.comment_id
+    ).join(
+        User,
+        User.id == Comments.comment_user_id
+    ).filter(
+        NotesComments.comment_note_id == note_id,
+        NotesComments.comment_id == comment_id
     ).first()
 
 

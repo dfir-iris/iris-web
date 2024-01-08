@@ -21,7 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from sqlalchemy import and_, desc, asc
 from sqlalchemy.orm import aliased
-from sqlalchemy.util import reduce
+from functools import reduce
 
 from app import db, app
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name

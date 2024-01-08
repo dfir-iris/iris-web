@@ -66,7 +66,7 @@ def ctx_get_user_cases(user_id, max_results: int = 100):
 
 def ctx_search_user_cases(search, user_id, max_results: int = 100):
     user_priority_sort = case(
-        [(Cases.owner_id == user_id, 0)],
+        (Cases.owner_id == user_id, 0),
         else_=1
     ).label("user_priority")
 

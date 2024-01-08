@@ -40,7 +40,7 @@ from sqlalchemy import func
 from typing import Any, Dict, List, Optional, Tuple, Union
 from werkzeug.datastructures import FileStorage
 
-from app import app
+from app import app, spec
 from app import db
 from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
@@ -211,6 +211,184 @@ class CaseNoteDirectorySchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class UserSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing User objects.
+
+    This schema defines the fields to include when serializing and deserializing User objects.
+    It includes fields for the user's name, login, email, password, admin status, CSRF token, ID, primary organization ID,
+    and service account status. It also includes methods for verifying the username, email, and password.
+
+    """
+    user_roles_str: List[str] = fields.List(fields.String, required=False)
+    user_name: str = auto_field('name', required=True, validate=Length(min=2))
+    user_login: str = auto_field('user', required=True, validate=Length(min=2))
+    user_email: str = auto_field('email', required=True, validate=Length(min=2))
+    user_password: Optional[str] = auto_field('password', required=False)
+    user_isadmin: bool = fields.Boolean(required=True)
+    csrf_token: Optional[str] = fields.String(required=False)
+    user_id: Optional[int] = fields.Integer(required=False)
+    user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
+    user_is_service_account: Optional[bool] = auto_field('is_service_account', required=False)
+
+    class Meta:
+        model = User
+        load_instance = True
+        include_fk = True
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
+
+    @pre_load()
+    def verify_username(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the username is not already taken.
+
+        This method verifies that the specified username is not already taken by another user. If the username is already
+        taken, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the username is already taken.
+
+        """
+        user = data.get('user_login')
+        user_id = data.get('user_id')
+
+        assert_type_mml(input_var=user_id,
+                        field_name="user_id",
+                        type=int,
+                        allow_none=True)
+
+        assert_type_mml(input_var=user,
+                        field_name="user_login",
+                        type=str,
+                        allow_none=True)
+
+        luser = User.query.filter(
+            User.user == user
+        ).all()
+        for usr in luser:
+            if usr.id != user_id:
+                raise marshmallow.exceptions.ValidationError('User name already taken',
+                                                             field_name="user_login")
+
+        return data
+
+    @pre_load()
+    def verify_email(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the email is not already taken.
+
+        This method verifies that the specified email is not already taken by another user. If the email is already
+        taken, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the email is already taken.
+
+        """
+        email = data.get('user_email')
+        user_id = data.get('user_id')
+
+        assert_type_mml(input_var=user_id,
+                        field_name="user_id",
+                        type=int,
+                        allow_none=True)
+
+        assert_type_mml(input_var=email,
+                        field_name="user_email",
+                        type=str,
+                        allow_none=True)
+
+        luser = User.query.filter(
+            User.email == email
+        ).all()
+        for usr in luser:
+            if usr.id != user_id:
+                raise marshmallow.exceptions.ValidationError('User email already taken',
+                                                             field_name="user_email")
+
+        return data
+
+    @pre_load()
+    def verify_password(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the password meets the server's password policy.
+
+        This method verifies that the specified password meets the server's password policy. If the password does not
+        meet the policy, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the password does not meet the server's password policy.
+
+        """
+        server_settings = ServerSettings.query.first()
+        password = data.get('user_password')
+
+        if (password == '' or password is None) and str_to_bool(data.get('user_is_service_account')) is True:
+            return data
+
+        if (password == '' or password is None) and data.get('user_id') != 0:
+            # Update
+            data.pop('user_password') if 'user_password' in data else None
+
+        else:
+            password_error = ""
+            if len(password) < server_settings.password_policy_min_length:
+                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters. "
+
+            if server_settings.password_policy_upper_case:
+                if not any(char.isupper() for char in password):
+                    password_error += "Password must contain uppercase char. "
+
+            if server_settings.password_policy_lower_case:
+                if not any(char.islower() for char in password):
+                    password_error += "Password must contain lowercase char. "
+
+            if server_settings.password_policy_digit:
+                if not any(char.isdigit() for char in password):
+                    password_error += "Password must contain digit. "
+
+            if len(server_settings.password_policy_special_chars) > 0:
+                if not any(char in server_settings.password_policy_special_chars for char in password):
+                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
+
+            if len(password_error) > 0:
+                raise marshmallow.exceptions.ValidationError(password_error,
+                                                             field_name="user_password")
+
+        return data
+
+
+class CommentSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing Comment objects.
+
+    This schema defines the fields to include when serializing and deserializing Comment objects.
+    It includes fields for the comment ID, the user who made the comment, the comment text, and the timestamp of the comment.
+
+    """
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+
+    class Meta:
+        model = Comments
+        load_instance = True
+        include_fk = True
+
+
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseNote objects.
 
@@ -283,6 +461,9 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
 
         return data
+
+
+spec.components.schema("CaseNote", schema=CaseNoteSchema)
 
 
 class CaseAddNoteSchema(ma.Schema):
@@ -797,184 +978,6 @@ class UserFullSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         exclude = ['password', 'ctx_case', 'ctx_human_case']
-
-
-class UserSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing User objects.
-
-    This schema defines the fields to include when serializing and deserializing User objects.
-    It includes fields for the user's name, login, email, password, admin status, CSRF token, ID, primary organization ID,
-    and service account status. It also includes methods for verifying the username, email, and password.
-
-    """
-    user_roles_str: List[str] = fields.List(fields.String, required=False)
-    user_name: str = auto_field('name', required=True, validate=Length(min=2))
-    user_login: str = auto_field('user', required=True, validate=Length(min=2))
-    user_email: str = auto_field('email', required=True, validate=Length(min=2))
-    user_password: Optional[str] = auto_field('password', required=False)
-    user_isadmin: bool = fields.Boolean(required=True)
-    csrf_token: Optional[str] = fields.String(required=False)
-    user_id: Optional[int] = fields.Integer(required=False)
-    user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
-    user_is_service_account: Optional[bool] = auto_field('is_service_account', required=False)
-
-    class Meta:
-        model = User
-        load_instance = True
-        include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
-
-    @pre_load()
-    def verify_username(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Verifies that the username is not already taken.
-
-        This method verifies that the specified username is not already taken by another user. If the username is already
-        taken, it raises a validation error.
-
-        Args:
-            data: The data to verify.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            The verified data.
-
-        Raises:
-            ValidationError: If the username is already taken.
-
-        """
-        user = data.get('user_login')
-        user_id = data.get('user_id')
-
-        assert_type_mml(input_var=user_id,
-                        field_name="user_id",
-                        type=int,
-                        allow_none=True)
-
-        assert_type_mml(input_var=user,
-                        field_name="user_login",
-                        type=str,
-                        allow_none=True)
-
-        luser = User.query.filter(
-            User.user == user
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User name already taken',
-                                                             field_name="user_login")
-
-        return data
-
-    @pre_load()
-    def verify_email(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Verifies that the email is not already taken.
-
-        This method verifies that the specified email is not already taken by another user. If the email is already
-        taken, it raises a validation error.
-
-        Args:
-            data: The data to verify.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            The verified data.
-
-        Raises:
-            ValidationError: If the email is already taken.
-
-        """
-        email = data.get('user_email')
-        user_id = data.get('user_id')
-
-        assert_type_mml(input_var=user_id,
-                        field_name="user_id",
-                        type=int,
-                        allow_none=True)
-
-        assert_type_mml(input_var=email,
-                        field_name="user_email",
-                        type=str,
-                        allow_none=True)
-
-        luser = User.query.filter(
-            User.email == email
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User email already taken',
-                                                             field_name="user_email")
-
-        return data
-
-    @pre_load()
-    def verify_password(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Verifies that the password meets the server's password policy.
-
-        This method verifies that the specified password meets the server's password policy. If the password does not
-        meet the policy, it raises a validation error.
-
-        Args:
-            data: The data to verify.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            The verified data.
-
-        Raises:
-            ValidationError: If the password does not meet the server's password policy.
-
-        """
-        server_settings = ServerSettings.query.first()
-        password = data.get('user_password')
-
-        if (password == '' or password is None) and str_to_bool(data.get('user_is_service_account')) is True:
-            return data
-
-        if (password == '' or password is None) and data.get('user_id') != 0:
-            # Update
-            data.pop('user_password') if 'user_password' in data else None
-
-        else:
-            password_error = ""
-            if len(password) < server_settings.password_policy_min_length:
-                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters. "
-
-            if server_settings.password_policy_upper_case:
-                if not any(char.isupper() for char in password):
-                    password_error += "Password must contain uppercase char. "
-
-            if server_settings.password_policy_lower_case:
-                if not any(char.islower() for char in password):
-                    password_error += "Password must contain lowercase char. "
-
-            if server_settings.password_policy_digit:
-                if not any(char.isdigit() for char in password):
-                    password_error += "Password must contain digit. "
-
-            if len(server_settings.password_policy_special_chars) > 0:
-                if not any(char in server_settings.password_policy_special_chars for char in password):
-                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
-
-            if len(password_error) > 0:
-                raise marshmallow.exceptions.ValidationError(password_error,
-                                                             field_name="user_password")
-
-        return data
-
-
-class CommentSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing Comment objects.
-
-    This schema defines the fields to include when serializing and deserializing Comment objects.
-    It includes fields for the comment ID, the user who made the comment, the comment text, and the timestamp of the comment.
-
-    """
-    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
-
-    class Meta:
-        model = Comments
-        load_instance = True
-        include_fk = True
 
 
 class EventSchema(ma.SQLAlchemyAutoSchema):

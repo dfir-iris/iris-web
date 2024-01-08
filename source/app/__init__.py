@@ -22,6 +22,8 @@ import json
 import logging as logger
 import os
 import urllib.parse
+from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
 from flask import session
 from flask_bcrypt import Bcrypt
@@ -64,6 +66,13 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 app = Flask(__name__)
+
+spec = APISpec(
+    title="My API",
+    version="1.0",
+    openapi_version="3.0.2",
+    plugins=[MarshmallowPlugin()],
+)
 
 
 def ac_current_user_has_permission(*permissions):

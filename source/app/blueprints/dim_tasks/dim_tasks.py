@@ -87,9 +87,6 @@ def list_dim_hook_options_ioc(hook_type, caseid):
     ).filter(
         IrisHook.hook_name == f"on_manual_trigger_{hook_type}",
         IrisModule.is_active == True
-    ).join(
-        IrisModuleHook.module,
-        IrisModuleHook.hook
     ).all()
 
     data = [options._asdict() for options in mods_options]

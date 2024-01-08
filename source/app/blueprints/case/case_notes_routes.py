@@ -21,7 +21,7 @@
 import marshmallow
 # IMPORTS ------------------------------------------------
 from datetime import datetime
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -31,30 +31,22 @@ from flask_socketio import emit, join_room
 from flask_wtf import FlaskForm
 from sqlalchemy import or_, and_
 
-from app import db, socket_io, app
+from app import db, socket_io, app, spec
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count, get_directory, \
     delete_directory
-from app.datamgmt.case.case_notes_db import add_note_group
 from app.datamgmt.case.case_notes_db import delete_note
 from app.datamgmt.case.case_notes_db import delete_note_comment
-from app.datamgmt.case.case_notes_db import delete_note_group
-from app.datamgmt.case.case_notes_db import find_pattern_in_notes
 from app.datamgmt.case.case_notes_db import get_case_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comments
-from app.datamgmt.case.case_notes_db import get_group_details
-from app.datamgmt.case.case_notes_db import get_groups_short
 from app.datamgmt.case.case_notes_db import get_note
-from app.datamgmt.case.case_notes_db import get_notes_from_group
-from app.datamgmt.case.case_notes_db import update_note_group
 from app.datamgmt.states import get_notes_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Notes
 from app.models.authorization import CaseAccessLevel
-from app.schema.marshables import CaseGroupNoteSchema
 from app.schema.marshables import CaseNoteDirectorySchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
@@ -62,6 +54,7 @@ from app.util import ac_api_case_requires, ac_socket_requires, endpoint_deprecat
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+
 
 case_notes_blueprint = Blueprint('case_notes',
                                  __name__,
@@ -90,6 +83,32 @@ def case_notes(caseid, url_redir):
 @case_notes_blueprint.route('/case/notes/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_note_detail(cur_id, caseid):
+    """
+    Returns a note and its comments
+
+    ---
+    tags:
+      - Case Notes
+
+    parameters:
+        - name: cur_id
+          in: path
+          description: Note ID
+          type: integer
+          required: true
+        - name: caseid
+          in: path
+          description: Case ID
+          type: integer
+          required: true
+    responses:
+        200:
+            description: Note and its comments
+            schema:
+                $ref: '#/definitions/CaseNoteSchema'
+        400:
+            description: Data error
+    """
     try:
         note = get_note(cur_id, caseid=caseid)
         if not note:
@@ -107,6 +126,11 @@ def case_note_detail(cur_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@app.route("/openapi.json")
+def create_swagger_spec():
+    return jsonify(spec.to_dict())
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['POST'])

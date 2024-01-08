@@ -109,9 +109,6 @@ def get_case_report_template():
         CaseTemplateReport.name,
         Languages.name,
         CaseTemplateReport.description
-    ).join(
-        CaseTemplateReport.language,
-        CaseTemplateReport.report_type
     ).filter(
         ReportType.name == "Investigation"
     ).all()
@@ -150,9 +147,6 @@ def get_activities_report_template():
         CaseTemplateReport.name,
         Languages.name,
         CaseTemplateReport.description
-    ).join(
-        CaseTemplateReport.language,
-        CaseTemplateReport.report_type
     ).filter(
         ReportType.name == "Activities"
     ).all()
