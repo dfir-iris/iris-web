@@ -43,6 +43,7 @@ from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
+from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list, get_case_state_by_name
@@ -447,6 +448,11 @@ def update_case_info(cur_id, caseid):
         previous_case_state = case_i.state_id
         case_previous_reviewer_id = case_i.reviewer_id
         closed_state_id = get_case_state_by_name('Closed').state_id
+
+        # If user tries to update the customer, check if the user has access to the new customer
+        if request_data.get('case_customer') and request_data.get('case_customer') != case_i.client_id:
+            if not user_has_client_access(current_user.id, request_data.get('case_customer')):
+                return response_error("Invalid customer ID. Permission denied.", status=403)
 
         request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')}"
         request_data['case_customer'] = case_i.client_id if request_data.get('case_customer') is None else request_data.get('case_customer')
