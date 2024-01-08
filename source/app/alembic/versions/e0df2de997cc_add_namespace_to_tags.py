@@ -27,25 +27,25 @@ def upgrade():
     # Parse all tags from iocs and register them into tags if they don't exists
     ioc_tags = op.get_bind().execute("SELECT ioc_tags FROM ioc;").fetchall()
     for entry in ioc_tags:
-        for ioc_tag in entry[0].split(',') if entry else []:
+        for ioc_tag in entry[0].split(',') if entry[0] else []:
             tags.add(ioc_tag.strip())
 
     # Parse all tags from assets and register them into tags if they don't exists
     asset_tags = op.get_bind().execute("SELECT asset_tags FROM case_assets;").fetchall()
     for entry in asset_tags:
-        for asset_tag in entry[0].split(',') if entry else []:
+        for asset_tag in entry[0].split(',') if entry[0] else []:
             tags.add(asset_tag.strip())
 
     # Parse all tags from case tasks and register them into tags if they don't exists
     task_tags = op.get_bind().execute("SELECT task_tags FROM case_tasks;").fetchall()
     for entry in task_tags:
-        for task_tag in entry[0].split(',') if entry else []:
+        for task_tag in entry[0].split(',') if entry[0] else []:
             tags.add(task_tag.strip())
 
     # Parse all tags from events and register them into tags if they don't exists
     event_tags = op.get_bind().execute("SELECT event_tags FROM cases_events;").fetchall()
     for entry in event_tags:
-        for event_tag in entry[0].split(',') if entry else []:
+        for event_tag in entry[0].split(',') if entry[0] else []:
             tags.add(event_tag.strip())
 
     # Add all tags to the database if they don't exist

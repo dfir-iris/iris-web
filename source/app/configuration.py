@@ -267,8 +267,8 @@ class Config:
     # Handled by bumpversion
     IRIS_VERSION = "v2.3.7"
 
-    API_MIN_VERSION = "2.0.0"
-    API_MAX_VERSION = "2.0.3"
+    API_MIN_VERSION = "2.0.4"
+    API_MAX_VERSION = "2.0.5"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.2.0'

@@ -455,7 +455,7 @@ def update_case_info(cur_id, caseid):
                 return response_error("Invalid customer ID. Permission denied.", status=403)
 
         request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')}"
-        request_data['case_customer'] = case_i.client_id if request_data.get('case_customer') is None else request_data.get('case_customer')
+        request_data['case_customer'] = case_i.client_id if not request_data.get('case_customer') else request_data.get('case_customer')
         request_data['reviewer_id'] = None if request_data.get('reviewer_id') == "" else request_data.get('reviewer_id')
 
         case = case_schema.load(request_data, instance=case_i, partial=True)

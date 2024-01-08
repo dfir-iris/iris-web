@@ -452,7 +452,7 @@ function add_folder(directory_id) {
 
 function refresh_folders() {
     load_directories().then(function() {
-        notify_success('Folders refreshed');
+        notify_success('Tree  refreshed');
         let note_id = $('#currentNoteIDLabel').data('note_id');
         $('.note').removeClass('note-highlight');
         $('#note-' + note_id).addClass('note-highlight');
@@ -742,7 +742,7 @@ function createDirectoryListItem(directory, directoryMap) {
             e.preventDefault();
             add_note(directory.id);
         }));
-        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Add folder').on('click', function(e) {
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Add directory').on('click', function(e) {
             e.preventDefault();
             add_folder(directory.id);
         }));
