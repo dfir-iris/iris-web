@@ -309,7 +309,7 @@ def get_case_iocs_comments_count(iocs_list):
 
 
 def get_case_ioc_comment(ioc_id, comment_id):
-    return IocComments.query.filter(
+    return (IocComments.query.filter(
         IocComments.comment_ioc_id == ioc_id,
         IocComments.comment_id == comment_id
     ).with_entities(
@@ -320,10 +320,8 @@ def get_case_ioc_comment(ioc_id, comment_id):
         Comments.comment_uuid,
         User.name,
         User.user
-    ).join(
-        IocComments.comment,
-        Comments.user
-    ).first()
+    ).join(IocComments.comment)
+            .join(Comments.user).first())
 
 
 def delete_ioc_comment(ioc_id, comment_id):

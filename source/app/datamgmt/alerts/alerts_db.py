@@ -178,7 +178,7 @@ def get_filtered_alerts(
             joinedload(Alert.iocs), joinedload(Alert.assets)
         ).order_by(
             order_func(Alert.alert_source_event_time)
-        ).paginate(page, per_page, error_out=False)
+        ).paginate(page=page, per_page=per_page, error_out=False)
 
     except Exception as e:
         app.app.logger.exception(f"Error getting alerts: {str(e)}")
