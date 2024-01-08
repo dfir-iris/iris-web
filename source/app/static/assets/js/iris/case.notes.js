@@ -29,24 +29,24 @@ function Collaborator( session_id, note_id ) {
 
     this.channel = "case-" + session_id + "-notes";
 
-    this.collaboration_socket.on( "change-note", function(data) {
-        if ( data.note_id !== note_id ) return ;
-        let delta = JSON.parse( data.delta ) ;
-        last_applied_change = delta ;
+    this.collaboration_socket.on("change-note", function (data) {
+        if (data.note_id !== note_id) return;
+        let delta = JSON.parse(data.delta);
+        last_applied_change = delta;
         $("#content_typing").text(data.last_change + " is typing..");
-        if ( delta !== null && delta !== undefined ) {
+        if (delta !== null && delta !== undefined) {
             note_editor.session.getDocument().applyDeltas([delta]);
         }
-    }.bind()) ;
+    }.bind());
 
-    this.collaboration_socket.on( "clear_buffer-note", function() {
-        if ( data.note_id !== note_id ) return ;
-        just_cleared_buffer = true ;
-        note_editor.setValue( "" ) ;
-    }.bind() ) ;
+    this.collaboration_socket.on("clear_buffer-note", function () {
+        if (data.note_id !== note_id) return;
+        just_cleared_buffer = true;
+        note_editor.setValue("");
+    }.bind());
 
-    this.collaboration_socket.on( "save-note", function(data) {
-        if ( data.note_id !== note_id ) return ;
+    this.collaboration_socket.on("save-note", function (data) {
+        if (data.note_id !== note_id) return;
         sync_note(note_id)
             .then(function () {
                 $("#content_last_saved_by").text("Last saved by " + data.last_saved);
@@ -57,56 +57,28 @@ function Collaborator( session_id, note_id ) {
 
     }.bind());
 
-    this.collaboration_socket.on('leave-note', function(data) {
+    this.collaboration_socket.on('leave-note', function (data) {
         ppl_viewing.delete(data.user);
         refresh_ppl_list(session_id, note_id);
     });
 
-    this.collaboration_socket.on('join-note', function(data) {
-        if ( data.note_id !== note_id ) return ;
+    this.collaboration_socket.on('join-note', function (data) {
+        if (data.note_id !== note_id) return;
         if ((data.user in ppl_viewing)) return;
         ppl_viewing.set(filterXSS(data.user), 1);
         refresh_ppl_list(session_id, note_id);
-        collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel, 'note_id': note_id });
+        collaborator.collaboration_socket.emit('ping-note', {'channel': collaborator.channel, 'note_id': note_id});
     });
 
-    this.collaboration_socket.on('ping-note', function(data) {
-        if ( data.note_id !== note_id ) return ;
-        collaborator.collaboration_socket.emit('pong-note', { 'channel': collaborator.channel, 'note_id': note_id });
+    this.collaboration_socket.on('ping-note', function (data) {
+        if (data.note_id !== note_id) return;
+        collaborator.collaboration_socket.emit('pong-note', {'channel': collaborator.channel, 'note_id': note_id});
     });
 
-    this.collaboration_socket.on('disconnect', function(data) {
+    this.collaboration_socket.on('disconnect', function (data) {
         ppl_viewing.delete(data.user);
         refresh_ppl_list(session_id, note_id);
     });
-
-}
-
-function set_notes_follow(data) {
-
-    if (data.note_id !== null) {
-        if (data.note_id in map_notes ) {
-            map_notes[data.note_id][data.user] = 2;
-        } else {
-            map_notes[data.note_id] = Object();
-            map_notes[data.note_id][data.user] = 2;
-        }
-    }
-
-    for (let notid in map_notes) {
-        for (let key in map_notes[notid]) {
-            if (key !== data.user && data.note_id !== note_id || data.note_id === null) {
-                map_notes[notid][key] -= 1;
-            }
-            if (map_notes[notid][key] < 0) {
-                delete map_notes[notid][key];
-            }
-        }
-        $(`#badge_${notid}`).empty();
-        for (let key in map_notes[notid]) {
-            $(`#badge_${notid}`).append(get_avatar_initials(filterXSS(key), false, undefined, true));
-        }
-    }
 
 }
 
@@ -693,9 +665,15 @@ function fetchNotes(searchInput) {
                 $('.note').hide();
 
                 data.data.forEach(note => {
-                    // Show the appropriate directory
-                    $('#directory-' + note.directory_id).show();
+                    // Show the note
                     $('#note-' + note.note_id).show();
+
+                    // Show all ancestor directories of the note
+                    let parentDirectory = $('#directory-' + note.directory_id);
+                    while (parentDirectory.length > 0) {
+                        parentDirectory.show();
+                        parentDirectory = parentDirectory.parents('.directory').first();
+                    }
                 });
             }
         });
@@ -888,10 +866,6 @@ $(document).ready(function(){
 
     collaborator_socket.on('ping-note', function(data) {
         last_ping = new Date();
-        if ( data.note_id === null || data.note_id !== note_id) {
-            set_notes_follow(data);
-            return;
-        }
 
         ppl_viewing.set(data.user, 1);
         for (let [key, value] of ppl_viewing) {
@@ -914,24 +888,22 @@ $(document).ready(function(){
     setInterval(auto_remove_typing, 1500);
 
     $(document).on('click', '#currentNoteTitle', function() {
-        var title = $(this).text();
+        let title = $(this).text();
         $(this).replaceWith('<input id="currentNoteTitleInput" type="text" value="' + title + '">');
         $('#currentNoteTitleInput').focus();
     });
 
     $(document).on('blur keyup', '#currentNoteTitleInput', function(e) {
         if (e.type === 'blur' || e.key === 'Enter') {
-            var title = $(this).val();
+            let title = $(this).val();
             $(this).replaceWith('<h4 class="page-title mb-0" id="currentNoteTitle">' + title + '</h4>');
             save_note();
         }
     });
 
-    $('#search-input').keypress(function(event) {
-        if (event.key === 'Enter') {
-            var searchInput = $(this).val();
-            fetchNotes(searchInput);
-        }
+    $('#search-input').keyup(function() {
+        let searchInput = $(this).val();
+        fetchNotes(searchInput);
     });
 
     $('#clear-search').on('click', function() {
