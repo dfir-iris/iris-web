@@ -10,7 +10,7 @@ Try to follow the repository convention :
 
 ## Code
 The code should be pretty easy to apprehend. It's not perfect but it will improve over time.   
-Some documentation about development is available [here](https://dfir-iris.github.io/development/).   
+Some documentation about development is available [here](https://docs.dfir-iris.org/development/).   
 Here are the main takes : 
 
 - **Routes** : these are the things that describes how URI should be handled. Routes are split by categories as in the UI menu. 
