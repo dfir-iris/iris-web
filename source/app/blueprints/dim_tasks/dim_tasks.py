@@ -80,14 +80,17 @@ def dim_index(caseid: int, url_redir):
 @dim_tasks_blueprint.route('/dim/hooks/options/<hook_type>/list', methods=['GET'])
 @ac_api_requires()
 def list_dim_hook_options_ioc(hook_type, caseid):
-    mods_options = IrisModuleHook.query.with_entities(
+    mods_options = (IrisModuleHook.query.with_entities(
         IrisModuleHook.manual_hook_ui_name,
         IrisHook.hook_name,
         IrisModule.module_name
     ).filter(
         IrisHook.hook_name == f"on_manual_trigger_{hook_type}",
         IrisModule.is_active == True
-    ).all()
+    )
+    .join(IrisHook, IrisHook.id == IrisModuleHook.hook_id)
+    .join(IrisModule, IrisModule.id == IrisModuleHook.module_id)
+    .all())
 
     data = [options._asdict() for options in mods_options]
 
