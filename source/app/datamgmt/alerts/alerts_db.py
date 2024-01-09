@@ -976,7 +976,8 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         matching_ioc_cases = (
             db.session.query(IocLink)
             .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name, Cases.close_date)
-            .join(IocLink.ioc, IocLink.case)
+            .join(IocLink.ioc)
+            .join(IocLink.case)
             .filter(
                 Ioc.ioc_value.in_(added_iocs),
                 close_condition
