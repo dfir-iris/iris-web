@@ -689,7 +689,9 @@ def ac_trace_user_effective_cases_access_2(user_id):
         and_(UserGroup.user_id == user_id,
              UserGroup.group_id == GroupCaseAccess.group_id)
     ).join(
-        GroupCaseAccess.case, GroupCaseAccess.group
+        GroupCaseAccess.case
+    ).join(
+        GroupCaseAccess.group
     ).all()
 
     ucas = UserCaseAccess.query.with_entities(
@@ -702,7 +704,9 @@ def ac_trace_user_effective_cases_access_2(user_id):
     ).filter(
         and_(UserCaseAccess.user_id == user_id)
     ).join(
-        UserCaseAccess.case, UserCaseAccess.user
+        UserCaseAccess.case
+    ).join(
+        UserCaseAccess.user
     ).all()
 
     effective_cases_access = {}
