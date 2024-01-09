@@ -59,6 +59,8 @@ cp .env.model .env
 
 # Build the dockers
 docker-compose build
+# Build dockers behind Proxy
+# docker compose build --build-arg HTTP_PROXY=http://proxyurl:proxyport --build-arg HTTPS_PROXY=http://proxyurl:proxyport
 
 # Run IRIS 
 docker-compose up
