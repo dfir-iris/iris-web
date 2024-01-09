@@ -39,7 +39,8 @@ def ctx_get_user_cases(user_id, max_results: int = 100):
         Cases.owner_id,
         UserCaseEffectiveAccess.access_level
     ).join(
-        UserCaseEffectiveAccess.case,
+        UserCaseEffectiveAccess.case
+    ).join(
         Cases.client
     ).order_by(
         asc(user_priority_sort),

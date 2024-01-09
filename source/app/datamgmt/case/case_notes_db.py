@@ -160,7 +160,8 @@ def get_notes_from_group(caseid, group_id):
         NotesGroupLink.case_id == caseid,
         NotesGroupLink.group_id == group_id,
     ).join(
-        NotesGroupLink.note,
+        NotesGroupLink.note
+    ).join(
         Notes.user
     ).order_by(
         Notes.note_id
@@ -182,8 +183,10 @@ def get_groups_detail(caseid):
     ).filter(
         NotesGroupLink.case_id == caseid,
     ).join(
-        NotesGroupLink.note,
-        NotesGroupLink.note_group,
+        NotesGroupLink.note
+    ).join(
+        NotesGroupLink.note_group
+    ).join(
         Notes.user
     ).group_by(
         NotesGroup.group_id,

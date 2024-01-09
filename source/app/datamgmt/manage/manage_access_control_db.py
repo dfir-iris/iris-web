@@ -36,7 +36,8 @@ def manage_ac_audit_users_db():
         Cases.name,
         Cases.case_id
     ).join(
-        UserCaseAccess.case,
+        UserCaseAccess.case
+    ).join(
         UserCaseAccess.user
     ).all()
 
@@ -48,7 +49,8 @@ def manage_ac_audit_users_db():
         Cases.name,
         Cases.case_id
     ).join(
-        GroupCaseAccess.case,
+        GroupCaseAccess.case
+    ).join(
         GroupCaseAccess.group
     ).all()
 

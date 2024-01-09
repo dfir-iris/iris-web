@@ -41,7 +41,9 @@ def get_case_summary(caseid):
         User.name.label('user'),
         Client.name.label('customer')
     ).join(
-        Cases.user, Cases.client
+        Cases.user
+    ).join(
+        Cases.client
     ).first()
 
     return case_summary

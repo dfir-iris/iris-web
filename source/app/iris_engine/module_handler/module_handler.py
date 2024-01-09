@@ -533,7 +533,9 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
         IrisModuleHook.run_asynchronously,
         IrisModule.module_name,
         IrisModuleHook.manual_hook_ui_name
-    ).filter(condition).all()
+    ).filter(condition).join(
+        IrisModule, IrisModuleHook.module_id == IrisModule.id
+    ).all()
 
     for module in modules:
         if module.run_asynchronously and "on_preload_" not in hook_name:

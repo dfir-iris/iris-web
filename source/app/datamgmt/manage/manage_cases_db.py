@@ -123,11 +123,14 @@ def list_cases_dict(user_id):
         CaseState.state_name,
         UserCaseEffectiveAccess.access_level
     ).join(
-        UserCaseEffectiveAccess.case,
-        Cases.client,
+        UserCaseEffectiveAccess.case
+    ).join(
+        Cases.client
+    ).join(
         Cases.user
     ).outerjoin(
-        Cases.classification,
+        Cases.classification
+    ).outerjoin(
         Cases.state
     ).join(
         user_alias, and_(Cases.user_id == user_alias.id)
@@ -275,7 +278,8 @@ def get_case_details_rt(case_id):
         ).join(
             Cases.client,
         ).outerjoin(
-            Cases.classification,
+            Cases.classification
+        ).outerjoin(
             Cases.state
         ).first()
 

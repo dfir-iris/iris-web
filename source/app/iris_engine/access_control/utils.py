@@ -42,7 +42,9 @@ def get_auto_follow_groups():
         Group.group_id,
         User.id
     ).join(
-        UserGroup.user, UserGroup.group
+        UserGroup.user
+    ).join(
+        UserGroup.group
     ).filter(
         Group.group_auto_follow == True
     ).all()

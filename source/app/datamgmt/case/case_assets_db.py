@@ -370,7 +370,8 @@ def get_case_asset_comment(asset_id, comment_id):
         User.name,
         User.user
     ).join(
-        AssetComments.comment,
+        AssetComments.comment
+    ).join(
         Comments.user
     ).first()
 

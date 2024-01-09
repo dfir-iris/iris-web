@@ -41,7 +41,8 @@ def get_overview_db(user_id, show_full):
     open_cases = Cases.query.filter(
        condition
     ).join(
-        Cases.owner,
+        Cases.owner
+    ).join(
         Cases.client
     ).all()
 

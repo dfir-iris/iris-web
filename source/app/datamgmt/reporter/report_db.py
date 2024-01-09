@@ -144,8 +144,10 @@ def export_caseinfo_json_extended(case_id):
 def export_case_evidences_json_extended(case_id):
     evidences = CaseReceivedFile.query.filter(
         CaseReceivedFile.case_id == case_id
-    ).join(CaseReceivedFile.case,
-           CaseReceivedFile.user).all()
+    ).join(
+        CaseReceivedFile.case
+    ).join(
+        CaseReceivedFile.user).all()
 
     return evidences
 
@@ -298,7 +300,11 @@ def export_case_tm_json(case_id):
             AssetsType.asset_name.label('type')
         ).filter(
             CaseEventsAssets.event_id == row.event_id
-        ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+        ).join(
+            CaseEventsAssets.asset
+        ).join(
+            CaseAssets.asset_type
+        ).all()
 
         alki = []
         for asset in as_list:
@@ -315,7 +321,11 @@ def export_case_tm_json(case_id):
         ).filter(
             CaseEventsIoc.event_id == row.event_id
         ).join(
-            CaseEventsIoc.ioc, Ioc.ioc_type, Ioc.tlp
+            CaseEventsIoc.ioc
+        ).join(
+            Ioc.ioc_type
+        ).join(
+            Ioc.tlp
         ).all()
 
         ras['iocs'] = [ioc._asdict() for ioc in iocs_list]
@@ -339,9 +349,12 @@ def export_case_iocs_json(case_id):
     ).filter(
         IocLink.case_id == case_id
     ).join(
-        IocLink.ioc,
-        Ioc.ioc_type,
-        Ioc.tlp,
+        IocLink.ioc
+    ).join(
+        Ioc.ioc_type
+    ).join(
+        Ioc.tlp
+    ).join(
         Ioc.user
     ).order_by(
         IocType.type_name
@@ -428,7 +441,9 @@ def export_case_assets_json(case_id):
     ).filter(
         CaseAssets.case_id == case_id
     ).join(
-        CaseAssets.asset_type, CaseAssets.analysis_status
+        CaseAssets.asset_type
+    ).join(
+        CaseAssets.analysis_status
     ).order_by(desc(CaseAssets.asset_compromise_status_id)).all()
 
     for row in res:
@@ -442,7 +457,8 @@ def export_case_assets_json(case_id):
         ).filter(
             IocAssetLink.asset_id == row['asset_id']
         ).join(
-            IocAssetLink.ioc,
+            IocAssetLink.ioc
+        ).join(
             Ioc.ioc_type
         ).all()
 

@@ -58,8 +58,10 @@ def get_case_events_assets_graph(caseid):
         CaseEventsAssets.case_id == caseid,
         CasesEvent.event_in_graph == True
     )).join(
-        CaseEventsAssets.event).join(
-        CaseEventsAssets.asset).join(
+        CaseEventsAssets.event
+    ).join(
+        CaseEventsAssets.asset
+    ).join(
         CaseAssets.asset_type
     ).all()
 
@@ -80,8 +82,10 @@ def get_case_events_ioc_graph(caseid):
         CaseEventsIoc.case_id == caseid,
         CasesEvent.event_in_graph == True
     )).join(
-        CaseEventsIoc.event).join(
-        CaseEventsIoc.ioc).join(
+        CaseEventsIoc.event
+    ).join(
+        CaseEventsIoc.ioc
+    ).join(
         Ioc.ioc_type
     ).all()
 

@@ -143,7 +143,8 @@ def get_case_evidence_comment(evidence_id, comment_id):
         User.name,
         User.user
     ).join(
-        EvidencesComments.comment,
+        EvidencesComments.comment
+    ).join(
         Comments.user
     ).first()
 
