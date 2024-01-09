@@ -36,7 +36,6 @@ from app.datamgmt.manage.manage_access_control_db import get_user_clients_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id, \
     case_template_post_modifier
-from app.datamgmt.manage.manage_users_db import get_user_clients
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
     alert_iocs_association, Ioc, IocLink

@@ -31,7 +31,7 @@ from flask_socketio import emit, join_room
 from flask_wtf import FlaskForm
 from sqlalchemy import or_, and_
 
-from app import db, socket_io, app, spec
+from app import db, socket_io, app
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
@@ -126,11 +126,6 @@ def case_note_detail(cur_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
-
-
-@app.route("/openapi.json")
-def create_swagger_spec():
-    return jsonify(spec.to_dict())
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['POST'])

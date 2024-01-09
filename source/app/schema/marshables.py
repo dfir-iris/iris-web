@@ -27,7 +27,6 @@ import re
 import shutil
 import string
 import tempfile
-import uuid
 from flask_login import current_user
 from marshmallow import ValidationError
 from marshmallow import fields
@@ -40,7 +39,7 @@ from sqlalchemy import func
 from typing import Any, Dict, List, Optional, Tuple, Union
 from werkzeug.datastructures import FileStorage
 
-from app import app, spec
+from app import app
 from app import db
 from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
@@ -461,9 +460,6 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
 
         return data
-
-
-spec.components.schema("CaseNote", schema=CaseNoteSchema)
 
 
 class CaseAddNoteSchema(ma.Schema):
