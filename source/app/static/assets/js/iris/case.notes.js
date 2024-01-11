@@ -3,18 +3,13 @@ let note_editor;
 let session_id = null ;
 let collaborator = null ;
 let collaborator_socket = null ;
-let buffer_dumped = false ;
 let last_applied_change = null ;
 let just_cleared_buffer = null ;
-let from_sync = null;
 let is_typing = "";
 let ppl_viewing = new Map();
 let timer_socket = 0;
 let note_id = null;
-let map_notes = Object();
 let last_ping = 0;
-let forceModalClose = false;
-let wasMiniNote = false;
 let cid = null;
 let previousNoteTitle = null;
 
@@ -457,6 +452,15 @@ function refresh_folders() {
         $('.note').removeClass('note-highlight');
         $('#note-' + note_id).addClass('note-highlight');
     });
+}
+
+function toggleDirectories() {
+    // Select all directory elements
+    let directories = $('.directory-container');
+
+    // Toggle the visibility of the directories
+    directories.toggle();
+
 }
 
 function rename_folder_api(directory_id, newName) {
