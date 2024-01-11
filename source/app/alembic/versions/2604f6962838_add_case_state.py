@@ -7,6 +7,8 @@ Create Date: 2023-05-05 11:16:19.997383
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
+
 from app.models.cases import CaseState
 
 
@@ -42,7 +44,7 @@ def upgrade():
         )
 
         # Set the default value for the state_id column
-        op.execute("UPDATE cases SET state_id = 1")
+        op.execute(text("UPDATE cases SET state_id = 1"))
 
         # Create a foreign key constraint between cases.state_id and case_state.state_id
         op.create_foreign_key(

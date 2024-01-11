@@ -7,6 +7,7 @@ Create Date: 2022-01-18 07:51:43.714021
 """
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import text
 
 from app.alembic.alembic_utils import _table_has_column
 
@@ -47,9 +48,9 @@ def upgrade():
         # Migrate existing IOCs
         for update in to_update:
             conn = op.get_bind()
-            res = conn.execute(f"select id from case_tasks where task_status = '{update}';")
+            res = conn.execute(text(f"select id from case_tasks where task_status = '{update}';"))
             results = res.fetchall()
-            res = conn.execute(f"select id from task_status where status_name = '{update}';")
+            res = conn.execute(text(f"select id from task_status where status_name = '{update}';"))
             e_info = res.fetchall()
 
             if e_info:
@@ -93,9 +94,9 @@ def upgrade():
         # Migrate existing IOCs
         for update in to_update:
             conn = op.get_bind()
-            res = conn.execute(f"select id from global_tasks where task_status = '{update}';")
+            res = conn.execute(text(f"select id from global_tasks where task_status = '{update}';"))
             results = res.fetchall()
-            res = conn.execute(f"select id from task_status where status_name = '{update}';")
+            res = conn.execute(text(f"select id from task_status where status_name = '{update}';"))
             e_info = res.fetchall()
 
             if e_info:

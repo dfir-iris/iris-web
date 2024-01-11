@@ -21,7 +21,7 @@ def upgrade():
                     existing_type=sa.INTEGER(),
                     type_=sa.BigInteger(),
                     existing_nullable=False)
-    pass
+    return
 
 
 def downgrade():

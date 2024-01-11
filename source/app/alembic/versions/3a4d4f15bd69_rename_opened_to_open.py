@@ -7,7 +7,7 @@ Create Date: 2023-10-05 11:36:45.246779
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = '3a4d4f15bd69'
@@ -17,12 +17,12 @@ depends_on = None
 
 
 def upgrade():
-    op.execute(
+    op.execute(text(
         "UPDATE case_state SET state_name='Open' WHERE state_name='Opened'"
-    )
+    ))
 
 
 def downgrade():
-    op.execute(
+    op.execute(text(
         "UPDATE case_state SET state_name='Opened' WHERE state_name='Open'"
-    )
+    ))
