@@ -7,7 +7,7 @@ Create Date: 2023-12-30 17:24:36.430292
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import text
+from sqlalchemy import text, Table, MetaData
 
 from app.alembic.alembic_utils import _table_has_column
 
@@ -20,6 +20,15 @@ depends_on = None
 
 def upgrade():
     if not _table_has_column('notes', 'directory_id'):
+        metadata = MetaData()
+
+        notes_group = Table('notes_group', metadata, autoload_with=op.get_bind())
+
+        result = op.get_bind().execute(sa.select(sa.func.max(notes_group.c.group_id)))
+        max_group_id = result.scalar() or 0
+
+        # Set the starting value for the primary key in the note_directory table
+        op.execute(text(f"SELECT setval('note_directory_id_seq', {max_group_id + 1})"))
 
         op.execute(text("""
             INSERT INTO note_directory (id, name, parent_id, case_id)
@@ -37,6 +46,11 @@ def upgrade():
                  WHERE notes_group_link.note_id = notes.note_id
              )
          """))
+
+        # Commit the transaction
+        op.execute(text("COMMIT"))
+
+    return
 
 
 def downgrade():
