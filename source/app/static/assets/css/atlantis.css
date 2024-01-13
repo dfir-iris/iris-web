@@ -1513,7 +1513,7 @@ body {
 }
 
 .page-with-aside .page-aside .aside-nav .nav>li>a {
-    color: #83848a;
+    color: #313131;
     display: flex;
     align-items: center;
     font-size: 12px;
@@ -1527,7 +1527,7 @@ body {
 .page-with-aside .page-aside .aside-nav .nav>li>a i {
     font-size: 20px;
     margin-right: 15px;
-    color: #a1a2a6;
+    color: #313131;
 }
 
 .page-with-aside .page-aside .aside-nav .label {
@@ -15955,3 +15955,27 @@ td.dt-nowrap { white-space: nowrap }
     margin-left: 10px;
 }
 
+#noteContentScroll {
+    overflow-y: auto;
+    height: 100vh; /* Adjust this value as needed */
+}
+
+.page-aside {
+    overflow: auto;
+}
+
+.notes-number {
+      position: relative;
+      text-align: center;
+      border-radius: 10px;
+      min-width: 17px;
+      height: 17px;
+      font-size: 8px;
+      color: #5e5e5e;
+      background-color: #dcdcdc;
+      padding: 2px 4px;
+      line-height: 17px;
+      top: -14px;
+      right: 0px;
+      letter-spacing: -1px;
+}
