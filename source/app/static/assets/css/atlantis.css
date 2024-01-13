@@ -15353,7 +15353,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_delete {
     position: fixed; /* Fixed/sticky position */
     bottom: 500px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15361,7 +15361,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_a {
     position: fixed; /* Fixed/sticky position */
     bottom: 420px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15369,7 +15369,7 @@ table.dataTable.stripe tbody > tr.selected {
 .div_btn_over_page_a {
     position: fixed; /* Fixed/sticky position */
     bottom: 420px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
