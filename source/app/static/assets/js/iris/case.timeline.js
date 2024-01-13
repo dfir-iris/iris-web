@@ -290,7 +290,14 @@ function toggle_selector() {
                 $(this).addClass("timeline-selected");
             }
         });
-    
+
+        $(".timeline li .timeline-panel-t").on('click', function(){
+            if($(this).hasClass("timeline-selected")) {
+                $(this).removeClass("timeline-selected");
+            } else {
+                $(this).addClass("timeline-selected");
+            }
+        });
 
     }
 
@@ -792,14 +799,14 @@ function build_timeline(data) {
         //entry = match_replace_ioc(entry, reap);
         // display the time info as a small box
         $('#timeline_list').append(tmb_d);
+        $('#timeline_list').append(entry);
+
 
         if (tree) {
             $('#timeline_list').addClass('timeline-t');
         } else {
             $('#timeline_list').removeClass('timeline-t');
         }
-
-        $('#timeline_list').append(entry);
 
     }
     //match_replace_ioc(data.data.iocs, "timeline_list");
