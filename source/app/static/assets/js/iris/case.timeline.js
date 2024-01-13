@@ -241,6 +241,34 @@ function toggle_compact_view() {
     }
 }
 
+
+function is_timeline_tree_view() {
+    var x = localStorage.getItem('iris-tm-tree');
+    if (typeof x !== 'undefined') {
+        if (x === 'true') {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+function toggle_tree_view() {
+    var x = localStorage.getItem('iris-tm-tree');
+    if (typeof x === 'undefined') {
+        localStorage.setItem('iris-tm-tree', 'true');
+        location.reload();
+    } else {
+        if (x === 'true') {
+            localStorage.setItem('iris-tm-tree', 'false');
+            location.reload();
+        } else {
+             localStorage.setItem('iris-tm-tree', 'true');
+            location.reload();
+        }
+    }
+}
+
 function toggle_selector() {
     //activating selector toggle
     if(selector_active == false) {
@@ -403,12 +431,13 @@ function toggleSeeMore(element) {
 }
 
 function build_timeline(data) {
-    var compact = is_timeline_compact_view();
+    let compact = is_timeline_compact_view();
+    let tree = is_timeline_tree_view();
     var is_i = false;
     current_timeline = data.data.tim;
-    tmb = [];
+    let tmb = [];
 
-    reid = 0;
+    let reid = 0;
 
     $('#time_timeline_select').empty();
 
@@ -451,14 +480,13 @@ function build_timeline(data) {
           enableLiveAutocompletion: true,
     });
 
-    var tesk = false;
-    // Prepare replacement mod
-    var reap = [];
-    ioc_list = data.data.iocs;
+    let tesk = false;
+    let reap = [];
+    let ioc_list = data.data.iocs;
     for (ioc in ioc_list) {
 
-        var capture_start = "(^|;|:|||>|<|[|]|(|)|\s|\>)(";
-        var capture_end = ")(;|:|||>|<|[|]|(|)|\s|>|$|<br/>)";
+        let capture_start = "(^|;|:|||>|<|[|]|(|)|\s|\>)(";
+        let capture_end = ")(;|:|||>|<|[|]|(|)|\s|>|$|<br/>)";
         // When an IOC contains another IOC in its description, we want to avoid to replace that particular pattern
         var avoid_inception_start = "(?!<span[^>]*?>)" + capture_start;
         var avoid_inception_end = "(?![^<]*?<\/span>)" + capture_end;
@@ -466,21 +494,21 @@ function build_timeline(data) {
                + escapeRegExp(sanitizeHTML(ioc_list[ioc]['ioc_value']))
                + avoid_inception_end
                ,"g");
-        replacement = `$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-trigger="hover" data-content="${sanitizeHTML(ioc_list[ioc]['ioc_description'])}" title="IOC">${sanitizeHTML(ioc_list[ioc]['ioc_value'])}</span>`;
+        let replacement = `$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-trigger="hover" data-content="${sanitizeHTML(ioc_list[ioc]['ioc_description'])}" title="IOC">${sanitizeHTML(ioc_list[ioc]['ioc_value'])}</span>`;
         reap.push([re, replacement]);
     }
-    idx = 0;
+    let idx = 0;
 
-    converter = get_showdown_convert();
+    let converter = get_showdown_convert();
 
-    for (index in data.data.tim) {
-        evt = data.data.tim[index];
-        dta =  evt.event_date.split('T');
-        tags = '';
-        cats = '';
-        tmb_d = '';
-        style = '';
-        asset = '';
+    for (let index in data.data.tim) {
+        let evt = data.data.tim[index];
+        let dta =  evt.event_date.split('T');
+        let tags = '';
+        let cats = '';
+        let tmb_d = '';
+        let style = '';
+        let asset = '';
 
         if (evt.event_id in data.data.comments_map) {
             nb_comments = data.data.comments_map[evt.event_id].length;
@@ -520,19 +548,30 @@ function build_timeline(data) {
                 }
         }
 
+        let entry = '';
+        let inverted = 'timeline';
+        let timeline_style = tree ? '-t' : '';
+
         /* Do we have a border color to set ? */
-        style = "";
         if (tesk) {
-            style += "timeline-odd";
+            style += "timeline-odd"+ timeline_style;
             tesk = false;
         } else {
-            style += "timeline-even";
+            style += "timeline-even" + timeline_style;
             tesk = true;
         }
 
-        style_s = "style='";
+        let style_s = "style='";
         if (evt.event_color != null) {
                 style_s += "border-left: 2px groove " + sanitizeHTML(evt.event_color);
+        }
+
+        if (!tree) {
+            inverted += '-inverted';
+        } else {
+            if (tesk) {
+                inverted += '-inverted';
+            }
         }
 
         style_s += ";'";
@@ -560,7 +599,7 @@ function build_timeline(data) {
             }
         }
 
-        ori_date = '<span class="ml-3"></span>';
+        let ori_date = '<span class="ml-3"></span>';
         if (evt.event_date_wtz != evt.event_date) {
             ori_date += `<i class="fas fa-info-circle mr-1" title="Locale date time ${evt.event_date_wtz}${evt.event_tz}"></i>`
         }
@@ -574,22 +613,22 @@ function build_timeline(data) {
         }
         
 
-        day = dta[0];
-        mtop_day = '';
+        let day = dta[0];
+
+        let hour = dta[1].split('.')[0];
+
+        let mtop_day = '';
         if (!tmb.includes(day)) {
             tmb.push(day);
-            if (!compact) {
-                tmb_d = `<div class="time-badge" id="time_${idx}"><small class="text-muted">${day}</small><br/></div>`;
-            } else {
-                tmb_d = `<div class="time-badge-compact" id="time_${idx}"><small class="text-muted">${day}</small><br/></div>`;
-            }
+            tmb_d = `<li class="time-badge${timeline_style} badge badge-dark" id="time_${idx}"><small class="">${day}</small><br/></li>`;
+
             idx += 1;
             mtop_day = 'mt-4';
         }
 
-        title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
-        raw_content = do_md_filter_xss(evt.event_content); // Raw markdown content
-        formatted_content = converter.makeHtml(raw_content); // Convert markdown to HTML
+        let title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
+        let raw_content = do_md_filter_xss(evt.event_content); // Raw markdown content
+        let formatted_content = converter.makeHtml(raw_content); // Convert markdown to HTML
 
         const wordLimit = 30; // Define your word limit
 
@@ -632,9 +671,9 @@ function build_timeline(data) {
 
 
 
-        shared_link = buildShareLink(evt.event_id);
+        let shared_link = buildShareLink(evt.event_id);
 
-        flag = '';
+        let flag = '';
         if (evt.event_is_flagged) {
             flag = `<i class="fas fa-flag text-warning" title="Flagged"></i>`;
         } else {
@@ -642,9 +681,8 @@ function build_timeline(data) {
         }
 
         if (compact) {
-            entry = `<li class="timeline-inverted ${mtop_day}" title="Event ID #${evt.event_id}">
-                ${tmb_d}
-                    <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
+            entry = `<li class="${inverted} ${mtop_day}" title="Event ID #${evt.event_id}">
+                    <div class="timeline-panel${timeline_style} ${style}" ${style_s} id="event_${evt.event_id}" >
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
                                 ${cats}
@@ -678,7 +716,7 @@ function build_timeline(data) {
                             </div>
                             <div class="collapsed" id="dropa_${evt.event_id}" data-toggle="collapse" data-target="#drop_${evt.event_id}" aria-expanded="false" aria-controls="drop_${evt.event_id}" role="button" style="cursor: pointer;">
                                 <span class="text-muted text-sm float-left mb--2"><small>${render_date(evt.event_date, true)}</small></span>
-                                <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
+                                <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${hour} - ${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
@@ -694,9 +732,8 @@ function build_timeline(data) {
                     </div>
                 </li>`
         } else {
-            entry = `<li class="timeline-inverted" title="Event ID #${evt.event_id}">
-                    ${tmb_d}
-                    <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
+            entry = `<li class=${inverted} title="Event ID #${evt.event_id}">
+                    <div class="timeline-panel${timeline_style} ${style}" ${style_s} id="event_${evt.event_id}" >
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
 
@@ -729,7 +766,7 @@ function build_timeline(data) {
                                 </div>
                             </div>
                             <div class="row mb-2">
-                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
+                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${hour} - ${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
@@ -753,8 +790,16 @@ function build_timeline(data) {
         is_i = false;
 
         //entry = match_replace_ioc(entry, reap);
-        $('#timeline_list').append(entry);
+        // display the time info as a small box
+        $('#timeline_list').append(tmb_d);
 
+        if (tree) {
+            $('#timeline_list').addClass('timeline-t');
+        } else {
+            $('#timeline_list').removeClass('timeline-t');
+        }
+
+        $('#timeline_list').append(entry);
 
     }
     //match_replace_ioc(data.data.iocs, "timeline_list");

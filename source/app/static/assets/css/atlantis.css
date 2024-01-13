@@ -1493,7 +1493,6 @@ body {
 .page-with-aside .page-aside .aside-nav .nav>li {
     padding: 8px 22px;
     margin-bottom: 5px;
-    border-radius: 0.6rem;
 }
 
 .page-with-aside .page-aside .aside-nav .nav>li:hover,
@@ -1512,7 +1511,7 @@ body {
 }
 
 .page-with-aside .page-aside .aside-nav .nav>li>a {
-    color: #313131;
+    color: #83848a;
     display: flex;
     align-items: center;
     font-size: 12px;
@@ -1526,7 +1525,7 @@ body {
 .page-with-aside .page-aside .aside-nav .nav>li>a i {
     font-size: 20px;
     margin-right: 15px;
-    color: #313131;
+    color: #a1a2a6;
 }
 
 .page-with-aside .page-aside .aside-nav .label {
@@ -1541,13 +1540,7 @@ body {
 }
 
 .page-with-aside .page-content {
-    width: 100%;
-}
-
-.note-highlight {
-    margin-top: 4px;
-    background-color: #dbdbdb;
-    box-shadow: 1px 1px 5px 0px rgba(69, 65, 78, 0.10);
+    width: calc(100% - 280px);
 }
 
 .footer {
@@ -6732,7 +6725,7 @@ body .badge-danger {
 
 .dropdown-menu {
     border: 0px;
-    border-radius: 0.5rem !important;
+    border-radius: 0.5rem;
     box-shadow: 0 1px 11px rgba(0, 0, 0, 0.15) !important;
     padding-bottom: 8px;
     margin-top: 3px;
@@ -8276,7 +8269,7 @@ body .badge-danger {
 
 .timeline {
     list-style: none;
-    padding: 20px 0 20px;
+    padding: 0 0;
     position: relative;
 }
 
@@ -8341,17 +8334,18 @@ body .badge-danger {
     background: rgba(177, 177, 177, 0.29);
 }
 
-.timeline>li.timeline-inverted+li:not(.timeline-inverted) {
-    margin-top: -30px;
-}
+/*.timeline>li.timeline-inverted+li:not(.timeline-inverted) {*/
+/*    margin-top: -30px;*/
+/*}*/
 
-.timeline>li:not(.timeline-inverted) {
-    padding-right: 90px;
-}
+/*.timeline>li:not(.timeline-inverted) {*/
+/*    padding-right: 90px;*/
+/*}.timeline>li:not(.timeline-inverted) {*/
+/*    padding-right: 90px;*/
+/*}*/
 
-.timeline>li:not(.timeline-inverted)+li.timeline-inverted {
-    margin-top: 30px;
-}
+
+
 
 .timeline>li>.timeline-badge {
     color: #ffffff;
@@ -8397,6 +8391,59 @@ body .badge-danger {
     margin-left: -25px;
     background-color: #ffffff00;
     z-index: 100;
+}
+
+
+
+.timeline>.time-badge-t {
+    margin-bottom: 10px;
+    margin-top: 30px;
+    left: 50%;
+    position: relative;
+    transform: translateX(-50%);
+}
+
+/*.timeline>li>.time-badge-compact-t {*/
+/*    color: #181818;*/
+/*    width: 5rem;*/
+/*    height: 2rem;*/
+/*    font-size: 1.8em;*/
+/*    text-align: center;*/
+/*    position: absolute;*/
+/*    left: 48%;*/
+/*    background-color: #ffffff00;*/
+/*    z-index: 100;*/
+/*}*/
+
+.timeline>li>.timeline-even-t {
+    transform: translateX(95%);
+    left: 0;
+}
+
+.timeline>li>.timeline-odd-t {
+    transform: translateX(5%);
+    left: 0;
+}
+
+.timeline>li>.timeline-panel-t {
+    width: 50%;
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 18px;
+    margin: 0 0 20px;
+    position: relative;
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);
+}
+
+.timeline-t:before {
+    top: 0;
+    bottom: 0;
+    position: absolute;
+    content: " ";
+    width: 3px;
+    background-color: #3f3e3e;
+    left: 50%;
+    display: inline-block;
 }
 
 .timeline-badge.default {
@@ -15391,6 +15438,14 @@ table.dataTable.stripe tbody > tr.selected {
     cursor: pointer; /* Add a mouse pointer on hover */
 }
 
+.btn_over_page_j {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 10px; /* Place the button at the bottom of the page */
+    right: 20px; /* Place the button 30px from the right */
+    z-index: 9999; /* Make sure it does not overlap */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
 .badge-light {
     color: #212529;
     background-color: #d7d7d7;
@@ -15904,27 +15959,3 @@ td.dt-nowrap { white-space: nowrap }
     margin-left: 10px;
 }
 
-#noteContentScroll {
-    overflow-y: auto;
-    height: 100vh; /* Adjust this value as needed */
-}
-
-.page-aside {
-    overflow: auto;
-}
-
-.notes-number {
-      position: relative;
-      text-align: center;
-      border-radius: 10px;
-      min-width: 17px;
-      height: 17px;
-      font-size: 8px;
-      color: #5e5e5e;
-      background-color: #dcdcdc;
-      padding: 2px 4px;
-      line-height: 17px;
-      top: -14px;
-      right: 0px;
-      letter-spacing: -1px;
-}

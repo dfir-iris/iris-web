@@ -223,7 +223,8 @@ def module_list_hooks_view():
         IrisHook.hook_description,
         IrisModuleHook.is_manual_hook
     ).join(
-        IrisModuleHook.module,
+        IrisModuleHook.module
+    ).join(
         IrisModuleHook.hook
     ).all()
 

@@ -58,6 +58,9 @@
                                   <span class="menu-title"><i class="fas fa-ellipsis-v"></i></span>
                               </button>
                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                  <a class="dropdown-item" href="javascript:void(0);" onclick="toggle_tree_view();"> Toggle tree view</a>
+                                  <a class="dropdown-item" href="javascript:void(0);" onclick="toggle_compact_view();"> Toggle compact view</a>
+                                  <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}"> Visualize</a>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=asset"> Visualize by asset</a>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=category">Visualize by category</a>
@@ -107,7 +110,6 @@
                 <button class="btn btn-round btn-light btn_over_page_f" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_g" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
                 <button class="btn btn-round btn-light btn_over_page_h" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_i" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>
             </div>
         
         </div>
