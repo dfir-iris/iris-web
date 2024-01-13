@@ -568,9 +568,9 @@ function build_timeline(data) {
             tesk = true;
         }
 
-        let style_s = "style='";
+        let style_s = "";
         if (evt.event_color != null) {
-                style_s += "border-left: 2px groove " + sanitizeHTML(evt.event_color);
+                style_s = `style='border-left: 2px groove ${sanitizeHTML(evt.event_color)};'`;
         }
 
         if (!tree) {
@@ -581,7 +581,6 @@ function build_timeline(data) {
             }
         }
 
-        style_s += ";'";
 
         /* For every assets linked to the event, build a link tag */
         if (evt.assets != null) {
@@ -823,7 +822,7 @@ function build_timeline(data) {
         var current_url = window.location.href;
         var id = current_url.substr(current_url.indexOf("#") + 1);
         if ($('#event_'+id).offset() != undefined) {
-            $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
+            $('.content').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
             $('#event_'+id).addClass('fade-it');
         }
     }
