@@ -723,7 +723,7 @@ function build_timeline(data) {
                             </div>
                             <div class="collapsed" id="dropa_${evt.event_id}" data-toggle="collapse" data-target="#drop_${evt.event_id}" aria-expanded="false" aria-controls="drop_${evt.event_id}" role="button" style="cursor: pointer;">
                                 <span class="text-muted text-sm float-left mb--2"><small>${render_date(evt.event_date, true)}</small></span>
-                                <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${hour} - ${title_parsed}</a>
+                                <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
