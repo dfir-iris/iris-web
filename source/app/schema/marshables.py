@@ -17,30 +17,26 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from typing import Any, Dict, List, Optional, Tuple, Union
-import uuid
-
 import datetime
-import logging
+import dateutil.parser
+import marshmallow
 import os
+import pyminizip
 import random
 import re
 import shutil
 import string
 import tempfile
-from pathlib import Path
-
-import dateutil.parser
-import marshmallow
-import pyminizip
 from flask_login import current_user
-from marshmallow import fields, Schema, validate, ValidationError
+from marshmallow import ValidationError
+from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
-from marshmallow import ValidationError
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import auto_field
+from pathlib import Path
 from sqlalchemy import func
+from typing import Any, Dict, List, Optional, Tuple, Union
 from werkzeug.datastructures import FileStorage
 
 from app import app
@@ -48,9 +44,10 @@ from app import db
 from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
+from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
-    ReviewStatus
+    ReviewStatus, EvidenceTypes, CaseStatus, NoteDirectory
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -65,6 +62,7 @@ from app.models import EventCategory
 from app.models import GlobalTasks
 from app.models import Ioc
 from app.models import IocType
+from app.models import IrisModule
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import ServerSettings
@@ -74,8 +72,7 @@ from app.models.alerts import Alert, Severity, AlertStatus, AlertResolutionStatu
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.models.cases import CaseState
-from app.models import IrisModule
+from app.models.cases import CaseState, CaseProtagonist
 from app.util import file_sha256sum, str_to_bool, assert_type_mml
 from app.util import stream_sha256sum
 
@@ -149,6 +146,248 @@ def store_icon(file):
     return filename, 'Saved'
 
 
+class CaseNoteDirectorySchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing CaseNoteDirectory objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseNoteDirectory objects.
+    It includes fields for the CSRF token, directory name, directory description, and directory ID.
+    It also includes a method for verifying the directory name.
+
+    """
+    csrf_token: str = fields.String(required=False)
+
+    class Meta:
+        model = NoteDirectory
+        load_instance = True
+        include_fk = True
+
+    def verify_parent_id(self, parent_id, case_id, current_id=None):
+
+        if current_id is not None and int(parent_id) == int(current_id):
+            raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
+                                                         field_name="parent_id")
+        directory = NoteDirectory.query.filter(
+            NoteDirectory.id == parent_id,
+            NoteDirectory.case_id == case_id
+        ).first()
+        if directory:
+            if current_id is not None and directory.parent_id == int(current_id):
+                raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
+                                                             field_name="parent_id")
+            return parent_id
+
+        raise marshmallow.exceptions.ValidationError("Invalid parent id for the directory",
+                                                     field_name="parent_id")
+
+    @pre_load
+    def verify_directory_name(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the directory name is unique.
+
+        This method verifies that the directory name specified in the data is unique. If the directory name is not
+        unique, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the directory name is not unique.
+
+        """
+        assert_type_mml(input_var=data.get('name'),
+                        field_name="name",
+                        type=str,
+                        allow_none=True)
+
+        assert_type_mml(input_var=data.get('parent_id'),
+                        field_name="parent_id",
+                        type=int,
+                        allow_none=True)
+
+        return data
+
+
+class UserSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing User objects.
+
+    This schema defines the fields to include when serializing and deserializing User objects.
+    It includes fields for the user's name, login, email, password, admin status, CSRF token, ID, primary organization ID,
+    and service account status. It also includes methods for verifying the username, email, and password.
+
+    """
+    user_roles_str: List[str] = fields.List(fields.String, required=False)
+    user_name: str = auto_field('name', required=True, validate=Length(min=2))
+    user_login: str = auto_field('user', required=True, validate=Length(min=2))
+    user_email: str = auto_field('email', required=True, validate=Length(min=2))
+    user_password: Optional[str] = auto_field('password', required=False)
+    user_isadmin: bool = fields.Boolean(required=True)
+    csrf_token: Optional[str] = fields.String(required=False)
+    user_id: Optional[int] = fields.Integer(required=False)
+    user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
+    user_is_service_account: Optional[bool] = auto_field('is_service_account', required=False)
+
+    class Meta:
+        model = User
+        load_instance = True
+        include_fk = True
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
+
+    @pre_load()
+    def verify_username(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the username is not already taken.
+
+        This method verifies that the specified username is not already taken by another user. If the username is already
+        taken, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the username is already taken.
+
+        """
+        user = data.get('user_login')
+        user_id = data.get('user_id')
+
+        assert_type_mml(input_var=user_id,
+                        field_name="user_id",
+                        type=int,
+                        allow_none=True)
+
+        assert_type_mml(input_var=user,
+                        field_name="user_login",
+                        type=str,
+                        allow_none=True)
+
+        luser = User.query.filter(
+            User.user == user
+        ).all()
+        for usr in luser:
+            if usr.id != user_id:
+                raise marshmallow.exceptions.ValidationError('User name already taken',
+                                                             field_name="user_login")
+
+        return data
+
+    @pre_load()
+    def verify_email(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the email is not already taken.
+
+        This method verifies that the specified email is not already taken by another user. If the email is already
+        taken, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the email is already taken.
+
+        """
+        email = data.get('user_email')
+        user_id = data.get('user_id')
+
+        assert_type_mml(input_var=user_id,
+                        field_name="user_id",
+                        type=int,
+                        allow_none=True)
+
+        assert_type_mml(input_var=email,
+                        field_name="user_email",
+                        type=str,
+                        allow_none=True)
+
+        luser = User.query.filter(
+            User.email == email
+        ).all()
+        for usr in luser:
+            if usr.id != user_id:
+                raise marshmallow.exceptions.ValidationError('User email already taken',
+                                                             field_name="user_email")
+
+        return data
+
+    @pre_load()
+    def verify_password(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the password meets the server's password policy.
+
+        This method verifies that the specified password meets the server's password policy. If the password does not
+        meet the policy, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the password does not meet the server's password policy.
+
+        """
+        server_settings = ServerSettings.query.first()
+        password = data.get('user_password')
+
+        if (password == '' or password is None) and str_to_bool(data.get('user_is_service_account')) is True:
+            return data
+
+        if (password == '' or password is None) and data.get('user_id') != 0:
+            # Update
+            data.pop('user_password') if 'user_password' in data else None
+
+        else:
+            password_error = ""
+            if len(password) < server_settings.password_policy_min_length:
+                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters. "
+
+            if server_settings.password_policy_upper_case:
+                if not any(char.isupper() for char in password):
+                    password_error += "Password must contain uppercase char. "
+
+            if server_settings.password_policy_lower_case:
+                if not any(char.islower() for char in password):
+                    password_error += "Password must contain lowercase char. "
+
+            if server_settings.password_policy_digit:
+                if not any(char.isdigit() for char in password):
+                    password_error += "Password must contain digit. "
+
+            if len(server_settings.password_policy_special_chars) > 0:
+                if not any(char in server_settings.password_policy_special_chars for char in password):
+                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
+
+            if len(password_error) > 0:
+                raise marshmallow.exceptions.ValidationError(password_error,
+                                                             field_name="user_password")
+
+        return data
+
+
+class CommentSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing Comment objects.
+
+    This schema defines the fields to include when serializing and deserializing Comment objects.
+    It includes fields for the comment ID, the user who made the comment, the comment text, and the timestamp of the comment.
+
+    """
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+
+    class Meta:
+        model = Comments
+        load_instance = True
+        include_fk = True
+
+
 class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseNote objects.
 
@@ -157,34 +396,18 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
     """
     csrf_token: str = fields.String(required=False)
-    group_id: int = fields.Integer()
-    group_uuid: uuid.UUID = fields.UUID()
-    group_title: str = fields.String()
+    comments = fields.Nested('CommentSchema', many=True)
+    directory = fields.Nested('CaseNoteDirectorySchema', many=False)
 
     class Meta:
         model = Notes
         load_instance = True
+        include_fk = True
 
+    def verify_directory_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the directory ID is valid.
 
-class CaseAddNoteSchema(ma.Schema):
-    """Schema for serializing and deserializing CaseNote objects.
-
-    This schema defines the fields to include when serializing and deserializing CaseNote objects.
-    It includes fields for the note ID, note title, note content, group ID, CSRF token, and custom attributes.
-    It also includes a method for verifying the group ID and a post-load method for merging custom attributes.
-
-    """
-    note_id: int = fields.Integer(required=False)
-    note_title: str = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
-    note_content: str = fields.String(required=False)
-    group_id: int = fields.Integer(required=True)
-    csrf_token: str = fields.String(required=False)
-    custom_attributes: Dict[str, Any] = fields.Dict(required=False)
-
-    def verify_group_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Verifies that the group ID is valid.
-
-        This method verifies that the group ID specified in the data is valid for the case ID specified in kwargs.
+        This method verifies that the directory ID specified in the data is valid for the case ID specified in kwargs.
         If the group ID is valid, it returns the data. Otherwise, it raises a validation error.
 
         Args:
@@ -195,22 +418,22 @@ class CaseAddNoteSchema(ma.Schema):
             The verified data.
 
         Raises:
-            ValidationError: If the group ID is invalid.
+            ValidationError: If the directory ID is invalid.
 
         """
-        assert_type_mml(input_var=data.get('group_id'),
-                        field_name="group_id",
+        assert_type_mml(input_var=data.get('directory_id'),
+                        field_name="directory_id",
                         type=int)
 
-        group = NotesGroup.query.filter(
-            NotesGroup.group_id == data.get('group_id'),
-            NotesGroup.group_case_id == kwargs.get('caseid')
+        directory = NoteDirectory.query.filter(
+            NoteDirectory.id == data.get('directory_id'),
+            NoteDirectory.case_id == kwargs.get('caseid')
         ).first()
-        if group:
+        if directory:
             return data
 
-        raise marshmallow.exceptions.ValidationError("Invalid group id for note",
-                                                     field_name="group_id")
+        raise marshmallow.exceptions.ValidationError("Invalid directory id for the case",
+                                                     field_name="directory_id")
 
     @post_load
     def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
@@ -229,7 +452,79 @@ class CaseAddNoteSchema(ma.Schema):
         """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
+            assert_type_mml(input_var=data.get('note_id'),
+                            field_name="note_id",
+                            type=int,
+                            allow_none=True)
 
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('note_id'), 'note')
+
+        return data
+
+
+class CaseAddNoteSchema(ma.Schema):
+    """Schema for serializing and deserializing CaseNote objects.
+
+    This schema defines the fields to include when serializing and deserializing CaseNote objects.
+    It includes fields for the note ID, note title, note content, group ID, CSRF token, and custom attributes.
+    It also includes a method for verifying the group ID and a post-load method for merging custom attributes.
+
+    """
+    note_id: int = fields.Integer(required=False)
+    note_title: str = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
+    note_content: str = fields.String(required=False)
+    csrf_token: str = fields.String(required=False)
+    custom_attributes: Dict[str, Any] = fields.Dict(required=False)
+
+
+    def verify_directory_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the directory ID is valid.
+
+        This method verifies that the directory ID specified in the data is valid for the case ID specified in kwargs.
+        If the group ID is valid, it returns the data. Otherwise, it raises a validation error.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments, including the case ID.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the directory ID is invalid.
+
+        """
+        assert_type_mml(input_var=data.get('directory_id'),
+                        field_name="directory_id",
+                        type=int)
+
+        directory = NoteDirectory.query.filter(
+            NoteDirectory.id == data.get('directory_id'),
+            NoteDirectory.case_id == kwargs.get('caseid')
+        ).first()
+        if directory:
+            return data
+
+        raise marshmallow.exceptions.ValidationError("Invalid directory id for the case",
+                                                     field_name="directory_id")
+
+    @post_load
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes.
+
+        This method merges any custom attributes specified in the data with the existing custom attributes for the note.
+        If there are no custom attributes specified, it returns the data unchanged.
+
+        Args:
+            data: The data to merge.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The merged data.
+
+        """
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
             assert_type_mml(input_var=data.get('note_id'),
                             field_name="note_id",
                             type=int,
@@ -290,11 +585,10 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the asset name is not unique.
 
         """
-        
+
         assert_type_mml(input_var=data.asset_name,
                         field_name="asset_name",
                         type=str)
-        
 
         assert_type_mml(input_var=data.asset_id,
                         field_name="asset_id",
@@ -400,6 +694,13 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
             if not status:
                 raise marshmallow.exceptions.ValidationError("Invalid analysis status ID",
                                                              field_name="analysis_status_id")
+
+        if data.get('asset_tags'):
+            for tag in data.get('asset_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="asset_tags")
+                add_db_tag(tag.strip())
 
         return data
 
@@ -601,16 +902,16 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
             TLP ID are invalid.
 
         """
-        assert_type_mml(input_var=data.get('ioc_type_id'), 
-                        field_name="ioc_type_id", 
+        assert_type_mml(input_var=data.get('ioc_type_id'),
+                        field_name="ioc_type_id",
                         type=int)
 
         ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
         if not ioc_type:
             raise marshmallow.exceptions.ValidationError("Invalid ioc type ID", field_name="ioc_type_id")
 
-        assert_type_mml(input_var=data.get('ioc_tlp_id'), 
-                        field_name="ioc_tlp_id", 
+        assert_type_mml(input_var=data.get('ioc_tlp_id'),
+                        field_name="ioc_tlp_id",
                         type=int)
 
         tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
@@ -622,6 +923,13 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
                 error = f"The input doesn\'t match the expected format " \
                         f"(expected: {ioc_type.type_validation_expect or ioc_type.type_validation_regex})"
                 raise marshmallow.exceptions.ValidationError(error, field_name="ioc_ioc_value")
+
+        if data.get('ioc_tags'):
+            for tag in data.get('ioc_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="ioc_tags")
+                add_db_tag(tag.strip())
 
         return data
 
@@ -642,10 +950,9 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
-
-            assert_type_mml(input_var=data.get('ioc_id'), 
-                            field_name="ioc_id", 
-                            type=int, 
+            assert_type_mml(input_var=data.get('ioc_id'),
+                            field_name="ioc_id",
+                            type=int,
                             allow_none=True)
 
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
@@ -653,183 +960,20 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
-class UserSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing User objects.
+class UserFullSchema(ma.SQLAlchemyAutoSchema):
+    """
+    Schema for serializing and deserializing User objects.
 
     This schema defines the fields to include when serializing and deserializing User objects.
     It includes fields for the user's name, login, email, password, admin status, CSRF token, ID, primary organization ID,
     and service account status. It also includes methods for verifying the username, email, and password.
-
     """
-    user_roles_str: List[str] = fields.List(fields.String, required=False)
-    user_name: str = auto_field('name', required=True, validate=Length(min=2))
-    user_login: str = auto_field('user', required=True, validate=Length(min=2))
-    user_email: str = auto_field('email', required=True, validate=Length(min=2))
-    user_password: Optional[str] = auto_field('password', required=False)
-    user_isadmin: bool = fields.Boolean(required=True)
-    csrf_token: Optional[str] = fields.String(required=False)
-    user_id: Optional[int] = fields.Integer(required=False)
-    user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
-    user_is_service_account: Optional[bool] = auto_field('is_service_account', required=False)
 
     class Meta:
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
-
-    @pre_load()
-    def verify_username(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Verifies that the username is not already taken.
-
-        This method verifies that the specified username is not already taken by another user. If the username is already
-        taken, it raises a validation error.
-
-        Args:
-            data: The data to verify.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            The verified data.
-
-        Raises:
-            ValidationError: If the username is already taken.
-
-        """
-        user = data.get('user_login')
-        user_id = data.get('user_id')
-
-        assert_type_mml(input_var=user_id,
-                        field_name="user_id", 
-                        type=int,
-                        allow_none=True)
-        
-        assert_type_mml(input_var=user, 
-                        field_name="user_login", 
-                        type=str,
-                        allow_none=True)
-
-        luser = User.query.filter(
-            User.user == user
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User name already taken',
-                                                             field_name="user_login")
-
-        return data
-
-    @pre_load()
-    def verify_email(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Verifies that the email is not already taken.
-
-        This method verifies that the specified email is not already taken by another user. If the email is already
-        taken, it raises a validation error.
-
-        Args:
-            data: The data to verify.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            The verified data.
-
-        Raises:
-            ValidationError: If the email is already taken.
-
-        """
-        email = data.get('user_email')
-        user_id = data.get('user_id')
-
-        assert_type_mml(input_var=user_id,
-                        field_name="user_id",
-                        type=int,
-                        allow_none=True)
-
-        assert_type_mml(input_var=email,
-                        field_name="user_email",
-                        type=str,
-                        allow_none=True)
-
-        luser = User.query.filter(
-            User.email == email
-        ).all()
-        for usr in luser:
-            if usr.id != user_id:
-                raise marshmallow.exceptions.ValidationError('User email already taken',
-                                                             field_name="user_email")
-
-        return data
-
-    @pre_load()
-    def verify_password(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Verifies that the password meets the server's password policy.
-
-        This method verifies that the specified password meets the server's password policy. If the password does not
-        meet the policy, it raises a validation error.
-
-        Args:
-            data: The data to verify.
-            kwargs: Additional keyword arguments.
-
-        Returns:
-            The verified data.
-
-        Raises:
-            ValidationError: If the password does not meet the server's password policy.
-
-        """
-        server_settings = ServerSettings.query.first()
-        password = data.get('user_password')
-
-        if (password == '' or password is None) and str_to_bool(data.get('user_is_service_account')) is True:
-            return data
-
-        if (password == '' or password is None) and data.get('user_id') != 0:
-            # Update
-            data.pop('user_password') if 'user_password' in data else None
-
-        else:
-            password_error = ""
-            if len(password) < server_settings.password_policy_min_length:
-                password_error += f"Password must be longer than {server_settings.password_policy_min_length} characters. "
-
-            if server_settings.password_policy_upper_case:
-                if not any(char.isupper() for char in password):
-                    password_error += "Password must contain uppercase char. "
-
-            if server_settings.password_policy_lower_case:
-                if not any(char.islower() for char in password):
-                    password_error += "Password must contain lowercase char. "
-
-            if server_settings.password_policy_digit:
-                if not any(char.isdigit() for char in password):
-                    password_error += "Password must contain digit. "
-
-            if len(server_settings.password_policy_special_chars) > 0:
-                if not any(char in server_settings.password_policy_special_chars for char in password):
-                    password_error += f"Password must contain a special char [{server_settings.password_policy_special_chars}]. "
-
-            if len(password_error) > 0:
-                raise marshmallow.exceptions.ValidationError(password_error,
-                                                             field_name="user_password")
-
-        return data
-
-
-class CommentSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing Comment objects.
-
-    This schema defines the fields to include when serializing and deserializing Comment objects.
-    It includes fields for the comment ID, the user who made the comment, the comment text, and the timestamp of the comment.
-
-    """
-    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
-
-
-    class Meta:
-        model = Comments
-        load_instance = True
-        include_fk = True
+        exclude = ['password', 'ctx_case', 'ctx_human_case']
 
 
 class EventSchema(ma.SQLAlchemyAutoSchema):
@@ -910,38 +1054,38 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             if field not in data:
                 raise marshmallow.exceptions.ValidationError(f"Missing field {field}", field_name=field)
 
-        assert_type_mml(input_var=int(data.get('event_category_id')), 
-                        field_name='event_category_id', 
+        assert_type_mml(input_var=int(data.get('event_category_id')),
+                        field_name='event_category_id',
                         type=int)
 
         event_cat = EventCategory.query.filter(EventCategory.id == int(data.get('event_category_id'))).count()
         if not event_cat:
             raise marshmallow.exceptions.ValidationError("Invalid event category ID", field_name="event_category_id")
-        
-        assert_type_mml(input_var=data.get('event_assets'), 
-                        field_name='event_assets', 
+
+        assert_type_mml(input_var=data.get('event_assets'),
+                        field_name='event_assets',
                         type=list)
 
         for asset in data.get('event_assets'):
-            
-            assert_type_mml(input_var=int(asset), 
-                            field_name='event_assets', 
+
+            assert_type_mml(input_var=int(asset),
+                            field_name='event_assets',
                             type=int)
 
             ast = CaseAssets.query.filter(CaseAssets.asset_id == asset).count()
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid assets ID", field_name="event_assets")
 
-        assert_type_mml(input_var=data.get('event_iocs'), 
-                        field_name='event_iocs', 
+        assert_type_mml(input_var=data.get('event_iocs'),
+                        field_name='event_iocs',
                         type=list)
-        
+
         for ioc in data.get('event_iocs'):
 
             assert_type_mml(input_var=int(ioc),
                             field_name='event_iocs',
                             type=int)
-            
+
             ast = Ioc.query.filter(Ioc.ioc_id == ioc).count()
             if not ast:
                 raise marshmallow.exceptions.ValidationError("Invalid IOC ID", field_name="event_assets")
@@ -949,6 +1093,13 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         if data.get('event_color') and data.get('event_color') not in ['#fff', '#1572E899', '#6861CE99', '#48ABF799',
                                                                        '#31CE3699', '#F2596199', '#FFAD4699']:
             data['event_color'] = ''
+
+        if data.get('event_tags'):
+            for tag in data.get('event_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="event_tags")
+                add_db_tag(tag.strip())
 
         return data
 
@@ -969,12 +1120,11 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
         if new_attr is not None:
-
             assert_type_mml(input_var=data.get('event_id'),
                             field_name='event_id',
                             type=int,
                             allow_none=True)
-            
+
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('event_id'), 'event')
 
         return data
@@ -1011,7 +1161,8 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
 
-    def ds_store_file_b64(self, filename: str, file_content: bytes, dsp: DataStorePath, cid: int) -> Tuple[DataStoreFile, bool]:
+    def ds_store_file_b64(self, filename: str, file_content: bytes, dsp: DataStorePath, cid: int) -> Tuple[
+        DataStoreFile, bool]:
         """Stores a file in the data store.
 
         This method stores a file in the data store. If the file already exists in the data store, it returns the
@@ -1074,7 +1225,8 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
         return dsf, exists
 
-    def ds_store_file(self, file_storage: FileStorage, location: Path, is_ioc: bool, password: Optional[str]) -> Tuple[str, int, str]:
+    def ds_store_file(self, file_storage: FileStorage, location: Path, is_ioc: bool, password: Optional[str]) -> Tuple[
+        str, int, str]:
         """Stores a file in the data store.
 
         This method stores a file in the data store. If the file is an IOC and no password is provided, it uses a default
@@ -1159,7 +1311,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
         setattr(self, 'file_local_path', str(location))
 
         return file_path, file_size, file_hash
-    
+
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing ServerSettings objects.
@@ -1241,6 +1393,49 @@ class CaseClassificationSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class EvidenceTypeSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing EvidenceType objects.
+
+    This schema defines the fields to include when serializing and deserializing EvidenceType objects.
+    It includes fields for the evidence type name, expanded name, and description.
+
+    """
+    name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    description: str = auto_field('description', required=True, allow_none=True)
+
+    class Meta:
+        model = EvidenceTypes
+        load_instance = True
+
+    @post_load
+    def verify_unique(self, data, **kwargs):
+        """Verifies that the evidence type name is unique.
+
+        This method verifies that the evidence type name is unique. If the name is not unique, it raises a validation error.
+
+        Args:
+            data: The data to load.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the evidence type name is not unique.
+
+        """
+        client = EvidenceTypes.query.filter(
+            func.lower(EvidenceTypes.name) == func.lower(data.name),
+            EvidenceTypes.id != data.id
+        ).first()
+        if client:
+            raise marshmallow.exceptions.ValidationError(
+                "Evidence type already exists",
+                field_name="name"
+            )
+
+        return data
+
+
 class CaseSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing Case objects.
 
@@ -1305,10 +1500,10 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
 
         """
         assert_type_mml(input_var=data.get('case_customer'),
-                        field_name='case_customer', 
+                        field_name='case_customer',
                         type=int,
                         allow_none=True)
-        
+
         client = Client.query.filter(Client.client_id == data.get('case_customer')).first()
         if client:
             return data
@@ -1333,13 +1528,13 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
 
-        assert_type_mml(input_var=new_attr, 
-                        field_name='custom_attributes', 
+        assert_type_mml(input_var=new_attr,
+                        field_name='custom_attributes',
                         type=dict,
                         allow_none=True)
-        
-        assert_type_mml(input_var=data.get('case_id'), 
-                        field_name='case_id', 
+
+        assert_type_mml(input_var=data.get('case_id'),
+                        field_name='case_id',
                         type=int,
                         allow_none=True)
 
@@ -1402,17 +1597,17 @@ class GlobalTasksSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the assignee ID or task status ID is not valid.
 
         """
-        assert_type_mml(input_var=data.get('task_assignee_id'), 
-                        field_name='task_assignee_id', 
+        assert_type_mml(input_var=data.get('task_assignee_id'),
+                        field_name='task_assignee_id',
                         type=int)
-        
+
         user = User.query.filter(User.id == data.get('task_assignee_id')).count()
         if not user:
             raise marshmallow.exceptions.ValidationError("Invalid user id for assignee",
                                                          field_name="task_assignees_id")
 
-        assert_type_mml(input_var=data.get('task_status_id'), 
-                        field_name='task_status_id', 
+        assert_type_mml(input_var=data.get('task_status_id'),
+                        field_name='task_status_id',
                         type=int)
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
@@ -1457,10 +1652,10 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the customer name is not unique.
 
         """
-        assert_type_mml(input_var=data.name, 
-                        field_name='customer_name', 
+        assert_type_mml(input_var=data.name,
+                        field_name='customer_name',
                         type=str)
-        
+
         assert_type_mml(input_var=data.client_id,
                         field_name='customer_id',
                         type=int,
@@ -1495,13 +1690,12 @@ class CustomerSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
 
-        assert_type_mml(input_var=new_attr, 
-                        field_name='custom_attributes', 
+        assert_type_mml(input_var=new_attr,
+                        field_name='custom_attributes',
                         type=dict,
                         allow_none=True)
 
         if new_attr is not None:
-
             assert_type_mml(input_var=data.get('client_id'),
                             field_name='customer_id',
                             type=int,
@@ -1562,14 +1756,21 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the task status ID is not valid.
 
         """
-        assert_type_mml(input_var=data.get('task_status_id'), 
-                        field_name='task_status_id', 
+        assert_type_mml(input_var=data.get('task_status_id'),
+                        field_name='task_status_id',
                         type=int)
 
         status = TaskStatus.query.filter(TaskStatus.id == data.get('task_status_id')).count()
         if not status:
             raise marshmallow.exceptions.ValidationError("Invalid task status ID",
                                                          field_name="task_status_id")
+
+        if data.get('task_tags'):
+            for tag in data.get('task_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="task_tags")
+                add_db_tag(tag.strip())
 
         return data
 
@@ -1590,13 +1791,13 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
 
-        assert_type_mml(input_var=new_attr, 
-                        field_name='custom_attributes', 
+        assert_type_mml(input_var=new_attr,
+                        field_name='custom_attributes',
                         type=dict,
                         allow_none=True)
-        
-        assert_type_mml(input_var=data.get('id'), 
-                        field_name='task_id', 
+
+        assert_type_mml(input_var=data.get('id'),
+                        field_name='task_id',
                         type=int,
                         allow_none=True)
 
@@ -1615,10 +1816,14 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     """
     filename: str = auto_field('filename', required=True, validate=Length(min=2), allow_none=False)
     csrf_token: Optional[str] = fields.String(required=False)
+    type = ma.Nested(EvidenceTypeSchema)
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
 
     class Meta:
         model = CaseReceivedFile
         load_instance = True
+        include_relationships = True
+        include_fk = True
 
     @post_load
     def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
@@ -1637,13 +1842,12 @@ class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
         """
         new_attr = data.get('custom_attributes')
 
-        assert_type_mml(input_var=new_attr, 
-                        field_name='custom_attributes', 
+        assert_type_mml(input_var=new_attr,
+                        field_name='custom_attributes',
                         type=dict,
                         allow_none=True)
 
         if new_attr is not None:
-
             assert_type_mml(input_var=data.get('id'),
                             field_name='evidence_id',
                             type=int,
@@ -1663,7 +1867,8 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
     """
     group_name: str = auto_field('group_name', required=True, validate=Length(min=2), allow_none=False)
     group_description: str = auto_field('group_description', required=True, validate=Length(min=2))
-    group_auto_follow_access_level: Optional[bool] = auto_field('group_auto_follow_access_level', required=False, default=False)
+    group_auto_follow_access_level: Optional[bool] = auto_field('group_auto_follow_access_level', required=False,
+                                                                default=False)
     group_permissions: int = fields.Integer(required=False)
     group_members: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
     group_permissions_list: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
@@ -1692,8 +1897,8 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the group name is not unique.
 
         """
-        assert_type_mml(input_var=data.get('group_name'), 
-                        field_name='group_name', 
+        assert_type_mml(input_var=data.get('group_name'),
+                        field_name='group_name',
                         type=str)
 
         groups = Group.query.filter(
@@ -1769,8 +1974,8 @@ class AuthorizationOrganisationSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the organization name is not unique.
 
         """
-        assert_type_mml(input_var=data.get('org_name'), 
-                        field_name='org_name', 
+        assert_type_mml(input_var=data.get('org_name'),
+                        field_name='org_name',
                         type=str)
 
         organisations = Organisation.query.filter(
@@ -1806,7 +2011,6 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
                    'id', 'name', 'email', 'user', 'uuid']
-
 
 
 def validate_ioc_type(type_id: int) -> None:
@@ -1964,6 +2168,20 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
 
+    @pre_load
+    def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """
+        Verify that the alert tags are valid and save them if they don't exist
+        """
+        if data.get('alert_tags'):
+            for tag in data.get('alert_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="alert_tags")
+                add_db_tag(tag.strip())
+
+        return data
+
 
 class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing SavedFilter objects.
@@ -1971,6 +2189,7 @@ class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
     This schema defines the fields to include when serializing and deserializing SavedFilter objects.
 
     """
+
     class Meta:
         model = SavedFilter
         load_instance = True
@@ -1983,13 +2202,14 @@ class IrisModuleSchema(ma.SQLAlchemyAutoSchema):
         model = IrisModule
         load_instance = True
 
-        
+
 class ModuleHooksSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing ModuleHooks objects.
 
     This schema defines the fields to include when serializing and deserializing ModuleHooks objects.
 
     """
+
     class Meta:
         model = IrisModuleHook
         load_instance = True
@@ -1998,7 +2218,6 @@ class ModuleHooksSchema(ma.SQLAlchemyAutoSchema):
 
 
 class TagsSchema(ma.SQLAlchemyAutoSchema):
-
     class Meta:
         model = Tags
         load_instance = True
@@ -2007,11 +2226,21 @@ class TagsSchema(ma.SQLAlchemyAutoSchema):
 
 
 class ReviewStatusSchema(ma.SQLAlchemyAutoSchema):
-        class Meta:
-            model = ReviewStatus
-            load_instance = True
-            include_fk = True
-            include_relationships = True
+    class Meta:
+        model = ReviewStatus
+        load_instance = True
+        include_fk = True
+        include_relationships = True
+
+
+class CaseProtagonistSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing CaseProtagonist objects."""
+
+    class Meta:
+        model = CaseProtagonist
+        load_instance = True
+        include_fk = True
+        include_relationships = True
 
 
 class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
@@ -2020,10 +2249,32 @@ class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     classification = ma.Nested(CaseClassificationSchema)
     state = ma.Nested(CaseStateSchema)
-    tags = ma.Nested(TagsSchema, many=True)
+    tags = ma.Nested(TagsSchema, many=True, only=['tag_title', 'id'])
     user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     reviewer = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     review_status = ma.Nested(ReviewStatusSchema)
+    severity = ma.Nested(SeveritySchema)
+
+    def get_status_name(self, obj):
+        return CaseStatus(obj.status_id).name
+
+    def get_protagonists(self, obj):
+        cp = CaseProtagonist.query.with_entities(
+            CaseProtagonist.role,
+            CaseProtagonist.name,
+            CaseProtagonist.contact,
+            User.name.label('user_name'),
+            User.user.label('user_login')
+        ).filter(
+            CaseProtagonist.case_id == obj.case_id
+        ).outerjoin(
+            CaseProtagonist.user
+        ).all()
+        cp = CaseProtagonistSchema(many=True).dump(cp)
+        return cp
+
+    status_name = ma.Method("get_status_name")
+    protagonists = ma.Method("get_protagonists")
 
     class Meta:
         model = Cases

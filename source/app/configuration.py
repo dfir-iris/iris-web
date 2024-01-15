@@ -265,10 +265,13 @@ class CeleryConfig:
 # --------- APP ---------
 class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.3.3"
+    IRIS_VERSION = "v2.3.7" # DO NOT EDIT THIS LINE MANUALLY
 
-    API_MIN_VERSION = "2.0.0"
-    API_MAX_VERSION = "2.0.3"
+    if os.environ.get('IRIS_DEMO_VERSION') is not None and os.environ.get('IRIS_DEMO_VERSION') != 'None':
+        IRIS_VERSION = os.environ.get('IRIS_DEMO_VERSION')
+
+    API_MIN_VERSION = "2.0.4"
+    API_MAX_VERSION = "2.0.5"
 
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.2.0'

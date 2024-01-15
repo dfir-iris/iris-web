@@ -15,6 +15,10 @@ body {
   background: #004eb3;
 }
 
+.text-link {
+    color: #66aaff;
+}
+
 .btn-success {
   background: #004eb3 !important;
   border-color: #004eb3 !important;
@@ -220,6 +224,25 @@ body .input-group-text {
     color: #fff;
 }
 
+.page-with-aside .page-content {
+    background: #171d2b;
+    color: #fff;
+}
+
+.bg-grey1 {
+    background: #1f283e !important;
+    color: #fff;
+}
+
+.page-with-aside .page-aside .aside-nav .nav > li > a,
+.page-with-aside .page-aside .aside-nav .nav > li > a i {
+    color: #b9babf;
+}
+
+.note-highlight {
+    background: #363f53 !important;
+}
+
 body .input-solid {
     background: #363b4c !important;
     border-color: #363b4c !important;
@@ -290,16 +313,6 @@ body .board {
 .list-group-item-action {
   color: #f0f0f0;
   text-align: inherit;
-}
-
-body .kanban-board {
-    background: #2f3953 !important;
-}
-
-body .kanban-item {
-    background: #1a2035 !important;
-    box-shadow: none;
-    border: #004079b0 1px solid;
 }
 
 body .modal-content {
@@ -414,6 +427,15 @@ body .btn-light:hover,
 body .btn-white:hover {
     background: #1a2035 !important;
     color: #cac7c7;
+}
+
+.swal-modal {
+  background: #202940 !important;
+}
+
+.swal-title,
+.swal-text {
+  color: #cac7c7 !important;
 }
 
 .select2-container--default .select2-selection--multiple {

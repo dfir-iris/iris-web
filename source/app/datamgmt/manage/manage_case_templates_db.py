@@ -26,9 +26,10 @@ from app.datamgmt.case.case_notes_db import add_note_group, add_note
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_name
 from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.models import CaseTemplate, Cases, Tags, NotesGroup
+from app.models import CaseTemplate, Cases, Tags, NotesGroup, NoteDirectory
 from app.models.authorization import User
-from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseGroupNoteSchema, CaseAddNoteSchema
+from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseGroupNoteSchema, CaseAddNoteSchema, \
+    CaseNoteDirectorySchema
 
 
 def get_case_templates_list() -> List[dict]:
@@ -205,22 +206,22 @@ def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
     return logs
 
 
-def case_template_populate_notes(case: Cases, note_group_template: dict, ng: NotesGroup):
+def case_template_populate_notes(case: Cases, note_dir_template: dict, ng: NoteDirectory):
     logs = []
-    if note_group_template.get("notes"):
-        for note_template in note_group_template["notes"]:
+    if note_dir_template.get("notes"):
+        for note_template in note_dir_template["notes"]:
             # validate before saving
             note_schema = CaseAddNoteSchema()
 
             mapped_note_template = {
-                "group_id": ng.group_id,
+                "directory_id": ng.group_id,
                 "note_title": note_template["title"],
                 "note_content": note_template["content"] if note_template.get("content") else ""
             }
 
             mapped_note_template = call_modules_hook('on_preload_note_create', data=mapped_note_template, caseid=case.case_id)
 
-            note_schema.verify_group_id(mapped_note_template, caseid=ng.group_case_id)
+            note_schema.verify_directory_id(mapped_note_template, caseid=ng.case_id)
             note = note_schema.load(mapped_note_template)
 
             cnote = add_note(note.get('note_title'),
@@ -241,29 +242,30 @@ def case_template_populate_notes(case: Cases, note_group_template: dict, ng: Not
 def case_template_populate_note_groups(case: Cases, case_template: CaseTemplate):
     logs = []
     # Update case tasks
-    for note_group_template in case_template.note_groups:
+    if case_template.note_groups:
+        case_template.note_directories = case_template.note_groups
+
+    for note_dir_template in case_template.note_directories:
         try:
             # validate before saving
-            note_group_schema = CaseGroupNoteSchema()
+            note_dir_schema = CaseNoteDirectorySchema()
 
             # Remap case task template fields
             # Set status to "To Do" which is ID 1
-            mapped_note_group_template = {
-                "group_title": note_group_template['title']
+            mapped_note_dir_template = {
+                "directory_title": note_dir_template['title']
             }
 
-            note_group = note_group_schema.load(mapped_note_group_template)
-
-            ng = add_note_group(group_title=note_group.group_title,
-                                caseid=case.case_id,
-                                userid=case.user_id,
-                                creationdate=datetime.utcnow())
+            note_dir = note_dir_schema.load(mapped_note_dir_template)
+            ng = db.session.add(note_dir)
+            ng.case_id = case.case_id
+            db.session.commit()
 
             if not ng:
                 logs.append("Unable to add note group for internal reasons")
                 break
 
-            logs = case_template_populate_notes(case, note_group_template, ng)
+            logs = case_template_populate_notes(case, note_dir_template, ng)
 
         except marshmallow.exceptions.ValidationError as e:
             logs.append(e.messages)

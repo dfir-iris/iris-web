@@ -20,7 +20,7 @@
 
     <div class="content">
 			<!-- Navbar Header -->
-			<nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient">
+			<nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient nav-sticky">
 				{{ form.hidden_tag() }}
 				<ul class="container-fluid mt-3 mb--2">
                     <ul class="navbar-nav col-8">
@@ -52,12 +52,20 @@
                                 <span class="menu-title">Add event</span>
                             </button>
                         </li>
+                         <li class="nav-item hidden-caret">
+                            <button class="btn btn-dark btn-sm" onclick="toggle_tree_view();">
+                                <span class="menu-title">Toggle view</span>
+                            </button>
+                        </li>
                         <li class="nav-item">
                             <div class="dropdown">
                               <button class="btn btn-sm btn-border btn-black" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                   <span class="menu-title"><i class="fas fa-ellipsis-v"></i></span>
                               </button>
                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                  <a class="dropdown-item" href="javascript:void(0);" onclick="toggle_tree_view();"> Toggle tree view</a>
+                                  <a class="dropdown-item" href="javascript:void(0);" onclick="toggle_compact_view();"> Toggle compact view</a>
+                                  <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}"> Visualize</a>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=asset"> Visualize by asset</a>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=category">Visualize by category</a>
@@ -99,15 +107,14 @@
                 <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-warning" title="color5" onclick="events_set_attribute('event_color', '#FFAD4699')"></button>
                 <button class="btn btn-round btn-light btn-conditional" title="Change color" onclick="toggle_colors()"><i class="fas fa-tint"></i></button>
             </div>
-                <button class="btn btn-round btn-light btn_over_page_delete btn-conditional" title="Delete selected events" onclick="events_bulk_delete();"><i class="fas fa-trash text-danger"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_b btn-conditional" title="Toggle Summary" onclick="events_set_attribute('event_in_summary')"><i class="fas fa-newspaper"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_c btn-conditional" title="Toggle Graph" onclick="events_set_attribute('event_in_graph')"><i class="fas fa-share-alt"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_d" title="Select rows" onclick="toggle_selector();" id="selector-btn"><i class="fas fa-check"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_e" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_f" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_g" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_h" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
-                <button class="btn btn-round btn-light btn_over_page_i" title="Toggle compact view" onclick="toggle_compact_view();"><i class="fas fa-list"></i></button>
+                <button class="btn btn-round bg-transparent btn_over_page_delete btn-conditional" title="Delete selected events" onclick="events_bulk_delete();"><i class="fas fa-trash text-danger"></i></button>
+                <button class="btn btn-round bg-transparent btn_over_page_c btn-conditional" title="Toggle Summary" onclick="events_set_attribute('event_in_summary')"><i class="fas fa-newspaper"></i></button>
+                <button class="btn btn-round bg-transparent btn_over_page_d btn-conditional" title="Toggle Graph" onclick="events_set_attribute('event_in_graph')"><i class="fas fa-share-alt"></i></button>
+                <button class="btn btn-round bg-transparent btn_over_page_e" title="Select rows" onclick="toggle_selector();" id="selector-btn"><i class="fas fa-check"></i></button>
+                <button class="btn btn-round bg-transparent btn_over_page_f" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
+                <button class="btn btn-round bg-transparent  btn_over_page_g" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
+                <button class="btn btn-round bg-transparent  btn_over_page_h" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
+                <button class="btn btn-round bg-transparent btn_over_page_i" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
             </div>
         
         </div>

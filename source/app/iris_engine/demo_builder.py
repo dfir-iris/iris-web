@@ -158,7 +158,6 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
             name=f"Unrestricted Case {case_index}",
             description="This is a demonstration of an unrestricted case",
             soc_id=f"SOC-{case_index}",
-            gen_report=False,
             user=random.choice(users_data['users']),
             client_id=random.choice(clients)
         )

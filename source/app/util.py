@@ -23,26 +23,22 @@ import base64
 import datetime
 import decimal
 import hashlib
+import json
+import jwt
 import logging as log
 import marshmallow
 import pickle
 import random
+import requests
 import shutil
 import string
 import traceback
 import uuid
 import weakref
-from flask_socketio import Namespace
-from functools import wraps
-from pathlib import Path
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
-from cryptography.exceptions import InvalidSignature
-
-import jwt
-import requests
 from flask import Request
-import json
 from flask import render_template
 from flask import request
 from flask import session
@@ -50,18 +46,20 @@ from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
 from flask_wtf import FlaskForm
+from functools import wraps
 from jwt import PyJWKClient
+from pathlib import Path
 from pyunpack import Archive
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import redirect
 
-from app import TEMPLATE_PATH, socket_io
+from app import TEMPLATE_PATH
 from app import app
 from app import db
-from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.datamgmt.manage.manage_users_db import get_user
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
@@ -645,6 +643,32 @@ def endpoint_deprecated(message, version):
         @wraps(f)
         def wrap(*args, **kwargs):
             return response_error(f"Endpoint deprecated in {version}. {message}.", status=410)
+        return wrap
+    return inner_wrap
+
+
+def ac_api_requires_client_access():
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            client_id = kwargs.get('client_id')
+            if not user_has_client_access(current_user.id, client_id):
+                return response_error("Permission denied", status=403)
+
+            return f(*args, **kwargs)
+        return wrap
+    return inner_wrap
+
+
+def ac_requires_client_access():
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            client_id = kwargs.get('client_id')
+            if not user_has_client_access(current_user.id, client_id):
+                return ac_return_access_denied()
+
+            return f(*args, **kwargs)
         return wrap
     return inner_wrap
 

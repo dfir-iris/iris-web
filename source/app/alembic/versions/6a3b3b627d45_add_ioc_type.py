@@ -7,6 +7,7 @@ Create Date: 2022-01-01 23:40:35.283005
 """
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 from app.alembic.alembic_utils import _table_has_column
@@ -54,9 +55,9 @@ def upgrade():
         # Migrate existing IOCs
         for src_up, dst_up in to_update:
             conn = op.get_bind()
-            res = conn.execute(f"select ioc_id from ioc where ioc_type = '{src_up}';")
+            res = conn.execute(text(f"select ioc_id from ioc where ioc_type = '{src_up}';"))
             results = res.fetchall()
-            res = conn.execute(f"select type_id from ioc_type where type_name = '{dst_up}';")
+            res = conn.execute(text(f"select type_id from ioc_type where type_name = '{dst_up}';"))
             e_info = res.fetchall()
 
             if e_info:

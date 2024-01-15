@@ -79,7 +79,7 @@
                                 <span class="form-check-sign"> File is Evidence <i class="ml-1 mt-1 fa-regular text-dark fa-circle-question"
                                                                                   title="Help" data-toggle="popover" data-html="true"
                                                                                   data-trigger="hover" style="cursor: pointer;"
-                                                                                  data-content="If set, the file is stored in a dedicated Evidence folder on the server and added to the case Evidences.">
+                                                                                  data-content="If set, the file is stored in a dedicated Evidence folder on the server and added to the case Evidence.">
 
                                 </i></span>
                             </label>
@@ -103,15 +103,8 @@
 
         $('#toggle_file_password > i').attr('class', type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash');
     });
+    set_suggest_tags('file_tags');
 
-    $('#file_tags').amsifySuggestags({
-        printValues: true,
-        {% if file.file_tags %}
-            suggestions: [ {% for tag in file.file_tags %} '{{ tag }}', {% endfor %} ],
-        {% endif %}
-        whiteList: false,
-        selectOnHover: false,
-    });
     $("#input_upload_ds_file").on("change", function(e) {
         var file = e.target.files[0].name;
         $('#file_original_name').val(file);

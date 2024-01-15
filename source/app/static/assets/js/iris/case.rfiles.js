@@ -49,7 +49,7 @@ function add_modal_rfile() {
              ajax_notify_error(xhr, url);
              return false;
         }
-        
+
         g_evidence_desc_editor = get_new_ace_editor('evidence_description', 'evidence_desc_content', 'target_evidence_desc',
                     function() {
                         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
@@ -58,8 +58,10 @@ function add_modal_rfile() {
         g_evidence_desc_editor.setOption("minLines", "10");
         edit_in_evidence_desc();
 
-        headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
+        let headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
         $('#evidence_edition_btn').append(headers);
+
+        load_evidence_type();
         
         $('#modal_add_rfiles').modal({ show: true });
         $('#filename').focus();
@@ -67,12 +69,26 @@ function add_modal_rfile() {
 }
 
 function add_rfile() {
-    var data_sent = $('form#form_edit_rfile').serializeObject();
+    let data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['file_description'] = g_evidence_desc_editor.getValue();
-    ret = get_custom_attributes_fields();
-    has_error = ret[0].length > 0;
-    attributes = ret[1];
+    data_sent['type_id'] = $('#file_type_id').val();
+
+    let sd = $('#start_date').val();
+    let st = $('#start_time').val()
+    if (sd && st) {
+        data_sent['start_date'] = `${sd}T${st}`;
+    }
+
+    let ed = $('#end_date').val();
+    let et = $('#end_time').val();
+    if (ed && et) {
+        data_sent['end_date'] = `${ed}T${et}`;
+    }
+
+    let ret = get_custom_attributes_fields();
+    let has_error = ret[0].length > 0;
+    let attributes = ret[1];
 
     if (has_error){return false;}
 
@@ -162,6 +178,14 @@ function get_case_rfiles() {
                 $('#rfiles_table_wrapper').show();
                 Table.responsive.recalc();
 
+                $(document)
+                    .off('click', '.evidence_details_link')
+                    .on('click', '.evidence_details_link', function(event) {
+                    event.preventDefault();
+                    let evidence_id = $(this).data('evidence_id');
+                    edit_rfiles(evidence_id);
+                });
+
             } else {
                 Table.clear().draw();
                 swal("Oh no !", data.message, "error")
@@ -182,8 +206,6 @@ function edit_rfiles(rfiles_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
-        
-        g_evidence_id = rfiles_id;
 
         g_evidence_desc_editor = get_new_ace_editor('evidence_description', 'evidence_desc_content', 'target_evidence_desc',
                             function() {
@@ -195,14 +217,78 @@ function edit_rfiles(rfiles_id) {
         g_evidence_desc_editor.setOption("minLines", "6");
         preview_evidence_description(true);
 
-        headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
+        let headers = get_editor_headers('g_evidence_desc_editor', null, 'evidence_edition_btn');
         $('#evidence_edition_btn').append(headers);
         
         load_menu_mod_options_modal(rfiles_id, 'evidence', $("#evidence_modal_quick_actions"));
+
+        load_evidence_type();
         
         $('#modal_add_rfiles').modal({ show: true });
+
         edit_in_evidence_desc();
     });
+}
+
+function show_x_time_converter(item){
+    $(`#${item}_date_convert`).show();
+    $(`#${item}_date_convert_input`).focus();
+    $(`#${item}_date_inputs`).hide();
+}
+
+function hide_x_time_converter(item){
+    $(`#${item}_date_convert`).hide();
+    $(`#${item}_date_inputs`).show();
+    $(`#${item}_date`).focus();
+}
+
+
+function time_converter(item){
+    let date_val = $(`#${item}_date_convert_input`).val();
+
+    let data_sent = Object();
+    data_sent['date_value'] = date_val;
+    data_sent['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api('timeline/events/convert-date', JSON.stringify(data_sent))
+    .done(function(data) {
+        if(notify_auto_api(data)) {
+            $(`#${item}_date`).val(data.data.date);
+            $(`#${item}_time`).val(data.data.time);
+            $(`#${item}_tz`).val(data.data.tz);
+            hide_x_time_converter(item);
+            $(`#convert_bad_feedback_${item}`).text('');
+        }
+    })
+    .fail(function() {
+        $(`#convert_bad_feedback_${item}`).text('Unable to find a matching pattern for the date');
+    });
+}
+
+
+function load_evidence_type() {
+    get_request_api('/manage/evidence-types/list')
+    .done((data) => {
+        if(notify_auto_api(data, true)) {
+            let ftype = $('#file_type_id');
+            if (data.data != null) {
+                let options = data.data;
+                for (let idx in options) {
+                    ftype.append(`<option value="${options[idx].id}">${filterXSS(options[idx].name)}</option>`);
+                }
+                ftype.selectpicker({
+                    liveSearch: true,
+                    title: "Evidence type"
+                });
+                let stored_type_id = $('#store_type_id').data('file-type-id');
+                if (stored_type_id !== undefined || stored_type_id !== "") {
+                    ftype.selectpicker('val', stored_type_id);
+                    ftype.selectpicker('refresh');
+                }
+            }
+
+        }
+    })
 }
 
 function preview_evidence_description(no_btn_update) {
@@ -231,11 +317,25 @@ function preview_evidence_description(no_btn_update) {
 
 /* Update an rfiles */
 function update_rfile(rfiles_id) {
-    var data_sent = $('form#form_edit_rfile').serializeObject();
+    let data_sent = $('form#form_edit_rfile').serializeObject();
     data_sent['csrf_token'] = $('#csrf_token').val();
-    ret = get_custom_attributes_fields();
-    has_error = ret[0].length > 0;
-    attributes = ret[1];
+    data_sent['type_id'] = $('#file_type_id').val();
+    let sd = $('#start_date').val();
+    let st = $('#start_time').val()
+    if (sd && st) {
+        data_sent['start_date'] = `${sd}T${st}`;
+    }
+
+    let ed = $('#end_date').val();
+    let et = $('#end_time').val();
+    if (ed && et) {
+        data_sent['end_date'] = `${ed}T${et}`;
+    }
+
+
+    let ret = get_custom_attributes_fields();
+    let has_error = ret[0].length > 0;
+    let attributes = ret[1];
 
     if (has_error){return false;}
 
@@ -246,6 +346,7 @@ function update_rfile(rfiles_id) {
     .done((data) => {
         notify_auto_api(data);
         reload_rfiles();
+        $('#modal_add_rfiles').modal("hide");
     });
 }
 
@@ -281,21 +382,43 @@ $(document).ready(function(){
             "data": "filename",
             "render": function (data, type, row, meta) {
               if (type === 'display' && data != null) {
-                if (isWhiteSpace(data)) {
-                    data = '#' + row['id'];
-                } else {
-                    data = sanitizeHTML(data);
-                }
-                share_link = buildShareLink(row['id']);
-                data = '<a data-toggle="tooltip" data-selector="true" href="' + share_link + '" title="Evidence ID #' + row['id'] + '" onclick="edit_rfiles(\'' + row['id'] + '\');return false;">' + data +'</a>';
+
+                    let datak = '';
+                    let anchor = $('<a>')
+                        .attr('href', 'javascript:void(0);')
+                        .attr('data-evidence_id', row['id'])
+                        .attr('title', `Evidence ID #${row['id']} - ${data}`)
+                        .addClass('evidence_details_link')
+
+                    if (isWhiteSpace(data)) {
+                        datak = '#' + row['id'];
+                        anchor.text(datak);
+                    } else {
+                        datak= ellipsis_field(data, 64);
+                        anchor.html(datak);
+                    }
+
+                    return anchor.prop('outerHTML');
               }
               return data;
             }
           },
-          { "data": "date_added" },
+          { "data": "type_id",
+            "render": function (data, type, row, meta) {
+              if (type === 'display' || type === 'sort' || type === 'filter') {
+
+                  if (row['type'] !== null && row['type'] !== undefined) {
+                      data = sanitizeHTML(row['type'].name)
+                  } else {
+                      data = 'Unspecified'
+                  }
+              }
+              return data;
+            }
+          },
           { "data": "file_hash",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') { return ret_obj_dt_description(data);}
                 return data;
               }
           },
@@ -306,12 +429,14 @@ $(document).ready(function(){
               }},
           { "data": "file_description",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') { return ret_obj_dt_description(data);}
                 return data;
               }},
-          { "data": "username",
+          { "data": "user",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display'|| type === 'sort' || type === 'filter') {
+                    data = sanitizeHTML(data.user_name);
+                }
                 return data;
               }}
         ],

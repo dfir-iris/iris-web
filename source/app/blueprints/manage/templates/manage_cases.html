@@ -20,127 +20,47 @@
                 </div>
                 <div class="card-body">
                     <div class="col-md-12">
-                        <div class="row">
-                            <div class="col d-flex justify-content-center">
-                                <ul class="nav nav-pills nav-dark" id="pills-tabs-manage-case"
-                                    role="tablist">
-                                    <li class="nav-item submenu">
-                                        <a class="nav-link active show" id="add-tab" data-toggle="pill" href="#add" role="tab"
-                                            aria-controls="pills-home-nobd" aria-selected="true">New</a>
-                                    </li>
-                                    <li class="nav-item submenu">
-                                        <a class="nav-link" id="view-tab" data-toggle="pill" href="#view" role="tab"
-                                            aria-controls="view-tab" aria-selected="false">Cases list</a>
-                                    </li>
-                                </ul>
+                        <button type="button" class="btn btn-sm btn-outline-dark float-right mr-3"
+                            onclick="load_add_case();">
+                            Create new case
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-dark float-right mr-3"
+                            onclick="refresh_case_table();">
+                            Refresh
+                        </button>
+                        <div class="table-responsive" id="cases_table_wrapper">
+                            <div class="selectgroup">
+                                <span id="table_buttons"></span>
                             </div>
+                            <table class="table display wrap col-border table-striped table-hover" width="100%"
+                                cellspacing="0" id="cases_table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Customer</th>
+                                        <th>State</th>
+                                        <th>Open date</th>
+                                        <th>Close date</th>
+                                        <th>SOC Ticket</th>
+                                        <th>Opening user</th>
+                                    </tr>
+                                </thead>
+                                <tfoot>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Customer</th>
+                                        <th>State</th>
+                                        <th>Open date</th>
+                                        <th>Close date</th>
+                                        <th>SOC Ticket</th>
+                                        <th>Opening user</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
-                        <div id="myTab1Content" class="tab-content col-md-12">
-                            <div id="add" role="tabpanel" aria-labelledby="add-tab"
-                                class="tab-pane fade px-4 py-5 show active">
-                                <div class="row">
-                                    <div class="col-md-12 col-lg-6 col-sm-12">
-                                        <h4 class="border-bottom pb-3">General info</h4>
-                                        Fields with an asterix are required.
-                                        <form method="post" action='' id="form_new_case" autocomplete="off">
-                                            {{ form.hidden_tag() }}
-
-                                            <div class="mt-4 col-md-12 col-lg-12 col-sm-12">
-                                                <div class="input-group mb-4">
-                                                    {{ form.case_customer(class="selectpicker form-control") }}
-                                                </div>
-                                                <div class="input-group mb-4">
-                                                    {{ form.case_template_id(class="selectpicker form-control", data_actions_box="true") }}
-                                                </div>
-                                                <div class="input-group mb-4">
-                                                    {{ form.classification_id(class="selectpicker form-control") }}
-                                                </div>
-                                                <div class="input-group mb-4">
-                                                    <div class="input-group-prepend">
-														<span class="input-group-text">Case name *</span>
-													</div>
-                                                    {{ form.case_name(class="form-control", type="text") }}
-                                                </div>
-                                                <div class="input-group mb-4">
-                                                    <div class="input-group-prepend">
-														<span class="input-group-text">Short description *</span>
-													</div>
-                                                    {{ form.case_description(class="form-control", type="text") }}
-                                                </div>
-                                                <div class="input-group mb-4">
-                                                    <div class="input-group-prepend">
-														<span class="input-group-text">SOC ticket ID</span>
-													</div>
-                                                    {{ form.case_soc_id(class="form-control", type="text") }}
-                                                </div>
-                                            </div>
-
-                                        </form>
-                                    </div>
-                                    <div class="col-md-12 col-lg-6 col-sm-12">
-                                        {% if attributes and attributes|length > 0 %}
-                                            <h4><ul class="nav nav-tabs nav-lines mr-4" role="tablist">
-                                                    {% for ca in attributes %}
-                                                        <li class="nav-item submenu">
-                                                            <a class="nav-link {% if loop.index == 1 %}{{"active show"}}{% endif %}"  data-toggle="tab" href="#itab_{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
-                                                            role="tab" aria-selected="false">{{ca}}</a>
-                                                        </li>
-                                                    {% endfor %}
-
-                                            </ul></h4>
-                                            <div role="tabpanel">
-                                                <div class="tab-content">
-                                                    {% set is_case_page = True %}
-                                                    {% include 'modals/modal_attributes_tabs.html' %}
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <button class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_case_btn" onclick="submit_new_case();">Create</button>
-                            </div>
-                            <div id="view" role="tabpanel" aria-labelledby="view-tab" class="tab-pane fade px-4 py-5">
-                                <button type="button" class="btn btn-sm btn-outline-dark float-right mr-3"
-                                    onclick="refresh_case_table();">
-                                    Refresh
-                                </button>
-                                <div class="table-responsive" id="cases_table_wrapper">
-                                    <div class="selectgroup">
-                                        <span id="table_buttons"></span>
-                                    </div>
-                                    <table class="table display wrap col-border table-striped table-hover" width="100%"
-                                        cellspacing="0" id="cases_table">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Description</th>
-                                                <th>Customer</th>
-                                                <th>State</th>
-                                                <th>Open date</th>
-                                                <th>Close date</th>
-                                                <th>SOC Ticket</th>
-                                                <th>Opening user</th>
-                                            </tr>
-                                        </thead>
-                                        <tfoot>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Description</th>
-                                                <th>Customer</th>
-                                                <th>State</th>
-                                                <th>Open date</th>
-                                                <th>Close date</th>
-                                                <th>SOC Ticket</th>
-                                                <th>Opening user</th>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-
-                            </div>
-                        </div>
-                        <!-- End bordered tabs -->
-                    </div>
+                     </div>
                 </div>
             </div>
         </div>

@@ -519,7 +519,7 @@ def case_filter_timeline(caseid):
             CaseEventsAssets.asset_id.in_(assets_id)
         )
 
-    assets_cache = CaseAssets.query.with_entities(
+    assets_cache = (CaseAssets.query.with_entities(
         CaseEventsAssets.event_id,
         CaseAssets.asset_id,
         CaseAssets.asset_name,
@@ -529,7 +529,8 @@ def case_filter_timeline(caseid):
         CaseAssets.asset_compromise_status_id
     ).filter(
         assets_cache_condition
-    ).join(CaseEventsAssets.asset, CaseAssets.asset_type).all()
+    ).join(CaseEventsAssets.asset)
+     .join(CaseAssets.asset_type).all())
 
     iocs_cache_condition = and_(
         CaseEventsIoc.case_id == caseid

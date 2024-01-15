@@ -70,6 +70,7 @@ class Cases(db.Model):
     classification_id = Column(ForeignKey('case_classification.id'))
     reviewer_id = Column(ForeignKey('user.id'), nullable=True)
     review_status_id = Column(ForeignKey('review_status.id'), nullable=True)
+    severity_id = Column(ForeignKey('severities.severity_id'), nullable=True)
 
     modification_history = Column(JSON)
 
@@ -78,6 +79,7 @@ class Cases(db.Model):
     owner = relationship('User', foreign_keys=[owner_id])
     classification = relationship('CaseClassification')
     reviewer = relationship('User', foreign_keys=[reviewer_id])
+    severity = relationship('Severity')
 
     alerts = relationship('Alert', secondary="alert_case_association", back_populates='cases', viewonly=True)
 

@@ -1,0 +1,37 @@
+<div class="modal-lg modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title mt-2 mr-4">Manage customers membership</h4>
+            <div class="row text-right">
+                <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="container col-md-12" >
+                <div class="row">
+                    <div class="form-group" data-select2-id="7">
+                        <label>Customers membership *</label>
+                        <div class="select2-input ml-12" data-select2-id="6">
+                            <select id="user_customers_membership" name="user_groups_membership" class="form-control select2-hidden-accessible ml-12" multiple=""
+                                    tabindex="-1" aria-hidden="true" style="width: 100%">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                    id="save_user_customers_membership">Save</button>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+<script>
+data_dc = [];
+if (current_customers_list.length === 0) {
+    refresh_customers().then(function () {
+        update_customers_membership_modal([{% for custo in  user.user_customers %} {{ custo.customer_id }}, {% endfor %}])
+    });
+} else {
+    update_customers_membership_modal([{% for custo in  user.user_customers %} {{ custo.customer_id }}, {% endfor %}])
+}
+</script>

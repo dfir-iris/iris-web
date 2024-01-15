@@ -37,7 +37,7 @@ function add_customer() {
 }
 
 $(document).ready(function() {
-    cid = case_param();
+    let cid = case_param();
     $('#customers_table').dataTable({
             "ajax": {
                 "url": "customers/list" + cid,

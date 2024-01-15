@@ -17,9 +17,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask_login import current_user
-from sqlalchemy import and_
+from typing import List
 
+from functools import reduce
+from flask_login import current_user
+from sqlalchemy import and_, desc, asc
+
+import app
 from app import bc
 from app import db
 from app.datamgmt.case.case_db import get_case
@@ -29,8 +33,8 @@ from app.iris_engine.access_control.utils import ac_auto_update_user_effective_a
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.iris_engine.access_control.utils import ac_remove_case_access_from_user
 from app.iris_engine.access_control.utils import ac_set_case_access_for_user
-from app.models import Cases
-from app.models.authorization import CaseAccessLevel
+from app.models import Cases, Client
+from app.models.authorization import CaseAccessLevel, UserClient
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -120,6 +124,37 @@ def update_user_groups(user_id, groups):
     db.session.commit()
 
     ac_auto_update_user_effective_access(user_id)
+
+
+def update_user_customers(user_id, customers):
+    # Update the user's customers directly
+    cur_customers = UserClient.query.with_entities(
+        UserClient.client_id
+    ).filter(UserClient.user_id == user_id).all()
+
+    set_cur_customers = set([cust[0] for cust in cur_customers])
+    set_new_customers = set(int(cust) for cust in customers)
+
+    customers_to_add = set_new_customers - set_cur_customers
+    customers_to_remove = set_cur_customers - set_new_customers
+
+    for client_id in customers_to_add:
+        user_client = UserClient()
+        user_client.user_id = user_id
+        user_client.client_id = client_id
+        user_client.access_level = CaseAccessLevel.full_access.value
+        user_client.allow_alerts = True
+        db.session.add(user_client)
+
+    for client_id in customers_to_remove:
+        UserClient.query.filter(
+            UserClient.user_id == user_id,
+            UserClient.client_id == client_id
+        ).delete()
+
+    ac_auto_update_user_effective_access(user_id)
+
+    db.session.commit()
 
 
 def update_user_orgs(user_id, orgs):
@@ -312,6 +347,22 @@ def get_user_cases_access(user_id):
     return user_cases_access
 
 
+def get_user_clients(user_id: int) -> List[Client]:
+    clients = UserClient.query.filter(
+        UserClient.user_id == user_id
+    ).join(
+        UserClient.client
+    ).with_entities(
+        Client.client_id.label('customer_id'),
+        Client.client_uuid,
+        Client.name.label('customer_name')
+    ).all()
+
+    clients_out = [c._asdict() for c in clients]
+
+    return clients_out
+
+
 def get_user_cases_fast(user_id):
 
     user_cases = UserCaseEffectiveAccess.query.with_entities(
@@ -425,6 +476,7 @@ def get_user_details(user_id, include_api_key=False):
     row['user_organisations'] = get_user_organisations(user_id)
     row['user_permissions'] = get_user_effective_permissions(user_id)
     row['user_cases_access'] = get_user_cases_access(user_id)
+    row['user_customers'] = get_user_clients(user_id)
 
     upg = get_user_primary_org(user_id)
     row['user_primary_organisation_id'] = upg.org_id if upg else 0
@@ -638,3 +690,53 @@ def user_exists(user_name, user_email):
 
     return user or user_by_email
 
+
+def get_filtered_users(user_ids: str = None,
+                       user_name: str = None,
+                       user_login: str = None,
+                       customer_id: int = None,
+                       page: int = None,
+                       per_page: int = None,
+                       sort: str =None):
+    """
+
+    """
+    conditions = []
+
+    if user_ids is not None:
+        conditions.append(User.id.in_(user_ids))
+
+    if user_name is not None:
+        conditions.append(User.name.ilike(user_name))
+
+    if user_login is not None:
+        conditions.append(User.user.ilike(user_login))
+
+    if customer_id is not None:
+        conditions.append(UserClient.client_id == customer_id)
+        conditions.append(UserClient.user_id == User.id)
+
+    if len(conditions) > 1:
+        conditions = [reduce(and_, conditions)]
+
+    order_func = desc if sort == 'desc' else asc
+
+    try:
+
+        filtered_users = db.session.query(
+            User
+        ).filter(
+            *conditions
+        ).order_by(
+            order_func(User.id)
+        ).paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
+    except Exception as e:
+        app.logger.exception(f'Error getting users: {str(e)}')
+        return None
+
+    return filtered_users

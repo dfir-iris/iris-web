@@ -3,86 +3,45 @@ let note_editor;
 let session_id = null ;
 let collaborator = null ;
 let collaborator_socket = null ;
-let buffer_dumped = false ;
 let last_applied_change = null ;
 let just_cleared_buffer = null ;
-let from_sync = null;
 let is_typing = "";
 let ppl_viewing = new Map();
 let timer_socket = 0;
 let note_id = null;
-let map_notes = Object();
 let last_ping = 0;
-let forceModalClose = false;
-let wasMiniNote = false;
+let cid = null;
+let previousNoteTitle = null;
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
     return false;
 };
 
-var boardNotes = {
-    init: function init() {
-        this.bindUIActions();
-    },
-    bindUIActions: function bindUIActions() {
-        // event handlers
-        this.handleBoardStyle();
-        this.handleSortable();
-    },
-    byId: function byId(id) {
-        return document.getElementById(id);
-    },
-    handleBoardStyle: function handleBoardStyle() {
-        $(document).on('mouseenter mouseleave', '.kanban-board-header', function (e) {
-            var isHover = e.type === 'mouseenter';
-            $(this).parent().toggleClass('hover', isHover);
-        });
-    },
-    handleSortable: function handleSortable() {
-        var board = this.byId('myKanban');
-        // Multi groups
-        Sortable.create(board, {
-            animation: 150,
-            draggable: '.kanban-board',
-            handle: '.kanban-board-header',
-            filter: '.ignore-sort',
-            forceFallback: true
-        });
-        [].forEach.call(board.querySelectorAll('.kanban-drag'), function (el) {
-            Sortable.create(el, {
-                group: 'tasks',
-                animation: 150,
-                filter: '.ignore-sort',
-                forceFallback: true
-            });
-        });
-    }
-};
 
 function Collaborator( session_id, note_id ) {
     this.collaboration_socket = collaborator_socket;
 
     this.channel = "case-" + session_id + "-notes";
 
-    this.collaboration_socket.on( "change-note", function(data) {
-        if ( data.note_id !== note_id ) return ;
-        let delta = JSON.parse( data.delta ) ;
-        last_applied_change = delta ;
+    this.collaboration_socket.on("change-note", function (data) {
+        if (data.note_id !== note_id) return;
+        let delta = JSON.parse(data.delta);
+        last_applied_change = delta;
         $("#content_typing").text(data.last_change + " is typing..");
-        if ( delta !== null && delta !== undefined ) {
+        if (delta !== null && delta !== undefined) {
             note_editor.session.getDocument().applyDeltas([delta]);
         }
-    }.bind()) ;
+    }.bind());
 
-    this.collaboration_socket.on( "clear_buffer-note", function() {
-        if ( data.note_id !== note_id ) return ;
-        just_cleared_buffer = true ;
-        note_editor.setValue( "" ) ;
-    }.bind() ) ;
+    this.collaboration_socket.on("clear_buffer-note", function () {
+        if (data.note_id !== note_id) return;
+        just_cleared_buffer = true;
+        note_editor.setValue("");
+    }.bind());
 
-    this.collaboration_socket.on( "save-note", function(data) {
-        if ( data.note_id !== note_id ) return ;
+    this.collaboration_socket.on("save-note", function (data) {
+        if (data.note_id !== note_id) return;
         sync_note(note_id)
             .then(function () {
                 $("#content_last_saved_by").text("Last saved by " + data.last_saved);
@@ -93,56 +52,28 @@ function Collaborator( session_id, note_id ) {
 
     }.bind());
 
-    this.collaboration_socket.on('leave-note', function(data) {
+    this.collaboration_socket.on('leave-note', function (data) {
         ppl_viewing.delete(data.user);
         refresh_ppl_list(session_id, note_id);
     });
 
-    this.collaboration_socket.on('join-note', function(data) {
-        if ( data.note_id !== note_id ) return ;
+    this.collaboration_socket.on('join-note', function (data) {
+        if (data.note_id !== note_id) return;
         if ((data.user in ppl_viewing)) return;
         ppl_viewing.set(filterXSS(data.user), 1);
         refresh_ppl_list(session_id, note_id);
-        collaborator.collaboration_socket.emit('ping-note', { 'channel': collaborator.channel, 'note_id': note_id });
+        collaborator.collaboration_socket.emit('ping-note', {'channel': collaborator.channel, 'note_id': note_id});
     });
 
-    this.collaboration_socket.on('ping-note', function(data) {
-        if ( data.note_id !== note_id ) return ;
-        collaborator.collaboration_socket.emit('pong-note', { 'channel': collaborator.channel, 'note_id': note_id });
+    this.collaboration_socket.on('ping-note', function (data) {
+        if (data.note_id !== note_id) return;
+        collaborator.collaboration_socket.emit('pong-note', {'channel': collaborator.channel, 'note_id': note_id});
     });
 
-    this.collaboration_socket.on('disconnect', function(data) {
+    this.collaboration_socket.on('disconnect', function (data) {
         ppl_viewing.delete(data.user);
         refresh_ppl_list(session_id, note_id);
     });
-
-}
-
-function set_notes_follow(data) {
-
-    if (data.note_id !== null) {
-        if (data.note_id in map_notes ) {
-            map_notes[data.note_id][data.user] = 2;
-        } else {
-            map_notes[data.note_id] = Object();
-            map_notes[data.note_id][data.user] = 2;
-        }
-    }
-
-    for (let notid in map_notes) {
-        for (let key in map_notes[notid]) {
-            if (key !== data.user && data.note_id !== note_id || data.note_id === null) {
-                map_notes[notid][key] -= 1;
-            }
-            if (map_notes[notid][key] < 0) {
-                delete map_notes[notid][key];
-            }
-        }
-        $(`#badge_${notid}`).empty();
-        for (let key in map_notes[notid]) {
-            $(`#badge_${notid}`).append(get_avatar_initials(filterXSS(key), false, undefined, true));
-        }
-    }
 
 }
 
@@ -173,22 +104,6 @@ function auto_remove_typing() {
 /* Generates a global sequence id for subnotes */
 let current_id = 0;
 
-function nextSubNote(element, _item, title) {
-    var newElement = element.clone();
-    var id = current_id + 1;
-    current_id = id;
-    if (id < 10) id = "0" + id;
-    newElement.attr("id", element.attr("id").split("_")[0] + "_" + id);
-    var field = $(newElement).attr("id");
-    $(newElement).attr("id", field.split("_")[0] + "_" + id);
-    $(newElement).find('iris_note').attr('id', 'xqx'  + id + 'qxq');
-    $(newElement).find('iris_note').text("New note");
-    var va = $(newElement).find('a');
-    $(newElement).find(va[1]).attr("onclick", 'delete_note("_' + id + '")');
-    newElement.appendTo($('#group-' + _item + "_main"));
-    newElement.show();
-}
-
 /* Generates a global sequence id for groups */
 var current_gid = 0;
 
@@ -201,209 +116,64 @@ async function sync_note(node_id) {
     return;
 }
 
-function nextGroupNote(title="", rid=0) {
 
-    if (rid == 0) {
-        console.log("RID is needed to create group");
-        return;
-    }
-
-    var element = $('#group_');
-    var newElement = element.clone();
-
-    if (title == "") {
-        title = "Untitled group";
-    }
-    newElement.attr("id", "group-" + rid);
-    newElement.attr("title", "New group note");
-
-    var fa = $(newElement).find('button')[0];
-    var fb = $(newElement).find('button')[1];
-    var va = $(newElement).find('a');
-
-    $(newElement).find('div.kanban-title-board').text(title);
-    $(newElement).find('div.kanban-title-board').attr("onclick", 'edit_add_save(' + rid + ')');
-
-    $(newElement).find(fa).attr("onclick", 'edit_remote_groupnote(' + rid + ')');
-    $(newElement).find(fb).attr("onclick", 'add_remote_note(' + rid + ')');
-
-    $(newElement).find(va[0]).attr("onclick", 'delete_remote_groupnote(' + rid + ')');
-
-    $(newElement).find('main').attr("id", "group-" + rid + "-main");
-    newElement.appendTo($('#myKanban'));
-    newElement.show();
-
-    return rid;
-}
-
-/* Add a subnote to an item */
-function add_subnote(_item, tr=0, title='', last_up, user) {
-
-    if (tr != 0) {
-        let element = $('#_subnote_');
-        var newElement = element.clone();
-        var id = tr;
-        current_id = id;
-
-        let info = user + " on " + last_up.replace('GMT', '');
-
-        newElement.attr("id", element.attr("id").split("_")[0] + "_" + id);
-        var field = $(newElement).attr("id");
-        $(newElement).attr("id", field.split("_")[0] + "_" + id);
-        $(newElement).attr("title", 'Note #' + id);
-        $(newElement).find('iris_note').attr('id', tr);
-        $(newElement).find('iris_note').text(title);
-        $(newElement).find('a.kanban-title').text(title);
-        $(newElement).find('small.kanban-info').text(info);
-        $(newElement).find('div.kanban-badge').attr('id', 'badge_' + id);
-        newElement.appendTo($('#group-' + _item + "-main"));
-        newElement.show();
-    }
-}
-
-/* Add a group to the dashboard */
-function add_groupnote(title="", rid=0) {
-    return nextGroupNote(title, rid=rid);
-}
-
-/* Add a remote note to a group */
-function add_remote_note(group_id) {
-        let data = Object();
-        data['note_title'] = "Untitled note";
-        data['note_content'] = "";
-
-        data['group_id'] = group_id;
-        data['csrf_token'] = $('#csrf_token').val();
-
-        post_request_api('/case/notes/add', JSON.stringify(data), false)
-        .done((data) => {
-            if (data.status == 'success') {
-                draw_kanban();
-            } else {
-                if (data.message != "No data to load for dashboard") {
-                    swal("Oh no !", data.message, "error");
-                }
-            }
-        })
-
-}
-
-/* Add a group note remotely */
-function add_remote_groupnote() {
-    let data = Object();
-    data['csrf_token'] = $('#csrf_token').val();
-
-    post_request_api('/case/notes/groups/add', JSON.stringify(data), false)
-    .done((data) => {
-        if (data.status == 'success') {
-            nextGroupNote(data.data.group_title, data.data.group_id);
-            draw_kanban();
-        } else {
-            if (data.message != "No data to load for dashboard") {
-                swal("Oh no !", data.message, "error");
-            }
-        }
-    })
-}
-
-/* Delete a group of the dashboard */
-function delete_remote_groupnote(group_id) {
-
-    swal({
-      title: "Attention ",
-      text: "All the notes in this group will be deleted !\nThis cannot be reverted, notes will not be recoverable",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    })
-    .then((willDelete) => {
-      if (willDelete) {
-        var data = Object();
-        data['group_id'] = group_id;
-        data['csrf_token'] = $('#csrf_token').val();
-
-        post_request_api('/case/notes/groups/delete/'+ group_id)
-        .done((data) => {
-            if (data.status == 'success') {
-                swal("Done !", data.message, "success");
-                draw_kanban();
-            } else {
-                if (data.message != "No data to load for dashboard") {
-                    swal("Oh no !", data.message, "error");
-                }
-            }
-        })
-      } else {
-        swal("Pfew, that was close");
-      }
-    });
-
-}
-
-/* Add a button to save group name */
-function edit_add_save(group_id) {
-    btn = $("#group-" + group_id).find('button')[0];
-    $(btn).show();
-}
-
-/* Delete a group of the dashboard */
-function edit_remote_groupnote(group_id) {
-
-    var data = Object();
-    data['group_title'] = $("#group-" + group_id).find('div.kanban-title-board').text();
-    data["csrf_token"] = $('#csrf_token').val();
-
-    post_request_api('/case/notes/groups/update/'+ group_id, JSON.stringify(data))
-    .done((data) => {
-        notify_auto_api(data);
-        draw_kanban();
-    })
-}
-
-/* Delete a group of the dashboard */
 function delete_note(_item, cid) {
+    if (_item === undefined || _item === null) {
+        _item = $('#currentNoteIDLabel').data('note_id')
+    }
 
-    var n_id = $("#info_note_modal_content").find('iris_notein').text();
-
-    do_deletion_prompt("You are about to delete note #" + n_id)
+    do_deletion_prompt("You are about to delete note #" + _item)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api('/case/notes/delete/' + n_id, null, null, cid)
+            post_request_api('/case/notes/delete/' + _item, null, null, cid)
             .done((data) => {
-               $('#modal_note_detail').modal('hide');
-               notify_auto_api(data);
+               if (notify_auto_api(data)) {
+                   load_directories()
+                       .then((data) =>
+                       {
+                           let shared_id = getSharedLink();
+                            if (shared_id) {
+                                note_detail(shared_id).then((data) => {
+                                    if (!data) {
+                                        setSharedLink(null);
+                                        toggleNoteEditor(false);
+                                    }
+                                });
+                            }
+                       }
+                   )
+               }
             })
-            .fail(function (error) {
-                draw_kanban();
-                swal( 'Oh no :(', error.message, 'error');
-            });
         }
     });
 }
 
-/* List all the notes on the dashboard */
-function list_notes() {
-    output = {};
-    $("#myKanban").children().each(function () {
+function proxy_comment_element() {
+    let note_id = $('#currentNoteIDLabel').data('note_id');
 
-        gid = $(this).attr('id');
+    return comment_element(note_id, 'notes');
+}
 
-        output[gid] = [];
+function proxy_copy_object_link() {
+    let note_id = $('#currentNoteIDLabel').data('note_id');
 
-        $(this).find('iris_note').each(function () {
-            output[gid].push(
-                [$(this).attr('id'),
-                $(this).text()
-            ]);
-        })
+    return copy_object_link(note_id);
+}
 
-    });
+function proxy_copy_object_link_md() {
+    let note_id = $('#currentNoteIDLabel').data('note_id');
 
-    return output;
+    return copy_object_link_md('note', note_id);
+}
 
+function toggleNoteEditor(show_editor) {
+    if (show_editor) {
+        $('#currentNoteContent').show();
+        $('#emptyNoteDisplay').hide();
+    } else {
+        $('#currentNoteContent').hide();
+        $('#emptyNoteDisplay').show();
+    }
 }
 
 /* Edit one note */
@@ -416,185 +186,93 @@ function edit_note(event) {
 }
 
 
-/* Fetch the edit modal with content from server */
-function note_detail(id, cid) {
-    if (cid === undefined ) {
-        cid = case_param()
+function setSharedLink(id) {
+    // Set the shared ID in the URL
+    let url = new URL(window.location.href);
+    if (id !== undefined && id !== null) {
+        url.searchParams.set('shared', id);
     } else {
-        cid = '?cid=' + cid;
+        url.searchParams.delete('shared');
     }
-
-    url = '/case/notes/' + id + "/modal" + cid;
-    $('#info_note_modal_content').load(url, function (response, status, xhr) {
-        $('#form_note').on("submit", preventFormDefaultBehaviourOnSubmit);
-        hide_minimized_modal_box();
-        if (status !== "success") {
-             ajax_notify_error(xhr, url);
-             return false;
-        }
-
-        let timer;
-        let timeout = 10000;
-        $('#form_note').keyup(function(){
-            if(timer) {
-                 clearTimeout(timer);
-            }
-            if (ppl_viewing.size <= 1) {
-                timer = setTimeout(save_note, timeout);
-            }
-        });
-
-        note_id = id;
-
-        collaborator = new Collaborator( get_caseid(), id );
-
-        note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function() {
-            $('#last_saved').addClass('btn-danger').removeClass('btn-success');
-            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-            $('#btn_save_note').text("Save").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
-        }, save_note);
-
-        note_editor.focus();
-
-        note_editor.on( "change", function( e ) {
-            // TODO, we could make things more efficient and not likely to conflict by keeping track of change IDs
-            if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
-                collaborator.change( JSON.stringify(e), id ) ;
-            }
-            }, false
-        );
-        last_applied_change = null ;
-        just_cleared_buffer = false ;
-
-        load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
-        $('#modal_note_detail').modal({ show: true, backdrop: 'static'});
-
-        $('#modal_note_detail').off('hide.bs.modal').on("hide.bs.modal", function (e) {
-            forceModalClose = false;
-            return handle_note_close(id, e);
-        });
-
-        collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
-
-    });
+    window.history.replaceState({}, '', url);
 }
 
+/* Fetch the edit modal with content from server */
+async function note_detail(id) {
 
-async function handle_note_close(id, e) {
-    note_id = null;
-
-    if ($("#minimized_modal_box").is(":visible")) {
-        forceModalClose = true;
-        wasMiniNote = true;
-        save_note(null, get_caseid());
-    }
-
-
-    if ($('#btn_save_note').text() === "Save" && !forceModalClose) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        swal({
-            title: "Are you sure?",
-            text: "You have unsaved changes!",
-            icon: "warning",
-            buttons: {
-                cancel: {
-                    text: "Cancel",
-                    value: null,
-                    visible: true,
-                },
-                confirm: {
-                    text: "Discard changes",
-                    value: true,
+    get_request_api('/case/notes/' + id)
+    .done((data) => {
+        if (notify_auto_api(data, true, true)) {
+            let timer;
+            let timeout = 10000;
+            $('#form_note').keyup(function(){
+                if(timer) {
+                     clearTimeout(timer);
                 }
-            },
-            dangerMode: true,
-            closeOnEsc: false,
-            allowOutsideClick: false,
-            allowEnterKey: false
-        })
-        .then((willDiscard) => {
-            if (willDiscard) {
-                location.reload();
-            } else {
-                return false;
-            }
-        })
+                if (ppl_viewing.size <= 1) {
+                    timer = setTimeout(save_note, timeout);
+                }
+            });
 
-    } else {
-        forceModalClose = false;
-        if (!wasMiniNote) {
-            if (collaborator) {
-                collaborator.close();
-            }
-            if (note_editor) {
-                note_editor.destroy();
+            note_id = id;
+
+            collaborator = new Collaborator( get_caseid(), id );
+
+            if (note_editor !== undefined || note_editor !== null) {
+                note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function () {
+                    $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                    $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                    $('#btn_save_note').text("Save").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
+                }, save_note);
             }
 
-            if (ppl_viewing) {
-                ppl_viewing.clear();
-            }
+            note_editor.focus();
+
+            note_editor.setValue(data.data.note_content, -1);
+            $('#currentNoteTitle').text(data.data.note_title);
+            previousNoteTitle = data.data.note_title;
+            $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
+                .data('note_id', data.data.note_id);
+
+            note_editor.on( "change", function( e ) {
+                if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
+                    collaborator.change( JSON.stringify(e), id ) ;
+                }
+                }, false
+            );
+            last_applied_change = null ;
+            just_cleared_buffer = false ;
+
+            load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
+
+            collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
+
+            toggleNoteEditor(true);
+
+            $('.note').removeClass('note-highlight');
+            $('#note-' + id).addClass('note-highlight');
+
+            $('#object_comments_number').text(data.data.comments.length);
+            $('#content_last_saved_by').text('');
+            $('#content_typing').text('');
+            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
+            setSharedLink(id);
+
+            return true;
+        } else {
+            setSharedLink();
+            return false;
         }
-        collaborator_socket.off('save-note');
-        collaborator_socket.off('leave-note');
-        collaborator_socket.off('join-note');
-        collaborator_socket.off('ping-note');
-        collaborator_socket.off('disconnect');
-        collaborator_socket.off('clear_buffer-note');
-        collaborator_socket.off('change-note');
-        collaborator_socket.emit('ping-note', {'channel': 'case-' + get_caseid() + '-notes', 'note_id': null});
-        wasMiniNote = false;
 
-        await draw_kanban();
-        return true;
-    }
+    });
 }
 
 function refresh_ppl_list() {
     $('#ppl_list_viewing').empty();
     for (let [key, value] of ppl_viewing) {
         $('#ppl_list_viewing').append(get_avatar_initials(key, false, undefined, true));
-    }
-}
-
-function handle_ed_paste(event) {
-    let filename = null;
-    const { items } = event.originalEvent.clipboardData;
-    for (let i = 0; i < items.length; i += 1) {
-      const item = items[i];
-
-      if (item.kind === 'string') {
-        item.getAsString(function (s){
-            filename = $.trim(s.replace(/\t|\n|\r/g, '')).substring(0, 40);
-        });
-      }
-
-      if (item.kind === 'file') {
-        console.log(item.type);
-        const blob = item.getAsFile();
-
-        if (blob !== null) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                notify_success('The file is uploading in background. Don\'t leave the page');
-
-                if (filename === null) {
-                    filename = random_filename(25);
-                }
-
-                upload_interactive_data(e.target.result, filename, function(data){
-                    url = data.data.file_url + case_param();
-                    event.preventDefault();
-                    note_editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
-                });
-
-            };
-            reader.readAsDataURL(blob);
-        } else {
-            notify_error('Unsupported direct paste of this item. Use datastore to upload.');
-        }
-      }
     }
 }
 
@@ -625,29 +303,30 @@ function search_notes() {
 }
 
 function toggle_max_editor() {
-    if ($('#container_note_content').hasClass('col-md-12')) {
-        $('#container_note_content').removeClass('col-md-12').addClass('col-md-6');
-        $('#ctrd_notesum').removeClass('d-none');
-        $('#btn_max_editor').html('<i class="fa-solid fa-minimize"></i>');
-    } else {
-        $('#container_note_content').removeClass('col-md-6').addClass('col-md-12');
-        $('#ctrd_notesum').addClass('d-none');
+    $('#ctrd_notesum').toggle();
+    if ($('#ctrd_notesum').is(':visible')) {
         $('#btn_max_editor').html('<i class="fa-solid fa-maximize"></i>');
+        $('#container_note_content').removeClass('col-md-12 col-lg-12').addClass('col-md-12 col-lg-6');
+    } else {
+        $('#btn_max_editor').html('<i class="fa-solid fa-minimize"></i>');
+        $('#container_note_content').removeClass('col-md-12 col-lg-6').addClass('col-md-12 col-lg-12');
     }
-
 }
 
 /* Save a note into db */
-function save_note(this_item, cid) {
+function save_note() {
     clear_api_error();
-    var n_id = $("#info_note_modal_content").find('iris_notein').text();
+    let n_id = $('#currentNoteIDLabel').data('note_id')
 
 
-    var data_sent = $('#form_note').serializeObject();
+    let data_sent = Object();
+    let currentNoteTitle = $('#currentNoteTitle').text() ? $('#currentNoteTitle').text() : $('#currentNoteTitleInput').val();
+    data_sent['note_title'] = currentNoteTitle;
+    data_sent['csrf_token'] = $('#csrf_token').val();
     data_sent['note_content'] = $('#note_content').val();
-    ret = get_custom_attributes_fields();
-    has_error = ret[0].length > 0;
-    attributes = ret[1];
+    let ret = get_custom_attributes_fields();
+    let has_error = ret[0].length > 0;
+    let attributes = ret[1];
 
     if (has_error){return false;}
 
@@ -665,53 +344,502 @@ function save_note(this_item, cid) {
              $("#content_last_saved_by").text('Last saved by you');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
             collaborator.save(n_id);
+            if (previousNoteTitle !== currentNoteTitle) {
+                load_directories().then(function() {
+                    $('.note').removeClass('note-highlight');
+                    $('#note-' + n_id).addClass('note-highlight');
+                });
+                previousNoteTitle = currentNoteTitle;
+            }
         }
     });
 }
 
 /* Span for note edition */
 function edit_innote() {
-    return edit_inner_editor('notes_edition_btn', 'container_note_content', 'ctrd_notesum');
+    $('#container_note_content').toggle();
+    if ($('#container_note_content').is(':visible')) {
+        $('#notes_edition_btn').show(100);
+        $('#ctrd_notesum').removeClass('col-md-11 col-lg-11 ml-4').addClass('col-md-6 col-lg-6');
+    } else {
+        $('#notes_edition_btn').hide(100);
+        $('#ctrd_notesum').removeClass('col-md-6 col-lg-6').addClass('col-md-11 col-lg-11 ml-4');
+    }
 }
 
-/* Load the kanban case data and build the board from it */
-async function draw_kanban() {
-    /* Empty board */
-    $('#myKanban').empty();
-    show_loader();
-
-    return get_request_api('/case/notes/groups/list')
+async function load_directories() {
+    return get_request_api('/case/notes/directories/filter')
         .done((data) => {
             if (notify_auto_api(data, true)) {
-                gidl = [];
-                if (data.data.groups.length > 0) {
-                    $('#empty-set-notes').hide();
-                } else {
-                    $('#empty-set-notes').show();
-                }
-                for (idx in data.data.groups) {
-                    group = data.data.groups[idx];
-                    if (!gidl.includes(group.group_id)) {
-                        nextGroupNote(group.group_title, group.group_id);
-                        gidl.push(group.group_id);
-                    }
-                    for  (ikd in group.notes) {
-                        note = group.notes[ikd];
-                        add_subnote(group.group_id,
-                                note.note_id,
-                                note.note_title,
-                                note.note_lastupdate,
-                                note.user
-                            );
-                    }
-                }
-            set_last_state(data.data.state);
-            hide_loader();
-            }
+                data = data.data;
+                let directoriesListing = $('#directoriesListing');
+                directoriesListing.empty();
 
+                let directoryMap = new Map();
+                data.forEach(function(directory) {
+                    directoryMap.set(directory.id, directory);
+                });
+
+                let subdirectoryIds = new Set();
+                data.forEach(function(directory) {
+                    directory.subdirectories.forEach(function(subdirectory) {
+                        subdirectoryIds.add(subdirectory.id);
+                    });
+                });
+
+                let directories = data.filter(function(directory) {
+                    return !subdirectoryIds.has(directory.id);
+                });
+
+                directories.forEach(function(directory) {
+                    directoriesListing.append(createDirectoryListItem(directory, directoryMap));
+                });
+            }
         });
+}
+
+function download_note() {
+    // Use directly the content of the note editor
+    let content = note_editor.getValue();
+    let filename = $('#currentNoteTitle').text() + '.md';
+    let blob = new Blob([content], {type: 'text/plain'});
+    let url = window.URL.createObjectURL(blob);
+
+    // Create a link to the file and click it to download it
+    let link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+}
+
+function add_note(directory_id) {
+    let data = Object();
+    data['directory_id'] = directory_id;
+    data['note_title'] = 'New note';
+    data['note_content'] = '';
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api('/case/notes/add', JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            note_detail(data.data.note_id);
+            load_directories().then(function() {
+                $('.note').removeClass('note-highlight');
+                $('#note-' + data.data.note_id).addClass('note-highlight');
+            });
+        }
+    });
+}
+
+function add_folder(directory_id) {
+    let data = Object();
+    data['parent_id'] = directory_id;
+    data['name'] = 'New folder';
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api('/case/notes/directories/add', JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            rename_folder(data.data.id);
+        }
+    });
+}
+
+function refresh_folders() {
+    load_directories().then(function() {
+        notify_success('Tree  refreshed');
+        let note_id = $('#currentNoteIDLabel').data('note_id');
+        $('.note').removeClass('note-highlight');
+        $('#note-' + note_id).addClass('note-highlight');
+    });
+}
+
+function toggleDirectories() {
+    // Select all directory elements
+    let directories = $('.directory-container');
+
+    // Toggle the visibility of the directories
+    directories.toggle();
 
 }
+
+function rename_folder_api(directory_id, newName) {
+    let data = Object();
+    data['name'] = newName;
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api(`/case/notes/directories/update/${directory_id}`,
+        JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data)) {
+            load_directories();
+        }
+    });
+}
+
+function delete_folder_api(directory_id) {
+    let data = Object();
+    data['csrf_token'] = $('#csrf_token').val();
+
+    post_request_api(`/case/notes/directories/delete/${directory_id}`,
+        JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data)) {
+            load_directories();
+        }
+    });
+}
+
+function move_note_api(note_id, new_directory_id) {
+    let data = Object();
+    data['csrf_token'] = $('#csrf_token').val();
+    data['directory_id'] = new_directory_id;
+
+    return post_request_api(`/case/notes/update/${note_id}`,
+        JSON.stringify(data));
+}
+
+function move_item(item_id, item_type) {
+    // Create a modal with a list of directories to move the folder to
+    let modal = $('#moveFolderModal');
+
+    let directoriesListing = $('<ul></ul>');
+    $('#dirListingMove').empty().append(directoriesListing);
+
+    let directoryMap = new Map();
+    $('#directoriesListing').find('li').filter('.directory').each(function() {
+        let directory = $(this).data('directory');
+        directoryMap.set(directory.id, directory);
+    });
+
+    let subdirectoryIds = new Set();
+
+    function addSubdirectoryIds(directory) {
+        directory.subdirectories.forEach(function(subdirectory) {
+            subdirectoryIds.add(subdirectory.id);
+            let subdirectoryData = directoryMap.get(subdirectory.id);
+            if (subdirectoryData) {
+                addSubdirectoryIds(subdirectoryData);
+            }
+        });
+    }
+
+    directoryMap.forEach(function(directory) {
+        addSubdirectoryIds(directory);
+    });
+
+    let directories = Array.from(directoryMap.values()).filter(function(directory) {
+        return item_type === 'folder' ? (item_id !== directory.id) : true;
+    });
+
+    let listItem = $('<li></li>');
+    let link = $('<a></a>').attr('href', '#').text('Root');
+    listItem.append(link);
+
+    link.on('click', function(e) {
+        e.preventDefault();
+        if (item_type === 'note') {
+            move_note_api(item_id, null).then(function() {
+                modal.modal('hide');
+            });
+        }
+        else if (item_type === 'folder') {
+            move_folder_api(item_id, null).then(function () {
+                modal.modal('hide');
+            });
+        }
+    });
+
+    directoriesListing.append(listItem);
+
+    directories.forEach(function(directory) {
+        let listItem = $('<li></li>');
+        let link = $('<a></a>').attr('href', '#');
+        link.append($('<i></i>').addClass('fa-regular fa-folder mr-2'));  // Add a folder icon
+        link.append(' ' + directory.name);
+        listItem.append(link);
+
+        link.on('click', function(e) {
+            e.preventDefault();
+            if (item_type === 'note') {
+                move_note_api(item_id, directory.id).then(function() {
+                    // reload the directories
+                    load_directories()
+                    .then(function() {
+                        note_detail(item_id);
+                        modal.modal('hide');
+                    });
+                });
+            }
+            else if (item_type === 'folder') {
+                move_folder_api(item_id, directory.id).then(function () {
+                    load_directories()
+                    .then(function() {
+                        modal.modal('hide');
+                    });
+                });
+            }
+        });
+
+        directoriesListing.append(listItem);
+    });
+
+    modal.modal('show');
+}
+
+async function move_folder_api(directory_id, new_parent_id) {
+    let data = Object();
+    data['csrf_token'] = $('#csrf_token').val();
+    data['parent_id'] = new_parent_id;
+
+    return post_request_api(`/case/notes/directories/update/${directory_id}`,
+        JSON.stringify(data))
+    .done((data) => {
+        if (notify_auto_api(data)) {
+            load_directories();
+        }
+    });
+}
+
+function delete_folder(directory_id) {
+    swal({
+        title: 'Delete folder',
+        text: 'Are you sure you want to delete this folder? All subfolders and notes will be deleted as well.',
+        icon: 'warning',
+        buttons: {
+            cancel: {
+                text: 'Cancel',
+                value: null,
+                visible: true,
+            },
+            confirm: {
+                text: 'Delete',
+                value: true,
+            }
+        },
+        dangerMode: true,
+        closeOnEsc: false,
+        allowOutsideClick: false,
+        allowEnterKey: false
+    })
+        .then((willDelete) => {
+            if (willDelete) {
+                delete_folder_api(directory_id);
+            }
+        });
+}
+
+function rename_folder(directory_id, new_directory=false) {
+
+    // Prompt the user for a new name
+    swal({
+        title: new_directory?  'Rename directory': "Name the new folder",
+        text: 'Enter a new name for the folder',
+        content: 'input',
+        buttons: {
+            cancel: {
+                text: 'Cancel',
+                value: null,
+                visible: true,
+            },
+            confirm: {
+                text: new_directory ? 'Ok' : 'Rename',
+                value: true,
+            }
+        },
+        dangerMode: true,
+        closeOnEsc: false,
+        allowOutsideClick: false,
+        allowEnterKey: false
+    })
+        .then((newName) => {
+            if (newName) {
+                rename_folder_api(directory_id, newName);
+            }
+        });
+}
+
+function fetchNotes(searchInput) {
+    // Send a GET request to the server with the search input as a parameter
+    get_raw_request_api('/case/notes/search?search_input=' + encodeURIComponent(searchInput) + '&cid=' + get_caseid())
+        .done(data => {
+            if (notify_auto_api(data, true)) {
+                $('.directory-container').find('li').hide();
+                $('.directory').hide();
+                $('.note').hide();
+
+                data.data.forEach(note => {
+                    // Show the note
+                    $('#note-' + note.note_id).show();
+
+                    // Show all ancestor directories of the note
+                    let parentDirectory = $('#directory-' + note.directory_id);
+                    while (parentDirectory.length > 0) {
+                        parentDirectory.show();
+                        parentDirectory = parentDirectory.parents('.directory').first();
+                    }
+                });
+            }
+        });
+}
+
+function getNotesInfo(directory, directoryMap, currentNoteID) {
+    let totalNotes = directory.notes.length;
+    let hasMoreThanFiveNotes = directory.notes.length > 5;
+    let dirContainsCurrentNote = directory.notes.some(note => note.id == currentNoteID);
+
+    for (let i = 0; i < directory.subdirectories.length; i++) {
+        let subdirectoryId = directory.subdirectories[i].id;
+        let subdirectory = directoryMap.get(subdirectoryId);
+        if (subdirectory) {
+            let subdirectoryInfo = getNotesInfo(subdirectory, directoryMap, currentNoteID);
+            totalNotes += subdirectoryInfo.totalNotes;
+            hasMoreThanFiveNotes = hasMoreThanFiveNotes || subdirectoryInfo.hasMoreThanFiveNotes;
+            dirContainsCurrentNote = dirContainsCurrentNote || subdirectoryInfo.dirContainsCurrentNote;
+        }
+    }
+
+    return { totalNotes, hasMoreThanFiveNotes, dirContainsCurrentNote };
+}
+
+
+
+function createDirectoryListItem(directory, directoryMap) {
+    // Create a list item for the directory
+    var listItem = $('<li></li>').attr('id', 'directory-' + directory.id).addClass('directory');
+    listItem.data('directory', directory);
+    var link = $('<a></a>').attr('href', '#');
+    var icon = $('<i></i>').addClass('fa-regular fa-folder');  // Create an icon for the directory
+    link.append(icon);
+    link.append(' ' + directory.name);
+    listItem.append(link);
+
+    let currentNoteID = getSharedLink();
+
+    var container = $('<div></div>').addClass('directory-container');
+    listItem.append(container);
+
+    let notesInfo = getNotesInfo(directory, directoryMap, currentNoteID);
+    icon.append($('<span></span>').addClass('notes-number').text(notesInfo.totalNotes));
+    if (!notesInfo.hasMoreThanFiveNotes || notesInfo.dirContainsCurrentNote) {
+        icon.removeClass('fa-folder').addClass('fa-folder-open');
+    } else {
+        container.hide();
+    }
+
+    link.on('click', function(e) {
+        e.preventDefault();
+        container.slideToggle();
+        icon.toggleClass('fa-folder fa-folder-open');
+    });
+
+    link.on('contextmenu', function(e) {
+        e.preventDefault();
+
+        let menu = $('<div></div>').addClass('dropdown-menu show').css({
+            position: 'absolute',
+            left: e.pageX,
+            top: e.pageY
+        });
+
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Add note').on('click', function(e) {
+            e.preventDefault();
+            add_note(directory.id);
+        }));
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Add directory').on('click', function(e) {
+            e.preventDefault();
+            add_folder(directory.id);
+        }));
+
+        menu.append($('<div></div>').addClass('dropdown-divider'));
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Rename').on('click', function(e) {
+            e.preventDefault();
+            rename_folder(directory.id);
+        }));
+        menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Move').on('click', function(e) {
+            e.preventDefault();
+            move_item(directory.id, 'folder');
+        }));
+
+        menu.append($('<div></div>').addClass('dropdown-divider'));
+        menu.append($('<a></a>').addClass('dropdown-item text-danger').attr('href', '#').text('Delete').on('click', function(e) {
+            e.preventDefault();
+            delete_folder(directory.id);
+        }));
+
+        $('body').append(menu).on('click', function() {
+            menu.remove();
+        });
+    });
+
+    // If the directory has subdirectories, create a list item for each subdirectory
+    if (directory.subdirectories && directory.subdirectories.length > 0) {
+        var subdirectoriesList = $('<ul></ul>').addClass('nav');
+        directory.subdirectories.forEach(function(subdirectory) {
+            // Look up the subdirectory in the directoryMap
+            var subdirectoryData = directoryMap.get(subdirectory.id);
+            if (subdirectoryData) {
+                subdirectoriesList.append(createDirectoryListItem(subdirectoryData, directoryMap));
+            }
+        });
+        container.append(subdirectoriesList);
+    }
+
+    // If the directory has notes, create a list item for each note
+    if (directory.notes && directory.notes.length > 0) {
+        var notesList = $('<ul></ul>').addClass('nav');
+        directory.notes.forEach(function(note) {
+            var noteListItem = $('<li></li>').attr('id', 'note-' + note.id).addClass('note');
+            var noteLink = $('<a></a>').attr('href', '#');
+            noteLink.append($('<i></i>').addClass('fa-regular fa-file'));
+            noteLink.append(' ' + note.title);
+
+            // Add a click event listener to the note link that calls note_detail with the note ID
+            noteLink.on('click', function(e) {
+                e.preventDefault();
+                note_detail(note.id);
+
+                // Highlight the note in the directory
+                $('.note').removeClass('note-highlight');
+                noteListItem.addClass('note-highlight');
+            });
+
+            noteLink.on('contextmenu', function(e) {
+                e.preventDefault();
+
+                let menu = $('<div></div>').addClass('dropdown-menu show').css({
+                    position: 'absolute',
+                    left: e.pageX,
+                    top: e.pageY
+                });
+
+
+                menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Move').on('click', function (e) {
+                    e.preventDefault();
+                    move_item(note.id, 'note');
+                }));
+
+                menu.append($('<div></div>').addClass('dropdown-divider'));
+                menu.append($('<a></a>').addClass('dropdown-item text-danger').attr('href', '#').text('Delete').on('click', function (e) {
+                    e.preventDefault();
+                    delete_note(note.id, cid);
+                }));
+
+                $('body').append(menu).on('click', function() {
+                    menu.remove();
+                });
+
+            });
+
+            noteListItem.append(noteLink);
+            notesList.append(noteListItem);
+        });
+        container.append(notesList);
+    }
+
+    return listItem;
+}
+
 
 function note_interval_pinger() {
     if (new Date() - last_ping > 2000) {
@@ -722,21 +850,26 @@ function note_interval_pinger() {
 }
 
 $(document).ready(function(){
-    shared_id = getSharedLink();
-    if (shared_id) {
-        note_detail(shared_id);
-    }
+    load_directories().then(
+        function() {
+            let shared_id = getSharedLink();
+            if (shared_id) {
+                note_detail(shared_id);
+            }
 
-    let cid = get_caseid();
+            $('.page-aside').resizable({
+                handles: 'e'
+            });
+        }
+    )
+
+
+    cid = get_caseid();
     collaborator_socket = io.connect();
     collaborator_socket.emit('join-notes-overview', { 'channel': 'case-' + cid + '-notes' });
 
     collaborator_socket.on('ping-note', function(data) {
         last_ping = new Date();
-        if ( data.note_id === null || data.note_id !== note_id) {
-            set_notes_follow(data);
-            return;
-        }
 
         ppl_viewing.set(data.user, 1);
         for (let [key, value] of ppl_viewing) {
@@ -757,5 +890,33 @@ $(document).ready(function(){
     collaborator_socket.emit('ping-note', { 'channel': 'case-' + cid + '-notes', 'note_id': note_id });
 
     setInterval(auto_remove_typing, 1500);
+
+    $(document).on('click', '#currentNoteTitle', function() {
+        let title = $(this).text();
+        $(this).replaceWith('<input id="currentNoteTitleInput" type="text" value="' + title + '">');
+        $('#currentNoteTitleInput').focus();
+    });
+
+    $(document).on('blur keyup', '#currentNoteTitleInput', function(e) {
+        if (e.type === 'blur' || e.key === 'Enter') {
+            let title = $(this).val();
+            $(this).replaceWith('<h4 class="page-title mb-0" id="currentNoteTitle">' + title + '</h4>');
+            save_note();
+        }
+    });
+
+    $('#search-input').keyup(function() {
+        let searchInput = $(this).val();
+        fetchNotes(searchInput);
+    });
+
+    $('#clear-search').on('click', function() {
+        // Clear the search input field
+        $('#search-input').val('');
+
+        $('.directory-container').find('li').show();
+        $('.directory').show();
+        $('.note').show();
+    });
 
 });

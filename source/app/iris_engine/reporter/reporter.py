@@ -307,7 +307,7 @@ class IrisMakeDocReport(IrisReportMaker):
 
         name = "{}".format("{}.docx".format(report.naming_format))
         name = name.replace("%code_name%", case_info['doc_id'])
-        name = name.replace('%customer%', case_info['case'].get('for_customer'))
+        name = name.replace('%customer%', case_info['case']['client']['customer_name'])
         name = name.replace('%case_name%', case_info['case'].get('name'))
         name = name.replace('%date%', datetime.utcnow().strftime("%Y-%m-%d"))
         output_file_path = os.path.join(self._tmp, name)
@@ -347,7 +347,8 @@ class IrisMakeDocReport(IrisReportMaker):
             'gen_user': current_user.name,
             'case': {'name': case_info_in['case'].get('name'),
                      'open_date': case_info_in['case'].get('open_date'),
-                     'for_customer': case_info_in['case'].get('for_customer')
+                     'for_customer': case_info_in['case'].get('for_customer'),
+                     'client': case_info_in['case'].get('client')
                      },
             'doc_id': doc_id
         }
@@ -549,11 +550,13 @@ class IrisMakeMdReport(IrisReportMaker):
 
         _, report_format = os.path.splitext(report.internal_reference)
 
+        case_info['case']['for_customer'] = f"{case_info['case'].get('client').get('customer_name')} (legacy::use client.customer_name)"
+
         # Prepare report name
         name = "{}".format(("{}" + str(report_format)).format(report.naming_format))
         name = name.replace("%code_name%", case_info['doc_id'])
         name = name.replace(
-            '%customer%', case_info['case'].get('for_customer'))
+            '%customer%', case_info['case'].get('client').get('customer_name'))
         name = name.replace('%case_name%', case_info['case'].get('name'))
         name = name.replace('%date%', datetime.utcnow().strftime("%Y-%m-%d"))
 

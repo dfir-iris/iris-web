@@ -7,6 +7,7 @@ Create Date: 2022-01-06 13:47:12.648707
 """
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 from app.alembic.alembic_utils import _table_has_column
@@ -48,7 +49,7 @@ def upgrade():
 
         # Migrate existing Assets
         conn = op.get_bind()
-        res = conn.execute("SELECT asset_id from case_assets WHERE asset_tags IS NULL;")
+        res = conn.execute(text("SELECT asset_id from case_assets WHERE asset_tags IS NULL;"))
         results = res.fetchall()
 
         if results:

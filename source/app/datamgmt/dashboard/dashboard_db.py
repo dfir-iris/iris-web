@@ -69,7 +69,8 @@ def get_global_task(task_id):
     ).filter(
         GlobalTasks.id == task_id
     ).join(
-        GlobalTasks.user_assigned,
+        GlobalTasks.user_assigned
+    ).join(
         GlobalTasks.status
     ).order_by(
         desc(TaskStatus.status_name)

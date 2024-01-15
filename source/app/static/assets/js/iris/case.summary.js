@@ -301,6 +301,10 @@ function case_detail(case_id, edit_mode=false) {
         if (edit_mode) {
             edit_case_info();
         }
+
+        $('#modal_case_detail').off('hide.bs.modal').on("hide.bs.modal", function (e) {
+            location.reload();
+        });
     });
 }
 

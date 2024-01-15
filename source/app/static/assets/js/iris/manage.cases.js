@@ -25,93 +25,6 @@ $('#classification_id').selectpicker({
 $('#classification_id').prepend(new Option('', ''));
 
 
-/* Submit event handler for new case */
-function submit_new_case() {
-
-    if(!$('form#form_new_case').valid()) {
-        return false;
-    }
-
-    var data_sent = $('form#form_new_case').serializeObject();
-    ret = get_custom_attributes_fields();
-    has_error = ret[0].length > 0;
-    attributes = ret[1];
-
-    if (has_error){return false;}
-
-    data_sent['custom_attributes'] = attributes;
-
-    send_add_case(data_sent);
-
-    return false;
-};
-
-
-function send_add_case(data_sent) {
-
-    post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {
-        $('#submit_new_case_btn').text('Checking data..')
-            .attr("disabled", true)
-            .removeClass('bt-outline-success')
-            .addClass('btn-success', 'text-dark');
-    })
-    .done((data) => {
-        if (notify_auto_api(data, true)) {
-            case_id = data.data.case_id;
-            swal("That's done !",
-                "Case has been successfully created",
-                "success",
-                {
-                    buttons: {
-                        again: {
-                            text: "Create a case again",
-                            value: "again",
-                            dangerMode: true,
-                            color: '#d33'
-                        },
-                        dash: {
-                            text: "Go to dashboard",
-                            value: "dash",
-                            color: '#d33'
-                        },
-                        go_case: {
-                            text: "Switch to newly created case",
-                            value: "go_case"
-                        }
-                    }
-                }
-            ).then((value) => {
-                switch (value) {
-
-                    case "dash":
-                        window.location.replace("/dashboard" + case_param());
-                        break;
-
-                    case "again":
-                        window.location.replace("/manage/cases" + case_param());
-                        break;
-
-                    case 'go_case':
-                        window.location.replace("/case?cid=" + case_id);
-
-                    default:
-                        window.location.replace("/case?cid=" + case_id);
-                }
-            });
-        }
-    })
-    .always(() => {
-        $('#submit_new_case_btn')
-        .attr("disabled", false)
-        .addClass('bt-outline-success')
-        .removeClass('btn-success', 'text-dark');
-    })
-    .fail(() => {
-        $('#submit_new_case_btn').text('Save');
-    })
-
-}
-
  /*************************
  *  Case list section 
  *************************/
@@ -135,8 +48,11 @@ $('#cases_table').dataTable({
     "columns": [
         {
             "render": function (data, type, row) {
-                data = sanitizeHTML(data);
-                return '<a href="#" onclick="case_detail(\'' + row['case_id'] + '\');">' + data + '</a>';
+               let a_anchor = $('<a>');
+                a_anchor.attr('href', 'javascript:void(0);');
+                a_anchor.attr('onclick', 'case_detail(\'' + row['case_id'] + '\');');
+                a_anchor.text(data);
+                return a_anchor[0].outerHTML;
             },
             "data": "case_name"
         },
@@ -144,12 +60,7 @@ $('#cases_table').dataTable({
             "data": "case_description",
             "render": function (data, type, row) {
                 if (type === 'display' && data != null) {
-                    if (row["case_description"].length > 50){
-                        return sanitizeHTML(row["case_description"].slice(0,50)) + " ... " ;
-                    }
-                    else {
-                        return sanitizeHTML(row["case_description"]);
-                    }
+                    return ret_obj_dt_description(data);
                 }
                 return data;
             },
@@ -187,7 +98,11 @@ $('#cases_table').dataTable({
         {
             "data": "case_soc_id",
             "render": function (data, type, row, meta) {
-                if (type === 'display') { data = sanitizeHTML(data);}
+                if (type === 'display') {
+                    let span_anchor = $('<span>');
+                    span_anchor.text(data);
+                    return span_anchor.html();
+                }
                 return data;
               }
         },
@@ -209,6 +124,7 @@ $('#cases_table').dataTable({
     pageLength: 25,
     select: true,
     sort: true,
+    orderCellsTop: true,
     responsive: {
         details: {
             display: $.fn.dataTable.Responsive.display.childRow,

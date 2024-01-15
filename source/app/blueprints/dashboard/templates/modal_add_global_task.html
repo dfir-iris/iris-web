@@ -69,10 +69,8 @@
 </div>
 
 <script>
-    $('#task_tags').amsifySuggestags({
-        printValues: false,
-        suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
-    });
+    set_suggest_tags('task_tags');
+
     $('#task_assignee_id').selectpicker({
         liveSearch: true,
         title: "None",

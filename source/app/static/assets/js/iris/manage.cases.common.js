@@ -1,9 +1,3 @@
-
-function add_protagonist() {
-    prota_html = $('#protagonist_list_edit_template').html();
-    $('#protagonist_list_edit').append(prota_html);
-}
-
 function refresh_case_table() {
     if ($('#cases_table').length === 0) {
         return false;
@@ -26,6 +20,42 @@ function case_detail(id) {
 
         $('#modal_case_detail').modal({ show: true });
 
+    });
+}
+
+/* Close case function */
+function close_case(id) {
+    swal({
+        title: "Are you sure?",
+        text: "Case ID " + id + " will be closed and will not appear in contexts anymore",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, close it!'
+    })
+    .then((willClose) => {
+        if (willClose) {
+            post_request_api('/manage/cases/close/' + id)
+            .done((data) => {
+                if (!refresh_case_table()) {
+                    window.location.reload();
+                }
+                $('#modal_case_detail').modal('hide');
+            });
+        }
+    });
+}
+
+/* Reopen case function */
+function reopen_case(id) {
+    post_request_api('/manage/cases/reopen/' + id)
+    .done((data) => {
+        if (!refresh_case_table()) {
+            window.location.reload();
+        }
+        $('#modal_case_detail').modal('hide');
     });
 }
 
@@ -70,41 +100,6 @@ function remove_case(id) {
         });
 }
 
-/* Reopen case function */
-function reopen_case(id) {
-    post_request_api('/manage/cases/reopen/' + id)
-    .done((data) => {
-        if (!refresh_case_table()) {
-            window.location.reload();
-        }
-        $('#modal_case_detail').modal('hide');
-    });
-}
-
-/* Close case function */
-function close_case(id) {
-    swal({
-        title: "Are you sure?",
-        text: "Case ID " + id + " will be closed and will not appear in contexts anymore",
-        icon: "warning",
-        buttons: true,
-        dangerMode: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, close it!'
-    })
-    .then((willClose) => {
-        if (willClose) {
-            post_request_api('/manage/cases/close/' + id)
-            .done((data) => {
-                if (!refresh_case_table()) {
-                    window.location.reload();
-                }
-            });
-        }
-    });
-}
-
 function edit_case_info() {
     $('#case_gen_info_content').hide();
     $('#case_gen_info_edit').show();
@@ -117,8 +112,8 @@ function cancel_case_edit() {
     $('#case_gen_info_content').show();
     $('#case_gen_info_edit').hide();
     $('#cancel_case_info').hide();
-    $('#case_info').show();
     $('#save_case_info').hide();
+    $('#case_info').show();
 }
 
 function save_case_edit(case_id) {
@@ -169,6 +164,17 @@ function save_case_edit(case_id) {
             case_detail(case_id);
         }
     });
+}
+
+function add_protagonist() {
+    random_string = Math.random().toString(36).substring(7);
+    prota_html = $('#protagonist_list_edit_template').html();
+    prota_html = prota_html.replace(/__PROTAGONIST_ID__/g, random_string);
+    $('#protagonist_list_edit').append(prota_html);
+}
+
+function remove_protagonist(id) {
+    $('#protagonist_' + id).remove();
 }
 
 function remove_case_access_from_user(user_id, case_id, on_finish) {
@@ -357,10 +363,7 @@ function access_case_info_reload(case_id, owner_id, reviewer_id) {
         }
     });
 
-    $('#case_tags').amsifySuggestags({
-        printValues: false,
-        suggestions: []
-    });
+    set_suggest_tags('case_tags');
 }
 
 

@@ -123,7 +123,7 @@ def delete_ioc(ioc, caseid):
 
 
 def get_detailed_iocs(caseid):
-    detailed_iocs = IocLink.query.with_entities(
+    detailed_iocs = (IocLink.query.with_entities(
         Ioc.ioc_id,
         Ioc.ioc_uuid,
         Ioc.ioc_value,
@@ -139,10 +139,10 @@ def get_detailed_iocs(caseid):
     ).filter(
         and_(IocLink.case_id == caseid,
              IocLink.ioc_id == Ioc.ioc_id)
-    ).join(IocLink.ioc,
-           Ioc.tlp,
-           Ioc.ioc_type
-    ).order_by(IocType.type_name).all()
+    ).join(IocLink.ioc)
+     .join(Ioc.ioc_type)
+     .join(Ioc.tlp)
+     .order_by(IocType.type_name).all())
 
     return detailed_iocs
 
@@ -154,7 +154,7 @@ def get_ioc_links(ioc_id, caseid):
     if user_search_limitations:
         search_condition = and_(Cases.case_id.in_(user_search_limitations))
 
-    ioc_link = IocLink.query.with_entities(
+    ioc_link = (IocLink.query.with_entities(
         Cases.case_id,
         Cases.name.label('case_name'),
         Client.name.label('client_name')
@@ -162,7 +162,9 @@ def get_ioc_links(ioc_id, caseid):
         IocLink.ioc_id == ioc_id,
         IocLink.case_id != caseid,
         search_condition)
-    ).join(IocLink.case, Cases.client).all()
+    ).join(IocLink.case)
+     .join(Cases.client)
+     .all())
 
     return ioc_link
 
@@ -307,7 +309,7 @@ def get_case_iocs_comments_count(iocs_list):
 
 
 def get_case_ioc_comment(ioc_id, comment_id):
-    return IocComments.query.filter(
+    return (IocComments.query.filter(
         IocComments.comment_ioc_id == ioc_id,
         IocComments.comment_id == comment_id
     ).with_entities(
@@ -318,10 +320,8 @@ def get_case_ioc_comment(ioc_id, comment_id):
         Comments.comment_uuid,
         User.name,
         User.user
-    ).join(
-        IocComments.comment,
-        Comments.user
-    ).first()
+    ).join(IocComments.comment)
+            .join(Comments.user).first())
 
 
 def delete_ioc_comment(ioc_id, comment_id):

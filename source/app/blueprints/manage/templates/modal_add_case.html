@@ -1,0 +1,75 @@
+<div class="modal-header">
+    <h4>Create a new case</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+
+    <div class="container col-md-12">
+        <div class="row">
+            <div class="col-12">
+                Fields with an asterix are required. <br/>
+                Access to the case can be granted to other users once the case is created. Users pertaining to the customer will be able to see the case by default. <br/>
+
+                <form method="post" action='' id="form_new_case" autocomplete="off">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mt-4">
+                        <div class="input-group mb-4">
+                            {{ form.case_customer(class="selectpicker form-control") }}
+                        </div>
+                        <div class="input-group mb-4">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Case name *</span>
+                            </div>
+                            {{ form.case_name(class="form-control", type="text") }}
+                        </div>
+
+                        <div class="input-group mb-4">
+                            {{ form.case_template_id(class="selectpicker form-control", data_actions_box="true") }}
+                        </div>
+                        <div class="input-group mb-4">
+                            {{ form.classification_id(class="selectpicker form-control") }}
+                        </div>
+                        <div class="input-group mb-4">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Short description *</span>
+                            </div>
+                            {{ form.case_description(class="form-control", type="text") }}
+                        </div>
+                        <div class="input-group mb-4">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">SOC ticket ID</span>
+                            </div>
+                            {{ form.case_soc_id(class="form-control", type="text") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-12">
+                {% if attributes and attributes|length > 0 %}
+                    <h4><ul class="nav nav-tabs nav-lines mr-4" role="tablist">
+                            {% for ca in attributes %}
+                                <li class="nav-item submenu">
+                                    <a class="nav-link {% if loop.index == 1 %}{{"active show"}}{% endif %}"  data-toggle="tab" href="#itab_{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
+                                    role="tab" aria-selected="false">{{ca}}</a>
+                                </li>
+                            {% endfor %}
+
+                    </ul></h4>
+                    <div role="tabpanel">
+                        <div class="tab-content">
+                            {% set is_case_page = True %}
+                            {% include 'modals/modal_attributes_tabs.html' %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <button class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_case_btn" onclick="submit_new_case();">Create</button>
+            </div>
+        </div>
+
+    </div>
+
+</div>

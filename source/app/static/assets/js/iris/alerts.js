@@ -179,6 +179,9 @@ function mergeMultipleAlertsModal() {
                             type: 'GET',
                             dataType: 'json'
                         },
+                        minLength: 0,
+                        clearOnEmpty: false,
+                        emptyRequest: true,
                         locale: {
                             emptyTitle: 'Select and Begin Typing',
                             statusInitialized: '',
@@ -188,7 +191,7 @@ function mergeMultipleAlertsModal() {
                         },
                         preserveSelected: false
                     };
-                    get_request_api('/context/get-cases/100')
+                    get_request_api('/context/search-cases')
                         .done((data) => {
                             if (notify_auto_api(data, true)) {
                                 mergeAlertCasesSelectOption(data);
@@ -310,17 +313,20 @@ function mergeAlertModal(alert_id) {
                     type: 'GET',
                     dataType: 'json'
                 },
+                minLength: 0,
+                clearOnEmpty: false,
+                emptyRequest: true,
                 locale: {
                     emptyTitle: 'Select and Begin Typing',
                     statusInitialized: '',
                 },
                 preprocessData: function (data) {
-                    return context_data_parser(data);
+                    return context_data_parser(data, false);
                 },
                 preserveSelected: false
             };
 
-            get_request_api('/context/get-cases/100')
+            get_request_api('/context/search-cases')
             .done((data) => {
                 if (notify_auto_api(data, true)) {
                     mergeAlertCasesSelectOption(data);
@@ -1545,10 +1551,7 @@ async function editAlert(alert_id, close=false) {
     const confirmAlertEdition = $('#confirmAlertEdition');
 
     alertTag.val($(`#alertTags-${alert_id}`).text())
-    alertTag.amsifySuggestags({
-     printValues: false,
-     suggestions: []
-    });
+    set_suggest_tags(`editAlertTags`);
     $('#editAlertNote').val($(`#alertNote-${alert_id}`).text());
 
     if (close) {
@@ -1573,13 +1576,11 @@ async function editAlert(alert_id, close=false) {
       console.error(error);
     });
 
-    $('#editAlertModal').modal('show');
+   $('#editAlertModal').modal('show');
 
     confirmAlertEdition.off('click').on('click', function () {
         let alert_note = $('#editAlertNote').val();
         let alert_tags = alertTag.val();
-
-        console.log(getAlertResolutionId($("input[type='radio'][name='resolutionStatus']:checked").val()));
 
         let data = {
           alert_note: alert_note,
@@ -1598,6 +1599,40 @@ async function editAlert(alert_id, close=false) {
                 $('#editAlertModal').modal('hide');
             });
     });
+}
+
+function closeBatchAlerts() {
+    const alertTag = $('#editAlertTags');
+    const confirmAlertEdition = $('#confirmAlertEdition');
+    $('#editAlertNote').val('');
+    alertTag.val('');
+
+    confirmAlertEdition.text('Close alerts');
+    $('.alert-edition-part').hide();
+    $('#closeAlertModalLabel').text(`Close multiple alerts`);
+
+    $('#editAlertModal').modal('show');
+
+    confirmAlertEdition.off('click').on('click', function () {
+        let alert_note = $('#editAlertNote').val();
+        let alert_tags = alertTag.val();
+
+        let data = {
+          alert_note: alert_note,
+          alert_tags: alert_tags,
+          alert_resolution_status_id: getAlertResolutionId($("input[type='radio'][name='resolutionStatus']:checked").val()),
+        };
+
+        if (close) {
+            data['alert_status_id'] = getAlertStatusId('Closed');
+        }
+
+        updateBatchAlerts(data)
+            .then(() => {
+                $('#editAlertModal').modal('hide');
+            });
+    });
+
 }
 
 async function fetchSavedFilters() {

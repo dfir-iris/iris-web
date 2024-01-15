@@ -49,7 +49,7 @@
                                     {{ form.ioc_type_id(class="selectpicker pl--6 col-10") }}
                                 </div>
                                 <div class="col-6">
-                                    <label for="ioc_type" class="mr-4">TLP *
+                                    <label for="ioc_tlp" class="mr-4">TLP *
                                     </label>
                                     {{ form.ioc_tlp_id(class="selectpicker pl--6 col-10") }}
                                 </div>
@@ -123,10 +123,7 @@
     </div>
 <script>
     $('form#form_new_ioc').validate();
-    $('#ioc_tags').amsifySuggestags({
-        printValues: false,
-        suggestions: [ {% for tag in tags %} '{{ tag }}', {% endfor %} ]
-    });
+    set_suggest_tags('ioc_tags')
 
     $('#ioc_type_id').selectpicker({
         liveSearch: true,
