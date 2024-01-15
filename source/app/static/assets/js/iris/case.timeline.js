@@ -82,7 +82,7 @@ function add_event(parent_event_id = null) {
             data_sent['event_iocs'] = $('#event_iocs').val();
             data_sent['event_tz'] = $('#event_tz').val();
             data_sent['event_content'] = g_event_desc_editor.getValue();
-            data_sent['parent_event_id'] = $('#parent_event_id').val();
+            data_sent['parent_event_id'] = $('#parent_event_id').val() || null;
 
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
@@ -944,7 +944,11 @@ function build_timeline(data) {
     $('[data-toggle="popover"]').popover();
 
     if (data.data.tim.length === 0) {
-       $('#timeline_list').append('<h3 class="ml-mr-auto text-center">No events in current view</h3>');
+       $('#card_main_load').append('<h3 class="ml-mr-auto text-center" id="no_events_msg">No events in current view</h3>');
+       $('#timeline_list').hide();
+    } else {
+        $('#timeline_list').show();
+        $('#no_events_msg').remove('h3');
     }
 
     set_last_state(data.data.state);
@@ -985,15 +989,20 @@ function toggle_child_events() {
 
 function toggle_child_events_of_event(event_id) {
     let child_events = $('.timeline-child-' + event_id);
+    let event = $('#event_' + event_id);
 
     if (child_events.is(':visible')) {
         child_events.hide();
-        // Set the button to show child events
-        $('#event_' + event_id).find('button:last').html('<span class="btn-label"><i class="fa fa-chevron-right"></i> Child events</span>');
+        let btn = $('#event_' + event_id).find('button:last');
+        if (btn.html().indexOf('fa-chevron-down') !== -1) {
+            btn.html('<span class="btn-label"><i class="fa fa-chevron-right"></i> Child events</span>');
+        }
     } else {
         child_events.show();
-        // Set the button to hide child events
-        $('#event_' + event_id).find('button:last').html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
+        let btn = $('#event_' + event_id).find('button:last');
+        if (btn.html().indexOf('fa-chevron-right') !== -1) {
+            btn.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
+        }
     }
 }
 
