@@ -126,7 +126,7 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="form-group col-12">
+                                    <div class="form-group col-12 col-md-6">
                                         <label for="event_assets">Link to assets
                                         </label>
                                         <div class="select2-input ml-12" data-select2-id="6">
@@ -134,9 +134,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="row">
-                                    <div class="form-group col-10">
+                                    <div class="form-group col-12 col-md-6">
                                         <label for="event_assets">Link to IOCs
                                         </label>
                                         <div class="select2-input ml-12" data-select2-id="6">
@@ -144,7 +142,23 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="form-group col-2">
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-6">
+                                        <label for="event_category_id" class="form-label">{{ form.event_category_id.label.text }}</label>
+                                        <div class="row col-12">
+                                            {{ form.event_category_id(class="selectpicker") }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="parent_event_id" class="form-label">Parent Event ID</label>
+                                        <div class="row col-12">
+                                            <select class="selectpicker form-control" id="parent_event_id"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                     <div class="form-group col-md-12 col-xl-2">
                                        <div class="form-check">
                                             <label class="form-check-label mt-3">
                                                 <input class="form-check-input" type="checkbox" id="event_sync_iocs_assets" checked>
@@ -153,14 +167,6 @@
                                                     </span>
                                             </label>
                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="form-group col-5">
-                                        <label for="event_category_id" class="form-label">{{ form.event_category_id.label.text }}</label>
-                                        <div class="row col-12">
-                                            {{ form.event_category_id(class="selectpicker") }}
-                                        </div>
                                     </div>
                                     <div class="form-group col-xl-2 col-md-12">
                                         <div class="form-check">

@@ -19,7 +19,7 @@ function edit_in_event_desc() {
 }
 
 /* Fetch a modal that allows to add an event */
-function add_event() {
+function add_event(parent_event_id = null) {
     url = 'timeline/events/add/modal' + case_param();
     $('#modal_add_event_content').load(url, function (response, status, xhr) {
         hide_minimized_modal_box();
@@ -35,9 +35,40 @@ function add_event() {
                             }, null);
 
         g_event_desc_editor.setOption("minLines", "10");
-        headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
+        let headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
         $('#event_edition_btn').append(headers);
         edit_in_event_desc();
+
+        let parent_selector = $('#parent_event_id');
+
+        // Add empty option
+        let option = $('<option>');
+        option.attr('value', '');
+        option.text('No parent event');
+        parent_selector.append(option);
+
+        // Add all events to the parent selector
+        for (let idx in current_timeline) {
+            let event = current_timeline[idx];
+            let option = $('<option>');
+            option.attr('value', event.event_id);
+            option.text(`${event.event_title}`);
+            parent_selector.append(option);
+        }
+
+        parent_selector.selectpicker({
+            liveSearch: true,
+            size: 10,
+            width: '100%',
+            title: 'Select a parent event',
+            style: 'btn-light',
+            noneSelectedText: 'No event selected',
+        });
+
+        if (parent_event_id != null) {
+            parent_selector.selectpicker('val', parent_event_id);
+            parent_selector.selectpicker("refresh");
+        }
 
         $('#submit_new_event').on("click", function () {
             clear_api_error();
@@ -51,6 +82,7 @@ function add_event() {
             data_sent['event_iocs'] = $('#event_iocs').val();
             data_sent['event_tz'] = $('#event_tz').val();
             data_sent['event_content'] = g_event_desc_editor.getValue();
+            data_sent['parent_event_id'] = $('#parent_event_id').val();
 
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
@@ -121,6 +153,8 @@ function update_event_ext(event_id, do_close) {
     data_sent['event_iocs'] = $('#event_iocs').val();
     data_sent['event_tz'] = $('#event_tz').val();
     data_sent['event_content'] = g_event_desc_editor.getValue();
+    data_sent['parent_event_id'] = $('#parent_event_id').val() || null;
+
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];
@@ -185,7 +219,45 @@ function edit_event(id) {
         headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
         $('#event_edition_btn').append(headers);
         edit_in_event_desc();
-        
+
+        let parent_selector = $('#parent_event_id');
+
+        // Add empty option
+        let option = $('<option>');
+        option.attr('value', '');
+        option.text('No parent event');
+        parent_selector.append(option);
+
+        let target_idx = 0;
+        // Add all events to the parent selector and remove the current event
+        for (let idx in current_timeline) {
+            let event = current_timeline[idx];
+
+            if (event.event_id === id) {
+                target_idx = event.parent_event_id;
+                continue;
+            }
+
+            let option = $('<option>');
+            option.attr('value', event.event_id);
+            option.text(`${event.event_title}`);
+            parent_selector.append(option);
+        }
+
+        parent_selector.selectpicker({
+            liveSearch: true,
+            size: 10,
+            width: '100%',
+            title: 'Select a parent event',
+            style: 'btn-light',
+            noneSelectedText: 'No event selected',
+        });
+
+        if (target_idx!= null) {
+            parent_selector.selectpicker('val', target_idx);
+            parent_selector.selectpicker("refresh");
+        }
+
         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
   });
@@ -507,6 +579,7 @@ function build_timeline(data) {
     let idx = 0;
 
     let converter = get_showdown_convert();
+    let child_events = Object();
 
     for (let index in data.data.tim) {
         let evt = data.data.tim[index];
@@ -687,8 +760,8 @@ function build_timeline(data) {
         }
 
         if (compact) {
-            entry = `<li class="${inverted} ${mtop_day}" title="Event ID #${evt.event_id}">
-                    <div class="timeline-panel${timeline_style} ${style}" ${style_s} id="event_${evt.event_id}" >
+            entry = `<li class="${inverted} ${mtop_day}" title="Event ID #${evt.event_id}" >
+                    <div class="timeline-panel${timeline_style} ${style}" ${style_s}  id="event_${evt.event_id}">
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
                                 ${cats}
@@ -738,14 +811,19 @@ function build_timeline(data) {
                     </div>
                 </li>`
         } else {
-            entry = `<li class=${inverted} title="Event ID #${evt.event_id}">
-                    <div class="timeline-panel${timeline_style} ${style}" ${style_s} id="event_${evt.event_id}" >
+            entry = `<li class=${inverted} title="Event ID #${evt.event_id}" >
+                    <div class="timeline-panel${timeline_style} ${style}" ${style_s} id="event_${evt.event_id}">
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
 
                                 <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
                                     <span class="btn-label">
                                         <i class="fa fa-pen"></i>
+                                    </span>
+                                </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="add_event(${evt.event_id})" title="Add child event">
+                                    <span class="btn-label">
+                                       <i class="fa-brands fa-hive"></i>
                                     </span>
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
@@ -772,7 +850,7 @@ function build_timeline(data) {
                                 </div>
                             </div>
                             <div class="row mb-2">
-                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${hour} - ${title_parsed}</a>
+                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">[${hour}] ${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
@@ -797,17 +875,71 @@ function build_timeline(data) {
 
         //entry = match_replace_ioc(entry, reap);
         // display the time info as a small box
-        $('#timeline_list').append(tmb_d);
-        $('#timeline_list').append(entry);
 
+        if (evt.parent_event_id != null) {
+            if (!(evt.parent_event_id in child_events)) {
+                child_events[evt.parent_event_id] = [];
+            }
+            child_events[evt.parent_event_id].push(entry);
+            tesk = !tesk;
 
-        if (tree) {
-            $('#timeline_list').addClass('timeline-t');
         } else {
-            $('#timeline_list').removeClass('timeline-t');
+            $('#timeline_list').append(tmb_d);
+            $('#timeline_list').append(entry);
         }
 
     }
+
+
+    if (tree) {
+        $('#timeline_list').addClass('timeline-t');
+    } else {
+        $('#timeline_list').removeClass('timeline-t');
+    }
+
+    for (let parent_id in child_events) {
+        let parent_event = $('#event_' + parent_id);
+
+        let parent_event_class = parent_event.parent().attr('class');
+        let parent_class = parent_event.attr('class');
+
+        // Reverse the order of the child events list
+        child_events[parent_id] = child_events[parent_id].reverse();
+
+        // Add button on parent to toggle child events
+        let button = $('<button>');
+        button.attr('type', 'button');
+        button.attr('class', 'btn btn-light btn-xs mt-2');
+        button.attr('onclick', `toggle_child_events_of_event(${parent_id});`);
+        button.attr('title', 'Toggle child events');
+        button.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
+
+        parent_event.find('.timeline-body').append(button);
+
+        for (let child_html in child_events[parent_id]) {
+
+            let child = $(child_events[parent_id][child_html]);
+
+            child.attr('class', parent_event_class);
+            child.addClass('timeline-child');
+            child.addClass('timeline-child-' + parent_id);
+
+            child.find('div:first').attr('class', parent_class);
+
+            let child_date = child.find('.bottom-hour').find('small').text();
+            let parent_date = parent_event.find('.bottom-hour').find('small').text();
+            child_date = Date.parse(child_date);
+            parent_date = Date.parse(parent_date);
+
+            if (child_date < parent_date) {
+                child.find('.bottom-hour').append('<span class="ml-2"><i class="fas fa-exclamation-triangle text-warning" title="Child event datetime is earlier than parent event"></i></span>')
+            }
+
+            child.insertAfter(parent_event.parent());
+        }
+
+    }
+
     //match_replace_ioc(data.data.iocs, "timeline_list");
     $('[data-toggle="popover"]').popover();
 
@@ -836,6 +968,32 @@ function build_timeline(data) {
                 $(this).addClass("timeline-selected");
             }
         });
+    }
+}
+
+function toggle_child_events() {
+    let child_events = $('.timeline-child');
+    if (child_events.is(':visible')) {
+        child_events.hide();
+        child_events.prev().find('button:last').html('<span class="btn-label"><i class="fa fa-chevron-right"></i> Child events</span>');
+
+    } else {
+        child_events.show();
+        child_events.prev().find('button:last').html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
+    }
+}
+
+function toggle_child_events_of_event(event_id) {
+    let child_events = $('.timeline-child-' + event_id);
+
+    if (child_events.is(':visible')) {
+        child_events.hide();
+        // Set the button to show child events
+        $('#event_' + event_id).find('button:last').html('<span class="btn-label"><i class="fa fa-chevron-right"></i> Child events</span>');
+    } else {
+        child_events.show();
+        // Set the button to hide child events
+        $('#event_' + event_id).find('button:last').html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
     }
 }
 

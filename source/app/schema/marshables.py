@@ -995,6 +995,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
     modification_history: str = auto_field('modification_history', required=False, readonly=True)
     event_comments_map: List[int] = fields.List(fields.Integer, required=False, allow_none=True)
     event_sync_iocs_assets: bool = fields.Boolean(required=False)
+    children = fields.Nested('EventSchema', many=True, required=False)
 
     class Meta:
         model = CasesEvent

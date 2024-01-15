@@ -22,7 +22,7 @@ import uuid
 from datetime import datetime
 from flask_login import current_user
 # IMPORTS ------------------------------------------------
-from sqlalchemy import BigInteger, Table
+from sqlalchemy import BigInteger, Table, CheckConstraint
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Date
@@ -36,7 +36,7 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from app import db
 from app.datamgmt.states import update_assets_state
@@ -172,6 +172,7 @@ class CasesEvent(db.Model):
     __tablename__ = "cases_events"
 
     event_id = Column(BigInteger, primary_key=True)
+    parent_event_id = Column(BigInteger, ForeignKey('cases_events.event_id'), nullable=True)
     event_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
                         nullable=False)
     case_id = Column(ForeignKey('cases.case_id'))
@@ -198,6 +199,11 @@ class CasesEvent(db.Model):
                             primaryjoin="CasesEvent.event_id==CaseEventCategory.event_id",
                             secondaryjoin="CaseEventCategory.category_id==EventCategory.id",
                             viewonly=True)
+    children = relationship("CasesEvent", backref=backref('parent', remote_side=[event_id]))
+
+    __table_args__ = (
+        CheckConstraint('event_id != parent_event_id', name='check_different_ids'),
+    )
 
 
 class CaseState(db.Model):

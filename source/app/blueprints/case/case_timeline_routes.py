@@ -498,6 +498,7 @@ def case_filter_timeline(caseid):
         CasesEvent.event_in_summary,
         CasesEvent.event_in_graph,
         CasesEvent.event_is_flagged,
+        CasesEvent.parent_event_id,
         User.user,
         CasesEvent.event_added,
         EventCategory.name.label("category_name")
@@ -716,7 +717,7 @@ def event_view(cur_id, caseid):
     output = event_schema.dump(event)
     output['event_assets'] = linked_assets
     output['event_iocs'] = linked_iocs
-    output['event_category_id'] = event.category[0].id
+    output['event_category_id'] = event.category[0].id if event.category else None
     output['event_comments_map'] = [c._asdict() for c in get_case_events_comments_count([cur_id])]
 
     return response_success(data=output)

@@ -72,10 +72,8 @@
                                   <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsvWithUI();"><small class="fa fa-download mr-2"></small> Download as CSV with user info</a>
-                                  <!-- BEGIN_RS_CODE -->
                                   <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="#" onclick="fire_upload_csv_events();"><small class="fa fa-upload mr-2"></small> Upload CSV of events</a>
-                                  <!-- END_RS_CODE -->
                               </div>
                             </div>
                         </li>
@@ -108,13 +106,15 @@
                 <button class="btn btn-round btn-light btn-conditional-2 colorinput-color bg-warning" title="color5" onclick="events_set_attribute('event_color', '#FFAD4699')"></button>
                 <button class="btn btn-round bg-transparent  btn-conditional" title="Change color" onclick="toggle_colors()"><i class="fas fa-tint"></i></button>
             </div>
-                <button class="btn btn-round bg-transparent btn_over_page_c btn-conditional" title="Toggle Summary" onclick="events_set_attribute('event_in_summary')"><i class="fas fa-newspaper"></i></button>
-                <button class="btn btn-round bg-transparent btn_over_page_d btn-conditional" title="Toggle Graph" onclick="events_set_attribute('event_in_graph')"><i class="fas fa-share-alt"></i></button>
-                <button class="btn btn-round bg-transparent btn_over_page_e" title="Select events" onclick="toggle_selector();" id="selector-btn"><i class="fas fa-check-double"></i></button>
-                <button class="btn btn-round bg-transparent btn_over_page_f" title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
-                <button class="btn btn-round bg-transparent  btn_over_page_g" title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
-                <button class="btn btn-round bg-transparent  btn_over_page_h" title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
-                <button class="btn btn-round bg-transparent btn_over_page_i" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
+            <div class="btn_over_page_i" style="display: flex; flex-direction: column;">
+                <button class="btn btn-round bg-transparent  btn-conditional" title="Toggle Summary" onclick="events_set_attribute('event_in_summary')"><i class="fas fa-newspaper"></i></button>
+                <button class="btn btn-round bg-transparent  btn-conditional" title="Toggle Graph" onclick="events_set_attribute('event_in_graph')"><i class="fas fa-share-alt"></i></button>
+                <button class="btn btn-round bg-transparent " title="Select events" onclick="toggle_selector();" id="selector-btn"><i class="fas fa-check-double"></i></button>
+                <button class="btn btn-round bg-transparent " title="Add new event" onclick="add_event();"><i class="fas fa-plus-circle"></i></button>
+                <button class="btn btn-round bg-transparent " title="Toggle child events" onclick="toggle_child_events();"><i class="fas fa-folder-tree"></i></button>
+                <button class="btn btn-round bg-transparent  " title="Refresh" onclick="get_or_filter_tm();"><i class="fas fa-redo-alt"></i></button>
+                <button class="btn btn-round bg-transparent " title="Go at the top" onclick="to_page_up();"><i class="fas fa-arrow-up"></i></button>
+                <button class="btn btn-round bg-transparent" title="Go at the bottom" onclick="to_page_down();"><i class="fas fa-arrow-down"></i></button>
             </div>
         
         </div>
@@ -123,7 +123,7 @@
         <div class="modal shadow-lg" tabindex="-1" id="modal_add_event" data-backdrop="true">
             <div class="modal-xl modal-dialog" role="document">
                 <div class="modal-content" id="modal_add_event_content">
-        
+
                 </div>
                 <!-- /.modal-content -->
             </div>

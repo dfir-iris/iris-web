@@ -8425,6 +8425,24 @@ body .badge-danger {
     left: 0;
 }
 
+.timeline>.timeline-child>.timeline-even-t {
+    transform: translateX(115%);
+    width: 45.3%;
+    background: #f4f4f4;
+    margin: 0 0 10px;
+    left: 0;
+    box-shadow: 2px 6px 15px 4px rgba(69, 65, 78, 0.29);
+}
+
+.timeline>.timeline-child>.timeline-odd-t {
+    transform: translateX(5.6%);
+    width: 45.3%;
+    background: #f4f4f4;
+    margin: 0 0 10px;
+    left: 0;
+    box-shadow: 2px 6px 15px 4px rgba(69, 65, 78, 0.29);
+}
+
 .timeline>li>.timeline-panel-t {
     width: 50%;
     background: #ffffff;
