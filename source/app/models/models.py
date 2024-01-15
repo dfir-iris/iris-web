@@ -247,7 +247,7 @@ class CaseTemplate(db.Model):
     summary = Column(String, nullable=True)
     tags = Column(JSON, nullable=True)
     tasks = Column(JSON, nullable=True)
-    note_groups = Column(JSON, nullable=True)
+    note_directories = Column(JSON, nullable=True)
     classification = Column(String, nullable=True)
 
     created_by_user = relationship('User')

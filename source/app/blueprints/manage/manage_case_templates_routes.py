@@ -104,7 +104,7 @@ def case_template_modal(cur_id, caseid, url_redir):
         "summary": case_template.summary,
         "tags": case_template.tags,
         "tasks": case_template.tasks,
-        "note_groups": case_template.note_groups,
+        "note_directories": case_template.note_directories,
         "classification": case_template.classification
     }
 
@@ -134,7 +134,7 @@ def add_template_modal(caseid):
                 "tags": ["tag1", "tag2"]
             }
         ],
-        "note_groups": [
+        "note_directories": [
             {
                 "title": "Note group 1",
                 "notes": [

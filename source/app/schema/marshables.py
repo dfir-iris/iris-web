@@ -752,6 +752,9 @@ class CaseTemplateSchema(ma.Schema):
     summary: Optional[str] = fields.String(allow_none=True, missing="")
     tags: Optional[List[str]] = fields.List(fields.String(), allow_none=True, missing=[])
     classification: Optional[str] = fields.String(allow_none=True, missing="")
+    note_directories: Optional[List[Dict[str, Union[str, List[Dict[str, str]]]]]] = fields.List(fields.Dict(),
+                                                                                                allow_none=True,
+                                                                                                missing=[])
 
     def validate_string_or_list(value: Union[str, List[str]]) -> Union[str, List[str]]:
         """Validates that a value is a string or a list of strings.
