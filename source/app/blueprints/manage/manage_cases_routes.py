@@ -43,6 +43,7 @@ from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
+from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list, get_case_state_by_name
@@ -57,7 +58,8 @@ from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_common import get_severities_list
 from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
-from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access, \
+    ac_current_user_has_permission
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -91,19 +93,7 @@ def manage_index_cases(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
 
-    form = AddCaseForm()
-    # Fill select form field customer with the available customers in DB
-    form.case_customer.choices = [(c.client_id, c.name) for c in
-                                  Client.query.order_by(Client.name)]
-
-    form.case_organisations.choices = [(org['org_id'], org['org_name']) for org in
-                                       get_user_organisations(current_user.id)]
-    form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
-    form.case_template_id.choices = [(ctp['id'], ctp['display_name']) for ctp in get_case_templates_list()]
-
-    attributes = get_default_custom_attributes('case')
-
-    return render_template('manage_cases.html', form=form, attributes=attributes)
+    return render_template('manage_cases.html')
 
 
 def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
@@ -128,9 +118,13 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Respon
     res = CaseDetailsSchema().dump(res)
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
-    customers = get_client_list()
+    user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
+
+    customers = get_client_list(current_user_id=current_user.id,
+                                is_server_administrator=user_is_server_administrator)
+
     severities = get_severities_list()
-    protagonists  = [r._asdict() for r in get_case_protagonists(cur_id)]
+    protagonists = [r._asdict() for r in get_case_protagonists(cur_id)]
 
     form = FlaskForm()
 
@@ -175,6 +169,9 @@ def manage_case_filter(caseid) -> Response:
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     case_ids_str = request.args.get('case_ids', None, type=str)
+    order_by = request.args.get('order_by', type=str)
+    sort_dir = request.args.get('sort_dir', 'asc', type=str)
+
     if case_ids_str:
         try:
 
@@ -196,9 +193,13 @@ def manage_case_filter(caseid) -> Response:
     case_severity_id = request.args.get('case_severity_id', None, type=int)
     case_state_id = request.args.get('case_state_id', None, type=int)
     case_soc_id = request.args.get('case_soc_id', None, type=str)
-    sort = request.args.get('sort')
     start_open_date = request.args.get('start_open_date', None, type=str)
     end_open_date = request.args.get('end_open_date', None, type=str)
+    draw = request.args.get('draw', 1, type=int)
+    search_value = request.args.get('search[value]', type=str)  # Get the search value from the request
+
+    if type(draw) is not int:
+        draw = 1
 
     filtered_cases = get_filtered_cases(
         case_ids=case_ids_str,
@@ -211,12 +212,14 @@ def manage_case_filter(caseid) -> Response:
         case_severity_id=case_severity_id,
         case_state_id=case_state_id,
         case_soc_id=case_soc_id,
-        sort=sort,
         start_open_date=start_open_date,
         end_open_date=end_open_date,
+        search_value=search_value,
         page=page,
         per_page=per_page,
-        current_user_id=current_user.id
+        current_user_id=current_user.id,
+        sort_by=order_by,
+        sort_dir=sort_dir
     )
     if filtered_cases is None:
         return response_error('Filtering error')
@@ -227,9 +230,10 @@ def manage_case_filter(caseid) -> Response:
         'last_page': filtered_cases.pages,
         'current_page': filtered_cases.page,
         'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
+        'draw': draw
     }
 
-    return response_success(cases)
+    return response_success(data=cases)
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
@@ -347,6 +351,26 @@ def api_case_close(cur_id, caseid):
     return response_success("Case closed successfully", data=case_schema.dump(res))
 
 
+@manage_cases_blueprint.route('/manage/cases/add/modal', methods=['GET'])
+@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+def add_case_modal(caseid):
+
+    form = AddCaseForm()
+    # Show only clients that the user has access to
+    client_list = get_client_list(current_user_id=current_user.id,
+                                  is_server_administrator=ac_current_user_has_permission(
+                                     Permissions.server_administrator))
+
+    form.case_customer.choices = [(c['customer_id'], c['customer_name']) for c in client_list]
+
+    form.classification_id.choices = [(clc['id'], clc['name_expanded']) for clc in get_case_classifications_list()]
+    form.case_template_id.choices = [(ctp['id'], ctp['display_name']) for ctp in get_case_templates_list()]
+
+    attributes = get_default_custom_attributes('case')
+
+    return render_template('modal_add_case.html', form=form, attributes=attributes)
+
+
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])
 @ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_add_case(caseid):
@@ -380,7 +404,7 @@ def api_add_case(caseid):
                 return response_error(msg=f"Unexpected error when loading template {case_template_id} to new case.",
                                       status=400)
 
-        ac_set_new_case_access(None, case.case_id)
+        ac_set_new_case_access(None, case.case_id, case.client_id)
 
         case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
@@ -425,8 +449,13 @@ def update_case_info(cur_id, caseid):
         case_previous_reviewer_id = case_i.reviewer_id
         closed_state_id = get_case_state_by_name('Closed').state_id
 
+        # If user tries to update the customer, check if the user has access to the new customer
+        if request_data.get('case_customer') and request_data.get('case_customer') != case_i.client_id:
+            if not user_has_client_access(current_user.id, request_data.get('case_customer')):
+                return response_error("Invalid customer ID. Permission denied.", status=403)
+
         request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')}"
-        request_data['case_customer'] = case_i.client_id if request_data.get('case_customer') is None else request_data.get('case_customer')
+        request_data['case_customer'] = case_i.client_id if not request_data.get('case_customer') else request_data.get('case_customer')
         request_data['reviewer_id'] = None if request_data.get('reviewer_id') == "" else request_data.get('reviewer_id')
 
         case = case_schema.load(request_data, instance=case_i, partial=True)

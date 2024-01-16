@@ -247,7 +247,7 @@ class CaseTemplate(db.Model):
     summary = Column(String, nullable=True)
     tags = Column(JSON, nullable=True)
     tasks = Column(JSON, nullable=True)
-    note_groups = Column(JSON, nullable=True)
+    note_directories = Column(JSON, nullable=True)
     classification = Column(String, nullable=True)
 
     created_by_user = relationship('User')
@@ -533,9 +533,23 @@ class Notes(db.Model):
     note_lastupdate = Column(DateTime)
     note_case_id = Column(ForeignKey('cases.case_id'))
     custom_attributes = Column(JSON)
+    directory_id = Column(ForeignKey('note_directory.id'), nullable=True)
 
     user = relationship('User')
     case = relationship('Cases')
+    directory = relationship('NoteDirectory', backref='notes')
+
+
+class NoteDirectory(db.Model):
+    __tablename__ = 'note_directory'
+
+    id = Column(BigInteger, primary_key=True)
+    name = Column(Text, nullable=False)
+    parent_id = Column(ForeignKey('note_directory.id'), nullable=True)
+    case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    parent = relationship('NoteDirectory', remote_side=[id], backref='subdirectories')
+    case = relationship('Cases', backref='note_directories')
 
 
 class NotesGroup(db.Model):
@@ -640,13 +654,15 @@ class Tags(db.Model):
     id = Column(BigInteger, primary_key=True, nullable=False)
     tag_title = Column(Text, unique=True)
     tag_creation_date = Column(DateTime)
+    tag_namespace = Column(Text)
 
     cases = relationship('Cases', secondary="case_tags", back_populates='tags', viewonly=True)
 
-    def __init__(self, tag_title):
+    def __init__(self, tag_title, namespace=None):
         self.id = None
         self.tag_title = tag_title
         self.tag_creation_date = datetime.datetime.now()
+        self.tag_namespace = namespace
 
     def save(self):
         existing_tag = self.get_by_title(self.tag_title)

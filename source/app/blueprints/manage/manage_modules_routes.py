@@ -73,11 +73,8 @@ def has_no_empty_params(rule):
 def site_map(caseid, url_redir):
     links = []
     for rule in app.url_map.iter_rules():
-        # Filter out rules we can't navigate to in a browser
-        # and rules that require parameters
-        if "GET" in rule.methods and has_no_empty_params(rule):
-            url = url_for(rule.endpoint, **(rule.defaults or {}))
-            links.append((url, rule.endpoint))
+        methods = [m for m in rule.methods if m != 'OPTIONS' and m != 'HEAD']
+        links.append((','.join(methods), str(rule), rule.endpoint))
 
     return response_success('', data=links)
 

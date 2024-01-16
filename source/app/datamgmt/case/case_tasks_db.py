@@ -276,7 +276,8 @@ def get_case_task_comment(task_id, comment_id):
         User.name,
         User.user
     ).join(
-        TaskComments.comment,
+        TaskComments.comment
+    ).join(
         Comments.user
     ).first()
 

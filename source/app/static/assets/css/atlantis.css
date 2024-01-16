@@ -1288,6 +1288,8 @@ body {
     min-height: calc(100% - 123px);
     margin-top: 62px;
     overflow: hidden;
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .main-panel>.content-full {
@@ -1511,7 +1513,7 @@ body {
 }
 
 .page-with-aside .page-aside .aside-nav .nav>li>a {
-    color: #83848a;
+    color: #313131;
     display: flex;
     align-items: center;
     font-size: 12px;
@@ -1525,7 +1527,7 @@ body {
 .page-with-aside .page-aside .aside-nav .nav>li>a i {
     font-size: 20px;
     margin-right: 15px;
-    color: #a1a2a6;
+    color: #313131;
 }
 
 .page-with-aside .page-aside .aside-nav .label {
@@ -6408,6 +6410,13 @@ label.error {
     right: 0;
 }
 
+
+.nav-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1000; /* Optional: this ensures the sticky bar stays on top of all other elements */
+}
+
 .dropdown-item {
     font-size: 13px;
 }
@@ -8269,7 +8278,7 @@ body .badge-danger {
 
 .timeline {
     list-style: none;
-    padding: 20px 0 20px;
+    padding: 0 0;
     position: relative;
 }
 
@@ -8310,11 +8319,13 @@ body .badge-danger {
     clear: both;
 }
 
-.timeline-panel.timeline-selected {
+.timeline-panel.timeline-selected,
+.timeline-panel-t.timeline-selected{
     box-shadow: 0px 0px 5px 5px rgba(255, 160, 36,.5),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12) !important;
 }
 
-.timeline-panel.timeline-flagged {
+.timeline-panel.timeline-flagged,
+.timeline-panel-t.timeline-flagged  {
     box-shadow: 0px 0px 5px 5px rgba(255, 48, 0, 0.3),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12) !important;
 }
 
@@ -8334,17 +8345,18 @@ body .badge-danger {
     background: rgba(177, 177, 177, 0.29);
 }
 
-.timeline>li.timeline-inverted+li:not(.timeline-inverted) {
-    margin-top: -30px;
-}
+/*.timeline>li.timeline-inverted+li:not(.timeline-inverted) {*/
+/*    margin-top: -30px;*/
+/*}*/
 
-.timeline>li:not(.timeline-inverted) {
-    padding-right: 90px;
-}
+/*.timeline>li:not(.timeline-inverted) {*/
+/*    padding-right: 90px;*/
+/*}.timeline>li:not(.timeline-inverted) {*/
+/*    padding-right: 90px;*/
+/*}*/
 
-.timeline>li:not(.timeline-inverted)+li.timeline-inverted {
-    margin-top: 30px;
-}
+
+
 
 .timeline>li>.timeline-badge {
     color: #ffffff;
@@ -8390,6 +8402,71 @@ body .badge-danger {
     margin-left: -25px;
     background-color: #ffffff00;
     z-index: 100;
+}
+
+
+
+.timeline>.time-badge-t {
+    margin-bottom: 10px;
+    margin-top: 30px;
+    left: 50%;
+    position: relative;
+    transform: translateX(-50%);
+}
+
+.timeline:not(.timeline-inverted)>.timeline-child {
+    margin-left: 2.5%;
+    width: 95%;
+    left: 0;
+}
+
+
+.timeline-t>li>.timeline-even-t {
+    margin-left: 47.5%;
+    left: 0;
+}
+
+.timeline-t>li>.timeline-odd-t {
+    margin-left: 2.5%;
+}
+
+
+.timeline-t>.timeline-child>.timeline-even-t {
+    margin-left: 54.5%;
+    width: 45.3%;
+    background: #f4f4f4;
+    margin-bottom: 10px;
+    left: 0;
+    box-shadow: 2px 6px 15px 4px rgba(69, 65, 78, 0.29);
+}
+
+.timeline-t>.timeline-child>.timeline-odd-t {
+    width: 45.3%;
+    background: #f4f4f4;
+    margin: 0 0 10px;
+    left: 0;
+    box-shadow: 2px 6px 15px 4px rgba(69, 65, 78, 0.29);
+}
+
+.timeline-t>li>.timeline-panel-t {
+    width: 50%;
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 18px;
+    margin-bottom: 10px;
+    position: relative;
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);
+}
+
+.timeline-t:before {
+    top: 0;
+    bottom: 0;
+    position: absolute;
+    content: " ";
+    width: 3px;
+    background-color: #3f3e3e;
+    left: 50%;
+    display: inline-block;
 }
 
 .timeline-badge.default {
@@ -15299,7 +15376,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_delete {
     position: fixed; /* Fixed/sticky position */
     bottom: 500px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15307,7 +15384,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_a {
     position: fixed; /* Fixed/sticky position */
     bottom: 420px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15315,7 +15392,7 @@ table.dataTable.stripe tbody > tr.selected {
 .div_btn_over_page_a {
     position: fixed; /* Fixed/sticky position */
     bottom: 420px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15323,7 +15400,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_b {
     position: fixed; /* Fixed/sticky position */
     bottom: 370px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15331,7 +15408,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_c {
     position: fixed; /* Fixed/sticky position */
     bottom: 320px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15339,7 +15416,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_d {
     position: fixed; /* Fixed/sticky position */
     bottom: 270px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15347,7 +15424,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_e {
     position: fixed; /* Fixed/sticky position */
     bottom: 220px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15355,7 +15432,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_f {
     position: fixed; /* Fixed/sticky position */
     bottom: 170px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15363,7 +15440,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_g {
     position: fixed; /* Fixed/sticky position */
     bottom: 120px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15371,7 +15448,7 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_h {
     position: fixed; /* Fixed/sticky position */
     bottom: 70px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
@@ -15379,10 +15456,11 @@ table.dataTable.stripe tbody > tr.selected {
 .btn_over_page_i {
     position: fixed; /* Fixed/sticky position */
     bottom: 20px; /* Place the button at the bottom of the page */
-    right: 20px; /* Place the button 30px from the right */
+    right: 15px; /* Place the button 30px from the right */
     z-index: 99; /* Make sure it does not overlap */
     cursor: pointer; /* Add a mouse pointer on hover */
 }
+
 
 .badge-light {
     color: #212529;
@@ -15535,35 +15613,38 @@ div.dataTables_processing { z-index: 1; }
 }
 
 
-@-webkit-keyframes yellow-fade {
+
+@-webkit-keyframes box-shadow-flash {
   from {
-    background: #f96;
+    box-shadow: 0 0 10px 5px #f96;
   }
   to {
-    background: rgba(150, 150, 150, 0);
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);;
   }
 }
-@-moz-keyframes yellow-fade {
+@-moz-keyframes box-shadow-flash {
   from {
-    background: #f96;
+    box-shadow: 0 0 10px 5px #f96;
   }
   to {
-    background: rgba(255, 255, 255, 0);
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);;
   }
 }
-@keyframes yellow-fade {
+
+@keyframes box-shadow-flash {
   from {
-    background: #f96;
+    box-shadow: 0 0 10px 5px #f96;
   }
   to {
-    background: rgba(255, 255, 255, 0);
+    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);;
   }
 }
+
 .fade-it {
-  -webkit-animation: yellow-fade 1s ease-in-out 0s;
-  -moz-animation: yellow-fade 1s ease-in-out 0s;
-  -o-animation: yellow-fade 1s ease-in-out 0s;
-  animation: yellow-fade 1s ease-in-out 0s;
+  -webkit-animation: box-shadow-flash 2s ease-in-out 0s;
+  -moz-animation: box-shadow-flash 2s ease-in-out 0s;
+  -o-animation: box-shadow-flash 2s ease-in-out 0s;
+  animation: box-shadow-flash 2s ease-in-out 0s;
 }
 
 .modal { overflow: auto !important; }
@@ -15897,3 +15978,27 @@ td.dt-nowrap { white-space: nowrap }
     margin-left: 10px;
 }
 
+#noteContentScroll {
+    overflow-y: auto;
+    height: 100vh; /* Adjust this value as needed */
+}
+
+.page-aside {
+    overflow: auto;
+}
+
+.notes-number {
+      position: relative;
+      text-align: center;
+      border-radius: 10px;
+      min-width: 17px;
+      height: 17px;
+      font-size: 8px;
+      color: #5e5e5e;
+      background-color: #dcdcdc;
+      padding: 2px 4px;
+      line-height: 17px;
+      top: -14px;
+      right: 0px;
+      letter-spacing: -1px;
+}

@@ -19,7 +19,7 @@ function edit_in_event_desc() {
 }
 
 /* Fetch a modal that allows to add an event */
-function add_event() {
+function add_event(parent_event_id = null) {
     url = 'timeline/events/add/modal' + case_param();
     $('#modal_add_event_content').load(url, function (response, status, xhr) {
         hide_minimized_modal_box();
@@ -35,9 +35,40 @@ function add_event() {
                             }, null);
 
         g_event_desc_editor.setOption("minLines", "10");
-        headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
+        let headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
         $('#event_edition_btn').append(headers);
         edit_in_event_desc();
+
+        let parent_selector = $('#parent_event_id');
+
+        // Add empty option
+        let option = $('<option>');
+        option.attr('value', '');
+        option.text('No parent event');
+        parent_selector.append(option);
+
+        // Add all events to the parent selector
+        for (let idx in current_timeline) {
+            let event = current_timeline[idx];
+            let option = $('<option>');
+            option.attr('value', event.event_id);
+            option.text(`${event.event_title}`);
+            parent_selector.append(option);
+        }
+
+        parent_selector.selectpicker({
+            liveSearch: true,
+            size: 10,
+            width: '100%',
+            title: 'Select a parent event',
+            style: 'btn-light',
+            noneSelectedText: 'No event selected',
+        });
+
+        if (parent_event_id != null) {
+            parent_selector.selectpicker('val', parent_event_id);
+            parent_selector.selectpicker("refresh");
+        }
 
         $('#submit_new_event').on("click", function () {
             clear_api_error();
@@ -51,6 +82,7 @@ function add_event() {
             data_sent['event_iocs'] = $('#event_iocs').val();
             data_sent['event_tz'] = $('#event_tz').val();
             data_sent['event_content'] = g_event_desc_editor.getValue();
+            data_sent['parent_event_id'] = $('#parent_event_id').val() || null;
 
             ret = get_custom_attributes_fields();
             has_error = ret[0].length > 0;
@@ -121,6 +153,8 @@ function update_event_ext(event_id, do_close) {
     data_sent['event_iocs'] = $('#event_iocs').val();
     data_sent['event_tz'] = $('#event_tz').val();
     data_sent['event_content'] = g_event_desc_editor.getValue();
+    data_sent['parent_event_id'] = $('#parent_event_id').val() || null;
+
     ret = get_custom_attributes_fields();
     has_error = ret[0].length > 0;
     attributes = ret[1];
@@ -185,7 +219,45 @@ function edit_event(id) {
         headers = get_editor_headers('g_event_desc_editor', null, 'event_edition_btn');
         $('#event_edition_btn').append(headers);
         edit_in_event_desc();
-        
+
+        let parent_selector = $('#parent_event_id');
+
+        // Add empty option
+        let option = $('<option>');
+        option.attr('value', '');
+        option.text('No parent event');
+        parent_selector.append(option);
+
+        let target_idx = 0;
+        // Add all events to the parent selector and remove the current event
+        for (let idx in current_timeline) {
+            let event = current_timeline[idx];
+
+            if (event.event_id === id) {
+                target_idx = event.parent_event_id;
+                continue;
+            }
+
+            let option = $('<option>');
+            option.attr('value', event.event_id);
+            option.text(`${event.event_title}`);
+            parent_selector.append(option);
+        }
+
+        parent_selector.selectpicker({
+            liveSearch: true,
+            size: 10,
+            width: '100%',
+            title: 'Select a parent event',
+            style: 'btn-light',
+            noneSelectedText: 'No event selected',
+        });
+
+        if (target_idx!= null) {
+            parent_selector.selectpicker('val', target_idx);
+            parent_selector.selectpicker("refresh");
+        }
+
         load_menu_mod_options_modal(id, 'event', $("#event_modal_quick_actions"));
         $('#modal_add_event').modal({show:true});
   });
@@ -241,6 +313,34 @@ function toggle_compact_view() {
     }
 }
 
+
+function is_timeline_tree_view() {
+    var x = localStorage.getItem('iris-tm-tree');
+    if (typeof x !== 'undefined') {
+        if (x === 'true') {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+function toggle_tree_view() {
+    var x = localStorage.getItem('iris-tm-tree');
+    if (typeof x === 'undefined') {
+        localStorage.setItem('iris-tm-tree', 'true');
+        location.reload();
+    } else {
+        if (x === 'true') {
+            localStorage.setItem('iris-tm-tree', 'false');
+            location.reload();
+        } else {
+             localStorage.setItem('iris-tm-tree', 'true');
+            location.reload();
+        }
+    }
+}
+
 function toggle_selector() {
     //activating selector toggle
     if(selector_active == false) {
@@ -262,7 +362,14 @@ function toggle_selector() {
                 $(this).addClass("timeline-selected");
             }
         });
-    
+
+        $(".timeline li .timeline-panel-t").on('click', function(){
+            if($(this).hasClass("timeline-selected")) {
+                $(this).removeClass("timeline-selected");
+            } else {
+                $(this).addClass("timeline-selected");
+            }
+        });
 
     }
 
@@ -403,12 +510,13 @@ function toggleSeeMore(element) {
 }
 
 function build_timeline(data) {
-    var compact = is_timeline_compact_view();
+    let compact = is_timeline_compact_view();
+    let tree = is_timeline_tree_view();
     var is_i = false;
     current_timeline = data.data.tim;
-    tmb = [];
+    let tmb = [];
 
-    reid = 0;
+    let reid = 0;
 
     $('#time_timeline_select').empty();
 
@@ -451,14 +559,13 @@ function build_timeline(data) {
           enableLiveAutocompletion: true,
     });
 
-    var tesk = false;
-    // Prepare replacement mod
-    var reap = [];
-    ioc_list = data.data.iocs;
+    let tesk = false;
+    let reap = [];
+    let ioc_list = data.data.iocs;
     for (ioc in ioc_list) {
 
-        var capture_start = "(^|;|:|||>|<|[|]|(|)|\s|\>)(";
-        var capture_end = ")(;|:|||>|<|[|]|(|)|\s|>|$|<br/>)";
+        let capture_start = "(^|;|:|||>|<|[|]|(|)|\s|\>)(";
+        let capture_end = ")(;|:|||>|<|[|]|(|)|\s|>|$|<br/>)";
         // When an IOC contains another IOC in its description, we want to avoid to replace that particular pattern
         var avoid_inception_start = "(?!<span[^>]*?>)" + capture_start;
         var avoid_inception_end = "(?![^<]*?<\/span>)" + capture_end;
@@ -466,21 +573,22 @@ function build_timeline(data) {
                + escapeRegExp(sanitizeHTML(ioc_list[ioc]['ioc_value']))
                + avoid_inception_end
                ,"g");
-        replacement = `$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-trigger="hover" data-content="${sanitizeHTML(ioc_list[ioc]['ioc_description'])}" title="IOC">${sanitizeHTML(ioc_list[ioc]['ioc_value'])}</span>`;
+        let replacement = `$1<span class="text-warning-high ml-1 link_asset" data-toggle="popover" style="cursor: pointer;" data-trigger="hover" data-content="${sanitizeHTML(ioc_list[ioc]['ioc_description'])}" title="IOC">${sanitizeHTML(ioc_list[ioc]['ioc_value'])}</span>`;
         reap.push([re, replacement]);
     }
-    idx = 0;
+    let idx = 0;
 
-    converter = get_showdown_convert();
+    let converter = get_showdown_convert();
+    let child_events = Object();
 
-    for (index in data.data.tim) {
-        evt = data.data.tim[index];
-        dta =  evt.event_date.split('T');
-        tags = '';
-        cats = '';
-        tmb_d = '';
-        style = '';
-        asset = '';
+    for (let index in data.data.tim) {
+        let evt = data.data.tim[index];
+        let dta =  evt.event_date.split('T');
+        let tags = '';
+        let cats = '';
+        let tmb_d = '';
+        let style = '';
+        let asset = '';
 
         if (evt.event_id in data.data.comments_map) {
             nb_comments = data.data.comments_map[evt.event_id].length;
@@ -520,22 +628,32 @@ function build_timeline(data) {
                 }
         }
 
+        let entry = '';
+        let inverted = 'timeline';
+        let timeline_style = tree ? '-t' : '';
+
         /* Do we have a border color to set ? */
-        style = "";
         if (tesk) {
-            style += "timeline-odd";
+            style += "timeline-odd"+ timeline_style;
             tesk = false;
         } else {
-            style += "timeline-even";
+            style += "timeline-even" + timeline_style;
             tesk = true;
         }
 
-        style_s = "style='";
+        let style_s = "";
         if (evt.event_color != null) {
-                style_s += "border-left: 2px groove " + sanitizeHTML(evt.event_color);
+                style_s = `style='border-left: 2px groove ${sanitizeHTML(evt.event_color)};'`;
         }
 
-        style_s += ";'";
+        if (!tree) {
+            inverted += '-inverted';
+        } else {
+            if (tesk) {
+                inverted += '-inverted';
+            }
+        }
+
 
         /* For every assets linked to the event, build a link tag */
         if (evt.assets != null) {
@@ -560,7 +678,7 @@ function build_timeline(data) {
             }
         }
 
-        ori_date = '<span class="ml-3"></span>';
+        let ori_date = '<span class="ml-3"></span>';
         if (evt.event_date_wtz != evt.event_date) {
             ori_date += `<i class="fas fa-info-circle mr-1" title="Locale date time ${evt.event_date_wtz}${evt.event_tz}"></i>`
         }
@@ -574,22 +692,22 @@ function build_timeline(data) {
         }
         
 
-        day = dta[0];
-        mtop_day = '';
+        let day = dta[0];
+
+        let hour = dta[1].split('.')[0];
+
+        let mtop_day = '';
         if (!tmb.includes(day)) {
             tmb.push(day);
-            if (!compact) {
-                tmb_d = `<div class="time-badge" id="time_${idx}"><small class="text-muted">${day}</small><br/></div>`;
-            } else {
-                tmb_d = `<div class="time-badge-compact" id="time_${idx}"><small class="text-muted">${day}</small><br/></div>`;
-            }
+            tmb_d = `<li class="time-badge${timeline_style} badge badge-dark" id="time_${idx}"><small class="">${day}</small><br/></li>`;
+
             idx += 1;
             mtop_day = 'mt-4';
         }
 
-        title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
-        raw_content = do_md_filter_xss(evt.event_content); // Raw markdown content
-        formatted_content = converter.makeHtml(raw_content); // Convert markdown to HTML
+        let title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
+        let raw_content = do_md_filter_xss(evt.event_content); // Raw markdown content
+        let formatted_content = converter.makeHtml(raw_content); // Convert markdown to HTML
 
         const wordLimit = 30; // Define your word limit
 
@@ -632,9 +750,9 @@ function build_timeline(data) {
 
 
 
-        shared_link = buildShareLink(evt.event_id);
+        let shared_link = buildShareLink(evt.event_id);
 
-        flag = '';
+        let flag = '';
         if (evt.event_is_flagged) {
             flag = `<i class="fas fa-flag text-warning" title="Flagged"></i>`;
         } else {
@@ -642,9 +760,8 @@ function build_timeline(data) {
         }
 
         if (compact) {
-            entry = `<li class="timeline-inverted ${mtop_day}" title="Event ID #${evt.event_id}">
-                ${tmb_d}
-                    <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
+            entry = `<li class="${inverted} ${mtop_day}" title="Event ID #${evt.event_id}" >
+                    <div class="timeline-panel${timeline_style} ${style}" ${style_s}  id="event_${evt.event_id}">
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
                                 ${cats}
@@ -694,15 +811,19 @@ function build_timeline(data) {
                     </div>
                 </li>`
         } else {
-            entry = `<li class="timeline-inverted" title="Event ID #${evt.event_id}">
-                    ${tmb_d}
-                    <div class="timeline-panel ${style}" ${style_s} id="event_${evt.event_id}" >
+            entry = `<li class=${inverted} title="Event ID #${evt.event_id}" >
+                    <div class="timeline-panel${timeline_style} ${style}" ${style_s} id="event_${evt.event_id}">
                         <div class="timeline-heading">
                             <div class="btn-group dropdown float-right">
 
                                 <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
                                     <span class="btn-label">
                                         <i class="fa fa-pen"></i>
+                                    </span>
+                                </button>
+                                <button type="button" class="btn btn-light btn-xs" onclick="add_event(${evt.event_id})" title="Add child event">
+                                    <span class="btn-label">
+                                       <i class="fa-brands fa-hive"></i>
                                     </span>
                                 </button>
                                 <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
@@ -729,7 +850,7 @@ function build_timeline(data) {
                                 </div>
                             </div>
                             <div class="row mb-2">
-                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
+                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">[${hour}] ${title_parsed}</a>
                             </div>
                         </div>
                         <div class="timeline-body text-faded" >
@@ -737,11 +858,11 @@ function build_timeline(data) {
 
                             <div class="bottom-hour mt-2">
                                 <div class="row">
-                                    <div class="col-4 d-flex">
-                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${render_date(evt.event_date, true)}${ori_date}</small></span>
+                                    <div class="col d-flex">
+                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small class="bottom-hour-i"><i class="flaticon-stopwatch mr-2"></i>${render_date(evt.event_date, true)}${ori_date}</small></span>
                                     </div>
                                     
-                                    <div class="col-8 ">
+                                    <div class="col">
                                         <span class="float-right">${tags}${asset} </span>
                                     </div>
                                 </div>
@@ -753,15 +874,81 @@ function build_timeline(data) {
         is_i = false;
 
         //entry = match_replace_ioc(entry, reap);
-        $('#timeline_list').append(entry);
+        // display the time info as a small box
 
+        if (evt.parent_event_id != null) {
+            if (!(evt.parent_event_id in child_events)) {
+                child_events[evt.parent_event_id] = [];
+            }
+            child_events[evt.parent_event_id].push(entry);
+            tesk = !tesk;
+
+        } else {
+            $('#timeline_list').append(tmb_d);
+            $('#timeline_list').append(entry);
+        }
 
     }
+
+
+    if (tree) {
+        $('#timeline_list').addClass('timeline-t');
+    } else {
+        $('#timeline_list').removeClass('timeline-t');
+    }
+
+    for (let parent_id in child_events) {
+        let parent_event = $('#event_' + parent_id);
+
+        let parent_event_class = parent_event.parent().attr('class');
+        let parent_class = parent_event.attr('class');
+
+        // Reverse the order of the child events list
+        child_events[parent_id] = child_events[parent_id].reverse();
+
+        // Add button on parent to toggle child events
+        let button = $('<button>');
+        button.attr('type', 'button');
+        button.attr('class', 'btn btn-light btn-xs mt-2');
+        button.attr('onclick', `toggle_child_events_of_event(${parent_id});`);
+        button.attr('title', 'Toggle child events');
+        button.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
+
+        parent_event.find('.timeline-body').append(button);
+
+        for (let child_html in child_events[parent_id]) {
+
+            let child = $(child_events[parent_id][child_html]);
+
+            child.attr('class', parent_event_class);
+            child.addClass('timeline-child');
+            child.addClass('timeline-child-' + parent_id);
+
+            child.find('div:first').attr('class', parent_class);
+
+            let child_date = child.find('.bottom-hour').find('small').text();
+            let parent_date = parent_event.find('.bottom-hour').find('small').text();
+            child_date = Date.parse(child_date);
+            parent_date = Date.parse(parent_date);
+
+            if (child_date < parent_date) {
+                child.find('.bottom-hour-i').append('<span class="ml-2"><i class="fas fa-exclamation-triangle text-warning" title="Child event datetime is earlier than parent event"></i></span>')
+            }
+
+            child.insertAfter(parent_event.parent());
+        }
+
+    }
+
     //match_replace_ioc(data.data.iocs, "timeline_list");
     $('[data-toggle="popover"]').popover();
 
     if (data.data.tim.length === 0) {
-       $('#timeline_list').append('<h3 class="ml-mr-auto text-center">No events in current view</h3>');
+       $('#card_main_load').append('<h3 class="ml-mr-auto text-center" id="no_events_msg">No events in current view</h3>');
+       $('#timeline_list').hide();
+    } else {
+        $('#timeline_list').show();
+        $('#no_events_msg').remove('h3');
     }
 
     set_last_state(data.data.state);
@@ -771,7 +958,7 @@ function build_timeline(data) {
         var current_url = window.location.href;
         var id = current_url.substr(current_url.indexOf("#") + 1);
         if ($('#event_'+id).offset() != undefined) {
-            $('html, body').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
+            $('.content').animate({ scrollTop: $('#event_'+id).offset().top - 180 });
             $('#event_'+id).addClass('fade-it');
         }
     }
@@ -785,6 +972,59 @@ function build_timeline(data) {
                 $(this).addClass("timeline-selected");
             }
         });
+    }
+}
+
+function toggle_child_events() {
+    let child_events = $('.timeline-child');
+    if (child_events.is(':visible')) {
+        child_events.hide();
+        // Find the button of the parent event, excluding the child events themselves
+        for (let i = 0; i < child_events.length; i++) {
+            let child_event = child_events[i];
+            let parent_event = $(child_event).prev();
+            if (parent_event.hasClass('timeline-child')) {
+                continue;
+            }
+            let btn = parent_event.find('button:last');
+            if (btn.html().indexOf('fa-chevron-down') !== -1) {
+                btn.html('<span class="btn-label"><i class="fa fa-chevron-right"></i> Child events</span>');
+            }
+        }
+
+
+    } else {
+        child_events.show();
+        for (let i = 0; i < child_events.length; i++) {
+            let child_event = child_events[i];
+            let parent_event = $(child_event).prev();
+            if (parent_event.hasClass('timeline-child')) {
+                continue;
+            }
+            let btn = parent_event.find('button:last');
+            if (btn.html().indexOf('fa-chevron-right') !== -1) {
+                btn.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
+            }
+        }
+    }
+}
+
+function toggle_child_events_of_event(event_id) {
+    let child_events = $('.timeline-child-' + event_id);
+    let event = $('#event_' + event_id);
+
+    if (child_events.is(':visible')) {
+        child_events.hide();
+        let btn = $('#event_' + event_id).find('button:last');
+        if (btn.html().indexOf('fa-chevron-down') !== -1) {
+            btn.html('<span class="btn-label"><i class="fa fa-chevron-right"></i> Child events</span>');
+        }
+    } else {
+        child_events.show();
+        let btn = $('#event_' + event_id).find('button:last');
+        if (btn.html().indexOf('fa-chevron-right') !== -1) {
+            btn.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
+        }
     }
 }
 
@@ -806,8 +1046,12 @@ function to_page_up() {
 }
 
 function to_page_down() {
-    window.scrollTo(0,document.body.scrollHeight);
-  }
+    // Get last element ID of the timeline
+    let last_element_id = $('.timeline li:last > div').attr('id').replace('event_', '');
+
+    // Scroll to the last element
+    $('html').animate({ scrollTop: $('#event_'+last_element_id).offset().top - 80 });
+}
 
 function show_time_converter(){
     $('#event_date_convert').show();

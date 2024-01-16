@@ -115,7 +115,9 @@ def get_all_users_activities():
         UserActivity.user_input,
         UserActivity.is_from_api
     ).join(
-        UserActivity.case, UserActivity.user
+        UserActivity.case
+    ).join(
+        UserActivity.user
     ).order_by(desc(UserActivity.activity_date)).limit(10000).all()
 
     user_activities += UserActivity.query.with_entities(

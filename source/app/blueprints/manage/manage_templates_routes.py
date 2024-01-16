@@ -94,8 +94,10 @@ def report_templates_list(caseid):
         ReportType.name.label('type_name'),
         CaseTemplateReport.id
     ).join(
-        CaseTemplateReport.created_by_user,
-        CaseTemplateReport.language,
+        CaseTemplateReport.created_by_user
+    ).join(
+        CaseTemplateReport.language
+    ).join(
         CaseTemplateReport.report_type
     ).all()
 

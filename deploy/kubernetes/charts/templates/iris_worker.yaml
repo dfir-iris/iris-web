@@ -1,3 +1,42 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iris-root-ca-cert-secret-worker
+  labels:
+    app: {{ .Values.irisworker.app }}
+type: Opaque
+data:
+{{ (.Files.Glob "certificates/rootCA/irisRootCACert.pem").AsSecrets | indent 2 }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iris-ldap-certs-secret-worker
+  labels:
+    app: {{ .Values.irisworker.app }}
+type: Opaque
+data:
+{{ (.Files.Glob "certificates/ldap/*").AsSecrets | indent 2 }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iris-certs-dir-rootca-secrets-worker
+  labels:
+    app: {{ .Values.irisworker.app }}
+type: Opaque
+data:
+{{ (.Files.Glob "certificates/rootCA/*").AsSecrets | indent 2 }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iris-certs-dir-webcerts-secrets-worker
+  labels:
+    app: {{ .Values.irisworker.app }}
+type: Opaque
+data:
+{{ (.Files.Glob "certificates/web_certificates/*").AsSecrets | indent 2 }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -17,7 +56,7 @@ spec:
         - name: {{ .Values.irisworker.name }}
           image: "{{ .Values.irisworker.image}}:{{ .Values.irisworker.tag }}"
           imagePullPolicy: "{{ .Values.irisworker.imagePullPolicy }}"
-          command: ['./wait-for-iriswebapp.sh', 'iriswebapp-app.test.svc.cluster.local:8000', './iris-entrypoint.sh', 'iris-worker']
+          command: ['./wait-for-iriswebapp.sh', "{{ .Values.irisapp.name }}:{{ .Values.irisapp.service.port }}", './iris-entrypoint.sh', 'iris-worker']
 
           env:
                 
@@ -49,16 +88,26 @@ spec:
             value: {{ .Values.irisworker.IRIS_SECURITY_PASSWORD_SALT | quote }}          
   
 
-          ports:
-            - containerPort: 80
-
           volumeMounts:
             - mountPath: /home/iris/downloads
-              name: iris-downloads  
+              name: iris-downloads
             - mountPath: /home/iris/user_templates
               name: user-templates
             - mountPath: /home/iris/server_data
               name: server-data
+            - mountPath: /etc/irisRootCACert.pem
+              name: iris-root-ca-cert
+              subPath: irisRootCACert.pem
+              readOnly: true
+            - mountPath: /home/iris/certificates/rootCA
+              name: iris-certs-dir-rootca
+              readOnly: true
+            - mountPath: /home/iris/certificates/web_certificates
+              name: iris-certs-dir-webcerts
+              readOnly: true
+            - mountPath: /iriswebapp/certificates/ldap/
+              name: iris-ldap-certs
+              readOnly: true
       volumes:
         - name: iris-downloads
           emptyDir: {}  
@@ -66,4 +115,16 @@ spec:
           emptyDir: {}
         - name: server-data 
           emptyDir: {}
+        - name: iris-root-ca-cert
+          secret:
+            secretName: iris-root-ca-cert-secret-worker
+        - name: iris-certs-dir-rootca
+          secret:
+            secretName: iris-certs-dir-rootca-secrets-worker
+        - name: iris-ldap-certs
+          secret:
+            secretName: iris-ldap-certs-secret-worker
+        - name: iris-certs-dir-webcerts
+          secret:
+            secretName: iris-certs-dir-webcerts-secrets-worker
 ---

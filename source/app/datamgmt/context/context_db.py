@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from sqlalchemy import and_, case, or_, asc
 from sqlalchemy import desc
 
@@ -38,7 +39,8 @@ def ctx_get_user_cases(user_id, max_results: int = 100):
         Cases.owner_id,
         UserCaseEffectiveAccess.access_level
     ).join(
-        UserCaseEffectiveAccess.case,
+        UserCaseEffectiveAccess.case
+    ).join(
         Cases.client
     ).order_by(
         asc(user_priority_sort),
@@ -65,11 +67,9 @@ def ctx_get_user_cases(user_id, max_results: int = 100):
 
 def ctx_search_user_cases(search, user_id, max_results: int = 100):
     user_priority_sort = case(
-        [(Cases.owner_id == user_id, 0)],
+        (Cases.owner_id == user_id, 0),
         else_=1
     ).label("user_priority")
-
-    print(search)
 
     conditions = []
     if not search:

@@ -30,7 +30,7 @@ import socket
 import time
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, exc, or_
+from sqlalchemy import create_engine, exc, or_, text
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
@@ -121,20 +121,18 @@ def run_post_init(development=False):
     log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
 
-    conn = None
-
     if os.getenv("IRIS_WORKER") is None:
         # Attempt to connect to the database with retries
         log.info("Attempting to connect to the database...")
         for i in range(retry_count):
-            log.info("Connecting to database, attempt " + str(i + 1) + "/" + str(retry_count))
-            conn = connect_to_database(db_host, db_port)
-            if conn is not None:
+            log.info("Connecting to database, attempt " + str(i+1) + "/" + str(retry_count))
+            conn = connect_to_database(db_host,db_port)
+            if conn:
                 break
             log.info("Retrying in " + str(retry_delay) + "seconds...")
             time.sleep(retry_delay)
         # If the connection is still not established, exit the script
-        if conn is None:
+        if not conn:
             log.info("Failed to connect to database after " + str(retry_count) + " attempts.")
             exit(1)
 
@@ -142,141 +140,142 @@ def run_post_init(development=False):
         log.info("Adding pgcrypto extension")
         pg_add_pgcrypto_ext()
 
-        log.info("Creating all Iris tables")
-        db.create_all(bind=None)
-        db.session.commit()
+        with app.app_context():
+            log.info("Creating all Iris tables")
+            db.create_all(bind_key=None)
+            db.session.commit()
 
-        log.info("Creating Celery metatasks tables")
-        create_safe_db(db_name="iris_tasks")
-        db.create_all(bind="iris_tasks")
-        db.session.commit()
+            log.info("Creating Celery metatasks tables")
+            create_safe_db(db_name="iris_tasks")
+            db.create_all(bind_key="iris_tasks")
+            db.session.commit()
 
-        log.info("Running DB migration")
+            log.info("Running DB migration")
 
-        alembic_cfg = Config(file_='app/alembic.ini')
-        alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
-        command.upgrade(alembic_cfg, 'head')
+            alembic_cfg = Config(file_='app/alembic.ini')
+            alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
+            command.upgrade(alembic_cfg, 'head')
 
-        # Create base server settings if they don't exist
-        srv_settings = ServerSettings.query.first()
-        if srv_settings is None:
-            log.info("Creating base server settings")
-            create_safe_server_settings()
+            # Create base server settings if they don't exist
             srv_settings = ServerSettings.query.first()
+            if srv_settings is None:
+                log.info("Creating base server settings")
+                create_safe_server_settings()
+                srv_settings = ServerSettings.query.first()
 
-        prevent_objects = srv_settings.prevent_post_objects_repush
+            prevent_objects = srv_settings.prevent_post_objects_repush
 
-        # Create base languages, OS types, IOC types, attributes, report types, TLP, event categories, assets,
-        # analysis status, case classification, task status, severities, alert status, case states, and hooks
-        log.info("Creating base languages")
-        create_safe_languages()
+            # Create base languages, OS types, IOC types, attributes, report types, TLP, event categories, assets,
+            # analysis status, case classification, task status, severities, alert status, case states, and hooks
+            log.info("Creating base languages")
+            create_safe_languages()
 
-        log.info("Creating base os types")
-        create_safe_os_types()
+            log.info("Creating base os types")
+            create_safe_os_types()
 
-        if not prevent_objects:
-            log.info("Creating base IOC types")
-            create_safe_ioctypes()
+            if not prevent_objects:
+                log.info("Creating base IOC types")
+                create_safe_ioctypes()
 
-        log.info("Creating base attributes")
-        create_safe_attributes()
+            log.info("Creating base attributes")
+            create_safe_attributes()
 
-        log.info("Creating base report types")
-        create_safe_report_types()
+            log.info("Creating base report types")
+            create_safe_report_types()
 
-        log.info("Creating base TLP")
-        create_safe_tlp()
+            log.info("Creating base TLP")
+            create_safe_tlp()
 
-        log.info("Creating base events categories")
-        create_safe_events_cats()
+            log.info("Creating base events categories")
+            create_safe_events_cats()
 
-        if not prevent_objects:
-            log.info("Creating base assets")
-            create_safe_assets()
+            if not prevent_objects:
+                log.info("Creating base assets")
+                create_safe_assets()
 
-        log.info("Creating base analysis status")
-        create_safe_analysis_status()
+            log.info("Creating base analysis status")
+            create_safe_analysis_status()
 
-        if not prevent_objects:
-            log.info("Creating base case classification")
-            create_safe_classifications()
+            if not prevent_objects:
+                log.info("Creating base case classification")
+                create_safe_classifications()
 
-        log.info("Creating base tasks status")
-        create_safe_task_status()
+            log.info("Creating base tasks status")
+            create_safe_task_status()
 
-        log.info("Creating base severities")
-        create_safe_severities()
+            log.info("Creating base severities")
+            create_safe_severities()
 
-        log.info("Creating base alert status")
-        create_safe_alert_status()
+            log.info("Creating base alert status")
+            create_safe_alert_status()
 
-        log.info("Creating base evidence types")
-        create_safe_evidence_types()
+            log.info("Creating base evidence types")
+            create_safe_evidence_types()
 
-        log.info("Creating base alert resolution status")
-        create_safe_alert_resolution_status()
+            log.info("Creating base alert resolution status")
+            create_safe_alert_resolution_status()
 
-        if not prevent_objects:
-            log.info("Creating base case states")
-            create_safe_case_states()
+            if not prevent_objects:
+                log.info("Creating base case states")
+                create_safe_case_states()
 
-        log.info("Creating base review status")
-        create_safe_review_status()
+            log.info("Creating base review status")
+            create_safe_review_status()
 
-        log.info("Creating base hooks")
-        create_safe_hooks()
+            log.info("Creating base hooks")
+            create_safe_hooks()
 
-        # Create initial authorization model, administrative user, and customer
-        log.info("Creating initial authorisation model")
-        def_org, gadm, ganalysts = create_safe_auth_model()
+            # Create initial authorization model, administrative user, and customer
+            log.info("Creating initial authorisation model")
+            def_org, gadm, ganalysts = create_safe_auth_model()
 
-        log.info("Creating first administrative user")
-        admin, pwd = create_safe_admin(def_org=def_org, gadm=gadm)
+            log.info("Creating first administrative user")
+            admin, pwd = create_safe_admin(def_org=def_org, gadm=gadm)
 
-        if not srv_settings.prevent_post_mod_repush:
-            log.info("Registering default modules")
-            register_default_modules()
+            if not srv_settings.prevent_post_mod_repush:
+                log.info("Registering default modules")
+                register_default_modules()
 
-        log.info("Creating initial customer")
-        client = create_safe_client()
+            log.info("Creating initial customer")
+            client = create_safe_client()
 
-        log.info("Creating initial case")
-        create_safe_case(
-            user=admin,
-            client=client,
-            groups=[gadm, ganalysts]
-        )
+            log.info("Creating initial case")
+            create_safe_case(
+                user=admin,
+                client=client,
+                groups=[gadm, ganalysts]
+            )
 
-        # Setup symlinks for custom_assets
-        log.info("Creating symlinks for custom asset icons")
-        custom_assets_symlinks()
+            # Setup symlinks for custom_assets
+            log.info("Creating symlinks for custom asset icons")
+            custom_assets_symlinks()
 
-        # If demo mode is enabled, create demo users and cases
-        if app.config.get('DEMO_MODE_ENABLED') == 'True':
-            log.warning("============================")
-            log.warning("|  THIS IS DEMO INSTANCE   |")
-            log.warning("| DO NOT USE IN PRODUCTION |")
-            log.warning("============================")
-            users_data = create_demo_users(def_org, gadm, ganalysts,
-                                           int(app.config.get('DEMO_USERS_COUNT', 10)),
-                                           app.config.get('DEMO_USERS_SEED'),
-                                           int(app.config.get('DEMO_ADM_COUNT', 4)),
-                                           app.config.get('DEMO_ADM_SEED'))
+            # If demo mode is enabled, create demo users and cases
+            if app.config.get('DEMO_MODE_ENABLED') == 'True':
+                log.warning("============================")
+                log.warning("|  THIS IS DEMO INSTANCE   |")
+                log.warning("| DO NOT USE IN PRODUCTION |")
+                log.warning("============================")
+                users_data = create_demo_users(def_org, gadm, ganalysts,
+                                               int(app.config.get('DEMO_USERS_COUNT', 10)),
+                                               app.config.get('DEMO_USERS_SEED'),
+                                               int(app.config.get('DEMO_ADM_COUNT', 4)),
+                                               app.config.get('DEMO_ADM_SEED'))
 
-            create_demo_cases(users_data=users_data,
-                              cases_count=int(app.config.get('DEMO_CASES_COUNT', 20)),
-                              clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
+                create_demo_cases(users_data=users_data,
+                                  cases_count=int(app.config.get('DEMO_CASES_COUNT', 20)),
+                                  clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
 
-        # Log completion message
-        log.info("Post-init steps completed")
-        log.warning("===============================")
-        log.warning(f"| IRIS IS READY on port  {os.getenv('INTERFACE_HTTPS_PORT')} |")
-        log.warning("===============================")
+            # Log completion message
+            log.info("Post-init steps completed")
+            log.warning("===============================")
+            log.warning(f"| IRIS IS READY on port  {os.getenv('INTERFACE_HTTPS_PORT')} |")
+            log.warning("===============================")
 
-        # If an administrative user was created, log their credentials
-        if pwd is not None:
-            log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<< '
-                     f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
+            # If an administrative user was created, log their credentials
+            if pwd is not None:
+                log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<< '
+                         f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
 
 
 def create_safe_db(db_name):
@@ -546,10 +545,13 @@ def pg_add_pgcrypto_ext():
     This extension provides cryptographic functions for PostgreSQL.
 
     """
-    # Open a connection to the database
-    with db.engine.connect() as con:
-        # Execute a SQL command to create the pgcrypto extension if it does not already exist
-        con.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
+
+    # Set the application context
+    with app.app_context():
+        # Open a connection to the database
+        with db.engine.connect() as con:
+            # Execute a SQL command to create the pgcrypto extension if it does not already exist
+            con.execute(text('CREATE EXTENSION IF NOT EXISTS pgcrypto CASCADE;'))
 
 
 def create_safe_languages():
@@ -979,7 +981,7 @@ def create_safe_auth_model():
     # Create new Analysts Group object
     try:
         ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
-                                  group_auto_follow=True,
+                                  group_auto_follow=False,
                                   group_auto_follow_access_level=CaseAccessLevel.full_access.value,
                                   group_permissions=ac_get_mask_analyst())
 
@@ -992,8 +994,8 @@ def create_safe_auth_model():
     if ganalysts.group_permissions != ac_get_mask_analyst():
         ganalysts.group_permissions = ac_get_mask_analyst()
 
-    if ganalysts.group_auto_follow is not True:
-        ganalysts.group_auto_follow = True
+    if ganalysts.group_auto_follow is not False:
+        ganalysts.group_auto_follow = False
 
     if ganalysts.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
         ganalysts.group_auto_follow_access_level = CaseAccessLevel.full_access.value
@@ -1644,6 +1646,7 @@ def create_safe_tlp():
     create_safe(db.session, Tlp, tlp_name="amber", tlp_bscolor="warning")
     create_safe(db.session, Tlp, tlp_name="green", tlp_bscolor="success")
     create_safe(db.session, Tlp, tlp_name="clear", tlp_bscolor="black")
+    create_safe(db.session, Tlp, tlp_name="amber+strict", tlp_bscolor="warning")
 
 
 def create_safe_server_settings():

@@ -7,6 +7,7 @@ Create Date: 2023-11-28 11:50:08.136090
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 from app.alembic.alembic_utils import _table_has_column
 
@@ -30,19 +31,19 @@ def upgrade():
 
     conn = op.get_bind()
     # Create the new severity if it doesn't exist already - we check first
-    res = conn.execute(
+    res = conn.execute(text(
         "SELECT severity_id FROM severities WHERE severity_name = 'Medium'"
-    ).fetchone()
+    )).fetchone()
 
     if res is None:
-        conn.execute(
+        conn.execute(text(
             "INSERT INTO severities (severity_name, severity_description) VALUES ('Medium', 'Medium')"
-        )
+        ))
 
     # Update the severity of all cases to the default severity
-    conn.execute(
+    conn.execute(text(
         "UPDATE cases SET severity_id = (SELECT severity_id FROM severities WHERE severity_name = 'Medium')"
-    )
+    ))
 
     pass
 

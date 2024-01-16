@@ -18,13 +18,13 @@ let OverviewTable = $("#overview_table").DataTable({
             data: "case_id" // field in data
         },
         {
-            targets: [11], // column index
+            targets: [2], // column index
             visible: false, // set visibility
             searchable: true, // set searchable
             data: "severity" // field in data
         },
         {
-            targets: [2], // column index
+            targets: [3], // column index
             visible: true, // set visibility
             searchable: true, // set searchable
             sType: 'integer'
@@ -44,6 +44,15 @@ let OverviewTable = $("#overview_table").DataTable({
           }
         },
       {
+          "data": "severity",
+            "render": function (data, type, row, meta) {
+                  if (data != null && (type === 'filter'  || type === 'sort' || type === 'display' || type === 'search')) {
+                    return data.severity_name;
+                  }
+                return data;
+            }
+      },
+      {
         "data": "name",
         "render": function (data, type, row, meta) {
             if (type === 'display' || type === 'filter') {
@@ -55,6 +64,7 @@ let OverviewTable = $("#overview_table").DataTable({
             }
 
             if (type === 'display') {
+                let div_anchor = $('<div>');
                 let a_anchor = $('<a>');
                 a_anchor.attr('href', `/case?cid=${row['case_id']}`);
                 a_anchor.attr('target', '_blank');
@@ -69,9 +79,10 @@ let OverviewTable = $("#overview_table").DataTable({
                 span_anchor.attr('title', 'Quick view');
                 span_anchor.attr('style', 'cursor: pointer;');
                 span_anchor.text(data);
-                a_anchor.append(span_anchor);
+                div_anchor.append(a_anchor);
+                div_anchor.append(span_anchor);
 
-                return a_anchor.prop('outerHTML');
+                return div_anchor.prop('outerHTML');
             }
 
             return data;
@@ -80,7 +91,20 @@ let OverviewTable = $("#overview_table").DataTable({
       { "data": "client",
        "render": function (data, type, row, meta) {
           if (type === 'display') {
-            data = sanitizeHTML(data.customer_name);
+            let div_anchor = $('<div>');
+            let a_anchor = $('<a>');
+            a_anchor.attr('href', `/manage/customers/${data.customer_id}/view`);
+            a_anchor.attr('target', '_blank');
+            a_anchor.attr('rel', 'noopener');
+            a_anchor.html("<i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-2 text-muted'></i>");
+
+            let span_anchor = $('<span>');
+            span_anchor.text(data.customer_name);
+            div_anchor.append(a_anchor);
+            div_anchor.append(span_anchor);
+
+            return div_anchor.prop('outerHTML');
+
           } else if (type === 'sort' || type === 'filter') {
             data = sanitizeHTML(data.customer_name);
           }
@@ -195,24 +219,21 @@ let OverviewTable = $("#overview_table").DataTable({
       {
         "data": "owner",
         "render": function (data, type, row, meta) {
-          if (type === 'display' && data != null) {
-              sdata = sanitizeHTML(data.user_name);
-              data = `<div class="row">${get_avatar_initials(sdata, false, null, true)} <span class="ml-1">${sdata}</span></div>`;
-          } else if (type === 'filter' || type === 'sort') {
-                data = data.user_name;
+            let sdata;
+            if (type === 'display' && data != null) {
+                sdata = sanitizeHTML(data.user_name);
+                let div_anchor = $('<div>');
+                div_anchor.addClass('row');
+                div_anchor.append(get_avatar_initials(sdata, false, null, true));
+                div_anchor.append($('<span/>').addClass('ml-1').text(sdata));
+                return div_anchor.html();
+            }
+            if ((type === 'filter' || type === 'sort') && data !== null) {
+                return sanitizeHTML(data.user_name);
             }
           return data;
         }
-      },
-      {
-          "data": "severity",
-            "render": function (data, type, row, meta) {
-                  if (data != null && (type == 'filter'  || type === 'sort' || type === 'display' || type === 'search')) {
-                    return data.severity_name;
-                  }
-                return data;
-            }
-        }
+      }
     ],
     filter: true,
     info: true,

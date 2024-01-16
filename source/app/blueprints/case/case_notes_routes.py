@@ -21,48 +21,40 @@
 import marshmallow
 # IMPORTS ------------------------------------------------
 from datetime import datetime
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
-from flask_socketio import emit, join_room, leave_room
+from flask_socketio import emit, join_room
 from flask_wtf import FlaskForm
+from sqlalchemy import or_, and_
 
-from app import db, socket_io
+from app import db, socket_io, app
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_notes_db import add_comment_to_note
-from app.datamgmt.case.case_notes_db import add_note
-from app.datamgmt.case.case_notes_db import add_note_group
+from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count, get_directory, \
+    delete_directory
 from app.datamgmt.case.case_notes_db import delete_note
 from app.datamgmt.case.case_notes_db import delete_note_comment
-from app.datamgmt.case.case_notes_db import delete_note_group
-from app.datamgmt.case.case_notes_db import find_pattern_in_notes
 from app.datamgmt.case.case_notes_db import get_case_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comments
-from app.datamgmt.case.case_notes_db import get_case_notes_comments_count
-from app.datamgmt.case.case_notes_db import get_group_details
-from app.datamgmt.case.case_notes_db import get_groups_short
 from app.datamgmt.case.case_notes_db import get_note
-from app.datamgmt.case.case_notes_db import get_notes_from_group
-from app.datamgmt.case.case_notes_db import update_note
-from app.datamgmt.case.case_notes_db import update_note_group
 from app.datamgmt.states import get_notes_state
-from app.forms import CaseNoteForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models import Notes
 from app.models.authorization import CaseAccessLevel
-from app.schema.marshables import CaseAddNoteSchema
-from app.schema.marshables import CaseGroupNoteSchema
+from app.schema.marshables import CaseNoteDirectorySchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires, ac_socket_requires
+from app.util import ac_api_case_requires, ac_socket_requires, endpoint_deprecated
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+
 
 case_notes_blueprint = Blueprint('case_notes',
                                  __name__,
@@ -85,48 +77,55 @@ def case_notes(caseid, url_redir):
         crc32 = None
         desc = None
 
-    return render_template('case_notes.html', case=case, form=form, th_desc=desc, crc=crc32)
+    return render_template('case_notes_v2.html', case=case, form=form, th_desc=desc, crc=crc32)
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_note_detail(cur_id, caseid):
+    """
+    Returns a note and its comments
+
+    ---
+    tags:
+      - Case Notes
+
+    parameters:
+        - name: cur_id
+          in: path
+          description: Note ID
+          type: integer
+          required: true
+        - name: caseid
+          in: path
+          description: Case ID
+          type: integer
+          required: true
+    responses:
+        200:
+            description: Note and its comments
+            schema:
+                $ref: '#/definitions/CaseNoteSchema'
+        400:
+            description: Data error
+    """
     try:
         note = get_note(cur_id, caseid=caseid)
         if not note:
             return response_error(msg="Invalid note ID")
-        note_schema = CaseNoteSchema()
 
-        return response_success(data=note_schema.dump(note))
+        note_comments = get_case_note_comments(cur_id)
+
+        note_schema = CaseNoteSchema()
+        comments_schema = CommentSchema(many=True)
+
+        note = note_schema.dump(note)
+        note['comments'] = comments_schema.dump(note_comments)
+
+        return response_success(data=note)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages, status=400)
-
-
-@case_notes_blueprint.route('/case/notes/<int:cur_id>/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
-def case_note_detail_modal(cur_id, caseid, url_redir):
-    if url_redir:
-        return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
-
-    form = CaseNoteForm()
-
-    note = get_note(cur_id, caseid)
-    ca = None
-
-    if note:
-        form.content = note.note_content
-        form.title = note.note_title
-        form.note_title.render_kw = {"value": note.note_title}
-        setattr(form, 'note_id', note.note_id)
-        setattr(form, 'note_uuid', note.note_uuid)
-        ca = note.custom_attributes
-        comments_map = get_case_notes_comments_count([cur_id])
-
-        return render_template("modal_note_edit.html", note=form, id=cur_id, attributes=ca,
-                               ncid=note.note_case_id, comments_map=comments_map)
-
-    return response_error(f'Unable to find note ID {cur_id} for case {caseid}')
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['POST'])
@@ -158,23 +157,18 @@ def case_note_save(cur_id, caseid):
 
     try:
         # validate before saving
-        addnote_schema = CaseAddNoteSchema()
+        addnote_schema = CaseNoteSchema()
+
+        note = get_note(cur_id, caseid=caseid)
+        if not note:
+            return response_error("Invalid note ID for this case")
 
         request_data = call_modules_hook('on_preload_note_update', data=request.get_json(), caseid=caseid)
 
         request_data['note_id'] = cur_id
-        addnote_schema.load(request_data, partial=['group_id'])
-
-        note = update_note(note_content=request_data.get('note_content'),
-                           note_title=request_data.get('note_title'),
-                           update_date=datetime.utcnow(),
-                           user_id=current_user.id,
-                           note_id=cur_id,
-                           caseid=caseid
-                           )
-        if not note:
-
-            return response_error("Invalid note ID for this case")
+        addnote_schema.load(request_data, partial=True, instance=note)
+        note.update_date = datetime.utcnow()
+        note.user_id = current_user.id
 
         note = call_modules_hook('on_postload_note_update', data=note, caseid=caseid)
 
@@ -190,25 +184,31 @@ def case_note_save(cur_id, caseid):
 def case_note_add(caseid):
     try:
         # validate before saving
-        addnote_schema = CaseAddNoteSchema()
+        addnote_schema = CaseNoteSchema()
+        request_data = request.get_json()
+
+        if request_data.get('group_id'):
+            return response_error('Group ID is deprecated, please use directory_id instead')
+
         request_data = call_modules_hook('on_preload_note_create', data=request.get_json(), caseid=caseid)
 
-        addnote_schema.verify_group_id(request_data, caseid=caseid)
-        addnote_schema.load(request_data)
+        addnote_schema.verify_directory_id(request_data, caseid=caseid)
 
-        note = add_note(request_data.get('note_title'),
-                        datetime.utcnow(),
-                        current_user.id,
-                        caseid,
-                        request_data.get('group_id'),
-                        note_content=request_data.get('note_content'))
+        new_note = addnote_schema.load(request_data)
 
-        note = call_modules_hook('on_postload_note_create', data=note, caseid=caseid)
+        new_note.note_creationdate = datetime.utcnow()
+        new_note.note_lastupdate = datetime.utcnow()
+        new_note.note_user = current_user.id
+        new_note.note_case_id = caseid
 
-        if note:
-            casenote_schema = CaseNoteSchema()
-            track_activity(f"added note \"{note.note_title}\"", caseid=caseid)
-            return response_success('Note added', data=casenote_schema.dump(note))
+        db.session.add(new_note)
+        db.session.commit()
+
+        new_note = call_modules_hook('on_postload_note_create', data=new_note, caseid=caseid)
+
+        if new_note:
+            track_activity(f"added note \"{new_note.note_title}\"", caseid=caseid)
+            return response_success('Note added', data=addnote_schema.dump(new_note))
 
         return response_error("Unable to create note for internal reasons")
 
@@ -216,32 +216,91 @@ def case_note_add(caseid):
         return response_error(msg="Data error", data=e.messages, status=400)
 
 
+@case_notes_blueprint.route('/case/notes/directories/add', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_directory_add(caseid):
+    try:
+
+        directory_schema = CaseNoteDirectorySchema()
+        request_data = request.get_json()
+
+        if request_data.get('parent_id') is not None:
+            directory_schema.verify_parent_id(request_data['parent_id'],
+                                              case_id=caseid)
+
+        request_data.pop('id', None)
+        request_data['case_id'] = caseid
+        new_directory = directory_schema.load(request_data)
+
+        db.session.add(new_directory)
+        db.session.commit()
+
+        track_activity(f"added directory \"{new_directory.name}\"", caseid=caseid)
+        return response_success('Directory added', data=directory_schema.dump(new_directory))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+
+@case_notes_blueprint.route('/case/notes/directories/update/<dir_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_directory_update(dir_id, caseid):
+    try:
+
+        directory = get_directory(dir_id, caseid)
+        if not directory:
+            return response_error(msg="Invalid directory ID")
+
+        directory_schema = CaseNoteDirectorySchema()
+        request_data = request.get_json()
+
+        request_data['case_id'] = caseid
+        if request_data.get('parent_id') is not None:
+            directory_schema.verify_parent_id(request_data['parent_id'],
+                                              case_id=caseid,
+                                              current_id=dir_id)
+
+        new_directory = directory_schema.load(request_data, instance=directory, partial=True)
+
+        db.session.commit()
+
+        track_activity(f"modified directory \"{new_directory.name}\"", caseid=caseid)
+        return response_success('Directory modified', data=directory_schema.dump(new_directory))
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+    except Exception as e:
+        app.logger.exception(f"Failed to update directory: {e}")
+        return response_error(msg="Internal error", status=500)
+
+
+@case_notes_blueprint.route('/case/notes/directories/delete/<dir_id>', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_directory_delete(dir_id, caseid):
+    try:
+
+        directory = get_directory(dir_id, caseid)
+        if not directory:
+            return response_error(msg="Invalid directory ID")
+
+        # Proceed to delete directory, but remove all associated notes and subdirectories recursively
+        has_succeed = delete_directory(directory, caseid)
+        if has_succeed:
+            track_activity(f"deleted directory \"{directory.name}\"", caseid=caseid)
+            return response_success('Directory deleted')
+
+        return response_error('Unable to delete directory')
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error(msg="Data error", data=e.messages, status=400)
+
+
 @case_notes_blueprint.route('/case/notes/groups/list', methods=['GET'])
+@endpoint_deprecated('Use /case/notes/directories/filter', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_load_notes_groups(caseid):
-
-    if not get_case(caseid=caseid):
-        return response_error("Invalid case ID")
-
-    groups_short = get_groups_short(caseid)
-
-    sta = []
-
-    for group in groups_short:
-        notes = get_notes_from_group(caseid=caseid, group_id=group.group_id)
-        group_d = group._asdict()
-        group_d['notes'] = [note._asdict() for note in notes]
-
-        sta.append(group_d)
-
-    sta = sorted(sta, key=lambda i: i['group_id'])
-
-    ret = {
-        'groups': sta,
-        'state': get_notes_state(caseid=caseid)
-    }
-
-    return response_success("", data=ret)
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/state', methods=['GET'])
@@ -254,92 +313,61 @@ def case_notes_state(caseid):
         return response_error('No notes state for this case.')
 
 
-@case_notes_blueprint.route('/case/notes/search', methods=['POST'])
+@case_notes_blueprint.route('/case/notes/search', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_search_notes(caseid):
+    search_input = request.args.get('search_input')
 
-    if request.is_json:
-        search = request.json.get('search_term')
-        ns = []
-        if search:
-            search = "%{}%".format(search)
-            ns = find_pattern_in_notes(search, caseid)
+    notes = Notes.query.filter(
+        and_(Notes.note_case_id == caseid,
+        or_(Notes.note_title.ilike(f'%{search_input}%'),
+            Notes.note_content.ilike(f'%{search_input}%')))
+    ).all()
 
-            ns = [row._asdict() for row in ns]
+    note_schema = CaseNoteSchema(many=True)
+    serialized_notes = note_schema.dump(notes)
 
-        return response_success("", data=ns)
-
-    return response_error("Invalid request")
+    return response_success(data=serialized_notes)
 
 
 @case_notes_blueprint.route('/case/notes/groups/add', methods=['POST'])
+@endpoint_deprecated('Use /case/notes/directories/add', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_notes_groups(caseid):
-    title = ''
-    if request.is_json:
-        title = request.json.get('group_title') or ''
-
-        ng = add_note_group(group_title=title,
-                            caseid=caseid,
-                            userid=current_user.id,
-                            creationdate=datetime.utcnow())
-
-        if ng.group_id:
-            group_schema = CaseGroupNoteSchema()
-            track_activity(f"added group note \"{ng.group_title}\"", caseid=caseid)
-
-            return response_success("Notes group added", data=group_schema.dump(ng))
-
-        else:
-            return response_error("Unable to add a new group")
-
-    return response_error("Invalid request")
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/groups/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('Use /case/notes/directories/delete/<ID>', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_notes_groups(cur_id, caseid):
-
-    if not delete_note_group(cur_id, caseid):
-        return response_error("Invalid group ID")
-
-    track_activity("deleted group note ID {}".format(cur_id), caseid=caseid)
-
-    return response_success("Group ID {} deleted".format(cur_id))
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/groups/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('Use /case/notes/directories/<ID>', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_notes_group(cur_id, caseid):
+    pass
 
-    group = get_group_details(cur_id, caseid)
-    if not group:
-        return response_error(f"Group ID {cur_id} not found")
 
-    return response_success("", data=group)
+@case_notes_blueprint.route('/case/notes/directories/filter', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_filter_notes_directories(caseid):
+
+    if not get_case(caseid=caseid):
+        return response_error("Invalid case ID")
+
+    directories = get_directories_with_note_count(caseid)
+
+    return response_success("", data=directories)
 
 
 @case_notes_blueprint.route('/case/notes/groups/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('Use /case/notes/directories/update/<ID>', 'v2.4.0')
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_notes_groups(cur_id, caseid):
-
-    js_data = request.get_json()
-    if not js_data:
-        return response_error("Invalid data")
-
-    group_title = js_data.get('group_title')
-    if not group_title:
-        return response_error("Missing field group_title")
-
-    ng = update_note_group(group_title, cur_id, caseid)
-
-    if ng:
-        # Note group has been properly found and updated in db
-        track_activity("updated group note \"{}\"".format(group_title), caseid=caseid)
-        group_schema = CaseGroupNoteSchema()
-        return response_success("Updated title of group ID {}".format(cur_id), data=group_schema.dump(ng))
-
-    return response_error("Group ID {} not found".format(cur_id))
+    pass
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/modal', methods=['GET'])

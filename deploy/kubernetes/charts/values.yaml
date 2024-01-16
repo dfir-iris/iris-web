@@ -82,12 +82,11 @@ irisapp:
    ## @param irisapp.service Iris Frontend Service
    ##
    service:
-     port: 80 
-     targetPort: 8000
+     port: 8000
     
    ## @param irisapp.type Iris Frontend Service type
    ##
-   type: ClusterIP  
+   type: NodePort
 
    ## @param  Iris Frontend Environments
    ##
@@ -100,6 +99,12 @@ irisapp:
    DOCKERIZED: 1
    IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
    IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+   IRIS_ADM_USERNAME: administrator
+   # Must be 12 characters minimum and contains a capital letter and a number. 
+   IRIS_ADM_PASSWORD: Hello12345!
+   DB_RETRY_COUNT: 5
+   DB_RETRY_DELAY: 5
+   INTERFACE_HTTPS_PORT: 443
 
 ## @section Iris Backend Configuration
 ##
@@ -144,15 +149,15 @@ ingress:
   annotations:
     # Add any annotations specific to your Ingress controller
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
   hosts:
     - host: <host_name>
       paths:
-        - path: /
-          pathType: Prefix
+        - path: /(.*)
+          pathType: ImplementationSpecific
           serviceName: iriswebapp-app
-          servicePort: 80
+          servicePort: 8000
   tls:
     - secretName: iris-ingress-tls-secret
       hosts:

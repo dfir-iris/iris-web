@@ -21,14 +21,14 @@ from datetime import datetime
 from pathlib import Path
 from sqlalchemy import and_, desc, asc
 from sqlalchemy.orm import aliased
-from sqlalchemy.util import reduce
+from functools import reduce
 
 from app import db, app
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee
+from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee, NoteDirectory
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
@@ -123,11 +123,14 @@ def list_cases_dict(user_id):
         CaseState.state_name,
         UserCaseEffectiveAccess.access_level
     ).join(
-        UserCaseEffectiveAccess.case,
-        Cases.client,
+        UserCaseEffectiveAccess.case
+    ).join(
+        Cases.client
+    ).join(
         Cases.user
     ).outerjoin(
-        Cases.classification,
+        Cases.classification
+    ).outerjoin(
         Cases.state
     ).join(
         user_alias, and_(Cases.user_id == user_alias.id)
@@ -275,7 +278,8 @@ def get_case_details_rt(case_id):
         ).join(
             Cases.client,
         ).outerjoin(
-            Cases.classification,
+            Cases.classification
+        ).outerjoin(
             Cases.state
         ).first()
 
@@ -350,9 +354,12 @@ def delete_case(case_id):
     alerts_to_update.update({CaseAssets.case_id: None}, synchronize_session='fetch')
     db.session.commit()
 
+    # Legacy code
     NotesGroupLink.query.filter(NotesGroupLink.case_id == case_id).delete()
     NotesGroup.query.filter(NotesGroup.group_case_id == case_id).delete()
+
     Notes.query.filter(Notes.note_case_id == case_id).delete()
+    NoteDirectory.query.filter(NoteDirectory.case_id == case_id).delete()
 
     tasks = CaseTasks.query.filter(CaseTasks.task_case_id == case_id).all()
     for task in tasks:
@@ -388,34 +395,15 @@ def get_filtered_cases(start_open_date: str = None,
                        case_severity_id: int = None,
                        case_state_id: int = None,
                        case_soc_id: str = None,
-                       sort: str = None,
                        per_page: int = None,
                        page: int = None,
-                       current_user_id = None
+                       current_user_id = None,
+                       search_value=None,
+                       sort_by=None,
+                       sort_dir='asc'
                        ):
     """
     Get a list of cases from the database, filtered by the given parameters
-
-    args:
-        start_open_date (str): The start date of the open date range
-        end_open_date (str): The end date of the open date range
-        case_customer_id (int): The ID of the customer to filter by
-        case_ids (list): A list of case IDs to filter by
-        case_name (str): The name of the case to filter by
-        case_description (str): The description of the case to filter by
-        case_classification_id (int): The ID of the classification to filter by
-        case_owner_id (int): The ID of the owner to filter by
-        case_opening_user_id (int): The ID of the user who opened the case to filter by
-        case_severity_id (int): The ID of the severity to filter by
-        case_state_id (int): The ID of the state to filter by
-        case_soc_id (str): The ID of the SOC to filter by
-        sort (str): The sort order to use
-        per_page (int): The number of cases to return per page
-        page (int): The page number to return
-        current_user_id (int): The ID of the current user
-
-    returns:
-        list: A list of cases
     """
     conditions = []
 
@@ -452,27 +440,41 @@ def get_filtered_cases(start_open_date: str = None,
     if case_soc_id is not None:
         conditions.append(Cases.soc_id == case_soc_id)
 
+    if search_value is not None:
+        conditions.append(Cases.name.like(f"%{search_value}%"))
+
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
 
-    # filter out cases the user doesn't have access to
     conditions.append(Cases.case_id.in_(user_list_cases_view(current_user_id)))
 
-    order_func = desc if sort == "desc" else asc
+    data = Cases.query.filter(*conditions)
+
+    if sort_by is not None:
+        order_func = desc if sort_dir == "desc" else asc
+
+        if sort_by == 'owner':
+            data = data.join(User, Cases.owner_id == User.id).order_by(order_func(User.name))
+
+        elif sort_by == 'opened_by':
+            data = data.join(User, Cases.user_id == User.id).order_by(order_func(User.name))
+
+        elif sort_by == 'customer_name':
+            data = data.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
+
+        elif sort_by == 'state':
+            data = data.join(CaseState, Cases.state_id == CaseState.state_id).order_by(order_func(CaseState.state_name))
+
+        elif hasattr(Cases, sort_by):
+            data = data.order_by(order_func(getattr(Cases, sort_by)))
 
     try:
 
-        # Query the cases using the filter conditions
-        filtered_cases = db.session.query(
-            Cases
-        ).filter(
-            *conditions
-        ).order_by(
-            order_func(Cases.case_id)
-        ).paginate(page=page, per_page=per_page, error_out=False)
+        filtered_cases = data.paginate(page=page, per_page=per_page, error_out=False)
 
     except Exception as e:
         app.logger.exception(f"Error getting cases: {str(e)}")
         return None
 
     return filtered_cases
+

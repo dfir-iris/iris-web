@@ -72,10 +72,11 @@ function ellipsis_field( data, cutoff, wordbreak ) {
 
 function ret_obj_dt_description(data) {
     let anchor = $('<span>');
+    let dataContent = typeof data === 'object' ? JSON.stringify(data) : data;
     anchor.attr('data-toggle', 'popover')
         .attr('data-trigger', 'hover')
         .attr('title', 'Description')
-        .attr('data-content', data)
+        .attr('data-content', dataContent)
         .attr('href', '#')
         .css('cursor', 'pointer')
         .text(ellipsis_field_raw(data, 64));
@@ -224,7 +225,7 @@ function notify_success(message) {
     });
 }
 
-function notify_auto_api(data, silent_success) {
+function notify_auto_api(data, silent_success, silent_failure) {
     if (data.status === 'success') {
         if (silent_success === undefined || silent_success === false) {
             if (data.message.length === 0) {
@@ -237,7 +238,9 @@ function notify_auto_api(data, silent_success) {
         if (data.message.length === 0) {
             data.message = 'Operation failed';
         }
-        notify_error(data.message);
+        if (silent_failure === undefined || silent_failure === false) {
+            notify_error(data.message);
+        }
         return false;
     }
 }
@@ -265,16 +268,18 @@ function get_raw_request_api(uri, propagate_api_error, beforeSend_fn) {
         },
         error: function(jqXHR) {
             if (propagate_api_error) {
-                if(jqXHR.responseJSON && jqXHR.status == 400) {
+                if(jqXHR.responseJSON && jqXHR.status === 400) {
                     propagate_form_api_errors(jqXHR.responseJSON.data);
                 } else {
                     ajax_notify_error(jqXHR, this.url);
                 }
             } else {
-                if(jqXHR.responseJSON) {
-                    notify_error(jqXHR.responseJSON.message);
-                } else {
-                    ajax_notify_error(jqXHR, this.url);
+                if (jqXHR.status !== 400) {
+                    if(jqXHR.responseJSON) {
+                        notify_error(jqXHR.responseJSON.message);
+                    } else {
+                        ajax_notify_error(jqXHR, this.url);
+                    }
                 }
             }
         }
@@ -929,7 +934,7 @@ function get_showdown_convert() {
         ghCodeBlocks: true,
         backslashEscapesHTMLTags: true,
         splitAdjacentBlockquotes: true,
-        extensions: ['bootstrap-tables', createSanitizeExtensionForImg]
+        extensions: [createSanitizeExtensionForImg, 'bootstrap-tables']
     });
 }
 
@@ -950,6 +955,7 @@ function do_md_filter_xss(html) {
                 input: ['type', 'checked', 'disabled', 'class'],
                 table: ['class'], thead: [], tbody: [], tr: [], th: [], td: [], br: []
             },
+
         onTagAttr: function (tag, name, value, isWhiteAttr) {
             if (tag === "i" && name === "class") {
                 if (iClassWhiteList.indexOf(value) === -1) {
@@ -1305,6 +1311,125 @@ function hide_table_search_input(columns) {
       }
     }
   }
+
+function load_add_case() {
+    // Dynamically load the modal
+    $('#modal_add_case_content').load('/manage/cases/add/modal', function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, '/case/add');
+             return false;
+        }
+        $('#case_customer').selectpicker({
+            liveSearch: true,
+            title: "Select customer *",
+            style: "btn-outline-white",
+            size: 8
+        });
+        $('#case_template_id').selectpicker({
+            liveSearch: true,
+            title: "Select case template",
+            style: "btn-outline-white",
+            size: 8
+        });
+        $('#case_template_id').prepend(new Option('', ''));
+        $('#classification_id').selectpicker({
+            liveSearch: true,
+            title: "Select classification",
+            style: "btn-outline-white",
+            size: 8
+        });
+        $('#classification_id').prepend(new Option('', ''));
+
+        $('#modal_add_case').modal({show:true});
+    });
+}
+
+/* Submit event handler for new case */
+function submit_new_case() {
+
+    let data_sent = $('form#form_new_case').serializeObject();
+    let ret = get_custom_attributes_fields();
+    let has_error = ret[0].length > 0;
+    let attributes = ret[1];
+
+    if (has_error){return false;}
+
+    data_sent['custom_attributes'] = attributes;
+
+    send_add_case(data_sent);
+
+    return false;
+}
+
+function set_suggest_tags(anchor_id) {
+    $(`#${anchor_id}`).amsifySuggestags({
+        suggestionsAction : {
+            url : '/manage/tags/suggest',
+            method: 'GET',
+            timeout: -1,
+            minChars: 2,
+            minChange: -1,
+            delay: 100,
+            type: 'GET',
+            dataType: null
+        }
+    });
+}
+
+function send_add_case(data_sent) {
+
+    post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {
+        $('#submit_new_case_btn').text('Checking data..')
+            .attr("disabled", true)
+            .removeClass('bt-outline-success')
+            .addClass('btn-success', 'text-dark');
+    })
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            let case_id = data.data.case_id;
+            swal("That's done !",
+                "Case has been successfully created",
+                "success",
+                {
+                    buttons: {
+                        dash: {
+                            text: "Go to dashboard",
+                            value: "dash",
+                            color: '#d33'
+                        },
+                        go_case: {
+                            text: "Switch to newly created case",
+                            value: "go_case"
+                        }
+                    }
+                }
+            ).then((value) => {
+                switch (value) {
+
+                    case "dash":
+                        window.location.replace("/dashboard" + case_param());
+                        break;
+
+                    case 'go_case':
+                        window.location.replace("/case?cid=" + case_id);
+
+                    default:
+                        window.location.replace("/case?cid=" + case_id);
+                }
+            });
+        }
+    })
+    .always(() => {
+        $('#submit_new_case_btn')
+        .attr("disabled", false)
+        .addClass('bt-outline-success')
+        .removeClass('btn-success', 'text-dark');
+    })
+    .fail(() => {
+        $('#submit_new_case_btn').text('Save');
+    })
+
+}
 
 function load_context_switcher() {
 
@@ -1673,17 +1798,33 @@ $(document).ready(function(){
       return [{
         type: "output",
         filter: function (html, converter, options) {
-          // parse the html string
-          var liveHtml = $('<div></div>').html(html);
-          $('table', liveHtml).each(function(){
-            var table = $(this);
+            let parser = new DOMParser();
 
-            // table bootstrap classes
-            table.addClass('table table-striped table-bordered table-hover table-sm')
-            // make table responsive
-            .wrap('<div class="table-responsive"></div>');
-          });
-          return liveHtml.html();
+            html = '<div id="fsjpowefjdwe">' + html + '</div>';
+
+            let doc = parser.parseFromString(html, 'text/html');
+
+            let tables = doc.getElementsByTagName('table');
+
+            for (let i = 0; i < tables.length; i++) {
+                let table = tables[i];
+
+                table.classList.add('table', 'table-striped', 'table-bordered', 'table-hover', 'table-sm');
+
+                let div = doc.createElement('div');
+                div.classList.add('table-responsive');
+
+                table.parentNode.insertBefore(div, table);
+                div.appendChild(table);
+            }
+
+            let serializer = new XMLSerializer();
+            let newHtml = serializer.serializeToString(doc);
+
+            let innerHtml = doc.getElementById('fsjpowefjdwe').innerHTML;
+
+            return innerHtml;
+
         }
           }];
     });

@@ -20,6 +20,10 @@
                         </li>
 
                         <li class="nav-item submenu">
+                            <a class="nav-link"  data-toggle="pill" href="#user_clients_tab" role="tab" aria-controls="user_clients_tab" aria-selected="false">Customers</a>
+                        </li>
+
+                        <li class="nav-item submenu">
                             <a class="nav-link"  data-toggle="pill" href="#user_cac_tab" role="tab" aria-controls="user_cac_tab" aria-selected="false">Cases access</a>
                         </li>
 
@@ -111,8 +115,13 @@
                                             <input autocomplete="off" class="form-control" type="text" value="{{ user.user_uuid }}" disabled>
                                         </div>
                                         <div class="form-group mt-3">
-                                            <label for="user_uuid" class="placeholder">User API Key</label>
-                                            <input autocomplete="off" class="form-control" type="text" value="{{ user.user_api_key }}" disabled>
+                                            <label for="userApiKey" class="placeholder">User API Key</label>
+                                            <div class="input-group">
+                                                <input autocomplete="off" class="form-control" type="text" value="{{ user.user_api_key }}" id="userApiKey" disabled>
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-sm btn-dark" type="button" onclick="renew_api_for_user({{ user.user_id }})">Renew</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     {% endif %}
                                 </div>
@@ -197,6 +206,36 @@
                             </div>
                         </div>
                     </div>
+                    <div class="tab-pane" id="user_clients_tab">
+                        <div class="row">
+                            <div class="container col-md-12">
+                                <span class="ml-2 mt-3">Customers the user belongs to.</span>
+                                <button class="btn btn-dark btn-sm pull-right mr-2" onclick="manage_user_clients({{ user.user_id }});">
+                                    <span class="menu-title">Manage</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="container col-md-12">
+                                <table class="table table-striped" id="user_clients_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Customer</th>
+                                            <th>Customer ID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for customer in user.user_customers %}
+                                        <tr>
+                                            <td>{{ customer.customer_name }}</td>
+                                            <td>{{ customer.customer_id }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                     <div class="tab-pane" id="user_cac_tab">
                         <div class="container col-md-12" >
                               <div class="row d-flex mb-4">
@@ -244,6 +283,8 @@
             });
 
             $('#user_permissions_table').dataTable({
+                "order": [[ 1, "asc" ]]});
+            $('#user_clients_table').dataTable({
                 "order": [[ 1, "asc" ]]});
             $('#user_groups_table').dataTable({
                 "order": [[ 1, "asc" ]],

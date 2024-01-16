@@ -59,9 +59,12 @@
 .amsify-suggestags-area .amsify-suggestags-list {
 	display: none;
 	position: absolute;
-	background: white;
-	border: 1px solid #dedede;
-	z-index: 1;
+	border-radius: 0.6rem;
+	border: 1px solid rgba(0,0,0,0.15);
+	box-shadow: 0 1px 11px rgba(0, 0, 0, 0.15) !important;
+	z-index: 1500;
+	color: #212529;
+	background-color: #fff;
 }
 
 .amsify-suggestags-area
@@ -79,7 +82,7 @@ ul.amsify-list
 li.amsify-list-item {
 	text-align: left;
     cursor: pointer;
-    padding: 0px 10px;	
+    padding: 0px 10px;
 }
 
 .amsify-suggestags-area
@@ -140,7 +143,9 @@ li.amsify-item-pad.active {
 }
 
 .amsify-suggestags-input-area
-.amsify-select-tag {
+.amsify-select-tag,
+.amsify-suggestags-input-area
+.amsify-plus-tag {
     padding: 2px 7px;
     margin: 0px 4px 1px 0px;
     -webkit-border-radius: 2px;
@@ -153,6 +158,15 @@ li.amsify-item-pad.active {
 .amsify-select-tag.col-bg {
 	background: #d8d8d8;
     color: black;
+}
+
+.amsify-suggestags-input-area
+.amsify-plus-tag.show-plus-bg {
+	background: #767676;
+    color: white;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
 }
 
 /*.amsify-suggestags-input-area
@@ -180,3 +194,9 @@ li.amsify-item-pad.active {
 .amsify-remove-tag {
 	cursor: pointer;
 }
+
+.amsify-no-suggestion {
+	display: none;
+	opacity: 0.7;
+}
+

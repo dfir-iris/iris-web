@@ -9,6 +9,7 @@ import uuid
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.alembic.alembic_utils import _has_table
@@ -25,9 +26,13 @@ depends_on = None
 
 
 def upgrade():
-    conn = op.get_bind()
+    # Ensure the DB is not in a locked state and commit any pending transactions
+    op.execute(text("COMMIT;"))
+
+    conn = None
     # Add UUID to users
     if not _table_has_column('user', 'uuid'):
+        conn = op.get_bind()
         op.add_column('user',
                       sa.Column('uuid', UUID(as_uuid=True), default=uuid.uuid4, nullable=False,
                                 server_default=sa.text('gen_random_uuid()'))
@@ -40,7 +45,8 @@ def upgrade():
             sa.Column('id', sa.BigInteger(), primary_key=True),
             sa.Column('uuid',  UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
         )
-        res = conn.execute(f"select id from \"user\";")
+
+        res = conn.execute(text(f"select id from \"user\";"))
         results = res.fetchall()
         for user in results:
             conn.execute(t_users.update().where(t_users.c.id == user[0]).values(
@@ -159,37 +165,39 @@ def upgrade():
         op.create_foreign_key('user_group_group_id_fkey', 'user_group', 'groups', ['group_id'], ['group_id'])
         op.create_unique_constraint('user_group_unique', 'user_group', ['user_id', 'group_id'])
 
+    if not conn:
+        conn = op.get_bind()
     # Create the groups if they don't exist
-    res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
+    res = conn.execute(text(f"select group_id from groups where group_name = 'Administrators';"))
     if res.rowcount == 0:
-        conn.execute(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
+        conn.execute(text(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
                      f"group_auto_follow, group_auto_follow_access_level) "
                      f"values ('Administrators', 'Administrators', '{ac_get_mask_full_permissions()}', '{uuid.uuid4()}',"
-                     f" true, 4);")
-        res = conn.execute(f"select group_id from groups where group_name = 'Administrators';")
+                     f" true, 4);"))
+        res = conn.execute(text(f"select group_id from groups where group_name = 'Administrators';"))
     admin_group_id = res.fetchone()[0]
 
-    res = conn.execute(f"select group_id from groups where group_name = 'Analysts';")
+    res = conn.execute(text(f"select group_id from groups where group_name = 'Analysts';"))
     if res.rowcount == 0:
-        conn.execute(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
+        conn.execute(text(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
                      f"group_auto_follow, group_auto_follow_access_level) "
-                     f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}', '{uuid.uuid4()}', true, 4);")
-        res = conn.execute(f"select group_id from groups where group_name = 'Analysts';")
+                     f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}', '{uuid.uuid4()}', true, 4);"))
+        res = conn.execute(text(f"select group_id from groups where group_name = 'Analysts';"))
 
     analyst_group_id = res.fetchone()[0]
 
     # Create the organisations if they don't exist
-    res = conn.execute(f"select org_id from organisations where org_name = 'Default Org';")
+    res = conn.execute(text(f"select org_id from organisations where org_name = 'Default Org';"))
     if res.rowcount == 0:
-        conn.execute(f"insert into organisations (org_name, org_description, org_url, org_email, org_logo, "
+        conn.execute(text(f"insert into organisations (org_name, org_description, org_url, org_email, org_logo, "
                      f"org_type, org_sector, org_nationality, org_uuid) values ('Default Org', 'Default Organisation', "
                      f"'', '', "
-                     f"'','', '', '', '{uuid.uuid4()}');")
-        res = conn.execute(f"select org_id from organisations where org_name = 'Default Org';")
+                     f"'','', '', '', '{uuid.uuid4()}');"))
+        res = conn.execute(text(f"select org_id from organisations where org_name = 'Default Org';"))
     default_org_id = res.fetchone()[0]
 
     # Give the organisation access to all the cases
-    res = conn.execute(f"select case_id from cases;")
+    res = conn.execute(text(f"select case_id from cases;"))
     result_cases = [case[0] for case in res.fetchall()]
     access_level = ac_get_mask_case_access_level_full()
 
@@ -198,8 +206,8 @@ def upgrade():
 
     # Get all users with their roles
     if _has_table("user_roles"):
-        res = conn.execute(f"select distinct roles.name, \"user\".id from user_roles INNER JOIN \"roles\" ON "
-                           f"\"roles\".id = user_roles.role_id INNER JOIN \"user\" ON \"user\".id = user_roles.user_id;")
+        res = conn.execute(text(f"select distinct roles.name, \"user\".id from user_roles INNER JOIN \"roles\" ON "
+                           f"\"roles\".id = user_roles.role_id INNER JOIN \"user\" ON \"user\".id = user_roles.user_id;"))
         results_users = res.fetchall()
 
         for user_id in results_users:
@@ -207,21 +215,21 @@ def upgrade():
             user_id = user_id[1]
             # Migrate user to groups
             if role_name == 'administrator':
-                conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {admin_group_id}) "
-                             f"on conflict do nothing;")
+                conn.execute(text(f"insert into user_group (user_id, group_id) values ({user_id}, {admin_group_id}) "
+                             f"on conflict do nothing;"))
 
             elif role_name == 'investigator':
-                conn.execute(f"insert into user_group (user_id, group_id) values ({user_id}, {analyst_group_id}) "
-                             f"on conflict do nothing;")
+                conn.execute(text(f"insert into user_group (user_id, group_id) values ({user_id}, {analyst_group_id}) "
+                             f"on conflict do nothing;"))
 
             # Add user to default organisation
-            conn.execute(f"insert into user_organisation (user_id, org_id, is_primary_org) values ({user_id}, "
-                         f"{default_org_id}, true) on conflict do nothing;")
+            conn.execute(text(f"insert into user_organisation (user_id, org_id, is_primary_org) values ({user_id}, "
+                         f"{default_org_id}, true) on conflict do nothing;"))
 
             # Add default cases effective permissions
             for case_id in result_cases:
-                conn.execute(f"insert into user_case_effective_access (case_id, user_id, access_level) values "
-                             f"({case_id}, {user_id}, {access_level}) on conflict do nothing;")
+                conn.execute(text(f"insert into user_case_effective_access (case_id, user_id, access_level) values "
+                             f"({case_id}, {user_id}, {access_level}) on conflict do nothing;"))
 
         op.drop_table('user_roles')
 

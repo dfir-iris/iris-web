@@ -534,8 +534,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str 
         IrisModule.module_name,
         IrisModuleHook.manual_hook_ui_name
     ).filter(condition).join(
-        IrisModuleHook.module,
-        IrisModuleHook.hook
+        IrisModule, IrisModuleHook.module_id == IrisModule.id
     ).all()
 
     for module in modules:

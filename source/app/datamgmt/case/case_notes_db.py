@@ -19,11 +19,12 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from flask_login import current_user
 from sqlalchemy import and_
+from sqlalchemy.orm import joinedload
 
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
-from app.models import Comments
+from app.models import Comments, NoteDirectory
 from app.models import Notes
 from app.models import NotesComments
 from app.models import NotesGroup
@@ -32,27 +33,41 @@ from app.models.authorization import User
 
 
 def get_note(note_id, caseid=None):
-    note = Notes.query.with_entities(
-        Notes.note_id,
-        Notes.note_uuid,
-        Notes.note_title,
-        Notes.note_content,
-        Notes.note_creationdate,
-        Notes.note_lastupdate,
-        NotesGroupLink.group_id,
-        NotesGroup.group_title,
-        NotesGroup.group_uuid,
-        Notes.custom_attributes,
-        Notes.note_case_id
-    ).filter(and_(
+    note = Notes.query.filter(and_(
         Notes.note_id == note_id,
         Notes.note_case_id == caseid
-    )).join(
-        NotesGroupLink.note,
-        NotesGroupLink.note_group
-    ).first()
+    )).first()
 
     return note
+
+
+def get_directory(directory_id, caseid):
+    directory = NoteDirectory.query.filter(and_(
+        NoteDirectory.id == directory_id,
+        NoteDirectory.case_id == caseid
+    )).first()
+
+    return directory
+
+
+def delete_directory(directory, caseid):
+    # Proceed to delete directory, but remove all associated notes and subdirectories recursively
+    if directory:
+        # Delete all notes in the directory
+        for note in directory.notes:
+            delete_note(note.note_id, caseid)
+
+        # Delete all subdirectories
+        for subdirectory in directory.subdirectories:
+            delete_directory(subdirectory, caseid)
+
+        # Delete the directory
+        db.session.delete(directory)
+        db.session.commit()
+
+        return True
+
+    return False
 
 
 def get_note_raw(note_id, caseid):
@@ -102,13 +117,14 @@ def update_note(note_content, note_title, update_date, user_id, note_id, caseid)
         return None
 
 
-def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=""):
+def add_note(note_title, creation_date, user_id, caseid, directory_id, note_content=""):
     note = Notes()
     note.note_title = note_title
     note.note_creationdate = note.note_lastupdate = creation_date
     note.note_content = note_content
     note.note_case_id = caseid
     note.note_user = user_id
+    note.directory_id = directory_id
 
     note.custom_attributes = get_default_custom_attributes('note')
     db.session.add(note)
@@ -116,19 +132,7 @@ def add_note(note_title, creation_date, user_id, caseid, group_id, note_content=
     update_notes_state(caseid=caseid, userid=user_id)
     db.session.commit()
 
-    if note.note_id:
-        ngl = NotesGroupLink()
-        ngl.note_id = note.note_id
-        ngl.group_id = group_id
-        ngl.case_id = caseid
-
-        db.session.add(ngl)
-        db.session.commit()
-
-        return note
-
-    else:
-        return None
+    return note
 
 
 def get_groups_short(caseid):
@@ -156,7 +160,8 @@ def get_notes_from_group(caseid, group_id):
         NotesGroupLink.case_id == caseid,
         NotesGroupLink.group_id == group_id,
     ).join(
-        NotesGroupLink.note,
+        NotesGroupLink.note
+    ).join(
         Notes.user
     ).order_by(
         Notes.note_id
@@ -178,8 +183,10 @@ def get_groups_detail(caseid):
     ).filter(
         NotesGroupLink.case_id == caseid,
     ).join(
-        NotesGroupLink.note,
-        NotesGroupLink.note_group,
+        NotesGroupLink.note
+    ).join(
+        NotesGroupLink.note_group
+    ).join(
         Notes.user
     ).group_by(
         NotesGroup.group_id,
@@ -338,10 +345,7 @@ def get_case_notes_comments_count(notes_list):
 
 
 def get_case_note_comment(note_id, comment_id):
-    return NotesComments.query.filter(
-        NotesComments.comment_note_id == note_id,
-        NotesComments.comment_id == comment_id
-    ).with_entities(
+    return db.session.query(
         Comments.comment_id,
         Comments.comment_text,
         Comments.comment_date,
@@ -350,8 +354,14 @@ def get_case_note_comment(note_id, comment_id):
         User.name,
         User.user
     ).join(
-        NotesComments.comment,
-        Comments.user
+        NotesComments,
+        Comments.comment_id == NotesComments.comment_id
+    ).join(
+        User,
+        User.id == Comments.comment_user_id
+    ).filter(
+        NotesComments.comment_note_id == note_id,
+        NotesComments.comment_id == comment_id
     ).first()
 
 
@@ -372,3 +382,41 @@ def delete_note_comment(note_id, comment_id):
     db.session.commit()
 
     return True, "Comment deleted"
+
+
+def get_directories_with_note_count(case_id):
+    # Fetch all directories for the given case
+    directories = NoteDirectory.query.filter_by(case_id=case_id).order_by(
+        NoteDirectory.name.asc()
+    ).all()
+
+    # Create a list to store the directories with note counts
+    directories_with_note_count = []
+
+    # For each directory, fetch the subdirectories, note count, and note titles
+    for directory in directories:
+        directory_with_note_count = get_directory_with_note_count(directory)
+        notes = [{'id': note.note_id, 'title': note.note_title} for note in directory.notes]
+        # Order by note title
+        notes = sorted(notes, key=lambda note: note['title'])
+        directory_with_note_count['notes'] = notes
+        directories_with_note_count.append(directory_with_note_count)
+
+    return directories_with_note_count
+
+
+def get_directory_with_note_count(directory):
+    note_count = Notes.query.filter_by(directory_id=directory.id).count()
+
+    directory_dict = {
+        'id': directory.id,
+        'name': directory.name,
+        'note_count': note_count,
+        'subdirectories': []
+    }
+
+    if directory.subdirectories:
+        for subdirectory in directory.subdirectories:
+            directory_dict['subdirectories'].append(get_directory_with_note_count(subdirectory))
+
+    return directory_dict

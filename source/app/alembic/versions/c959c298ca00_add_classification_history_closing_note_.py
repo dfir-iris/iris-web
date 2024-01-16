@@ -33,10 +33,10 @@ def upgrade():
         sa.Column('owner_id', sa.Integer, sa.ForeignKey('user.id'), nullable=False),
         sa.Column('classification_id', sa.Integer, sa.ForeignKey('case_classification.id'), nullable=False)
     )
-    res = conn.execute(f"select case_id, open_date, user_id from \"cases\";")
+    res = conn.execute(text(f"select case_id, open_date, user_id from \"cases\";"))
     results = res.fetchall()
 
-    ras = conn.execute(f"select id from \"user\" ORDER BY id ASC LIMIT 1;")
+    ras = conn.execute(text(f"select id from \"user\" ORDER BY id ASC LIMIT 1;"))
     user = ras.fetchone()
 
     if not _table_has_column('cases', 'modification_history'):
@@ -89,10 +89,10 @@ def upgrade():
 
         if conn.execute(other_classification).fetchone() is None:
             # Create other:other for migration - the rest of the data will be handled by post init
-            op.execute(f"insert into case_classification (name, name_expanded, description, created_by_id) "
+            op.execute(text(f"insert into case_classification (name, name_expanded, description, created_by_id) "
                        f"values ('other:other', 'Other: Other', 'All incidents that do not fit in one of the given "
                        f"categories should be put into this class. If the number of incidents in this category "
-                       f"increases, it is an indicator that the classification scheme must be revised.', {user[0]});")
+                       f"increases, it is an indicator that the classification scheme must be revised.', {user[0]});"))
 
             other_classification = sa.select([classification_table.c.id]).where(
                 classification_table.c.name == 'other:other')
