@@ -858,11 +858,11 @@ function build_timeline(data) {
 
                             <div class="bottom-hour mt-2">
                                 <div class="row">
-                                    <div class="col-4 d-flex">
-                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small><i class="flaticon-stopwatch mr-2"></i>${render_date(evt.event_date, true)}${ori_date}</small></span>
+                                    <div class="col d-flex">
+                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small class="bottom-hour-i"><i class="flaticon-stopwatch mr-2"></i>${render_date(evt.event_date, true)}${ori_date}</small></span>
                                     </div>
                                     
-                                    <div class="col-8 ">
+                                    <div class="col">
                                         <span class="float-right">${tags}${asset} </span>
                                     </div>
                                 </div>
@@ -932,7 +932,7 @@ function build_timeline(data) {
             parent_date = Date.parse(parent_date);
 
             if (child_date < parent_date) {
-                child.find('.bottom-hour').append('<span class="ml-2"><i class="fas fa-exclamation-triangle text-warning" title="Child event datetime is earlier than parent event"></i></span>')
+                child.find('.bottom-hour-i').append('<span class="ml-2"><i class="fas fa-exclamation-triangle text-warning" title="Child event datetime is earlier than parent event"></i></span>')
             }
 
             child.insertAfter(parent_event.parent());
