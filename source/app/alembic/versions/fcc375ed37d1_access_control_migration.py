@@ -181,7 +181,7 @@ def upgrade():
     if res.rowcount == 0:
         conn.execute(text(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
                      f"group_auto_follow, group_auto_follow_access_level) "
-                     f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}'), '{uuid.uuid4()}', true, 4);"))
+                     f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}', '{uuid.uuid4()}', true, 4);"))
         res = conn.execute(text(f"select group_id from groups where group_name = 'Analysts';"))
 
     analyst_group_id = res.fetchone()[0]

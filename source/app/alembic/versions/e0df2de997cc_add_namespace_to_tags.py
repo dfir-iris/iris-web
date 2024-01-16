@@ -57,9 +57,10 @@ def upgrade():
             if event_tag:
                 tags.add(event_tag.strip())
 
-    # Bulk add all tags with a RAW SQL query and skip error if tag already exists
-    op.get_bind().execute(text("INSERT INTO tags (tag_title) VALUES (:tag_title) ON CONFLICT (tag_title) DO NOTHING"),
-                          [{"tag_title": tag} for tag in tags])
+    if len(tags) > 0:
+        # Bulk add all tags with a RAW SQL query and skip error if tag already exists
+        op.get_bind().execute(text("INSERT INTO tags (tag_title) VALUES (:tag_title) ON CONFLICT (tag_title) DO NOTHING"),
+                              [{"tag_title": tag} for tag in tags])
 
     pass
 

@@ -551,7 +551,7 @@ def pg_add_pgcrypto_ext():
         # Open a connection to the database
         with db.engine.connect() as con:
             # Execute a SQL command to create the pgcrypto extension if it does not already exist
-            con.execute(text('CREATE EXTENSION IF NOT EXISTS pgcrypto;'))
+            con.execute(text('CREATE EXTENSION IF NOT EXISTS pgcrypto CASCADE;'))
 
 
 def create_safe_languages():
