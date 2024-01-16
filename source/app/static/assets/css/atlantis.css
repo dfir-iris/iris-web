@@ -8449,7 +8449,7 @@ body .badge-danger {
     background: #ffffff;
     border-radius: 1.5rem;
     padding: 18px;
-    margin: 0 0 20px;
+    margin: 0 0 10px;
     position: relative;
     box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);
 }
