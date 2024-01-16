@@ -8415,34 +8415,32 @@ body .badge-danger {
 }
 
 .timeline:not(.timeline-inverted)>.timeline-child {
-    transform: translateX(5%);
+    margin-left: 4%;
     width: 95%;
     left: 0;
 }
 
 
 .timeline-t>li>.timeline-even-t {
-    transform: translateX(95%);
+    margin-left: 47.5%;
     left: 0;
 }
 
 .timeline-t>li>.timeline-odd-t {
-    transform: translateX(5%);
-    left: 0;
+    margin-left: 1.5%;
 }
 
 
 .timeline-t>.timeline-child>.timeline-even-t {
-    transform: translateX(113.5%);
+    margin-left: 51.5%;
     width: 45.3%;
     background: #f4f4f4;
-    margin: 0 0 10px;
+    margin-bottom: 10px;
     left: 0;
     box-shadow: 2px 6px 15px 4px rgba(69, 65, 78, 0.29);
 }
 
 .timeline-t>.timeline-child>.timeline-odd-t {
-    transform: translateX(-1.5%);
     width: 45.3%;
     background: #f4f4f4;
     margin: 0 0 10px;
@@ -8455,7 +8453,7 @@ body .badge-danger {
     background: #ffffff;
     border-radius: 1.5rem;
     padding: 18px;
-    margin: 0 0 10px;
+    margin-bottom: 10px;
     position: relative;
     box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);
 }
