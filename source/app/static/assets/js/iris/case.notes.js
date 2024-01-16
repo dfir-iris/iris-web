@@ -287,10 +287,13 @@ function search_notes() {
         if (data.status == 'success') {
             $('#notes_search_list').empty();
             for (e in data.data) {
-                li = `<li class="list-group-item list-group-item-action">
-                <span class="name" style="cursor:pointer" title="Click to open note" onclick="note_detail(`+ data.data[e]['note_id'] +`);">`+ data.data[e]['note_title'] +`</span>
-                </li>`
-                $('#notes_search_list').append(li);
+                let lit_tag = $('<li>');
+                lit_tag.addClass('list-group-item list-group-item-action');
+                lit_tag.attr('id', 'note-' + data.data[e]['note_id']);
+                lit_tag.attr('onclick', 'note_detail(' + data.data[e]['note_id'] + ');');
+                lit_tag.text(data.data[e]['note_title']);
+                $('#notes_search_list').append(lit_tag);
+
             }
             $('#notes_search_list').show();
 
@@ -711,7 +714,7 @@ function createDirectoryListItem(directory, directoryMap) {
     var link = $('<a></a>').attr('href', '#');
     var icon = $('<i></i>').addClass('fa-regular fa-folder');  // Create an icon for the directory
     link.append(icon);
-    link.append(' ' + directory.name);
+    link.append($('<span>').text(directory.name));
     listItem.append(link);
 
     let currentNoteID = getSharedLink();
@@ -791,8 +794,9 @@ function createDirectoryListItem(directory, directoryMap) {
         directory.notes.forEach(function(note) {
             var noteListItem = $('<li></li>').attr('id', 'note-' + note.id).addClass('note');
             var noteLink = $('<a></a>').attr('href', '#');
+
             noteLink.append($('<i></i>').addClass('fa-regular fa-file'));
-            noteLink.append(' ' + note.title);
+            noteLink.append($('<span>').text(note.title));
 
             // Add a click event listener to the note link that calls note_detail with the note ID
             noteLink.on('click', function(e) {
@@ -893,14 +897,29 @@ $(document).ready(function(){
 
     $(document).on('click', '#currentNoteTitle', function() {
         let title = $(this).text();
-        $(this).replaceWith('<input id="currentNoteTitleInput" type="text" value="' + title + '">');
+
+        let input = $('<input>');
+        input.attr('id', 'currentNoteTitleInput');
+        input.attr('type', 'text');
+        input.val(title);
+        input.addClass('form-control');
+
+        $(this).replaceWith(input);
+
         $('#currentNoteTitleInput').focus();
     });
 
     $(document).on('blur keyup', '#currentNoteTitleInput', function(e) {
         if (e.type === 'blur' || e.key === 'Enter') {
             let title = $(this).val();
-            $(this).replaceWith('<h4 class="page-title mb-0" id="currentNoteTitle">' + title + '</h4>');
+
+            let h4 = $('<h4>');
+            h4.attr('id', 'currentNoteTitle');
+            h4.addClass('page-title mb-0');
+            h4.text(title);
+
+            $(this).replaceWith(h4);
+
             save_note();
         }
     });
