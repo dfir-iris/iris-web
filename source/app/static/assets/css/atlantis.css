@@ -8415,7 +8415,7 @@ body .badge-danger {
 }
 
 .timeline:not(.timeline-inverted)>.timeline-child {
-    margin-left: 4%;
+    margin-left: 2.5%;
     width: 95%;
     left: 0;
 }
@@ -8427,12 +8427,12 @@ body .badge-danger {
 }
 
 .timeline-t>li>.timeline-odd-t {
-    margin-left: 1.5%;
+    margin-left: 2.5%;
 }
 
 
 .timeline-t>.timeline-child>.timeline-even-t {
-    margin-left: 51.5%;
+    margin-left: 54.5%;
     width: 45.3%;
     background: #f4f4f4;
     margin-bottom: 10px;
