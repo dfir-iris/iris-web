@@ -1288,7 +1288,7 @@ body {
     min-height: calc(100% - 123px);
     margin-top: 62px;
     overflow: hidden;
-    height: 100vh;
+    height: 93vh;
     overflow-y: auto;
 }
 
@@ -1543,6 +1543,16 @@ body {
 
 .page-with-aside .page-content {
     width: calc(100% - 280px);
+}
+
+.note {
+    border-radius: 6px;
+}
+
+.note-highlight {
+    margin-top: 4px;
+    background-color: #dbdbdb;
+    box-shadow: 1px 1px 5px 0px rgba(69, 65, 78, 0.10);
 }
 
 .footer {

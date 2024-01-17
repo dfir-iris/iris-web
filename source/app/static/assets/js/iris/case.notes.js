@@ -288,7 +288,7 @@ function search_notes() {
             $('#notes_search_list').empty();
             for (e in data.data) {
                 let lit_tag = $('<li>');
-                lit_tag.addClass('list-group-item list-group-item-action');
+                lit_tag.addClass('list-group-item list-group-item-action note');
                 lit_tag.attr('id', 'note-' + data.data[e]['note_id']);
                 lit_tag.attr('onclick', 'note_detail(' + data.data[e]['note_id'] + ');');
                 lit_tag.text(data.data[e]['note_title']);
