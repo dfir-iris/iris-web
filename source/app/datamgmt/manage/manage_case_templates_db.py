@@ -227,6 +227,11 @@ def case_template_populate_notes(case: Cases, note_dir_template: dict, ng: NoteD
             note_schema.verify_directory_id(mapped_note_template, caseid=ng.case_id)
             note = note_schema.load(mapped_note_template)
 
+            note.note_creationdate = datetime.utcnow()
+            note.note_lastupdate = datetime.utcnow()
+            note.note_user = case.user_id
+            note.note_case_id = case.case_id
+
             db.session.add(note)
 
             note = call_modules_hook('on_postload_note_create', data=note, caseid=case.case_id)
