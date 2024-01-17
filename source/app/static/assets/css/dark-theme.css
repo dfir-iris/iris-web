@@ -986,3 +986,15 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 .show > .btn-light.dropdown-toggle{
   color: #ffffff;
 }
+
+.timeline-t > li > .timeline-panel-t {
+    background: #4f4f4f;
+}
+
+.timeline-t>.timeline-child>.timeline-even-t {
+    background-color: #353535;
+}
+
+.timeline-t>.timeline-child>.timeline-odd-t {
+    background-color: #353535;
+}
