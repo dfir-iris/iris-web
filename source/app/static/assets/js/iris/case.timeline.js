@@ -563,7 +563,11 @@ function build_timeline(data) {
     let reap = [];
     let ioc_list = data.data.iocs;
     for (ioc in ioc_list) {
-
+        let ioc_len = ioc_list[ioc]['ioc_value'].length;
+        if (ioc_len === 0 || ioc_len > 64) {
+            console.log('Ignoring IOC with length 0 or > 64')
+            continue;
+        }
         let capture_start = "(^|;|:|||>|<|[|]|(|)|\s|\>)(";
         let capture_end = ")(;|:|||>|<|[|]|(|)|\s|>|$|<br/>)";
         // When an IOC contains another IOC in its description, we want to avoid to replace that particular pattern
