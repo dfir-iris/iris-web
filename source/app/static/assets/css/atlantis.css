@@ -1545,6 +1545,16 @@ body {
     width: calc(100% - 280px);
 }
 
+.note {
+    border-radius: 6px;
+}
+
+.note-highlight {
+    margin-top: 4px;
+    background-color: #dbdbdb;
+    box-shadow: 1px 1px 5px 0px rgba(69, 65, 78, 0.10);
+}
+
 .footer {
     border-top: 1px solid #eee;
     padding: 15px;
