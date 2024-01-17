@@ -812,11 +812,6 @@ class CaseTemplateSchema(ma.Schema):
         allow_none=True,
         missing=[]
     )
-    note_groups: Optional[List[Dict[str, Union[str, List[Dict[str, str]]]]]] = fields.List(
-        fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list_of_dict])),
-        allow_none=True,
-        missing=[]
-    )
 
 
 class IocTypeSchema(ma.SQLAlchemyAutoSchema):
