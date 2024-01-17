@@ -827,7 +827,6 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
     type_taxonomy: Optional[str] = auto_field('type_taxonomy')
     type_validation_regex: Optional[str] = auto_field('type_validation_regex')
     type_validation_expect: Optional[str] = auto_field('type_validation_expect')
-
     class Meta:
         model = IocType
         load_instance = True
