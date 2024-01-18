@@ -24,6 +24,16 @@ function Collaborator( session_id, n_id ) {
 
     this.channel = "case-" + session_id + "-notes";
 
+    this.collaboration_socket.off("change-note");
+    this.collaboration_socket.off("clear_buffer-note");
+    this.collaboration_socket.off("save-note");
+    this.collaboration_socket.off("leave-note");
+    this.collaboration_socket.off("join-note");
+    this.collaboration_socket.off("ping-note");
+    this.collaboration_socket.off("pong-note");
+    this.collaboration_socket.off("disconnect");
+
+
     this.collaboration_socket.on("change-note", function (data) {
         // Set as int to avoid type mismatch
         if (parseInt(data.note_id) !== parseInt(note_id)) return;
@@ -32,10 +42,6 @@ function Collaborator( session_id, n_id ) {
         last_applied_change = delta;
         $("#content_typing").text(data.last_change + " is typing..");
         if (delta !== null && delta !== undefined) {
-            console.log('Applying delta: ' + JSON.stringify(data));
-            console.log('Is matching note ID:' + parseInt(data.note_id) !== parseInt(note_id));
-            console.log('Note ID from socket:' + parseInt(data.note_id));
-            console.log('Current note ID:' + parseInt(note_id));
             note_editor.session.getDocument().applyDeltas([delta]);
         }
     }.bind());
@@ -272,13 +278,17 @@ async function note_detail(id) {
 
             collaborator = new Collaborator( get_caseid() );
 
-            if (note_editor !== undefined || note_editor !== null) {
-                note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function () {
-                    $('#last_saved').addClass('btn-danger').removeClass('btn-success');
-                    $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                    $('#btn_save_note').text("Save").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
-                }, save_note);
+            // Destroy the note editor if it exists
+            if (note_editor !== undefined && note_editor !== null) {
+                note_editor.destroy();
+                note_editor = null;
             }
+
+            note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function () {
+                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+                $('#btn_save_note').text("Save").removeClass('btn-success').addClass('btn-warning').removeClass('btn-danger');
+            }, save_note);
 
             note_editor.focus();
 
@@ -288,8 +298,10 @@ async function note_detail(id) {
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
                 .data('note_id', data.data.note_id);
 
+            note_editor.off('change');
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
+                    console.log('Change detected - signaling teammates');
                     collaborator.change( JSON.stringify(e), note_id ) ;
                 }
                 }, false

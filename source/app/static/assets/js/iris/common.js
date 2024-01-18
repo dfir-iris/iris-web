@@ -883,6 +883,9 @@ function get_new_ace_editor(anchor_id, content_anchor, target_anchor, onchange_c
 
     if (live_preview === undefined || live_preview === true) {
         let textarea = $('#'+content_anchor);
+        // Remove any previous event handler
+        editor.getSession().off("change");
+
         editor.getSession().on("change", function () {
             if (onchange_callback !== undefined && onchange_callback !== null) {
                 onchange_callback();
