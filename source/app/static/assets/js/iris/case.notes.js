@@ -19,29 +19,35 @@ const preventFormDefaultBehaviourOnSubmit = (event) => {
 };
 
 
-function Collaborator( session_id, note_id ) {
+function Collaborator( session_id, n_id ) {
     this.collaboration_socket = collaborator_socket;
 
     this.channel = "case-" + session_id + "-notes";
 
     this.collaboration_socket.on("change-note", function (data) {
-        if (data.note_id !== note_id) return;
+        // Set as int to avoid type mismatch
+        if (parseInt(data.note_id) !== parseInt(note_id)) return;
+
         let delta = JSON.parse(data.delta);
         last_applied_change = delta;
         $("#content_typing").text(data.last_change + " is typing..");
         if (delta !== null && delta !== undefined) {
+            console.log('Applying delta: ' + JSON.stringify(data));
+            console.log('Is matching note ID:' + parseInt(data.note_id) !== parseInt(note_id));
+            console.log('Note ID from socket:' + parseInt(data.note_id));
+            console.log('Current note ID:' + parseInt(note_id));
             note_editor.session.getDocument().applyDeltas([delta]);
         }
     }.bind());
 
     this.collaboration_socket.on("clear_buffer-note", function () {
-        if (data.note_id !== note_id) return;
+        if (parseInt(data.note_id) !== parseInt(note_id)) return;
         just_cleared_buffer = true;
         note_editor.setValue("");
     }.bind());
 
     this.collaboration_socket.on("save-note", function (data) {
-        if (data.note_id !== note_id) return;
+        if (parseInt(data.note_id) !== parseInt(note_id)) return;
         sync_note(note_id)
             .then(function () {
                 $("#content_last_saved_by").text("Last saved by " + data.last_saved);
@@ -58,7 +64,7 @@ function Collaborator( session_id, note_id ) {
     });
 
     this.collaboration_socket.on('join-note', function (data) {
-        if (data.note_id !== note_id) return;
+        if (parseInt(data.note_id) !== parseInt(note_id)) return;
         if ((data.user in ppl_viewing)) return;
         ppl_viewing.set(filterXSS(data.user), 1);
         refresh_ppl_list(session_id, note_id);
@@ -112,6 +118,50 @@ async function get_remote_note(note_id) {
 }
 
 async function sync_note(node_id) {
+    // Get the remote note
+    let remote_note = await get_remote_note(node_id);
+    if (remote_note.status !== 'success') {
+        return;
+    }
+
+    // Get the local note
+    let local_note = note_editor.getValue();
+
+    // If the local note is empty, set it to the remote note
+    if (local_note === '') {
+        note_editor.setValue(remote_note.data.note_content, -1);
+        return;
+    }
+
+    // If the local note is not empty, check if it is different from the remote note
+    if (local_note !== remote_note.data.note_content) {
+        swal({
+            title: 'Note conflict',
+            text: 'The note has been modified by someone else. Do you want to overwrite your changes?',
+            icon: 'warning',
+            buttons: {
+                cancel: {
+                    text: 'Cancel',
+                    value: null,
+                    visible: true,
+                },
+                confirm: {
+                    text: 'Overwrite',
+                    value: true,
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            allowOutsideClick: false,
+            allowEnterKey: false
+        })
+            .then((overwrite) => {
+                if (overwrite) {
+                    // Overwrite the local note with the remote note
+                    note_editor.setValue(remote_note.data.note_content, -1);
+                }
+            });
+    }
 
     return;
 }
@@ -216,7 +266,11 @@ async function note_detail(id) {
 
             note_id = id;
 
-            collaborator = new Collaborator( get_caseid(), id );
+            if (collaborator !== null) {
+                collaborator.close(note_id);
+            }
+
+            collaborator = new Collaborator( get_caseid() );
 
             if (note_editor !== undefined || note_editor !== null) {
                 note_editor = get_new_ace_editor('editor_detail', 'note_content', 'targetDiv', function () {
@@ -236,7 +290,7 @@ async function note_detail(id) {
 
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
-                    collaborator.change( JSON.stringify(e), id ) ;
+                    collaborator.change( JSON.stringify(e), note_id ) ;
                 }
                 }, false
             );
@@ -874,6 +928,9 @@ $(document).ready(function(){
 
     collaborator_socket.on('ping-note', function(data) {
         last_ping = new Date();
+
+        // Set as int to avoid type mismatch
+        if (parseInt(data.note_id) !== parseInt(note_id)) return;
 
         ppl_viewing.set(data.user, 1);
         for (let [key, value] of ppl_viewing) {
