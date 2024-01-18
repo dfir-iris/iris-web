@@ -29,7 +29,6 @@ function Collaborator( session_id, n_id ) {
     this.collaboration_socket.off("save-note");
     this.collaboration_socket.off("leave-note");
     this.collaboration_socket.off("join-note");
-    this.collaboration_socket.off("ping-note");
     this.collaboration_socket.off("pong-note");
     this.collaboration_socket.off("disconnect");
 
@@ -298,7 +297,6 @@ async function note_detail(id) {
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
                 .data('note_id', data.data.note_id);
 
-            note_editor.off('change');
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
                     console.log('Change detected - signaling teammates');
