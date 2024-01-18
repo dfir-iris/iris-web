@@ -142,7 +142,7 @@ async function sync_note(node_id) {
     if (local_note !== remote_note.data.note_content) {
         swal({
             title: 'Note conflict',
-            text: 'The note has been modified by someone else. Do you want to overwrite your changes?',
+            text: 'The note has been saved by someone else. Do you want to overwrite your changes?',
             icon: 'warning',
             buttons: {
                 cancel: {
