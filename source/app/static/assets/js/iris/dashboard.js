@@ -349,7 +349,7 @@ $(document).ready(function() {
             "render": function (data, type, row, meta) {
               if (type === 'display') {
                   let a_anchor = $('<a>');
-                    a_anchor.attr('href', `case/tasks?cid=${row['case_id']}'&shared=${row['task_id']}`);
+                    a_anchor.attr('href', `case/tasks?cid=${row['case_id']}&shared=${row['task_id']}`);
                     a_anchor.attr('target', '_blank');
                     a_anchor.attr('rel', 'noopener');
                     a_anchor.title="Go to task";
