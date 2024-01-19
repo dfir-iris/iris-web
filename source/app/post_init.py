@@ -137,9 +137,10 @@ def run_post_init(development=False):
             exit(1)
 
         # Setup database before everything
-        log.info("Adding pgcrypto extension")
-        pg_add_pgcrypto_ext()
+        #log.info("Adding pgcrypto extension")
+        #pg_add_pgcrypto_ext()
 
+        # Setup database before everything
         with app.app_context():
             log.info("Creating all Iris tables")
             db.create_all(bind_key=None)
@@ -548,10 +549,13 @@ def pg_add_pgcrypto_ext():
 
     # Set the application context
     with app.app_context():
-        # Open a connection to the database
+
+        # Open a connection to the iris_db database
         with db.engine.connect() as con:
             # Execute a SQL command to create the pgcrypto extension if it does not already exist
             con.execute(text('CREATE EXTENSION IF NOT EXISTS pgcrypto CASCADE;'))
+            db.session.commit()
+            log.info("pgcrypto extension added")
 
 
 def create_safe_languages():
