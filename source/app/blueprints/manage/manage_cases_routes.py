@@ -31,6 +31,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug import Response
+from werkzeug.utils import secure_filename
 
 import app
 from app import db
@@ -633,6 +634,7 @@ def manage_cases_uploadfiles(caseid):
                               create=is_update
                               )
 
+    f.filename = secure_filename(f.filename)
     status = mod.pipeline_files_upload(fpath, f, case_customer, case_name, is_update)
 
     if status.is_success():
