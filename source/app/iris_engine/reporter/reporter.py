@@ -28,8 +28,10 @@ import os
 from datetime import datetime
 
 import jinja2
+from jinja2.sandbox import SandboxedEnvironment
 
 from app.datamgmt.reporter.report_db import export_case_json_for_report
+from app.iris_engine.utils.common import IrisJinjaEnv
 from docx_generator.docx_generator import DocxGenerator
 from docx_generator.exceptions import rendering_error
 from flask_login import current_user
@@ -562,14 +564,10 @@ class IrisMakeMdReport(IrisReportMaker):
         output_file_path = os.path.join(self._tmp, name)
 
         try:
-            # Load the template
-            template_loader = jinja2.FileSystemLoader(searchpath=".")
-            template_env = jinja2.Environment(loader=template_loader, autoescape=True)
-            template_env.filters = app.jinja_env.filters
-            template = template_env.get_template(os.path.join(
-                app.config['TEMPLATES_PATH'], report.internal_reference))
-
-            # Render with a mapping between JSON (from db) and template tags
+            env = IrisJinjaEnv()
+            env.filters = app.jinja_env.filters
+            template = env.from_string(
+               open(os.path.join(app.config['TEMPLATES_PATH'], report.internal_reference)).read())
             output_text = template.render(case_info)
 
             # Write the result in the output file

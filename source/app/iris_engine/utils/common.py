@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import os
 from datetime import datetime
+from jinja2.sandbox import SandboxedEnvironment
 
 from app import app
 
@@ -109,3 +110,24 @@ def parse_bf_date_format(input_str):
                 pass
 
     return None
+
+
+class IrisJinjaEnv(SandboxedEnvironment):
+
+    def is_safe_attribute(self, obj, attr, value):
+        # Extend the list of blocked attributes with magic methods and other potential unsafe attributes
+        unsafe_attributes = [
+            'os', 'subprocess', 'eval', 'exec', 'open', 'input', '__import__',
+            '__class__', '__bases__', '__mro__', '__subclasses__', '__globals__'
+        ]
+        # Block access to all attributes starting and ending with double underscores
+        if attr in unsafe_attributes or attr.startswith('__') and attr.endswith('__'):
+            return False
+        return super().is_safe_attribute(obj, attr, value)
+
+    def call(self, obj, *args, **kwargs):
+        # Block calling of functions if necessary
+        # For example, block if obj is a built-in function or method
+        if isinstance(obj, (type,)):
+            raise Exception("Calling of built-in types is not allowed.")
+        return super().call(obj, *args, **kwargs)

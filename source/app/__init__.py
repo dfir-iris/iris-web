@@ -91,6 +91,7 @@ app.jinja_env.filters['escape_dots'] = lambda u: u.replace('.', '[.]')
 app.jinja_env.globals.update(user_has_perm=ac_current_user_has_permission)
 app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_perms)
 app.jinja_options["autoescape"] = lambda _: True
+app.jinja_env.autoescape = True
 
 app.config.from_object('app.configuration.Config')
 
