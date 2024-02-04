@@ -563,7 +563,7 @@ class IrisMakeMdReport(IrisReportMaker):
 
         try:
             # Load the template
-            template_loader = jinja2.FileSystemLoader(searchpath="/")
+            template_loader = jinja2.FileSystemLoader(searchpath=".")
             template_env = jinja2.Environment(loader=template_loader, autoescape=True)
             template_env.filters = app.jinja_env.filters
             template = template_env.get_template(os.path.join(
