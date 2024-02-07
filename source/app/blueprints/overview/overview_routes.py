@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 #  IRIS Source Code
 #  DFIR-IRIS Team
 #  contact@dfir-iris.org
