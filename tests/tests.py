@@ -32,3 +32,7 @@ class Tests(TestCase):
     def test_create_asset_should_not_fail(self):
         response = self._subject.create_asset()
         self.assertEqual('success', response['status'])
+
+    def test_get_api_version_should_not_fail(self):
+        response = self._subject.get_api_version()
+        self.assertEqual('success', response['status'])

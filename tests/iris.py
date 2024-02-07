@@ -61,6 +61,10 @@ class Iris:
     def stop(self):
         self._docker_compose.stop()
 
+    def get_api_version(self):
+        response = self._api.get('api/versions')
+        return response.json()
+
     def create_asset(self):
         body = {
             'asset_type_id': '9',
