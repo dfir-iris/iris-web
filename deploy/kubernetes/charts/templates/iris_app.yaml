@@ -59,9 +59,6 @@ spec:
           command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
 
           env:
-                
-          - name: DOCKERIZED  # Setting Database name 
-            value: {{ .Values.irisapp.DOCKERIZED | quote }}
 
           - name: POSTGRES_USER  # Setting Database username 
             value: {{ .Values.irisapp.POSTGRES_USER| quote }}

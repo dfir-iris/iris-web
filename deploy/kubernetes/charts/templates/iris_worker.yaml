@@ -59,9 +59,6 @@ spec:
           command: ['./wait-for-iriswebapp.sh', "{{ .Values.irisapp.name }}:{{ .Values.irisapp.service.port }}", './iris-entrypoint.sh', 'iris-worker']
 
           env:
-                
-          - name: DOCKERIZED  
-            value: {{ .Values.irisworker.DOCKERIZED | quote }}
 
           - name: POSTGRES_USER  
             value: {{ .Values.irisworker.POSTGRES_USER | quote }}
