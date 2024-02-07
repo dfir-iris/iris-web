@@ -22,7 +22,7 @@ on: push
 jobs:
 
   tests:
-    name: Build iris dockers and run API tests
+    name: API tests
     runs-on: ubuntu-22.04
     steps:
       - name: Check out iris
@@ -37,3 +37,11 @@ jobs:
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
           docker-compose build
+      - name: Run tests
+        working-directory: tests
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+          PYTHONUNBUFFERED=true python -m unittest --verbose
+
