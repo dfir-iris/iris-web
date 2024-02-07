@@ -1,6 +1,13 @@
 # Coding style 
 
-If you wish to develop in DFIR-IRIS, please make sure to read the following tips.   
+If you wish to develop in DFIR-IRIS, please make sure to read the following tips.
+
+## Python coding rules
+
+* do not prefix files with any shebang, such as:
+```python
+#!/usr/bin/env python3
+```
 
 ## Commits 
 Try to follow the repository convention : 
