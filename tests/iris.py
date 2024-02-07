@@ -62,13 +62,23 @@ class Iris:
         self._docker_compose.stop()
 
     def get_api_version(self):
-        response = self._api.get('api/versions')
-        return response.json()
+        return self._api.get('api/versions')
 
     def create_asset(self):
         body = {
             'asset_type_id': '9',
             'asset_name': 'admin_laptop',
         }
-        response = self._api.post('/case/assets/add', body)
-        return response.json()
+        return self._api.post('/case/assets/add', body)
+
+    def create_case(self):
+        body = {
+            'case_name': 'case name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }
+        return self._api.post('/manage/cases/add', body)
+
+    def get_cases(self):
+        return self._api.get('/manage/cases/list')

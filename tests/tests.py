@@ -36,3 +36,9 @@ class Tests(TestCase):
     def test_get_api_version_should_not_fail(self):
         response = self._subject.get_api_version()
         self.assertEqual('success', response['status'])
+
+    def test_create_case_should_add_a_new_case(self):
+        self._subject.create_case()
+        response = self._subject.get_cases()
+        case_count = len(response['data'])
+        self.assertEqual(2, case_count)
