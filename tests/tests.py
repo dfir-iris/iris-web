@@ -42,3 +42,9 @@ class Tests(TestCase):
         response = self._subject.get_cases()
         case_count = len(response['data'])
         self.assertEqual(2, case_count)
+
+    def test_update_case_should_not_require_case_name_issue_358(self):
+        response = self._subject.create_case()
+        case_identifier = response['data']['case_id']
+        response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
+        self.assertEqual('success', response['status'])

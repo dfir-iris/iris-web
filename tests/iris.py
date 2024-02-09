@@ -84,5 +84,8 @@ class Iris:
         }
         return self._api.post('/manage/cases/add', body)
 
+    def update_case(self, case_identifier, data):
+        return self._api.post(f'/manage/cases/update/{case_identifier}', data)
+
     def get_cases(self):
         return self._api.get('/manage/cases/list')
