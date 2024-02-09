@@ -559,7 +559,7 @@ def ac_socket_requires(*access_level):
         @wraps(f)
         def wrap(*args, **kwargs):
             if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url(request_url=request.full_path))
+                return redirect(not_authenticated_redirection_url(request.full_path))
 
             else:
                 chan_id = args[0].get('channel')
@@ -584,7 +584,7 @@ def ac_requires(*permissions, no_cid_required=False):
         def wrap(*args, **kwargs):
 
             if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url(request_url=request.full_path))
+                return redirect(not_authenticated_redirection_url(request.full_path))
 
             else:
                 redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
