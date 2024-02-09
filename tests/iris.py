@@ -18,7 +18,6 @@
 
 from pathlib import Path
 import shutil
-from tempfile import TemporaryDirectory
 import time
 from docker_compose import DockerCompose
 from rest_api import RestApi
@@ -28,6 +27,7 @@ _API_URL = 'http://127.0.0.1:8000'
 _API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
 _IRIS_PATH = Path('..')
 _TEST_DATA_PATH = Path('./data')
+
 
 class Iris:
 
@@ -48,11 +48,15 @@ class Iris:
         self._wait(self._api.is_ready, 60)
 
     def start(self):
-        # TODO it would be preferable to have a dedicated directory with the docker-compose.yml file,
-        #      because for now, it will overwrite the .env file and development/tests contexts are mixed up
-        #      to do that, we should the building phase of dockers from the execution phase of the docker-compose
-        #      we should minimize the docker-compose so that as few files as possible need to be copied
-        #      also, we should try to use standard dockers as much as possible instead of having iris specific builds (for instance for the database)
+        # TODO it would be preferable to have a dedicated directory with the
+        #      docker-compose.yml file, because for now, it will overwrite the
+        #      .env file and development/tests contexts are mixed up. To do
+        #      that, we should split the building phase of dockers from the
+        #      execution phase of the docker-compose. We should minimize the
+        #      docker-compose so that as few files as possible need to be
+        #      copied. Also, we should try to use standard dockers as much as
+        #      possible instead of having iris specific builds (for instance
+        #      for the database)
         shutil.copy2(_TEST_DATA_PATH.joinpath('basic.env'), _IRIS_PATH.joinpath('.env'))
         self._docker_compose.start()
         print('Waiting for DFIR-IRIS to start...')
