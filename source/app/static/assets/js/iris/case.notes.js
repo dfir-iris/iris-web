@@ -302,8 +302,7 @@ async function note_detail(id) {
             let history_data = '';
             for (let ent in data.data.modification_history) {
                 let entry = data.data.modification_history[ent];
-                let date = new Date(Math.floor(ent) * 1000);
-                let dateStr = date.toLocaleString();
+                let dateStr = formatTime(parseFloat(ent))
                 let i_t = $('<li></li>');
                 i_t.text(`${dateStr} - ${entry.user} ${entry.action}`);
                 history_data += i_t.prop('outerHTML');

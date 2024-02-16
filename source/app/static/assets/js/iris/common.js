@@ -1262,7 +1262,18 @@ function get_custom_attributes_fields() {
 }
 
 function update_time() {
-    $('#current_date').text((new Date()).toLocaleString().slice(0, 17));
+    $('#current_date').text((new Date()).toLocaleString());
+}
+
+function formatTime(in_, format) {
+    console.log(typeof(in_));
+    if (typeof(in_) === typeof(1)){
+        let date = new Date(Math.floor(in_) * 1000);
+        return date.toLocaleString();
+    } else if (typeof(in_) === typeof('')) {
+        let date = new Date(in_);
+        return date.toLocaleString();
+    }
 }
 
 function download_file(filename, contentType, data) {
