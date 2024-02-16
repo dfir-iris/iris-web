@@ -12,6 +12,9 @@ let note_id = null;
 let last_ping = 0;
 let cid = null;
 let previousNoteTitle = null;
+let timer = null;
+let timeout = 5000;
+
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -321,6 +324,19 @@ async function note_detail(id) {
             $('#content_typing').text('');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
+            let ed_details = $('#editor_detail');
+            ed_details.keyup(function(){
+                if(timer) {
+                     clearTimeout(timer);
+                }
+                timer = setTimeout(save_note, timeout);
+            });
+            ed_details.off('paste');
+            ed_details.on('paste', (event) => {
+                event.preventDefault();
+                handle_ed_paste(event);
+            });
 
             setSharedLink(id);
 
@@ -918,6 +934,7 @@ function note_interval_pinger() {
 }
 
 $(document).ready(function(){
+
     load_directories().then(
         function() {
             let shared_id = getSharedLink();

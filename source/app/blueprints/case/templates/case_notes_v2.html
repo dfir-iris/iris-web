@@ -59,40 +59,41 @@
 					<div class="mt-2 ml-2 mr-2 d-lg-flex d-block">
 						<div class="col">
 							<h4 class="page-title mb-0" id="currentNoteTitle"></h4>
-							<small><i class="text-muted" id="currentNoteIDLabel"></i></small>
+							<small><i class="text-muted" id="currentNoteIDLabel"></i><i class="fa fa-cloud-upload-alt ml-2" title="Auto saving enabled"></i></small>
+
 						</div>
 						<div class="col">
-						  <div class="row float-right">
-							<span class="float-right mr-2 mt-1" id="content_typing"></span>
-							<span class="float-right mr-2 mt-1" id="content_last_saved_by"></span>
-							<div class="avatar-group-note mt-1 mr-2 float-right" id="ppl_list_viewing">
-						 	</div>
-							  <button type="button" class="btn bg-transparent btn-xs" onclick="proxy_comment_element();" title="Comments">
-								<span class="btn-label">
-									<i class="fa-solid fa-comments mr-2"></i><span class="notification" id="object_comments_number"></span>
-								</span>
-							</button>
-						    <button type="button" class="btn bg-transparent btn-xs" onclick="proxy_copy_object_link();return false;" title="Copy shared link">
-								<span class="btn-label">
-									<i class="fa fa-share mr-2"></i>
-								</span>
-							</button>
-						    <button type="button" class="btn bg-transparent btn-xs" onclick="proxy_copy_object_link_md();return false;" title="Copy MD link">
-								<span class="btn-label">
-									<i class="fa-brands fa-markdown mr-2"></i>
-								</span>
-							</button>
-						  	<button type="button" class="btn bg-transparent btn-xs" onclick="download_note();return false;" title="Download as MD">
-								<span class="btn-label">
-									<i class="fa-solid fa-download mr-2"></i>
-								</span>
-							</button>
-							<button type="button" class="btn bg-transparent btn-xs" onclick="delete_note();return false;" title="Delete note">
-								<span class="btn-label">
-									<i class="fa-solid fa-trash mr-2 text-danger"></i>
-								</span>
-							</button>
-						  </div>
+							<div class="row float-right">
+								<span class="float-right mr-2 mt-1" id="content_typing"></span>
+								<span class="float-right mr-2 mt-1" id="content_last_saved_by"></span>
+								<div class="avatar-group-note mt-1 mr-2 float-right" id="ppl_list_viewing">
+								</div>
+								  <button type="button" class="btn bg-transparent btn-xs" onclick="proxy_comment_element();" title="Comments">
+									<span class="btn-label">
+										<i class="fa-solid fa-comments mr-2"></i><span class="notification" id="object_comments_number"></span>
+									</span>
+								</button>
+								<button type="button" class="btn bg-transparent btn-xs" onclick="proxy_copy_object_link();return false;" title="Copy shared link">
+									<span class="btn-label">
+										<i class="fa fa-share mr-2"></i>
+									</span>
+								</button>
+								<button type="button" class="btn bg-transparent btn-xs" onclick="proxy_copy_object_link_md();return false;" title="Copy MD link">
+									<span class="btn-label">
+										<i class="fa-brands fa-markdown mr-2"></i>
+									</span>
+								</button>
+								<button type="button" class="btn bg-transparent btn-xs" onclick="download_note();return false;" title="Download as MD">
+									<span class="btn-label">
+										<i class="fa-solid fa-download mr-2"></i>
+									</span>
+								</button>
+								<button type="button" class="btn bg-transparent btn-xs" onclick="delete_note();return false;" title="Delete note">
+									<span class="btn-label">
+										<i class="fa-solid fa-trash mr-2 text-danger"></i>
+									</span>
+								</button>
+						  	</div>
 						</div>
 					</div>
 					<div class="note-body">
