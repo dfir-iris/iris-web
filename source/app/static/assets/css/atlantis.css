@@ -6429,6 +6429,9 @@ label.error {
 
 .dropdown-item {
     font-size: 13px;
+    width: inherit;
+    margin-left: 3px;
+    margin-right: 3px;
 }
 
 .navbar .navbar-nav .notification {
