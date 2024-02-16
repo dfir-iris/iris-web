@@ -661,7 +661,7 @@ function build_timeline(data) {
 
         /* For every assets linked to the event, build a link tag */
         if (evt.assets != null) {
-            for (ide in evt.assets) {
+            for (let ide in evt.assets) {
                 let cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
                 cpn = sanitizeHTML(cpn)
                 let span_anchor = $('<span>');
@@ -863,7 +863,7 @@ function build_timeline(data) {
                             <div class="bottom-hour mt-2">
                                 <div class="row">
                                     <div class="col d-flex">
-                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small class="bottom-hour-i"><i class="flaticon-stopwatch mr-2"></i>${render_date(evt.event_date, true)}${ori_date}</small></span>
+                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small class="bottom-hour-i"><i class="flaticon-stopwatch mr-2"></i>${formatTime(evt.event_date)}${ori_date}</small></span>
                                     </div>
                                     
                                     <div class="col">
