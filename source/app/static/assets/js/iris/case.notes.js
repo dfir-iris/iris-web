@@ -299,6 +299,16 @@ async function note_detail(id) {
             previousNoteTitle = data.data.note_title;
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
                 .data('note_id', data.data.note_id);
+            let history_data = '';
+            for (let ent in data.data.modification_history) {
+                let entry = data.data.modification_history[ent];
+                let date = new Date(Math.floor(ent) * 1000);
+                let dateStr = date.toLocaleString();
+                let i_t = $('<li></li>');
+                i_t.text(`${dateStr} - ${entry.user} ${entry.action}`);
+                history_data += i_t.prop('outerHTML');
+            }
+            $('#modalHistoryList').empty().append(history_data);
 
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
