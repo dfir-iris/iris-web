@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 #
 #  IRIS Source Code
 #  Copyright (C) 2022 - DFIR IRIS Team
@@ -139,7 +137,7 @@ def init_ds_tree(cid):
     ).all()
 
     if dsp_root:
-      return dsp_root
+        return dsp_root
 
     dsp_root = DataStorePath()
     dsp_root.path_name = f'Case {cid}'

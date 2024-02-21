@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 #  IRIS Source Code
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
@@ -51,7 +49,7 @@ def set_ctx():
     :return: Page
     """
     if not current_user.is_authenticated:
-        return redirect(not_authenticated_redirection_url())
+        return redirect(not_authenticated_redirection_url(request.full_path))
 
     ctx = request.form.get('ctx')
     ctx_h = request.form.get('ctx_h')

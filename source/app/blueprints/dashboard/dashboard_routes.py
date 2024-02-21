@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 #  IRIS Source Code
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
@@ -79,7 +77,7 @@ def logout():
     track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
     logout_user()
 
-    return redirect(not_authenticated_redirection_url(request_url='/'))
+    return redirect(not_authenticated_redirection_url('/'))
 
 
 @dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])

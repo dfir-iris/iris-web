@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-#
-#
 #  IRIS Source Code
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
