@@ -1,0 +1,47 @@
+#  IRIS Source Code
+#  Copyright (C) 2023 - DFIR-IRIS
+#  contact@dfir-iris.org
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 3 of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+name: Continuous Integration
+on: push
+
+jobs:
+
+  tests:
+    name: API tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Build dockers
+        run: |
+          # TODO using the environment file from tests to build here. 
+          #      I am a bit uneasy with this choice.
+          #      For now this works, but if we come to have different .env files for different tests, it won't anymore.
+          #      Maybe the .env should be split to differentiate the variables used during the build from the variables used at runtime, 
+          #      or maybe the docker building phase should also be part of the tests 
+          #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
+          cp tests/data/basic.env .env
+          docker-compose build
+      - name: Run tests
+        working-directory: tests
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+          PYTHONUNBUFFERED=true python -m unittest --verbose
+
