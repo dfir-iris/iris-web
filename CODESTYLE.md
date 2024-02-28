@@ -14,7 +14,10 @@ If you wish to develop in DFIR-IRIS, please make sure to read the following tips
   git switch -c <branch-name>
   git push --set-upstream origin <branch-name>
   ```
-- when work on the branch is ready to be published, then a pull request (PR) is created from the github interface
+- when work on the branch is ready to be published, then a pull request (PR) is created from the github interface.
+  Do not forget to choose `develop` as the base branch (by default it is set to `master`,
+  more information [here](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request#changing-the-branch-range-and-destination-repository)).
+
 
 ### Commits
 Try to follow the repository convention:
