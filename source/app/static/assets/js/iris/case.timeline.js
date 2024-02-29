@@ -746,7 +746,7 @@ function build_timeline(data) {
                 </div>
                 <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent" onclick="toggleSeeMore(this)">&gt; See more</a>`;
             } else {
-                content_parsed = converter.makeHtml(raw_content); // Convert markdown to HTML
+                let content_parsed = converter.makeHtml(raw_content); // Convert markdown to HTML
                 content_parsed = filterXSS(content_parsed);
                 formatted_content = match_replace_ioc(content_parsed, reap);
             }
