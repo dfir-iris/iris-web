@@ -993,7 +993,7 @@ function get_avatar_initials(name, small, onClickFunction, xsmall) {
         snum = initial[0][0].charCodeAt(0);
     }
 
-    const initials = initial.map(i => i[0].toUpperCase()).join('');
+    const initials = initial.map(i => i[0] ? i[0].toUpperCase(): '').join('');
     const avatarColor = get_avatar_color(snum);
 
     const avatarHTMLin = `<span class="avatar-title avatar-iris rounded-circle" style="background-color:${avatarColor}; cursor:pointer;">${initials}</span>`
@@ -1266,7 +1266,6 @@ function update_time() {
 }
 
 function formatTime(in_, format) {
-    console.log(typeof(in_));
     if (typeof(in_) === typeof(1)){
         let date = new Date(Math.floor(in_) * 1000);
         return date.toLocaleString();
