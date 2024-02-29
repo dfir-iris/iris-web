@@ -1086,8 +1086,12 @@ function uiFlagEvent(event_id, is_flagged) {
     }
 }
 
+function uiRemoveEvent(event_id) {
+    $('#event_'+event_id).remove();
+}
+
 function time_converter(){
-    date_val = $('#event_date_convert_input').val();
+    let date_val = $('#event_date_convert_input').val();
 
     var data_sent = Object();
     data_sent['date_value'] = date_val;
@@ -1313,8 +1317,11 @@ function handleCollabNotifications(collab_data) {
    if (collab_data.action_type === "flagged") {
        uiFlagEvent(collab_data.object_id, true);
    }
-   if (collab_data.action_type === "un-flagged") {
+   else if (collab_data.action_type === "un-flagged") {
        uiFlagEvent(collab_data.object_id, false);
+   }
+   else if (collab_data.action_type === "deletion") {
+       uiRemoveEvent(collab_data.object_id);
    }
 }
 
