@@ -1073,14 +1073,17 @@ function flag_event(event_id){
     get_request_api('timeline/events/flag/'+event_id)
     .done(function(data) {
         if (notify_auto_api(data)) {
-            if (data.data.event_is_flagged == true) {
-                $('#event_'+event_id).find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
-                $('#event_210').find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
-            } else {
-                $('#event_'+event_id).find('.fa-flag').addClass('fa-regular').removeClass('fas text-warning');
-            }
+            uiFlagEvent(event_id, data.data.event_is_flagged)
         }
     });
+}
+
+function uiFlagEvent(event_id, is_flagged) {
+    if (is_flagged === true) {
+        $('#event_'+event_id).find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
+    } else {
+        $('#event_'+event_id).find('.fa-flag').addClass('fa-regular').removeClass('fas text-warning');
+    }
 }
 
 function time_converter(){
@@ -1306,6 +1309,15 @@ function upload_csv_events() {
     return false;
 }
 
+function handleCollabNotifications(collab_data) {
+   if (collab_data.action_type === "flagged") {
+       uiFlagEvent(collab_data.object_id, true);
+   }
+   if (collab_data.action_type === "un-flagged") {
+       uiFlagEvent(collab_data.object_id, false);
+   }
+}
+
 function generate_events_sample_csv(){
     csv_data = "event_date,event_tz,event_title,event_category,event_content,event_raw,event_source,event_assets,event_iocs,event_tags\n"
     csv_data += '"2023-03-26T03:00:30.000","+00:00","An event","Unspecified","Event description","raw","source","","","defender|malicious"\n'
@@ -1351,6 +1363,13 @@ $(document).ready(function(){
     get_or_filter_tm();
 
     setInterval(function() { check_update('timeline/state'); }, 3000);
+
+    collab_case.on('case-obj-notif', function(data) {
+        let js_data = JSON.parse(data);
+        if (js_data.object_type === 'events') {
+            handleCollabNotifications(js_data);
+        }
+    });
 
 });
 

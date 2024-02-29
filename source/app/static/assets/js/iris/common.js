@@ -16,6 +16,7 @@ $.fn.serializeObject = function() {
 
 
 var jdata_menu_options = [];
+let current_cid = null;
 
 function clear_api_error() {
    $(".invalid-feedback").hide();
@@ -437,10 +438,13 @@ function updateURLParameter(url, param, paramVal) {
 }
 
 function get_caseid() {
-    queryString = window.location.search;
-    urlParams = new URLSearchParams(queryString);
+    if (current_cid === null) {
+        let queryString = window.location.search;
+        let urlParams = new URLSearchParams(queryString);
 
-    return urlParams.get('cid')
+        current_cid = urlParams.get('cid')
+    }
+    return current_cid
 }
 
 function is_redirect() {
