@@ -31,5 +31,4 @@ class DockerCompose:
         return subprocess.check_output(['docker', 'compose', 'logs', '--no-color'], cwd=self._docker_compose_path, universal_newlines=True)
 
     def stop(self):
-        subprocess.check_call(['docker', 'compose', 'down'], cwd=self._docker_compose_path)
-        subprocess.check_call(['docker', 'volume', 'prune', '--all', '--force'])
+        subprocess.check_call(['docker', 'compose', 'down', '--volumes'], cwd=self._docker_compose_path)
