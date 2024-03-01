@@ -22,12 +22,16 @@ from iris import Iris
 
 class Tests(TestCase):
 
-    def setUp(self) -> None:
-        self._subject = Iris()
-        self._subject.start()
+    _subject = None
 
-    def tearDown(self) -> None:
-        self._subject.stop()
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._subject = Iris()
+        cls._subject.start()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._subject.stop()
 
     def test_create_asset_should_not_fail(self):
         response = self._subject.create_asset()
@@ -38,10 +42,12 @@ class Tests(TestCase):
         self.assertEqual('success', response['status'])
 
     def test_create_case_should_add_a_new_case(self):
+        response = self._subject.get_cases()
+        initial_case_count = len(response['data'])
         self._subject.create_case()
         response = self._subject.get_cases()
         case_count = len(response['data'])
-        self.assertEqual(2, case_count)
+        self.assertEqual(initial_case_count + 1, case_count)
 
     def test_update_case_should_not_require_case_name_issue_358(self):
         response = self._subject.create_case()
