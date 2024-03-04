@@ -1,4 +1,4 @@
-name: Release Charts
+name: Release Iris Web Helm Chart
 
 on:
   push:
@@ -8,8 +8,6 @@ on:
 
 jobs:
   release:
-    # depending on default permission settings for your org (contents being read-only or read-write for workloads), you will have to add permissions
-    # see: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -28,7 +26,7 @@ jobs:
         uses: azure/setup-helm@v3
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.6.0
+        uses: helm/chart-releaser-action@v1
         with:
             charts_dir: deploy/kubernetes
         env:
