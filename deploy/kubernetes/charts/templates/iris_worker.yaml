@@ -59,34 +59,34 @@ spec:
           command: ['./wait-for-iriswebapp.sh', "{{ .Values.irisapp.name }}:{{ .Values.irisapp.service.port }}", './iris-entrypoint.sh', 'iris-worker']
 
           env:
-                
-          - name: DOCKERIZED  
+
+          - name: DOCKERIZED
             value: {{ .Values.irisworker.DOCKERIZED | quote }}
 
-          - name: POSTGRES_USER  
+          - name: POSTGRES_USER
             value: {{ .Values.irisworker.POSTGRES_USER | quote }}
 
-          - name:  POSTGRES_PASSWORDD 
+          - name:  POSTGRES_PASSWORDD
             value: {{ .Values.irisworker.POSTGRES_PASSWORD | quote }}
 
-          - name:  POSTGRES_ADMIN_USER 
+          - name:  POSTGRES_ADMIN_USER
             value: {{ .Values.irisworker.POSTGRES_ADMIN_USER | quote }}
 
-          - name:  POSTGRES_ADMIN_PASSWORD 
+          - name:  POSTGRES_ADMIN_PASSWORD
             value: {{ .Values.irisworker.POSTGRES_ADMIN_PASSWORD | quote }}    
 
-          - name:  POSTGRES_PORT 
+          - name:  POSTGRES_PORT
             value: {{ .Values.irisworker.POSTGRES_PORT | quote }}   
 
-          - name:  POSTGRES_SERVER 
+          - name:  POSTGRES_SERVER
             value: {{ .Values.irisworker.POSTGRES_SERVER | quote }}  
 
-          - name:  IRIS_SECRET_KEY 
+          - name:  IRIS_SECRET_KEY
             value: {{ .Values.irisworker.IRIS_SECRET_KEY | quote }}
 
-          - name:  IRIS_SECURITY_PASSWORD_SALT 
-            value: {{ .Values.irisworker.IRIS_SECURITY_PASSWORD_SALT | quote }}          
-  
+          - name:  IRIS_SECURITY_PASSWORD_SALT
+            value: {{ .Values.irisworker.IRIS_SECURITY_PASSWORD_SALT | quote }}
+
 
           volumeMounts:
             - mountPath: /home/iris/downloads
