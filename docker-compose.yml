@@ -25,7 +25,7 @@ services:
 
   db:
     container_name: iriswebapp_db
-    image: ${DB_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp-db}:${DB_IMAGE_TAG:-main}
+    image: ${DB_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp-db}:${DB_IMAGE_TAG:-latest}
     restart: always
     # Used for debugging purposes, should be deleted for production
     ports:
@@ -42,7 +42,7 @@ services:
       - db_data:/var/lib/postgresql/data
 
   app:
-    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp-db}:${APP_IMAGE_TAG:-main}
+    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_db}:${APP_IMAGE_TAG:-latest}
     container_name: iriswebapp_app
     command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
@@ -77,7 +77,7 @@ services:
       - iris_frontend
 
   worker:
-    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp-app}:${APP_IMAGE_TAG:-main}
+    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_app}:${APP_IMAGE_TAG:-latest}
     container_name: iriswebapp_worker
     command: ['./wait-for-iriswebapp.sh', 'app:8000', './iris-entrypoint.sh', 'iris-worker']
     volumes:
@@ -108,12 +108,7 @@ services:
       - iris_backend
 
   nginx:
-    build:
-      context: ./docker/nginx
-      args:
-        NGINX_CONF_GID: 1234
-        NGINX_CONF_FILE: nginx.conf
-    image: iriswebapp_nginx:v2.4.5
+    image: ${NGINX_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_nginx}:${NGINX_IMAGE_TAG:-latest}
     container_name: iriswebapp_nginx
     environment:
       - IRIS_UPSTREAM_SERVER
