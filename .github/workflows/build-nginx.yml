@@ -51,8 +51,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         env:
-          NGINX_CONF_GID: 1234
-          NGINX_CONF_FILE: nginx.conf
+          NGINX_CONF_GID: "1234"
+          NGINX_CONF_FILE: "nginx.conf"
         with:
           context: docker/nginx
           push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
