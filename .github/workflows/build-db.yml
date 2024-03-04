@@ -1,5 +1,4 @@
-name: Build and push image
-
+name: Build and push DB image
 
 on:
   push:

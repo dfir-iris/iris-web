@@ -1,5 +1,4 @@
-name: Build and push image
-
+name: Build and push WebApp image
 
 on:
   push:
@@ -62,7 +61,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: docker/db
+          context: docker/webApp
           push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
