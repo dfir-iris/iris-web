@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from unittest import TestCase
+from unittest import skip
 from iris import Iris
 
 
@@ -35,6 +36,7 @@ class TestsWhichRequireACleanSlate(TestCase):
     def tearDown(self) -> None:
         self._subject.stop()
 
+    @skip
     def test_create_case_should_add_a_new_case(self):
         """
         This test is also present in the main test suite tests.py (although in a slightly more complex form
