@@ -22,8 +22,8 @@ FROM nginx:1.25
 RUN apt-get update && apt-get install -y curl
 
 # Used to pass protected files to the container through volumes
-ARG NGINX_CONF_GID
-ARG NGINX_CONF_FILE
+ARG NGINX_CONF_GID=${NGINX_CONF_GID}
+ARG NGINX_CONF_FILE=${NGINX_CONF_FILE}
 
 RUN groupadd -g ${NGINX_CONF_GID} az-app-nginx-conf && usermod -a -G az-app-nginx-conf www-data
 
