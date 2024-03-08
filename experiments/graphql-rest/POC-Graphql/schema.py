@@ -76,4 +76,3 @@ class Mutation(graphene.ObjectType):
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation, types=[AuthorObject, BookObject])
-print(schema)

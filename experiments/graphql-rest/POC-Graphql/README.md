@@ -67,6 +67,140 @@ python3
 ```
 The database gdb should be available on the interface, port 5433 protocol HTTP -http://localhost:5433
 
+### Graphql schema
+``` bash
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type AddBook {
+  book: BookObject
+}
+
+type AuthorConnection {
+  pageInfo: PageInfo!
+  edges: [AuthorEdge]!
+}
+
+type AuthorEdge {
+  node: AuthorObject
+  cursor: String!
+}
+
+type AuthorObject implements Node {
+  id: ID!
+  username: String!
+  email: String!
+  books(before: String, after: String, first: Int, last: Int): BookObjectConnection
+}
+
+enum AuthorObjectSortEnum {
+  ID_ASC
+  ID_DESC
+  USERNAME_ASC
+  USERNAME_DESC
+  EMAIL_ASC
+  EMAIL_DESC
+}
+
+type BookConnection {
+  pageInfo: PageInfo!
+  edges: [BookEdge]!
+}
+
+type BookEdge {
+  node: BookObject
+  cursor: String!
+}
+
+type BookObject implements Node {
+  id: ID!
+  title: String!
+  description: String!
+  year: Int!
+  authorId: Int
+  author: AuthorObject
+}
+
+type BookObjectConnection {
+  pageInfo: PageInfo!
+  edges: [BookObjectEdge]!
+}
+
+type BookObjectEdge {
+  node: BookObject
+  cursor: String!
+}
+
+enum BookObjectSortEnum {
+  ID_ASC
+  ID_DESC
+  TITLE_ASC
+  TITLE_DESC
+  DESCRIPTION_ASC
+  DESCRIPTION_DESC
+  YEAR_ASC
+  YEAR_DESC
+  AUTHOR_ID_ASC
+  AUTHOR_ID_DESC
+}
+
+type MovieConnection {
+  pageInfo: PageInfo!
+  edges: [MovieEdge]!
+}
+
+type MovieEdge {
+  node: MovieObject
+  cursor: String!
+}
+
+type MovieObject implements Node {
+  id: ID!
+  title: String!
+  description: String!
+  authorId: Int
+}
+
+enum MovieObjectSortEnum {
+  ID_ASC
+  ID_DESC
+  TITLE_ASC
+  TITLE_DESC
+  DESCRIPTION_ASC
+  DESCRIPTION_DESC
+  AUTHOR_ID_ASC
+  AUTHOR_ID_DESC
+}
+
+type Mutation {
+  addBook(description: String!, title: String!, username: String!, year: Int!): AddBook
+}
+
+interface Node {
+  id: ID!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Query {
+  node(id: ID!): Node
+  author(username: String): [AuthorObject]
+  book(title: String): [BookObject]
+  movie(title: String): [MovieObject]
+  allBooks(sort: [BookObjectSortEnum] = [ID_ASC], before: String, after: String, first: Int, last: Int): BookConnection
+  allAuthors(sort: [AuthorObjectSortEnum] = [ID_ASC], before: String, after: String, first: Int, last: Int): AuthorConnection
+  allMovies(sort: [MovieObjectSortEnum] = [ID_ASC], before: String, after: String, first: Int, last: Int): MovieConnection
+}
+``` 
+
+### Run app.py
 ``` bash
 #  To run the server 
 flask run

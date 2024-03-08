@@ -116,11 +116,11 @@ Il s'agit d'un ensemble de conventions et de bonnes pratiques à mettre en oeuvr
 | Message d'erreur                          |  X   |    X    |
 
 
-Besoin en matière de collecte de données 
+Besoin en matière de collecte de données :
 - En utilisant GraphQL on évite la sur-récupération ou sous-récupération de données, ce qui permettra de ne pas surcharger la bande passante.
 - REST n'est pas flexible sur la structure de réponse.
 
-IDE GraphQL 
+IDE GraphQL :
 
 On retrouve deux grandes plateformes pour développer en GraphQL.
 Il s'agit d'interfaces graphiques pour écrire des requêtes et des mutations.
@@ -137,7 +137,7 @@ https://github.com/graphql/graphiql/blob/main/packages/graphiql/README.md
 
 https://github.com/graphql/graphql-playground
 
-Courbe d'apprentissage
+Courbe d'apprentissage :
 - REST possède une grande source de documentation, de nombreux outils et resources disponibles. 
 - GraphQL possède lui moins de ressources mais on retrouve tout de même le forum apollo dédié à la discussion sur GraphQL, ainsi que Apollo GraphOS.
 
@@ -146,14 +146,14 @@ Lien de la communauté apollo :
 https://community.apollographql.com/
 https://www.apollographql.com/docs/graphos/
 
-Téléchargement des fichiers 
+Téléchargement des fichiers :
 - Le téléchargement de fichier n'est pas pris en compte par GraphQL, il faudra trouver une autre solution (la librairie graphql-upload).
 
 
 https://github.com/lmcgartland/graphene-file-upload
 
-Documentation 
-- Pour GraphQL, on peut utiliser différents outils tel que dociql ou spectaql qui génère une documentattion dans un répertoire séparé "public".
+Documentation :
+- Pour GraphQL, on peut utiliser différents outils tel que dociql ou spectaql (documentation autoportée) qui génère une documentattion dans un répertoire séparé "public".
 
 ![Capture d’écran du 2024-03-07 16-38-01.png](..%2F..%2F..%2F..%2FImages%2FCaptures%20d%E2%80%99%C3%A9cran%2FCapture%20d%E2%80%99%C3%A9cran%20du%202024-03-07%2016-38-01.png)
 
@@ -161,10 +161,10 @@ Dociql permet de générer :
 - des exemples de requête/réponse avec l'option "Try it now".
 - des exemples de schémas.
 
-Message d'erreur
+Message d'erreur :
 - GraphQL à introduit des tableaux d'erreurs en options pour faire face à la non pertinence des codes d'erreurs HTTP. Exemple : Plusieurs opérations envoyer dans la même requête, mais il est impossible qu'une requête échoue partiellement, renvoyant ainsi des données erronées et réelles.
 
-Exemple d'erreur
+Exemple d'erreur :
 ``` bash  
 {
   "errors": [
@@ -181,43 +181,12 @@ Exemple d'erreur
 }
 ```
 
-Autre exemple d'erreur 
-``` bash 
-{
-  "errors": [
-    {
-      "message": "Name for character with ID 1002 could not be fetched.",
-      "locations": [ { "line": 6, "column": 7 } ],
-      "path": [ "hero", "heroFriends", 1, "name" ]
-    }
-  ],
-  "data": {
-    "hero": {
-      "name": "R2-D2",
-      "heroFriends": [
-        {
-          "id": "1000",
-          "name": "Luke Skywalker"
-        },
-        {
-          "id": "1002",
-          "name": null
-        },
-        {
-          "id": "1003",
-          "name": "Leia Organa"
-        }
-      ]
-    }
-  }
-}
-```
-Performance 
+Performance :
 - GraphQl a une absence de prise en charge native de la mise en cache, on doit mettre en oeuvre des stratégies de cache personnalisées.
 - Attention, lorsque des requêtes GraphQL deviennent excesivement complexes et imbriquées, cela peut entraîner une surcharge significative sur le serveur.
 - REST utilise les pratiques standard de mise en cache HTTP.
 
-Sécurité
+Sécurité :
 - Pour faire en oeuvre des mécanismes d'authentification on peut notamment utiliser OSO (l'autorisation intervient à différents moments).
 
 
@@ -234,9 +203,16 @@ Lien comparatif :
 https://www.libhunt.com/compare-graphene-vs-strawberry
 https://graphql.org/code/#python
 
+Utilisation de sqlalchemy avec strawberry :
+https://github.com/strawberry-graphql/strawberry-sqlalchemy
+
 Exemple d'application Flask avec GraphQL :
 
 https://github.com/graphql-python/graphql-server/blob/master/docs/flask.md
+
+Utilisation de Postgraphile pour générer automatiquement des schémas à partir de la base de donnée PostgresSQL :
+https://www.graphile.org/postgraphile/
+
 
 ## Besoin du projet
 Iris étant en train de s'agrandir et d'être utilisé par de plus en plus en plus d'utilisateurs un objectif majeur, serait de faciliter la gestion d'un grand nombre de requêtes. 
