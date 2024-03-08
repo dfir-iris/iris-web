@@ -18,6 +18,8 @@
 
 from unittest import TestCase
 from iris import Iris
+import requests
+from iris import _API_KEY, _API_URL
 
 
 class Tests(TestCase):
@@ -54,3 +56,25 @@ class Tests(TestCase):
         case_identifier = response['data']['case_id']
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
+
+    # TODO rewrite this test in a nicer way (too low level)
+    # TODO use gql
+    def test_graphql_endpoint_should_not_fail(self):
+        url = _API_URL + '/graphql'
+        _headers = {'Authorization': f'Bearer {_API_KEY}', 'Content-Type': 'application/json'}
+        payload = {
+            'query': '{ hello(firstName: "Paul") }'
+        }
+        response = requests.post(_API_URL + '/graphql', headers=_headers, json=payload)
+        body = response.json()
+        self.assertEqual('Hello Paul!', body['data']['hello'])
+
+    # TODO rewrite this test in a nicer way (too low level)
+    def test_graphql_endpoint_should_reject_requests_with_wrong_authentication_token(self):
+        url = _API_URL + '/graphql'
+        _headers = {'Authorization': f'Bearer 0000000000000000000000000000000000000000000000000000000000000000', 'Content-Type': 'application/json'}
+        payload = {
+            'query': '{ hello(firstName: "friendly") }'
+        }
+        response = requests.post(url, headers=_headers, json=payload)
+        self.assertEqual(401, response.status_code)

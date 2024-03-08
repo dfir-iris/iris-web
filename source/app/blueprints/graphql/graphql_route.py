@@ -76,12 +76,7 @@ def _create_blueprint():
 
 graphql_blueprint = _create_blueprint()
 
-# TODO add first unit tests: test request is rejected with wrong token, test request is successful
-# TODO try to rewrite this as another blueprint and group it with the other blueprints
 # TODO how to handle permissions?
 # TODO link with the database: graphene-sqlalchemy
 # TODO I am unsure about the code organization (directories)
-# curl --insecure -X POST -H "Content-Type: application/json" -d '{ "query": "{ hello(firstName: \"friendly\") }" }' https://127.0.0.1/graphql
-#app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema))
-#API_KEY=B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594
-#curl --insecure -X POST --header 'Authorization: Bearer '${API_KEY} --header 'Content-Type: application/json' -d '{ "query": "{ hello(firstName: \"friendly\") }" }' https://127.0.0.1/graphql
+# TODO define the graphql API and establish the most important needs
