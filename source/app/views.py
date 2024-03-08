@@ -30,6 +30,7 @@ from app.blueprints.api.api_routes import api_blueprint
 from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.context.context import ctx_blueprint
 # Blueprints
+from app.blueprints.graphql.graphql_route import graphql_blueprint
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.demo_landing.demo_landing import demo_blueprint
@@ -67,6 +68,8 @@ from app.blueprints.search.search_routes import search_blueprint
 from app.models.authorization import User
 from app.post_init import run_post_init
 
+
+app.register_blueprint(graphql_blueprint)
 app.register_blueprint(dashboard_blueprint)
 app.register_blueprint(overview_blueprint)
 app.register_blueprint(login_blueprint)

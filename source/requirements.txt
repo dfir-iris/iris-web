@@ -32,6 +32,9 @@ PyJWT==2.4.0
 cryptography>=39.0.1
 ldap3==2.9.1
 pyintelowl>=4.4.0
+graphene==3.3
+# unfortunately we are relying on a beta version here. I hope a definitive version gets released soon
+graphql-server[flask]==3.0.0b7
 
 dependencies/docx_generator-0.8.0-py3-none-any.whl
 dependencies/iris_interface-1.2.0-py3-none-any.whl
