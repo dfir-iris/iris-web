@@ -44,37 +44,37 @@ class Query(ObjectType):
 #   TypeError: dispatch_request() got an unexpected keyword argument 'caseid'
 # so I rewrote a simpler decorator...
 # Maybe, no decorator is needed (since graphql needs only one endpoint) => try to write code directly
-def ac_graphql_requires():
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                if cookie_session:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
+def ac_graphql_requires(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if request.method == 'POST':
+            cookie_session = request.cookies.get('session')
+            if cookie_session:
+                form = FlaskForm()
+                if not form.validate():
+                    return response_error('Invalid CSRF token')
+                elif request.is_json:
+                    request.json.pop('csrf_token')
 
-            if not is_user_authenticated(request):
-                return response_error('Authentication required', status=401)
+        if not is_user_authenticated(request):
+            return response_error('Authentication required', status=401)
 
-            return f(*args, **kwargs)
-        return wrap
-    return inner_wrap
+        return f(*args, **kwargs)
+    return wrap
 
 
-schema = Schema(query=Query)
-graphql_view = GraphQLView.as_view('graphql', schema=schema)
+def _create_blueprint():
+    schema = Schema(query=Query)
+    graphql_view = GraphQLView.as_view('graphql', schema=schema)
+    graphql_view_with_authentication = ac_graphql_requires(graphql_view)
 
-graphql_blueprint = Blueprint('graphql', __name__)
+    blueprint = Blueprint('graphql', __name__)
+    blueprint.add_url_rule('/graphql', view_func=graphql_view_with_authentication, methods=['POST'])
+
+    return blueprint
 
 
-@graphql_blueprint.route('/graphql', methods=['POST'])
-@ac_graphql_requires()
-def process_graphql_request(*args, **kwargs):
-    return graphql_view(*args, **kwargs)
+graphql_blueprint = _create_blueprint()
 
 # TODO add first unit tests: test request is rejected with wrong token, test request is successful
 # TODO try to rewrite this as another blueprint and group it with the other blueprints
