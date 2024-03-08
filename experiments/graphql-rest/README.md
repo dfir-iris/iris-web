@@ -155,8 +155,6 @@ https://github.com/lmcgartland/graphene-file-upload
 Documentation :
 - Pour GraphQL, on peut utiliser différents outils tel que dociql ou spectaql (documentation autoportée) qui génère une documentattion dans un répertoire séparé "public".
 
-![Capture d’écran du 2024-03-07 16-38-01.png](..%2F..%2F..%2F..%2FImages%2FCaptures%20d%E2%80%99%C3%A9cran%2FCapture%20d%E2%80%99%C3%A9cran%20du%202024-03-07%2016-38-01.png)
-
 Dociql permet de générer :
 - des exemples de requête/réponse avec l'option "Try it now".
 - des exemples de schémas.
