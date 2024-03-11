@@ -809,9 +809,14 @@ def case_edit_event(cur_id, caseid):
         event = call_modules_hook('on_postload_event_update', data=event, caseid=caseid)
 
         track_activity(f"updated event \"{event.event_title}\"", caseid=caseid)
-        collab_notify(caseid, 'events', 'updated', cur_id)
+        event_dump = event_schema.dump(event)
+        collab_notify(case_id=caseid,
+                      object_type='events',
+                      action_type='updated',
+                      object_id=cur_id,
+                      object_data=event_dump)
 
-        return response_success("Event updated", data=event_schema.dump(event))
+        return response_success("Event updated", data=event_dump)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages(), status=400)
