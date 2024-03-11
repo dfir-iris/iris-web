@@ -17,40 +17,34 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from unittest import TestCase
+from unittest import skip
 from iris import Iris
 
 
-class Tests(TestCase):
+class TestsWhichRequireACleanSlate(TestCase):
+    """
+    In this test suite, each test is started from a clean slate: the state of IRIS after a fresh install.
+    This is achieved by stopping and removing containers, networks and modules (docker compose down) after each test.
+    In consequence tests run in this context will be costlier.
+    So, whenever possible try to avoid adding tests to this suite.
+    """
 
-    _subject = None
+    def setUp(self) -> None:
+        self._subject = Iris()
+        self._subject.start()
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls._subject = Iris()
-        cls._subject.start()
+    def tearDown(self) -> None:
+        self._subject.stop()
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls._subject.stop()
-
-    def test_create_asset_should_not_fail(self):
-        response = self._subject.create_asset()
-        self.assertEqual('success', response['status'])
-
-    def test_get_api_version_should_not_fail(self):
-        response = self._subject.get_api_version()
-        self.assertEqual('success', response['status'])
-
+    @skip
     def test_create_case_should_add_a_new_case(self):
-        response = self._subject.get_cases()
-        initial_case_count = len(response['data'])
+        """
+        This test is also present in the main test suite tests.py (although in a slightly more complex form
+        to be independent of the initial the database state)
+        This was just to give an example of a test which requires starting from an empty database.
+        It may thus be removed when we have more interesting tests to add to this suite.
+        """
         self._subject.create_case()
         response = self._subject.get_cases()
         case_count = len(response['data'])
-        self.assertEqual(initial_case_count + 1, case_count)
-
-    def test_update_case_should_not_require_case_name_issue_358(self):
-        response = self._subject.create_case()
-        case_identifier = response['data']['case_id']
-        response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
-        self.assertEqual('success', response['status'])
+        self.assertEqual(2, case_count)
