@@ -320,13 +320,13 @@ dociql -d config.yml
 Example requests via curl 
 ``` bash
 #  Make a GraphQl query request
-curl 'http://127.0.0.1:5000/graphql-api' -X POST -H 'content-type:application/json' -d '{"query": "query{ allMovies { edges { node { title description}}}}"}'
+curl 'http://127.0.0.1:5000/graphql-api' --request POST --header 'content-type:application/json' -d '{"query": "query{ allMovies { edges { node { title description}}}}"}'
 
 #  Answer 
 {"data":{"allMovies":{"edges":[{"node":{"title":"Blues brother","description":"Music"}},{"node":{"title":"Titanic","description":"Romance"}},{"node":{"title":"Oppenheimer","description":"Science"}},{"node":{"title":"Yannick","description":"Humour"}}]}}}
 
   #  Make a GraphQl mutation request
-curl 'http://127.0.0.1:5000/graphql-api' -X POST -H 'content-type:application/json' -d '{"query": "mutation{ addBook(username: \"mikedean\", title: \"Graphql\", description : \"V1\", year: 2018) { book { title }}}"}'
+curl 'http://127.0.0.1:5000/graphql-api' --request POST --header 'content-type:application/json' -d '{"query": "mutation{ addBook(username: \"mikedean\", title: \"Graphql\", description : \"V1\", year: 2018) { book { title }}}"}'
 
 #  Answer
 {"data":{"addBook":{"book":{"title":"Graphql"}}}}
