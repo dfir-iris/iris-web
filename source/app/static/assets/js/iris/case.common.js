@@ -29,6 +29,9 @@ $(document).ready(function(){
             }
         })
     });
-    collab_case = io.connect();
-    collab_case.emit('join-case-obj-notif', { 'channel': 'case-' + get_caseid() });
+    // Check if io is avalaible
+    if (typeof io !== 'undefined' && io !== undefined) {
+        collab_case = io.connect();
+        collab_case.emit('join-case-obj-notif', { 'channel': 'case-' + get_caseid() });
+    }
 });
