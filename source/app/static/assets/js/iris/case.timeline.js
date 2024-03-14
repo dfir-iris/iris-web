@@ -1343,10 +1343,10 @@ function handleCollabNotifications(collab_data) {
    else if (collab_data.action_type === "deletion") {
        uiRemoveEvent(collab_data.object_id);
    }
-   else if (collab_data.action_type === 'updated') {
-       uiUpdateEvent(collab_data.object_id,
-           collab_data.object_data)
-   }
+   // else if (collab_data.action_type === 'updated') {
+   //     uiUpdateEvent(collab_data.object_id,
+   //         collab_data.object_data)
+   // }
 }
 
 function generate_events_sample_csv(){
