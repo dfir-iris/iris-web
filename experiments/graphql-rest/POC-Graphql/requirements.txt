@@ -1,12 +1,7 @@
 Flask==2.3.2
-Flask-GraphQL==2.0.1
-#Flask-Migrate==4.0.5
-Flask-SQLAlchemy==3.0.5
-#graphe==0.0.2
-graphene==2.1.9
-graphene-sqlalchemy==2.3.0
-#graphql-core==2.3.2
-#graphql-relay==2.0.1
-#graphql-server-core==1.2.0
+Flask-SQLAlchemy==3.0.2
 psycopg2-binary==2.9.1
-SQLAlchemy==1.4.52
+SQLAlchemy==2.0.24
+graphql-server[flask]==3.0.0b7
+graphene==3.3
+graphene-sqlalchemy==3.0.0rc1
