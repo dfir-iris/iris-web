@@ -621,6 +621,11 @@ function buildEvent(event_data, compact, comments_map, tree, tesk, tmb, idx, rea
 
 
     let day = dta[0];
+    // Transform the date to the user's system format. day is in the format YYYY-MM-DD. We want our date in the user's host format, without the minutes and seconds.
+    // First parse the date to a Date object
+    let date = new Date(day);
+    // Then use the toLocaleDateString method to get the date in the user's host format
+    day = date.toLocaleDateString();
 
     let hour = dta[1].split('.')[0];
 
