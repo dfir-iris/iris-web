@@ -1,7 +1,7 @@
 from db import db
 
-
 class Author(db.Model):
+    """Author class documentation"""
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -18,6 +18,7 @@ class Author(db.Model):
 
 
 class Book(db.Model):
+    """Book class documentation"""
     __tablename__ = 'books'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -27,10 +28,11 @@ class Book(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def __repr__(self):
-        return '' % self.title % self.description % self.year % self.author_id
+        return '' % self.id % self.title % self.description % self.year % self.author_id
 
 
 class Movie(db.Model):
+    """Movie class documentation"""
     __tablename__ = 'movie'
 
     id = db.Column(db.Integer, primary_key=True)
