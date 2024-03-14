@@ -879,6 +879,8 @@ function build_timeline(data) {
     for (let index in data.data.tim) {
         let evt =  data.data.tim[index];
         let eki = buildEvent(evt, compact, data.data.comments_map, tree, tesk, tmb, idx, reap, converter);
+        tesk = !tesk;
+
         is_i = false;
         let entry = eki[0];
         let tmb_d = eki[1];
