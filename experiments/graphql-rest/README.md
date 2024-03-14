@@ -1,38 +1,287 @@
-# Etude entre Graphql et REST
+# Study between Graphql and REST 
 
 ## GraphQL
-Graphql est un langage de requête et un environnment d'exécution côté serveur pour les interfaces de programmation d'application (API).
-Il permet de fournir uniquement les ressources demandées aux clients. Il est possible de le déployer au sein de son propre environnement de développement GraphiQL.
+Graphql is a query langage and and server-side runtime environment for application programming interfaces (APIs).
+It allows only the requested resources to be provided to clients. It is possible to deploy it within your own GraphiQL development environment.
 
-### Schéma 
-Un schéma définit le système type de l'API GraphQL.
-Il décrit l'ensemble complet de données (objet, champ, relation, ...).
-Les appels du clients sont validés et exécutés à partir du schéma. 
+### Schema 
+A schema defines the typical system of the GraphQL API.
+It describes the complete set of data (object, field, relationship, etc.).
+Client calls are validated and executed from the schema.
 
 
-### Exemple de schéma
+### Schema example
 ``` bash
-type Book{
-
-    id :  PRIMARY KEY
-    title : VARCHAR(30)
-    description : VARCHAR (30)
-    year : VARCHAR(30)
-    author_id : VARCHAR(30)
-    
+"""Documentation about user informations."""
+type AuthorObject implements Node {
+  """The ID of the object"""
+  id: ID!
+  username: String!
+  email: String!
+  books(before: String, after: String, first: Int, last: Int): BookObjectConnection
 }
 
-type Author{
-
-    id : VARCHAR(30),
-    username : VARCHAR(30),
-    email : VARCHAR(30)
-    
+"""An object with an ID"""
+interface Node {
+  """The ID of the object"""
+  id: ID!
 }
+
+type BookObjectConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [BookObjectEdge]!
+}
+
+"""
+The Relay compliant `PageInfo` type, containing data necessary to paginate this connection.
+"""
+type PageInfo {
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+}
+
+"""A Relay edge containing a `BookObject` and its cursor."""
+type BookObjectEdge {
+  """The item at the end of the edge"""
+  node: BookObject
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+"""Documentation about different authors."""
+type BookObject implements Node {
+  """The ID of the object"""
+  id: ID!
+  title: String!
+  description: String!
+  year: Int!
+  authorId: Int
+  author: AuthorObject
+}
+
+"""Documentation about different movies."""
+type MovieObject implements Node {
+  """The ID of the object"""
+  id: ID!
+  title: String!
+  description: String!
+  authorId: Int
+}
+
+"""Query documentation"""
+type Query {
+  node(
+    """The ID of the object"""
+    id: ID!
+  ): Node
+
+  """author documentation"""
+  author(username: String): [AuthorObject]
+
+  """book documentation"""
+  book(title: String): [BookObject]
+
+  """movie documentation"""
+  movie(title: String): [MovieObject]
+
+  """book all documentation"""
+  bookAll: [BookObject]
+
+  """movie all documentation"""
+  movieAll: [MovieObject]
+
+  """author all documentation"""
+  authorAll: [AuthorObject]
+  allBooks(sort: [BookObjectSortEnum] = [ID_ASC], filter: BookObjectFilter, before: String, after: String, first: Int, last: Int): BookConnection
+  allAuthors(sort: [AuthorObjectSortEnum] = [ID_ASC], filter: AuthorObjectFilter, before: String, after: String, first: Int, last: Int): AuthorConnection
+  allMovies(sort: [MovieObjectSortEnum] = [ID_ASC], filter: MovieObjectFilter, before: String, after: String, first: Int, last: Int): MovieConnection
+}
+
+type BookConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [BookEdge]!
+}
+
+"""A Relay edge containing a `Book` and its cursor."""
+type BookEdge {
+  """The item at the end of the edge"""
+  node: BookObject
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+"""An enumeration."""
+enum BookObjectSortEnum {
+  ID_ASC
+  ID_DESC
+  TITLE_ASC
+  TITLE_DESC
+  DESCRIPTION_ASC
+  DESCRIPTION_DESC
+  YEAR_ASC
+  YEAR_DESC
+  AUTHOR_ID_ASC
+  AUTHOR_ID_DESC
+}
+
+input BookObjectFilter {
+  id: IdFilter
+  title: StringFilter
+  description: StringFilter
+  year: IntFilter
+  authorId: IntFilter
+  author: AuthorObjectFilter
+  and: [BookObjectFilter]
+  or: [BookObjectFilter]
+}
+
+input IdFilter {
+  eq: ID
+  in: [ID]
+  nEq: ID
+  notIn: [ID]
+}
+
+input StringFilter {
+  eq: String
+  ilike: String
+  in: [String]
+  like: String
+  nEq: String
+  notIn: [String]
+  notlike: String
+}
+
+input IntFilter {
+  eq: Int
+  gt: Int
+  gte: Int
+  in: [Int]
+  lt: Int
+  lte: Int
+  nEq: Int
+  notIn: [Int]
+}
+
+input AuthorObjectFilter {
+  id: IdFilter
+  username: StringFilter
+  email: StringFilter
+  books: BookObjectRelationshipFilter
+  and: [AuthorObjectFilter]
+  or: [AuthorObjectFilter]
+}
+
+input BookObjectRelationshipFilter {
+  containsExactly: [BookObjectFilter]
+  contains: [BookObjectFilter]
+}
+
+type AuthorConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [AuthorEdge]!
+}
+
+"""A Relay edge containing a `Author` and its cursor."""
+type AuthorEdge {
+  """The item at the end of the edge"""
+  node: AuthorObject
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+"""An enumeration."""
+enum AuthorObjectSortEnum {
+  ID_ASC
+  ID_DESC
+  USERNAME_ASC
+  USERNAME_DESC
+  EMAIL_ASC
+  EMAIL_DESC
+}
+
+type MovieConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [MovieEdge]!
+}
+
+"""A Relay edge containing a `Movie` and its cursor."""
+type MovieEdge {
+  """The item at the end of the edge"""
+  node: MovieObject
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+"""An enumeration."""
+enum MovieObjectSortEnum {
+  ID_ASC
+  ID_DESC
+  TITLE_ASC
+  TITLE_DESC
+  DESCRIPTION_ASC
+  DESCRIPTION_DESC
+  AUTHOR_ID_ASC
+  AUTHOR_ID_DESC
+}
+
+input MovieObjectFilter {
+  id: IdFilter
+  title: StringFilter
+  description: StringFilter
+  authorId: IntFilter
+  and: [MovieObjectFilter]
+  or: [MovieObjectFilter]
+}
+
+"""Mutation documentation"""
+type Mutation {
+  """Mutation Addbook """
+  addBook(description: String!, title: String!, username: String!, year: Int!): AddBook
+
+  """Mutation Updatebook """
+  updateBook(authorId: Int, description: String!, title: String!, year: Int!): UpdateBook
+}
+
+"""Mutation Addbook """
+type AddBook {
+  book: BookObject
+}
+
+"""Mutation Updatebook """
+type UpdateBook {
+  book: BookObject
+}
+
 ``` 
-### Exemple de requête
-Pour interroger la base de donnée, on envoie des requêtes.
-Pour l'exemple ci-dessous on souhaite récupérer tous les livres.
+### Request example 
+To query the database, we send requests.
+For the example below we want to recover all the books.
 ``` bash
 {
   allBooks{
@@ -48,7 +297,7 @@ Pour l'exemple ci-dessous on souhaite récupérer tous les livres.
   }
 }
 ``` 
-### Réponse de la requête
+### Request answer
 ``` bash
 {
   "data": {
@@ -68,20 +317,26 @@ Pour l'exemple ci-dessous on souhaite récupérer tous les livres.
   }
 }
 ```
-### Resolveur
-Une fois la requête vérifiée de part sa syntaxe et via le schéma du serveur, GraphQL fait appel aux resolveurs.
-Le resolveur va alors récupérer la donnée au bon endroit en fonction de ce qu'il reçoit. 
+### Resolver
+Once the query has been verified through its syntax and via the server schema, GraphQL calls on the resolvers.
+The resolver will then retrieve the data from the right place depending on what it receives.
+
+
 
 ``` bash
-class Query(graphene.ObjectType):
-    node = graphene.relay.Node.Field()
-    all_books = SQLAlchemyConnectionField(BookObject)
-    all_users = SQLAlchemyConnectionField(UserObject)
-    all_movies = SQLAlchemyConnectionField(MovieObject)
+    def resolve_author(self, info, **kwargs):
+        query = AuthorObject.get_query(info)
+        username = kwargs.get('username')
+        return query.filter(Author.username == username).all()
+
+    def resolve_book(self, info, **kwargs):
+        query = BookObject.get_query(info)
+        title = kwargs.get('title')
+        return query.filter(Book.title == title).all()
 ```
 ### Mutation
-Chaque schéma à un type racine pour les requêtes et les mutations.
-Le type mutation définit les opérations qui vont modifier les données sur le serveur. (Par exemple les actions : créer et supprimer)
+
+The mutation type defines the operations that will modify the data on the server. (For example actions: create and delete).
 ``` bash
 mutation {
   addBook(
@@ -99,70 +354,73 @@ mutation {
   }
 }
 ```
-## Api REST
-Interface de programmation d'application qui respecte les contraintes de l'architecture REST. 
-Il s'agit d'un ensemble de conventions et de bonnes pratiques à mettre en oeuvre. Permet d'interagir avec les services web RESTful.
+## REST api
+Application programming interface that respects the constraints of the REST architecture.
+This is a set of conventions and good practices to be implemented. Allows you to interact with RESTful web services.
 
-## Comparaison entre GraphQL et REST
-| Contexte du projet                        | REST | GraphQL |
-|-------------------------------------------|:----:|:-------:|
-| Une source de donnée (PostgreSQL)         |  X   |         |
-| Evite la sur-récupération de donnée       |      |    X    |
-| Requêtes flexibles                        |      |    X    |
-| Téléchargement de fichier                 |  X   |         |
-| Performance (cache)                       |  X   |         |
-| Documentation                             |  X   |    X    |
-| Plusieurs ressources accesibles à la fois |      |    X    |
-| Message d'erreur                          |  X   |    X    |
+## Comparison between Graphql and REST
+| Project standard       | REST | GraphQL |
+|------------------------|:----:|:-------:|
+| Avoid overflow of data |      |    X    |
+| Flexible request       |      |    X    |
+| File upload            |  X   |         |
+| Http cache             |  X   |         |
+| Documentation          |  X   |    X    |
+| Error alert            |  X   |    X    |
 
 
-Besoin en matière de collecte de données :
-- En utilisant GraphQL on évite la sur-récupération ou sous-récupération de données, ce qui permettra de ne pas surcharger la bande passante.
-- REST n'est pas flexible sur la structure de réponse.
+### Data collection requirement:
+- By using GraphQL we avoid over-recovery or under-recovery of data, which will avoid overloading the bandwidth.
+- REST is not flexible on response structure.
 
-IDE GraphQL :
+### GraphQL IDE:
 
-On retrouve deux grandes plateformes pour développer en GraphQL.
-Il s'agit d'interfaces graphiques pour écrire des requêtes et des mutations.
+There are two main platforms for developing in GraphQL (GraphOs and GraphiQL).
+These are graphical interfaces for writing queries and mutations.
 
-- GraphOs : développé par Apollo, permet de vérifier la structure d'un schéma via "schema checks" et propose l'auto-complétion de champs (sous liscence MIT).
+- GraphOs: developed by Apollo, allows you to check the structure of a schema via "schema checks" and offers auto-completion of fields (under MIT license).
 
 https://www.apollographql.com/docs/graphos/
 
-- GraphiQL : Fait de l'introspection pour récupérer la documentation de notre API, propose également l'auto-complétion de champs (sous liscence MIT).
+- GraphiQL: Does introspection to retrieve our API documentation, also offers auto-completion of fields (under MIT licensing).
 
 https://github.com/graphql/graphiql/blob/main/packages/graphiql/README.md
 
-- GraphQL-playground : IDE GraphQL interactif développé par Prisma et basé sur GraphiQL, (sous liscence MIT). 
+- GraphQL-playground: Interactive GraphQL IDE developed by Prisma and based on GraphiQL, (under MIT license).
 
 https://github.com/graphql/graphql-playground
 
-Courbe d'apprentissage :
-- REST possède une grande source de documentation, de nombreux outils et resources disponibles. 
-- GraphQL possède lui moins de ressources mais on retrouve tout de même le forum apollo dédié à la discussion sur GraphQL, ainsi que Apollo GraphOS.
+### Learning curve:
+- REST has a large source of documentation, many tools and resources available.
+- GraphQL has fewer resources but we still find the Apollo forum dedicated to the discussion on GraphQL, as well as Apollo GraphOS.
 
-Lien de la communauté apollo :
+Apollo community link:
 
 https://community.apollographql.com/
 https://www.apollographql.com/docs/graphos/
 
-Téléchargement des fichiers :
-- Le téléchargement de fichier n'est pas pris en compte par GraphQL, il faudra trouver une autre solution (la librairie graphql-upload).
-
+### File upload :
+- File uploading is not taken into account by GraphQL, you will have to find another solution (the graphql-upload library).
 
 https://github.com/lmcgartland/graphene-file-upload
 
-Documentation :
-- Pour GraphQL, on peut utiliser différents outils tel que dociql ou spectaql (documentation autoportée) qui génère une documentattion dans un répertoire séparé "public".
+### Documentation :
+- For GraphQL, you can use different tools such as dociql or spectaql (self-supported documentation) which generates documentation in a separate "public" directory.
 
-Dociql permet de générer :
-- des exemples de requête/réponse avec l'option "Try it now".
-- des exemples de schémas.
+Dociql allows you to generate:
+- examples of request/response with the "Try it now" option.
+- examples of diagrams.
 
-Message d'erreur :
-- GraphQL à introduit des tableaux d'erreurs en options pour faire face à la non pertinence des codes d'erreurs HTTP. Exemple : Plusieurs opérations envoyer dans la même requête, mais il est impossible qu'une requête échoue partiellement, renvoyant ainsi des données erronées et réelles.
+### Error alert :
+- GraphQL introduced error tables as options to deal with the irrelevance of HTTP error codes. Example: Multiple operations send in the same query, but it is impossible for a query to partially fail, thus returning wrong and real data.
 
-Exemple d'erreur :
+### HTTP cache :
+- GraphQL does not take into account HTTP caching processes. (Using client-side cache via ApolloClient for example).
+- GraphQl lacks native caching support, one must implement custom caching strategies.
+- Be careful, when GraphQL queries become excessively complex and nested, this can cause significant overhead on the server.
+- REST uses standard HTTP caching practices.
+
+Error example  :
 ``` bash  
 {
   "errors": [
@@ -179,52 +437,41 @@ Exemple d'erreur :
 }
 ```
 
-Performance :
-- GraphQl a une absence de prise en charge native de la mise en cache, on doit mettre en oeuvre des stratégies de cache personnalisées.
-- Attention, lorsque des requêtes GraphQL deviennent excesivement complexes et imbriquées, cela peut entraîner une surcharge significative sur le serveur.
-- REST utilise les pratiques standard de mise en cache HTTP.
-
-Sécurité :
-- Pour faire en oeuvre des mécanismes d'authentification on peut notamment utiliser OSO (l'autorisation intervient à différents moments).
-
+### Security :
+- To implement authorization mechanisms, you can use OSO.
 
 https://www.osohq.com/post/graphql-authorization
 
-Différentes librairies GraphQL (python) entre graphene, strawberry et Ariadne :
+Different GraphQL libraries (python) between Graphene, Strawberry and Ariadne:
 
-| Language| Schema-first implementation | Code-first implementation |
-|---------|:---------------------------:|:-------------------------:|
-| Python  |           Ariadne           |   Graphene / Strawberry   |
+| Critère                     |      Ariadne       | Graphene | Strawberry |
+|-----------------------------|:------------------:|:--------:|:----------:|
+| Schema-first implementation |        YES         |    NO    |     NO     |
+| Code-first implementation   |         NO         |   YES    |    YES     |
+| Users                       |         2k         |    8k    |     4k     |
+| License                     | BSD 3-Clause "New" |   MIT    |    MIT     |
+| Current version             |        0.22        |  3.3.0   |  0.220.0   |
 
-Lien comparatif : 
+Comparison link:
 
 https://www.libhunt.com/compare-graphene-vs-strawberry
 https://graphql.org/code/#python
 
-Utilisation de sqlalchemy avec strawberry :
+Using sqlalchemy with strawberry:
+
 https://github.com/strawberry-graphql/strawberry-sqlalchemy
 
-Exemple d'application Flask avec GraphQL :
+Example Flask application with GraphQL:
 
 https://github.com/graphql-python/graphql-server/blob/master/docs/flask.md
 
-Utilisation de Postgraphile pour générer automatiquement des schémas à partir de la base de donnée PostgresSQL :
+Using Postgraphile to automatically generate schemas from the PostgresSQL database:
+
 https://www.graphile.org/postgraphile/
 
+Link about mutation update :
 
-## Besoin du projet
-Iris étant en train de s'agrandir et d'être utilisé par de plus en plus en plus d'utilisateurs un objectif majeur, serait de faciliter la gestion d'un grand nombre de requêtes. 
-Exemple : Récupération des données liées aux cases.
+https://www.twilio.com/en-us/blog/graphql-apis-django-graphene
 
-- GraphQL permettrai d'éviter cette sur-récupération de données.
 
-## Les risques encourus 
-- Inconnue MFA 
-- Recul technologique 
-- Un grand nombre de données inconnues sur GraphQL (haut risque)
-
-## Conclusion
-Etant donné le contexte actuel, il a été décidé de partir sur GraphQL.
-Cela représente plus de travail pour reprendre toute l'API depuis le début mais à terme l'api supportera plus facilement un plus grand nombre de données.
-Un exemple typique de l'avantage de GraphQL, sera la récupération de métadonnée sur un case.
 
