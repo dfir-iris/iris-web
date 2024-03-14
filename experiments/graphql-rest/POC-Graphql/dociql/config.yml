@@ -6,12 +6,14 @@ servers:
 
 info:
     title: GraphQL POC
-    description: Welcome to POC GraphQL. This is an example of graphql documentation. GraphQL is a query language for APIs and a runtime for fulfilling those queries with your existing data. GraphQL provides a complete and understandable description of the data in your API, gives clients the power to ask for exactly what they need and nothing more, makes it easier to evolve APIs over time, and enables powerful developer tools.
+    description: Welcome to POC GraphQL documentation. Graphql is a query langage and and server-side runtime environment for application programming interfaces (APIs). It allows only the requested resources to be provided to clients. It is possible to deploy it within your own GraphiQL development environment.
+
+
 
 
 domains:
-  - name: Query and mutation
-    description: Base methods to make query and mutation.
+  - name: Query
+    description: Base methods to make query
     usecases:
           - name:  Query author
             description: Query author
@@ -23,10 +25,13 @@ domains:
             description: Query movie
             query: query.movie
   - name: Mutation
-    description: Mutation addBook
+    description: Base methods to make mutation
     usecases:
         - name: Addbook
           description: Add a book
           query: mutation.addBook
+        - name: Updatebook
+          description: Update a book
+          query: mutation.updateBook
 
 #domains: []
