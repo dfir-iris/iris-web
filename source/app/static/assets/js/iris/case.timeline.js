@@ -630,7 +630,8 @@ function buildEvent(event_data, compact, comments_map, tree, tesk, tmb, idx, rea
     let hour = dta[1].split('.')[0];
 
     let mtop_day = '';
-    if (!tmb.includes(day)) {
+
+    if (!tmb.includes(day) && evt.parent_event_id == null) {
         tmb.push(day);
         tmb_d = `<li class="time-badge${timeline_style} badge badge-dark" id="time_${idx}"><small class="">${day}</small><br/></li>`;
 

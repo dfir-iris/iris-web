@@ -8464,11 +8464,11 @@ body .badge-danger {
 .timeline-t>li>.timeline-panel-t {
     width: 50%;
     background: #ffffff;
-    border-radius: 1.5rem;
-    padding: 18px;
-    margin-bottom: 10px;
+    border-radius: 18px;
+    margin-bottom: 9px;
     position: relative;
     box-shadow: 1px 1px 20px 0px rgba(69, 65, 78, 0.18);
+    padding: 12px 11px 6px 17px;
 }
 
 .timeline-t:before {
