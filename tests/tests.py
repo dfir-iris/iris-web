@@ -57,13 +57,6 @@ class Tests(TestCase):
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
 
-    def test_graphql_endpoint_should_not_fail(self):
-        payload = {
-            'query': '{ hello(firstName: "Paul") }'
-        }
-        body = self._subject.execute_graphql_query(payload)
-        self.assertEqual('Hello Paul!', body['data']['hello'])
-
     def test_graphql_endpoint_should_reject_requests_with_wrong_authentication_token(self):
         graphql_api = GraphQLApi(API_URL + '/graphql', 64*'0')
         payload = {
@@ -71,3 +64,17 @@ class Tests(TestCase):
         }
         response = graphql_api.execute(payload)
         self.assertEqual(401, response.status_code)
+
+    def test_graphql_endpoint_should_not_fail(self):
+        payload = {
+            'query': '{ hello(firstName: "Paul") }'
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertEqual('Hello Paul!', body['data']['hello'])
+
+    def test_graphql_cases_should_contain_the_initial_case(self):
+        payload = {
+            'query': '{ cases { name } }'
+        }
+        body = self._subject.execute_graphql_query(payload)
+        # TODO should check the list contains an element with name "#1 - Initial Demo"

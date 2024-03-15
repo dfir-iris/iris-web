@@ -21,10 +21,17 @@ from flask import request
 from flask_wtf import FlaskForm
 from flask import Blueprint
 from graphql_server.flask import GraphQLView
-from graphene import ObjectType, String, Schema
+from graphene import ObjectType, String, Schema, List
+from graphene_sqlalchemy import SQLAlchemyObjectType
 
+from app.models.cases import Cases
 from app.util import is_user_authenticated
 from app.util import response_error
+
+
+class CaseObject(SQLAlchemyObjectType):
+    class Meta:
+        model = Cases
 
 
 class Query(ObjectType):
@@ -32,6 +39,9 @@ class Query(ObjectType):
 
     hello = String(first_name=String(default_value='stranger'), description='Field documentation')
     goodbye = String()
+
+    # starting with the conversion of '/manage/cases/list'
+    cases = List(lambda: CaseObject, description='author documentation')
 
     def resolve_hello(root, info, first_name):
         return f'Hello {first_name}!'
