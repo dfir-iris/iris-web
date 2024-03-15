@@ -405,11 +405,18 @@ https://www.apollographql.com/docs/graphos/
 https://github.com/lmcgartland/graphene-file-upload
 
 ### Documentation :
-- For GraphQL, you can use different tools such as dociql or spectaql (self-supported documentation) which generates documentation in a separate "public" directory.
+- For GraphQL, you can use different tools such as dociql, spectaql or magidoc (self-supported documentation) which generates documentation in a separate "public" directory.
 
 Dociql allows you to generate:
 - examples of request/response with the "Try it now" option.
 - examples of diagrams.
+
+Link about Magidoc (static documentation for graphql):
+
+You have to create a configuration file.
+
+https://magidoc.js.org/introduction/welcome
+
 
 ### Error alert :
 - GraphQL introduced error tables as options to deal with the irrelevance of HTTP error codes. Example: Multiple operations send in the same query, but it is impossible for a query to partially fail, thus returning wrong and real data.
@@ -472,6 +479,7 @@ https://www.graphile.org/postgraphile/
 Link about mutation update :
 
 https://www.twilio.com/en-us/blog/graphql-apis-django-graphene
+
 
 
 
