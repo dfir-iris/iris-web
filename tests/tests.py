@@ -65,7 +65,7 @@ class Tests(TestCase):
         payload = {
             'query': '{ hello(firstName: "Paul") }'
         }
-        response = requests.post(_API_URL + '/graphql', headers=_headers, json=payload)
+        response = requests.post(url, headers=_headers, json=payload)
         body = response.json()
         self.assertEqual('Hello Paul!', body['data']['hello'])
 
