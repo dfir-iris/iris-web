@@ -1,7 +1,7 @@
 # Study between Graphql and REST 
 
 ## GraphQL
-Graphql is a query langage and and server-side runtime environment for application programming interfaces (APIs).
+Graphql is a query langage and a server-side runtime environment for application programming interfaces (APIs).
 It allows only the requested resources to be provided to clients. It is possible to deploy it within your own GraphiQL development environment.
 
 ### Schema 
@@ -9,6 +9,9 @@ A schema defines the typical system of the GraphQL API.
 It describes the complete set of data (object, field, relationship, etc.).
 Client calls are validated and executed from the schema.
 
+Using Postgraphile to automatically generate schemas from the PostgresSQL database:
+
+https://www.graphile.org/postgraphile/
 
 ### Schema example
 ``` bash
@@ -336,7 +339,9 @@ The resolver will then retrieve the data from the right place depending on what 
 ```
 ### Mutation
 
-The mutation type defines the operations that will modify the data on the server. (For example actions: create and delete).
+The mutation type defines the operations that will modify the data on the server. (For example actions: create, update and delete).
+
+AddBook mutation
 ``` bash
 mutation {
   addBook(
@@ -354,6 +359,26 @@ mutation {
   }
 }
 ```
+UpdateBook mutation 
+``` bash
+mutation {
+  updateBook(
+    title: "Flask test"
+    year : 1717
+  ) {
+    book {
+      title
+      year
+      description
+      authorId
+    }
+  }
+}
+``` 
+Link about mutation update :
+
+https://www.twilio.com/en-us/blog/graphql-apis-django-graphene
+
 ## REST api
 Application programming interface that respects the constraints of the REST architecture.
 This is a set of conventions and good practices to be implemented. Allows you to interact with RESTful web services.
@@ -449,7 +474,7 @@ Error example  :
 
 https://www.osohq.com/post/graphql-authorization
 
-Different GraphQL libraries (python) between Graphene, Strawberry and Ariadne:
+### Different GraphQL libraries (python) between Graphene, Strawberry and Ariadne:
 
 | Critère                     |      Ariadne       | Graphene | Strawberry |
 |-----------------------------|:------------------:|:--------:|:----------:|
@@ -459,7 +484,7 @@ Different GraphQL libraries (python) between Graphene, Strawberry and Ariadne:
 | License                     | BSD 3-Clause "New" |   MIT    |    MIT     |
 | Current version             |        0.22        |  3.3.0   |  0.220.0   |
 
-Comparison link:
+### Comparison link :
 
 https://www.libhunt.com/compare-graphene-vs-strawberry
 https://graphql.org/code/#python
@@ -468,17 +493,27 @@ Using sqlalchemy with strawberry:
 
 https://github.com/strawberry-graphql/strawberry-sqlalchemy
 
+### Graphene-sqlalchemy :
+Graphene-sqlalchemy requires aiodataloader, graphene, promise, SQLAlchemy.
+
+Documentation about graphene-sqlalchemy :
+
+https://docs.graphene-python.org/projects/sqlalchemy/en/latest/
+
+Project with graphene-sqlalchemy :
+
+https://github.com/Getmrahul/Flask-Graphene-SQLAlchemy/blob/master/schema.py
+
+https://github.com/alexisrolland/flask-graphene-sqlalchemy/tree/master/example
+
+### Flask :
 Example Flask application with GraphQL:
 
 https://github.com/graphql-python/graphql-server/blob/master/docs/flask.md
 
-Using Postgraphile to automatically generate schemas from the PostgresSQL database:
 
-https://www.graphile.org/postgraphile/
 
-Link about mutation update :
 
-https://www.twilio.com/en-us/blog/graphql-apis-django-graphene
 
 
 
