@@ -12,7 +12,7 @@ python3 -m venv myapp
 source myapp/bin/activate
 
 #Install dependencies
-pip install flask ariadne flask-sqlalchemy flask-cors
+pip install -r requirements.txt
 
 ```
 Database Postgres
