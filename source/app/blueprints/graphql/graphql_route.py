@@ -43,7 +43,6 @@ class Query(ObjectType):
 # util.ac_api_requires does not seem to work => it leads to error:
 #   TypeError: dispatch_request() got an unexpected keyword argument 'caseid'
 # so I rewrote a simpler decorator...
-# Maybe, no decorator is needed (since graphql needs only one endpoint) => try to write code directly
 def _ac_graphql_requires(f):
     @wraps(f)
     def wrap(*args, **kwargs):
