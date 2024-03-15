@@ -441,16 +441,18 @@ Answer via GraphiQL
   }
 }
 ```
-Example mutation via GraphiQL
+Example mutation via GraphiQL (field optional)
 ``` bash
 mutation {
   updateBook(
-    title:"Pride and prejudice",
-    description:"POC GraphQL 2",
-    year:2018){
-    book{
+    title: "Flask test"
+    year : 1717
+  ) {
+    book {
       title
+      year
       description
+      authorId
     }
   }
 }
@@ -461,8 +463,10 @@ Answer via GraphiQL
   "data": {
     "updateBook": {
       "book": {
-        "title": "Pride and prejudice",
-        "description": "POC GraphQL 2"
+        "title": "Flask test",
+        "year": 1717,
+        "description": "test",
+        "authorId": 6
       }
     }
   }
