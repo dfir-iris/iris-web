@@ -44,7 +44,7 @@ class Query(ObjectType):
 #   TypeError: dispatch_request() got an unexpected keyword argument 'caseid'
 # so I rewrote a simpler decorator...
 # Maybe, no decorator is needed (since graphql needs only one endpoint) => try to write code directly
-def ac_graphql_requires(f):
+def _ac_graphql_requires(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         if request.method == 'POST':
@@ -66,7 +66,7 @@ def ac_graphql_requires(f):
 def _create_blueprint():
     schema = Schema(query=Query)
     graphql_view = GraphQLView.as_view('graphql', schema=schema)
-    graphql_view_with_authentication = ac_graphql_requires(graphql_view)
+    graphql_view_with_authentication = _ac_graphql_requires(graphql_view)
 
     blueprint = Blueprint('graphql', __name__)
     blueprint.add_url_rule('/graphql', view_func=graphql_view_with_authentication, methods=['POST'])
