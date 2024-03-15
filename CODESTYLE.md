@@ -55,9 +55,13 @@ New files should be prefixed by the following license header, where `${current_y
 ```python
 #!/usr/bin/env python3
 ```
+* prefix names of all private fields, methods and variables with underscore (_).
+  This allows any code maintainer to immediately spot which code elements can be freely modified
+  without having to worry about the external context.
+  Note: private elements are only called within the modules in which they are defined.
 
 ## Code
-The code should be pretty easy to apprehend. It's not perfect but it will improve over time.   
+The code should be pretty easy to apprehend. It's not perfect, but it will improve over time.
 Some documentation about development is available [here](https://docs.dfir-iris.org/development/).   
 Here are the main takes : 
 
