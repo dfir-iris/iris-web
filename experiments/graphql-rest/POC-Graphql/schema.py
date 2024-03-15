@@ -97,10 +97,10 @@ class AddBook(graphene.Mutation):
 class UpdateBook(graphene.Mutation):
     """Mutation Updatebook """
     class Arguments:
-        title = graphene.String(required=True)
-        description = graphene.String(required=True)
-        year = graphene.Int(required=True)
-        author_id= graphene.Int(required=False)
+        title = graphene.String(required=False, default_value=None)
+        description = graphene.String(required=False, default_value=None)
+        year = graphene.Int(required=False, default_value=None)
+        author_id = graphene.Int(required=False, default_value=None)
     book = graphene.Field(lambda: BookObject)
 
     def mutate(self, info, title, description, year, author_id):
@@ -108,9 +108,12 @@ class UpdateBook(graphene.Mutation):
         book_instance = Book.query.filter_by(title=title).first()
 
         if book_instance:
-            book_instance.description = description
-            book_instance.year = year
-            book_instance.author_id = author_id
+            if description:
+                book_instance.description = description
+            if year:
+                book_instance.year = year
+            if author_id:
+                book_instance.author_id = author_id
             db.session.commit()
             return UpdateBook(book=book_instance)
         return UpdateBook(book=None)
