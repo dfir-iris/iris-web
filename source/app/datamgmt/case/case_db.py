@@ -109,8 +109,11 @@ def get_case_report_template():
         CaseTemplateReport.name,
         Languages.name,
         CaseTemplateReport.description
-    ).filter(
+    ).filter(and_(
+        Languages.id == CaseTemplateReport.report_type_id,
         ReportType.name == "Investigation"
+    )).join(
+        CaseTemplateReport.report_type
     ).all()
 
     return reports
@@ -147,9 +150,10 @@ def get_activities_report_template():
         CaseTemplateReport.name,
         Languages.name,
         CaseTemplateReport.description
-    ).filter(
-        ReportType.name == "Activities"
-    ).all()
+    ).filter(and_(
+        ReportType.name == "Activities",
+        Languages.id == CaseTemplateReport.language_id
+    )).all()
 
     return reports
 
