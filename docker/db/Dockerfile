@@ -17,6 +17,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-FROM postgres:16-alpine
+FROM postgres:12-alpine
 
 COPY create_user.sh   /docker-entrypoint-initdb.d/10-create_user.sh
