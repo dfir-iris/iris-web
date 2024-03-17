@@ -575,10 +575,10 @@ function get_mk_link_ds_file(file_id, filename, file_icon, has_password) {
 
 
    if (has_password == 'false' && ['png', 'svg', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'].includes(filename.split('.').pop())) {
-        mk_link = `![${filename}](${link} =40%x40%)`;
+        mk_link = `![\`${filename}\`](${link} =60%x40%)`;
     } else {
         file_icon = atob(file_icon);
-        mk_link = `[${file_icon} [DS] ${filename}](${link})`;
+        mk_link = `[${file_icon} [DS] \`${filename}\`](${link})`;
     }
 
    navigator.clipboard.writeText(mk_link).then(function() {
