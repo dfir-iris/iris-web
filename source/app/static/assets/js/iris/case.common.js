@@ -1,3 +1,5 @@
+let collab_case = null;
+
 function buildShareLink(lookup_id) {
     current_path = location.protocol + '//' + location.host + location.pathname;
     current_path = current_path + case_param() + '&shared=' + lookup_id;
@@ -27,4 +29,9 @@ $(document).ready(function(){
             }
         })
     });
+    // Check if io is avalaible
+    if (typeof io !== 'undefined' && io !== undefined) {
+        collab_case = io.connect();
+        collab_case.emit('join-case-obj-notif', { 'channel': 'case-' + get_caseid() });
+    }
 });

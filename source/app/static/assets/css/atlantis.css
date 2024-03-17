@@ -6429,6 +6429,9 @@ label.error {
 
 .dropdown-item {
     font-size: 13px;
+    width: inherit;
+    margin-left: 3px;
+    margin-right: 3px;
 }
 
 .navbar .navbar-nav .notification {
@@ -8447,7 +8450,7 @@ body .badge-danger {
     background: #f4f4f4;
     margin-bottom: 10px;
     left: 0;
-    box-shadow: 2px 6px 15px 4px rgba(69, 65, 78, 0.29);
+    box-shadow: 1px 1px 20px 0px rgba(69, 65, 78, 0.18);
 }
 
 .timeline-t>.timeline-child>.timeline-odd-t {
@@ -8455,17 +8458,17 @@ body .badge-danger {
     background: #f4f4f4;
     margin: 0 0 10px;
     left: 0;
-    box-shadow: 2px 6px 15px 4px rgba(69, 65, 78, 0.29);
+    box-shadow: 1px 1px 20px 0px rgba(69, 65, 78, 0.18);
 }
 
 .timeline-t>li>.timeline-panel-t {
     width: 50%;
     background: #ffffff;
-    border-radius: 1.5rem;
-    padding: 18px;
-    margin-bottom: 10px;
+    border-radius: 18px;
+    margin-bottom: 9px;
     position: relative;
-    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);
+    box-shadow: 1px 1px 20px 0px rgba(69, 65, 78, 0.18);
+    padding: 12px 11px 10px 17px;
 }
 
 .timeline-t:before {
@@ -15646,7 +15649,7 @@ div.dataTables_processing { z-index: 1; }
     box-shadow: 0 0 10px 5px #f96;
   }
   to {
-    box-shadow: 2px 6px 15px 0px rgba(69, 65, 78, 0.29);;
+    box-shadow: 1px 1px 20px 0px rgba(69, 65, 78, 0.18);
   }
 }
 

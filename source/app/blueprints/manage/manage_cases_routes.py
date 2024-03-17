@@ -31,6 +31,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug import Response
+from werkzeug.utils import secure_filename
 
 import app
 from app import db
@@ -452,7 +453,9 @@ def update_case_info(cur_id, caseid):
             if not user_has_client_access(current_user.id, request_data.get('case_customer')):
                 return response_error("Invalid customer ID. Permission denied.", status=403)
 
-        request_data['case_name'] = f"#{case_i.case_id} - {request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')}"
+        if 'case_name' in request_data:
+            short_case_name = request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')
+            request_data['case_name'] = f'#{case_i.case_id} - {short_case_name}'
         request_data['case_customer'] = case_i.client_id if not request_data.get('case_customer') else request_data.get('case_customer')
         request_data['reviewer_id'] = None if request_data.get('reviewer_id') == "" else request_data.get('reviewer_id')
 
@@ -631,6 +634,7 @@ def manage_cases_uploadfiles(caseid):
                               create=is_update
                               )
 
+    f.filename = secure_filename(f.filename)
     status = mod.pipeline_files_upload(fpath, f, case_customer, case_name, is_update)
 
     if status.is_success():

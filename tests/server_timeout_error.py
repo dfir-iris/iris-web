@@ -1,6 +1,6 @@
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2023 - DFIR-IRIS
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,5 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
-FROM postgres:16-alpine
-
-COPY create_user.sh   /docker-entrypoint-initdb.d/10-create_user.sh
+class ServerTimeoutError(Exception):
+    pass

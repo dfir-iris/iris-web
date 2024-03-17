@@ -112,6 +112,22 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
     return render_template("modal_ds_file.html", form=form, file=None, dsp=dsp)
 
 
+@datastore_blueprint.route('/datastore/file/add/<int:cur_id>/multi-modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.full_access)
+def datastore_add_multi_files_modal(cur_id: int, caseid: int, url_redir: bool):
+
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    dsp = datastore_get_path_node(cur_id, caseid)
+    if not dsp:
+        return response_error('Invalid path node for this case')
+
+    form = ModalDSFileForm()
+
+    return render_template("modal_ds_multi_files.html", form=form, file=None, dsp=dsp)
+
+
 @datastore_blueprint.route('/datastore/filter-help/modal', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def datastore_filter_help_modal(caseid, url_redir):

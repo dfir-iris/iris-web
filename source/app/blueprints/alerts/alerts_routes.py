@@ -241,6 +241,9 @@ def alerts_get_route(caseid, alert_id) -> Response:
     if alert is None:
         return response_error('Alert not found')
 
+    if not user_has_client_access(current_user.id, alert.alert_customer_id):
+        return response_error('Alert not found')
+
     alert_dump = alert_schema.dump(alert)
 
     # Get similar alerts
@@ -269,6 +272,9 @@ def alerts_similarities_route(caseid, alert_id) -> Response:
 
     # Return the alert as JSON
     if alert is None:
+        return response_error('Alert not found')
+
+    if not user_has_client_access(current_user.id, alert.alert_customer_id):
         return response_error('Alert not found')
 
     open_alerts = request.args.get('open-alerts', 'false').lower() == 'true'
@@ -312,6 +318,9 @@ def alerts_update_route(alert_id, caseid) -> Response:
     if not alert:
         return response_error('Alert not found')
 
+    if not user_has_client_access(current_user.id, alert.alert_customer_id):
+        return response_error('User not entitled to update alerts for the client', status=403)
+
     alert_schema = AlertSchema()
 
     do_resolution_hook = False
@@ -338,10 +347,6 @@ def alerts_update_route(alert_id, caseid) -> Response:
                     do_status_hook = True
 
                 activity_data.append(f"\"{key}\"")
-
-        # Check if the user has access to the client
-        if not user_has_client_access(current_user.id, alert.alert_customer_id):
-            return response_error('User not entitled to update alerts for the client', status=403)
 
         # Deserialize the JSON data into an Alert object
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
@@ -921,6 +926,9 @@ def alert_comment_modal(cur_id, caseid, url_redir):
     alert = get_alert_by_id(cur_id)
     if not alert:
         return response_error('Invalid alert ID')
+
+    if not user_has_client_access(current_user.id, alert.alert_customer_id):
+        return response_error('User not entitled to update alerts for the client', status=403)
 
     return render_template("modal_conversation.html", element_id=cur_id, element_type='alerts',
                            title=f" alert #{alert.alert_id}")

@@ -12,6 +12,9 @@ let note_id = null;
 let last_ping = 0;
 let cid = null;
 let previousNoteTitle = null;
+let timer = null;
+let timeout = 5000;
+
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -296,6 +299,15 @@ async function note_detail(id) {
             previousNoteTitle = data.data.note_title;
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
                 .data('note_id', data.data.note_id);
+            let history_data = '';
+            for (let ent in data.data.modification_history) {
+                let entry = data.data.modification_history[ent];
+                let dateStr = formatTime(parseFloat(ent))
+                let i_t = $('<li></li>');
+                i_t.text(`${dateStr} - ${entry.user} ${entry.action}`);
+                history_data += i_t.prop('outerHTML');
+            }
+            $('#modalHistoryList').empty().append(history_data);
 
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
@@ -321,6 +333,19 @@ async function note_detail(id) {
             $('#content_typing').text('');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
+            let ed_details = $('#editor_detail');
+            ed_details.keyup(function(){
+                if(timer) {
+                     clearTimeout(timer);
+                }
+                timer = setTimeout(save_note, timeout);
+            });
+            ed_details.off('paste');
+            ed_details.on('paste', (event) => {
+                event.preventDefault();
+                handle_ed_paste(event);
+            });
 
             setSharedLink(id);
 
@@ -881,6 +906,15 @@ function createDirectoryListItem(directory, directoryMap) {
                     top: e.pageY
                 });
 
+                menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Copy link').on('click', function (e) {
+                    e.preventDefault();
+                    copy_object_link(note.id);
+                }));
+
+                menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Copy MD link').on('click', function (e) {
+                    e.preventDefault();
+                    copy_object_link_md('notes',note.id);
+                }));
 
                 menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Move').on('click', function (e) {
                     e.preventDefault();
@@ -918,6 +952,7 @@ function note_interval_pinger() {
 }
 
 $(document).ready(function(){
+
     load_directories().then(
         function() {
             let shared_id = getSharedLink();
