@@ -906,6 +906,15 @@ function createDirectoryListItem(directory, directoryMap) {
                     top: e.pageY
                 });
 
+                menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Copy link').on('click', function (e) {
+                    e.preventDefault();
+                    copy_object_link(note.id);
+                }));
+
+                menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Copy MD link').on('click', function (e) {
+                    e.preventDefault();
+                    copy_object_link_md('notes',note.id);
+                }));
 
                 menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Move').on('click', function (e) {
                     e.preventDefault();
