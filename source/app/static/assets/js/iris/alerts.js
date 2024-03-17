@@ -991,11 +991,11 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                       </div>` : ''}
                       ${alert.alert_source_event_time ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Event Time:</b></div>
-                        <div class="col-md-9">${alert.alert_source_event_time}</div>
+                        <div class="col-md-9">${formatTime(alert.alert_source_event_time)} UTC</div>
                       </div>` : ''}
                       ${alert.alert_creation_time ? `<div class="row mt-2">
                         <div class="col-md-3"><b>IRIS Creation Time:</b></div>
-                        <div class="col-md-9">${alert.alert_creation_time}</div>
+                        <div class="col-md-9">${formatTime(alert.alert_creation_time)} UTC</div>
                       </div>` : ''}
                     
                     <div class="separator-solid"></div>
@@ -1186,8 +1186,8 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
               <div class="">  
                 ${alert_resolution === undefined ? "": alert_resolution} 
                 ${alert.status ? `<span class="badge alert-bade-status badge-pill badge-light mr-3">${alert.status.status_name}</span>` : ''}                    
-                <span title="Alert source event time"><b><i class="fa-regular fa-calendar-check"></i></b>
-                <small class="text-muted ml-1">${alert.alert_source_event_time}</small></span>
+                <span title="Alert source event UTC time"><b><i class="fa-regular fa-calendar-check"></i></b>
+                <small class="text-muted ml-1">${formatTime(alert.alert_source_event_time)}</small></span>
                 <span title="Alert severity"><b class="ml-3"><i class="fa-solid fa-bolt"></i></b>
                   <small class="text-muted ml-1" id="alertSeverity-${alert.alert_id}" data-severity-id="${alert.severity.severity_id}">${alert.severity.severity_name}</small></span>
                 <span title="Alert source"><b class="ml-3"><i class="fa-solid fa-cloud-arrow-down"></i></b>
