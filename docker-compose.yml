@@ -28,7 +28,7 @@ services:
     build:
       context: docker/db
     container_name: iriswebapp_db
-    image: iriswebapp_db:v2.4.5
+    image: iriswebapp_db:v2.4.6
     restart: always
     # Used for debugging purposes, should be deleted for production
     ports:
@@ -48,7 +48,7 @@ services:
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
-    image: iriswebapp_app:v2.4.5
+    image: iriswebapp_app:v2.4.6
     container_name: iriswebapp_app
     command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
@@ -86,7 +86,7 @@ services:
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
-    image: iriswebapp_app:v2.4.5
+    image: iriswebapp_app:v2.4.6
     container_name: iriswebapp_worker
     restart: always
     command: ['./wait-for-iriswebapp.sh', 'app:8000', './iris-entrypoint.sh', 'iris-worker']
@@ -123,7 +123,7 @@ services:
       args:
         NGINX_CONF_GID: 1234
         NGINX_CONF_FILE: nginx.conf
-    image: iriswebapp_nginx:v2.4.5
+    image: iriswebapp_nginx:v2.4.6
     container_name: iriswebapp_nginx
     environment:
       - IRIS_UPSTREAM_SERVER
