@@ -20,6 +20,8 @@ from functools import wraps
 from flask import request
 from flask_wtf import FlaskForm
 from flask import Blueprint
+from flask_login import current_user
+
 from graphql_server.flask import GraphQLView
 from graphene import ObjectType, String, Schema, List
 from graphene_sqlalchemy import SQLAlchemyObjectType
@@ -27,6 +29,7 @@ from graphene_sqlalchemy import SQLAlchemyObjectType
 from app.models.cases import Cases
 from app.util import is_user_authenticated
 from app.util import response_error
+from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 
 
 class CaseObject(SQLAlchemyObjectType):
@@ -42,6 +45,13 @@ class Query(ObjectType):
 
     # starting with the conversion of '/manage/cases/list'
     cases = List(lambda: CaseObject, description='author documentation')
+
+    def resolve_cases(self, info):
+        # TODO missing permissions
+        # TODO add all parameters to filter
+        # TODO parameter current_user_id should be mandatory on get_filtered_cases
+        filtered_cases = get_filtered_cases(current_user_id=current_user.id)
+        return filtered_cases.items
 
     def resolve_hello(root, info, first_name):
         return f'Hello {first_name}!'

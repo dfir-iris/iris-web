@@ -77,4 +77,7 @@ class Tests(TestCase):
             'query': '{ cases { name } }'
         }
         body = self._subject.execute_graphql_query(payload)
-        # TODO should check the list contains an element with name "#1 - Initial Demo"
+        case_names = []
+        for case in body['data']['cases']:
+            case_names.append(case['name'])
+        self.assertIn('#1 - Initial Demo', case_names)
