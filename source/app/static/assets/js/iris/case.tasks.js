@@ -409,7 +409,7 @@ $(document).ready(function(){
             "data": "task_open_date",
             "render": function (data, type, row, meta) {
                 if (type === 'display' && data != null) {
-                    return render_date(data);
+                    return formatTime(data);
                 }
                 return data;
             }

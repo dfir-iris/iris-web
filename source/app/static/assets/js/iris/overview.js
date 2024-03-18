@@ -192,7 +192,7 @@ let OverviewTable = $("#overview_table").DataTable({
         "data": "open_date",
         "render": function (data, type, row, meta) {
             if (type === 'display' && data != null) {
-              data = sanitizeHTML(data);
+              data = formatTime(data, { day: '2-digit', month: '2-digit', year: 'numeric' });
             }
             return data;
           }
