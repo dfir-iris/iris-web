@@ -655,7 +655,7 @@ function load_case_activity(){
             }
 
             entry =	`<li class="feed-item ${api_flag}" title='${sanitizeHTML(title)}'>
-                    <time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
+                    <time class="date" datetime="${js_data[index].activity_date}">${formatTime(js_data[index].activity_date)}</time>
                     <span class="text">${sanitizeHTML(js_data[index].name)} - ${sanitizeHTML(js_data[index].activity_desc)}</span>
                     </li>`
             $('#case_activities').append(entry);

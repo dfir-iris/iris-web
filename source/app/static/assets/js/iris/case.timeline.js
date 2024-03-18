@@ -726,7 +726,7 @@ function buildEvent(event_data, compact, comments_map, tree, tesk, tmb, idx, rea
                             </div>
                         </div>
                         <div class="collapsed" id="dropa_${evt.event_id}" data-toggle="collapse" data-target="#drop_${evt.event_id}" aria-expanded="false" aria-controls="drop_${evt.event_id}" role="button" style="cursor: pointer;">
-                            <span class="text-muted text-sm float-left mb--2"><small>${render_date(evt.event_date, true)}</small></span>
+                            <span class="text-muted text-sm float-left mb--2"><small>${formatTime(evt.event_date, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'})}</small></span>
                             <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
                         </div>
                     </div>
@@ -791,7 +791,7 @@ function buildEvent(event_data, compact, comments_map, tree, tesk, tmb, idx, rea
                         <div class="bottom-hour mt-2">
                             <div class="row">
                                 <div class="col d-flex">
-                                    <span class="text-muted text-sm align-self-end float-left mb--2"><small class="bottom-hour-i"><i class="flaticon-stopwatch mr-2"></i>${formatTime(evt.event_date)}${ori_date}</small></span>
+                                    <span class="text-muted text-sm align-self-end float-left mb--2"><small class="bottom-hour-i"><i class="flaticon-stopwatch mr-2"></i>${formatTime(evt.event_date, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'})}${ori_date}</small></span>
                                 </div>
                                 
                                 <div class="col">
