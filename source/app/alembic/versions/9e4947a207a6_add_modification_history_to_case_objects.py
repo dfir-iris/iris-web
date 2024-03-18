@@ -34,6 +34,10 @@ def upgrade():
                 conn.execute(t_ua.update().values(
                     modification_history={}
                 ))
+
+                # Commit the transaction
+                conn.commit()
+
             except Exception as e:
                 print(f"Error adding column to {table}: {e}")
                 continue
