@@ -21,18 +21,22 @@ def upgrade():
     tables = ['ioc', 'case_assets', 'case_received_file', 'case_tasks', 'notes', 'cases_events']
     for table in tables:
         if not _table_has_column(table, 'modification_history'):
-            op.add_column(table,
-                          sa.Column('modification_history', sa.JSON)
-                          )
-            t_ua = sa.Table(
-                table,
-                sa.MetaData(),
-                sa.Column('modification_history', sa.JSON)
-            )
-            conn = op.get_bind()
-            conn.execute(t_ua.update().values(
-                modification_history={}
-            ))
+            try:
+                op.add_column(table,
+                              sa.Column('modification_history', sa.JSON)
+                              )
+                t_ua = sa.Table(
+                    table,
+                    sa.MetaData(),
+                    sa.Column('modification_history', sa.JSON)
+                )
+                conn = op.get_bind()
+                conn.execute(t_ua.update().values(
+                    modification_history={}
+                ))
+            except Exception as e:
+                print(f"Error adding column to {table}: {e}")
+                continue
     pass
 
 
