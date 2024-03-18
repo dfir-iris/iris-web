@@ -284,7 +284,7 @@ async function save_ds_multi_files(node, index_i) {
     let index = index_i === undefined ? 0 : index_i;
     if (index >= totalFiles) {
         window.swal.close();
-        $('#modal_ds_file').modal("hide").empty();
+        $('#modal_ds_file').modal("hide");
         return;
     }
     let file = $('#input_upload_ds_files').prop('files')[index];
