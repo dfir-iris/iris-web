@@ -58,10 +58,10 @@ git checkout v2.4.7
 cp .env.model .env
 
 # Build the dockers
-docker-compose build
+docker compose build
 
 # Run IRIS 
-docker-compose up
+docker compose up
 ```
 
 Iris shall be available on the host interface, port 443, protocol HTTPS - ``https://<your_instance_ip>``.  
