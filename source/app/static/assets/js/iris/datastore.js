@@ -312,11 +312,12 @@ async function save_ds_multi_files(node, index_i) {
 function save_ds_file(node, file_id) {
     var formData = new FormData($('#form_new_ds_file')[0]);
     formData.append('file_content', $('#input_upload_ds_file').prop('files')[0]);
+    let uri = '';
 
     if (file_id === undefined) {
-        let uri = '/datastore/file/add/' + node;
+        uri = '/datastore/file/add/' + node;
     } else {
-        let uri = '/datastore/file/update/' + file_id;
+        uri = '/datastore/file/update/' + file_id;
     }
 
     post_request_data_api(uri, formData, true, function() {
