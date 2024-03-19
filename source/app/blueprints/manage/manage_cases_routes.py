@@ -75,6 +75,7 @@ from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import delete
+from app.business.business_processing_error import BusinessProcessingError
 
 manage_cases_blueprint = Blueprint('manage_case',
                                    __name__,
@@ -245,20 +246,11 @@ def api_delete_case(cur_id, caseid):
 
     else:
         try:
-            call_modules_hook('on_preload_case_delete', data=cur_id, caseid=caseid)
-            if delete(cur_id):
-
-                call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
-
-                track_activity("case {} deleted successfully".format(cur_id), ctx_less=True)
+            try:
+                delete(cur_id, caseid)
                 return response_success("Case successfully deleted")
-
-            else:
-                track_activity("tried to delete case {}, but it doesn't exist".format(cur_id),
-                               caseid=caseid, ctx_less=True)
-
-                return response_error("Tried to delete a non-existing case")
-
+            except BusinessProcessingError as e:
+                return response_error(str(e))
         except Exception as e:
             app.app.logger.exception(e)
             return response_error("Cannot delete the case. Please check server logs for additional informations")
