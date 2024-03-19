@@ -32,23 +32,14 @@ from app.blueprints.graphql.cases import CaseObject
 
 
 class Query(ObjectType):
-    """Query documentation"""
-
-    hello = String(first_name=String(default_value='stranger'), description='Field documentation')
-    goodbye = String()
+    """This is the IRIS GraphQL queries documentation!"""
 
     # starting with the conversion of '/manage/cases/filter'
-    cases = List(lambda: CaseObject, description='author documentation')
+    cases = List(lambda: CaseObject, description='Retrieves cases')
 
     def resolve_cases(self, info):
         # TODO add all parameters to filter
         return get_filtered_cases(current_user.id)
-
-    def resolve_hello(root, info, first_name):
-        return f'Hello {first_name}!'
-
-    def resolve_goodbye(root, info):
-        return 'See ya!'
 
 
 def _check_authentication_wrapper(f):

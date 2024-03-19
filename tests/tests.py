@@ -60,17 +60,10 @@ class Tests(TestCase):
     def test_graphql_endpoint_should_reject_requests_with_wrong_authentication_token(self):
         graphql_api = GraphQLApi(API_URL + '/graphql', 64*'0')
         payload = {
-            'query': '{ hello(firstName: "friendly") }'
+            'query': '{ cases { name } }'
         }
         response = graphql_api.execute(payload)
         self.assertEqual(401, response.status_code)
-
-    def test_graphql_endpoint_should_not_fail(self):
-        payload = {
-            'query': '{ hello(firstName: "Paul") }'
-        }
-        body = self._subject.execute_graphql_query(payload)
-        self.assertEqual('Hello Paul!', body['data']['hello'])
 
     def test_graphql_cases_should_contain_the_initial_case(self):
         payload = {
