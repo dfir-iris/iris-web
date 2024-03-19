@@ -49,17 +49,14 @@ from app.datamgmt.manage.manage_case_state_db import get_case_states_list, get_c
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, case_template_pre_modifier, \
     case_template_post_modifier
 from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status, get_filtered_cases
-from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_common import get_severities_list
-from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access, \
     ac_current_user_has_permission
-from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
@@ -67,18 +64,17 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
-from app.models.alerts import AlertStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
-from app.models.models import Client, ReviewStatusList
+from app.models.models import ReviewStatusList
 from app.schema.marshables import CaseSchema, CaseDetailsSchema
-from app.util import ac_api_case_requires, add_obj_history_entry
+from app.util import add_obj_history_entry
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
-from app.util import ac_case_requires
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from app.business.cases import delete
 
 manage_cases_blueprint = Blueprint('manage_case',
                                    __name__,
@@ -250,7 +246,7 @@ def api_delete_case(cur_id, caseid):
     else:
         try:
             call_modules_hook('on_preload_case_delete', data=cur_id, caseid=caseid)
-            if delete_case(case_id=cur_id):
+            if delete(cur_id):
 
                 call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
 
