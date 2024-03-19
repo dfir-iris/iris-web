@@ -201,6 +201,7 @@ def manage_case_filter(caseid) -> Response:
         draw = 1
 
     filtered_cases = get_filtered_cases(
+        current_user.id,
         case_ids=case_ids_str,
         case_customer_id=case_customer_id,
         case_name=case_name,
@@ -216,7 +217,6 @@ def manage_case_filter(caseid) -> Response:
         search_value=search_value,
         page=page,
         per_page=per_page,
-        current_user_id=current_user.id,
         sort_by=order_by,
         sort_dir=sort_dir
     )

@@ -42,8 +42,7 @@ class Query(ObjectType):
 
     def resolve_cases(self, info):
         # TODO add all parameters to filter
-        # TODO parameter current_user_id should be mandatory on get_filtered_cases
-        return get_filtered_cases(current_user_id=current_user.id)
+        return get_filtered_cases(current_user.id)
 
     def resolve_hello(root, info, first_name):
         return f'Hello {first_name}!'

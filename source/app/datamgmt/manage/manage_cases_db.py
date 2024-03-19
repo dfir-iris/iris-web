@@ -381,7 +381,8 @@ def delete_case(case_id):
     return True
 
 
-def get_filtered_cases(start_open_date: str = None,
+def get_filtered_cases(current_user_id,
+                       start_open_date: str = None,
                        end_open_date: str = None,
                        case_customer_id: int = None,
                        case_ids: list = None,
@@ -395,7 +396,6 @@ def get_filtered_cases(start_open_date: str = None,
                        case_soc_id: str = None,
                        per_page: int = None,
                        page: int = None,
-                       current_user_id = None,
                        search_value=None,
                        sort_by=None,
                        sort_dir='asc'
