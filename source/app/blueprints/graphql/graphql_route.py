@@ -43,7 +43,7 @@ class Query(ObjectType):
     hello = String(first_name=String(default_value='stranger'), description='Field documentation')
     goodbye = String()
 
-    # starting with the conversion of '/manage/cases/list'
+    # starting with the conversion of '/manage/cases/filter'
     cases = List(lambda: CaseObject, description='author documentation')
 
     def resolve_cases(self, info):
