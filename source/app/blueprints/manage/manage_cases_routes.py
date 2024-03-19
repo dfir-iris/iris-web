@@ -33,7 +33,6 @@ from flask_wtf import FlaskForm
 from werkzeug import Response
 from werkzeug.utils import secure_filename
 
-import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case, get_review_id_from_name
@@ -238,22 +237,11 @@ def api_delete_case(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
 
-    if cur_id == 1:
-        track_activity("tried to delete case {}, but case is the primary case".format(cur_id),
-                       caseid=caseid, ctx_less=True)
-
-        return response_error("Cannot delete a primary case to keep consistency")
-
-    else:
-        try:
-            try:
-                delete(cur_id, caseid)
-                return response_success("Case successfully deleted")
-            except BusinessProcessingError as e:
-                return response_error(str(e))
-        except Exception as e:
-            app.app.logger.exception(e)
-            return response_error("Cannot delete the case. Please check server logs for additional informations")
+    try:
+        delete(cur_id, caseid)
+        return response_success('Case successfully deleted')
+    except BusinessProcessingError as e:
+        return response_error(str(e))
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
