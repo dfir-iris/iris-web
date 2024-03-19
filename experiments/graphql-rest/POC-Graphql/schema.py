@@ -39,37 +39,37 @@ class Query(graphene.ObjectType):
     """Query documentation"""
     node = graphene.relay.Node.Field()
 
-    author = graphene.List(lambda: AuthorObject, username=graphene.String(), description='author documentation')
-    book = graphene.List(lambda: BookObject, title=graphene.String(), description='book documentation')
-    movie = graphene.List(lambda: MovieObject, title=graphene.String(), description='movie documentation')
+    authors = graphene.List(lambda: AuthorObject, username=graphene.String(), description='author documentation')
+    books = graphene.List(lambda: BookObject, title=graphene.String(), description='book documentation')
+    movies = graphene.List(lambda: MovieObject, title=graphene.String(), description='movie documentation')
 
-    book_all = graphene.List(lambda: BookObject, description='book all documentation')
-    movie_all = graphene.List(lambda: MovieObject, description='movie all documentation')
-    author_all = graphene.List(lambda: AuthorObject, description='author all documentation')
+    books_all = graphene.List(lambda: BookObject, description='book all documentation')
+    movies_all = graphene.List(lambda: MovieObject, description='movie all documentation')
+    authors_all = graphene.List(lambda: AuthorObject, description='author all documentation')
 
     all_books = SQLAlchemyConnectionField(BookConnection)
     all_authors = SQLAlchemyConnectionField(AuthorConnection)
     all_movies = SQLAlchemyConnectionField(MovieConnection)
 
-    def resolve_author(self, info, **kwargs):
+    def resolve_authors(self, info, **kwargs):
         query = AuthorObject.get_query(info)
         username = kwargs.get('username')
         return query.filter(Author.username == username).all()
 
-    def resolve_book(self, info, **kwargs):
+    def resolve_books(self, info, **kwargs):
         query = BookObject.get_query(info)
         title = kwargs.get('title')
         return query.filter(Book.title == title).all()
 
-    def resolve_book_all(self, info):
+    def resolve_books_all(self, info):
         query = BookObject.get_query(info)
         return query.all()
 
-    def resolve_movie_all(self, info):
+    def resolve_movies_all(self, info):
         query = MovieObject.get_query(info)
         return query.all()
 
-    def resolve_author_all(self, info):
+    def resolve_authors_all(self, info):
         query = AuthorObject.get_query(info)
         return query.all()
 
