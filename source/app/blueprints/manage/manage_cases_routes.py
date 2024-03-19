@@ -54,8 +54,8 @@ from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_common import get_severities_list
 from app.forms import AddCaseForm
-from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access, \
-    ac_current_user_has_permission
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
+from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
@@ -74,7 +74,8 @@ from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import delete
-from app.business.business_processing_error import BusinessProcessingError
+from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDenied
 
 manage_cases_blueprint = Blueprint('manage_case',
                                    __name__,
@@ -234,14 +235,13 @@ def manage_case_filter(caseid) -> Response:
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_delete_case(cur_id, caseid):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=cur_id)
-
     try:
         delete(cur_id, caseid)
         return response_success('Case successfully deleted')
     except BusinessProcessingError as e:
         return response_error(str(e))
+    except PermissionDenied:
+        return ac_api_return_access_denied(caseid=cur_id)
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])

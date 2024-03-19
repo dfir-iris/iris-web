@@ -19,3 +19,7 @@
 
 class BusinessProcessingError(Exception):
     pass
+
+
+class PermissionDenied(Exception):
+    pass

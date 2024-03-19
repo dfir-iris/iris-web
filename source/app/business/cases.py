@@ -17,13 +17,19 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from app import app
+from app.models.authorization import CaseAccessLevel
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.datamgmt.manage.manage_cases_db import delete_case
-from app.business.business_processing_error import BusinessProcessingError
+from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDenied
 
 
 def delete(identifier, context_case_identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        raise PermissionDenied()
+
     if identifier == 1:
         track_activity(f'tried to delete case {identifier}, but case is the primary case',
                        caseid=context_case_identifier, ctx_less=True)
@@ -40,4 +46,4 @@ def delete(identifier, context_case_identifier):
         track_activity(f'case {identifier} deleted successfully', ctx_less=True)
     except Exception as e:
         app.logger.exception(e)
-        raise BusinessProcessingError("Cannot delete the case. Please check server logs for additional informations")
+        raise BusinessProcessingError('Cannot delete the case. Please check server logs for additional informations')
