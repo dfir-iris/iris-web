@@ -1,5 +1,5 @@
 #  IRIS Source Code
-#  Copyright (C) ${current_year} - DFIR-IRIS
+#  Copyright (C) 2024 - DFIR-IRIS
 #  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
@@ -24,17 +24,11 @@ from flask_login import current_user
 
 from graphql_server.flask import GraphQLView
 from graphene import ObjectType, String, Schema, List
-from graphene_sqlalchemy import SQLAlchemyObjectType
 
-from app.models.cases import Cases
 from app.util import is_user_authenticated
 from app.util import response_error
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
-
-
-class CaseObject(SQLAlchemyObjectType):
-    class Meta:
-        model = Cases
+from app.blueprints.graphql.cases import CaseObject
 
 
 class Query(ObjectType):
@@ -47,11 +41,9 @@ class Query(ObjectType):
     cases = List(lambda: CaseObject, description='author documentation')
 
     def resolve_cases(self, info):
-        # TODO missing permissions
         # TODO add all parameters to filter
         # TODO parameter current_user_id should be mandatory on get_filtered_cases
-        filtered_cases = get_filtered_cases(current_user_id=current_user.id)
-        return filtered_cases.items
+        return get_filtered_cases(current_user_id=current_user.id)
 
     def resolve_hello(root, info, first_name):
         return f'Hello {first_name}!'
@@ -60,10 +52,7 @@ class Query(ObjectType):
         return 'See ya!'
 
 
-# util.ac_api_requires does not seem to work => it leads to error:
-#   TypeError: dispatch_request() got an unexpected keyword argument 'caseid'
-# so I rewrote a simpler decorator...
-def _ac_graphql_requires(f):
+def _check_authentication_wrapper(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         if request.method == 'POST':
@@ -85,7 +74,7 @@ def _ac_graphql_requires(f):
 def _create_blueprint():
     schema = Schema(query=Query)
     graphql_view = GraphQLView.as_view('graphql', schema=schema)
-    graphql_view_with_authentication = _ac_graphql_requires(graphql_view)
+    graphql_view_with_authentication = _check_authentication_wrapper(graphql_view)
 
     blueprint = Blueprint('graphql', __name__)
     blueprint.add_url_rule('/graphql', view_func=graphql_view_with_authentication, methods=['POST'])
@@ -95,7 +84,4 @@ def _create_blueprint():
 
 graphql_blueprint = _create_blueprint()
 
-# TODO how to handle permissions?
-# TODO link with the database: graphene-sqlalchemy
 # TODO I am unsure about the code organization (directories)
-# TODO define the graphql API and establish the most important needs
