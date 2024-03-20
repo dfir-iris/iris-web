@@ -37,7 +37,7 @@ class Query(ObjectType):
     # starting with the conversion of '/manage/cases/filter'
     cases = List(lambda: CaseObject, description='Retrieves cases')
 
-    def resolve_cases(self, info):
+    def resolve_cases(root, info):
         # TODO add all parameters to filter
         return get_filtered_cases(current_user.id)
 
