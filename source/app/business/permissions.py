@@ -16,6 +16,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from flask import session
+from flask_login import current_user
+
+from app.models.authorization import Permissions
+from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.business.errors import PermissionDeniedError
 
@@ -23,3 +28,14 @@ from app.business.errors import PermissionDeniedError
 def check_current_user_has_some_case_access(case_identifier, access_levels):
     if not ac_fast_check_current_user_has_case_access(case_identifier, access_levels):
         raise PermissionDeniedError()
+
+
+def check_current_user_has_some_permission(permissions):
+    if 'permissions' not in session:
+        session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+
+    for permission in permissions:
+        if session['permissions'] & permission.value:
+            return
+
+    raise PermissionDeniedError()

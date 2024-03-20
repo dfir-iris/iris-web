@@ -18,14 +18,17 @@
 
 from app import app
 from app.models.authorization import CaseAccessLevel
+from app.models.authorization import Permissions
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import check_current_user_has_some_case_access
+from app.business.permissions import check_current_user_has_some_permission
 
 
 def delete(case_identifier, context_case_identifier):
+    check_current_user_has_some_permission([Permissions.standard_user])
     check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
     if case_identifier == 1:
