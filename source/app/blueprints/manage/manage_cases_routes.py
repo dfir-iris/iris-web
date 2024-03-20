@@ -75,7 +75,7 @@ from app.util import response_error
 from app.util import response_success
 from app.business.cases import delete
 from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDenied
+from app.business.errors import PermissionDeniedError
 
 manage_cases_blueprint = Blueprint('manage_case',
                                    __name__,
@@ -240,7 +240,7 @@ def api_delete_case(cur_id, caseid):
         return response_success('Case successfully deleted')
     except BusinessProcessingError as e:
         return response_error(str(e))
-    except PermissionDenied:
+    except PermissionDeniedError:
         return ac_api_return_access_denied(caseid=cur_id)
 
 

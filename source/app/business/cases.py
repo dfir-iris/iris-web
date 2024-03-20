@@ -23,12 +23,12 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDenied
+from app.business.errors import PermissionDeniedError
 
 
 def delete(identifier, context_case_identifier):
     if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
-        raise PermissionDenied()
+        raise PermissionDeniedError()
 
     if identifier == 1:
         track_activity(f'tried to delete case {identifier}, but case is the primary case',

@@ -21,5 +21,5 @@ class BusinessProcessingError(Exception):
     pass
 
 
-class PermissionDenied(Exception):
+class PermissionDeniedError(Exception):
     pass
