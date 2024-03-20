@@ -55,6 +55,8 @@ New files should be prefixed by the following license header, where `${current_y
 ```python
 #!/usr/bin/env python3
 ```
+* use string interpolation (f-strings, https://peps.python.org/pep-0498/),
+  rather than the string `format` method (https://podalirius.net/en/articles/python-format-string-vulnerabilities/)
 
 ## Code
 The code should be pretty easy to apprehend. It's not perfect but it will improve over time.   
