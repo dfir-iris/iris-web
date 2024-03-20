@@ -35,7 +35,7 @@ class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
     # starting with the conversion of '/manage/cases/filter'
-    cases = List(lambda: CaseObject, description='Retrieves cases')
+    cases = List(CaseObject, description='Retrieves cases')
 
     def resolve_cases(root, info):
         # TODO add all parameters to filter
