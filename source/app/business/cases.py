@@ -18,32 +18,30 @@
 
 from app import app
 from app.models.authorization import CaseAccessLevel
-from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.datamgmt.manage.manage_cases_db import delete_case
 from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDeniedError
+from app.business.permissions import check_current_user_has_some_case_access
 
 
-def delete(identifier, context_case_identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
-        raise PermissionDeniedError()
+def delete(case_identifier, context_case_identifier):
+    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
-    if identifier == 1:
-        track_activity(f'tried to delete case {identifier}, but case is the primary case',
+    if case_identifier == 1:
+        track_activity(f'tried to delete case {case_identifier}, but case is the primary case',
                        caseid=context_case_identifier, ctx_less=True)
 
         raise BusinessProcessingError('Cannot delete a primary case to keep consistency')
 
     try:
-        call_modules_hook('on_preload_case_delete', data=identifier, caseid=context_case_identifier)
-        if not delete_case(identifier):
-            track_activity(f'tried to delete case {identifier}, but it doesn\'t exist',
+        call_modules_hook('on_preload_case_delete', data=case_identifier, caseid=context_case_identifier)
+        if not delete_case(case_identifier):
+            track_activity(f'tried to delete case {case_identifier}, but it doesn\'t exist',
                            caseid=context_case_identifier, ctx_less=True)
             raise BusinessProcessingError('Tried to delete a non-existing case')
-        call_modules_hook('on_postload_case_delete', data=identifier, caseid=context_case_identifier)
-        track_activity(f'case {identifier} deleted successfully', ctx_less=True)
+        call_modules_hook('on_postload_case_delete', data=case_identifier, caseid=context_case_identifier)
+        track_activity(f'case {case_identifier} deleted successfully', ctx_less=True)
     except Exception as e:
         app.logger.exception(e)
         raise BusinessProcessingError('Cannot delete the case. Please check server logs for additional informations')
