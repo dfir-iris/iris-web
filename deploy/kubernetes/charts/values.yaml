@@ -96,7 +96,6 @@ irisapp:
    POSTGRES_ADMIN_PASSWORD: postgres
    POSTGRES_PORT: 5432
    POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
-   DOCKERIZED: 1
    IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
    IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
    IRIS_ADM_USERNAME: administrator
@@ -136,7 +135,6 @@ irisworker:
    POSTGRES_ADMIN_PASSWORD: postgres
    POSTGRES_PORT: 5432
    POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
-   DOCKERIZED: 1
    IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
    IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
 

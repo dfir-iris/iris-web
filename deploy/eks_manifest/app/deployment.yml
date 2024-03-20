@@ -49,11 +49,6 @@ spec:
               secretKeyRef:
                 name: iris-app-secrets
                 key: POSTGRES_PORT
-          - name: DOCKERIZED
-            valueFrom:
-              secretKeyRef:
-                name: iris-app-secrets
-                key: DOCKERIZED
           - name: IRIS_SECRET_KEY
             valueFrom:
               secretKeyRef:
