@@ -55,6 +55,8 @@ New files should be prefixed by the following license header, where `${current_y
 ```python
 #!/usr/bin/env python3
 ```
+* use string interpolation (f-strings, https://peps.python.org/pep-0498/),
+  rather than the string `format` method (https://podalirius.net/en/articles/python-format-string-vulnerabilities/)
 * prefix names of all private fields, methods and variables with underscore (_).
   This allows any code maintainer to immediately spot which code elements can be freely modified
   without having to worry about the external context.
