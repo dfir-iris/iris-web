@@ -20,6 +20,7 @@ from unittest import TestCase
 from iris import Iris
 from iris import API_URL
 from graphql_api import GraphQLApi
+from base64 import b64encode
 
 
 class Tests(TestCase):
@@ -74,3 +75,14 @@ class Tests(TestCase):
         for case in body['data']['cases']:
             case_names.append(case['name'])
         self.assertIn('#1 - Initial Demo', case_names)
+
+    def test_graphql_cases_should_have_a_global_identifier(self):
+        payload = {
+            'query': '{ cases { id name } }'
+        }
+        body = self._subject.execute_graphql_query(payload)
+        first_case = None
+        for case in body['data']['cases']:
+            if case['name'] == '#1 - Initial Demo':
+                first_case = case
+        self.assertEqual(b64encode(b'CaseObject:1').decode(), first_case['id'])

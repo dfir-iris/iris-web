@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
+from graphene.relay import Node
 
 from app.models.cases import Cases
 
@@ -24,3 +25,4 @@ from app.models.cases import Cases
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
         model = Cases
+        interfaces = [Node]
