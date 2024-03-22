@@ -23,7 +23,9 @@ from flask import Blueprint
 from flask_login import current_user
 
 from graphql_server.flask import GraphQLView
-from graphene import ObjectType, Schema, List
+from graphene import ObjectType
+from graphene import Schema
+from graphene import List
 
 from app.util import is_user_authenticated
 from app.util import response_error
