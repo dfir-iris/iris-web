@@ -18,7 +18,9 @@
 
 from flask import session
 from flask_login import current_user
+from flask import request
 
+from app.util import get_case_access
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.business.errors import PermissionDeniedError
@@ -26,6 +28,19 @@ from app.business.errors import PermissionDeniedError
 
 def check_current_user_has_some_case_access(case_identifier, access_levels):
     if not ac_fast_check_current_user_has_case_access(case_identifier, access_levels):
+        raise PermissionDeniedError()
+
+
+# TODO: really this and the previous method should be merged.
+#       This one comes from ac_api_case_requires, whereas the other one comes from the way api_delete_case was written...
+def check_current_user_has_some_case_access_stricter(access_levels):
+    redir, caseid, has_access = get_case_access(request, access_levels, from_api=True)
+
+    # TODO: do we really want to keep the details of the errors, when permission is denied => more work, more complex code?
+    if not caseid or redir:
+        raise PermissionDeniedError()
+
+    if not has_access:
         raise PermissionDeniedError()
 
 

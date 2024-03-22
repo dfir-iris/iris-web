@@ -239,7 +239,7 @@ def api_delete_case(cur_id, caseid):
         delete(cur_id, caseid)
         return response_success('Case successfully deleted')
     except BusinessProcessingError as e:
-        return response_error(str(e))
+        return response_error(e.get_message())
     except PermissionDeniedError:
         return ac_api_return_access_denied(caseid=cur_id)
 

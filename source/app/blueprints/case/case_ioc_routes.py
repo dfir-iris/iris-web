@@ -64,6 +64,8 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+from app.business.iocs import create
+from app.business.errors import BusinessProcessingError
 
 case_ioc_blueprint = Blueprint(
     'case_ioc',
@@ -126,40 +128,13 @@ def case_ioc_state(caseid):
 @case_ioc_blueprint.route('/case/ioc/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_ioc(caseid):
+    add_ioc_schema = IocSchema()
+
     try:
-        # validate before saving
-        add_ioc_schema = IocSchema()
-
-        request_data = call_modules_hook('on_preload_ioc_create', data=request.get_json(), caseid=caseid)
-
-        ioc = add_ioc_schema.load(request_data)
-
-        if not check_ioc_type_id(type_id=ioc.ioc_type_id):
-            return response_error("Not a valid IOC type")
-
-        ioc, existed = add_ioc(ioc=ioc,
-                               user_id=current_user.id,
-                               caseid=caseid
-                               )
-        link_existed = add_ioc_link(ioc.ioc_id, caseid)
-
-        if link_existed:
-            return response_success("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
-
-        if not link_existed:
-            ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
-
-        if ioc:
-            track_activity("added ioc \"{}\"".format(ioc.ioc_value), caseid=caseid)
-
-            msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
-
-            return response_success(msg=msg, data=add_ioc_schema.dump(ioc))
-
-        return response_error("Unable to create IOC for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        ioc, msg = create(request.get_json(), caseid)
+        return response_success(msg, data=add_ioc_schema.dump(ioc))
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])

@@ -18,7 +18,16 @@
 
 
 class BusinessProcessingError(Exception):
-    pass
+
+    def __init__(self, message, data=None):
+        self._message = message
+        self._data = data
+
+    def get_message(self):
+        return self._message
+
+    def get_data(self):
+        return self._data
 
 
 class PermissionDeniedError(Exception):
