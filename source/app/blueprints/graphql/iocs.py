@@ -17,11 +17,14 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
+from graphene import Field
 from graphene import Mutation
-from graphene import ID
 from graphene import NonNull
+from graphene import Int
+from graphene import String
 
 from app.models.models import Ioc
+from app.business.iocs import create
 
 
 class IocObject(SQLAlchemyObjectType):
@@ -32,20 +35,26 @@ class IocObject(SQLAlchemyObjectType):
 class AddIoc(Mutation):
 
     class Arguments:
+        # TODO: it seems really too difficult to work with IDs.
+        #       I don't understand why graphql_relay.from_global_id does not seem to work...
         # note: I prefer NonNull rather than the syntax required=True
-        caseId: NonNull(ID)
-        #typeId: 1
-        #tlpId: 1
-        #value: "8.8.8.8"
-        #description: "some description"
-        #tags:
+        # TODO: Integers in graphql are only 32 bits. => will this be a problem? Should we use either float or string?
+        case_id = NonNull(Int)
+        type_id = NonNull(Int)
+        tlp_id = NonNull(Int)
+        value = NonNull(String)
+        # TODO add these non mandatory arguments
+        #description =
+        #tags =
+
+    ioc = Field(IocObject)
 
     @staticmethod
-    def mutate(root, info, title, description, year, username):
-        author = Author.query.filter_by(username=username).first()
-        book = Book(title=title, description=description, year=year)
-        if author is not None:
-            book.author = author
-        db.session.add(book)
-        db.session.commit()
-        return AddBook(book=book)
+    def mutate(root, info, case_id, type_id, tlp_id, value):
+        request = {
+            'ioc_type_id': type_id,
+            'ioc_tlp_id': tlp_id,
+            'ioc_value': value
+        }
+        ioc, _ = create(request, case_id)
+        return AddIoc(ioc=ioc)

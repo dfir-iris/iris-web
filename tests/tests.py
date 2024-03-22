@@ -81,8 +81,31 @@ class Tests(TestCase):
             'query': '{ cases { id name } }'
         }
         body = self._subject.execute_graphql_query(payload)
-        first_case = None
+        first_case = self._get_first_case(body)
+        self.assertEqual(b64encode(b'CaseObject:1').decode(), first_case['id'])
+
+    def test_graphql_create_ioc_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                             createIoc(caseId: 1, typeId: 1, tlpId: 1, value: "8.8.8.8",
+                                       description: "some description", tags: "") {{
+                                           ioc {{ iocValue }}
+                             }}
+                         }}'''
+        }
+        payload = {
+            'query': f'''mutation {{
+                             createIoc(caseId: 1, typeId: 1, tlpId: 1, value: "8.8.8.8") {{
+                                           ioc {{ iocValue }}
+                             }}
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+    def _get_first_case(self, body):
         for case in body['data']['cases']:
             if case['name'] == '#1 - Initial Demo':
-                first_case = case
-        self.assertEqual(b64encode(b'CaseObject:1').decode(), first_case['id'])
+                return case
+
+# TODO: should maybe try to use gql
