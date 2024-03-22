@@ -19,7 +19,6 @@
 from flask import session
 from flask_login import current_user
 
-from app.models.authorization import Permissions
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.business.errors import PermissionDeniedError
