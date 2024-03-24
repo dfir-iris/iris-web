@@ -16,21 +16,14 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import subprocess
-
-_DOCKER_COMPOSE = ['docker', 'compose']
+import requests
 
 
-class DockerCompose:
+class GraphQLApi:
 
-    def __init__(self, docker_compose_path):
-        self._docker_compose_path = docker_compose_path
+    def __init__(self, url, api_key):
+        self._url = url
+        self._headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
 
-    def start(self):
-        subprocess.check_call(_DOCKER_COMPOSE + ['up', '--detach'], cwd=self._docker_compose_path)
-
-    def extract_all_logs(self):
-        return subprocess.check_output(_DOCKER_COMPOSE + ['logs', '--no-color'], cwd=self._docker_compose_path, universal_newlines=True)
-
-    def stop(self):
-        subprocess.check_call(_DOCKER_COMPOSE + ['down', '--volumes'], cwd=self._docker_compose_path)
+    def execute(self, payload):
+        return requests.post(self._url, headers=self._headers, json=payload)

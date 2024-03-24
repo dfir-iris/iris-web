@@ -33,7 +33,6 @@ from flask_wtf import FlaskForm
 from werkzeug import Response
 from werkzeug.utils import secure_filename
 
-import app
 from app import db
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case, get_review_id_from_name
@@ -49,17 +48,14 @@ from app.datamgmt.manage.manage_case_state_db import get_case_states_list, get_c
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, case_template_pre_modifier, \
     case_template_post_modifier
 from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status, get_filtered_cases
-from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_common import get_severities_list
-from app.datamgmt.manage.manage_users_db import get_user_organisations
 from app.forms import AddCaseForm
-from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access, \
-    ac_current_user_has_permission
-from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
+from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
@@ -67,18 +63,19 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
-from app.models.alerts import AlertStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
-from app.models.models import Client, ReviewStatusList
+from app.models.models import ReviewStatusList
 from app.schema.marshables import CaseSchema, CaseDetailsSchema
-from app.util import ac_api_case_requires, add_obj_history_entry
+from app.util import add_obj_history_entry
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
-from app.util import ac_case_requires
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from app.business.cases import delete
+from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDeniedError
 
 manage_cases_blueprint = Blueprint('manage_case',
                                    __name__,
@@ -201,6 +198,7 @@ def manage_case_filter(caseid) -> Response:
         draw = 1
 
     filtered_cases = get_filtered_cases(
+        current_user.id,
         case_ids=case_ids_str,
         case_customer_id=case_customer_id,
         case_name=case_name,
@@ -216,7 +214,6 @@ def manage_case_filter(caseid) -> Response:
         search_value=search_value,
         page=page,
         per_page=per_page,
-        current_user_id=current_user.id,
         sort_by=order_by,
         sort_dir=sort_dir
     )
@@ -238,34 +235,13 @@ def manage_case_filter(caseid) -> Response:
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_delete_case(cur_id, caseid):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
+    try:
+        delete(cur_id, caseid)
+        return response_success('Case successfully deleted')
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
+    except PermissionDeniedError:
         return ac_api_return_access_denied(caseid=cur_id)
-
-    if cur_id == 1:
-        track_activity("tried to delete case {}, but case is the primary case".format(cur_id),
-                       caseid=caseid, ctx_less=True)
-
-        return response_error("Cannot delete a primary case to keep consistency")
-
-    else:
-        try:
-            call_modules_hook('on_preload_case_delete', data=cur_id, caseid=caseid)
-            if delete_case(case_id=cur_id):
-
-                call_modules_hook('on_postload_case_delete', data=cur_id, caseid=caseid)
-
-                track_activity("case {} deleted successfully".format(cur_id), ctx_less=True)
-                return response_success("Case successfully deleted")
-
-            else:
-                track_activity("tried to delete case {}, but it doesn't exist".format(cur_id),
-                               caseid=caseid, ctx_less=True)
-
-                return response_error("Tried to delete a non-existing case")
-
-        except Exception as e:
-            app.app.logger.exception(e)
-            return response_error("Cannot delete the case. Please check server logs for additional informations")
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])

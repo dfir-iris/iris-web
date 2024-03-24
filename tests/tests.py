@@ -18,6 +18,9 @@
 
 from unittest import TestCase
 from iris import Iris
+from iris import API_URL
+from graphql_api import GraphQLApi
+from base64 import b64encode
 
 
 class Tests(TestCase):
@@ -54,3 +57,55 @@ class Tests(TestCase):
         case_identifier = response['data']['case_id']
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
+
+    def test_graphql_endpoint_should_reject_requests_with_wrong_authentication_token(self):
+        graphql_api = GraphQLApi(API_URL + '/graphql', 64*'0')
+        payload = {
+            'query': '{ cases { name } }'
+        }
+        response = graphql_api.execute(payload)
+        self.assertEqual(401, response.status_code)
+
+    def test_graphql_cases_should_contain_the_initial_case(self):
+        payload = {
+            'query': '{ cases { name } }'
+        }
+        body = self._subject.execute_graphql_query(payload)
+        case_names = []
+        for case in body['data']['cases']:
+            case_names.append(case['name'])
+        self.assertIn('#1 - Initial Demo', case_names)
+
+    def test_graphql_cases_should_have_a_global_identifier(self):
+        payload = {
+            'query': '{ cases { id name } }'
+        }
+        body = self._subject.execute_graphql_query(payload)
+        first_case = self._get_first_case(body)
+        self.assertEqual(b64encode(b'CaseObject:1').decode(), first_case['id'])
+
+    def test_graphql_create_ioc_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                             createIoc(caseId: 1, typeId: 1, tlpId: 1, value: "8.8.8.8",
+                                       description: "some description", tags: "") {{
+                                           ioc {{ iocValue }}
+                             }}
+                         }}'''
+        }
+        payload = {
+            'query': f'''mutation {{
+                             createIoc(caseId: 1, typeId: 1, tlpId: 1, value: "8.8.8.8") {{
+                                           ioc {{ iocValue }}
+                             }}
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+    def _get_first_case(self, body):
+        for case in body['data']['cases']:
+            if case['name'] == '#1 - Initial Demo':
+                return case
+
+# TODO: should maybe try to use gql

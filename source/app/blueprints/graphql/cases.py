@@ -1,5 +1,5 @@
 #  IRIS Source Code
-#  Copyright (C) 2023 - DFIR-IRIS
+#  Copyright (C) 2024 - DFIR-IRIS
 #  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
@@ -16,21 +16,13 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import subprocess
+from graphene_sqlalchemy import SQLAlchemyObjectType
+from graphene.relay import Node
 
-_DOCKER_COMPOSE = ['docker', 'compose']
+from app.models.cases import Cases
 
 
-class DockerCompose:
-
-    def __init__(self, docker_compose_path):
-        self._docker_compose_path = docker_compose_path
-
-    def start(self):
-        subprocess.check_call(_DOCKER_COMPOSE + ['up', '--detach'], cwd=self._docker_compose_path)
-
-    def extract_all_logs(self):
-        return subprocess.check_output(_DOCKER_COMPOSE + ['logs', '--no-color'], cwd=self._docker_compose_path, universal_newlines=True)
-
-    def stop(self):
-        subprocess.check_call(_DOCKER_COMPOSE + ['down', '--volumes'], cwd=self._docker_compose_path)
+class CaseObject(SQLAlchemyObjectType):
+    class Meta:
+        model = Cases
+        interfaces = [Node]

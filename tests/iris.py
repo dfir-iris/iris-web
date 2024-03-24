@@ -21,9 +21,10 @@ import shutil
 import time
 from docker_compose import DockerCompose
 from rest_api import RestApi
+from graphql_api import GraphQLApi
 from server_timeout_error import ServerTimeoutError
 
-_API_URL = 'http://127.0.0.1:8000'
+API_URL = 'http://127.0.0.1:8000'
 _API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
 _IRIS_PATH = Path('..')
 _TEST_DATA_PATH = Path('./data')
@@ -33,7 +34,8 @@ class Iris:
 
     def __init__(self):
         self._docker_compose = DockerCompose(_IRIS_PATH)
-        self._api = RestApi(_API_URL, _API_KEY)
+        self._api = RestApi(API_URL, _API_KEY)
+        self._graphql_api = GraphQLApi(API_URL + '/graphql', _API_KEY)
 
     def _wait(self, condition, attempts, sleep_duration=1):
         count = 0
@@ -89,3 +91,7 @@ class Iris:
 
     def get_cases(self):
         return self._api.get('/manage/cases/list')
+
+    def execute_graphql_query(self, payload):
+        response = self._graphql_api.execute(payload)
+        return response.json()
