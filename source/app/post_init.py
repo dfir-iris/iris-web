@@ -120,6 +120,8 @@ def run_post_init(development=False):
     log.info("Running post initiation steps")
 
     if os.getenv("IRIS_WORKER") is None:
+        create_directories()
+
         # Attempt to connect to the database with retries
         log.info("Attempting to connect to the database...")
         for i in range(retry_count):
@@ -1725,3 +1727,14 @@ def custom_assets_symlinks():
 
     except Exception as e:
         log.error(f"Error: {e}")
+
+
+def create_directories():
+    log.info("Attempting to create data directories")
+
+    for d in ['UPLOADED_PATH', 'TEMPLATES_PATH', 'BACKUP_PATH', 'ASSET_STORE_PATH', 'DATASTORE_PATH']:
+        try:
+            log.info(f'Creating directory {d}')
+            os.makedirs(app.config.get(d), exist_ok=True)
+        except OSError as e:
+            log.error(f"Failed to create directory {app.config.get(d)}: {e}")
