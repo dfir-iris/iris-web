@@ -1,0 +1,7 @@
+Flask==2.3.2
+Flask-SQLAlchemy==3.0.2
+psycopg2-binary==2.9.1
+SQLAlchemy==2.0.24
+graphql-server[flask]==3.0.0b7
+graphene==3.3
+graphene-sqlalchemy==3.0.0rc1

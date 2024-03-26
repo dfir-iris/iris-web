@@ -1,0 +1,37 @@
+introspection: http://127.0.0.1:5000/graphql-api
+
+servers:
+  - url: http://127.0.0.1:5000/
+    description: Test server
+
+info:
+    title: GraphQL POC
+    description: Welcome to POC GraphQL documentation. Graphql is a query langage and and server-side runtime environment for application programming interfaces (APIs). It allows only the requested resources to be provided to clients. It is possible to deploy it within your own GraphiQL development environment.
+
+
+
+
+domains:
+  - name: Query
+    description: Base methods to make query
+    usecases:
+          - name:  Query author
+            description: Query author
+            query: query.author
+          - name: Query book
+            description: Query book
+            query: query.book
+          - name: Query movie
+            description: Query movie
+            query: query.movie
+  - name: Mutation
+    description: Base methods to make mutation
+    usecases:
+        - name: Addbook
+          description: Add a book
+          query: mutation.addBook
+        - name: Updatebook
+          description: Update a book
+          query: mutation.updateBook
+
+#domains: []
