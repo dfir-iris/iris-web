@@ -81,5 +81,3 @@ def _create_blueprint():
 
 
 graphql_blueprint = _create_blueprint()
-
-# TODO I am unsure about the code organization (directories)
