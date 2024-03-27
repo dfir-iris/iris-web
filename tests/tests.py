@@ -116,3 +116,18 @@ class Tests(TestCase):
         }
         response = self._subject.execute_graphql_query(payload)
         self.assertEqual(description, response['data']['iocCreate']['ioc']['iocDescription'])
+
+    def test_graphql_create_ioc_should_allow_optional_tags_to_be_set(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        tags = 'tag1,tag2'
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8"
+                                       tags: "{tags}") {{
+                                           ioc {{ iocTags }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(tags, response['data']['iocCreate']['ioc']['iocTags'])
