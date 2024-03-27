@@ -43,18 +43,19 @@ class AddIoc(Mutation):
         type_id = NonNull(Int)
         tlp_id = NonNull(Int)
         value = NonNull(String)
-        # TODO add these non mandatory arguments
-        #description =
+        description = String()
+        # TODO add this non mandatory arguments
         #tags =
 
     ioc = Field(IocObject)
 
     @staticmethod
-    def mutate(root, info, case_id, type_id, tlp_id, value):
+    def mutate(root, info, case_id, type_id, tlp_id, value, description=None):
         request = {
             'ioc_type_id': type_id,
             'ioc_tlp_id': tlp_id,
-            'ioc_value': value
+            'ioc_value': value,
+            'ioc_description': description
         }
         ioc, _ = create(request, case_id)
         return AddIoc(ioc=ioc)
