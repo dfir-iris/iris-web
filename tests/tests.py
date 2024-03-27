@@ -53,8 +53,8 @@ class Tests(TestCase):
         self.assertEqual(initial_case_count + 1, case_count)
 
     def test_update_case_should_not_require_case_name_issue_358(self):
-        response = self._subject.create_case()
-        case_identifier = response['data']['case_id']
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
 
@@ -76,6 +76,11 @@ class Tests(TestCase):
             case_names.append(case['name'])
         self.assertIn('#1 - Initial Demo', case_names)
 
+    def _get_first_case(self, body):
+        for case in body['data']['cases']:
+            if case['name'] == '#1 - Initial Demo':
+                return case
+
     def test_graphql_cases_should_have_a_global_identifier(self):
         payload = {
             'query': '{ cases { id name } }'
@@ -93,19 +98,14 @@ class Tests(TestCase):
                              }}
                          }}'''
         }
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
         payload = {
             'query': f'''mutation {{
-                             createIoc(caseId: 1, typeId: 1, tlpId: 1, value: "8.8.8.8") {{
+                             createIoc(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "8.8.8.8") {{
                                            ioc {{ iocValue }}
                              }}
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
-
-    def _get_first_case(self, body):
-        for case in body['data']['cases']:
-            if case['name'] == '#1 - Initial Demo':
-                return case
-
-# TODO: should maybe try to use gql
