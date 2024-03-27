@@ -90,22 +90,29 @@ class Tests(TestCase):
         self.assertEqual(b64encode(b'CaseObject:1').decode(), first_case['id'])
 
     def test_graphql_create_ioc_should_not_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                             createIoc(caseId: 1, typeId: 1, tlpId: 1, value: "8.8.8.8",
-                                       description: "some description", tags: "") {{
-                                           ioc {{ iocValue }}
-                             }}
-                         }}'''
-        }
         case = self._subject.create_case()
         case_identifier = case['case_id']
         payload = {
             'query': f'''mutation {{
-                             createIoc(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "8.8.8.8") {{
+                             createIoc(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8") {{
                                            ioc {{ iocValue }}
                              }}
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
+
+    def test_graphql_create_ioc_should_allow_optional_description_to_be_set(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        description = 'some description'
+        payload = {
+            'query': f'''mutation {{
+                             createIoc(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8"
+                                       description: "{description}") {{
+                                           ioc {{ iocValue iocDescription }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(description, response['data']['createIoc']['ioc']['iocDescription'])
