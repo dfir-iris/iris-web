@@ -95,4 +95,6 @@ class Iris:
 
     def execute_graphql_query(self, payload):
         response = self._graphql_api.execute(payload)
-        return response.json()
+        body = response.json()
+        print(f'{payload} => {body}')
+        return body
