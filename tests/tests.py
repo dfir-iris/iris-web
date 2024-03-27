@@ -110,7 +110,7 @@ class Tests(TestCase):
             'query': f'''mutation {{
                              createIoc(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8"
                                        description: "{description}") {{
-                                           ioc {{ iocValue iocDescription }}
+                                           ioc {{ iocDescription }}
                              }}
                          }}'''
         }
