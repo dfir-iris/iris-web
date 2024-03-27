@@ -94,7 +94,7 @@ class Tests(TestCase):
         case_identifier = case['case_id']
         payload = {
             'query': f'''mutation {{
-                             createIoc(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8") {{
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8") {{
                                            ioc {{ iocValue }}
                              }}
                          }}'''
@@ -108,11 +108,11 @@ class Tests(TestCase):
         description = 'some description'
         payload = {
             'query': f'''mutation {{
-                             createIoc(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8"
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8"
                                        description: "{description}") {{
                                            ioc {{ iocDescription }}
                              }}
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertEqual(description, response['data']['createIoc']['ioc']['iocDescription'])
+        self.assertEqual(description, response['data']['iocCreate']['ioc']['iocDescription'])

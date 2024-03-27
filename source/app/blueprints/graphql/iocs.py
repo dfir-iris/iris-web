@@ -32,10 +32,10 @@ class IocObject(SQLAlchemyObjectType):
         model = Ioc
 
 
-class AddIoc(Mutation):
+class CreateIoc(Mutation):
 
     class Arguments:
-        # TODO: it seems really too difficult to work with IDs.
+        # note: it seems really too difficult to work with IDs.
         #       I don't understand why graphql_relay.from_global_id does not seem to work...
         # note: I prefer NonNull rather than the syntax required=True
         # TODO: Integers in graphql are only 32 bits. => will this be a problem? Should we use either float or string?
@@ -58,4 +58,4 @@ class AddIoc(Mutation):
             'ioc_description': description
         }
         ioc, _ = create(request, case_id)
-        return AddIoc(ioc=ioc)
+        return CreateIoc(ioc=ioc)
