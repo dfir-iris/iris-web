@@ -108,4 +108,37 @@ class Tests(TestCase):
             if case['name'] == '#1 - Initial Demo':
                 return case
 
+    def test_graphql_create_case_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                                createCase(caseId: 1, client: IrisClient, name: "test1", description: "Some description") {{
+                                              cases {{ name }}
+                                }}
+                            }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+    def test_graphql_delete_case_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                                createCase(caseId: 1, client: IrisClient, name: "test1", description: "Some description") {{
+                                              cases {{ name }}
+                                }}
+                            }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+    def test_graphql_update_case_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                                createCase(caseId: 1, client: IrisClient, name: "test1", description: "Some description") {{
+                                              cases {{ name }}
+                                }}
+                            }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
 # TODO: should maybe try to use gql
