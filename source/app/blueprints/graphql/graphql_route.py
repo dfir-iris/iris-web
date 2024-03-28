@@ -31,6 +31,7 @@ from app.util import is_user_authenticated
 from app.util import response_error
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.blueprints.graphql.cases import CaseObject
+from app.blueprints.graphql.cases import AddCase
 from app.blueprints.graphql.iocs import AddIoc
 
 
@@ -48,6 +49,7 @@ class Query(ObjectType):
 
 class Mutation(ObjectType):
     create_ioc = AddIoc.Field()
+    create_case = AddCase.Field()
 
 
 def _check_authentication_wrapper(f):
