@@ -111,30 +111,40 @@ class Tests(TestCase):
     def test_graphql_create_case_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
-                                createCase(caseId: 1, client: IrisClient, name: "test1", description: "Some description") {{
-                                              cases {{ name }}
+                                createCase(caseId: 2,  name: "case2", description: "Some description", client: 1) {{
+                                              case {{ caseId }}
                                 }}
                             }}'''
         }
+        print(payload)
         body = self._subject.execute_graphql_query(payload)
+        print(body)
         self.assertNotIn('errors', body)
 
     def test_graphql_delete_case_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
-                                createCase(caseId: 1, client: IrisClient, name: "test1", description: "Some description") {{
-                                              cases {{ name }}
+                                    createCase(caseId: 2, name: "test1", description: "Some description", client: 1) {{
+                                                      case {{ name }}
+                                    }}
+                                }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        payload2 = {
+            'query': f'''mutation {{
+                                deleteCase(caseId: 2) {{
+                                              case {{ name }}
                                 }}
                             }}'''
         }
-        body = self._subject.execute_graphql_query(payload)
+        body = self._subject.execute_graphql_query(payload2)
         self.assertNotIn('errors', body)
 
     def test_graphql_update_case_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
-                                createCase(caseId: 1, client: IrisClient, name: "test1", description: "Some description") {{
-                                              cases {{ name }}
+                                UpdateCase(caseId: 1, name: "new name" ) {{
+                                              case {{ name description case_id }}
                                 }}
                             }}'''
         }

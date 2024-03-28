@@ -23,11 +23,11 @@ from graphene import Mutation
 from graphene import NonNull
 from graphene import Int
 from graphene import String
-from graphene import Text
 
 from app.models.cases import Cases
 from app.business.cases import create
-
+from app.business.cases import delete
+from app.business.cases import update
 
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
@@ -38,21 +38,56 @@ class AddCase(Mutation):
 
     class Arguments:
         case_id = NonNull(Int)
-        client = NonNull(Text)
         name = NonNull(String)
-        description = NonNull(Text)
-
-        # TODO add these non mandatory arguments
-        #soc_id = NonNull(Int)
+        description = NonNull(String)
+        client = NonNull(Int)
 
     case = Field(CaseObject)
 
     @staticmethod
-    def mutate(root, info, case_id, client, name, description):
+    def mutate(root, info, case_id, name, description, client):
         request = {
-            'case_client': client,
             'case_name': name,
-            'case_description': description
+            'case_description': description,
+            'case_customer': client,
+            'case_soc_id': ''
         }
         case, _ = create(request, case_id)
         return AddCase(case=case)
+class DeleteCase(Mutation):
+
+    class Arguments:
+        case_id = NonNull(Int)
+
+    case = Field(CaseObject)
+
+    @staticmethod
+    def mutate(root, info, case_id,cur_id):
+        delete(case_id,cur_id)
+
+class UpdateCase(Mutation):
+
+    class Arguments:
+        cur_id = NonNull(Int)
+        case_id = NonNull(Int)
+
+        case_name = String(required=False, default_value=None)
+        soc_id = Int(required=False, default_value=None)
+        classification = String(required=False, default_value=None)
+        state = String(required=False, default_value=None)
+        severity = String(required=False, default_value=None)
+        client = String(required=False, default_value=None)
+        owner = String(required=False, default_value=None)
+        reviewer = String(required=False, default_value=None)
+        tags = String(required=False, default_value=None)
+
+    case = Field(CaseObject)
+
+    @staticmethod
+    def mutate(root, info, case_id, cur_id, case_name):
+        if case_name:
+            request = {
+                'case_name': case_name
+            }
+        case, _ = update(cur_id, case_id)
+        return UpdateCase(case=case)
