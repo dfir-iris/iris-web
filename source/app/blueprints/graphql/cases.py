@@ -18,11 +18,41 @@
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene.relay import Node
+from graphene import Field
+from graphene import Mutation
+from graphene import NonNull
+from graphene import Int
+from graphene import String
+from graphene import Text
 
 from app.models.cases import Cases
+from app.business.cases import create
 
 
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
         model = Cases
         interfaces = [Node]
+
+class AddCase(Mutation):
+
+    class Arguments:
+        case_id = NonNull(Int)
+        client = NonNull(Text)
+        name = NonNull(String)
+        description = NonNull(Text)
+
+        # TODO add these non mandatory arguments
+        #soc_id = NonNull(Int)
+
+    case = Field(CaseObject)
+
+    @staticmethod
+    def mutate(root, info, case_id, client, name, description):
+        request = {
+            'case_client': client,
+            'case_name': name,
+            'case_description': description
+        }
+        case, _ = create(request, case_id)
+        return AddCase(case=case)
