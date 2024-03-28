@@ -58,11 +58,15 @@ class DeleteCase(Mutation):
 
     class Arguments:
         case_id = NonNull(Int)
+        cur_id = NonNull(Int)
 
     case = Field(CaseObject)
 
     @staticmethod
     def mutate(root, info, case_id,cur_id):
+        request = {
+            'case_id': case_id,
+        }
         delete(case_id,cur_id)
 
 class UpdateCase(Mutation):
