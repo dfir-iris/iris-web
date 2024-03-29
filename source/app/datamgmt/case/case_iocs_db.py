@@ -174,7 +174,7 @@ def find_ioc(ioc_value, ioc_type_id):
     return ioc
 
 
-def add_ioc(ioc, user_id, caseid):
+def add_ioc(ioc: Ioc, user_id, caseid):
     if not ioc:
         return None, False
 
