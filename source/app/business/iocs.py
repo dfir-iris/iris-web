@@ -66,7 +66,7 @@ def create(request_json, case_identifier):
     if ioc:
         track_activity(f'added ioc "{ioc.ioc_value}"', caseid=case_identifier)
 
-        msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
+        msg = 'IOC already existed in DB. Updated with info on DB.' if existed else 'IOC added'
         return ioc, msg
 
     raise BusinessProcessingError('Unable to create IOC for internal reasons')
