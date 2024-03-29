@@ -296,7 +296,7 @@ def case_update_ioc(cur_id, caseid):
     try:
         ioc = get_ioc(cur_id, caseid)
         if not ioc:
-            return response_error("Invalid IOC ID for this case")
+            return response_error('Invalid IOC ID for this case')
 
         request_data = call_modules_hook('on_preload_ioc_update', data=request.get_json(), caseid=caseid)
 
@@ -307,7 +307,7 @@ def case_update_ioc(cur_id, caseid):
         ioc_sc.user_id = current_user.id
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
-            return response_error("Not a valid IOC type")
+            return response_error('Not a valid IOC type')
 
         update_ioc_state(caseid=caseid)
         db.session.commit()
@@ -315,13 +315,13 @@ def case_update_ioc(cur_id, caseid):
         ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=caseid)
 
         if ioc_sc:
-            track_activity(f"updated ioc \"{ioc_sc.ioc_value}\"", caseid=caseid)
-            return response_success(f"Updated ioc \"{ioc_sc.ioc_value}\"", data=ioc_schema.dump(ioc))
+            track_activity(f'updated ioc "{ioc_sc.ioc_value}"', caseid=caseid)
+            return response_success(f'Updated ioc "{ioc_sc.ioc_value}"', data=ioc_schema.dump(ioc))
 
-        return response_error("Unable to update ioc for internal reasons")
+        return response_error('Unable to update ioc for internal reasons')
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/modal', methods=['GET'])
