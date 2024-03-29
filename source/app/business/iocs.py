@@ -23,6 +23,8 @@ from app.models.authorization import CaseAccessLevel
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
+from app.datamgmt.case.case_iocs_db import get_ioc
+from app.datamgmt.case.case_iocs_db import delete_ioc
 from app.schema.marshables import IocSchema
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -68,3 +70,20 @@ def create(request_json, case_identifier):
         return ioc, msg
 
     raise BusinessProcessingError('Unable to create IOC for internal reasons')
+
+
+def remove_from_case(identifier, case_identifier):
+    call_modules_hook('on_preload_ioc_delete', data=identifier, caseid=case_identifier)
+    ioc = get_ioc(identifier, case_identifier)
+
+    if not ioc:
+        raise BusinessProcessingError('Not a valid IOC for this case')
+
+    if not delete_ioc(ioc, case_identifier):
+        track_activity(f"unlinked IOC ID {ioc.ioc_value}", caseid=case_identifier)
+        return f'IOC {identifier} unlinked'
+
+    call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=case_identifier)
+
+    track_activity(f"deleted IOC \"{ioc.ioc_value}\"", caseid=case_identifier)
+    return f'IOC {identifier} deleted'

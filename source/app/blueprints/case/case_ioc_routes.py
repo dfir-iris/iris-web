@@ -65,6 +65,7 @@ from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
 from app.business.iocs import create
+from app.business.iocs import remove_from_case
 from app.business.errors import BusinessProcessingError
 
 case_ioc_blueprint = Blueprint(
@@ -248,20 +249,10 @@ def case_add_ioc_modal(caseid):
 @case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_ioc(cur_id, caseid):
-    call_modules_hook('on_preload_ioc_delete', data=cur_id, caseid=caseid)
-    ioc = get_ioc(cur_id, caseid)
-
-    if not ioc:
-        return response_error('Not a valid IOC for this case')
-
-    if not delete_ioc(ioc, caseid):
-        track_activity(f"unlinked IOC ID {ioc.ioc_value}", caseid=caseid)
-        return response_success(f"IOC {cur_id} unlinked")
-
-    call_modules_hook('on_postload_ioc_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"deleted IOC \"{ioc.ioc_value}\"", caseid=caseid)
-    return response_success(f"IOC {cur_id} deleted")
+    try:
+        remove_from_case(cur_id, caseid)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
