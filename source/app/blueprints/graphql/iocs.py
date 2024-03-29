@@ -26,14 +26,14 @@ from graphene import String
 
 from app.models.models import Ioc
 from app.business.iocs import create
-
+from app.business.iocs import delete
 
 class IocObject(SQLAlchemyObjectType):
     class Meta:
         model = Ioc
 
 
-class CreateIoc(Mutation):
+class IOCCreate(Mutation):
 
     class Arguments:
         # note: it seems really too difficult to work with IDs.
@@ -58,4 +58,18 @@ class CreateIoc(Mutation):
             'ioc_tags': tags
         }
         ioc, _ = create(request, case_id)
-        return CreateIoc(ioc=ioc)
+        return IOCCreate(ioc=ioc)
+
+
+# TODO: this mutation does both IOC creation and IOC link onto case: maybe we should distinguish the two actions
+class IOCDelete(Mutation):
+    class Arguments:
+        ioc_id = NonNull(Float)
+        case_id = NonNull(Float)
+
+    message = String()
+
+    @staticmethod
+    def mutate(root, info, ioc_id, case_id):
+        message = delete(ioc_id, case_id)
+        return IOCDelete(message=message)

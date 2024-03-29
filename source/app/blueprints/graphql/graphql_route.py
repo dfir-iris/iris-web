@@ -31,7 +31,8 @@ from app.util import is_user_authenticated
 from app.util import response_error
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.blueprints.graphql.cases import CaseObject
-from app.blueprints.graphql.iocs import CreateIoc
+from app.blueprints.graphql.iocs import IOCCreate
+from app.blueprints.graphql.iocs import IOCDelete
 
 
 class Query(ObjectType):
@@ -47,7 +48,8 @@ class Query(ObjectType):
 
 
 class Mutation(ObjectType):
-    ioc_create = CreateIoc.Field()
+    ioc_create = IOCCreate.Field()
+    ioc_delete = IOCDelete.Field()
 
 
 def _check_authentication_wrapper(f):

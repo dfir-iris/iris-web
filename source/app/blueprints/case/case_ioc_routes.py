@@ -65,7 +65,7 @@ from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
 from app.business.iocs import create
-from app.business.iocs import remove_from_case
+from app.business.iocs import delete
 from app.business.errors import BusinessProcessingError
 
 case_ioc_blueprint = Blueprint(
@@ -250,7 +250,7 @@ def case_add_ioc_modal(caseid):
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_ioc(cur_id, caseid):
     try:
-        remove_from_case(cur_id, caseid)
+        delete(cur_id, caseid)
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 

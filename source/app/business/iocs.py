@@ -72,7 +72,7 @@ def create(request_json, case_identifier):
     raise BusinessProcessingError('Unable to create IOC for internal reasons')
 
 
-def remove_from_case(identifier, case_identifier):
+def delete(identifier, case_identifier):
     call_modules_hook('on_preload_ioc_delete', data=identifier, caseid=case_identifier)
     ioc = get_ioc(identifier, case_identifier)
 
@@ -80,10 +80,10 @@ def remove_from_case(identifier, case_identifier):
         raise BusinessProcessingError('Not a valid IOC for this case')
 
     if not delete_ioc(ioc, case_identifier):
-        track_activity(f"unlinked IOC ID {ioc.ioc_value}", caseid=case_identifier)
+        track_activity(f'unlinked IOC ID {ioc.ioc_value}', caseid=case_identifier)
         return f'IOC {identifier} unlinked'
 
     call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=case_identifier)
 
-    track_activity(f"deleted IOC \"{ioc.ioc_value}\"", caseid=case_identifier)
+    track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=case_identifier)
     return f'IOC {identifier} deleted'

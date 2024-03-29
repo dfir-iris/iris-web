@@ -108,8 +108,31 @@ class Tests(TestCase):
                              }}
                          }}'''
         }
-        body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        response = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', response)
+
+    def test_graphql_delete_ioc_should_not_fail(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}") {{
+                                 ioc {{ iocId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        payload = {
+            'query': f'''mutation {{
+                             iocDelete(iocId: {ioc_identifier} caseId: {case_identifier}) {{
+                                 message
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(f'IOC {ioc_identifier} deleted', response['data']['iocDelete']['message'])
 
     def test_graphql_create_ioc_should_allow_optional_description_to_be_set(self):
         case = self._subject.create_case()
