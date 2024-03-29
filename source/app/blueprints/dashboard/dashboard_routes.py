@@ -284,7 +284,7 @@ def add_gtask(caseid):
         gtask = gtask_schema.load(request_data)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     gtask.task_userid_update = current_user.id
     gtask.task_open_date = datetime.utcnow()
@@ -297,7 +297,7 @@ def add_gtask(caseid):
         db.session.commit()
 
     except Exception as e:
-        return response_error(msg="Data error", data=e.__str__(), status=400)
+        return response_error(msg="Data error", data=e.__str__())
 
     gtask = call_modules_hook('on_postload_global_task_create', data=gtask, caseid=caseid)
     track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
@@ -333,7 +333,7 @@ def edit_gtask(cur_id, caseid):
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     if not task:
-        return response_error(msg="Data error", data="Invalid task ID", status=400)
+        return response_error(msg="Data error", data="Invalid task ID")
 
     try:
         gtask_schema = GlobalTasksSchema()
@@ -350,7 +350,7 @@ def edit_gtask(cur_id, caseid):
         gtask = call_modules_hook('on_postload_global_task_update', data=gtask, caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
 

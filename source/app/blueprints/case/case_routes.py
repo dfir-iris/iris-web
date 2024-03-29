@@ -263,7 +263,7 @@ def case_add_tasklog(caseid):
         ua = track_activity(log_data.get('log_content'), caseid, user_input=True)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_success("Log saved", data=ua)
 

@@ -168,7 +168,7 @@ def customer_update_contact(client_id, contact_id, caseid):
         contact = update_contact(request.json, contact_id, client_id)
 
     except ValidationError as e:
-        return response_error(msg='Error update contact', data=e.messages, status=400)
+        return response_error(msg='Error update contact', data=e.messages)
 
     except Exception as e:
         print(traceback.format_exc())
@@ -197,7 +197,7 @@ def customer_add_contact(client_id, caseid):
         contact = create_contact(request.json, client_id)
 
     except ValidationError as e:
-        return response_error(msg='Error adding contact', data=e.messages, status=400)
+        return response_error(msg='Error adding contact', data=e.messages)
 
     except Exception as e:
         print(traceback.format_exc())
@@ -359,7 +359,7 @@ def add_customers(caseid):
     try:
         client = create_client(request.json)
     except ValidationError as e:
-        return response_error(msg='Error adding customer', data=e.messages, status=400)
+        return response_error(msg='Error adding customer', data=e.messages)
     except Exception as e:
         print(traceback.format_exc())
         return response_error(f'An error occurred during customer addition. {e}')

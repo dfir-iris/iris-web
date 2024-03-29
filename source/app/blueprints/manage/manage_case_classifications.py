@@ -136,7 +136,7 @@ def update_case_classification(classification_id: int, caseid: int) -> Response:
             return response_success("Case classification updated", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated", data=case_classification)
 
@@ -190,7 +190,7 @@ def add_case_classification(caseid: int) -> Response:
             return response_success("Case classification added", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing added", data=None)
 

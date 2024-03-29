@@ -136,4 +136,4 @@ def manage_update_settings(caseid):
             return response_success("Server settings updated", srv_settings_sc)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)

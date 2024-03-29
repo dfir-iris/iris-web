@@ -195,7 +195,7 @@ def add_asset(caseid):
         return response_error("Unable to create asset for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_assets_blueprint.route('/case/assets/upload', methods=['POST'])
@@ -292,7 +292,7 @@ def case_upload_ioc(caseid):
         return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
@@ -383,7 +383,7 @@ def asset_update(cur_id, caseid):
         return response_error("Unable to update asset for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_assets_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
@@ -466,7 +466,7 @@ def case_comment_asset_add(cur_id, caseid):
         return response_success("Asset commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+        return response_error(msg="Data error", data=e.normalized_messages())
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
