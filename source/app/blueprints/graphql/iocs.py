@@ -26,7 +26,9 @@ from graphene import String
 
 from app.models.models import Ioc
 from app.business.iocs import create
+from app.business.iocs import update
 from app.business.iocs import delete
+
 
 class IocObject(SQLAlchemyObjectType):
     class Meta:
@@ -58,6 +60,35 @@ class IOCCreate(Mutation):
             'ioc_tags': tags
         }
         ioc, _ = create(request, case_id)
+        return IOCCreate(ioc=ioc)
+
+
+class IOCUpdate(Mutation):
+
+    class Arguments:
+        ioc_id = NonNull(Float)
+        case_id = NonNull(Float)
+        # TODO shouldn't this argument be optional?
+        type_id = NonNull(Int)
+        # TODO shouldn't this argument be optional?
+        tlp_id = NonNull(Int)
+        # TODO shouldn't this argument be optional?
+        value = NonNull(String)
+        #description = String()
+        #tags = String()
+        #custom attributes?
+        #enrichment?
+
+    ioc = Field(IocObject)
+
+    @staticmethod
+    def mutate(root, info, ioc_id, case_id, type_id, tlp_id, value):
+        request = {
+            'ioc_type_id': type_id,
+            'ioc_tlp_id': tlp_id,
+            'ioc_value': value
+        }
+        ioc, _ = update(ioc_id, request, case_id)
         return IOCCreate(ioc=ioc)
 
 

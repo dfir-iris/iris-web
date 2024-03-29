@@ -32,6 +32,7 @@ from app.util import response_error
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.blueprints.graphql.cases import CaseObject
 from app.blueprints.graphql.iocs import IOCCreate
+from app.blueprints.graphql.iocs import IOCUpdate
 from app.blueprints.graphql.iocs import IOCDelete
 
 
@@ -49,6 +50,7 @@ class Query(ObjectType):
 
 class Mutation(ObjectType):
     ioc_create = IOCCreate.Field()
+    ioc_update = IOCUpdate.Field()
     ioc_delete = IOCDelete.Field()
 
 
