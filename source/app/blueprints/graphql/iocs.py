@@ -21,6 +21,7 @@ from graphene import Field
 from graphene import Mutation
 from graphene import NonNull
 from graphene import Int
+from graphene import Float
 from graphene import String
 
 from app.models.models import Ioc
@@ -38,8 +39,7 @@ class CreateIoc(Mutation):
         # note: it seems really too difficult to work with IDs.
         #       I don't understand why graphql_relay.from_global_id does not seem to work...
         # note: I prefer NonNull rather than the syntax required=True
-        # TODO: Integers in graphql are only 32 bits. => will this be a problem? Should we use either float or string?
-        case_id = NonNull(Int)
+        case_id = NonNull(Float)
         type_id = NonNull(Int)
         tlp_id = NonNull(Int)
         value = NonNull(String)
