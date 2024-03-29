@@ -31,10 +31,18 @@ class Tests(TestCase):
     def setUpClass(cls) -> None:
         cls._subject = Iris()
         cls._subject.start()
+        cls._ioc_count = 0
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls._subject.stop()
+
+    # Note: this method is necessary because the state of the database is not reset between each test
+    #       and we want to work with distinct object in each test
+    @classmethod
+    def _generate_new_dummy_ioc_value(cls):
+        cls._ioc_count += 1
+        return f'IOC value #{cls._ioc_count}'
 
     def test_create_asset_should_not_fail(self):
         response = self._subject.create_asset()
@@ -92,9 +100,10 @@ class Tests(TestCase):
     def test_graphql_create_ioc_should_not_fail(self):
         case = self._subject.create_case()
         case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8") {{
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}") {{
                                            ioc {{ iocValue }}
                              }}
                          }}'''
@@ -106,9 +115,10 @@ class Tests(TestCase):
         case = self._subject.create_case()
         case_identifier = case['case_id']
         description = 'some description'
+        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8"
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}"
                                        description: "{description}") {{
                                            ioc {{ iocDescription }}
                              }}
@@ -121,9 +131,10 @@ class Tests(TestCase):
         case = self._subject.create_case()
         case_identifier = case['case_id']
         tags = 'tag1,tag2'
+        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "8.8.8.8"
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}"
                                        tags: "{tags}") {{
                                            ioc {{ iocTags }}
                              }}
@@ -131,3 +142,30 @@ class Tests(TestCase):
         }
         response = self._subject.execute_graphql_query(payload)
         self.assertEqual(tags, response['data']['iocCreate']['ioc']['iocTags'])
+
+    # IOC are uniquely determined by their type/value
+    def test_graphql_create_ioc_should_not_update_tags_when_creating_the_same_ioc_twice(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}") {{
+                                           ioc {{ iocId iocDescription }}
+                             }}
+                         }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        tags = 'tag1,tag2'
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}"
+                                       tags: "{tags}") {{
+                                           ioc {{ iocId iocTags }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertIsNone(response['data']['iocCreate']['ioc']['iocTags'])
