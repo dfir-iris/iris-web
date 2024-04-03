@@ -26,7 +26,7 @@ from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_
 from app.business.errors import PermissionDeniedError
 
 
-# When moving down premission checks from the REST layer into the business layer,
+# When moving down permission checks from the REST layer into the business layer,
 # this method is used to replace manual calls to ac_fast_check_current_user_has_case_access
 def check_current_user_has_some_case_access(case_identifier, access_levels):
     if not ac_fast_check_current_user_has_case_access(case_identifier, access_levels):
@@ -35,7 +35,7 @@ def check_current_user_has_some_case_access(case_identifier, access_levels):
 
 # TODO: really this and the previous method should be merged.
 #       This one comes from ac_api_case_requires, whereas the other one comes from the way api_delete_case was written...
-# When moving down premission checks from the REST layer into the business layer,
+# When moving down permission checks from the REST layer into the business layer,
 # this method is used to replace annotation ac_api_case_requires
 def check_current_user_has_some_case_access_stricter(access_levels):
     redir, caseid, has_access = get_case_access(request, access_levels, from_api=True)
@@ -48,7 +48,7 @@ def check_current_user_has_some_case_access_stricter(access_levels):
         raise PermissionDeniedError()
 
 
-# When moving down premission checks from the REST layer into the business layer,
+# When moving down permission checks from the REST layer into the business layer,
 # this method is used to replace annotation ac_api_requires
 def check_current_user_has_some_permission(permissions):
     if 'permissions' not in session:
