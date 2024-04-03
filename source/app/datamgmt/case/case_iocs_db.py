@@ -47,6 +47,13 @@ def get_iocs(caseid):
     return iocs
 
 
+def get_iocs_by_case(case_identifier) -> list[Ioc]:
+    return Ioc.query.filter(
+        IocLink.case_id == case_identifier,
+        IocLink.ioc_id == Ioc.ioc_id
+    ).all()
+
+
 def get_ioc(ioc_id, caseid=None):
     if caseid:
         return IocLink.query.with_entities(

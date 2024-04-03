@@ -253,5 +253,27 @@ class Tests(TestCase):
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        print(response)
         self.assertEqual(case_identifier, response['data']['case']['caseId'])
+
+    def test_graphql_iocs_should_return_all_iocs_of_a_case(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                           ioc {{ iocId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        payload = {
+            'query': f'''{{
+                             case(caseId: {case_identifier}) {{
+                                 iocs {{ iocId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(ioc_identifier, response['data']['case']['iocs'][0]['iocId'])

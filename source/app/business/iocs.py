@@ -25,6 +25,7 @@ from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
 from app.datamgmt.case.case_iocs_db import get_ioc
+from app.datamgmt.case.case_iocs_db import get_iocs_by_case
 from app.datamgmt.case.case_iocs_db import delete_ioc
 from app.datamgmt.states import update_ioc_state
 from app.schema.marshables import IocSchema
@@ -129,3 +130,9 @@ def delete(identifier, case_identifier):
 
     track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=case_identifier)
     return f'IOC {identifier} deleted'
+
+
+def get_iocs(case_identifier):
+    check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+
+    return get_iocs_by_case(case_identifier)

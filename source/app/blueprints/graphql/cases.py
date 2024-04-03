@@ -17,12 +17,23 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
+from graphene import List
 from graphene.relay import Node
 
 from app.models.cases import Cases
+from app.blueprints.graphql.iocs import IOCObject
+from app.business.iocs import get_iocs
 
 
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
         model = Cases
         interfaces = [Node]
+
+    # TODO add filters
+    # TODO do pagination (maybe present it as a relay Connection?)
+    iocs = List(IOCObject, description='Get IOCs associated with the case')
+
+    @staticmethod
+    def resolve_iocs(root: Cases, info):
+        return get_iocs(root.case_id)
