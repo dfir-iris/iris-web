@@ -74,6 +74,7 @@ from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import delete
+from app.business.cases import update
 from app.business.cases import create
 from app.business.errors import BusinessProcessingError
 from app.business.errors import PermissionDeniedError
@@ -370,92 +371,12 @@ def api_list_case(caseid):
 @manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def update_case_info(cur_id, caseid):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=cur_id)
-
     case_schema = CaseSchema()
-
-    case_i = get_case(cur_id)
-    if not case_i:
-        return response_error("Case not found")
-
     try:
-
-        request_data = request.get_json()
-        previous_case_state = case_i.state_id
-        case_previous_reviewer_id = case_i.reviewer_id
-        closed_state_id = get_case_state_by_name('Closed').state_id
-
-        # If user tries to update the customer, check if the user has access to the new customer
-        if request_data.get('case_customer') and request_data.get('case_customer') != case_i.client_id:
-            if not user_has_client_access(current_user.id, request_data.get('case_customer')):
-                return response_error("Invalid customer ID. Permission denied.", status=403)
-
-        if 'case_name' in request_data:
-            short_case_name = request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')
-            request_data['case_name'] = f'#{case_i.case_id} - {short_case_name}'
-        request_data['case_customer'] = case_i.client_id if not request_data.get('case_customer') else request_data.get('case_customer')
-        request_data['reviewer_id'] = None if request_data.get('reviewer_id') == "" else request_data.get('reviewer_id')
-
-        case = case_schema.load(request_data, instance=case_i, partial=True)
-
-        db.session.commit()
-
-        if previous_case_state != case.state_id:
-            if case.state_id == closed_state_id:
-                track_activity("case closed", caseid=cur_id)
-                res = close_case(cur_id)
-                if not res:
-                    return response_error("Tried to close an non-existing case")
-
-                # Close the related alerts
-                if case.alerts:
-                    close_status = get_alert_status_by_name('Closed')
-                    case_status_id_mapped = map_alert_resolution_to_case_status(case.status_id)
-
-                    for alert in case.alerts:
-                        if alert.alert_status_id != close_status.status_id:
-                            alert.alert_status_id = close_status.status_id
-                            alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=caseid)
-
-                        if alert.alert_resolution_status_id != case_status_id_mapped:
-                            alert.alert_resolution_status_id = case_status_id_mapped
-                            alert = call_modules_hook('on_postload_alert_resolution_update', data=alert, caseid=caseid)
-
-                            track_activity(f"closing alert ID {alert.alert_id} due to case #{caseid} being closed",
-                                           caseid=caseid, ctx_less=False)
-
-                            db.session.add(alert)
-
-            elif previous_case_state == closed_state_id and case.state_id != closed_state_id:
-                track_activity("case re-opened", caseid=cur_id)
-                res = reopen_case(cur_id)
-                if not res:
-                    return response_error("Tried to re-open an non-existing case")
-
-        if case_previous_reviewer_id != case.reviewer_id:
-            if case.reviewer_id is None:
-                track_activity("case reviewer removed", caseid=cur_id)
-                case.review_status_id = get_review_id_from_name(ReviewStatusList.not_reviewed)
-            else:
-                track_activity("case reviewer changed", caseid=cur_id)
-
-        register_case_protagonists(case.case_id, request_data.get('protagonists'))
-        save_case_tags(request_data.get('case_tags'), case_i)
-
-        case = call_modules_hook('on_postload_case_update', data=case, caseid=caseid)
-
-        add_obj_history_entry(case_i, 'case info updated')
-        track_activity("case updated {case_name}".format(case_name=case.name), caseid=cur_id)
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
-    except Exception as e:
-        log.error(e.__str__())
-        log.error(traceback.format_exc())
-        return response_error(msg="Error updating case - check server logs")
-
-    return response_success(msg='Case updated', data=case_schema.dump(case))
+        case, msg = update(cur_id, request.get_json())
+        return response_success(msg, data=case_schema.dump(case))
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @manage_cases_blueprint.route('/manage/cases/trigger-pipeline', methods=['POST'])

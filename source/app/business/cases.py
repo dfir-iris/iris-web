@@ -146,3 +146,93 @@ def delete(case_identifier):
     except Exception as e:
         app.logger.exception(e)
         raise BusinessProcessingError('Cannot delete the case. Please check server logs for additional informations')
+
+
+def update(cur_id, request_data):
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=cur_id)
+
+    case_i = get_case(cur_id)
+    if not case_i:
+        raise BusinessProcessingError('Case not found')
+
+    try:
+
+        previous_case_state = case_i.state_id
+        case_previous_reviewer_id = case_i.reviewer_id
+        closed_state_id = get_case_state_by_name('Closed').state_id
+
+        # If user tries to update the customer, check if the user has access to the new customer
+        if request_data.get('case_customer') and request_data.get('case_customer') != case_i.client_id:
+            if not user_has_client_access(current_user.id, request_data.get('case_customer')):
+                raise BusinessProcessingError('Invalid customer ID. Permission denied.')
+
+        if 'case_name' in request_data:
+            short_case_name = request_data.get('case_name').replace(f'#{case_i.case_id} - ', '')
+            request_data['case_name'] = f'#{case_i.case_id} - {short_case_name}'
+        request_data['case_customer'] = case_i.client_id if not request_data.get('case_customer') else request_data.get(
+            'case_customer')
+        request_data['reviewer_id'] = None if request_data.get('reviewer_id') == "" else request_data.get('reviewer_id')
+
+        case = _load(request_data, instance=case_i, partial=True)
+
+        db.session.commit()
+
+        if previous_case_state != case.state_id:
+            if case.state_id == closed_state_id:
+                track_activity("case closed", caseid=cur_id)
+                res = close_case(cur_id)
+                if not res:
+                    raise BusinessProcessingError('Tried to close an non-existing case')
+
+                # Close the related alerts
+                if case.alerts:
+                    close_status = get_alert_status_by_name('Closed')
+                    case_status_id_mapped = map_alert_resolution_to_case_status(case.status_id)
+
+                    for alert in case.alerts:
+                        if alert.alert_status_id != close_status.status_id:
+                            alert.alert_status_id = close_status.status_id
+                            alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=cur_id)
+
+                        if alert.alert_resolution_status_id != case_status_id_mapped:
+                            alert.alert_resolution_status_id = case_status_id_mapped
+                            alert = call_modules_hook('on_postload_alert_resolution_update', data=alert,
+                                                      caseid=cur_id)
+
+                            track_activity(
+                                f"closing alert ID {alert.alert_id} due to case #{cur_id} being closed",
+                                caseid=cur_id, ctx_less=False)
+
+                            db.session.add(alert)
+
+            elif previous_case_state == closed_state_id and case.state_id != closed_state_id:
+                track_activity("case re-opened", caseid=cur_id)
+                res = reopen_case(cur_id)
+                if not res:
+                    raise BusinessProcessingError('Tried to re-open an non-existing case')
+
+        if case_previous_reviewer_id != case.reviewer_id:
+            if case.reviewer_id is None:
+                track_activity("case reviewer removed", caseid=cur_id)
+                case.review_status_id = get_review_id_from_name(ReviewStatusList.not_reviewed)
+            else:
+                track_activity("case reviewer changed", caseid=cur_id)
+
+        register_case_protagonists(case.case_id, request_data.get('protagonists'))
+        save_case_tags(request_data.get('case_tags'), case_i)
+
+        case = call_modules_hook('on_postload_case_update', data=case, caseid=cur_id)
+
+        add_obj_history_entry(case_i, 'case info updated')
+        track_activity("case updated {case_name}".format(case_name=case.name), caseid=cur_id)
+
+        return case, 'updated'
+
+    except ValidationError as e:
+        raise BusinessProcessingError('Data error', e.messages)
+
+    except Exception as e:
+        log.error(e.__str__())
+        log.error(traceback.format_exc())
+        raise BusinessProcessingError('Error updating case - check server logs')
