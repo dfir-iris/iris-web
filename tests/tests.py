@@ -103,7 +103,7 @@ class Tests(TestCase):
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
                                            ioc {{ iocValue }}
                              }}
                          }}'''
@@ -117,7 +117,7 @@ class Tests(TestCase):
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
                                  ioc {{ iocId }}
                              }}
                          }}'''
@@ -141,7 +141,7 @@ class Tests(TestCase):
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}"
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
                                        description: "{description}") {{
                                            ioc {{ iocDescription }}
                              }}
@@ -157,7 +157,7 @@ class Tests(TestCase):
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}"
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
                                        tags: "{tags}") {{
                                            ioc {{ iocTags }}
                              }}
@@ -173,7 +173,7 @@ class Tests(TestCase):
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
                                            ioc {{ iocId iocDescription }}
                              }}
                          }}'''
@@ -184,7 +184,7 @@ class Tests(TestCase):
         tags = 'tag1,tag2'
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}"
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
                                        tags: "{tags}") {{
                                            ioc {{ iocId iocTags }}
                              }}
@@ -199,7 +199,7 @@ class Tests(TestCase):
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier} typeId: 1 tlpId: 1 value: "{ioc_value}") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
                                            ioc {{ iocId }}
                              }}
                          }}'''
@@ -208,8 +208,8 @@ class Tests(TestCase):
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier} caseId: {case_identifier}
-                                       typeId: 1 tlpId: 2 value: "{ioc_value}") {{
+                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
+                                       typeId: 1, tlpId: 2, value: "{ioc_value}") {{
                                            ioc {{ iocTlpId }}
                              }}
                          }}'''
