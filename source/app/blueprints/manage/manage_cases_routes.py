@@ -74,6 +74,7 @@ from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import delete
+from app.business.cases import create
 from app.business.errors import BusinessProcessingError
 from app.business.errors import PermissionDeniedError
 
@@ -352,48 +353,10 @@ def api_add_case(caseid):
     case_schema = CaseSchema()
 
     try:
-
-        request_data = call_modules_hook('on_preload_case_create', data=request.get_json(), caseid=caseid)
-        case_template_id = request_data.pop("case_template_id", None)
-
-        case = case_schema.load(request_data)
-        case.owner_id = current_user.id
-        case.severity_id = 4
-
-        if case_template_id and len(case_template_id) > 0:
-            case = case_template_pre_modifier(case, case_template_id)
-            if case is None:
-                return response_error(msg=f"Invalid Case template ID {case_template_id}")
-
-        case.state_id = get_case_state_by_name('Open').state_id
-
-        case.save()
-
-        if case_template_id and len(case_template_id) > 0:
-            try:
-                case, logs = case_template_post_modifier(case, case_template_id)
-                if len(logs) > 0:
-                    return response_error(msg=f"Could not update new case with {case_template_id}", data=logs)
-            except Exception as e:
-                log.error(e.__str__())
-                return response_error(msg=f"Unexpected error when loading template {case_template_id} to new case.")
-
-        ac_set_new_case_access(None, case.case_id, case.client_id)
-
-        case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
-
-        add_obj_history_entry(case, 'created')
-        track_activity("new case {case_name} created".format(case_name=case.name), caseid=case.case_id, ctx_less=False)
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
-
-    except Exception as e:
-        log.error(e.__str__())
-        log.error(traceback.format_exc())
-        return response_error(msg="Error creating case - check server logs")
-
-    return response_success(msg='Case created', data=case_schema.dump(case))
+        case, msg = create(request.get_json())
+        return response_success(msg, data=case_schema.dump(case))
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])
