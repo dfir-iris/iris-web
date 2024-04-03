@@ -39,6 +39,7 @@ from app.blueprints.graphql.iocs import IOCDelete
 from app.business.cases import get_case_by_identifier
 from app.blueprints.graphql.cases import AddCase
 from app.blueprints.graphql.cases import DeleteCase
+from app.blueprints.graphql.cases import UpdateCase
 
 
 
@@ -66,6 +67,7 @@ class Mutation(ObjectType):
 
     create_case = AddCase.Field()
     delete_case = DeleteCase.Field()
+    update_case = UpdateCase.Field()
 
 
 def _check_authentication_wrapper(f):

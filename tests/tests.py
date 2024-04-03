@@ -348,5 +348,15 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload2)
         self.assertNotIn('errors', body)
 
+    def test_graphql_update_case_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                                   updateCase(caseId: 1, name: "new name" ) {{
+                                                 case {{ caseId }}
+                                   }}
+                               }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
 
 # TODO: should maybe try to use gql

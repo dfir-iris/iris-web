@@ -32,6 +32,7 @@ from app.blueprints.graphql.iocs import IOCObject
 from app.business.iocs import get_iocs
 from app.business.cases import create
 from app.business.cases import delete
+from app.business.cases import update
 
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
@@ -78,3 +79,29 @@ class DeleteCase(Mutation):
     @staticmethod
     def mutate(root, info, case_id):
         delete(case_id)
+
+
+class UpdateCase(Mutation):
+
+    class Arguments:
+        case_id = NonNull(Float)
+
+        name = String(required=False, default_value=None)
+        soc_id = Int(required=False, default_value=None)
+        classification = String(required=False, default_value=None)
+        state = String(required=False, default_value=None)
+        severity = String(required=False, default_value=None)
+        client = String(required=False, default_value=None)
+        owner = String(required=False, default_value=None)
+        reviewer = String(required=False, default_value=None)
+        tags = String(required=False, default_value=None)
+
+    case = Field(CaseObject)
+
+    @staticmethod
+    def mutate(root, info, case_id, name, soc_id, classification, state, severity, client, owner, reviewer, tags):
+        request = {}
+        if name:
+            request['case_name'] = name
+        case, _ = update(case_id, request)
+        return UpdateCase(case=case)
