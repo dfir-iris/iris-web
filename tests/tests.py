@@ -316,3 +316,16 @@ class Tests(TestCase):
         }
         response = user.execute_graphql_query(payload)
         self.assertRegex(response['errors'][0]['message'], r'Permission denied \(EID [0-9a-f-]{36}\)')
+
+    def test_graphql_create_case_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                                createCase(name: "case2", description: "Some description", client: 1) {{
+                                              case {{ caseId }}
+                                }}
+                            }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+# TODO: should maybe try to use gql

@@ -16,13 +16,21 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene import List
 from graphene.relay import Node
+from graphene import Field
+from graphene import Mutation
+from graphene import NonNull
+from graphene import Int
+from graphene import Float
+from graphene import String
 
 from app.models.cases import Cases
 from app.blueprints.graphql.iocs import IOCObject
 from app.business.iocs import get_iocs
+from app.business.cases import create
 
 
 class CaseObject(SQLAlchemyObjectType):
@@ -37,3 +45,24 @@ class CaseObject(SQLAlchemyObjectType):
     @staticmethod
     def resolve_iocs(root: Cases, info):
         return get_iocs(root.case_id)
+
+
+class AddCase(Mutation):
+
+    class Arguments:
+        name = NonNull(String)
+        description = NonNull(String)
+        client = NonNull(Int)
+
+    case = Field(CaseObject)
+
+    @staticmethod
+    def mutate(root, info, name, description, client):
+        request = {
+            'case_name': name,
+            'case_description': description,
+            'case_customer': client,
+            'case_soc_id': ''
+        }
+        case, _ = create(request)
+        return AddCase(case=case)
