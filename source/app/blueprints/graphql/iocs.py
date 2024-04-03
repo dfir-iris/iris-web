@@ -30,7 +30,7 @@ from app.business.iocs import update
 from app.business.iocs import delete
 
 
-class IocObject(SQLAlchemyObjectType):
+class IOCObject(SQLAlchemyObjectType):
     class Meta:
         model = Ioc
 
@@ -48,7 +48,7 @@ class IOCCreate(Mutation):
         description = String()
         tags = String()
 
-    ioc = Field(IocObject)
+    ioc = Field(IOCObject)
 
     @staticmethod
     def mutate(root, info, case_id, type_id, tlp_id, value, description=None, tags=None):
@@ -78,7 +78,7 @@ class IOCUpdate(Mutation):
         description = String()
         tags = String()
 
-    ioc = Field(IocObject)
+    ioc = Field(IOCObject)
 
     @staticmethod
     def mutate(root, info, ioc_id, case_id, type_id, tlp_id, value, description=None, tags=None):
