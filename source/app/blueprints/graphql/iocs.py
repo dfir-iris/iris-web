@@ -67,6 +67,7 @@ class IOCUpdate(Mutation):
 
     class Arguments:
         ioc_id = NonNull(Float)
+        # TODO shouldn't this argument be optional? (unless we want to add the IOC to another case?)
         case_id = NonNull(Float)
         # TODO shouldn't this argument be optional?
         type_id = NonNull(Int)
@@ -74,20 +75,22 @@ class IOCUpdate(Mutation):
         tlp_id = NonNull(Int)
         # TODO shouldn't this argument be optional?
         value = NonNull(String)
-        #description = String()
-        #tags = String()
-        #custom attributes?
-        #enrichment?
+        description = String()
+        tags = String()
 
     ioc = Field(IocObject)
 
     @staticmethod
-    def mutate(root, info, ioc_id, case_id, type_id, tlp_id, value):
+    def mutate(root, info, ioc_id, case_id, type_id, tlp_id, value, description=None, tags=None):
         request = {
             'ioc_type_id': type_id,
             'ioc_tlp_id': tlp_id,
             'ioc_value': value
         }
+        if description:
+            request['ioc_description'] = description
+        if description:
+            request['ioc_tags'] = tags
         ioc, _ = update(ioc_id, request, case_id)
         return IOCCreate(ioc=ioc)
 
