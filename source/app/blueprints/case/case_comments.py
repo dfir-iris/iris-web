@@ -54,4 +54,4 @@ def case_comment_update(comment_id, object_type, caseid):
         return response_success("Comment edited", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+        return response_error(msg="Data error", data=e.normalized_messages())

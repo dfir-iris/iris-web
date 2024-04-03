@@ -136,7 +136,7 @@ def update_case_classification(evidence_type_id: int, caseid: int) -> Response:
             return response_success("Evidence type updated", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated", data=evidence_type)
 
@@ -190,7 +190,7 @@ def add_evidence_type(caseid: int) -> Response:
             return response_success("Evidence type added", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing added", data=None)
 

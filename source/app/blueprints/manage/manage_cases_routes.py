@@ -363,7 +363,7 @@ def api_add_case(caseid):
         if case_template_id and len(case_template_id) > 0:
             case = case_template_pre_modifier(case, case_template_id)
             if case is None:
-                return response_error(msg=f"Invalid Case template ID {case_template_id}", status=400)
+                return response_error(msg=f"Invalid Case template ID {case_template_id}")
 
         case.state_id = get_case_state_by_name('Open').state_id
 
@@ -373,11 +373,10 @@ def api_add_case(caseid):
             try:
                 case, logs = case_template_post_modifier(case, case_template_id)
                 if len(logs) > 0:
-                    return response_error(msg=f"Could not update new case with {case_template_id}", data=logs, status=400)
+                    return response_error(msg=f"Could not update new case with {case_template_id}", data=logs)
             except Exception as e:
                 log.error(e.__str__())
-                return response_error(msg=f"Unexpected error when loading template {case_template_id} to new case.",
-                                      status=400)
+                return response_error(msg=f"Unexpected error when loading template {case_template_id} to new case.")
 
         ac_set_new_case_access(None, case.case_id, case.client_id)
 
@@ -387,12 +386,12 @@ def api_add_case(caseid):
         track_activity("new case {case_name} created".format(case_name=case.name), caseid=case.case_id, ctx_less=False)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     except Exception as e:
         log.error(e.__str__())
         log.error(traceback.format_exc())
-        return response_error(msg="Error creating case - check server logs", status=400)
+        return response_error(msg="Error creating case - check server logs")
 
     return response_success(msg='Case created', data=case_schema.dump(case))
 
@@ -487,11 +486,11 @@ def update_case_info(cur_id, caseid):
         track_activity("case updated {case_name}".format(case_name=case.name), caseid=cur_id)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
     except Exception as e:
         log.error(e.__str__())
         log.error(traceback.format_exc())
-        return response_error(msg="Error updating case - check server logs", status=400)
+        return response_error(msg="Error updating case - check server logs")
 
     return response_success(msg='Case updated', data=case_schema.dump(case))
 
@@ -507,7 +506,7 @@ def update_case_files(caseid):
         # Create the update task
         jsdata = request.get_json()
         if not jsdata:
-            return response_error('Not a JSON content', status=400)
+            return response_error('Not a JSON content')
 
         pipeline = jsdata.get('pipeline')
 
@@ -516,11 +515,11 @@ def update_case_files(caseid):
             pipeline_name = pipeline.split("-")[1]
         except Exception as e:
             log.error(e.__str__())
-            return response_error('Malformed request', status=400)
+            return response_error('Malformed request')
 
         ppl_config = get_pipelines_args_from_name(pipeline_mod)
         if not ppl_config:
-            return response_error('Malformed request', status=400)
+            return response_error('Malformed request')
 
         pl_args = ppl_config['pipeline_args']
         pipeline_args = {}
@@ -579,16 +578,16 @@ def manage_cases_uploadfiles(caseid):
         pipeline_mod = pipeline.split("-")[0]
     except Exception as e:
         log.error(e.__str__())
-        return response_error('Malformed request', status=400)
+        return response_error('Malformed request')
 
     if not iris_module_exists(pipeline_mod):
-        return response_error('Missing pipeline', status=400)
+        return response_error('Missing pipeline')
 
     mod, _ = instantiate_module_from_name(pipeline_mod)
     status = configure_module_on_init(mod)
     if status.is_failure():
         return response_error("Path for upload {} is not built ! Unreachable pipeline".format(
-            os.path.join(f.filename)), status=400)
+            os.path.join(f.filename)))
 
     case_customer = None
     case_name = None
@@ -616,4 +615,4 @@ def manage_cases_uploadfiles(caseid):
     if status.is_success():
         return response_success(status.get_message())
 
-    return response_error(status.get_message(), status=400)
+    return response_error(status.get_message())

@@ -143,7 +143,7 @@ def update_user_view(caseid):
         return response_error("Unable to update user for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @profile_blueprint.route('/user/theme/set/<string:theme>', methods=['GET'])

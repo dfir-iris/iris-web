@@ -138,7 +138,7 @@ def update_case_state(state_id: int, caseid: int) -> Response:
             return response_success("Case state updated", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated", data=case_state)
 
@@ -192,7 +192,7 @@ def add_case_state(caseid: int) -> Response:
             return response_success("Case state added", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing added", data=None)
 

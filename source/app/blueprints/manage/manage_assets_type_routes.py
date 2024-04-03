@@ -135,7 +135,7 @@ def view_assets(cur_id, caseid):
             return response_success("Asset type updated", asset_sc)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated")
 
@@ -176,7 +176,7 @@ def add_assets(caseid):
             return response_success("Asset type updated", asset_sc)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated")
 

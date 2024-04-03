@@ -126,7 +126,7 @@ def run_post_init(development=False):
         log.info("Attempting to connect to the database...")
         for i in range(retry_count):
             log.info("Connecting to database, attempt " + str(i+1) + "/" + str(retry_count))
-            conn = connect_to_database(db_host,db_port)
+            conn = connect_to_database(db_host, db_port)
             if conn:
                 break
             log.info("Retrying in " + str(retry_delay) + "seconds...")

@@ -229,7 +229,7 @@ def case_upload_ioc(caseid):
         return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_ioc_blueprint.route('/case/ioc/add/modal', methods=['GET'])
@@ -330,7 +330,7 @@ def case_update_ioc(cur_id, caseid):
         return response_error("Unable to update ioc for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/modal', methods=['GET'])
@@ -391,7 +391,7 @@ def case_comment_ioc_add(cur_id, caseid):
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+        return response_error(msg="Data error", data=e.normalized_messages())
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
