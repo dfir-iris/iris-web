@@ -77,4 +77,4 @@ class DeleteCase(Mutation):
 
     @staticmethod
     def mutate(root, info, case_id):
-        delete(case_id, case_id)
+        delete(case_id)
