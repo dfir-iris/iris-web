@@ -241,3 +241,17 @@ class Tests(TestCase):
         }
         response = self._subject.execute_graphql_query(payload)
         self.assertEqual(description, response['data']['iocUpdate']['ioc']['iocDescription'])
+
+    def test_graphql_case_should_return_a_case_by_its_identifier(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        payload = {
+            'query': f'''{{
+                             case(caseId: {case_identifier}) {{
+                                  caseId
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        print(response)
+        self.assertEqual(case_identifier, response['data']['case']['caseId'])
