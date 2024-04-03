@@ -74,7 +74,6 @@ def _load(request_data, **kwargs):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-#case_schema must be changed
 def create(request_json):
 
     try:

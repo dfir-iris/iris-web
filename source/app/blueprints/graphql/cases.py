@@ -31,7 +31,7 @@ from app.models.cases import Cases
 from app.blueprints.graphql.iocs import IOCObject
 from app.business.iocs import get_iocs
 from app.business.cases import create
-
+from app.business.cases import delete
 
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
@@ -66,3 +66,15 @@ class AddCase(Mutation):
         }
         case, _ = create(request)
         return AddCase(case=case)
+
+
+class DeleteCase(Mutation):
+
+    class Arguments:
+        case_id = NonNull(Float)
+
+    case = Field(CaseObject)
+
+    @staticmethod
+    def mutate(root, info, case_id):
+        delete(case_id, case_id)

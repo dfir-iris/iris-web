@@ -328,4 +328,25 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_delete_case_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                                           createCase(name: "case2", description: "Some description", client: 1) {{
+                                                         case {{ caseId }}
+                                           }}
+                                       }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        case_identifier = response['data']['createCase']['case']['caseId']
+        payload2 = {
+            'query': f'''mutation {{
+                                   deleteCase(caseId: {case_identifier}) {{
+                                                 case {{ caseId }}
+                                   }}
+                               }}'''
+        }
+        body = self._subject.execute_graphql_query(payload2)
+        self.assertNotIn('errors', body)
+
+
 # TODO: should maybe try to use gql
