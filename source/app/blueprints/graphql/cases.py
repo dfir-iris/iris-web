@@ -93,22 +93,26 @@ class UpdateCase(Mutation):
     class Arguments:
         case_id = NonNull(Float)
 
-        name = String(required=False, default_value=None)
-        soc_id = Int(required=False, default_value=None)
-        classification = String(required=False, default_value=None)
-        state = String(required=False, default_value=None)
-        severity = String(required=False, default_value=None)
-        client = String(required=False, default_value=None)
-        owner = String(required=False, default_value=None)
-        reviewer = String(required=False, default_value=None)
-        tags = String(required=False, default_value=None)
+        name = String()
+        description = String()
+        soc_id = String()
+        classification_id = String()
+        client = Int()
 
     case = Field(CaseObject)
 
     @staticmethod
-    def mutate(root, info, case_id, name, soc_id, classification, state, severity, client, owner, reviewer, tags):
+    def mutate(root, info, case_id, name=None, soc_id=None, classification_id=None, client=None, description=None):
         request = {}
         if name:
             request['case_name'] = name
+        if soc_id:
+            request['case_soc_id'] = soc_id
+        if classification_id:
+            request['classification_id'] = classification_id
+        if client:
+            request['case_customer'] = client
+        if description:
+            request['case_description'] = description
         case, _ = update(case_id, request)
         return UpdateCase(case=case)
