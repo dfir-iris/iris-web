@@ -79,7 +79,7 @@ def create(request_json):
     try:
         #TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
         request_data = call_modules_hook('on_preload_case_create', request_json, None)
-        case_template_id = request_data.pop("case_template_id", None)
+        case_template_id = request_data.pop('case_template_id', None)
 
         case = _load(request_data)
         case.owner_id = current_user.id
@@ -110,7 +110,7 @@ def create(request_json):
         case = call_modules_hook('on_postload_case_create', case, None)
 
         add_obj_history_entry(case, 'created')
-        track_activity("new case {case_name} created".format(case_name=case.name), caseid=case.case_id, ctx_less=False)
+        track_activity('new case {case_name} created'.format(case_name=case.name), caseid=case.case_id, ctx_less=False)
 
         return case, 'Case created'
 
@@ -172,7 +172,7 @@ def update(case_identifier, request_data):
             request_data['case_name'] = f'#{case_i.case_id} - {short_case_name}'
         request_data['case_customer'] = case_i.client_id if not request_data.get('case_customer') else request_data.get(
             'case_customer')
-        request_data['reviewer_id'] = None if request_data.get('reviewer_id') == "" else request_data.get('reviewer_id')
+        request_data['reviewer_id'] = None if request_data.get('reviewer_id') == '' else request_data.get('reviewer_id')
 
         case = _load(request_data, instance=case_i, partial=True)
 
@@ -180,7 +180,7 @@ def update(case_identifier, request_data):
 
         if previous_case_state != case.state_id:
             if case.state_id == closed_state_id:
-                track_activity("case closed", caseid=case_identifier)
+                track_activity('case closed', caseid=case_identifier)
                 res = close_case(case_identifier)
                 if not res:
                     raise BusinessProcessingError('Tried to close an non-existing case')
@@ -201,23 +201,23 @@ def update(case_identifier, request_data):
                                                       caseid=case_identifier)
 
                             track_activity(
-                                f"closing alert ID {alert.alert_id} due to case #{case_identifier} being closed",
+                                f'closing alert ID {alert.alert_id} due to case #{case_identifier} being closed',
                                 caseid=case_identifier, ctx_less=False)
 
                             db.session.add(alert)
 
             elif previous_case_state == closed_state_id and case.state_id != closed_state_id:
-                track_activity("case re-opened", caseid=case_identifier)
+                track_activity('case re-opened', caseid=case_identifier)
                 res = reopen_case(case_identifier)
                 if not res:
                     raise BusinessProcessingError('Tried to re-open an non-existing case')
 
         if case_previous_reviewer_id != case.reviewer_id:
             if case.reviewer_id is None:
-                track_activity("case reviewer removed", caseid=case_identifier)
+                track_activity('case reviewer removed', caseid=case_identifier)
                 case.review_status_id = get_review_id_from_name(ReviewStatusList.not_reviewed)
             else:
-                track_activity("case reviewer changed", caseid=case_identifier)
+                track_activity('case reviewer changed', caseid=case_identifier)
 
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
         save_case_tags(request_data.get('case_tags'), case_i)
@@ -225,7 +225,7 @@ def update(case_identifier, request_data):
         case = call_modules_hook('on_postload_case_update', data=case, caseid=case_identifier)
 
         add_obj_history_entry(case_i, 'case info updated')
-        track_activity("case updated {case_name}".format(case_name=case.name), caseid=case_identifier)
+        track_activity('case updated {case_name}'.format(case_name=case.name), caseid=case_identifier)
 
         return case, 'updated'
 
