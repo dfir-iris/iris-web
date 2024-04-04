@@ -55,16 +55,23 @@ class AddCase(Mutation):
         description = NonNull(String)
         client = NonNull(Int)
 
+        soc_id = String()
+        classification_id = String()
+
     case = Field(CaseObject)
 
     @staticmethod
-    def mutate(root, info, name, description, client):
+    def mutate(root, info, name, description, client, soc_id=None, classification_id=None):
         request = {
             'case_name': name,
             'case_description': description,
             'case_customer': client,
             'case_soc_id': ''
         }
+        if soc_id:
+            request['case_soc_id'] = soc_id
+        if classification_id:
+            request['classification_id'] = classification_id
         case, _ = create(request)
         return AddCase(case=case)
 
