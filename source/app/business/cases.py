@@ -149,8 +149,8 @@ def delete(case_identifier):
 
 
 def update(case_identifier, request_data):
-    if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=case_identifier)
+    check_current_user_has_some_permission([Permissions.standard_user])
+    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
     case_i = get_case(case_identifier)
     if not case_i:
