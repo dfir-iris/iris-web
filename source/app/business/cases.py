@@ -110,7 +110,7 @@ def create(request_json):
         case = call_modules_hook('on_postload_case_create', case, None)
 
         add_obj_history_entry(case, 'created')
-        track_activity('new case {case_name} created'.format(case_name=case.name), caseid=case.case_id, ctx_less=False)
+        track_activity(f'new case "{case.name}" created', caseid=case.case_id, ctx_less=False)
 
         return case, 'Case created'
 
@@ -225,7 +225,7 @@ def update(case_identifier, request_data):
         case = call_modules_hook('on_postload_case_update', data=case, caseid=case_identifier)
 
         add_obj_history_entry(case_i, 'case info updated')
-        track_activity('case updated {case_name}'.format(case_name=case.name), caseid=case_identifier)
+        track_activity(f'case updated "{case.name}"', caseid=case_identifier)
 
         return case, 'updated'
 
