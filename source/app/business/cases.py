@@ -148,11 +148,11 @@ def delete(case_identifier):
         raise BusinessProcessingError('Cannot delete the case. Please check server logs for additional informations')
 
 
-def update(cur_id, request_data):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=cur_id)
+def update(case_identifier, request_data):
+    if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_identifier)
 
-    case_i = get_case(cur_id)
+    case_i = get_case(case_identifier)
     if not case_i:
         raise BusinessProcessingError('Case not found')
 
@@ -180,8 +180,8 @@ def update(cur_id, request_data):
 
         if previous_case_state != case.state_id:
             if case.state_id == closed_state_id:
-                track_activity("case closed", caseid=cur_id)
-                res = close_case(cur_id)
+                track_activity("case closed", caseid=case_identifier)
+                res = close_case(case_identifier)
                 if not res:
                     raise BusinessProcessingError('Tried to close an non-existing case')
 
@@ -193,39 +193,39 @@ def update(cur_id, request_data):
                     for alert in case.alerts:
                         if alert.alert_status_id != close_status.status_id:
                             alert.alert_status_id = close_status.status_id
-                            alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=cur_id)
+                            alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=case_identifier)
 
                         if alert.alert_resolution_status_id != case_status_id_mapped:
                             alert.alert_resolution_status_id = case_status_id_mapped
                             alert = call_modules_hook('on_postload_alert_resolution_update', data=alert,
-                                                      caseid=cur_id)
+                                                      caseid=case_identifier)
 
                             track_activity(
-                                f"closing alert ID {alert.alert_id} due to case #{cur_id} being closed",
-                                caseid=cur_id, ctx_less=False)
+                                f"closing alert ID {alert.alert_id} due to case #{case_identifier} being closed",
+                                caseid=case_identifier, ctx_less=False)
 
                             db.session.add(alert)
 
             elif previous_case_state == closed_state_id and case.state_id != closed_state_id:
-                track_activity("case re-opened", caseid=cur_id)
-                res = reopen_case(cur_id)
+                track_activity("case re-opened", caseid=case_identifier)
+                res = reopen_case(case_identifier)
                 if not res:
                     raise BusinessProcessingError('Tried to re-open an non-existing case')
 
         if case_previous_reviewer_id != case.reviewer_id:
             if case.reviewer_id is None:
-                track_activity("case reviewer removed", caseid=cur_id)
+                track_activity("case reviewer removed", caseid=case_identifier)
                 case.review_status_id = get_review_id_from_name(ReviewStatusList.not_reviewed)
             else:
-                track_activity("case reviewer changed", caseid=cur_id)
+                track_activity("case reviewer changed", caseid=case_identifier)
 
         register_case_protagonists(case.case_id, request_data.get('protagonists'))
         save_case_tags(request_data.get('case_tags'), case_i)
 
-        case = call_modules_hook('on_postload_case_update', data=case, caseid=cur_id)
+        case = call_modules_hook('on_postload_case_update', data=case, caseid=case_identifier)
 
         add_obj_history_entry(case_i, 'case info updated')
-        track_activity("case updated {case_name}".format(case_name=case.name), caseid=cur_id)
+        track_activity("case updated {case_name}".format(case_name=case.name), caseid=case_identifier)
 
         return case, 'updated'
 
