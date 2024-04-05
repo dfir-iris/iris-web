@@ -233,7 +233,7 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
 
         except Exception as e:
             print(request_data.url)
-            redir, caseid, has_access = handle_exception(e, request_data)
+            redir, caseid, has_access = _handle_exception(e, request_data)
 
     return redir, caseid, has_access
 
@@ -247,7 +247,7 @@ def _set_caseid_from_current_user():
     return redir, caseid, True
 
 
-def handle_exception(e, request_data):
+def _handle_exception(e, request_data):
     cookie_session = request_data.cookies.get('session')
     if not cookie_session:
         return _set_caseid_from_current_user()
