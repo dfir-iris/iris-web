@@ -89,7 +89,7 @@ class IOCUpdate(Mutation):
         }
         if description:
             request['ioc_description'] = description
-        if description:
+        if tags:
             request['ioc_tags'] = tags
         ioc, _ = update(ioc_id, request, case_id)
         return IOCCreate(ioc=ioc)
