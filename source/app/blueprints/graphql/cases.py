@@ -48,7 +48,7 @@ class CaseObject(SQLAlchemyObjectType):
         return get_iocs(root.case_id)
 
 
-class AddCase(Mutation):
+class CaseCreate(Mutation):
 
     class Arguments:
         name = NonNull(String)
@@ -73,10 +73,10 @@ class AddCase(Mutation):
         if classification_id:
             request['classification_id'] = classification_id
         case, _ = create(request)
-        return AddCase(case=case)
+        return CaseCreate(case=case)
 
 
-class DeleteCase(Mutation):
+class CaseDelete(Mutation):
 
     class Arguments:
         case_id = NonNull(Float)
@@ -88,7 +88,7 @@ class DeleteCase(Mutation):
         delete(case_id)
 
 
-class UpdateCase(Mutation):
+class CaseUpdate(Mutation):
 
     class Arguments:
         case_id = NonNull(Float)
@@ -115,4 +115,4 @@ class UpdateCase(Mutation):
         if description:
             request['case_description'] = description
         case, _ = update(case_id, request)
-        return UpdateCase(case=case)
+        return CaseUpdate(case=case)

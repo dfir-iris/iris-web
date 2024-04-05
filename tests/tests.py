@@ -320,7 +320,7 @@ class Tests(TestCase):
     def test_graphql_create_case_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
-                                createCase(name: "case2", description: "Some description", client: 1) {{
+                                caseCreate(name: "case2", description: "Some description", client: 1) {{
                                               case {{ caseId }}
                                 }}
                             }}'''
@@ -331,16 +331,16 @@ class Tests(TestCase):
     def test_graphql_delete_case_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
-                                           createCase(name: "case2", description: "Some description", client: 1) {{
+                                           caseCreate(name: "case2", description: "Some description", client: 1) {{
                                                          case {{ caseId }}
                                            }}
                                        }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        case_identifier = response['data']['createCase']['case']['caseId']
+        case_identifier = response['data']['caseCreate']['case']['caseId']
         payload2 = {
             'query': f'''mutation {{
-                                   deleteCase(caseId: {case_identifier}) {{
+                                   caseDelete(caseId: {case_identifier}) {{
                                                  case {{ caseId }}
                                    }}
                                }}'''
@@ -351,7 +351,7 @@ class Tests(TestCase):
     def test_graphql_update_case_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
-                                   updateCase(caseId: 1, name: "new name" ) {{
+                                   caseUpdate(caseId: 1, name: "new name" ) {{
                                                  case {{ caseId }}
                                    }}
                                }}'''
@@ -362,7 +362,7 @@ class Tests(TestCase):
     def test_graphql_create_case_should_use_optionals_parameters(self):
         payload = {
             'query': f'''mutation {{
-                                        createCase(name: "case2", description: "Some description", client: 1, 
+                                        caseCreate(name: "case2", description: "Some description", client: 1, 
                                         socId: "1", classificationId : "1") {{
                                                       case {{ caseId }}
                                         }}
@@ -374,7 +374,7 @@ class Tests(TestCase):
     def test_graphql_update_case_should_use_optionals_parameters(self):
         payload = {
             'query': f'''mutation {{
-                                        updateCase(caseId: 1, description: "Some description", client: 1, 
+                                        caseUpdate(caseId: 1, description: "Some description", client: 1, 
                                         socId: "1", classificationId : "1") {{
                                                       case {{ caseId }}
                                         }}

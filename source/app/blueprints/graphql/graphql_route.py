@@ -33,13 +33,16 @@ from app.util import is_user_authenticated
 from app.util import response_error
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.blueprints.graphql.cases import CaseObject
+
 from app.blueprints.graphql.iocs import IOCCreate
 from app.blueprints.graphql.iocs import IOCUpdate
 from app.blueprints.graphql.iocs import IOCDelete
 from app.business.cases import get_case_by_identifier
-from app.blueprints.graphql.cases import AddCase
-from app.blueprints.graphql.cases import DeleteCase
-from app.blueprints.graphql.cases import UpdateCase
+
+from app.blueprints.graphql.cases import CaseCreate
+from app.blueprints.graphql.cases import CaseDelete
+from app.blueprints.graphql.cases import CaseUpdate
+
 
 
 
@@ -61,13 +64,15 @@ class Query(ObjectType):
 
 
 class Mutation(ObjectType):
+
     ioc_create = IOCCreate.Field()
     ioc_update = IOCUpdate.Field()
     ioc_delete = IOCDelete.Field()
 
-    create_case = AddCase.Field()
-    delete_case = DeleteCase.Field()
-    update_case = UpdateCase.Field()
+    case_create = CaseCreate.Field()
+    case_delete = CaseDelete.Field()
+    case_update = CaseUpdate.Field()
+
 
 
 def _check_authentication_wrapper(f):
