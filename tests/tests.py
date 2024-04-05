@@ -466,4 +466,15 @@ class Tests(TestCase):
         print(response)
         self.assertEqual(2, response['data']['caseUpdate']['case']['classificationId'])
 
+    def test_graphql_update_case_with_optional_parameter_severityId(self):
+        payload = {
+            'query': f'''mutation {{
+                                        caseUpdate(caseId: 1, severityId : 1) {{
+                                                      case {{ caseId }}
+                                        }}
+                                    }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
 #TODO: should maybe try to use gql
