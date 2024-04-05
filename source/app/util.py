@@ -261,7 +261,7 @@ def log_exception_and_error(e):
     log.error(traceback.print_exc())
 
 
-def handle_no_cid_required(request, no_cid_required):
+def _handle_no_cid_required(request, no_cid_required):
     if no_cid_required:
         js_d = request.get_json(silent=True)
         caseid = None
@@ -320,7 +320,7 @@ def update_denied_case(caseid, from_api):
 def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
     redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
 
-    redir, ctmp, has_access = handle_no_cid_required(request, no_cid_required)
+    redir, ctmp, has_access = _handle_no_cid_required(request, no_cid_required)
     if ctmp is not None:
         return redir, ctmp, has_access
 
