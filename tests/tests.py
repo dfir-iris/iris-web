@@ -394,9 +394,9 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         case_identifier = response['data']['caseCreate']['case']['caseId']
         payload = {
-            'query': '{ cases { caseId } }'
+            'query': '{ cases { caseId} }'
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertEqual(case_identifier, response['data']['cases'][1]['caseId'])
+        self.assertEqual(case_identifier, response['data']['cases'][2]['caseId'])
 
 # TODO: should maybe try to use gql
