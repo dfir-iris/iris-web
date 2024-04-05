@@ -99,11 +99,15 @@ class CaseUpdate(Mutation):
         classification_id = String()
         severity_id = Int()
         client = Int()
+        owner_id = Int()
+        state_id = Int()
+        reviewer_id = Int()
 
     case = Field(CaseObject)
 
     @staticmethod
-    def mutate(root, info, case_id, name=None, soc_id=None, classification_id=None, client=None, description=None, severity_id=None ):
+    def mutate(root, info, case_id, name=None, soc_id=None, classification_id=None, client=None, description=None,
+               severity_id=None, owner_id=None, state_id=None, reviewer_id=None):
         request = {}
         if name:
             request['case_name'] = name
@@ -117,5 +121,11 @@ class CaseUpdate(Mutation):
             request['case_description'] = description
         if severity_id:
             request['severity_id'] = severity_id
+        if owner_id:
+            request['owner_id'] = owner_id
+        if state_id:
+            request['state_id'] = state_id
+        if reviewer_id:
+            request['reviewer_id'] = reviewer_id
         case, _ = update(case_id, request)
         return CaseUpdate(case=case)

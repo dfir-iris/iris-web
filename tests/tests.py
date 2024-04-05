@@ -469,7 +469,18 @@ class Tests(TestCase):
     def test_graphql_update_case_with_optional_parameter_severityId(self):
         payload = {
             'query': f'''mutation {{
-                                        caseUpdate(caseId: 1, severityId : 1) {{
+                                        caseUpdate(caseId: 1, severityId: 1) {{
+                                                      case {{ caseId }}
+                                        }}
+                                    }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+    def test_graphql_update_case_with_optional_parameter_stateId_and_ownerId_reviewerId(self):
+        payload = {
+            'query': f'''mutation {{
+                                        caseUpdate(caseId: 1, stateId: 1, ownerId: 1, reviewerId: 1) {{
                                                       case {{ caseId }}
                                         }}
                                     }}'''
