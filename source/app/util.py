@@ -215,11 +215,11 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
     caseid = request_data.args.get('cid', default=None, type=int)
     redir = False
     has_access = True
-    js_d = None
 
     if not caseid and not no_cid_required:
 
         try:
+            js_d = None
 
             if request_data.content_type == 'application/json':
                 js_d = request_data.get_json()
