@@ -487,7 +487,7 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
         msg = f"Failed to run hook {hook_name} with module {module_name}. Error {str(e)}"
         log.critical(msg)
         log.exception(e)
-        task_status = IStatus.I2Error(message=msg, logs=[traceback.format_exc()], user=init_user, caseid=caseid)
+        task_status = IStatus.I2Error(message=msg, logs=[traceback.format_exc()], user=init_user)
 
     return task_status
 
