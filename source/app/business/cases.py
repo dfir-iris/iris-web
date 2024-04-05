@@ -25,6 +25,13 @@ from app.datamgmt.manage.manage_cases_db import delete_case
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import check_current_user_has_some_case_access
 from app.business.permissions import check_current_user_has_some_permission
+from app.datamgmt.case.case_db import get_case
+
+
+def get_case_by_identifier(case_identifier):
+    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+
+    return get_case(case_identifier)
 
 
 def delete(case_identifier, context_case_identifier):

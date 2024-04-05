@@ -31,10 +31,18 @@ class Tests(TestCase):
     def setUpClass(cls) -> None:
         cls._subject = Iris()
         cls._subject.start()
+        cls._ioc_count = 0
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls._subject.stop()
+
+    # Note: this method is necessary because the state of the database is not reset between each test
+    #       and we want to work with distinct object in each test
+    @classmethod
+    def _generate_new_dummy_ioc_value(cls):
+        cls._ioc_count += 1
+        return f'IOC value #{cls._ioc_count}'
 
     def test_create_asset_should_not_fail(self):
         response = self._subject.create_asset()
@@ -53,8 +61,8 @@ class Tests(TestCase):
         self.assertEqual(initial_case_count + 1, case_count)
 
     def test_update_case_should_not_require_case_name_issue_358(self):
-        response = self._subject.create_case()
-        case_identifier = response['data']['case_id']
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
 
@@ -76,6 +84,11 @@ class Tests(TestCase):
             case_names.append(case['name'])
         self.assertIn('#1 - Initial Demo', case_names)
 
+    def _get_first_case(self, body):
+        for case in body['data']['cases']:
+            if case['name'] == '#1 - Initial Demo':
+                return case
+
     def test_graphql_cases_should_have_a_global_identifier(self):
         payload = {
             'query': '{ cases { id name } }'
@@ -85,27 +98,182 @@ class Tests(TestCase):
         self.assertEqual(b64encode(b'CaseObject:1').decode(), first_case['id'])
 
     def test_graphql_create_ioc_should_not_fail(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             createIoc(caseId: 1, typeId: 1, tlpId: 1, value: "8.8.8.8",
-                                       description: "some description", tags: "") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
                                            ioc {{ iocValue }}
                              }}
                          }}'''
         }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', response)
+
+    def test_graphql_delete_ioc_should_not_fail(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             createIoc(caseId: 1, typeId: 1, tlpId: 1, value: "8.8.8.8") {{
-                                           ioc {{ iocValue }}
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                 ioc {{ iocId }}
                              }}
                          }}'''
         }
-        body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        payload = {
+            'query': f'''mutation {{
+                             iocDelete(iocId: {ioc_identifier} caseId: {case_identifier}) {{
+                                 message
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(f'IOC {ioc_identifier} deleted', response['data']['iocDelete']['message'])
 
-    def _get_first_case(self, body):
-        for case in body['data']['cases']:
-            if case['name'] == '#1 - Initial Demo':
-                return case
+    def test_graphql_create_ioc_should_allow_optional_description_to_be_set(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        description = 'some description'
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
+                                       description: "{description}") {{
+                                           ioc {{ iocDescription }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(description, response['data']['iocCreate']['ioc']['iocDescription'])
 
-# TODO: should maybe try to use gql
+    def test_graphql_create_ioc_should_allow_optional_tags_to_be_set(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        tags = 'tag1,tag2'
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
+                                       tags: "{tags}") {{
+                                           ioc {{ iocTags }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(tags, response['data']['iocCreate']['ioc']['iocTags'])
+
+    # IOC are uniquely determined by their type/value
+    def test_graphql_create_ioc_should_not_update_tags_when_creating_the_same_ioc_twice(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                           ioc {{ iocId iocDescription }}
+                             }}
+                         }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        tags = 'tag1,tag2'
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
+                                       tags: "{tags}") {{
+                                           ioc {{ iocId iocTags }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertIsNone(response['data']['iocCreate']['ioc']['iocTags'])
+
+    def test_graphql_update_ioc_should_update_tlp(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                           ioc {{ iocId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        payload = {
+            'query': f'''mutation {{
+                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
+                                       typeId: 1, tlpId: 2, value: "{ioc_value}") {{
+                                           ioc {{ iocTlpId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(2, response['data']['iocUpdate']['ioc']['iocTlpId'])
+
+    def test_graphql_update_ioc_should_update_optional_parameter_description(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                           ioc {{ iocId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        description = 'some description'
+        payload = {
+            'query': f'''mutation {{
+                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
+                                       typeId: 1, tlpId: 2, value: "{ioc_value}", description: "{description}") {{
+                                           ioc {{ iocDescription }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(description, response['data']['iocUpdate']['ioc']['iocDescription'])
+
+    def test_graphql_case_should_return_a_case_by_its_identifier(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        payload = {
+            'query': f'''{{
+                             case(caseId: {case_identifier}) {{
+                                  caseId
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(case_identifier, response['data']['case']['caseId'])
+
+    def test_graphql_iocs_should_return_all_iocs_of_a_case(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                           ioc {{ iocId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        payload = {
+            'query': f'''{{
+                             case(caseId: {case_identifier}) {{
+                                 iocs {{ iocId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(ioc_identifier, response['data']['case']['iocs'][0]['iocId'])

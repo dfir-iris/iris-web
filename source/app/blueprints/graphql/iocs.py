@@ -21,40 +21,89 @@ from graphene import Field
 from graphene import Mutation
 from graphene import NonNull
 from graphene import Int
+from graphene import Float
 from graphene import String
 
 from app.models.models import Ioc
 from app.business.iocs import create
+from app.business.iocs import update
+from app.business.iocs import delete
 
 
-class IocObject(SQLAlchemyObjectType):
+class IOCObject(SQLAlchemyObjectType):
     class Meta:
         model = Ioc
 
 
-class AddIoc(Mutation):
+class IOCCreate(Mutation):
 
     class Arguments:
-        # TODO: it seems really too difficult to work with IDs.
+        # note: it seems really too difficult to work with IDs.
         #       I don't understand why graphql_relay.from_global_id does not seem to work...
         # note: I prefer NonNull rather than the syntax required=True
-        # TODO: Integers in graphql are only 32 bits. => will this be a problem? Should we use either float or string?
-        case_id = NonNull(Int)
+        case_id = NonNull(Float)
         type_id = NonNull(Int)
         tlp_id = NonNull(Int)
         value = NonNull(String)
-        # TODO add these non mandatory arguments
-        #description =
-        #tags =
+        description = String()
+        tags = String()
 
-    ioc = Field(IocObject)
+    ioc = Field(IOCObject)
 
     @staticmethod
-    def mutate(root, info, case_id, type_id, tlp_id, value):
+    def mutate(root, info, case_id, type_id, tlp_id, value, description=None, tags=None):
+        request = {
+            'ioc_type_id': type_id,
+            'ioc_tlp_id': tlp_id,
+            'ioc_value': value,
+            'ioc_description': description,
+            'ioc_tags': tags
+        }
+        ioc, _ = create(request, case_id)
+        return IOCCreate(ioc=ioc)
+
+
+class IOCUpdate(Mutation):
+
+    class Arguments:
+        ioc_id = NonNull(Float)
+        # TODO shouldn't this argument be optional? (unless we want to add the IOC to another case?)
+        case_id = NonNull(Float)
+        # TODO shouldn't this argument be optional?
+        type_id = NonNull(Int)
+        # TODO shouldn't this argument be optional?
+        tlp_id = NonNull(Int)
+        # TODO shouldn't this argument be optional?
+        value = NonNull(String)
+        description = String()
+        tags = String()
+
+    ioc = Field(IOCObject)
+
+    @staticmethod
+    def mutate(root, info, ioc_id, case_id, type_id, tlp_id, value, description=None, tags=None):
         request = {
             'ioc_type_id': type_id,
             'ioc_tlp_id': tlp_id,
             'ioc_value': value
         }
-        ioc, _ = create(request, case_id)
-        return AddIoc(ioc=ioc)
+        if description:
+            request['ioc_description'] = description
+        if description:
+            request['ioc_tags'] = tags
+        ioc, _ = update(ioc_id, request, case_id)
+        return IOCCreate(ioc=ioc)
+
+
+# TODO: this mutation does both IOC creation and IOC link onto case: maybe we should distinguish the two actions
+class IOCDelete(Mutation):
+    class Arguments:
+        ioc_id = NonNull(Float)
+        case_id = NonNull(Float)
+
+    message = String()
+
+    @staticmethod
+    def mutate(root, info, ioc_id, case_id):
+        message = delete(ioc_id, case_id)
+        return IOCDelete(message=message)

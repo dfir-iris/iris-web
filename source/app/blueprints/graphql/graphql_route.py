@@ -26,12 +26,17 @@ from graphql_server.flask import GraphQLView
 from graphene import ObjectType
 from graphene import Schema
 from graphene import List
+from graphene import Float
+from graphene import Field
 
 from app.util import is_user_authenticated
 from app.util import response_error
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.blueprints.graphql.cases import CaseObject
-from app.blueprints.graphql.iocs import AddIoc
+from app.blueprints.graphql.iocs import IOCCreate
+from app.blueprints.graphql.iocs import IOCUpdate
+from app.blueprints.graphql.iocs import IOCDelete
+from app.business.cases import get_case_by_identifier
 
 
 class Query(ObjectType):
@@ -39,15 +44,22 @@ class Query(ObjectType):
 
     # starting with the conversion of '/manage/cases/filter'
     cases = List(CaseObject, description='Retrieves cases')
+    case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
 
     @staticmethod
     def resolve_cases(root, info):
         # TODO add all parameters to filter
         return get_filtered_cases(current_user.id)
 
+    @staticmethod
+    def resolve_case(root, info, case_id):
+        return get_case_by_identifier(case_id)
+
 
 class Mutation(ObjectType):
-    create_ioc = AddIoc.Field()
+    ioc_create = IOCCreate.Field()
+    ioc_update = IOCUpdate.Field()
+    ioc_delete = IOCDelete.Field()
 
 
 def _check_authentication_wrapper(f):
