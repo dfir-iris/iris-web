@@ -290,4 +290,4 @@ class Tests(TestCase):
                          }}'''
         }
         response = user.execute_graphql_query(payload)
-        self.assertRegex(response['errors'][0]['message'], 'Permission denied \(EID [0-9a-f-]{36}\)')
+        self.assertRegex(response['errors'][0]['message'], r'Permission denied \(EID [0-9a-f-]{36}\)')

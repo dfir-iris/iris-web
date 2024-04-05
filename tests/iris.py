@@ -21,7 +21,6 @@ import shutil
 import time
 from docker_compose import DockerCompose
 from rest_api import RestApi
-from graphql_api import GraphQLApi
 from server_timeout_error import ServerTimeoutError
 from user import User
 
