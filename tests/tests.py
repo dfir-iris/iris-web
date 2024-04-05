@@ -422,4 +422,25 @@ class Tests(TestCase):
         r = response['data']['caseUpdate']['case']['description']
         self.assertEqual(description, response['data']['caseUpdate']['case']['description'])
 
+    def test_graphql_update_case_should_update_optional_parameter_socId(self):
+        payload = {
+            'query': f'''mutation {{
+                                               caseCreate(name: "case2", description: "Some description", client: 1, 
+                                               socId: "1", classificationId : "1") {{
+                                                             case {{ caseId }}
+                                               }}
+                                           }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        case_identifier = body['data']['caseCreate']['case']['caseId']
+        socId = '17'
+        payload = {
+            'query': f'''mutation {{
+                        caseUpdate(caseId: {case_identifier}, socId: "{socId}") {{
+                                           case {{ socId }}
+                                               }}
+                                           }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(socId, response['data']['caseUpdate']['case']['socId'])
 # TODO: should maybe try to use gql
