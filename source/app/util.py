@@ -211,7 +211,7 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_caseid_from_request_data(request_data, no_cid_required):
+def _get_caseid_from_request_data(request_data, no_cid_required):
     caseid = request_data.args.get('cid', default=None, type=int)
     redir = False
     has_access = True
@@ -318,7 +318,7 @@ def update_denied_case(caseid, from_api):
 
 
 def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
-    redir, caseid, has_access = get_caseid_from_request_data(request_data, no_cid_required)
+    redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
 
     redir, ctmp, has_access = handle_no_cid_required(request, no_cid_required)
     if ctmp is not None:
