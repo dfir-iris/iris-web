@@ -213,29 +213,29 @@ class FileRemover(object):
 
 def _get_caseid_from_request_data(request_data, no_cid_required):
     caseid = request_data.args.get('cid', default=None, type=int)
-    redir = False
-    has_access = True
+    if caseid:
+        return False, caseid, True
 
-    if not caseid and not no_cid_required:
+    if no_cid_required:
+        return False, caseid, True
 
-        try:
-            js_d = None
+    try:
+        js_d = None
 
-            if request_data.content_type == 'application/json':
-                js_d = request_data.get_json()
+        if request_data.content_type == 'application/json':
+            js_d = request_data.get_json()
 
-            if js_d:
-                caseid = js_d.get('cid')
-                request_data.json.pop('cid')
+        if not js_d:
+            return _set_caseid_from_current_user()
 
-            else:
-                redir, caseid, has_access = _set_caseid_from_current_user()
+        caseid = js_d.get('cid')
+        request_data.json.pop('cid')
 
-        except Exception as e:
-            print(request_data.url)
-            redir, caseid, has_access = _handle_exception(e, request_data)
+        return False, caseid, True
 
-    return redir, caseid, has_access
+    except Exception as e:
+        print(request_data.url)
+        return _handle_exception(e, request_data)
 
 
 def _set_caseid_from_current_user():
