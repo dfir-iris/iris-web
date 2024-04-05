@@ -16,6 +16,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import logging
+from uuid import uuid4
+
 from flask import session
 from flask_login import current_user
 from flask import request
@@ -26,11 +29,18 @@ from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_
 from app.business.errors import PermissionDeniedError
 
 
+def _deny_permission():
+    error_uuid = uuid4()
+    message = f'Permission denied (EID {error_uuid})'
+    logging.warning(message)
+    raise PermissionDeniedError(message)
+
+
 # When moving down permission checks from the REST layer into the business layer,
 # this method is used to replace manual calls to ac_fast_check_current_user_has_case_access
 def check_current_user_has_some_case_access(case_identifier, access_levels):
     if not ac_fast_check_current_user_has_case_access(case_identifier, access_levels):
-        raise PermissionDeniedError()
+        _deny_permission()
 
 
 # TODO: really this and the previous method should be merged.
@@ -42,10 +52,10 @@ def check_current_user_has_some_case_access_stricter(access_levels):
 
     # TODO: do we really want to keep the details of the errors, when permission is denied => more work, more complex code?
     if not caseid or redir:
-        raise PermissionDeniedError()
+        _deny_permission()
 
     if not has_access:
-        raise PermissionDeniedError()
+        _deny_permission()
 
 
 # When moving down permission checks from the REST layer into the business layer,
@@ -58,4 +68,4 @@ def check_current_user_has_some_permission(permissions):
         if session['permissions'] & permission.value:
             return
 
-    raise PermissionDeniedError()
+    _deny_permission()
