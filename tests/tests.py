@@ -499,4 +499,15 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_update_case_with_optional_parameter_reviewStatusId(self):
+        payload = {
+            'query': f'''mutation {{
+                                        caseUpdate(caseId: 1,tags: "test", reviewStatusId: 1) {{
+                                                      case {{ caseId }}
+                                        }}
+                                    }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
 #TODO: should maybe try to use gql
