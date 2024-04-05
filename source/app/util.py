@@ -276,11 +276,11 @@ def _handle_no_cid_required(request, no_cid_required):
                 request.json.pop('cid')
 
         except Exception:
-            return False, None, False
+            return None, False
 
-        return False, caseid, True
+        return caseid, True
 
-    return False, None, False
+    return None, False
 
 
 def update_session(caseid, eaccess_level, from_api):
@@ -320,7 +320,8 @@ def update_denied_case(caseid, from_api):
 def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
     redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
 
-    redir, ctmp, has_access = _handle_no_cid_required(request, no_cid_required)
+    ctmp, has_access = _handle_no_cid_required(request, no_cid_required)
+    redir = False
     if ctmp is not None:
         return redir, ctmp, has_access
 
