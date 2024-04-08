@@ -34,23 +34,23 @@ def get_case_by_identifier(case_identifier):
     return get_case(case_identifier)
 
 
-def delete(case_identifier, context_case_identifier):
+def delete(case_identifier):
     check_current_user_has_some_permission([Permissions.standard_user])
     check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
     if case_identifier == 1:
         track_activity(f'tried to delete case {case_identifier}, but case is the primary case',
-                       caseid=context_case_identifier, ctx_less=True)
+                       caseid=case_identifier, ctx_less=True)
 
         raise BusinessProcessingError('Cannot delete a primary case to keep consistency')
 
     try:
-        call_modules_hook('on_preload_case_delete', data=case_identifier, caseid=context_case_identifier)
+        call_modules_hook('on_preload_case_delete', data=case_identifier, caseid=case_identifier)
         if not delete_case(case_identifier):
             track_activity(f'tried to delete case {case_identifier}, but it doesn\'t exist',
-                           caseid=context_case_identifier, ctx_less=True)
+                           caseid=case_identifier, ctx_less=True)
             raise BusinessProcessingError('Tried to delete a non-existing case')
-        call_modules_hook('on_postload_case_delete', data=case_identifier, caseid=context_case_identifier)
+        call_modules_hook('on_postload_case_delete', data=case_identifier, caseid=case_identifier)
         track_activity(f'case {case_identifier} deleted successfully', ctx_less=True)
     except Exception as e:
         app.logger.exception(e)

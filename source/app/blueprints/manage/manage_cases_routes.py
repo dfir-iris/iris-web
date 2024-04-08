@@ -236,7 +236,7 @@ def manage_case_filter(caseid) -> Response:
 @ac_api_requires(Permissions.standard_user, no_cid_required=True)
 def api_delete_case(cur_id, caseid):
     try:
-        delete(cur_id, caseid)
+        delete(cur_id)
         return response_success('Case successfully deleted')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
