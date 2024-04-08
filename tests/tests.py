@@ -383,7 +383,7 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases_should_return_all_cases(self):
+    def test_graphql_cases_should_return_newly_created_case(self):
         payload = {
             'query': f'''mutation {{
                                 caseCreate(name: "case2", description: "Some description", client: 1) {{
@@ -397,7 +397,10 @@ class Tests(TestCase):
             'query': '{ cases { caseId} }'
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertEqual(case_identifier, response['data']['cases'][2]['caseId'])
+        case_identifiers = []
+        for case in response['data']['cases']:
+            case_identifiers.append(case['caseId'])
+        self.assertIn(case_identifier, case_identifiers)
 
     def test_graphql_update_case_should_update_optional_parameter_description(self):
         payload = {
@@ -509,5 +512,3 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
-
-#TODO: should maybe try to use gql

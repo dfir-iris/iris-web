@@ -20,14 +20,12 @@ import logging as log
 import traceback
 
 from flask_login import current_user
-from flask import request
 from marshmallow.exceptions import ValidationError
 
 from app import app
 from app import db
 
 from app.util import add_obj_history_entry
-from app.util import ac_api_return_access_denied
 
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
@@ -36,9 +34,7 @@ from app.models import ReviewStatusList
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.iris_engine.access_control.utils import ac_set_new_case_access
-from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 
-from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.case.case_db import register_case_protagonists
 from app.datamgmt.case.case_db import get_review_id_from_name
@@ -51,11 +47,11 @@ from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_cases_db import map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import close_case
+from app.datamgmt.case.case_db import get_case
 
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import check_current_user_has_some_case_access
 from app.business.permissions import check_current_user_has_some_permission
-from app.datamgmt.case.case_db import get_case
 
 from app.schema.marshables import CaseSchema
 

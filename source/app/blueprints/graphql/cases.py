@@ -34,6 +34,7 @@ from app.business.cases import create
 from app.business.cases import delete
 from app.business.cases import update
 
+
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
         model = Cases
