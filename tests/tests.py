@@ -26,12 +26,12 @@ from base64 import b64encode
 class Tests(TestCase):
 
     _subject = None
+    _ioc_count = 0
 
     @classmethod
     def setUpClass(cls) -> None:
         cls._subject = Iris()
         cls._subject.start()
-        cls._ioc_count = 0
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -277,3 +277,17 @@ class Tests(TestCase):
         }
         response = self._subject.execute_graphql_query(payload)
         self.assertEqual(ioc_identifier, response['data']['case']['iocs'][0]['iocId'])
+
+    def test_graphql_case_should_return_error_log_uuid_when_permission_denied(self):
+        user = self._subject.create_user()
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        payload = {
+            'query': f'''{{
+                             case(caseId: {case_identifier}) {{
+                                  caseId
+                             }}
+                         }}'''
+        }
+        response = user.execute_graphql_query(payload)
+        self.assertRegex(response['errors'][0]['message'], r'Permission denied \(EID [0-9a-f-]{36}\)')
