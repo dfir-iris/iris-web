@@ -95,7 +95,6 @@ class IOCUpdate(Mutation):
         return IOCCreate(ioc=ioc)
 
 
-# TODO: this mutation does both IOC creation and IOC link onto case: maybe we should distinguish the two actions
 class IOCDelete(Mutation):
     class Arguments:
         ioc_id = NonNull(Float)
