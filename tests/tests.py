@@ -242,6 +242,31 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         self.assertEqual(description, response['data']['iocUpdate']['ioc']['iocDescription'])
 
+    def test_graphql_update_ioc_should_update_optional_parameter_tags(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                           ioc {{ iocId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        tags = 'tag1,tag2'
+        payload = {
+            'query': f'''mutation {{
+                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
+                                       typeId: 1, tlpId: 2, value: "{ioc_value}", tags: "{tags}") {{
+                                           ioc {{ iocTags }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        self.assertEqual(tags, response['data']['iocUpdate']['ioc']['iocTags'])
+
     def test_graphql_case_should_return_a_case_by_its_identifier(self):
         case = self._subject.create_case()
         case_identifier = case['case_id']
