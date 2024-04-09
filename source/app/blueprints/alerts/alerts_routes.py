@@ -432,11 +432,11 @@ def alerts_batch_update_route(caseid: int) -> Response:
 
             db.session.commit()
 
-            alert = call_modules_hook('on_postload_alert_create', data=alert, caseid=caseid)
+            alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=caseid)
 
             if activity_data:
-                track_activity(f"updated alerts #{alert_id}: {','.join(activity_data)}", ctx_less=True)
-                add_obj_history_entry(alert, f"updated alerts: {','.join(activity_data)}")
+                track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", ctx_less=True)
+                add_obj_history_entry(alert, f"updated alert: {','.join(activity_data)}")
 
             db.session.commit()
 
