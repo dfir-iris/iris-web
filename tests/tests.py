@@ -320,7 +320,7 @@ class Tests(TestCase):
     def test_graphql_create_case_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
-                                caseCreate(name: "case2", description: "Some description", client: 1) {{
+                                caseCreate(name: "case2", description: "Some description", clientId: 1) {{
                                               case {{ caseId }}
                                 }}
                             }}'''
@@ -331,7 +331,7 @@ class Tests(TestCase):
     def test_graphql_delete_case_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
-                                           caseCreate(name: "case2", description: "Some description", client: 1) {{
+                                           caseCreate(name: "case2", description: "Some description", clientId: 1) {{
                                                          case {{ caseId }}
                                            }}
                                        }}'''
@@ -362,8 +362,8 @@ class Tests(TestCase):
     def test_graphql_create_case_should_use_optionals_parameters(self):
         payload = {
             'query': f'''mutation {{
-                                        caseCreate(name: "case2", description: "Some description", client: 1, 
-                                        socId: "1", classificationId : "1") {{
+                                        caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                        socId: "1", classificationId : 1) {{
                                                       case {{ caseId }}
                                         }}
                                     }}'''
@@ -374,8 +374,8 @@ class Tests(TestCase):
     def test_graphql_update_case_should_use_optionals_parameters(self):
         payload = {
             'query': f'''mutation {{
-                                        caseUpdate(caseId: 1, description: "Some description", client: 1, 
-                                        socId: "1", classificationId : "1") {{
+                                        caseUpdate(caseId: 1, description: "Some description", clientId: 1, 
+                                        socId: "1", classificationId : 1) {{
                                                       case {{ caseId }}
                                         }}
                                     }}'''
@@ -386,7 +386,7 @@ class Tests(TestCase):
     def test_graphql_cases_should_return_newly_created_case(self):
         payload = {
             'query': f'''mutation {{
-                                caseCreate(name: "case2", description: "Some description", client: 1) {{
+                                caseCreate(name: "case2", description: "Some description", clientId: 1) {{
                                               case {{ caseId }}
                                 }}
                             }}'''
@@ -405,8 +405,8 @@ class Tests(TestCase):
     def test_graphql_update_case_should_update_optional_parameter_description(self):
         payload = {
             'query': f'''mutation {{
-                                               caseCreate(name: "case2", description: "Some description", client: 1, 
-                                               socId: "1", classificationId : "1") {{
+                                               caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                               socId: "1", classificationId : 1) {{
                                                              case {{ caseId }}
                                                }}
                                            }}'''
@@ -427,8 +427,8 @@ class Tests(TestCase):
     def test_graphql_update_case_should_update_optional_parameter_socId(self):
         payload = {
             'query': f'''mutation {{
-                                               caseCreate(name: "case2", description: "Some description", client: 1, 
-                                               socId: "1", classificationId : "1") {{
+                                               caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                               socId: "1", classificationId : 1) {{
                                                              case {{ caseId }}
                                                }}
                                            }}'''
@@ -449,24 +449,23 @@ class Tests(TestCase):
     def test_graphql_update_case_should_update_optional_parameter_classificationId(self):
         payload = {
             'query': f'''mutation {{
-                                               caseCreate(name: "case2", description: "Some description", client: 1, 
-                                               socId: "1", classificationId : "1") {{
+                                               caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                               socId: "1", classificationId : 1) {{
                                                              case {{ caseId }}
                                                }}
                                            }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         case_identifier = body['data']['caseCreate']['case']['caseId']
-        classificationId = '2'
+        classificationId = 2
         payload = {
             'query': f'''mutation {{
-                        caseUpdate(caseId: {case_identifier}, classificationId: "{classificationId}") {{
+                        caseUpdate(caseId: {case_identifier}, classificationId: {classificationId}) {{
                                            case {{ classificationId }}
                                                }}
                                            }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        print(response)
         self.assertEqual(2, response['data']['caseUpdate']['case']['classificationId'])
 
     def test_graphql_update_case_with_optional_parameter_severityId(self):

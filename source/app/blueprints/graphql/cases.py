@@ -26,6 +26,7 @@ from graphene import NonNull
 from graphene import Int
 from graphene import Float
 from graphene import String
+from graphene import BigInt
 
 from app.models.cases import Cases
 from app.blueprints.graphql.iocs import IOCObject
@@ -54,19 +55,19 @@ class CaseCreate(Mutation):
     class Arguments:
         name = NonNull(String)
         description = NonNull(String)
-        client = NonNull(Int)
+        client_id = NonNull(Int)
 
         soc_id = String()
-        classification_id = String()
+        classification_id = Int()
 
     case = Field(CaseObject)
 
     @staticmethod
-    def mutate(root, info, name, description, client, soc_id=None, classification_id=None):
+    def mutate(root, info, name, description, client_id, soc_id=None, classification_id=None):
         request = {
             'case_name': name,
             'case_description': description,
-            'case_customer': client,
+            'case_customer': client_id,
             'case_soc_id': ''
         }
         if soc_id:
@@ -97,9 +98,9 @@ class CaseUpdate(Mutation):
         name = String()
         description = String()
         soc_id = String()
-        classification_id = String()
+        classification_id = Int()
         severity_id = Int()
-        client = Int()
+        client_id = Int()
         owner_id = Int()
         state_id = Int()
         review_status_id = Int()
@@ -109,7 +110,7 @@ class CaseUpdate(Mutation):
     case = Field(CaseObject)
 
     @staticmethod
-    def mutate(root, info, case_id, name=None, soc_id=None, classification_id=None, client=None, description=None,
+    def mutate(root, info, case_id, name=None, soc_id=None, classification_id=None, client_id=None, description=None,
                severity_id=None, owner_id=None, state_id=None, reviewer_id=None, tags=None, review_status_id=None):
         request = {}
         if name:
@@ -118,8 +119,8 @@ class CaseUpdate(Mutation):
             request['case_soc_id'] = soc_id
         if classification_id:
             request['classification_id'] = classification_id
-        if client:
-            request['case_customer'] = client
+        if client_id:
+            request['case_customer'] = client_id
         if description:
             request['case_description'] = description
         if severity_id:
