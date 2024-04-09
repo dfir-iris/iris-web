@@ -855,7 +855,7 @@ def alerts_batch_escalate_route(caseid) -> Response:
 
             alert.alert_status_id = AlertStatus.query.filter_by(status_name='Merged').first().status_id
             db.session.commit()
-            alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=caseid)
+            alert = call_modules_hook('on_postload_alert_escalate', data=alert, caseid=caseid)
 
             alerts_list.append(alert)
 
