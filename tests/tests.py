@@ -472,42 +472,54 @@ class Tests(TestCase):
         payload = {
             'query': f'''mutation {{
                                         caseUpdate(caseId: 1, severityId: 1) {{
-                                                      case {{ caseId }}
+                                                      case {{ severityId }}
                                         }}
                                     }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        self.assertEqual(1, body['data']['caseUpdate']['case']['severityId'])
 
-    def test_graphql_update_case_with_optional_parameter_stateId_and_ownerId_reviewerId(self):
+    def test_graphql_update_case_with_optional_parameter_ownerId(self):
         payload = {
             'query': f'''mutation {{
-                                        caseUpdate(caseId: 1, stateId: 1, ownerId: 1, reviewerId: 1) {{
-                                                      case {{ caseId }}
+                                        caseUpdate(caseId: 1, ownerId: 1) {{
+                                                      case {{ ownerId }}
                                         }}
                                     }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        self.assertEqual(1, body['data']['caseUpdate']['case']['ownerId'])
 
-    def test_graphql_update_case_with_optional_parameter_tags(self):
+    def test_graphql_update_case_with_optional_parameter_stateId_reviewerId(self):
         payload = {
             'query': f'''mutation {{
-                                        caseUpdate(caseId: 1,tags: "test") {{
-                                                      case {{ caseId }}
+                                        caseUpdate(caseId: 1, reviewerId: 1) {{
+                                                      case {{ reviewerId }}
                                         }}
                                     }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        self.assertEqual(1, body['data']['caseUpdate']['case']['reviewerId'])
+
+    def test_graphql_update_case_with_optional_parameter_stateId(self):
+        payload = {
+            'query': f'''mutation {{
+                                        caseUpdate(caseId: 1, stateId: 1) {{
+                                                      case {{ stateId }}
+                                        }}
+                                    }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertEqual(1, body['data']['caseUpdate']['case']['stateId'])
+
 
     def test_graphql_update_case_with_optional_parameter_reviewStatusId(self):
         payload = {
             'query': f'''mutation {{
-                                        caseUpdate(caseId: 1,tags: "test", reviewStatusId: 1) {{
-                                                      case {{ caseId }}
+                                        caseUpdate(caseId: 1, reviewStatusId: 1) {{
+                                                      case {{ reviewStatusId }}
                                         }}
                                     }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        self.assertEqual(1, body['data']['caseUpdate']['case']['reviewStatusId'])
