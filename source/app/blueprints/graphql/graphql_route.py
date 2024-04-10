@@ -33,10 +33,12 @@ from app.util import is_user_authenticated
 from app.util import response_error
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.blueprints.graphql.cases import CaseObject
+from app.blueprints.graphql.iocs import IOCObject
 from app.blueprints.graphql.iocs import IOCCreate
 from app.blueprints.graphql.iocs import IOCUpdate
 from app.blueprints.graphql.iocs import IOCDelete
 from app.business.cases import get_case_by_identifier
+from app.business.iocs import get_ioc_by_identifier
 from app.blueprints.graphql.cases import CaseCreate
 from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
@@ -48,6 +50,7 @@ class Query(ObjectType):
     # starting with the conversion of '/manage/cases/filter'
     cases = List(CaseObject, description='Retrieves cases')
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
+    ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
     @staticmethod
     def resolve_cases(root, info):
@@ -57,6 +60,10 @@ class Query(ObjectType):
     @staticmethod
     def resolve_case(root, info, case_id):
         return get_case_by_identifier(case_id)
+
+    @staticmethod
+    def resolve_ioc(root, info, ioc_id):
+        return get_ioc_by_identifier(ioc_id)
 
 
 class Mutation(ObjectType):
