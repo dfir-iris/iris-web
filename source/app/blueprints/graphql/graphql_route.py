@@ -23,6 +23,7 @@ from flask import Blueprint
 from flask_login import current_user
 
 from graphql_server.flask import GraphQLView
+from graphene_sqlalchemy import SQLAlchemyConnectionField
 from graphene import ObjectType
 from graphene import Schema
 from graphene import List
@@ -42,6 +43,7 @@ from app.business.iocs import get_ioc_by_identifier
 from app.blueprints.graphql.cases import CaseCreate
 from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
+from app.blueprints.graphql.cases import CaseConnection
 
 
 class Query(ObjectType):
@@ -49,6 +51,7 @@ class Query(ObjectType):
 
     # starting with the conversion of '/manage/cases/filter'
     cases = List(CaseObject, description='Retrieves cases')
+    cases2 = SQLAlchemyConnectionField(CaseConnection)
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 

@@ -549,3 +549,20 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertEqual(ioc_value, body['data']['ioc']['iocValue'])
+
+
+    def test_graphql_case2_should_not_fail(self):
+        payload1 = {
+            'query': f'''mutation {{
+                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                    socId: "1", classificationId : 1) {{
+                                                 case {{ caseId }}
+                                                       }}
+                                                   }}'''
+        }
+        payload = {
+            'query': '{ cases2(first: 1) { edges { node { id name } } } }'
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+

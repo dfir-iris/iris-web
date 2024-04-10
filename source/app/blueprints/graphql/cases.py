@@ -20,6 +20,7 @@
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene import List
 from graphene.relay import Node
+from graphene.relay import Connection
 from graphene import Field
 from graphene import Mutation
 from graphene import NonNull
@@ -47,6 +48,11 @@ class CaseObject(SQLAlchemyObjectType):
     @staticmethod
     def resolve_iocs(root: Cases, info):
         return get_iocs(root.case_id)
+
+
+class CaseConnection(Connection):
+    class Meta:
+        node = CaseObject
 
 
 class CaseCreate(Mutation):
