@@ -549,5 +549,5 @@ class Tests(TestCase):
                                 ioc(iocId: {ioc_identifier}) {{ iocValue }}
                                          }}'''
         }
-        response = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', response)
+        body = self._subject.execute_graphql_query(payload)
+        self.assertEqual(ioc_value, body['data']['ioc']['iocValue'])
