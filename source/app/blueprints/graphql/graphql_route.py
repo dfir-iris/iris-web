@@ -29,6 +29,7 @@ from graphene import Schema
 from graphene import List
 from graphene import Float
 from graphene import Field
+from graphene import String
 
 from app.util import is_user_authenticated
 from app.util import response_error
@@ -51,7 +52,7 @@ class Query(ObjectType):
 
     # starting with the conversion of '/manage/cases/filter'
     cases = List(CaseObject, description='Retrieves cases')
-    cases2 = SQLAlchemyConnectionField(CaseConnection)
+    cases2 = SQLAlchemyConnectionField(CaseConnection, name=String())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -67,6 +68,13 @@ class Query(ObjectType):
     @staticmethod
     def resolve_ioc(root, info, ioc_id):
         return get_ioc_by_identifier(ioc_id)
+
+    @staticmethod
+    def resolve_cases2(root, info, **kwargs):
+        query = CaseObject.get_query(info)
+        if kwargs.get('name'):
+            query = query.filter_by(name=kwargs['name'])
+        return query
 
 
 class Mutation(ObjectType):
