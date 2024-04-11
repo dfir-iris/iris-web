@@ -583,3 +583,21 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_cases2_pageInfo_and_cursor_should_not_fail(self):
+        payload1 = {
+            'query': f'''mutation {{
+                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                    socId: "1", classificationId : 1) {{
+                                                 case {{ name }}
+                                                       }}
+                                                   }}'''
+        }
+        response = self._subject.execute_graphql_query(payload1)
+        case_name = response['data']['caseCreate']['case']['name']
+        payload = {
+            'query': f'''query {{ cases2(name: "{case_name}") {{ edges {{ node {{ name }} cursor }}  
+            pageInfo {{  endCursor  hasNextPage  }} }} }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
