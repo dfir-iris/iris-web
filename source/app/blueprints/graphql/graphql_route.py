@@ -30,6 +30,7 @@ from graphene import List
 from graphene import Float
 from graphene import Field
 from graphene import String
+from graphene import Int
 
 from app.util import is_user_authenticated
 from app.util import response_error
@@ -52,7 +53,7 @@ class Query(ObjectType):
 
     # starting with the conversion of '/manage/cases/filter'
     cases = List(CaseObject, description='Retrieves cases')
-    cases2 = SQLAlchemyConnectionField(CaseConnection, name=String())
+    cases2 = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -74,6 +75,8 @@ class Query(ObjectType):
         query = CaseObject.get_query(info)
         if kwargs.get('name'):
             query = query.filter_by(name=kwargs['name'])
+        if kwargs.get('clientId'):
+            query = query.filter_by(client_id=kwargs['clientId'])
         return query
 
 
