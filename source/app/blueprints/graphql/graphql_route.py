@@ -53,7 +53,7 @@ class Query(ObjectType):
 
     # starting with the conversion of '/manage/cases/filter'
     cases = List(CaseObject, description='Retrieves cases')
-    cases2 = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int())
+    cases2 = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int(), ownerId=Float())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -81,6 +81,8 @@ class Query(ObjectType):
             query = query.filter_by(classification_id=kwargs['classificationId'])
         if kwargs.get('stateId'):
             query = query.filter_by(state_id=kwargs['stateId'])
+        if kwargs.get('ownerId'):
+            query = query.filter_by(owner_id=kwargs['ownerId'])
         return query
 
 
