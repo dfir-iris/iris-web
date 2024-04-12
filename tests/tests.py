@@ -708,3 +708,10 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_cases_totalCount_should_not_fail(self):
+        payload = {
+            'query': f'''query {{ cases {{ totalCount }} }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+

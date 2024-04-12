@@ -54,6 +54,12 @@ class CaseConnection(Connection):
     class Meta:
         node = CaseObject
 
+    total_count = Int()
+
+    @staticmethod
+    def resolve_total_count(root, info, **kwargs):
+        return root.length
+
 
 class CaseCreate(Mutation):
 
