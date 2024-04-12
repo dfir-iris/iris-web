@@ -872,3 +872,47 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_iocs_filter_iocTlpId_should_not_fail(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+                'query': f'''mutation {{
+                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                   ioc {{ iocTlpId }}
+                             }}
+                     }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_tlp_id = response['data']['iocCreate']['ioc']['iocTlpId']
+        payload = {
+               'query': f'''{{
+                       case(caseId: {case_identifier}) {{
+                           iocs(iocTlpId: {ioc_tlp_id}) {{ edges {{ node {{ iocTlpId }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+    def test_graphql_iocs_filter_userId_should_not_fail(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+                'query': f'''mutation {{
+                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                   ioc {{ userId }}
+                             }}
+                     }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        user_id = response['data']['iocCreate']['ioc']['userId']
+        payload = {
+               'query': f'''{{
+                       case(caseId: {case_identifier}) {{
+                           iocs(userId: {user_id}) {{ edges {{ node {{ userId }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
