@@ -806,3 +806,69 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_iocs_filter_iocDescription_should_not_fail(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+                'query': f'''mutation {{
+                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                   ioc {{ iocDescription }}
+                             }}
+                     }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_description = response['data']['iocCreate']['ioc']['iocDescription']
+        payload = {
+               'query': f'''{{
+                       case(caseId: {case_identifier}) {{
+                           iocs(iocDescription: "{ioc_description}") {{ edges {{ node {{ iocDescription }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+    def test_graphql_iocs_filter_iocTags_should_not_fail(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+                'query': f'''mutation {{
+                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                   ioc {{ iocTags }}
+                             }}
+                     }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_tags = response['data']['iocCreate']['ioc']['iocTags']
+        payload = {
+               'query': f'''{{
+                       case(caseId: {case_identifier}) {{
+                           iocs(iocTags: "{ioc_tags}") {{ edges {{ node {{ iocTags }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
+    def test_graphql_iocs_filter_iocMisp_should_not_fail(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+                'query': f'''mutation {{
+                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                   ioc {{ iocMisp }}
+                             }}
+                     }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_misp = response['data']['iocCreate']['ioc']['iocMisp']
+        payload = {
+               'query': f'''{{
+                       case(caseId: {case_identifier}) {{
+                           iocs(iocMisp: "{ioc_misp}") {{ edges {{ node {{ iocMisp }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+

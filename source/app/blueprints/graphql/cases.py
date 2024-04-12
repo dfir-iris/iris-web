@@ -46,7 +46,7 @@ class CaseObject(SQLAlchemyObjectType):
 
     # TODO add filters
     # TODO do pagination (maybe present it as a relay Connection?)
-    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Float(), iocUuid=String(), iocValue=String(), iocTypeId=Int())
+    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Float(), iocUuid=String(), iocValue=String(), iocTypeId=Int(), iocDescription=String(), iocTags=String(), iocMisp=String())
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
@@ -59,6 +59,12 @@ class CaseObject(SQLAlchemyObjectType):
             query = query.filter_by(ioc_value=kwargs['iocValue'])
         if kwargs.get('iocTypeId'):
             query = query.filter_by(ioc_type_id=kwargs['iocTypeId'])
+        if kwargs.get('iocDescription'):
+            query = query.filter_by(ioc_description=kwargs['iocDescription'])
+        if kwargs.get('iocTags'):
+            query = query.filter_by(ioc_tags=kwargs['iocTags'])
+        if kwargs.get('iocMisp'):
+            query = query.filter_by(ioc_misp=kwargs['iocMisp'])
         return query
 
 
