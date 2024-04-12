@@ -38,6 +38,7 @@ from app.business.cases import update
 
 from app.blueprints.graphql.iocs import IOCConnection
 
+
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
         model = Cases
@@ -45,13 +46,15 @@ class CaseObject(SQLAlchemyObjectType):
 
     # TODO add filters
     # TODO do pagination (maybe present it as a relay Connection?)
-    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Float())
+    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Float(), iocUuid=String())
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
         query = IOCObject.get_query(info)
         if kwargs.get('iocId'):
             query = query.filter_by(ioc_id=kwargs['iocId'])
+        if kwargs.get('iocUuid'):
+            query = query.filter_by(ioc_uuid=kwargs['iocUuid'])
         return query
 
 
