@@ -69,33 +69,33 @@ class Tests(TestCase):
     def test_graphql_endpoint_should_reject_requests_with_wrong_authentication_token(self):
         graphql_api = GraphQLApi(API_URL + '/graphql', 64*'0')
         payload = {
-            'query': '{ cases { name } }'
+            'query': f'''query {{ cases  {{ edges {{ node {{ name }} }} }} }}'''
         }
         response = graphql_api.execute(payload)
         self.assertEqual(401, response.status_code)
 
     def test_graphql_cases_should_contain_the_initial_case(self):
         payload = {
-            'query': '{ cases { name } }'
+            'query': f'''query {{ cases {{ edges {{ node {{ name }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         case_names = []
-        for case in body['data']['cases']:
-            case_names.append(case['name'])
+        for case in body['data']['cases']['edges']:
+            case_names.append(case['node']['name'])
         self.assertIn('#1 - Initial Demo', case_names)
 
     def _get_first_case(self, body):
-        for case in body['data']['cases']:
-            if case['name'] == '#1 - Initial Demo':
+        for case in body['data']['cases']['edges']:
+            if case['node']['name'] == '#1 - Initial Demo':
                 return case
 
     def test_graphql_cases_should_have_a_global_identifier(self):
         payload = {
-            'query': '{ cases { id name } }'
+            'query': f'''query {{ cases {{ edges {{ node {{ id name }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         first_case = self._get_first_case(body)
-        self.assertEqual(b64encode(b'CaseObject:1').decode(), first_case['id'])
+        self.assertEqual(b64encode(b'CaseObject:1').decode(), first_case['node']['id'])
 
     def test_graphql_create_ioc_should_not_fail(self):
         case = self._subject.create_case()
@@ -393,12 +393,12 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         case_identifier = response['data']['caseCreate']['case']['caseId']
         payload = {
-            'query': '{ cases { caseId} }'
+            'query': f'''query {{ cases {{ edges {{ node {{ caseId }} }} }} }}'''
         }
         response = self._subject.execute_graphql_query(payload)
         case_identifiers = []
-        for case in response['data']['cases']:
-            case_identifiers.append(case['caseId'])
+        for case in response['data']['cases']['edges']:
+            case_identifiers.append(case['node']['caseId'])
         self.assertIn(case_identifier, case_identifiers)
 
     def test_graphql_update_case_should_update_optional_parameter_description(self):
@@ -561,12 +561,12 @@ class Tests(TestCase):
                                                    }}'''
         }
         payload = {
-            'query': '{ cases2(first: 1) { edges { node { id name } } } }'
+            'query': '{ cases(first: 1) { edges { node { id name } } } }'
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases2_first_filter_name_should_not_fail(self):
+    def test_graphql_cases_first_filter_name_should_not_fail(self):
         payload1 = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
@@ -578,12 +578,12 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload1)
         case_name = response['data']['caseCreate']['case']['name']
         payload = {
-            'query': f'''query {{ cases2(name: "{case_name}") {{ edges {{ node {{ name }} }} }} }}'''
+            'query': f'''query {{ cases(name: "{case_name}") {{ edges {{ node {{ name }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases2_pageInfo_and_cursor_should_not_fail(self):
+    def test_graphql_cases_pageInfo_and_cursor_should_not_fail(self):
         payload1 = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
@@ -595,13 +595,13 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload1)
         case_name = response['data']['caseCreate']['case']['name']
         payload = {
-            'query': f'''query {{ cases2(name: "{case_name}") {{ edges {{ node {{ name }} cursor }}  
+            'query': f'''query {{ cases(name: "{case_name}") {{ edges {{ node {{ name }} cursor }}  
             pageInfo {{  endCursor  hasNextPage  }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases2_filter_clientId_should_not_fail(self):
+    def test_graphql_cases_filter_clientId_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
@@ -613,12 +613,12 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         client_id = response['data']['caseCreate']['case']['clientId']
         payload = {
-            'query': f'''query {{ cases2(clientId: {client_id}) {{ edges {{ node {{ clientId }} }} }} }}'''
+            'query': f'''query {{ cases(clientId: {client_id}) {{ edges {{ node {{ clientId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases2_filter_classificationId_should_not_fail(self):
+    def test_graphql_cases_filter_classificationId_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
@@ -630,13 +630,13 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         classification_id = response['data']['caseCreate']['case']['classificationId']
         payload = {
-            'query': f'''query {{ cases2(classificationId: {classification_id}) 
+            'query': f'''query {{ cases(classificationId: {classification_id}) 
             {{ edges {{ node {{ classificationId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases2_filter_stateId_should_not_fail(self):
+    def test_graphql_cases_filter_stateId_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
@@ -648,13 +648,13 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         state_id = response['data']['caseCreate']['case']['stateId']
         payload = {
-            'query': f'''query {{ cases2(stateId: {state_id}) 
+            'query': f'''query {{ cases(stateId: {state_id}) 
                     {{ edges {{ node {{ stateId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases2_filter_ownerId_should_not_fail(self):
+    def test_graphql_cases_filter_ownerId_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
@@ -666,13 +666,13 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         owner_id = response['data']['caseCreate']['case']['ownerId']
         payload = {
-            'query': f'''query {{ cases2(ownerId: {owner_id}) 
+            'query': f'''query {{ cases(ownerId: {owner_id}) 
                     {{ edges {{ node {{ ownerId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases2_filter_openDate_should_not_fail(self):
+    def test_graphql_cases_filter_openDate_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
@@ -684,13 +684,13 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         open_date = response['data']['caseCreate']['case']['openDate']
         payload = {
-            'query': f'''query {{ cases2(openDate: "{open_date}") 
+            'query': f'''query {{ cases(openDate: "{open_date}") 
                     {{ edges {{ node {{ openDate }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases2_filter_initialDate_should_not_fail(self):
+    def test_graphql_cases_filter_initialDate_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
@@ -702,7 +702,7 @@ class Tests(TestCase):
         response = self._subject.execute_graphql_query(payload)
         initial_date = response['data']['caseCreate']['case']['initialDate']
         payload = {
-            'query': f'''query {{ cases2(initialDate: "{initial_date}") 
+            'query': f'''query {{ cases(initialDate: "{initial_date}") 
                             {{ edges {{ node {{ initialDate }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)

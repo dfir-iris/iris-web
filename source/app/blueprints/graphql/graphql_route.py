@@ -52,26 +52,12 @@ class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
     # starting with the conversion of '/manage/cases/filter'
-    cases = List(CaseObject, description='Retrieves cases')
-    cases2 = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int(), ownerId=Float(), openDate=String(), initialDate=String())
+    cases = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int(), ownerId=Float(), openDate=String(), initialDate=String())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
     @staticmethod
-    def resolve_cases(root, info):
-        # TODO add all parameters to filter
-        return get_filtered_cases(current_user.id)
-
-    @staticmethod
-    def resolve_case(root, info, case_id):
-        return get_case_by_identifier(case_id)
-
-    @staticmethod
-    def resolve_ioc(root, info, ioc_id):
-        return get_ioc_by_identifier(ioc_id)
-
-    @staticmethod
-    def resolve_cases2(root, info, **kwargs):
+    def resolve_cases(root, info, **kwargs):
         query = CaseObject.get_query(info)
         if kwargs.get('name'):
             query = query.filter_by(name=kwargs['name'])
@@ -88,6 +74,14 @@ class Query(ObjectType):
         if kwargs.get('initialDate'):
             query = query.filter_by(initial_date=kwargs['initialDate'])
         return query
+
+    @staticmethod
+    def resolve_case(root, info, case_id):
+        return get_case_by_identifier(case_id)
+
+    @staticmethod
+    def resolve_ioc(root, info, ioc_id):
+        return get_ioc_by_identifier(ioc_id)
 
 
 class Mutation(ObjectType):
