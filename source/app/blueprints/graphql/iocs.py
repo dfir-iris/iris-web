@@ -29,11 +29,23 @@ from app.business.iocs import create
 from app.business.iocs import update
 from app.business.iocs import delete
 
+from graphene.relay import Connection
+
 
 class IOCObject(SQLAlchemyObjectType):
     class Meta:
         model = Ioc
 
+
+class IOCConnection(Connection):
+    class Meta:
+        node = IOCObject
+
+    total_count = Int()
+
+    @staticmethod
+    def resolve_total_count(root, info, **kwargs):
+        return root.length
 
 class IOCCreate(Mutation):
 

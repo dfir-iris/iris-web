@@ -18,6 +18,7 @@
 
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
+from graphene_sqlalchemy import SQLAlchemyConnectionField
 from graphene import List
 from graphene.relay import Node
 from graphene.relay import Connection
@@ -35,6 +36,7 @@ from app.business.cases import create
 from app.business.cases import delete
 from app.business.cases import update
 
+from app.blueprints.graphql.iocs import IOCConnection
 
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
@@ -43,11 +45,14 @@ class CaseObject(SQLAlchemyObjectType):
 
     # TODO add filters
     # TODO do pagination (maybe present it as a relay Connection?)
-    iocs = List(IOCObject, description='Get IOCs associated with the case')
+    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Float())
 
     @staticmethod
-    def resolve_iocs(root: Cases, info):
-        return get_iocs(root.case_id)
+    def resolve_iocs(root, info, **kwargs):
+        query = IOCObject.get_query(info)
+        if kwargs.get('iocId'):
+            query = query.filter_by(ioc_id=kwargs['iocId'])
+        return query
 
 
 class CaseConnection(Connection):
