@@ -20,13 +20,11 @@ from functools import wraps
 from flask import request
 from flask_wtf import FlaskForm
 from flask import Blueprint
-from flask_login import current_user
 
 from graphql_server.flask import GraphQLView
 from graphene_sqlalchemy import SQLAlchemyConnectionField
 from graphene import ObjectType
 from graphene import Schema
-from graphene import List
 from graphene import Float
 from graphene import Field
 from graphene import String
@@ -34,7 +32,7 @@ from graphene import Int
 
 from app.util import is_user_authenticated
 from app.util import response_error
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
+
 from app.blueprints.graphql.cases import CaseObject
 from app.blueprints.graphql.iocs import IOCObject
 from app.blueprints.graphql.iocs import IOCCreate
@@ -52,7 +50,7 @@ class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
     # starting with the conversion of '/manage/cases/filter'
-    cases = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int(), ownerId=Float(), openDate=String(), initialDate=String())
+    cases = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int(), ownerId=Float(), openDate=String(), initialDate=String(), caseId=Float())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -73,6 +71,8 @@ class Query(ObjectType):
             query = query.filter_by(open_date=kwargs['openDate'])
         if kwargs.get('initialDate'):
             query = query.filter_by(initial_date=kwargs['initialDate'])
+        if kwargs.get('caseId'):
+            query = query.filter_by(case_id=kwargs['caseId'])
         return query
 
     @staticmethod

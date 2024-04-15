@@ -916,3 +916,21 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_cases_filter_caseId_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                    socId: "1", classificationId : 1) {{
+                                                 case {{ caseId }}
+                                                       }}
+                                                   }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        case_id = response['data']['caseCreate']['case']['caseId']
+        payload = {
+            'query': f'''query {{ cases(caseId: {case_id}) 
+                            {{ edges {{ node {{ caseId }} }} }} }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
