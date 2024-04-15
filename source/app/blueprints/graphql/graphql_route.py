@@ -50,7 +50,7 @@ class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
     # starting with the conversion of '/manage/cases/filter'
-    cases = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int(), ownerId=Float(), openDate=String(), initialDate=String(), caseId=Float(), severityId=Int())
+    cases = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int(), ownerId=Float(), openDate=String(), initialDate=String(), caseId=Float(), severityId=Int(), socId=String())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -73,6 +73,8 @@ class Query(ObjectType):
             query = query.filter_by(initial_date=kwargs['initialDate'])
         if kwargs.get('caseId'):
             query = query.filter_by(case_id=kwargs['caseId'])
+        if kwargs.get('socId'):
+            query = query.filter_by(soc_id=kwargs['socId'])
         if kwargs.get('severityId'):
             query = query.filter_by(severity_id=kwargs['severityId'])
         return query
