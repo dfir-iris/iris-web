@@ -46,7 +46,7 @@ class CaseObject(SQLAlchemyObjectType):
 
     # TODO add filters
     # TODO do pagination (maybe present it as a relay Connection?)
-    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Float(), iocUuid=String(), iocValue=String(), iocTypeId=Int(), iocDescription=String(), iocTags=String(), iocMisp=String(), iocTlpId=Int(), userId=Float(), iocCustomAttributes=String(), iociocEnrichment=String())
+    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Float(), iocUuid=String(), iocValue=String(), iocTypeId=Int(), iocDescription=String(), iocTags=String(), iocMisp=String(), iocTlpId=Int(), userId=Float(), iocCustomAttributes=String(), iociocEnrichment=String(), iocModificationHistory=String())
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
@@ -73,6 +73,8 @@ class CaseObject(SQLAlchemyObjectType):
             query = query.filter_by(ioc_custom_attributes=kwargs['CustomAttributes'])
         if kwargs.get('iocEnrichment'):
             query = query.filter_by(ioc_ioc_enrichment=kwargs['iocEnrichment'])
+        if kwargs.get('modificationHistory'):
+            query = query.filter_by(ioc_modification_history=kwargs['modificationHistory'])
         return query
 
 
