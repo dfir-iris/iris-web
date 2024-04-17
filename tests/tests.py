@@ -994,7 +994,7 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases_filter_ioc_enrichment_should_not_fail(self):
+    def test_graphql_cases_filter_iocEnrichment_should_not_fail(self):
         case = self._subject.create_case()
         case_identifier = case['case_id']
         ioc_value = self._generate_new_dummy_ioc_value()
