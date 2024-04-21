@@ -38,6 +38,7 @@ from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
 from app.forms import CaseGlobalTaskForm
+from app.iris_engine.access_control.utils import ac_get_user_case_counts
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
@@ -130,17 +131,12 @@ def index(caseid, url_redir):
 
     msg = None
 
-    # Retrieve the dashboard data from multiple sources.
-    # Quite fast as it is only counts.
-    user_open_case = Cases.query.filter(
-        Cases.owner_id == current_user.id,
-        Cases.close_date == None
-    ).count()
+    acgucc = ac_get_user_case_counts(current_user.id)
 
     data = {
-        "user_open_count": user_open_case,
-        "cases_open_count": Cases.query.filter(Cases.close_date == None).count(),
-        "cases_count": Cases.query.with_entities(distinct(Cases.case_id)).count(),
+        "user_open_count": acgucc[2],
+        "cases_open_count": acgucc[1],
+        "cases_count": acgucc[0],
     }
 
     # Create the customer form to be able to quickly add a customer
