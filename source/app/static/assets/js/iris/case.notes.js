@@ -389,7 +389,7 @@ function handle_ed_paste(event) {
                 upload_interactive_data(e.target.result, filename, function(data){
                     url = data.data.file_url + case_param();
                     event.preventDefault();
-                    editor.insertSnippet(`\n![${filename}](${url} =40%x40%)\n`);
+                    note_editor.insertSnippet(`\n![${filename}](${url} =100%x40%)\n`);
                 });
             };
 			reader.readAsDataURL(blob);
