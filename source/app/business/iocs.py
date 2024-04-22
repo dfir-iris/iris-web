@@ -24,7 +24,6 @@ from app.models.authorization import CaseAccessLevel
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
-from app.datamgmt.case.case_iocs_db import get_ioc
 from app.datamgmt.case.case_iocs_db import get_iocs_by_case
 from app.datamgmt.case.case_iocs_db import delete_ioc
 from app.datamgmt.states import update_ioc_state
@@ -33,6 +32,12 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import check_current_user_has_some_case_access_stricter
+from app.datamgmt.case.case_iocs_db import get_ioc
+
+
+def get_ioc_by_identifier(ioc_identifier):
+
+    return get_ioc(ioc_identifier)
 
 
 def _load(request_data):
