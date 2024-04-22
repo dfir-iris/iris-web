@@ -688,30 +688,29 @@ def ac_api_requires(*permissions, no_cid_required=False):
             if not is_user_authenticated(request):
                 return response_error("Authentication required", status=401)
 
-            else:
-                try:
-                    redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
-                except Exception as e:
-                    log.exception(e)
-                    return response_error("Invalid data. Check server logs", status=500)
+            try:
+                redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
+            except Exception as e:
+                log.exception(e)
+                return response_error("Invalid data. Check server logs", status=500)
 
-                if not (caseid or redir) and not no_cid_required:
-                    return response_error("Invalid case ID", status=404)
+            if not (caseid or redir) and not no_cid_required:
+                return response_error("Invalid case ID", status=404)
 
-                kwargs.update({"caseid": caseid})
+            kwargs.update({"caseid": caseid})
 
-                if 'permissions' not in session:
-                    session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+            if 'permissions' not in session:
+                session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
-                if permissions:
+            if permissions:
 
-                    for permission in permissions:
-                        if session['permissions'] & permission.value:
-                            return f(*args, **kwargs)
+                for permission in permissions:
+                    if session['permissions'] & permission.value:
+                        return f(*args, **kwargs)
 
-                    return response_error("Permission denied", status=403)
+                return response_error("Permission denied", status=403)
 
-                return f(*args, **kwargs)
+            return f(*args, **kwargs)
         return wrap
     return inner_wrap
 
