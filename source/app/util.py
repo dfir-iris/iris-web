@@ -694,7 +694,7 @@ def ac_api_requires(*permissions, no_cid_required=False):
                 log.exception(e)
                 return response_error("Invalid data. Check server logs", status=500)
 
-            if not (caseid or redir) and not no_cid_required:
+            if not caseid and not redir and not no_cid_required:
                 return response_error("Invalid case ID", status=404)
 
             kwargs.update({"caseid": caseid})
