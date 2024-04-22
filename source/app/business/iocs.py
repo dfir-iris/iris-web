@@ -24,7 +24,6 @@ from app.models.authorization import CaseAccessLevel
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
-from app.datamgmt.case.case_iocs_db import get_ioc
 from app.datamgmt.case.case_iocs_db import get_iocs_by_case
 from app.datamgmt.case.case_iocs_db import delete_ioc
 from app.datamgmt.states import update_ioc_state

@@ -73,7 +73,7 @@ def _load(request_data, **kwargs):
 def create(request_json):
 
     try:
-        #TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
+        # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
         request_data = call_modules_hook('on_preload_case_create', request_json, None)
         case_template_id = request_data.pop('case_template_id', None)
 
@@ -102,7 +102,7 @@ def create(request_json):
 
         ac_set_new_case_access(None, case.case_id, case.client_id)
 
-        #TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
+        # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
         case = call_modules_hook('on_postload_case_create', case, None)
 
         add_obj_history_entry(case, 'created')
@@ -110,7 +110,7 @@ def create(request_json):
 
         return case, 'Case created'
 
-    #TODO maybe remove validationerror (because unnecessary)
+    # TODO maybe remove validationerror (because unnecessary)
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
 

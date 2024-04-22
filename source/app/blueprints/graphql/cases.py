@@ -26,7 +26,6 @@ from graphene import NonNull
 from graphene import Int
 from graphene import Float
 from graphene import String
-from graphene import BigInt
 
 from app.models.cases import Cases
 from app.blueprints.graphql.iocs import IOCObject
