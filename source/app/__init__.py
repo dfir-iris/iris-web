@@ -98,7 +98,8 @@ app.config.from_object('app.configuration.Config')
 cache = Cache(app)
 
 SQLALCHEMY_ENGINE_OPTIONS = {
-    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict)
+    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict),
+    "pool_pre_ping": True
 }
 
 db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
