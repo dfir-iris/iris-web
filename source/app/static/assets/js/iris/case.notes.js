@@ -21,10 +21,6 @@ const preventFormDefaultBehaviourOnSubmit = (event) => {
     return false;
 };
 
-var editor = ace.edit("editor_detail",
-    {autoScrollEditorIntoView: true,
-    minLines: 4
-    });
 
 function Collaborator( session_id, n_id ) {
     this.collaboration_socket = collaborator_socket;
