@@ -579,6 +579,20 @@ def ac_socket_requires(*access_level):
     return inner_wrap
 
 
+def _user_has_required_permissions(permissions):
+    if not permissions:
+        return True
+
+    for permission in permissions:
+        # TODO do we really want to do this?
+        #      as it is coded now, as soon as the user has one of the required permission, the action is allowed
+        #      don't we rather want the user to have all required permissions?
+        if session['permissions'] & permission.value:
+            return True
+
+    return False
+
+
 def ac_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
@@ -592,11 +606,7 @@ def ac_requires(*permissions, no_cid_required=False):
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                if permissions:
-                    for permission in permissions:
-                        if session['permissions'] & permission.value:
-                            return f(*args, **kwargs)
-
+                if not _user_has_required_permissions(permissions):
                     return ac_return_access_denied()
 
                 return f(*args, **kwargs)
@@ -702,13 +712,8 @@ def ac_api_requires(*permissions, no_cid_required=False):
             if 'permissions' not in session:
                 session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
-            if permissions:
-
-                for permission in permissions:
-                    if session['permissions'] & permission.value:
-                        return f(*args, **kwargs)
-
-                return response_error("Permission denied", status=403)
+            if not _user_has_required_permissions(permissions):
+                return response_error('Permission denied', status=403)
 
             return f(*args, **kwargs)
         return wrap
