@@ -346,7 +346,10 @@ def alerts_update_route(alert_id, caseid) -> Response:
                 if key == 'alert_status_id':
                     do_status_hook = True
 
-                activity_data.append(f"\"{key}\"")
+                if key not in ["alert_content", "alert_note"]:
+                    activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
+                else:
+                    activity_data.append(f"\"{key}\"")
 
         # Deserialize the JSON data into an Alert object
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
