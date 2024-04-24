@@ -27,7 +27,7 @@ import app
 from app.datamgmt.activities.activities_db import get_all_users_activities
 from app.datamgmt.activities.activities_db import get_users_activities
 from app.models.authorization import Permissions
-from app.util import ac_api_requires_deprecated
+from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import response_success
 
@@ -52,8 +52,8 @@ def activities_index(caseid: int, url_redir):
 
 
 @activities_blueprint.route('/activities/list', methods=['GET'])
-@ac_api_requires_deprecated(Permissions.activities_read, Permissions.all_activities_read, no_cid_required=True)
-def list_activities(caseid):
+@ac_api_requires(Permissions.activities_read, Permissions.all_activities_read)
+def list_activities():
     # Get User activities from database
 
     user_activities = get_users_activities()
@@ -65,8 +65,8 @@ def list_activities(caseid):
 
 
 @activities_blueprint.route('/activities/list-all', methods=['GET'])
-@ac_api_requires_deprecated(Permissions.all_activities_read, no_cid_required=True)
-def list_all_activities(caseid):
+@ac_api_requires(Permissions.all_activities_read)
+def list_all_activities():
     # Get User activities from database
 
     user_activities = get_all_users_activities()
