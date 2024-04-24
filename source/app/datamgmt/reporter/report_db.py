@@ -20,6 +20,7 @@ import re
 
 from sqlalchemy import desc
 
+from app.business.iocs import get_iocs
 from app.datamgmt.case.case_notes_db import get_notes_from_group, get_case_note_comments
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.models import AnalysisStatus, CompromiseStatus, TaskAssignee, NotesGroupLink
@@ -44,7 +45,7 @@ from app.models import NotesGroup
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models.authorization import User
-from app.schema.marshables import CaseDetailsSchema, CommentSchema, CaseNoteSchema
+from app.schema.marshables import CaseDetailsSchema, CommentSchema, CaseNoteSchema, IocSchema
 
 
 def export_case_json(case_id):
@@ -334,34 +335,11 @@ def export_case_tm_json(case_id):
 
 
 def export_case_iocs_json(case_id):
-    res = IocLink.query.with_entities(
-        Ioc.ioc_value,
-        IocType.type_name,
-        Ioc.ioc_tags,
-        Ioc.ioc_description,
-        Ioc.custom_attributes,
-        Ioc.ioc_id,
-        Ioc.ioc_uuid,
-        Tlp.tlp_name,
-        User.name.label('added_by'),
-    ).filter(
-        IocLink.case_id == case_id
-    ).join(
-        IocLink.ioc
-    ).join(
-        Ioc.ioc_type
-    ).join(
-        Ioc.tlp
-    ).join(
-        Ioc.user
-    ).order_by(
-        IocType.type_name
-    ).all()
+    iocs = get_iocs(case_id)
 
-    if res:
-        return [row._asdict() for row in res]
+    iocs_serialized = IocSchema().dump(iocs, many=True)
 
-    return []
+    return iocs_serialized
 
 
 def export_case_tasks_json(case_id):
