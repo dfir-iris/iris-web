@@ -61,7 +61,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseSchema, CaseDetailsSchema
 from app.util import add_obj_history_entry
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
@@ -141,7 +141,7 @@ def manage_details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Resp
 
 
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_case_api(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -154,7 +154,7 @@ def get_case_api(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/filter', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def manage_case_filter(caseid) -> Response:
 
     page = request.args.get('page', 1, type=int)
@@ -228,7 +228,7 @@ def manage_case_filter(caseid) -> Response:
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.standard_user, no_cid_required=True)
 def api_delete_case(cur_id, caseid):
     try:
         delete(cur_id)
@@ -240,7 +240,7 @@ def api_delete_case(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.standard_user, no_cid_required=True)
 def api_reopen_case(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -277,7 +277,7 @@ def api_reopen_case(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.standard_user, no_cid_required=True)
 def api_case_close(cur_id, caseid):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -322,7 +322,7 @@ def api_case_close(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.standard_user, no_cid_required=True)
 def add_case_modal(caseid):
 
     form = AddCaseForm()
@@ -342,7 +342,7 @@ def add_case_modal(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])
-@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.standard_user, no_cid_required=True)
 def api_add_case(caseid):
     case_schema = CaseSchema()
 
@@ -354,7 +354,7 @@ def api_add_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])
-@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.standard_user, no_cid_required=True)
 def api_list_case(caseid):
     data = list_cases_dict(current_user.id)
 
@@ -362,7 +362,7 @@ def api_list_case(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.standard_user, no_cid_required=True)
 def update_case_info(cur_id, caseid):
     case_schema = CaseSchema()
     try:
@@ -373,7 +373,7 @@ def update_case_info(cur_id, caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/trigger-pipeline', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires_deprecated(Permissions.standard_user)
 def update_case_files(caseid):
     if not ac_fast_check_current_user_has_case_access(caseid, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=caseid)
@@ -434,7 +434,7 @@ def update_case_files(caseid):
 
 
 @manage_cases_blueprint.route('/manage/cases/upload_files', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires_deprecated(Permissions.standard_user)
 def manage_cases_uploadfiles(caseid):
     """
     Handles the entire the case management, i.e creation, update, list and files imports

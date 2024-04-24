@@ -31,7 +31,7 @@ from app.forms import AddAssetForm
 from app.forms import AttributeForm
 from app.models.authorization import Permissions
 from app.models.models import CustomAttribute
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
@@ -54,7 +54,7 @@ def manage_attributes(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/list')
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def list_attributes(caseid):
     # Get all attributes
     attributes = CustomAttribute.query.with_entities(
@@ -113,7 +113,7 @@ def attributes_preview(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def update_attribute(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")

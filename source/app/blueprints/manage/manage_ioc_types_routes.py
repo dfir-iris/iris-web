@@ -31,7 +31,7 @@ from app.models import Ioc
 from app.models import IocType
 from app.models.authorization import Permissions
 from app.schema.marshables import IocTypeSchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
@@ -43,7 +43,7 @@ manage_ioc_type_blueprint = Blueprint('manage_ioc_types',
 
 # CONTENT ------------------------------------------------
 @manage_ioc_type_blueprint.route('/manage/ioc-types/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_ioc_types(caseid):
     lstatus = get_ioc_types_list()
 
@@ -51,7 +51,7 @@ def list_ioc_types(caseid):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/<int:cur_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_ioc_type(cur_id, caseid):
 
     ioc_type = IocType.query.filter(IocType.type_id == cur_id).first()
@@ -93,7 +93,7 @@ def add_ioc_modal(caseid, url_redir):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def add_ioc_type_api(caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -115,7 +115,7 @@ def add_ioc_type_api(caseid):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def remove_ioc_type(cur_id, caseid):
 
     type_id = IocType.query.filter(
@@ -138,7 +138,7 @@ def remove_ioc_type(cur_id, caseid):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def update_ioc(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -164,7 +164,7 @@ def update_ioc(cur_id, caseid):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def search_ioc_type(caseid):
     """Searches for IOC types in the database.
 

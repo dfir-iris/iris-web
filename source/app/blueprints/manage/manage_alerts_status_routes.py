@@ -20,7 +20,7 @@ from flask import Blueprint, Response, request
 from app.datamgmt.alerts.alerts_db import get_alert_status_list, get_alert_status_by_id, search_alert_status_by_name, \
     get_alert_resolution_by_id, get_alert_resolution_list, search_alert_resolution_by_name
 from app.schema.marshables import AlertStatusSchema, AlertResolutionSchema
-from app.util import ac_api_requires, response_error
+from app.util import ac_api_requires_deprecated, response_error
 from app.util import response_success
 
 manage_alerts_status_blueprint = Blueprint('manage_alerts_status',
@@ -30,7 +30,7 @@ manage_alerts_status_blueprint = Blueprint('manage_alerts_status',
 
 # CONTENT ------------------------------------------------
 @manage_alerts_status_blueprint.route('/manage/alert-status/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_alert_status(caseid: int) -> Response:
     """
     Get the list of alert status
@@ -48,7 +48,7 @@ def list_alert_status(caseid: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-status/<int:classification_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_case_alert_status(classification_id: int, caseid: int) -> Response:
     """
     Get the alert status
@@ -64,7 +64,7 @@ def get_case_alert_status(classification_id: int, caseid: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-status/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def search_alert_status(caseid):
     if not request.is_json:
         return response_error("Invalid request")
@@ -86,7 +86,7 @@ def search_alert_status(caseid):
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_alert_resolution(caseid: int) -> Response:
     """
     Get the list of alert resolution
@@ -104,7 +104,7 @@ def list_alert_resolution(caseid: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/<int:resolution_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_case_alert_resolution(resolution_id: int, caseid: int) -> Response:
     """
     Get the alert resolution
@@ -120,7 +120,7 @@ def get_case_alert_resolution(resolution_id: int, caseid: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def search_alert_resolution(caseid):
     if not request.is_json:
         return response_error("Invalid request")

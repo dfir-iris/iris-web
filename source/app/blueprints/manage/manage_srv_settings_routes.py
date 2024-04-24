@@ -39,7 +39,7 @@ from app.iris_engine.updater.updater import setup_periodic_update_checks
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import ServerSettingsSchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
@@ -62,7 +62,7 @@ def manage_update(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/server/backups/make-db', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_make_db_backup(caseid):
 
     has_error, logs = backup_iris_db()
@@ -111,7 +111,7 @@ def manage_settings(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/settings/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_update_settings(caseid):
     if not request.is_json:
         return response_error('Invalid request')

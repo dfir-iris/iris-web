@@ -28,7 +28,7 @@ from app.forms import CaseClassificationForm, EvidenceTypeForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseClassificationSchema, EvidenceTypeSchema
-from app.util import ac_api_requires, response_error, ac_requires
+from app.util import ac_api_requires_deprecated, response_error, ac_requires
 from app.util import response_success
 
 manage_evidence_types_blueprint = Blueprint('manage_evidence_types',
@@ -38,7 +38,7 @@ manage_evidence_types_blueprint = Blueprint('manage_evidence_types',
 
 # CONTENT ------------------------------------------------
 @manage_evidence_types_blueprint.route('/manage/evidence-types/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_evidence_types(caseid: int) -> Response:
     """Get the list of evidence types
 
@@ -55,7 +55,7 @@ def list_evidence_types(caseid: int) -> Response:
 
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/<int:evidence_type_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_evidence_type(evidence_type_id: int, caseid: int) -> Response:
     """Get an evidence type
 
@@ -107,7 +107,7 @@ def update_evidence_type_modal(evidence_type_id: int, caseid: int, url_redir: bo
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/update/<int:evidence_type_id>',
                                        methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def update_case_classification(evidence_type_id: int, caseid: int) -> Response:
     """Update an evidence type
 
@@ -163,7 +163,7 @@ def add_evidence_type_modal(caseid: int, url_redir: bool) -> Union[str, Response
 
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def add_evidence_type(caseid: int) -> Response:
     """Add an evidence type
 
@@ -197,7 +197,7 @@ def add_evidence_type(caseid: int) -> Response:
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/delete/<int:evidence_type_id>',
                                        methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def delete_evidence_type(evidence_type_id: int, caseid: int) -> Response:
     """Delete an evidence type
 
@@ -223,7 +223,7 @@ def delete_evidence_type(evidence_type_id: int, caseid: int) -> Response:
 
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def search_evidence_type(caseid):
     if not request.is_json:
         return response_error("Invalid request")

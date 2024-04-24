@@ -35,7 +35,7 @@ from app.models.authorization import Permissions
 from app.models.models import AssetsType
 from app.models.models import CaseAssets
 from app.schema.marshables import AssetTypeSchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
@@ -46,7 +46,7 @@ manage_assets_type_blueprint = Blueprint('manage_assets_type',
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/list')
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_assets(caseid):
     # Get all assets
     assets = AssetsType.query.with_entities(
@@ -70,7 +70,7 @@ def list_assets(caseid):
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def view_asset_api(cur_id, caseid):
     # Get all assets
     asset_type = AssetsType.query.with_entities(
@@ -110,7 +110,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def view_assets(cur_id, caseid):
     asset_type = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset_type:
@@ -151,7 +151,7 @@ def add_assets_modal(caseid, url_redir):
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def add_assets(caseid):
 
     asset_schema = AssetTypeSchema()
@@ -182,7 +182,7 @@ def add_assets(caseid):
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def delete_assets(cur_id, caseid):
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset:
@@ -213,7 +213,7 @@ def delete_assets(cur_id, caseid):
 
 
 @manage_assets_type_blueprint.route('/manage/asset-types/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def search_assets_type(caseid):
     """Searches for assets types in the database.
 

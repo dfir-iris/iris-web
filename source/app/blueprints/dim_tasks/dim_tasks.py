@@ -46,7 +46,7 @@ from app.models.alerts import Alert
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.util import ac_api_case_requires
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_case_requires
 from app.util import ac_requires
 from app.util import response_error
@@ -75,7 +75,7 @@ def dim_index(caseid: int, url_redir):
 
 
 @dim_tasks_blueprint.route('/dim/hooks/options/<hook_type>/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_dim_hook_options_ioc(hook_type, caseid):
     mods_options = (IrisModuleHook.query.with_entities(
         IrisModuleHook.manual_hook_ui_name,
@@ -201,7 +201,7 @@ def dim_hooks_call(caseid):
 
 
 @dim_tasks_blueprint.route('/dim/tasks/list/<int:count>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_dim_tasks(count, caseid):
     tasks = CeleryTaskMeta.query.filter(
         ~ CeleryTaskMeta.name.like('app.iris_engine.updater.updater.%')

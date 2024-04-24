@@ -25,7 +25,7 @@ from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.access_control.utils import ac_trace_effective_user_permissions
 from app.iris_engine.access_control.utils import ac_trace_user_effective_cases_access_2
 from app.models.authorization import Permissions
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_requires
 from app.util import response_success
 
@@ -48,7 +48,7 @@ def manage_ac_index(caseid, url_redir):
 
 
 @manage_ac_blueprint.route('/manage/access-control/recompute-effective-users-ac', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_ac_compute_effective_all_ac(caseid):
 
     ac_recompute_all_users_effective_ac()
@@ -57,7 +57,7 @@ def manage_ac_compute_effective_all_ac(caseid):
 
 
 @manage_ac_blueprint.route('/manage/access-control/recompute-effective-user-ac/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_ac_compute_effective_ac(cur_id, caseid):
 
     ac_recompute_effective_ac(cur_id)
@@ -66,7 +66,7 @@ def manage_ac_compute_effective_ac(cur_id, caseid):
 
 
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_ac_audit_user(cur_id, caseid):
     user_audit = {
         'access_audit': ac_trace_user_effective_cases_access_2(cur_id),
@@ -77,7 +77,7 @@ def manage_ac_audit_user(cur_id, caseid):
 
 
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>/modal', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_ac_audit_user_modal(cur_id, caseid):
     access_audit = ac_trace_user_effective_cases_access_2(cur_id)
     permissions_audit = ac_trace_effective_user_permissions(cur_id)

@@ -27,7 +27,7 @@ from app.forms import CaseClassificationForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseClassificationSchema
-from app.util import ac_api_requires, response_error, ac_requires
+from app.util import ac_api_requires_deprecated, response_error, ac_requires
 from app.util import response_success
 
 manage_case_classification_blueprint = Blueprint('manage_case_classifications',
@@ -37,7 +37,7 @@ manage_case_classification_blueprint = Blueprint('manage_case_classifications',
 
 # CONTENT ------------------------------------------------
 @manage_case_classification_blueprint.route('/manage/case-classifications/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_case_classifications(caseid: int) -> Response:
     """Get the list of case classifications
 
@@ -54,7 +54,7 @@ def list_case_classifications(caseid: int) -> Response:
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/<int:classification_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_case_classification(classification_id: int, caseid: int) -> Response:
     """Get a case classification
 
@@ -107,7 +107,7 @@ def update_case_classification_modal(classification_id: int, caseid: int, url_re
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/update/<int:classification_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def update_case_classification(classification_id: int, caseid: int) -> Response:
     """Update a case classification
 
@@ -163,7 +163,7 @@ def add_case_classification_modal(caseid: int, url_redir: bool) -> Union[str, Re
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def add_case_classification(caseid: int) -> Response:
     """Add a case classification
 
@@ -197,7 +197,7 @@ def add_case_classification(caseid: int) -> Response:
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/delete/<int:classification_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def delete_case_classification(classification_id: int, caseid: int) -> Response:
     """Delete a case classification
 
@@ -220,7 +220,7 @@ def delete_case_classification(classification_id: int, caseid: int) -> Response:
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def search_alert_status(caseid):
     if not request.is_json:
         return response_error("Invalid request")

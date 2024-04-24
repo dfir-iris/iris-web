@@ -46,7 +46,7 @@ from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
@@ -64,7 +64,7 @@ log = app.logger
 
 
 @manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_index(caseid):
     groups = get_groups_list_hr_perms()
 
@@ -104,7 +104,7 @@ def manage_groups_add_modal(caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_add(caseid):
 
     if not request.is_json:
@@ -133,7 +133,7 @@ def manage_groups_add(caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_update(cur_id, caseid):
 
     if not request.is_json:
@@ -174,7 +174,7 @@ def manage_groups_update(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_delete(cur_id, caseid):
 
     group = get_group(cur_id)
@@ -193,7 +193,7 @@ def manage_groups_delete(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_view(cur_id, caseid):
 
     group = get_group_details(cur_id)
@@ -220,7 +220,7 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_members_update(cur_id, caseid):
 
     group = get_group_with_members(cur_id)
@@ -247,7 +247,7 @@ def manage_groups_members_update(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_members_delete(cur_id, cur_id_2, caseid):
 
     group = get_group_with_members(cur_id)
@@ -298,7 +298,7 @@ def manage_groups_cac_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_cac_add_case(cur_id, caseid):
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
@@ -344,7 +344,7 @@ def manage_groups_cac_add_case(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_groups_cac_delete_case(cur_id, caseid):
 
     group = get_group_with_members(cur_id)

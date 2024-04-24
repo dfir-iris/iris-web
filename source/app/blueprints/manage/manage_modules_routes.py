@@ -46,7 +46,7 @@ from app.iris_engine.module_handler.module_handler import iris_update_hooks
 from app.iris_engine.module_handler.module_handler import register_module
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
@@ -89,7 +89,7 @@ def manage_modules_index(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def manage_modules_list(caseid):
     output = iris_modules_list()
 
@@ -97,7 +97,7 @@ def manage_modules_list(caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def add_module(caseid):
     if request.json is None:
         return response_error('Invalid request')
@@ -165,7 +165,7 @@ def getmodule_param(param_name, caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/set-parameter/<param_name>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def update_module_param(param_name, caseid):
 
     if request.json is None:
@@ -212,7 +212,7 @@ def view_module(mod_id, caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def enable_module(mod_id, caseid):
 
     module_name = iris_module_name_from_id(mod_id)
@@ -233,7 +233,7 @@ def enable_module(mod_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/disable/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def disable_module(module_id, caseid):
     if iris_module_disable_by_id(module_id):
 
@@ -245,7 +245,7 @@ def disable_module(module_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/remove/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def view_delete_module(module_id, caseid):
     try:
 
@@ -260,7 +260,7 @@ def view_delete_module(module_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/export-config/<int:module_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def export_mod_config(module_id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(module_id)
@@ -275,7 +275,7 @@ def export_mod_config(module_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/import-config/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def import_mod_config(module_id, caseid):
 
     mod_config, mod_name, _ = get_module_config_from_id(module_id)
@@ -308,7 +308,7 @@ def import_mod_config(module_id, caseid):
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def view_modules_hook(caseid):
     output = module_list_hooks_view()
     data = [item._asdict() for item in output]

@@ -19,7 +19,7 @@
 from flask import Blueprint, jsonify, render_template
 
 from app import app
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import response_success
 
 api_blueprint = Blueprint(
@@ -31,13 +31,13 @@ api_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @api_blueprint.route('/api/ping', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def api_ping(caseid):
     return response_success("pong")
 
 
 @api_blueprint.route('/api/versions', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def api_version(caseid):
     versions = {
         "iris_current": app.config.get('IRIS_VERSION'),

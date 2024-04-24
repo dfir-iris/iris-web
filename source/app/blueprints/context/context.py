@@ -30,7 +30,7 @@ from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import not_authenticated_redirection_url
 from app.util import response_success
 
@@ -80,7 +80,7 @@ def has_updates():
 
 
 @ctx_blueprint.route('/context/search-cases', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def cases_context_search(caseid):
     search = request.args.get('q')
 

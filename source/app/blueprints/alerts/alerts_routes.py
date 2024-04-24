@@ -39,7 +39,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema, CaseSchema, CommentSchema, CaseAssetsSchema, IocSchema
-from app.util import ac_api_requires, response_error, add_obj_history_entry, ac_requires
+from app.util import ac_api_requires_deprecated, response_error, add_obj_history_entry, ac_requires
 from app.util import response_success
 
 alerts_blueprint = Blueprint(
@@ -51,7 +51,7 @@ alerts_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @alerts_blueprint.route('/alerts/filter', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_read, no_cid_required=True)
 def alerts_list_route(caseid) -> Response:
     """
     Get a list of alerts from the database
@@ -147,7 +147,7 @@ def alerts_list_route(caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/add', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alerts_add_route(caseid) -> Response:
     """
     Add a new alert to the database
@@ -219,7 +219,7 @@ def alerts_add_route(caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_read, no_cid_required=True)
 def alerts_get_route(caseid, alert_id) -> Response:
     """
     Get an alert from the database
@@ -254,7 +254,7 @@ def alerts_get_route(caseid, alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/similarities/<int:alert_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_read, no_cid_required=True)
 def alerts_similarities_route(caseid, alert_id) -> Response:
     """
     Get an alert and similarities from the database
@@ -299,7 +299,7 @@ def alerts_similarities_route(caseid, alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/update/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alerts_update_route(alert_id, caseid) -> Response:
     """
     Update an alert in the database
@@ -385,7 +385,7 @@ def alerts_update_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/update', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alerts_batch_update_route(caseid: int) -> Response:
     """
     Update multiple alerts in the database
@@ -452,7 +452,7 @@ def alerts_batch_update_route(caseid: int) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/delete', methods=['POST'])
-@ac_api_requires(Permissions.alerts_delete, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_delete, no_cid_required=True)
 def alerts_batch_delete_route(caseid: int) -> Response:
     """
     Delete multiple alerts from the database
@@ -497,7 +497,7 @@ def alerts_batch_delete_route(caseid: int) -> Response:
 
 
 @alerts_blueprint.route('/alerts/delete/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_delete, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_delete, no_cid_required=True)
 def alerts_delete_route(alert_id, caseid) -> Response:
     """
     Delete an alert from the database
@@ -540,7 +540,7 @@ def alerts_delete_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/escalate/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alerts_escalate_route(alert_id, caseid) -> Response:
     """
     Escalate an alert
@@ -611,7 +611,7 @@ def alerts_escalate_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/merge/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alerts_merge_route(alert_id, caseid) -> Response:
     """
     Merge an alert into a case
@@ -679,7 +679,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/unmerge/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alerts_unmerge_route(alert_id, caseid) -> Response:
     """
     Unmerge an alert from a case
@@ -735,7 +735,7 @@ def alerts_unmerge_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/merge', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alerts_batch_merge_route(caseid) -> Response:
     """
     Merge multiple alerts into a case
@@ -814,7 +814,7 @@ def alerts_batch_merge_route(caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/escalate', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alerts_batch_escalate_route(caseid) -> Response:
     """
     Escalate multiple alerts into a case
@@ -938,7 +938,7 @@ def alert_comment_modal(cur_id, caseid, url_redir):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/list', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_read, no_cid_required=True)
 def alert_comments_get(alert_id, caseid):
     """
     Get the comments for an alert
@@ -966,7 +966,7 @@ def alert_comments_get(alert_id, caseid):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/delete', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alert_comment_delete(alert_id, com_id, caseid):
     """
     Delete a comment for an alert
@@ -999,7 +999,7 @@ def alert_comment_delete(alert_id, com_id, caseid):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_read, no_cid_required=True)
 def alert_comment_get(alert_id, com_id, caseid):
     """
     Get a comment for an alert
@@ -1028,7 +1028,7 @@ def alert_comment_get(alert_id, com_id, caseid):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/edit', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def alert_comment_edit(alert_id, com_id, caseid):
     """
     Edit a comment for an alert
@@ -1052,7 +1052,7 @@ def alert_comment_edit(alert_id, com_id, caseid):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/add', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.alerts_write, no_cid_required=True)
 def case_comment_add(alert_id, caseid):
     """
     Add a comment to an alert

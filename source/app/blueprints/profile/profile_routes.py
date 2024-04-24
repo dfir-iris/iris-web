@@ -39,7 +39,7 @@ from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema, BasicUserSchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_requires
 from app.util import endpoint_deprecated
 from app.util import response_error
@@ -61,7 +61,7 @@ def user_settings(caseid, url_redir):
 
 
 @profile_blueprint.route('/user/token/renew', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def user_renew_api(caseid):
 
     user = get_user(current_user.id)
@@ -79,7 +79,7 @@ def user_is_admin(caseid):
 
 
 @profile_blueprint.route('/user/has-permission', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def user_has_permission(caseid):
 
     req_js = request.json
@@ -116,7 +116,7 @@ def update_pwd_modal(caseid, url_redir):
 
 
 @profile_blueprint.route('/user/update', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def update_user_view(caseid):
     try:
         user = get_user(current_user.id)
@@ -147,7 +147,7 @@ def update_user_view(caseid):
 
 
 @profile_blueprint.route('/user/theme/set/<string:theme>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def profile_set_theme(theme, caseid):
     if theme not in ['dark', 'light']:
         return response_error('Invalid data')
@@ -163,7 +163,7 @@ def profile_set_theme(theme, caseid):
 
 
 @profile_blueprint.route('/user/deletion-prompt/set/<string:val>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def profile_set_deletion_prompt(val, caseid):
     if val not in ['true', 'false']:
         return response_error('Invalid data')
@@ -179,7 +179,7 @@ def profile_set_deletion_prompt(val, caseid):
 
 
 @profile_blueprint.route('/user/mini-sidebar/set/<string:val>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def profile_set_minisidebar(val, caseid):
     if val not in ['true', 'false']:
         return response_error('Invalid data')
@@ -195,7 +195,7 @@ def profile_set_minisidebar(val, caseid):
 
 
 @profile_blueprint.route('/user/refresh-permissions', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def profile_refresh_permissions_and_ac(caseid):
 
     user = get_user(current_user.id)
@@ -209,7 +209,7 @@ def profile_refresh_permissions_and_ac(caseid):
 
 
 @profile_blueprint.route('/user/whoami', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def profile_whoami(caseid):
     """
     Returns the current user's profile

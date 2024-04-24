@@ -52,7 +52,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
-from app.util import ac_api_requires, ac_api_requires_client_access, ac_requires_client_access
+from app.util import ac_api_requires_deprecated, ac_api_requires_client_access, ac_requires_client_access
 from app.util import ac_requires
 from app.util import page_not_found
 from app.util import response_error
@@ -79,7 +79,7 @@ def manage_customers(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/list')
-@ac_api_requires(Permissions.customers_read, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_read, no_cid_required=True)
 def list_customers(caseid):
     user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
     client_list = get_client_list(current_user_id=current_user.id,
@@ -89,7 +89,7 @@ def list_customers(caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>', methods=['GET'])
-@ac_api_requires(Permissions.customers_read, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_read, no_cid_required=True)
 @ac_api_requires_client_access()
 def view_customer(client_id, caseid):
 
@@ -153,7 +153,7 @@ def customer_edit_contact_modal(client_id, contact_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/contacts/<int:contact_id>/update', methods=['POST'])
-@ac_api_requires(Permissions.customers_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_write, no_cid_required=True)
 @ac_api_requires_client_access()
 def customer_update_contact(client_id, contact_id, caseid):
 
@@ -182,7 +182,7 @@ def customer_update_contact(client_id, contact_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/contacts/add', methods=['POST'])
-@ac_api_requires(Permissions.customers_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_write, no_cid_required=True)
 @ac_api_requires_client_access()
 def customer_add_contact(client_id, caseid):
 
@@ -211,7 +211,7 @@ def customer_add_contact(client_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/cases', methods=['GET'])
-@ac_api_requires(Permissions.customers_read, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_read, no_cid_required=True)
 @ac_api_requires_client_access()
 def get_customer_case_stats(client_id, caseid):
 
@@ -315,7 +315,7 @@ def view_customer_modal(client_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:client_id>', methods=['POST'])
-@ac_api_requires(Permissions.customers_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_write, no_cid_required=True)
 @ac_api_requires_client_access()
 def view_customers(client_id, caseid):
     if not request.is_json:
@@ -350,7 +350,7 @@ def add_customers_modal(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/add', methods=['POST'])
-@ac_api_requires(Permissions.customers_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_write, no_cid_required=True)
 @ac_api_requires_client_access()
 def add_customers(caseid):
     if not request.is_json:
@@ -372,7 +372,7 @@ def add_customers(caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/delete/<int:client_id>', methods=['POST'])
-@ac_api_requires(Permissions.customers_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_write, no_cid_required=True)
 @ac_api_requires_client_access()
 def delete_customers(client_id, caseid):
     try:
@@ -394,7 +394,7 @@ def delete_customers(client_id, caseid):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/contacts/<int:contact_id>/delete', methods=['POST'])
-@ac_api_requires(Permissions.customers_write, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.customers_write, no_cid_required=True)
 @ac_api_requires_client_access()
 def delete_contact_route(client_id, contact_id, caseid):
     try:

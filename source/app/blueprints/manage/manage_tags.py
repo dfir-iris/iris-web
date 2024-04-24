@@ -25,7 +25,7 @@ from werkzeug import Response
 from app import app
 from app.datamgmt.manage.manage_tags_db import get_filtered_tags
 from app.schema.marshables import TagsSchema
-from app.util import ac_api_requires, AlchemyEncoder
+from app.util import ac_api_requires_deprecated, AlchemyEncoder
 from app.util import response_success
 
 manage_tags_blueprint = Blueprint('manage_tags',
@@ -34,7 +34,7 @@ manage_tags_blueprint = Blueprint('manage_tags',
 
 
 @manage_tags_blueprint.route('/manage/tags/filter', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def manage_tags_filter(caseid) -> Response:
     """ Returns a list of tags, filtered by the given parameters.
 
@@ -77,7 +77,7 @@ def manage_tags_filter(caseid) -> Response:
 
 
 @manage_tags_blueprint.route('/manage/tags/suggest', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def manage_tags_suggest(caseid) -> Response:
     tag_title = request.args.get('term', None, type=str)
     filtered_tags = get_filtered_tags(tag_title=tag_title,

@@ -24,7 +24,7 @@ from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
 from app.datamgmt.overview.overview_db import get_overview_db
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_requires
 from app.util import response_success
 
@@ -50,7 +50,7 @@ def get_overview(caseid, url_redir):
 
 
 @overview_blueprint.route('/overview/filter', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_overview_filter(caseid):
     """
     Return an overview of the cases

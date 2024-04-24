@@ -72,7 +72,7 @@ from app.models.authorization import Permissions
 from app.models.models import Client, ReviewStatusList
 from app.schema.marshables import CaseSchema, CaseDetailsSchema, CaseAssetsSchema
 from app.util import ac_api_case_requires, add_obj_history_entry
-from app.util import ac_api_requires
+from app.util import ac_api_requires_deprecated
 from app.util import ac_api_return_access_denied
 from app.util import ac_case_requires
 from app.util import ac_requires
@@ -85,7 +85,7 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 @manage_assets_blueprint.route('/manage/assets/filter', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def manage_assets_filter(caseid) -> Response:
     """ Returns a list of assets, filtered by the given parameters.
     """

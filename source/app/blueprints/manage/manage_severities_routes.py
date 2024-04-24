@@ -19,7 +19,7 @@ from flask import Blueprint, Response, request
 
 from app.datamgmt.manage.manage_common import get_severity_by_id, get_severities_list, search_severity_by_name
 from app.schema.marshables import SeveritySchema
-from app.util import ac_api_requires, response_error
+from app.util import ac_api_requires_deprecated, response_error
 from app.util import response_success
 
 manage_severities_blueprint = Blueprint('manage_severities',
@@ -29,7 +29,7 @@ manage_severities_blueprint = Blueprint('manage_severities',
 
 # CONTENT ------------------------------------------------
 @manage_severities_blueprint.route('/manage/severities/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_severities(caseid: int) -> Response:
     """
     Get the list of severities
@@ -47,7 +47,7 @@ def list_severities(caseid: int) -> Response:
 
 
 @manage_severities_blueprint.route('/manage/severities/<int:severity_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_case_alert_status(severity_id: int, caseid: int) -> Response:
     """
     Get the alert status
@@ -63,7 +63,7 @@ def get_case_alert_status(severity_id: int, caseid: int) -> Response:
 
 
 @manage_severities_blueprint.route('/manage/severities/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def search_analysis_status(caseid):
     if not request.is_json:
         return response_error("Invalid request")

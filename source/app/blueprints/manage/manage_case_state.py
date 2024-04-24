@@ -27,7 +27,7 @@ from app.forms import CaseStateForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseStateSchema
-from app.util import ac_api_requires, response_error, ac_requires
+from app.util import ac_api_requires_deprecated, response_error, ac_requires
 from app.util import response_success
 
 manage_case_state_blueprint = Blueprint('manage_case_state',
@@ -37,7 +37,7 @@ manage_case_state_blueprint = Blueprint('manage_case_state',
 
 # CONTENT ------------------------------------------------
 @manage_case_state_blueprint.route('/manage/case-states/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def list_case_state(caseid: int) -> Response:
     """Get the list of case state
 
@@ -54,7 +54,7 @@ def list_case_state(caseid: int) -> Response:
 
 
 @manage_case_state_blueprint.route('/manage/case-states/<int:state_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
+@ac_api_requires_deprecated(no_cid_required=True)
 def get_case_state(state_id: int, caseid: int) -> Response:
     """Get a case state
 
@@ -106,7 +106,7 @@ def update_case_state_modal(state_id: int, caseid: int, url_redir: bool) -> Unio
 
 @manage_case_state_blueprint.route('/manage/case-states/update/<int:state_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def update_case_state(state_id: int, caseid: int) -> Response:
     """Update a case state
 
@@ -165,7 +165,7 @@ def add_case_state_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
 
 
 @manage_case_state_blueprint.route('/manage/case-states/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def add_case_state(caseid: int) -> Response:
     """Add a case state
 
@@ -199,7 +199,7 @@ def add_case_state(caseid: int) -> Response:
 
 @manage_case_state_blueprint.route('/manage/case-states/delete/<int:state_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_api_requires_deprecated(Permissions.server_administrator, no_cid_required=True)
 def delete_case_state(state_id: int, caseid: int) -> Response:
     """Delete a case state
 
