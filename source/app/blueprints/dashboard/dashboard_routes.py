@@ -82,7 +82,7 @@ def logout():
 
 
 @dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def get_cases_charts(caseid):
     """
     Get case charts
@@ -146,7 +146,7 @@ def index(caseid, url_redir):
 
 
 @dashboard_blueprint.route('/global/tasks/list', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def get_gtasks(caseid):
 
     tasks_list = list_global_tasks()
@@ -165,7 +165,7 @@ def get_gtasks(caseid):
 
 
 @dashboard_blueprint.route('/user/cases/list', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def list_own_cases(caseid):
 
     cases = list_user_cases(
@@ -176,7 +176,7 @@ def list_own_cases(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def view_gtask(cur_id, caseid):
 
     task = get_global_task(task_id=cur_id)
@@ -187,7 +187,7 @@ def view_gtask(cur_id, caseid):
 
 
 @dashboard_blueprint.route('/user/tasks/list', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def get_utasks(caseid):
 
     ct = list_user_tasks()
@@ -206,7 +206,7 @@ def get_utasks(caseid):
 
 
 @dashboard_blueprint.route('/user/reviews/list', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def get_reviews(caseid):
 
     ct = list_user_reviews()
@@ -255,7 +255,7 @@ def utask_statusupdate(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/add/modal', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def add_gtask_modal(caseid):
     task = GlobalTasks()
 
@@ -302,7 +302,7 @@ def add_gtask(caseid):
 
 
 @dashboard_blueprint.route('/global/tasks/update/<int:cur_id>/modal', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(no_cid_required=True)
 def edit_gtask_modal(cur_id, caseid):
     form = CaseGlobalTaskForm()
     task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
