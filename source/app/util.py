@@ -682,6 +682,29 @@ def ac_requires_client_access():
     return inner_wrap
 
 
+def _decorate_with_requires_case_identifier(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        try:
+            redir, caseid, _ = get_case_access(request, [], from_api=True)
+        except Exception as e:
+            log.exception(e)
+            return response_error('Invalid data. Check server logs', status=500)
+
+        if not caseid and not redir:
+            return response_error('Invalid case ID', status=404)
+
+        kwargs.update({'caseid': caseid})
+
+        return f(*args, **kwargs)
+
+    return wrap
+
+
+def ac_requires_case_identifier():
+    return _decorate_with_requires_case_identifier
+
+
 def ac_api_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
@@ -698,23 +721,17 @@ def ac_api_requires(*permissions, no_cid_required=False):
             if not is_user_authenticated(request):
                 return response_error("Authentication required", status=401)
 
-            try:
-                redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
-            except Exception as e:
-                log.exception(e)
-                return response_error("Invalid data. Check server logs", status=500)
-
-            if not caseid and not redir and not no_cid_required:
-                return response_error("Invalid case ID", status=404)
-
-            kwargs.update({"caseid": caseid})
-
             if 'permissions' not in session:
                 session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
             if not _user_has_required_permissions(permissions):
                 return response_error('Permission denied', status=403)
 
+            if not no_cid_required:
+                require_case_identifier_then_f = _decorate_with_requires_case_identifier(f)
+                return require_case_identifier_then_f(*args, **kwargs)
+
+            kwargs.update({'caseid': None})
             return f(*args, **kwargs)
         return wrap
     return inner_wrap
