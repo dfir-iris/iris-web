@@ -1586,9 +1586,12 @@ async function editAlert(alert_id, close=false) {
           alert_note: alert_note,
           alert_tags: alert_tags,
           alert_resolution_status_id: getAlertResolutionId($("input[type='radio'][name='resolutionStatus']:checked").val()),
-          alert_classification_id: $('#editAlertClassification').val(),
-          alert_severity_id: $('#editAlertSeverity').val()
+          alert_severity_id: $('#editAlertSeverity').val(),
         };
+
+        let alert_classification_id = $('#editAlertClassification').val();
+        if (alert_classification_id)
+            data['alert_classification_id'] = alert_classification_id;
 
         if (close) {
             data['alert_status_id'] = getAlertStatusId('Closed');
