@@ -319,7 +319,7 @@ async function note_detail(id) {
             last_applied_change = null ;
             just_cleared_buffer = false ;
 
-            load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
+            load_menu_mod_options_modal(id, 'note', $("#note_quick_actions"));
 
             collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
 
