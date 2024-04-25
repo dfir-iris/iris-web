@@ -18,7 +18,7 @@ requests==2.31.0
 SQLAlchemy==2.0.24
 SQLAlchemy-ImageAttach==1.1.0
 SQLAlchemy-Utils==0.41.1
-urllib3==1.26.5
+urllib3==1.26.18
 Werkzeug==2.3.7
 WTForms==2.2.1
 flask-socketio==5.1.1
