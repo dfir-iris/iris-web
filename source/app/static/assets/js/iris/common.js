@@ -16,6 +16,7 @@ $.fn.serializeObject = function() {
 
 
 var jdata_menu_options = [];
+let current_cid = null;
 
 function clear_api_error() {
    $(".invalid-feedback").hide();
@@ -437,10 +438,13 @@ function updateURLParameter(url, param, paramVal) {
 }
 
 function get_caseid() {
-    queryString = window.location.search;
-    urlParams = new URLSearchParams(queryString);
+    if (current_cid === null) {
+        let queryString = window.location.search;
+        let urlParams = new URLSearchParams(queryString);
 
-    return urlParams.get('cid')
+        current_cid = urlParams.get('cid')
+    }
+    return current_cid
 }
 
 function is_redirect() {
@@ -651,7 +655,7 @@ function load_case_activity(){
             }
 
             entry =	`<li class="feed-item ${api_flag}" title='${sanitizeHTML(title)}'>
-                    <time class="date" datetime="${js_data[index].activity_date}">${js_data[index].activity_date}</time>
+                    <time class="date" datetime="${js_data[index].activity_date}">${formatTime(js_data[index].activity_date)}</time>
                     <span class="text">${sanitizeHTML(js_data[index].name)} - ${sanitizeHTML(js_data[index].activity_desc)}</span>
                     </li>`
             $('#case_activities').append(entry);
@@ -749,14 +753,14 @@ function load_menu_mod_options_modal(element_id, data_type, anchor) {
     .done(function (data){
         if(notify_auto_api(data, true)) {
             if (data.data != null) {
-                jsdata = data.data;
-                if (jsdata.length != 0) {
+                let jsdata = data.data;
+                if (jsdata.length !== 0 && anchor.children().length !== 0){
                     anchor.append('<div class="dropdown-divider"></div>');
                 }
 
                 for (option in jsdata) {
-                    opt = jsdata[option];
-                    menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
+                    let opt = jsdata[option];
+                    let menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
                                 `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
                     anchor.append(menu_opt);
                 }
@@ -993,7 +997,7 @@ function get_avatar_initials(name, small, onClickFunction, xsmall) {
         snum = initial[0][0].charCodeAt(0);
     }
 
-    const initials = initial.map(i => i[0].toUpperCase()).join('');
+    const initials = initial.map(i => i[0] ? i[0].toUpperCase(): '').join('');
     const avatarColor = get_avatar_color(snum);
 
     const avatarHTMLin = `<span class="avatar-title avatar-iris rounded-circle" style="background-color:${avatarColor}; cursor:pointer;">${initials}</span>`
@@ -1262,7 +1266,17 @@ function get_custom_attributes_fields() {
 }
 
 function update_time() {
-    $('#current_date').text((new Date()).toLocaleString().slice(0, 17));
+    $('#current_date').text((new Date()).toLocaleString());
+}
+
+function formatTime(in_, format) {
+    if (typeof(in_) === typeof(1)){
+        let date = new Date(Math.floor(in_) * 1000);
+        return date.toLocaleString(undefined, format);
+    } else if (typeof(in_) === typeof('')) {
+        let date = new Date(in_);
+        return date.toLocaleString(undefined, format);
+    }
 }
 
 function download_file(filename, contentType, data) {

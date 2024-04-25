@@ -188,7 +188,7 @@ def update_module_param(param_name, caseid):
 
         return response_success("Saved", logs)
 
-    return response_error('Malformed request', status=400)
+    return response_error('Malformed request')
 
 
 @manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>/modal', methods=['GET'])
@@ -208,7 +208,7 @@ def view_module(mod_id, caseid, url_redir):
         return render_template("modal_module_info.html", form=form, data=module,
                                config=config, is_configured=is_configured, missing_params=missing_params)
 
-    return response_error('Malformed request', status=400)
+    return response_error('Malformed request')
 
 
 @manage_modules_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['POST'])
@@ -217,7 +217,7 @@ def enable_module(mod_id, caseid):
 
     module_name = iris_module_name_from_id(mod_id)
     if module_name is None:
-        return response_error('Invalid module ID', status=400)
+        return response_error('Invalid module ID')
 
     if not iris_module_enable_by_id(mod_id):
         return response_error('Unable to enable module')

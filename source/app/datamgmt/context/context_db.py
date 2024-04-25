@@ -22,6 +22,7 @@ from app.models import Cases
 from app.models import Client
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import UserCaseEffectiveAccess
+from app.datamgmt.authorization import has_deny_all_access_level
 
 
 def ctx_get_user_cases(user_id, max_results: int = 100):
@@ -49,7 +50,7 @@ def ctx_get_user_cases(user_id, max_results: int = 100):
 
     results = []
     for ucea in uceas:
-        if ucea.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+        if has_deny_all_access_level(ucea):
             continue
 
         row = ucea._asdict()
@@ -102,7 +103,7 @@ def ctx_search_user_cases(search, user_id, max_results: int = 100):
 
     results = []
     for ucea in uceas:
-        if ucea.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+        if has_deny_all_access_level(ucea):
             continue
 
         row = ucea._asdict()

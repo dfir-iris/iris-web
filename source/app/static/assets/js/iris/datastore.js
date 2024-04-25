@@ -70,6 +70,7 @@ function build_ds_tree(data, tree_node) {
                         <div class="dropdown-menu" role="menu">
                                 <a href="#" class="dropdown-item" onclick="add_ds_folder('${node}');return false;"><small class="fa-solid fa-folder mr-2"></small>Add subfolder</a>
                                 <a href="#" class="dropdown-item" onclick="add_ds_file('${node}');return false;"><small class="fa-solid fa-file mr-2"></small>Add file</a>
+                                <a href="#" class="dropdown-item" onclick="add_ds_multi_files('${node}');return false;"><small class="fa-solid fa-file-circle-plus fa-box mr-2"></small>Add multiple files</a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item" onclick="move_ds_folder('${node}');return false;"><small class="fa fa-arrow-right-arrow-left mr-2"></small>Move</a>
                                 <a href="#" class="dropdown-item" onclick="rename_ds_folder('${node}', '${sanitizeHTML(data[node].name)}');return false;"><small class="fa-solid fa-pencil mr-2"></small>Rename</a>
@@ -227,7 +228,20 @@ function save_ds_mod_folder() {
 
 function add_ds_file(node) {
     node = node.replace('d-', '');
-    url = '/datastore/file/add/'+ node +'/modal' + case_param();
+    let url = '/datastore/file/add/'+ node +'/modal' + case_param();
+    $('#modal_ds_file_content').load(url, function (response, status, xhr) {
+        if (status !== "success") {
+             ajax_notify_error(xhr, url);
+             return false;
+        }
+
+        $('#modal_ds_file').modal("show");
+    });
+}
+
+function add_ds_multi_files(node) {
+    node = node.replace('d-', '');
+    let url = '/datastore/file/add/'+ node +'/multi-modal' + case_param();
     $('#modal_ds_file_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -264,9 +278,41 @@ function info_ds_file(node) {
     });
 }
 
+async function save_ds_multi_files(node, index_i) {
+    let formData = new FormData($('#form_new_ds_files')[0]);
+    let totalFiles = $('#input_upload_ds_files').prop('files').length;
+    let index = index_i === undefined ? 0 : index_i;
+    if (index >= totalFiles) {
+        window.swal.close();
+        $('#modal_ds_file').modal("hide");
+        return;
+    }
+    let file = $('#input_upload_ds_files').prop('files')[index];
+    formData.append('file_content', file);
+    formData.append('file_original_name', file.name);
+    let uri = '/datastore/file/add/' + node;
+    await post_request_data_api(uri, formData, true, function () {
+        window.swal({
+            title: `File ${file.name} is uploading. (${index}/${totalFiles} files)`,
+            text: "Please wait. This window will close automatically when the file is uploaded.",
+            icon: "/static/assets/img/loader.gif",
+            button: false,
+            allowOutsideClick: false
+        });
+    }).then((data) => {
+        notify_auto_api(data);
+        index += 1;
+        save_ds_multi_files(node, index);
+        load_datastore();
+    }).always((data) => {
+        window.swal.close();
+    });
+}
+
 function save_ds_file(node, file_id) {
     var formData = new FormData($('#form_new_ds_file')[0]);
     formData.append('file_content', $('#input_upload_ds_file').prop('files')[0]);
+    let uri = '';
 
     if (file_id === undefined) {
         uri = '/datastore/file/add/' + node;
@@ -530,10 +576,10 @@ function get_mk_link_ds_file(file_id, filename, file_icon, has_password) {
 
 
    if (has_password == 'false' && ['png', 'svg', 'jpeg', 'jpg', 'webp', 'bmp', 'gif'].includes(filename.split('.').pop())) {
-        mk_link = `![${filename}](${link} =40%x40%)`;
+        mk_link = `![\`${filename}\`](${link} =60%x40%)`;
     } else {
         file_icon = atob(file_icon);
-        mk_link = `[${file_icon} [DS] ${filename}](${link})`;
+        mk_link = `[${file_icon} [DS] \`${filename}\`](${link})`;
     }
 
    navigator.clipboard.writeText(mk_link).then(function() {

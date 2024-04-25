@@ -25,6 +25,7 @@ from app import db, app
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
+from app.datamgmt.authorization import has_deny_all_access_level
 from app.datamgmt.states import delete_case_states
 from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee, NoteDirectory
 from app.models import CaseEventCategory
@@ -142,7 +143,7 @@ def list_cases_dict(user_id):
 
     data = []
     for row in res:
-        if row.access_level & CaseAccessLevel.deny_all.value == CaseAccessLevel.deny_all.value:
+        if has_deny_all_access_level(row):
             continue
 
         row = row._asdict()
@@ -381,7 +382,8 @@ def delete_case(case_id):
     return True
 
 
-def get_filtered_cases(start_open_date: str = None,
+def get_filtered_cases(current_user_id,
+                       start_open_date: str = None,
                        end_open_date: str = None,
                        case_customer_id: int = None,
                        case_ids: list = None,
@@ -395,7 +397,6 @@ def get_filtered_cases(start_open_date: str = None,
                        case_soc_id: str = None,
                        per_page: int = None,
                        page: int = None,
-                       current_user_id = None,
                        search_value=None,
                        sort_by=None,
                        sort_dir='asc'

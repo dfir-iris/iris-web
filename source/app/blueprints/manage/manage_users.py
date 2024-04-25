@@ -168,7 +168,7 @@ def add_user(caseid):
         return response_error("Unable to create user for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
@@ -228,13 +228,13 @@ def manage_user_group_modal(cur_id, caseid, url_redir):
 def manage_user_group_(cur_id, caseid):
 
     if not request.is_json:
-        return response_error("Invalid request", status=400)
+        return response_error("Invalid request")
 
     if not request.json.get('groups_membership'):
-        return response_error("Invalid request", status=400)
+        return response_error("Invalid request")
 
     if type(request.json.get('groups_membership')) is not list:
-        return response_error("Expected list of groups ID", status=400)
+        return response_error("Expected list of groups ID")
 
     user = get_user_details(cur_id)
     if not user:
@@ -270,13 +270,13 @@ def manage_user_customers_modal(cur_id, caseid, url_redir):
 def manage_user_customers_(cur_id, caseid):
 
     if not request.is_json:
-        return response_error("Invalid request", status=400)
+        return response_error("Invalid request")
 
     if not request.json.get('customers_membership'):
-        return response_error("Invalid request", status=400)
+        return response_error("Invalid request")
 
     if type(request.json.get('customers_membership')) is not list:
-        return response_error("Expected list of customers ID", status=400)
+        return response_error("Expected list of customers ID")
 
     user = get_user_details(cur_id)
     if not user:
@@ -460,7 +460,7 @@ def update_user_api(cur_id, caseid):
         return response_error("Unable to update user for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])

@@ -612,10 +612,30 @@ def ac_get_fast_user_cases_access(user_id):
         UserCaseEffectiveAccess.case_id
     ).filter(and_(
         UserCaseEffectiveAccess.user_id == user_id,
-        UserCaseEffectiveAccess.access_level != CaseAccessLevel.full_access.deny_all.value
+        UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value
     )).all()
 
     return [e.case_id for e in ucea]
+
+
+def ac_get_user_case_counts(user_id):
+    query = UserCaseEffectiveAccess.query.filter(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value
+    )
+
+    ucea_count = query.count()
+    open_cases_count = query.join(Cases).filter(Cases.close_date == None).count()
+    owned_cases_count = query.join(
+        Cases, isouter=True
+    ).filter(
+        and_(
+            Cases.owner_id == user_id,
+            Cases.close_date == None
+        )
+    ).count()
+
+    return ucea_count, open_cases_count, owned_cases_count
 
 
 def ac_get_user_cases_access(user_id):

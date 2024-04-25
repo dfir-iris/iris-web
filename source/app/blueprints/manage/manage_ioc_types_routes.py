@@ -107,7 +107,7 @@ def add_ioc_type_api(caseid):
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     track_activity("Added ioc type {ioc_type_name}".format(ioc_type_name=ioct_sc.type_name), caseid=caseid, ctx_less=True)
     # Return the assets
@@ -158,7 +158,7 @@ def update_ioc(cur_id, caseid):
             return response_success("IOC type updated", ioct_sc)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated", data=ioc_type)
 

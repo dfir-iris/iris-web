@@ -38,6 +38,7 @@ from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
 from app.forms import CaseGlobalTaskForm
+from app.iris_engine.access_control.utils import ac_get_user_case_counts
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
@@ -130,17 +131,12 @@ def index(caseid, url_redir):
 
     msg = None
 
-    # Retrieve the dashboard data from multiple sources.
-    # Quite fast as it is only counts.
-    user_open_case = Cases.query.filter(
-        Cases.owner_id == current_user.id,
-        Cases.close_date == None
-    ).count()
+    acgucc = ac_get_user_case_counts(current_user.id)
 
     data = {
-        "user_open_count": user_open_case,
-        "cases_open_count": Cases.query.filter(Cases.close_date == None).count(),
-        "cases_count": Cases.query.with_entities(distinct(Cases.case_id)).count(),
+        "user_open_count": acgucc[2],
+        "cases_open_count": acgucc[1],
+        "cases_count": acgucc[0],
     }
 
     # Create the customer form to be able to quickly add a customer
@@ -284,7 +280,7 @@ def add_gtask(caseid):
         gtask = gtask_schema.load(request_data)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     gtask.task_userid_update = current_user.id
     gtask.task_open_date = datetime.utcnow()
@@ -297,7 +293,7 @@ def add_gtask(caseid):
         db.session.commit()
 
     except Exception as e:
-        return response_error(msg="Data error", data=e.__str__(), status=400)
+        return response_error(msg="Data error", data=e.__str__())
 
     gtask = call_modules_hook('on_postload_global_task_create', data=gtask, caseid=caseid)
     track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
@@ -333,7 +329,7 @@ def edit_gtask(cur_id, caseid):
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     if not task:
-        return response_error(msg="Data error", data="Invalid task ID", status=400)
+        return response_error(msg="Data error", data="Invalid task ID")
 
     try:
         gtask_schema = GlobalTasksSchema()
@@ -350,7 +346,7 @@ def edit_gtask(cur_id, caseid):
         gtask = call_modules_hook('on_postload_global_task_update', data=gtask, caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
 

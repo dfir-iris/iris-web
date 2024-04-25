@@ -12,6 +12,9 @@ let note_id = null;
 let last_ping = 0;
 let cid = null;
 let previousNoteTitle = null;
+let timer = null;
+let timeout = 5000;
+
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
     event.preventDefault();
@@ -296,6 +299,15 @@ async function note_detail(id) {
             previousNoteTitle = data.data.note_title;
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
                 .data('note_id', data.data.note_id);
+            let history_data = '';
+            for (let ent in data.data.modification_history) {
+                let entry = data.data.modification_history[ent];
+                let dateStr = formatTime(parseFloat(ent))
+                let i_t = $('<li></li>');
+                i_t.text(`${dateStr} - ${entry.user} ${entry.action}`);
+                history_data += i_t.prop('outerHTML');
+            }
+            $('#modalHistoryList').empty().append(history_data);
 
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
@@ -307,7 +319,7 @@ async function note_detail(id) {
             last_applied_change = null ;
             just_cleared_buffer = false ;
 
-            load_menu_mod_options_modal(id, 'note', $("#note_modal_quick_actions"));
+            load_menu_mod_options_modal(id, 'note', $("#note_quick_actions"));
 
             collaborator_socket.emit('ping-note', { 'channel': 'case-' + get_caseid() + '-notes', 'note_id': note_id });
 
@@ -322,6 +334,19 @@ async function note_detail(id) {
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
 
+            let ed_details = $('#editor_detail');
+            ed_details.keyup(function(){
+                if(timer) {
+                     clearTimeout(timer);
+                }
+                timer = setTimeout(save_note, timeout);
+            });
+            ed_details.off('paste');
+            ed_details.on('paste', (event) => {
+                event.preventDefault();
+                handle_ed_paste(event);
+            });
+
             setSharedLink(id);
 
             return true;
@@ -332,6 +357,45 @@ async function note_detail(id) {
 
     });
 }
+
+function handle_ed_paste(event) {
+    filename = null;
+    const { items } = event.originalEvent.clipboardData;
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i]; 
+
+      if (item.kind === 'string') {
+        item.getAsString(function (s){
+            filename = $.trim(s.replace(/\t|\n|\r/g, '')).substring(0, 40);
+        });
+      }
+
+      if (item.kind === 'file') {
+        const blob = item.getAsFile();
+		
+        if (blob !== null) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+				notify_success('The file is uploading in background. Don\'t leave the page');
+
+                if (filename === null) {
+					filename = random_filename(25);
+                }
+
+                upload_interactive_data(e.target.result, filename, function(data){
+                    url = data.data.file_url + case_param();
+                    event.preventDefault();
+                    note_editor.insertSnippet(`\n![${filename}](${url} =100%x40%)\n`);
+                });
+            };
+			reader.readAsDataURL(blob);
+        } else {
+            notify_error('Unsupported direct paste of this item. Use datastore to upload.');
+        }
+      }
+    }
+}
+
 
 function refresh_ppl_list() {
     $('#ppl_list_viewing').empty();
@@ -881,6 +945,15 @@ function createDirectoryListItem(directory, directoryMap) {
                     top: e.pageY
                 });
 
+                menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Copy link').on('click', function (e) {
+                    e.preventDefault();
+                    copy_object_link(note.id);
+                }));
+
+                menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Copy MD link').on('click', function (e) {
+                    e.preventDefault();
+                    copy_object_link_md('notes',note.id);
+                }));
 
                 menu.append($('<a></a>').addClass('dropdown-item').attr('href', '#').text('Move').on('click', function (e) {
                     e.preventDefault();
@@ -909,6 +982,46 @@ function createDirectoryListItem(directory, directoryMap) {
 }
 
 
+function handle_ed_paste(event) {
+    let filename = null;
+    const { items } = event.originalEvent.clipboardData;
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+
+      if (item.kind === 'string') {
+        item.getAsString(function (s){
+            filename = $.trim(s.replace(/\t|\n|\r/g, '')).substring(0, 40);
+        });
+      }
+
+      if (item.kind === 'file') {
+        const blob = item.getAsFile();
+
+        if (blob !== null) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                notify_success('The file is uploading in background. Don\'t leave the page');
+
+                if (filename === null) {
+                    filename = random_filename(25);
+                }
+
+                upload_interactive_data(e.target.result, filename, function(data){
+                    url = data.data.file_url + case_param();
+                    event.preventDefault();
+                    note_editor.insertSnippet(`\n![${filename}](${url} =100%x40%)\n`);
+                });
+
+            };
+            reader.readAsDataURL(blob);
+        } else {
+            notify_error('Unsupported direct paste of this item. Use datastore to upload.');
+        }
+      }
+    }
+}
+
+
 function note_interval_pinger() {
     if (new Date() - last_ping > 2000) {
         collaborator_socket.emit('ping-note',
@@ -918,6 +1031,7 @@ function note_interval_pinger() {
 }
 
 $(document).ready(function(){
+
     load_directories().then(
         function() {
             let shared_id = getSharedLink();

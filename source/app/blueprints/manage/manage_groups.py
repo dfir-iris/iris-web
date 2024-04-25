@@ -125,7 +125,7 @@ def manage_groups_add(caseid):
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     track_activity(message=f"added group {ags_c.group_name}", caseid=caseid, ctx_less=True)
 
@@ -168,7 +168,7 @@ def manage_groups_update(cur_id, caseid):
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_success('', data=ags.dump(ags_c))
 

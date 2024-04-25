@@ -509,6 +509,303 @@ function toggleSeeMore(element) {
     }
 }
 
+function buildEvent(event_data, compact, comments_map, tree, tesk, tmb, idx, reap, converter) {
+    let evt = event_data;
+    let dta =  evt.event_date.toString().split('T');
+    let tags = '';
+    let cats = '';
+    let tmb_d = '';
+    let style = '';
+    let asset = '';
+
+    if (evt.event_id in comments_map) {
+        nb_comments = comments_map[evt.event_id].length;
+    } else {
+        nb_comments = '';
+    }
+
+    if(evt.category_name && evt.category_name != 'Unspecified') {
+         if (!compact) {
+             tags += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
+         } else {
+             if (evt.category_name != 'Unspecified') {
+                 cats += `<span class="badge badge-light float-right ml-1 mt-1 mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
+             }
+         }
+    }
+
+    if (evt.iocs != null && evt.iocs.length > 0) {
+        for (let ioc in evt.iocs) {
+            let span_anchor = $('<span>');
+            span_anchor.addClass('badge badge-warning-event float-right ml-1 mt-2');
+            span_anchor.attr('data-toggle', 'popover');
+            span_anchor.attr('data-trigger', 'hover');
+            span_anchor.attr('style', 'cursor: pointer;');
+            span_anchor.attr('data-content', 'IOC - ' + evt.iocs[ioc].description);
+            span_anchor.attr('title', evt.iocs[ioc].name);
+            span_anchor.text(evt.iocs[ioc].name)
+            span_anchor.html('<i class="fa-solid fa-virus-covid mr-1"></i>' + span_anchor.html());
+            tags += span_anchor[0].outerHTML;
+        }
+    }
+
+    if (evt.event_tags != null && evt.event_tags.length > 0) {
+        sp_tag = evt.event_tags.split(',');
+        for (tag_i in sp_tag) {
+                tags += get_tag_from_data(sp_tag[tag_i], 'badge badge-light ml-1 float-right mt-2');
+            }
+    }
+
+    let entry = '';
+    let inverted = 'timeline';
+    let timeline_style = tree ? '-t' : '';
+
+    /* Do we have a border color to set ? */
+    if (tesk) {
+        style += "timeline-odd"+ timeline_style;
+        tesk = false;
+    } else {
+        style += "timeline-even" + timeline_style;
+        tesk = true;
+    }
+
+    let style_s = "";
+    if (evt.event_color != null) {
+            style_s = `style='border-left: 2px groove ${sanitizeHTML(evt.event_color)};'`;
+    }
+
+    if (!tree) {
+        inverted += '-inverted';
+    } else {
+        if (tesk) {
+            inverted += '-inverted';
+        }
+    }
+
+
+    /* For every assets linked to the event, build a link tag */
+    if (evt.assets != null) {
+        for (let ide in evt.assets) {
+            let cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
+            cpn = sanitizeHTML(cpn)
+            let span_anchor = $('<span>');
+            span_anchor.attr('data-toggle', 'popover');
+            span_anchor.attr('data-trigger', 'hover');
+            span_anchor.attr('style', 'cursor: pointer;');
+            span_anchor.attr('data-content', cpn);
+            span_anchor.attr('title', evt.assets[ide]["name"]);
+            span_anchor.text(evt.assets[ide]["name"]);
+
+            if (evt.assets[ide]["compromised"]) {
+                span_anchor.addClass('badge badge-warning-event float-right ml-1 mt-2');
+            } else {
+                span_anchor.addClass('badge badge-light float-right ml-1 mt-2');
+            }
+
+            asset += span_anchor[0].outerHTML;
+        }
+    }
+
+    let ori_date = '<span class="ml-3"></span>';
+    if (evt.event_date_wtz != evt.event_date) {
+        ori_date += `<i class="fas fa-info-circle mr-1" title="Locale date time ${evt.event_date_wtz}${evt.event_tz}"></i>`
+    }
+
+    if(evt.event_in_summary) {
+        ori_date += `<i class="fas fa-newspaper mr-1" title="Showed in summary"></i>`
+    }
+
+    if(evt.event_in_graph) {
+        ori_date += `<i class="fas fa-share-alt mr-1" title="Showed in graph"></i>`
+    }
+
+
+    let day = dta[0];
+    // Transform the date to the user's system format. day is in the format YYYY-MM-DD. We want our date in the user's host format, without the minutes and seconds.
+    // First parse the date to a Date object
+    let date = new Date(day);
+    // Then use the toLocaleDateString method to get the date in the user's host format
+    day = date.toLocaleDateString();
+
+    let hour = dta[1].split('.')[0];
+
+    let mtop_day = '';
+
+    if (!tmb.includes(day) && evt.parent_event_id == null) {
+        tmb.push(day);
+        tmb_d = `<li class="time-badge${timeline_style} badge badge-dark" id="time_${idx}"><small class="">${day}</small><br/></li>`;
+
+        idx += 1;
+        mtop_day = 'mt-4';
+    }
+
+    let title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
+    let raw_content = do_md_filter_xss(evt.event_content); // Raw markdown content
+    let formatted_content = converter.makeHtml(raw_content); // Convert markdown to HTML
+
+    const wordLimit = 30; // Define your word limit
+
+    if (!compact) {
+        let paragraphs = raw_content.split('\n\n');
+        let short_content, long_content;
+
+        if (paragraphs.join(' ').split(' ').length > wordLimit || paragraphs.length > 2) {
+            let temp_content = '';
+            let i = 0;
+            let wordCount = 0;
+
+            // Loop until the content length is more than wordLimit or paragraph count is more than 2
+            while(wordCount <= wordLimit && i < 2 && i < paragraphs.length){
+                let words = paragraphs[i].split(' ');
+                if (wordCount + words.length > wordLimit && wordCount != 0) {
+                    break;
+                }
+                temp_content += paragraphs[i] + '\n\n';
+                wordCount += words.length;
+                i++;
+            }
+
+            short_content = converter.makeHtml(temp_content); // Convert markdown to HTML
+            short_content = match_replace_ioc(filterXSS(short_content), reap);
+            temp_content = paragraphs.slice(i).join('\n\n');
+            long_content = converter.makeHtml(temp_content); // Convert markdown to HTML
+            long_content = match_replace_ioc(filterXSS(long_content), reap);
+
+            formatted_content = short_content + `<div class="collapse" id="collapseContent-${evt.event_id}">
+            ${long_content}
+            </div>
+            <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent" onclick="toggleSeeMore(this)">&gt; See more</a>`;
+        } else {
+            let content_parsed = converter.makeHtml(raw_content); // Convert markdown to HTML
+            content_parsed = filterXSS(content_parsed);
+            formatted_content = match_replace_ioc(content_parsed, reap);
+        }
+    }
+
+    let shared_link = buildShareLink(evt.event_id);
+
+    let flag = '';
+    if (evt.event_is_flagged) {
+        flag = `<i class="fas fa-flag text-warning" title="Flagged"></i>`;
+    } else {
+        flag = `<i class="fa-regular fa-flag" title="Not flagged"></i>`;
+    }
+
+    if (compact) {
+        entry = `<li class="${inverted} ${mtop_day}" title="Event ID #${evt.event_id}" data-datetime="${evt.event_date}" >
+                <div class="timeline-panel${timeline_style} ${style}" ${style_s}  id="event_${evt.event_id}">
+                    <div class="timeline-heading">
+                        <div class="btn-group dropdown float-right">
+                            ${cats}
+                            <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
+                                <span class="btn-label">
+                                    <i class="fa fa-pen"></i>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
+                                <span class="btn-label">
+                                    ${flag}
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
+                                <span class="btn-label">
+                                    <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${evt.event_id}">${nb_comments}</span>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                <span class="btn-label">
+                                    <i class="fa fa-cog"></i>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                    <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                    <a href= "#" class="dropdown-item" onclick="copy_object_link_md('event', ${evt.event_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
+                                    <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
+                            </div>
+                        </div>
+                        <div class="collapsed" id="dropa_${evt.event_id}" data-toggle="collapse" data-target="#drop_${evt.event_id}" aria-expanded="false" aria-controls="drop_${evt.event_id}" role="button" style="cursor: pointer;">
+                            <span class="text-muted text-sm float-left mb--2"><small>${formatTime(evt.event_date, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'})}</small></span>
+                            <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
+                        </div>
+                    </div>
+                    <div class="timeline-body text-faded" >
+                        <div id="drop_${evt.event_id}" class="collapse" aria-labelledby="dropa_${evt.event_id}" style="">
+                            <div class="card-body">
+                            ${formatted_content}
+                            </div>
+                            <div class="bottom-hour mt-2">
+                                <span class="float-right">${tags}${asset} </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>`
+    } else {
+        entry = `<li class=${inverted} title="Event ID #${evt.event_id}" >
+                <div class="timeline-panel${timeline_style} ${style}" ${style_s} id="event_${evt.event_id}">
+                    <div class="timeline-heading">
+                        <div class="btn-group dropdown float-right">
+
+                            <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
+                                <span class="btn-label">
+                                    <i class="fa fa-pen"></i>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-light btn-xs" onclick="add_event(${evt.event_id})" title="Add child event">
+                                <span class="btn-label">
+                                   <i class="fa-brands fa-hive"></i>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
+                                <span class="btn-label">
+                                    ${flag}
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
+                                <span class="btn-label">
+                                    <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${evt.event_id}">${nb_comments}</span>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                <span class="btn-label">
+                                    <i class="fa fa-cog"></i>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                    <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
+                                    <a href= "#" class="dropdown-item" onclick="copy_object_link_md('event', ${evt.event_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
+                                    <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">[${hour}] ${title_parsed}</a>
+                        </div>
+                    </div>
+                    <div class="timeline-body text-faded" >
+                        <span>${formatted_content}</span>
+
+                        <div class="bottom-hour mt-2">
+                            <div class="row">
+                                <div class="col d-flex">
+                                    <span class="text-muted text-sm align-self-end float-left mb--2"><small class="bottom-hour-i"><i class="flaticon-stopwatch mr-2"></i>${formatTime(evt.event_date, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'})}${ori_date}</small></span>
+                                </div>
+                                
+                                <div class="col">
+                                    <span class="float-right">${tags}${asset} </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>`
+    }
+    return [entry, tmb_d];
+}
+
 function build_timeline(data) {
     let compact = is_timeline_compact_view();
     let tree = is_timeline_tree_view();
@@ -538,13 +835,13 @@ function build_timeline(data) {
                 {value: 'AND ', score: 10, meta: 'AND operator'}
               ]
 
-    for (rid in data.data.assets) {
+    for (let rid in data.data.assets) {
         standard_filters.push(
              {value: data.data.assets[rid][0], score: 1, meta: data.data.assets[rid][1]}
         );
     }
 
-    for (rid in data.data.categories) {
+    for (let rid in data.data.categories) {
         standard_filters.push(
              {value: data.data.categories[rid], score: 1, meta: "Event category"}
         );
@@ -586,299 +883,13 @@ function build_timeline(data) {
     let child_events = Object();
 
     for (let index in data.data.tim) {
-        let evt = data.data.tim[index];
-        let dta =  evt.event_date.split('T');
-        let tags = '';
-        let cats = '';
-        let tmb_d = '';
-        let style = '';
-        let asset = '';
+        let evt =  data.data.tim[index];
+        let eki = buildEvent(evt, compact, data.data.comments_map, tree, tesk, tmb, idx, reap, converter);
+        tesk = !tesk;
 
-        if (evt.event_id in data.data.comments_map) {
-            nb_comments = data.data.comments_map[evt.event_id].length;
-        } else {
-            nb_comments = '';
-        }
-
-        if(evt.category_name && evt.category_name != 'Unspecified') {
-             if (!compact) {
-                 tags += `<span class="badge badge-light float-right ml-1 mt-2">${sanitizeHTML(evt.category_name)}</span>`;
-             } else {
-                 if (evt.category_name != 'Unspecified') {
-                     cats += `<span class="badge badge-light float-right ml-1 mt-1 mr-2 mb-1">${sanitizeHTML(evt.category_name)}</span>`;
-                 }
-             }
-        }
-        
-        if (evt.iocs != null && evt.iocs.length > 0) {
-            for (let ioc in evt.iocs) {
-                let span_anchor = $('<span>');
-                span_anchor.addClass('badge badge-warning-event float-right ml-1 mt-2');
-                span_anchor.attr('data-toggle', 'popover');
-                span_anchor.attr('data-trigger', 'hover');
-                span_anchor.attr('style', 'cursor: pointer;');
-                span_anchor.attr('data-content', 'IOC - ' + evt.iocs[ioc].description);
-                span_anchor.attr('title', evt.iocs[ioc].name);
-                span_anchor.text(evt.iocs[ioc].name)
-                span_anchor.html('<i class="fa-solid fa-virus-covid mr-1"></i>' + span_anchor.html());
-                tags += span_anchor[0].outerHTML;
-            }
-        }
-
-        if (evt.event_tags != null && evt.event_tags.length > 0) {
-            sp_tag = evt.event_tags.split(',');
-            for (tag_i in sp_tag) {
-                    tags += get_tag_from_data(sp_tag[tag_i], 'badge badge-light ml-1 float-right mt-2');
-                }
-        }
-
-        let entry = '';
-        let inverted = 'timeline';
-        let timeline_style = tree ? '-t' : '';
-
-        /* Do we have a border color to set ? */
-        if (tesk) {
-            style += "timeline-odd"+ timeline_style;
-            tesk = false;
-        } else {
-            style += "timeline-even" + timeline_style;
-            tesk = true;
-        }
-
-        let style_s = "";
-        if (evt.event_color != null) {
-                style_s = `style='border-left: 2px groove ${sanitizeHTML(evt.event_color)};'`;
-        }
-
-        if (!tree) {
-            inverted += '-inverted';
-        } else {
-            if (tesk) {
-                inverted += '-inverted';
-            }
-        }
-
-
-        /* For every assets linked to the event, build a link tag */
-        if (evt.assets != null) {
-            for (ide in evt.assets) {
-                let cpn =  evt.assets[ide]["ip"] + ' - ' + evt.assets[ide]["description"]
-                cpn = sanitizeHTML(cpn)
-                let span_anchor = $('<span>');
-                span_anchor.attr('data-toggle', 'popover');
-                span_anchor.attr('data-trigger', 'hover');
-                span_anchor.attr('style', 'cursor: pointer;');
-                span_anchor.attr('data-content', cpn);
-                span_anchor.attr('title', evt.assets[ide]["name"]);
-                span_anchor.text(evt.assets[ide]["name"]);
-
-                if (evt.assets[ide]["compromised"]) {
-                    span_anchor.addClass('badge badge-warning-event float-right ml-1 mt-2');
-                } else {
-                    span_anchor.addClass('badge badge-light float-right ml-1 mt-2');
-                }
-
-                asset += span_anchor[0].outerHTML;
-            }
-        }
-
-        let ori_date = '<span class="ml-3"></span>';
-        if (evt.event_date_wtz != evt.event_date) {
-            ori_date += `<i class="fas fa-info-circle mr-1" title="Locale date time ${evt.event_date_wtz}${evt.event_tz}"></i>`
-        }
-
-        if(evt.event_in_summary) {
-            ori_date += `<i class="fas fa-newspaper mr-1" title="Showed in summary"></i>`
-        }
-
-        if(evt.event_in_graph) {
-            ori_date += `<i class="fas fa-share-alt mr-1" title="Showed in graph"></i>`
-        }
-        
-
-        let day = dta[0];
-
-        let hour = dta[1].split('.')[0];
-
-        let mtop_day = '';
-        if (!tmb.includes(day)) {
-            tmb.push(day);
-            tmb_d = `<li class="time-badge${timeline_style} badge badge-dark" id="time_${idx}"><small class="">${day}</small><br/></li>`;
-
-            idx += 1;
-            mtop_day = 'mt-4';
-        }
-
-        let title_parsed = match_replace_ioc(sanitizeHTML(evt.event_title), reap);
-        let raw_content = do_md_filter_xss(evt.event_content); // Raw markdown content
-        let formatted_content = converter.makeHtml(raw_content); // Convert markdown to HTML
-
-        const wordLimit = 30; // Define your word limit
-
-        if (!compact) {
-            let paragraphs = raw_content.split('\n\n');
-            let short_content, long_content;
-
-            if (paragraphs.join(' ').split(' ').length > wordLimit || paragraphs.length > 2) {
-                let temp_content = '';
-                let i = 0;
-                let wordCount = 0;
-
-                // Loop until the content length is more than wordLimit or paragraph count is more than 2
-                while(wordCount <= wordLimit && i < 2 && i < paragraphs.length){
-                    let words = paragraphs[i].split(' ');
-                    if (wordCount + words.length > wordLimit && wordCount != 0) {
-                        break;
-                    }
-                    temp_content += paragraphs[i] + '\n\n';
-                    wordCount += words.length;
-                    i++;
-                }
-
-                short_content = converter.makeHtml(temp_content); // Convert markdown to HTML
-                short_content = match_replace_ioc(filterXSS(short_content), reap);
-                temp_content = paragraphs.slice(i).join('\n\n');
-                long_content = converter.makeHtml(temp_content); // Convert markdown to HTML
-                long_content = match_replace_ioc(filterXSS(long_content), reap);
-
-                formatted_content = short_content + `<div class="collapse" id="collapseContent-${evt.event_id}">
-                ${long_content}
-                </div>
-                <a class="btn btn-link btn-sm" data-toggle="collapse" href="#collapseContent-${evt.event_id}" role="button" aria-expanded="false" aria-controls="collapseContent" onclick="toggleSeeMore(this)">&gt; See more</a>`;
-            } else {
-                content_parsed = converter.makeHtml(raw_content); // Convert markdown to HTML
-                content_parsed = filterXSS(content_parsed);
-                formatted_content = match_replace_ioc(content_parsed, reap);
-            }
-        }
-
-
-
-        let shared_link = buildShareLink(evt.event_id);
-
-        let flag = '';
-        if (evt.event_is_flagged) {
-            flag = `<i class="fas fa-flag text-warning" title="Flagged"></i>`;
-        } else {
-            flag = `<i class="fa-regular fa-flag" title="Not flagged"></i>`;
-        }
-
-        if (compact) {
-            entry = `<li class="${inverted} ${mtop_day}" title="Event ID #${evt.event_id}" >
-                    <div class="timeline-panel${timeline_style} ${style}" ${style_s}  id="event_${evt.event_id}">
-                        <div class="timeline-heading">
-                            <div class="btn-group dropdown float-right">
-                                ${cats}
-                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
-                                    <span class="btn-label">
-                                        <i class="fa fa-pen"></i>
-                                    </span>
-                                </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
-                                    <span class="btn-label">
-                                        ${flag}
-                                    </span>
-                                </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
-                                    <span class="btn-label">
-                                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${evt.event_id}">${nb_comments}</span>
-                                    </span>
-                                </button>
-                                <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                    <span class="btn-label">
-                                        <i class="fa fa-cog"></i>
-                                    </span>
-                                </button>
-                                <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                                        <a href= "#" class="dropdown-item" onclick="copy_object_link_md('event', ${evt.event_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
-                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
-                                        <div class="dropdown-divider"></div>
-                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
-                                </div>
-                            </div>
-                            <div class="collapsed" id="dropa_${evt.event_id}" data-toggle="collapse" data-target="#drop_${evt.event_id}" aria-expanded="false" aria-controls="drop_${evt.event_id}" role="button" style="cursor: pointer;">
-                                <span class="text-muted text-sm float-left mb--2"><small>${render_date(evt.event_date, true)}</small></span>
-                                <a class="text-dark text-sm ml-3" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">${title_parsed}</a>
-                            </div>
-                        </div>
-                        <div class="timeline-body text-faded" >
-                            <div id="drop_${evt.event_id}" class="collapse" aria-labelledby="dropa_${evt.event_id}" style="">
-                                <div class="card-body">
-                                ${formatted_content}
-                                </div>
-                                <div class="bottom-hour mt-2">
-                                    <span class="float-right">${tags}${asset} </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>`
-        } else {
-            entry = `<li class=${inverted} title="Event ID #${evt.event_id}" >
-                    <div class="timeline-panel${timeline_style} ${style}" ${style_s} id="event_${evt.event_id}">
-                        <div class="timeline-heading">
-                            <div class="btn-group dropdown float-right">
-
-                                <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
-                                    <span class="btn-label">
-                                        <i class="fa fa-pen"></i>
-                                    </span>
-                                </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="add_event(${evt.event_id})" title="Add child event">
-                                    <span class="btn-label">
-                                       <i class="fa-brands fa-hive"></i>
-                                    </span>
-                                </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
-                                    <span class="btn-label">
-                                        ${flag}
-                                    </span>
-                                </button>
-                                <button type="button" class="btn btn-light btn-xs" onclick="comment_element(${evt.event_id}, 'timeline/events')" title="Comments">
-                                    <span class="btn-label">
-                                        <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number_${evt.event_id}">${nb_comments}</span>
-                                    </span>
-                                </button>
-                                <button type="button" class="btn btn-light btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                    <span class="btn-label">
-                                        <i class="fa fa-cog"></i>
-                                    </span>
-                                </button>
-                                <div class="dropdown-menu" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 32px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                        <a href= "#" class="dropdown-item" onclick="copy_object_link(${evt.event_id});return false;"><small class="fa fa-share mr-2"></small>Share</a>
-                                        <a href= "#" class="dropdown-item" onclick="copy_object_link_md('event', ${evt.event_id});return false;"><small class="fa-brands fa-markdown mr-2"></small>Markdown Link</a>
-                                        <a href= "#" class="dropdown-item" onclick="duplicate_event(${evt.event_id});return false;"><small class="fa fa-clone mr-2"></small>Duplicate</a>
-                                        <div class="dropdown-divider"></div>
-                                        <a href= "#" class="dropdown-item text-danger" onclick="delete_event(${evt.event_id});"><small class="fa fa-trash mr-2"></small>Delete</a>
-                                </div>
-                            </div>
-                            <div class="row mb-2">
-                                <a class="timeline-title" href="${shared_link}" onclick="edit_event(${evt.event_id});return false;">[${hour}] ${title_parsed}</a>
-                            </div>
-                        </div>
-                        <div class="timeline-body text-faded" >
-                            <span>${formatted_content}</span>
-
-                            <div class="bottom-hour mt-2">
-                                <div class="row">
-                                    <div class="col d-flex">
-                                        <span class="text-muted text-sm align-self-end float-left mb--2"><small class="bottom-hour-i"><i class="flaticon-stopwatch mr-2"></i>${render_date(evt.event_date, true)}${ori_date}</small></span>
-                                    </div>
-                                    
-                                    <div class="col">
-                                        <span class="float-right">${tags}${asset} </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>`
-        }
         is_i = false;
-
-        //entry = match_replace_ioc(entry, reap);
-        // display the time info as a small box
+        let entry = eki[0];
+        let tmb_d = eki[1];
 
         if (evt.parent_event_id != null) {
             if (!(evt.parent_event_id in child_events)) {
@@ -1073,18 +1084,42 @@ function flag_event(event_id){
     get_request_api('timeline/events/flag/'+event_id)
     .done(function(data) {
         if (notify_auto_api(data)) {
-            if (data.data.event_is_flagged == true) {
-                $('#event_'+event_id).find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
-                $('#event_210').find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
-            } else {
-                $('#event_'+event_id).find('.fa-flag').addClass('fa-regular').removeClass('fas text-warning');
-            }
+            uiFlagEvent(event_id, data.data.event_is_flagged)
         }
     });
 }
 
+function uiFlagEvent(event_id, is_flagged) {
+    if (is_flagged === true) {
+        $('#event_'+event_id).find('.fa-flag').addClass('fas text-warning').removeClass('fa-regular');
+    } else {
+        $('#event_'+event_id).find('.fa-flag').addClass('fa-regular').removeClass('fas text-warning');
+    }
+}
+
+function uiRemoveEvent(event_id) {
+    $('#event_'+event_id).remove();
+}
+
+function uiUpdateEvent(event_id, event_data) {
+    let last_event_id = 0;
+    for (let index in current_timeline){
+        let list_date = new Date(current_timeline[index].event_date);
+        let evt_date = new Date(event_data.event_date);
+
+        if (list_date < evt_date) {
+            last_event_id = current_timeline[index].event_id;
+        }
+    }
+    if (last_event_id !== 0) {
+        let updated_event = $(`#event_${event_id}`).html();
+        $(`#event_${event_id}`).remove();
+        $(`#event_${last_event_id}`).after(updated_event);
+    }
+}
+
 function time_converter(){
-    date_val = $('#event_date_convert_input').val();
+    let date_val = $('#event_date_convert_input').val();
 
     var data_sent = Object();
     data_sent['date_value'] = date_val;
@@ -1306,6 +1341,22 @@ function upload_csv_events() {
     return false;
 }
 
+function handleCollabNotifications(collab_data) {
+   if (collab_data.action_type === "flagged") {
+       uiFlagEvent(collab_data.object_id, true);
+   }
+   else if (collab_data.action_type === "un-flagged") {
+       uiFlagEvent(collab_data.object_id, false);
+   }
+   else if (collab_data.action_type === "deletion") {
+       uiRemoveEvent(collab_data.object_id);
+   }
+   // else if (collab_data.action_type === 'updated') {
+   //     uiUpdateEvent(collab_data.object_id,
+   //         collab_data.object_data)
+   // }
+}
+
 function generate_events_sample_csv(){
     csv_data = "event_date,event_tz,event_title,event_category,event_content,event_raw,event_source,event_assets,event_iocs,event_tags\n"
     csv_data += '"2023-03-26T03:00:30.000","+00:00","An event","Unspecified","Event description","raw","source","","","defender|malicious"\n'
@@ -1351,6 +1402,13 @@ $(document).ready(function(){
     get_or_filter_tm();
 
     setInterval(function() { check_update('timeline/state'); }, 3000);
+
+    collab_case.on('case-obj-notif', function(data) {
+        let js_data = JSON.parse(data);
+        if (js_data.object_type === 'events') {
+            handleCollabNotifications(js_data);
+        }
+    });
 
 });
 

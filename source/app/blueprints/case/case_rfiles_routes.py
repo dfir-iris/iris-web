@@ -122,7 +122,7 @@ def case_add_rfile(caseid):
         return response_error("Unable to create task for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_rfiles_blueprint.route('/case/evidences/<int:cur_id>', methods=['GET'])
@@ -190,7 +190,7 @@ def case_edit_rfile(cur_id, caseid):
         return response_error("Unable to update task for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_rfiles_blueprint.route('/case/evidences/delete/<int:cur_id>', methods=['POST'])
@@ -269,7 +269,7 @@ def case_comment_evidence_add(cur_id, caseid):
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+        return response_error(msg="Data error", data=e.normalized_messages())
 
 
 @case_rfiles_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
