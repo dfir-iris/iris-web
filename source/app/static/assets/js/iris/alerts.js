@@ -1089,7 +1089,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                                    <td>${filterXSS(ioc.ioc_description)}</td>
                                                    <td>${ioc.ioc_type ? filterXSS(ioc.ioc_type.type_name) : '-'}</td>
                                                    <td>${filterXSS(ioc.ioc_tlp) ? ioc.ioc_tlp : '-'}</td>
-                                                   <td>${ioc.ioc_tags ? ioc.ioc_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') : ''}</td>
+                                                   <td>${ioc.ioc_tags ? ioc.ioc_tags.split(',').map((tag) => get_tag_from_data(tag, 'badge badge-pill badge-light ml-1')).join('') : ''}</td>
                                                    <td>${ioc.ioc_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(ioc.ioc_enrichment).replace(/"/g, '&quot;')})">
                                                       View Enrichment
                                                     </button>` : ''}
@@ -1142,7 +1142,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                        <td>${asset.asset_type ? filterXSS(asset.asset_type.asset_name) : '-'}</td>
                                        <td>${asset.asset_domain ? filterXSS(asset.asset_domain) : '-'}</td>
                                        <td>${asset.asset_ip ? filterXSS(asset.asset_ip) : '-'}</td>
-                                       <td>${asset.asset_tags ? asset.asset_tags.split(',').map((tag) => `<span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>${filterXSS(tag)}</span>`).join('') : ''}</td>
+                                       <td>${asset.asset_tags ? asset.asset_tags.split(',').map((tag) => get_tag_from_data(tag, 'badge badge-pill badge-light ml-1')).join('') : ''}</td>
                                        <td>${asset.asset_enrichment ? `<button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal" data-target="#enrichmentModal" onclick="showEnrichment(${JSON.stringify(asset.asset_enrichment).replace(/"/g, '&quot;')})">
                                           View Enrichment
                                         </button>` : ''}
