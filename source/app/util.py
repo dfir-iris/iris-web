@@ -732,41 +732,6 @@ def ac_api_requires(*permissions):
     return inner_wrap
 
 
-# Deprecated, transform into
-# when no_cid_required=False => ac_api_requires followed by ac_requires_case_identifier
-# when no_cid_required=True => ac_api_requires
-def ac_api_requires_deprecated(*permissions, no_cid_required=False):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                if cookie_session:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
-
-            if not is_user_authenticated(request):
-                return response_error("Authentication required", status=401)
-
-            if 'permissions' not in session:
-                session['permissions'] = ac_get_effective_permissions_of_user(current_user)
-
-            if not _user_has_required_permissions(permissions):
-                return response_error('Permission denied', status=403)
-
-            if not no_cid_required:
-                require_case_identifier_then_f = _decorate_with_requires_case_identifier(f)
-                return require_case_identifier_then_f(*args, **kwargs)
-
-            kwargs.update({'caseid': None})
-            return f(*args, **kwargs)
-        return wrap
-    return inner_wrap
-
-
 def decompress_7z(filename: Path, output_dir):
     """
     Decompress a 7z file in specified output directory
