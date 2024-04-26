@@ -24,21 +24,23 @@ from flask import request
 from flask import send_file
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.iris_engine.reporter.reporter import IrisMakeDocReport, IrisMakeMdReport
+from app.iris_engine.reporter.reporter import IrisMakeDocReport
+from app.iris_engine.reporter.reporter import IrisMakeMdReport
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseTemplateReport
-from app.util import FileRemover, ac_api_requires_deprecated
+from app.util import FileRemover
+from app.util import ac_api_requires
+from app.util import ac_requires_case_identifier
 from app.util import response_error
 
-reports_blueprint = Blueprint('reports',
-                              __name__,
-                              template_folder='templates')
+reports_blueprint = Blueprint('reports', __name__, template_folder='templates')
 
 file_remover = FileRemover()
 
 
 @reports_blueprint.route('/case/report/generate-activities/<int:report_id>', methods=['GET'])
-@ac_api_requires_deprecated()
+@ac_api_requires()
+@ac_requires_case_identifier()
 def download_case_activity(report_id, caseid):
 
     call_modules_hook('on_preload_activities_report_create', data=report_id, caseid=caseid)
@@ -83,7 +85,8 @@ def download_case_activity(report_id, caseid):
 
 
 @reports_blueprint.route("/case/report/generate-investigation/<int:report_id>", methods=['GET'])
-@ac_api_requires_deprecated()
+@ac_api_requires()
+@ac_requires_case_identifier()
 def _gen_report(report_id, caseid):
 
     safe_mode = False
