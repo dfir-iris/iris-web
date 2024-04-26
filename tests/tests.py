@@ -291,18 +291,12 @@ class Tests(TestCase):
                              }}
                          }}'''
         }
-        response = self._subject.execute_graphql_query(payload)
-        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''{{
-<<<<<<< HEAD
-                        case(caseId: {case_identifier}) {{
-                            iocs {{ iocId }}
-=======
-                             case(caseId: {case_identifier}) {{
-                                 iocs {{ edges {{ node {{ iocId }} }} }}
->>>>>>> b2a5df1f ([FIX] fix problem on iocId and add iocUuid filter)
-                             }}
+                            case(caseId: {case_identifier}) {{
+                                iocs {{ edges {{ node {{ iocId }} }} }}
+                            }}
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
