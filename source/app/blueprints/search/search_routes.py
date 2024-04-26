@@ -35,8 +35,7 @@ from app.models.models import IocLink
 from app.models.models import IocType
 from app.models.models import Notes
 from app.models.models import Tlp
-from app.util import ac_api_requires_deprecated
-from app.util import ac_requires_case_identifier
+from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import response_success
 
@@ -45,10 +44,9 @@ search_blueprint = Blueprint('search',
                              template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
 @search_blueprint.route('/search', methods=['POST'])
-@ac_api_requires_deprecated(Permissions.search_across_cases, no_cid_required=True)
-def search_file_post(caseid: int):
+@ac_api_requires(Permissions.search_across_cases)
+def search_file_post():
 
     jsdata = request.get_json()
     search_value = jsdata.get('search_value')
