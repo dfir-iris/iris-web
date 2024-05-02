@@ -47,6 +47,7 @@ class IOCConnection(Connection):
     def resolve_total_count(root, info, **kwargs):
         return root.length
 
+
 class IOCCreate(Mutation):
 
     class Arguments:

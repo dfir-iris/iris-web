@@ -19,7 +19,6 @@
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene_sqlalchemy import SQLAlchemyConnectionField
-from graphene import List
 from graphene.relay import Node
 from graphene.relay import Connection
 from graphene import Field
@@ -31,7 +30,6 @@ from graphene import String
 
 from app.models.cases import Cases
 from app.blueprints.graphql.iocs import IOCObject
-from app.business.iocs import get_iocs
 from app.business.cases import create
 from app.business.cases import delete
 from app.business.cases import update
