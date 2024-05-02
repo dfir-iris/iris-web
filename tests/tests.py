@@ -1074,5 +1074,30 @@ class Tests(TestCase):
         print(response)
         self.assertEqual("test", response['data']['iocUpdate']['ioc']['iocMisp'])
 
+    def test_graphql_update_ioc_should_update_userId(self):
+        case = self._subject.create_case()
+        case_identifier = case['case_id']
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                ioc {{ iocId }}
+                            }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        payload = {
+            'query': f'''mutation {{
+                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
+                                 typeId: 1, tlpId: 2, userId: 1, value: "{ioc_value}") {{
+                                     ioc {{ userId }}
+                             }}
+                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        print(response)
+        self.assertEqual(1, response['data']['iocUpdate']['ioc']['userId'])
+
 
 
