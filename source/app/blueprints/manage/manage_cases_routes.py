@@ -42,7 +42,7 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
-from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status, get_filtered_cases
+from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
@@ -59,7 +59,8 @@ from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
-from app.schema.marshables import CaseSchema, CaseDetailsSchema
+from app.schema.marshables import CaseSchema
+from app.schema.marshables import CaseDetailsSchema
 from app.util import add_obj_history_entry
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
@@ -67,6 +68,7 @@ from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import delete
+from app.business.cases import build_filter_case_query
 from app.business.cases import update
 from app.business.cases import create
 from app.business.errors import BusinessProcessingError
@@ -157,74 +159,20 @@ def get_case_api(cur_id, caseid):
 @ac_api_requires(no_cid_required=True)
 def manage_case_filter(caseid) -> Response:
 
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    case_ids_str = request.args.get('case_ids', None, type=str)
-    order_by = request.args.get('order_by', type=str)
-    sort_dir = request.args.get('sort_dir', 'asc', type=str)
+    try:
+        filtered_cases, draw = build_filter_case_query(caseid)
+        cases = {
+            'total': filtered_cases.total,
+            'cases': CaseDetailsSchema().dump(filtered_cases.items, many=True),
+            'last_page': filtered_cases.pages,
+            'current_page': filtered_cases.page,
+            'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
+            'draw': draw
+        }
 
-    if case_ids_str:
-        try:
-
-            if ',' in case_ids_str:
-                case_ids_str = [int(alert_id) for alert_id in case_ids_str.split(',')]
-
-            else:
-                case_ids_str = [int(case_ids_str)]
-
-        except ValueError:
-            return response_error('Invalid case id')
-
-    case_customer_id = request.args.get('case_customer_id', None, type=str)
-    case_name = request.args.get('case_name', None, type=str)
-    case_description = request.args.get('case_description', None, type=str)
-    case_classification_id = request.args.get('case_classification_id', None, type=int)
-    case_owner_id = request.args.get('case_owner_id', None, type=int)
-    case_opening_user_id = request.args.get('case_opening_user_id', None, type=int)
-    case_severity_id = request.args.get('case_severity_id', None, type=int)
-    case_state_id = request.args.get('case_state_id', None, type=int)
-    case_soc_id = request.args.get('case_soc_id', None, type=str)
-    start_open_date = request.args.get('start_open_date', None, type=str)
-    end_open_date = request.args.get('end_open_date', None, type=str)
-    draw = request.args.get('draw', 1, type=int)
-    search_value = request.args.get('search[value]', type=str)  # Get the search value from the request
-
-    if type(draw) is not int:
-        draw = 1
-
-    filtered_cases = get_filtered_cases(
-        current_user.id,
-        case_ids=case_ids_str,
-        case_customer_id=case_customer_id,
-        case_name=case_name,
-        case_description=case_description,
-        case_classification_id=case_classification_id,
-        case_owner_id=case_owner_id,
-        case_opening_user_id=case_opening_user_id,
-        case_severity_id=case_severity_id,
-        case_state_id=case_state_id,
-        case_soc_id=case_soc_id,
-        start_open_date=start_open_date,
-        end_open_date=end_open_date,
-        search_value=search_value,
-        page=page,
-        per_page=per_page,
-        sort_by=order_by,
-        sort_dir=sort_dir
-    )
-    if filtered_cases is None:
-        return response_error('Filtering error')
-
-    cases = {
-        'total': filtered_cases.total,
-        'cases': CaseDetailsSchema().dump(filtered_cases.items, many=True),
-        'last_page': filtered_cases.pages,
-        'current_page': filtered_cases.page,
-        'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
-        'draw': draw
-    }
-
-    return response_success(data=cases)
+        return response_success(data=cases)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])

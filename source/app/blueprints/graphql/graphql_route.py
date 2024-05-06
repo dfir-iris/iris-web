@@ -15,20 +15,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import base64
 
 from functools import wraps
+
 from flask import request
 from flask_wtf import FlaskForm
 from flask import Blueprint
 
 from graphql_server.flask import GraphQLView
-from graphene_sqlalchemy import SQLAlchemyConnectionField
 from graphene import ObjectType
 from graphene import Schema
 from graphene import Float
 from graphene import Field
-from graphene import String
-from graphene import Int
 
 from app.util import is_user_authenticated
 from app.util import response_error
@@ -45,39 +44,35 @@ from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
 from app.blueprints.graphql.cases import CaseConnection
 
+from fields import SlicedResult
+from fields import SQLAlchemyConnectionField
+
 
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
-    # starting with the conversion of '/manage/cases/filter'
-    cases = SQLAlchemyConnectionField(CaseConnection, name=String(), clientId=Float(), classificationId=Int(), stateId=Int(), ownerId=Float(), openDate=String(), initialDate=String(), caseId=Float(), severityId=Int(), socId=String())
+    cases = SQLAlchemyConnectionField(CaseConnection)
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
     @staticmethod
     def resolve_cases(root, info, **kwargs):
         query = CaseObject.get_query(info)
-        if kwargs.get('name'):
-            query = query.filter_by(name=kwargs['name'])
-        if kwargs.get('clientId'):
-            query = query.filter_by(client_id=kwargs['clientId'])
-        if kwargs.get('classificationId'):
-            query = query.filter_by(classification_id=kwargs['classificationId'])
-        if kwargs.get('stateId'):
-            query = query.filter_by(state_id=kwargs['stateId'])
-        if kwargs.get('ownerId'):
-            query = query.filter_by(owner_id=kwargs['ownerId'])
-        if kwargs.get('openDate'):
-            query = query.filter_by(open_date=kwargs['openDate'])
-        if kwargs.get('initialDate'):
-            query = query.filter_by(initial_date=kwargs['initialDate'])
-        if kwargs.get('caseId'):
-            query = query.filter_by(case_id=kwargs['caseId'])
-        if kwargs.get('socId'):
-            query = query.filter_by(soc_id=kwargs['socId'])
-        if kwargs.get('severityId'):
-            query = query.filter_by(severity_id=kwargs['severityId'])
-        return query
+        total = query.count()
+        if kwargs.get("first"):
+            first = kwargs.get("first")
+        else:
+            first = total
+        if kwargs.get("after"):
+            after = kwargs.get("after")
+            decode_after = base64.b64decode(after)
+            start = int(decode_after[16:].decode())
+            start += 1
+        else:
+            start = 0
+        query_slice = query.slice(start, start + first).all()
+        result = SlicedResult(query_slice, start, total)
+        return result
 
     @staticmethod
     def resolve_case(root, info, case_id):

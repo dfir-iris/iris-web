@@ -36,6 +36,10 @@ from app.business.cases import update
 
 from app.blueprints.graphql.iocs import IOCConnection
 
+import base64
+
+from fields import SlicedResult
+
 
 class CaseObject(SQLAlchemyObjectType):
     class Meta:
@@ -43,37 +47,26 @@ class CaseObject(SQLAlchemyObjectType):
         interfaces = [Node]
 
     # TODO add filters
-    # TODO do pagination (maybe present it as a relay Connection?)
-    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Float(), iocUuid=String(), iocValue=String(), iocTypeId=Int(), iocDescription=String(), iocTags=String(), iocMisp=String(), iocTlpId=Int(), userId=Float(), iocCustomAttributes=String(), iociocEnrichment=String(), iocModificationHistory=String())
+    iocs = SQLAlchemyConnectionField(IOCConnection)
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
         query = IOCObject.get_query(info)
-        if kwargs.get('iocId'):
-            query = query.filter_by(ioc_id=kwargs['iocId'])
-        if kwargs.get('iocUuid'):
-            query = query.filter_by(ioc_uuid=kwargs['iocUuid'])
-        if kwargs.get('iocValue'):
-            query = query.filter_by(ioc_value=kwargs['iocValue'])
-        if kwargs.get('iocTypeId'):
-            query = query.filter_by(ioc_type_id=kwargs['iocTypeId'])
-        if kwargs.get('iocDescription'):
-            query = query.filter_by(ioc_description=kwargs['iocDescription'])
-        if kwargs.get('iocTags'):
-            query = query.filter_by(ioc_tags=kwargs['iocTags'])
-        if kwargs.get('iocMisp'):
-            query = query.filter_by(ioc_misp=kwargs['iocMisp'])
-        if kwargs.get('iocTlpId'):
-            query = query.filter_by(ioc_tlp_id=kwargs['iocTlpId'])
-        if kwargs.get('userId'):
-            query = query.filter_by(user_id=kwargs['userId'])
-        if kwargs.get('CustomAttributes'):
-            query = query.filter_by(ioc_custom_attributes=kwargs['CustomAttributes'])
-        if kwargs.get('iocEnrichment'):
-            query = query.filter_by(ioc_ioc_enrichment=kwargs['iocEnrichment'])
-        if kwargs.get('modificationHistory'):
-            query = query.filter_by(ioc_modification_history=kwargs['modificationHistory'])
-        return query
+        total = query.count()
+        if kwargs.get("first"):
+            first = kwargs.get("first")
+        else:
+            first = total
+        if kwargs.get("after"):
+            after = kwargs.get("after")
+            decode_after = base64.b64decode(after)
+            start = int(decode_after[16:].decode())
+            start += 1
+        else:
+            start = 0
+        query_slice = query.slice(start, start + first).all()
+        result = SlicedResult(query_slice, start, total)
+        return result
 
 
 class CaseConnection(Connection):
