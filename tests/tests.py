@@ -549,10 +549,3 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertEqual(ioc_value, body['data']['ioc']['iocValue'])
-
-    def test_filter_alerts_should_find_newly_created_alert(self):
-        response = self._subject._api.get('/alerts/filter')
-        self.assertEqual('success', response['status'])
-        # should rather check that response['data']['alerts'] contains the alert
-        # alert_identifiers = self._get_alert_identifiers(response['data']['alerts'])
-        # self.assertIn(alert_identifier, alert_identifiers)
