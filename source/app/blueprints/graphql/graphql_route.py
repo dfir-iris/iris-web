@@ -54,13 +54,12 @@ from fields import SQLAlchemyConnectionField
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
-    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int())
+    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int(), ownerId=Float())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
     @staticmethod
     def resolve_cases(root, info, **kwargs):
-        global case_classification_id, case_client_id
         query = CaseObject.get_query(info)
         total = query.count()
         if kwargs.get("first"):
@@ -88,8 +87,13 @@ class Query(ObjectType):
             case_state_id = kwargs.get("stateId")
         else:
             case_state_id = None
+        if kwargs.get("ownerId"):
+            case_owner_id = kwargs.get("ownerId")
+        else:
+            case_owner_id = None
         filtered_cases = build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,
-                                                 case_customer_id=case_client_id, case_state_id=case_state_id)
+                                                 case_customer_id=case_client_id, case_state_id=case_state_id,
+                                                 case_owner_id=case_owner_id)
         return filtered_cases
         #return result
 
