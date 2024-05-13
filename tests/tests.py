@@ -906,10 +906,13 @@ class Tests(TestCase):
         }
         response = self._subject.execute_graphql_query(payload)
         severity_id = response['data']['caseCreate']['case']['severityId']
+        print(severity_id)
         payload = {
-            'query': f'''query {{ cases(socId: "{severity_id}") 
+            'query': f'''query {{ cases(severityId: {severity_id}) 
                     {{ edges {{ node {{ severityId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_severity = case['node']['severityId']
+            self.assertEqual(severity_id, test_severity)
 
