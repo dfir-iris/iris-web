@@ -840,3 +840,21 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
+
+    def test_graphql_cases_filter_openDate_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                    socId: "1", classificationId : 1) {{
+                                                 case {{ openDate }}
+                                                       }}
+                                                   }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        open_date = response['data']['caseCreate']['case']['openDate']
+        payload = {
+            'query': f'''query {{ cases(openDate: "{open_date}") 
+                    {{ edges {{ node {{ openDate }} }} }} }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)

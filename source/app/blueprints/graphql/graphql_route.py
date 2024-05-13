@@ -29,6 +29,7 @@ from graphene import Schema
 from graphene import Float
 from graphene import Int
 from graphene import Field
+from graphene import String
 
 from app.datamgmt.manage.manage_cases_db import build_filter_case_query
 from app.util import is_user_authenticated
@@ -54,7 +55,7 @@ from fields import SQLAlchemyConnectionField
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
-    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int(), ownerId=Float())
+    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int(), ownerId=Float(), openDate=String())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -74,7 +75,7 @@ class Query(ObjectType):
         else:
             start = 0
         query_slice = query.slice(start, start + first).all()
-        result = SlicedResult(query_slice, start, total)
+        SlicedResult(query_slice, start, total)
         if kwargs.get("classificationId"):
             case_classification_id = kwargs.get("classificationId")
         else:
@@ -91,11 +92,14 @@ class Query(ObjectType):
             case_owner_id = kwargs.get("ownerId")
         else:
             case_owner_id = None
+        if kwargs.get("openDate"):
+            start_open_date = kwargs.get("openDate")
+        else:
+            start_open_date = None
         filtered_cases = build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,
                                                  case_customer_id=case_client_id, case_state_id=case_state_id,
-                                                 case_owner_id=case_owner_id)
+                                                 case_owner_id=case_owner_id,  start_open_date=start_open_date)
         return filtered_cases
-        #return result
 
     @staticmethod
     def resolve_case(root, info, case_id):
