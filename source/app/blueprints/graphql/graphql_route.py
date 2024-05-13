@@ -55,7 +55,8 @@ from fields import SQLAlchemyConnectionField
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
-    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int(), ownerId=Float(), openDate=String(), name=String())
+    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int(),
+                                      ownerId=Float(), openDate=String(), name=String(), socId=String())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -100,9 +101,14 @@ class Query(ObjectType):
             case_name = kwargs.get("name")
         else:
             case_name = None
+        if kwargs.get("socId"):
+            case_soc_id = kwargs.get("socId")
+        else:
+            case_soc_id = None
         filtered_cases = build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,
                                                  case_customer_id=case_client_id, case_state_id=case_state_id,
-                                                 case_owner_id=case_owner_id,  start_open_date=start_open_date, case_name=case_name)
+                                                 case_owner_id=case_owner_id,  start_open_date=start_open_date,
+                                                 case_name=case_name, case_soc_id=case_soc_id)
         return filtered_cases
 
     @staticmethod
