@@ -804,3 +804,21 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
+
+    def test_graphql_cases_filter_stateId_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                    socId: "1", classificationId : 1) {{
+                                                 case {{ stateId }}
+                                                       }}
+                                                   }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        state_id = response['data']['caseCreate']['case']['stateId']
+        payload = {
+            'query': f'''query {{ cases(stateId: {state_id}) 
+                    {{ edges {{ node {{ stateId }} }} }} }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)

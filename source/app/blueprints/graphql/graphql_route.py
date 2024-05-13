@@ -27,6 +27,7 @@ from graphql_server.flask import GraphQLView
 from graphene import ObjectType
 from graphene import Schema
 from graphene import Float
+from graphene import Int
 from graphene import Field
 
 from app.datamgmt.manage.manage_cases_db import build_filter_case_query
@@ -53,7 +54,7 @@ from fields import SQLAlchemyConnectionField
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
-    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float())
+    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -83,9 +84,12 @@ class Query(ObjectType):
             case_client_id = kwargs.get("clientId")
         else:
             case_client_id = None
-
+        if kwargs.get("stateId"):
+            case_state_id = kwargs.get("stateId")
+        else:
+            case_state_id = None
         filtered_cases = build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,
-                                                 case_customer_id=case_client_id)
+                                                 case_customer_id=case_client_id, case_state_id=case_state_id)
         return filtered_cases
         #return result
 
