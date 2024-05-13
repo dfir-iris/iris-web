@@ -19,8 +19,12 @@
 import logging as log
 import traceback
 
+from flask import request
 from flask_login import current_user
+
 from marshmallow.exceptions import ValidationError
+
+from app.schema.marshables import CaseSchema
 
 from app import app
 from app import db
@@ -47,18 +51,13 @@ from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_cases_db import map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import close_case
+from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.datamgmt.case.case_db import get_case
 
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import check_current_user_has_some_case_access
 from app.business.permissions import check_current_user_has_some_permission
 
-from app.schema.marshables import CaseSchema
-
-#new one
-from flask import request
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
-from app.schema.marshables import CaseDetailsSchema
 
 def get_case_by_identifier(case_identifier):
     check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
@@ -234,66 +233,3 @@ def update(case_identifier, request_data):
         log.error(e.__str__())
         log.error(traceback.format_exc())
         raise BusinessProcessingError('Error updating case - check server logs')
-
-
-def build_filter_case_query(case_identifier):
-
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    case_ids_str = request.args.get('case_ids', None, type=str)
-    order_by = request.args.get('order_by', type=str)
-    sort_dir = request.args.get('sort_dir', 'asc', type=str)
-
-    if case_ids_str:
-        try:
-
-            if ',' in case_ids_str:
-                case_ids_str = [int(alert_id) for alert_id in case_ids_str.split(',')]
-
-            else:
-                case_ids_str = [int(case_ids_str)]
-
-        except ValueError:
-            raise BusinessProcessingError('Invalid case id')
-
-    case_customer_id = request.args.get('case_customer_id', None, type=str)
-    case_name = request.args.get('case_name', None, type=str)
-    case_description = request.args.get('case_description', None, type=str)
-    case_classification_id = request.args.get('case_classification_id', None, type=int)
-    case_owner_id = request.args.get('case_owner_id', None, type=int)
-    case_opening_user_id = request.args.get('case_opening_user_id', None, type=int)
-    case_severity_id = request.args.get('case_severity_id', None, type=int)
-    case_state_id = request.args.get('case_state_id', None, type=int)
-    case_soc_id = request.args.get('case_soc_id', None, type=str)
-    start_open_date = request.args.get('start_open_date', None, type=str)
-    end_open_date = request.args.get('end_open_date', None, type=str)
-    draw = request.args.get('draw', 1, type=int)
-    search_value = request.args.get('search[value]', type=str)  # Get the search value from the request
-
-    if type(draw) is not int:
-        draw = 1
-
-    filtered_cases = get_filtered_cases(
-        case_ids=case_ids_str,
-        case_customer_id=case_customer_id,
-        case_name=case_name,
-        case_description=case_description,
-        case_classification_id=case_classification_id,
-        case_owner_id=case_owner_id,
-        case_opening_user_id=case_opening_user_id,
-        case_severity_id=case_severity_id,
-        case_state_id=case_state_id,
-        case_soc_id=case_soc_id,
-        start_open_date=start_open_date,
-        end_open_date=end_open_date,
-        search_value=search_value,
-        page=page,
-        per_page=per_page,
-        current_user_id=current_user.id,
-        sort_by=order_by,
-        sort_dir=sort_dir
-    )
-    if filtered_cases is None:
-        raise BusinessProcessingError('Filtering error')
-
-    return filtered_cases, draw

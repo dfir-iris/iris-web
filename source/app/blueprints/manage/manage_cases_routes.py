@@ -68,7 +68,6 @@ from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import delete
-from app.business.cases import build_filter_case_query
 from app.business.cases import update
 from app.business.cases import create
 from app.business.errors import BusinessProcessingError
@@ -160,7 +159,7 @@ def get_case_api(cur_id, caseid):
 def manage_case_filter(caseid) -> Response:
 
     try:
-        filtered_cases, draw = build_filter_case_query(caseid)
+        filtered_cases, draw = build_filter_case_query()
         cases = {
             'total': filtered_cases.total,
             'cases': CaseDetailsSchema().dump(filtered_cases.items, many=True),
@@ -169,7 +168,6 @@ def manage_case_filter(caseid) -> Response:
             'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
             'draw': draw
         }
-
         return response_success(data=cases)
     except BusinessProcessingError as e:
         return response_error(e.get_message())

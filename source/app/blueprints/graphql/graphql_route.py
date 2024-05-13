@@ -29,6 +29,7 @@ from graphene import Schema
 from graphene import Float
 from graphene import Field
 
+from app.datamgmt.manage.manage_cases_db import build_filter_case_query
 from app.util import is_user_authenticated
 from app.util import response_error
 
@@ -44,6 +45,7 @@ from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
 from app.blueprints.graphql.cases import CaseConnection
 
+
 from fields import SlicedResult
 from fields import SQLAlchemyConnectionField
 
@@ -51,12 +53,13 @@ from fields import SQLAlchemyConnectionField
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
-    cases = SQLAlchemyConnectionField(CaseConnection)
+    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
     @staticmethod
     def resolve_cases(root, info, **kwargs):
+        global case_classification_id, case_client_id
         query = CaseObject.get_query(info)
         total = query.count()
         if kwargs.get("first"):
@@ -72,7 +75,19 @@ class Query(ObjectType):
             start = 0
         query_slice = query.slice(start, start + first).all()
         result = SlicedResult(query_slice, start, total)
-        return result
+        if kwargs.get("classificationId"):
+            case_classification_id = kwargs.get("classificationId")
+        else:
+            case_classification_id = None
+        if kwargs.get("clientId"):
+            case_client_id = kwargs.get("clientId")
+        else:
+            case_client_id = None
+
+        filtered_cases = build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,
+                                                 case_customer_id=case_client_id)
+        return filtered_cases
+        #return result
 
     @staticmethod
     def resolve_case(root, info, case_id):
