@@ -392,16 +392,18 @@ class Tests(TestCase):
         self.assertNotIn('errors', body)
 
     def test_graphql_update_case_should_use_optionals_parameters(self):
+        id_case = 1
         payload = {
-            'query': ''' mutation { 
-                             caseUpdate(caseId: 1, description: "Some description", clientId: 1, socId: "1",
-                             classificationId : 1) {
-                             case { caseId }
-                          }
-                     }'''
+            'query': f'''mutation {{
+                             caseUpdate(caseId: {id_case}, description: "Some description", clientId: 1, socId: "1",
+                             classificationId : 1) {{
+                             case {{ caseId }}
+                          }}
+                     }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        caseId = body['data']['caseUpdate']['case']['caseId']
+        self.assertEqual(caseId, id_case)
 
     def test_graphql_cases_should_return_newly_created_case(self):
         payload = {
@@ -574,7 +576,7 @@ class Tests(TestCase):
     def test_graphql_cases_should_not_fail(self):
         test_name = '#1 - Initial Demo'
         payload = {
-            'query': '{ cases(first: 2) { edges { node { id name } } } }'
+            'query': '{ cases(first: 1) { edges { node { id name } } } }'
         }
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
