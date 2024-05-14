@@ -688,35 +688,26 @@ class Tests(TestCase):
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
                                     socId: "1", classificationId : 1) {{
-                                                 case {{ socId }}
+                                                 case {{ caseId }}
                                                        }}
                                                    }}'''
         }
         self._subject.execute_graphql_query(payload)
+        case_id = 2
+        self._subject.execute_graphql_query(payload)
         payload = {
-            'query': f'''mutation {{
-                                 caseCreate(name: "case3", description: "Some description", clientId: 1, 
-                                            socId: "2", classificationId : 1) {{
-                                                         case {{ socId }}
-                                                               }}
-                                                           }}'''
+            'query': f'''query {{ cases
+                     {{ edges {{ node {{ caseId name }} cursor }} }} }}'''
         }
         self._subject.execute_graphql_query(payload)
         payload = {
-            'query': f'''mutation {{
-                                         caseCreate(name: "case4", description: "Some description", clientId: 1, 
-                                                    socId: "2", classificationId : 1) {{
-                                                                 case {{ socId }}
-                                                                       }}
-                                                                   }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''query {{ cases(first:2, after:"YXJyYXljb25uZWN0aW9uOjA=")
+            'query': f'''query {{ cases(first:1, after:"YXJyYXljb25uZWN0aW9uOjA=")
              {{ edges {{ node {{ caseId }} cursor }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_caseId = case['node']['caseId']
+            self.assertEqual(case_id, test_caseId)
 
     def test_graphql_cases_classificationId_should_not_fail(self):
         classification_id = 1
