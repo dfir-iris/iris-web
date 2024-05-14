@@ -872,10 +872,12 @@ class Tests(TestCase):
         name = response['data']['caseCreate']['case']['name']
         payload = {
             'query': f'''query {{ cases(name: "{name}") 
-                    {{ edges {{ node {{ openDate }} }} }} }}'''
+                    {{ edges {{ node {{ name }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_name = case['node']['name']
+            self.assertEqual(name, test_name)
 
     def test_graphql_cases_filter_socId_should_not_fail(self):
         payload = {
@@ -893,7 +895,9 @@ class Tests(TestCase):
                     {{ edges {{ node {{ socId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_socId = case['node']['socId']
+            self.assertEqual(soc_id, test_socId)
 
     def test_graphql_cases_filter_severityId_should_not_fail(self):
         payload = {
