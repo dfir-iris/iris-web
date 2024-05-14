@@ -31,6 +31,8 @@ from graphene import Int
 from graphene import Field
 from graphene import String
 
+from graphene_sqlalchemy import SQLAlchemyConnectionField
+
 from app.datamgmt.manage.manage_cases_db import build_filter_case_query
 from app.util import is_user_authenticated
 from app.util import response_error
@@ -46,17 +48,15 @@ from app.blueprints.graphql.cases import CaseCreate
 from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
 from app.blueprints.graphql.cases import CaseConnection
-
-
-from fields import SlicedResult
-from fields import SQLAlchemyConnectionField
+from app.blueprints.graphql.sliced_result import SlicedResult
 
 
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
     cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int(),
-                                      ownerId=Float(), openDate=String(), name=String(), socId=String(), severityId=Int())
+                                      ownerId=Float(), openDate=String(), name=String(), socId=String(),
+                                      severityId=Int(), initialDate=String())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -109,11 +109,15 @@ class Query(ObjectType):
             case_severity_id = kwargs.get("severityId")
         else:
             case_severity_id = None
+        if kwargs.get("initialDate"):
+            end_open_date = kwargs.get("initialDate")
+        else:
+            end_open_date = None
         filtered_cases = build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,
                                                  case_customer_id=case_client_id, case_state_id=case_state_id,
                                                  case_owner_id=case_owner_id,  start_open_date=start_open_date,
                                                  case_name=case_name, case_soc_id=case_soc_id,
-                                                 case_severity_id=case_severity_id)
+                                                 case_severity_id=case_severity_id, end_open_date=end_open_date)
         return filtered_cases
 
     @staticmethod

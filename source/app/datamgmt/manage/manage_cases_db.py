@@ -412,7 +412,6 @@ def build_filter_case_query(current_user_id,
     if case_description is not None:
         conditions.append(Cases.description.ilike(f'%{case_description}%'))
     if case_classification_id is not None:
-        print("hellllllllllllllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooo")
         conditions.append(Cases.classification_id == case_classification_id)
     if case_owner_id is not None:
         conditions.append(Cases.owner_id == case_owner_id)

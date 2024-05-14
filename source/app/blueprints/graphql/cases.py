@@ -16,6 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import base64
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene_sqlalchemy import SQLAlchemyConnectionField
@@ -35,10 +36,7 @@ from app.business.cases import delete
 from app.business.cases import update
 
 from app.blueprints.graphql.iocs import IOCConnection
-
-import base64
-
-from fields import SlicedResult
+from app.blueprints.graphql.sliced_result import SlicedResult
 
 
 class CaseObject(SQLAlchemyObjectType):
