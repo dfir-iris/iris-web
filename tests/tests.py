@@ -839,7 +839,9 @@ class Tests(TestCase):
                     {{ edges {{ node {{ ownerId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_owner = case['node']['ownerId']
+            self.assertEqual(owner_id, test_owner)
 
     def test_graphql_cases_filter_openDate_should_not_fail(self):
         payload = {
@@ -857,7 +859,9 @@ class Tests(TestCase):
                     {{ edges {{ node {{ openDate }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_date = case['node']['openDate']
+            self.assertEqual(open_date, test_date)
 
     def test_graphql_cases_filter_name_should_not_fail(self):
         payload = {
