@@ -318,15 +318,17 @@ class Tests(TestCase):
         self.assertRegex(response['errors'][0]['message'], r'Permission denied \(EID [0-9a-f-]{36}\)')
 
     def test_graphql_create_case_should_not_fail(self):
+        test_description = 'description 2'
         payload = {
-            'query': ''' mutation { 
-                             caseCreate(name: "case2", description: "Some description", clientId: 1) {
-                             case { caseId }
-                        }
-                    }'''
+            'query': f''' mutation {{ 
+                             caseCreate(name: "case2", description: "{test_description}", clientId: 1) {{
+                             case {{ description }}
+                        }}
+                    }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        description = body['data']['caseCreate']['case']['description']
+        self.assertEqual(description, test_description)
 
     def test_graphql_delete_case_should_not_fail(self):
         payload = {
