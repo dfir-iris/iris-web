@@ -369,15 +369,18 @@ class Tests(TestCase):
         self.assertIn('errors', body)
 
     def test_graphql_update_case_should_not_fail(self):
+        test_name = 'new name'
+        final_name = '#1 - new name'
         payload = {
-            'query': ''' mutation {
-                     caseUpdate(caseId: 1, name: "new name") {
-                          case { caseId }
-                     } 
-                }'''
+            'query': f''' mutation {{
+                     caseUpdate(caseId: 1, name: "{test_name}") {{
+                          case {{ name }}
+                     }} 
+                }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        name = body['data']['caseUpdate']['case']['name']
+        self.assertEqual(name, final_name)
 
     def test_graphql_create_case_should_use_optionals_parameters(self):
         id_client = 1
