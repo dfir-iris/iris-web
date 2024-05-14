@@ -380,16 +380,18 @@ class Tests(TestCase):
         self.assertNotIn('errors', body)
 
     def test_graphql_create_case_should_use_optionals_parameters(self):
+        id_client = 1
         payload = {
-            'query': ''' mutation { 
-                             caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1",
-                             classificationId : 1) {
-                                 case { caseId }
-                             } 
-                        }'''
+            'query': f''' mutation {{
+                             caseCreate(name: "case2", description: "Some description", clientId: {id_client}, socId: "1",
+                             classificationId : 1) {{
+                                 case {{ clientId }}
+                             }} 
+                        }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        clientId = body['data']['caseCreate']['case']['clientId']
+        self.assertEqual(clientId, id_client)
 
     def test_graphql_update_case_should_use_optionals_parameters(self):
         id_case = 1
