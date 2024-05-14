@@ -572,20 +572,14 @@ class Tests(TestCase):
 
 
     def test_graphql_cases_should_not_fail(self):
-        payload1 = {
-            'query': f'''mutation {{
-                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                    socId: "1", classificationId : 1) {{
-                                                 case {{ caseId }}
-                                                       }}
-                                                   }}'''
-        }
+        test_name = '#1 - Initial Demo'
         payload = {
-            'query': '{ cases(first: 1) { edges { node { id name } } } }'
+            'query': '{ cases(first: 2) { edges { node { id name } } } }'
         }
         body = self._subject.execute_graphql_query(payload)
-        print(body)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            name = case['node']['name']
+            self.assertEqual(test_name, name)
 
     def test_graphql_update_ioc_should_update_misp(self):
         case = self._subject.create_case()
