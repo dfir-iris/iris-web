@@ -718,41 +718,6 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
-    def test_graphql_cases_classificationId_should_be_incoherent(self):
-        payload = {
-            'query': f'''mutation {{
-                                 caseCreate(name: "case1", description: "Some description", clientId: 1, 
-                                            socId: "1", classificationId : 1) {{
-                                                         case {{ caseId }}
-                                                               }}
-                                                           }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''mutation {{
-                                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                                    socId: "1", classificationId : 3) {{
-                                                                 case {{ caseId }}
-                                                                       }}
-                                                                   }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''mutation {{
-                                         caseCreate(name: "case3", description: "Some description", clientId: 1, 
-                                                    socId: "1", classificationId : 1) {{
-                                                                 case {{ caseId }}
-                                                                       }}
-                                                                   }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''query {{ cases(classificationId : 1, first:2)
-                     {{ edges {{ node {{ name caseId classificationId }} cursor }} }} }}'''
-        }
-        body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
-
     def test_graphql_cases_classificationId_should_not_fail(self):
         classification_id = 1
         payload = {
