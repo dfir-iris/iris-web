@@ -683,7 +683,7 @@ class Tests(TestCase):
         print(response)
         self.assertEqual('"test"', response['data']['iocUpdate']['ioc']['modificationHistory'])
 
-    def test_cases(self):
+    def test_cursor_first_after(self):
         payload = {
             'query': f'''mutation {{
                          caseCreate(name: "case2", description: "Some description", clientId: 1, 
