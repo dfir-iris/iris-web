@@ -109,7 +109,8 @@ class Tests(TestCase):
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', response)
+        test_ioc_value = response['data']['iocCreate']['ioc']['iocValue']
+        self.assertEqual(test_ioc_value, ioc_value)
 
     def test_graphql_delete_ioc_should_not_fail(self):
         case = self._subject.create_case()
