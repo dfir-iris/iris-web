@@ -782,11 +782,13 @@ class Tests(TestCase):
         }
         self._subject.execute_graphql_query(payload)
         payload = {
-            'query': f'''query {{ cases(classificationId:1)
+            'query': f'''query {{ cases(classificationId: {classification_id} )
                      {{ edges {{ node {{ name caseId classificationId }} cursor }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_classification = case['node']['classificationId']
+            self.assertEqual(classification_id, test_classification)
 
     def test_graphql_cases_filter_clientId_should_not_fail(self):
         payload = {
@@ -803,7 +805,9 @@ class Tests(TestCase):
             'query': f'''query {{ cases(clientId: {client_id}) {{ edges {{ node {{ clientId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_client = case['node']['clientId']
+            self.assertEqual(client_id, test_client)
 
     def test_graphql_cases_filter_stateId_should_not_fail(self):
         payload = {
@@ -821,7 +825,9 @@ class Tests(TestCase):
                     {{ edges {{ node {{ stateId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for case in body['data']['cases']['edges']:
+            test_state = case['node']['stateId']
+            self.assertEqual(state_id, test_state)
 
     def test_graphql_cases_filter_ownerId_should_not_fail(self):
         payload = {
