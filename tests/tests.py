@@ -938,15 +938,19 @@ class Tests(TestCase):
                                         }}
                                     }}'''
         }
-        self._subject.execute_graphql_query(payload)
+        response = self._subject.execute_graphql_query(payload)
+        ioc_uuid = response['data']['iocCreate']['ioc']['iocUuid']
         payload = {
             'query': f'''{{
                                 case(caseId: 1) {{
-                                   iocs(iocUuid: "5276ae76-9059-4e5d-903f-b7e37272d6f5") {{ edges {{ node {{ iocId }} }} }} }} 
+                                   iocs(iocUuid: "{ioc_uuid}") {{ edges {{ node {{ iocId iocUuid }}
+                                    }} }} }} 
                                    }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for ioc in body['data']['case']['iocs']['edges']:
+            test_ioc_uuid = ioc['node']['iocUuid']
+            self.assertEqual(ioc_uuid, test_ioc_uuid)
 
     def test_graphql_iocs_filter_iocValue_should_not_fail(self):
         ioc_value = 'test'
