@@ -16,8 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
-
 import marshmallow
 from flask import Blueprint
 from flask import render_template
@@ -32,7 +30,6 @@ from app import db
 from app.datamgmt.manage.manage_srv_settings_db import get_alembic_revision
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.iris_engine.backup.backup import backup_iris_db
-from app.iris_engine.updater.updater import inner_init_server_update
 from app.iris_engine.updater.updater import is_updates_available
 from app.iris_engine.updater.updater import remove_periodic_update_checks
 from app.iris_engine.updater.updater import setup_periodic_update_checks
@@ -62,8 +59,8 @@ def manage_update(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/server/backups/make-db', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_make_db_backup(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_make_db_backup():
 
     has_error, logs = backup_iris_db()
     if has_error:
@@ -111,8 +108,8 @@ def manage_settings(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/settings/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_update_settings(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_update_settings():
     if not request.is_json:
         return response_error('Invalid request')
 
@@ -132,7 +129,7 @@ def manage_update_settings(caseid):
                 remove_periodic_update_checks()
 
         if srv_settings_sc:
-            track_activity("Server settings updated", caseid=caseid)
+            track_activity("Server settings updated")
             return response_success("Server settings updated", srv_settings_sc)
 
     except marshmallow.exceptions.ValidationError as e:

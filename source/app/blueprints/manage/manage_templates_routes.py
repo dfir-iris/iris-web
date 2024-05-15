@@ -16,7 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 import os
 import random
 import string
@@ -79,8 +78,8 @@ def manage_report_templates(caseid, url_redir):
 
 
 @manage_templates_blueprint.route('/manage/templates/list')
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def report_templates_list(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def report_templates_list():
     # Get all templates
     templates = CaseTemplateReport.query.with_entities(
         CaseTemplateReport.name,
@@ -106,8 +105,8 @@ def report_templates_list(caseid):
 
 
 @manage_templates_blueprint.route('/manage/templates/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def add_template_modal(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def add_template_modal():
     report_template = CaseTemplateReport()
     form = AddReportTemplateForm()
     form.report_language.choices = [(c.id, c.name.capitalize()) for c in Languages.query.all()]
@@ -117,8 +116,8 @@ def add_template_modal(caseid):
 
 
 @manage_templates_blueprint.route('/manage/templates/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def add_template(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def add_template():
 
     report_template = CaseTemplateReport()
 
@@ -152,7 +151,7 @@ def add_template(caseid):
         db.session.add(report_template)
         db.session.commit()
 
-        track_activity(f"report template '{report_template.name}' added", caseid=caseid, ctx_less=True)
+        track_activity(f"report template '{report_template.name}' added", ctx_less=True)
 
         ret = {
             "report_id": report_template.id,
@@ -169,8 +168,8 @@ def add_template(caseid):
 
 
 @manage_templates_blueprint.route('/manage/templates/download/<report_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def download_template(report_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def download_template(report_id):
     if report_id != 0:
         report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
 
@@ -185,8 +184,8 @@ def download_template(report_id, caseid):
 
 
 @manage_templates_blueprint.route('/manage/templates/delete/<report_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def delete_template(report_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def delete_template(report_id):
     error = None
 
     report_template = CaseTemplateReport.query.filter(CaseTemplateReport.id == report_id).first()
@@ -209,5 +208,5 @@ def delete_template(report_id, caseid):
     if error:
         return response_error(error)
 
-    track_activity(f"report template '{report_name}' deleted", caseid=caseid, ctx_less=True)
+    track_activity(f"report template '{report_name}' deleted", ctx_less=True)
     return response_success("Deleted successfully", data=error)

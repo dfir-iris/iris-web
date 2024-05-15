@@ -36,6 +36,7 @@ from app.models.authorization import Permissions
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseTemplateSchema
 from app.util import ac_api_requires
+from app.util import ac_requires_case_identifier
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
@@ -59,7 +60,7 @@ def manage_case_templates(caseid, url_redir):
 
 @manage_case_templates_blueprint.route('/manage/case-templates/list', methods=['GET'])
 @ac_api_requires()
-def list_case_templates(caseid):
+def list_case_templates():
     """Show a list of case templates
 
     Returns:
@@ -113,7 +114,7 @@ def case_template_modal(cur_id, caseid, url_redir):
 
 @manage_case_templates_blueprint.route('/manage/case-templates/add/modal', methods=['GET'])
 @ac_api_requires(Permissions.case_templates_write)
-def add_template_modal(caseid):
+def add_template_modal():
     case_template = CaseTemplate()
     form = CaseTemplateForm()
     form.case_template_json.data = {
@@ -150,12 +151,13 @@ def add_template_modal(caseid):
 
 @manage_case_templates_blueprint.route('/manage/case-templates/upload/modal', methods=['GET'])
 @ac_api_requires(Permissions.case_templates_write)
-def upload_template_modal(caseid):
+def upload_template_modal():
     return render_template("modal_upload_case_template.html")
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/add', methods=['POST'])
 @ac_api_requires(Permissions.case_templates_write)
+@ac_requires_case_identifier()
 def add_case_template(caseid):
     data = request.get_json()
     if not data:
@@ -193,7 +195,7 @@ def add_case_template(caseid):
 
 @manage_case_templates_blueprint.route('/manage/case-templates/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.case_templates_write)
-def update_case_template(cur_id, caseid):
+def update_case_template(cur_id):
     if not request.is_json:
         return response_error("Invalid request")
 
@@ -235,6 +237,7 @@ def update_case_template(cur_id, caseid):
 
 @manage_case_templates_blueprint.route('/manage/case-templates/delete/<int:case_template_id>', methods=['POST'])
 @ac_api_requires(Permissions.case_templates_write)
+@ac_requires_case_identifier()
 def delete_case_template(case_template_id, caseid):
     case_template = get_case_template_by_id(case_template_id)
     if case_template is None:

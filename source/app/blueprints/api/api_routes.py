@@ -16,7 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint
 
 from app import app
 from app.util import ac_api_requires
@@ -32,13 +32,13 @@ api_blueprint = Blueprint(
 # CONTENT ------------------------------------------------
 @api_blueprint.route('/api/ping', methods=['GET'])
 @ac_api_requires()
-def api_ping(caseid):
+def api_ping():
     return response_success("pong")
 
 
 @api_blueprint.route('/api/versions', methods=['GET'])
 @ac_api_requires()
-def api_version(caseid):
+def api_version():
     versions = {
         "iris_current": app.config.get('IRIS_VERSION'),
         "api_min": app.config.get('API_MIN_VERSION'),
