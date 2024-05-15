@@ -889,7 +889,7 @@ class Tests(TestCase):
             test_severity = case['node']['severityId']
             self.assertEqual(severity_id, test_severity)
 
-    def test_parameter_totalCount_should_not_fail(self):
+    def test_graphql_cases_parameter_totalCount_should_not_fail(self):
         payload = {
             'query': f'''query {{ cases {{ totalCount }} }}'''
         }
