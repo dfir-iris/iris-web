@@ -999,7 +999,9 @@ class Tests(TestCase):
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for ioc in body['data']['case']['iocs']['edges']:
+            test_type_id = ioc['node']['iocTypeId']
+            self.assertEqual(test_type_id, ioc_type_id)
 
     def test_graphql_iocs_filter_iocDescription_should_not_fail(self):
         payload = {
