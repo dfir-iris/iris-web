@@ -16,7 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import base64
+from base64 import b64decode
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene_sqlalchemy import SQLAlchemyConnectionField
@@ -51,20 +51,18 @@ class CaseObject(SQLAlchemyObjectType):
     def resolve_iocs(root, info, **kwargs):
         query = IOCObject.get_query(info)
         total = query.count()
-        if kwargs.get("first"):
-            first = kwargs.get("first")
-        else:
+        first = kwargs.get('first')
+        if not first:
             first = total
-        if kwargs.get("after"):
-            after = kwargs.get("after")
-            decode_after = base64.b64decode(after)
+        if kwargs.get('after'):
+            after = kwargs.get('after')
+            decode_after = b64decode(after)
             start = int(decode_after[16:].decode())
             start += 1
         else:
             start = 0
         query_slice = query.slice(start, start + first).all()
-        result = SlicedResult(query_slice, start, total)
-        return result
+        return SlicedResult(query_slice, start, total)
 
 
 class CaseConnection(Connection):

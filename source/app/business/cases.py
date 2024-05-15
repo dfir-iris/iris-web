@@ -19,7 +19,6 @@
 import logging as log
 import traceback
 
-from flask import request
 from flask_login import current_user
 
 from marshmallow.exceptions import ValidationError
@@ -51,7 +50,6 @@ from app.datamgmt.manage.manage_cases_db import delete_case
 from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_cases_db import map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import close_case
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.datamgmt.case.case_db import get_case
 
 from app.business.errors import BusinessProcessingError

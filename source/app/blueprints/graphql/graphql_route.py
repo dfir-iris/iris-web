@@ -15,7 +15,6 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import base64
 
 from functools import wraps
 
@@ -48,7 +47,6 @@ from app.blueprints.graphql.cases import CaseCreate
 from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
 from app.blueprints.graphql.cases import CaseConnection
-from app.blueprints.graphql.sliced_result import SlicedResult
 
 
 class Query(ObjectType):
@@ -62,55 +60,37 @@ class Query(ObjectType):
 
     @staticmethod
     def resolve_cases(root, info, **kwargs):
-        query = CaseObject.get_query(info)
-        total = query.count()
-        if kwargs.get("first"):
-            first = kwargs.get("first")
-        else:
-            first = total
-        if kwargs.get("after"):
-            after = kwargs.get("after")
-            decode_after = base64.b64decode(after)
-            start = int(decode_after[16:].decode())
-            start += 1
-        else:
-            start = 0
-        query_slice = query.slice(start, start + first).all()
-        SlicedResult(query_slice, start, total)
-        if kwargs.get("classificationId"):
-            case_classification_id = kwargs.get("classificationId")
-        else:
-            case_classification_id = None
-        if kwargs.get("clientId"):
-            case_client_id = kwargs.get("clientId")
+        case_classification_id = kwargs.get('classificationId')
+        if kwargs.get('clientId'):
+            case_client_id = kwargs.get('clientId')
         else:
             case_client_id = None
-        if kwargs.get("stateId"):
-            case_state_id = kwargs.get("stateId")
+        if kwargs.get('stateId'):
+            case_state_id = kwargs.get('stateId')
         else:
             case_state_id = None
-        if kwargs.get("ownerId"):
-            case_owner_id = kwargs.get("ownerId")
+        if kwargs.get('ownerId'):
+            case_owner_id = kwargs.get('ownerId')
         else:
             case_owner_id = None
-        if kwargs.get("openDate"):
-            start_open_date = kwargs.get("openDate")
+        if kwargs.get('openDate'):
+            start_open_date = kwargs.get('openDate')
         else:
             start_open_date = None
-        if kwargs.get("name"):
-            case_name = kwargs.get("name")
+        if kwargs.get('name'):
+            case_name = kwargs.get('name')
         else:
             case_name = None
-        if kwargs.get("socId"):
-            case_soc_id = kwargs.get("socId")
+        if kwargs.get('socId'):
+            case_soc_id = kwargs.get('socId')
         else:
             case_soc_id = None
-        if kwargs.get("severityId"):
-            case_severity_id = kwargs.get("severityId")
+        if kwargs.get('severityId'):
+            case_severity_id = kwargs.get('severityId')
         else:
             case_severity_id = None
-        if kwargs.get("initialDate"):
-            end_open_date = kwargs.get("initialDate")
+        if kwargs.get('initialDate'):
+            end_open_date = kwargs.get('initialDate')
         else:
             end_open_date = None
         filtered_cases = build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,

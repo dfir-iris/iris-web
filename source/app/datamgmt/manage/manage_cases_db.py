@@ -403,32 +403,45 @@ def build_filter_case_query(current_user_id,
     conditions = []
     if start_open_date is not None and end_open_date is not None:
         conditions.append(Cases.open_date.between(start_open_date, end_open_date))
+
     if case_customer_id is not None:
         conditions.append(Cases.client_id == case_customer_id)
+
     if case_ids is not None:
         conditions.append(Cases.case_id.in_(case_ids))
+
     if case_name is not None:
         conditions.append(Cases.name.ilike(f'%{case_name}%'))
+
     if case_description is not None:
         conditions.append(Cases.description.ilike(f'%{case_description}%'))
+
     if case_classification_id is not None:
         conditions.append(Cases.classification_id == case_classification_id)
+
     if case_owner_id is not None:
         conditions.append(Cases.owner_id == case_owner_id)
+
     if case_opening_user_id is not None:
         conditions.append(Cases.user_id == case_opening_user_id)
+
     if case_severity_id is not None:
         conditions.append(Cases.severity_id == case_severity_id)
+
     if case_state_id is not None:
         conditions.append(Cases.state_id == case_state_id)
+
     if case_soc_id is not None:
         conditions.append(Cases.soc_id == case_soc_id)
+
     if search_value is not None:
         conditions.append(Cases.name.like(f"%{search_value}%"))
+
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
     conditions.append(Cases.case_id.in_(user_list_cases_view(current_user_id)))
     data = Cases.query.filter(*conditions)
+
     if sort_by is not None:
         order_func = desc if sort_dir == "desc" else asc
 
