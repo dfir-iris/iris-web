@@ -912,7 +912,7 @@ class Tests(TestCase):
         total = body['data']['cases']['totalCount']
         self.assertEqual(total, test_total)
 
-    def test_graphql_iocs_first_filter_iocId_should_not_fail(self):
+    def test_graphql_iocs_filter_iocId_should_not_fail(self):
         payload = {
             'query': f'''mutation {{
                                         iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "33") {{
@@ -920,7 +920,8 @@ class Tests(TestCase):
                                         }}
                                     }}'''
         }
-        self._subject.execute_graphql_query(payload)
+        response = self._subject.execute_graphql_query(payload)
+        ioc_id = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'''{{
                                 case(caseId: 1) {{
@@ -928,7 +929,9 @@ class Tests(TestCase):
                                    }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for ioc in body['data']['case']['iocs']['edges']:
+            test_ioc_id = ioc['node']['iocId']
+            self.assertEqual(ioc_id, test_ioc_id)
 
     def test_graphql_iocs_filter_iocUuid_should_not_fail(self):
         payload = {
