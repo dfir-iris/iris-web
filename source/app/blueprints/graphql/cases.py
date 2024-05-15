@@ -52,7 +52,22 @@ class CaseObject(SQLAlchemyObjectType):
         ioc_id = kwargs.get('iocId')
         ioc_uuid = kwargs.get('iocUuid')
         ioc_value = kwargs.get('iocValue')
-        return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value)
+        query = build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value)
+        total = query.count()
+
+        first = kwargs.get('first')
+        if not first:
+            first = total
+
+        if kwargs.get('after'):
+            after = kwargs.get('after')
+            decode_after = b64decode(after)
+            start = int(decode_after[16:].decode())
+            start += 1
+        else:
+            start = 0
+        query_slice = query.slice(start, start + first).all()
+        return SlicedResult(query_slice, start, total)
 
 
 class CaseConnection(Connection):

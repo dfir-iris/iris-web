@@ -958,9 +958,25 @@ class Tests(TestCase):
         }
         self._subject.execute_graphql_query(payload)
         payload = {
+            'query': f'''mutation {{
+                        iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test") {{
+                            ioc {{ iocValue }}
+                            }}
+                        }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        payload = {
+            'query': f'''mutation {{
+                        iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "testtest") {{
+                            ioc {{ iocValue }}
+                            }}
+                        }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        payload = {
             'query': f'''{{
                case(caseId: 1) {{
-                     iocs(iocValue: "test") {{ edges {{ node {{ iocValue }} }} }} }} 
+                     iocs(iocValue: "test", first:2) {{ edges {{ node {{ iocValue iocId }} }} }} }} 
                   }}'''
         }
         body = self._subject.execute_graphql_query(payload)
