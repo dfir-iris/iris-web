@@ -502,16 +502,19 @@ def get_filtered_cases(current_user_id,
 
 
 def build_filter_case_ioc_query(ioc_id: int = None,
-                                ioc_uuid: str = None
+                                ioc_uuid: str = None,
+                                ioc_value: str = None
                                 ):
     """
-    Get a list of cases from the database, filtered by the given parameters
+    Get a list of iocs from the database, filtered by the given parameters
     """
     conditions = []
     if ioc_id is not None:
         conditions.append(Ioc.ioc_id == ioc_id)
     if ioc_uuid is not None:
         conditions.append(Ioc.ioc_uuid == ioc_uuid)
+    if ioc_value is not None:
+        conditions.append(Ioc.ioc_value == ioc_value)
 
     query = Ioc.query.filter(*conditions)
     return query

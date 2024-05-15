@@ -45,14 +45,14 @@ class CaseObject(SQLAlchemyObjectType):
         model = Cases
         interfaces = [Node]
 
-    # TODO add filters
-    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Int(), iocUuid=String())
+    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Int(), iocUuid=String(), ioc_value=String())
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
         ioc_id = kwargs.get('iocId')
         ioc_uuid = kwargs.get('iocUuid')
-        return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid)
+        ioc_value = kwargs.get('iocValue')
+        return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value)
 
 
 class CaseConnection(Connection):
