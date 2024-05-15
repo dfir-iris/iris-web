@@ -1044,6 +1044,8 @@ class Tests(TestCase):
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', body)
+        for ioc in body['data']['case']['iocs']['edges']:
+            test_tlp_id = ioc['node']['iocTlpId']
+            self.assertEqual(test_tlp_id, ioc_tlp_id)
 
 
