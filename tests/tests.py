@@ -890,7 +890,21 @@ class Tests(TestCase):
             self.assertEqual(severity_id, test_severity)
 
     def test_parameter_totalCount_should_not_fail(self):
-        test_total = 1
+        payload = {
+            'query': f'''query {{ cases {{ totalCount }} }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        test_total = body['data']['cases']['totalCount']
+        payload = {
+            'query': f'''mutation {{
+                                 caseCreate(name: "case2", description: "Some description", clientId: 1, 
+                                            socId: "1", classificationId : 1) {{
+                                                         case {{ name }}
+                                                               }}
+                                                           }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        test_total += 1
         payload = {
             'query': f'''query {{ cases {{ totalCount }} }}'''
         }
