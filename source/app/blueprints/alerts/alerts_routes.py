@@ -408,6 +408,9 @@ def alerts_batch_update_route() -> Response:
     alert_ids: List[int] = data.get('alert_ids', [])
     updates = data.get('updates', {})
 
+    if not updates.get('alert_tags'):
+        updates.pop('alert_tags', None)
+
     if not alert_ids:
         return response_error('No alert IDs provided')
 
