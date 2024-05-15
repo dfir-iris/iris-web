@@ -51,9 +51,11 @@ class CaseObject(SQLAlchemyObjectType):
     def resolve_iocs(root, info, **kwargs):
         query = IOCObject.get_query(info)
         total = query.count()
+
         first = kwargs.get('first')
         if not first:
             first = total
+
         if kwargs.get('after'):
             after = kwargs.get('after')
             decode_after = b64decode(after)
