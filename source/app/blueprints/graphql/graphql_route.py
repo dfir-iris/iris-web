@@ -61,34 +61,13 @@ class Query(ObjectType):
     @staticmethod
     def resolve_cases(root, info, **kwargs):
         case_classification_id = kwargs.get('classificationId')
-        if kwargs.get('clientId'):
-            case_client_id = kwargs.get('clientId')
-        else:
-            case_client_id = None
-        if kwargs.get('stateId'):
-            case_state_id = kwargs.get('stateId')
-        else:
-            case_state_id = None
-        if kwargs.get('ownerId'):
-            case_owner_id = kwargs.get('ownerId')
-        else:
-            case_owner_id = None
-        if kwargs.get('openDate'):
-            start_open_date = kwargs.get('openDate')
-        else:
-            start_open_date = None
-        if kwargs.get('name'):
-            case_name = kwargs.get('name')
-        else:
-            case_name = None
-        if kwargs.get('socId'):
-            case_soc_id = kwargs.get('socId')
-        else:
-            case_soc_id = None
-        if kwargs.get('severityId'):
-            case_severity_id = kwargs.get('severityId')
-        else:
-            case_severity_id = None
+        case_client_id = kwargs.get('clientId')
+        case_state_id = kwargs.get('stateId')
+        case_owner_id = kwargs.get('ownerId')
+        start_open_date = kwargs.get('openDate')
+        case_name = kwargs.get('name')
+        case_soc_id = kwargs.get('socId')
+        case_severity_id = kwargs.get('severityId')
         filtered_cases = build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,
                                                  case_customer_id=case_client_id, case_state_id=case_state_id,
                                                  case_owner_id=case_owner_id,  start_open_date=start_open_date,
