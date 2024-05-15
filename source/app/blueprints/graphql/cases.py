@@ -16,10 +16,12 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from base64 import b64decode
 
 from graphene_sqlalchemy import SQLAlchemyObjectType
-from graphene import List
+from graphene_sqlalchemy import SQLAlchemyConnectionField
 from graphene.relay import Node
+from graphene.relay import Connection
 from graphene import Field
 from graphene import Mutation
 from graphene import NonNull
@@ -29,10 +31,12 @@ from graphene import String
 
 from app.models.cases import Cases
 from app.blueprints.graphql.iocs import IOCObject
-from app.business.iocs import get_iocs
 from app.business.cases import create
 from app.business.cases import delete
 from app.business.cases import update
+
+from app.blueprints.graphql.iocs import IOCConnection
+from app.blueprints.graphql.sliced_result import SlicedResult
 
 
 class CaseObject(SQLAlchemyObjectType):
@@ -41,12 +45,37 @@ class CaseObject(SQLAlchemyObjectType):
         interfaces = [Node]
 
     # TODO add filters
-    # TODO do pagination (maybe present it as a relay Connection?)
-    iocs = List(IOCObject, description='Get IOCs associated with the case')
+    iocs = SQLAlchemyConnectionField(IOCConnection)
 
     @staticmethod
-    def resolve_iocs(root: Cases, info):
-        return get_iocs(root.case_id)
+    def resolve_iocs(root, info, **kwargs):
+        query = IOCObject.get_query(info)
+        total = query.count()
+
+        first = kwargs.get('first')
+        if not first:
+            first = total
+
+        if kwargs.get('after'):
+            after = kwargs.get('after')
+            decode_after = b64decode(after)
+            start = int(decode_after[16:].decode())
+            start += 1
+        else:
+            start = 0
+        query_slice = query.slice(start, start + first).all()
+        return SlicedResult(query_slice, start, total)
+
+
+class CaseConnection(Connection):
+    class Meta:
+        node = CaseObject
+
+    total_count = Int()
+
+    @staticmethod
+    def resolve_total_count(root, info, **kwargs):
+        return root.length
 
 
 class CaseCreate(Mutation):

@@ -29,10 +29,23 @@ from app.business.iocs import create
 from app.business.iocs import update
 from app.business.iocs import delete
 
+from graphene.relay import Connection
+
 
 class IOCObject(SQLAlchemyObjectType):
     class Meta:
         model = Ioc
+
+
+class IOCConnection(Connection):
+    class Meta:
+        node = IOCObject
+
+    total_count = Int()
+
+    @staticmethod
+    def resolve_total_count(root, info, **kwargs):
+        return root.length
 
 
 class IOCCreate(Mutation):
@@ -66,22 +79,23 @@ class IOCCreate(Mutation):
 class IOCUpdate(Mutation):
 
     class Arguments:
-        ioc_id = NonNull(Float)
-        # TODO shouldn't this argument be optional? (unless we want to add the IOC to another case?)
-        case_id = NonNull(Float)
-        # TODO shouldn't this argument be optional?
+        ioc_id = Float()
+        case_id = Float()
         type_id = NonNull(Int)
-        # TODO shouldn't this argument be optional?
         tlp_id = NonNull(Int)
-        # TODO shouldn't this argument be optional?
         value = NonNull(String)
         description = String()
         tags = String()
+        ioc_misp = String()
+        user_id = Float()
+        ioc_enrichment = String()
+        custom_attributes = String()
+        modification_history = String()
 
     ioc = Field(IOCObject)
 
     @staticmethod
-    def mutate(root, info, ioc_id, case_id, type_id, tlp_id, value, description=None, tags=None):
+    def mutate(root, info, type_id, tlp_id, value, ioc_id=None, case_id=None, description=None, tags=None, ioc_misp=None, user_id=None, ioc_enrichment=None, modification_history=None):
         request = {
             'ioc_type_id': type_id,
             'ioc_tlp_id': tlp_id,
@@ -91,6 +105,14 @@ class IOCUpdate(Mutation):
             request['ioc_description'] = description
         if tags:
             request['ioc_tags'] = tags
+        if ioc_misp:
+            request['ioc_misp'] = ioc_misp
+        if user_id:
+            request['user_id'] = user_id
+        if ioc_enrichment:
+            request['ioc_enrichment'] = ioc_enrichment
+        if modification_history:
+            request['modification_history'] = modification_history
         ioc, _ = update(ioc_id, request, case_id)
         return IOCCreate(ioc=ioc)
 

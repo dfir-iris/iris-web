@@ -20,7 +20,10 @@ import logging as log
 import traceback
 
 from flask_login import current_user
+
 from marshmallow.exceptions import ValidationError
+
+from app.schema.marshables import CaseSchema
 
 from app import app
 from app import db
@@ -53,8 +56,6 @@ from app.business.errors import BusinessProcessingError
 from app.business.permissions import check_current_user_has_some_case_access
 from app.business.permissions import check_current_user_has_some_permission
 
-from app.schema.marshables import CaseSchema
-
 
 def get_case_by_identifier(case_identifier):
     check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
@@ -71,7 +72,6 @@ def _load(request_data, **kwargs):
 
 
 def create(request_json):
-
     try:
         # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
         request_data = call_modules_hook('on_preload_case_create', request_json, None)
@@ -121,7 +121,6 @@ def create(request_json):
 
 
 def delete(case_identifier):
-
     check_current_user_has_some_permission([Permissions.standard_user])
     check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 

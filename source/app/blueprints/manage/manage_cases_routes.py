@@ -40,7 +40,8 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
-from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status, get_filtered_cases
+from app.datamgmt.manage.manage_cases_db import get_filtered_cases
+from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
@@ -193,7 +194,6 @@ def manage_case_filter() -> Response:
         draw = 1
 
     filtered_cases = get_filtered_cases(
-        current_user.id,
         case_ids=case_ids_str,
         case_customer_id=case_customer_id,
         case_name=case_name,
@@ -209,6 +209,7 @@ def manage_case_filter() -> Response:
         search_value=search_value,
         page=page,
         per_page=per_page,
+        current_user_id=current_user.id,
         sort_by=order_by,
         sort_dir=sort_dir
     )
