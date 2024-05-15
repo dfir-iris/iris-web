@@ -34,6 +34,7 @@ from app.models import CaseEventsIoc
 from app.models import CaseReceivedFile
 from app.models import CaseTasks
 from app.models import Cases
+from app.models import Ioc
 from app.models import CasesEvent
 from app.models import Client
 from app.models import DataStoreFile
@@ -458,7 +459,8 @@ def build_filter_case_query(current_user_id,
             query = query.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
 
         elif sort_by == 'state':
-            query = query.join(CaseState, Cases.state_id == CaseState.state_id).order_by(order_func(CaseState.state_name))
+            query = query.join(CaseState, Cases.state_id == CaseState.state_id).order_by(
+                order_func(CaseState.state_name))
 
         elif hasattr(Cases, sort_by):
             query = query.order_by(order_func(getattr(Cases, sort_by)))
@@ -484,7 +486,6 @@ def get_filtered_cases(current_user_id,
                        sort_by=None,
                        sort_dir='asc'
                        ):
-
     data = build_filter_case_query(case_classification_id, case_customer_id, case_description, case_ids, case_name,
                                    case_opening_user_id, case_owner_id, case_severity_id, case_soc_id, case_state_id,
                                    current_user_id, end_open_date, search_value, sort_by, sort_dir, start_open_date)
@@ -498,3 +499,15 @@ def get_filtered_cases(current_user_id,
         return None
 
     return filtered_cases
+
+
+def build_filter_case_ioc_query(ioc_id: int = None):
+    """
+    Get a list of cases from the database, filtered by the given parameters
+    """
+    conditions = []
+    if ioc_id is not None:
+        conditions.append(Ioc.ioc_id == ioc_id)
+
+    query = Ioc.query.filter(*conditions)
+    return query

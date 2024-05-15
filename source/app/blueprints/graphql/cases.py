@@ -29,6 +29,7 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
+from app.datamgmt.manage.manage_cases_db import build_filter_case_ioc_query
 from app.models.cases import Cases
 from app.blueprints.graphql.iocs import IOCObject
 from app.business.cases import create
@@ -45,26 +46,12 @@ class CaseObject(SQLAlchemyObjectType):
         interfaces = [Node]
 
     # TODO add filters
-    iocs = SQLAlchemyConnectionField(IOCConnection)
+    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Int())
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
-        query = IOCObject.get_query(info)
-        total = query.count()
-
-        first = kwargs.get('first')
-        if not first:
-            first = total
-
-        if kwargs.get('after'):
-            after = kwargs.get('after')
-            decode_after = b64decode(after)
-            start = int(decode_after[16:].decode())
-            start += 1
-        else:
-            start = 0
-        query_slice = query.slice(start, start + first).all()
-        return SlicedResult(query_slice, start, total)
+        ioc_id = kwargs.get('iocId')
+        return build_filter_case_ioc_query(ioc_id=ioc_id)
 
 
 class CaseConnection(Connection):
