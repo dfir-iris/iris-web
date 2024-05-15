@@ -440,26 +440,26 @@ def build_filter_case_query(current_user_id,
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
     conditions.append(Cases.case_id.in_(user_list_cases_view(current_user_id)))
-    data = Cases.query.filter(*conditions)
+    query = Cases.query.filter(*conditions)
 
     if sort_by is not None:
         order_func = desc if sort_dir == "desc" else asc
 
         if sort_by == 'owner':
-            data = data.join(User, Cases.owner_id == User.id).order_by(order_func(User.name))
+            query = query.join(User, Cases.owner_id == User.id).order_by(order_func(User.name))
 
         elif sort_by == 'opened_by':
-            data = data.join(User, Cases.user_id == User.id).order_by(order_func(User.name))
+            query = query.join(User, Cases.user_id == User.id).order_by(order_func(User.name))
 
         elif sort_by == 'customer_name':
-            data = data.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
+            query = query.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
 
         elif sort_by == 'state':
-            data = data.join(CaseState, Cases.state_id == CaseState.state_id).order_by(order_func(CaseState.state_name))
+            query = query.join(CaseState, Cases.state_id == CaseState.state_id).order_by(order_func(CaseState.state_name))
 
         elif hasattr(Cases, sort_by):
-            data = data.order_by(order_func(getattr(Cases, sort_by)))
-    return data
+            query = query.order_by(order_func(getattr(Cases, sort_by)))
+    return query
 
 
 def get_filtered_cases(current_user_id,
