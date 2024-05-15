@@ -45,7 +45,8 @@ def get_client_list(current_user_id: int = None,
         Client.client_id.label('customer_id'),
         Client.client_uuid.label('customer_uuid'),
         Client.description.label('customer_description'),
-        Client.sla.label('customer_sla')
+        Client.sla.label('customer_sla'),
+        Client.custom_attributes
     ).filter(
         filter
     ).all()
@@ -66,7 +67,8 @@ def get_client_api(client_id: str) -> Client:
         Client.client_id.label('customer_id'),
         Client.client_uuid.label('customer_uuid'),
         Client.description.label('customer_description'),
-        Client.sla.label('customer_sla')
+        Client.sla.label('customer_sla'),
+        Client.custom_attributes
     ).filter(Client.client_id == client_id).first()
 
     output = None
