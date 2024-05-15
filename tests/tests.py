@@ -982,4 +982,23 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_iocs_filter_iocTypeId_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                     iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test") {{
+                                   ioc {{ iocTypeId }}
+                             }}
+                     }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_type_id = response['data']['iocCreate']['ioc']['iocTypeId']
+        payload = {
+            'query': f'''{{
+                       case(caseId: 1) {{
+                           iocs(iocTypeId: {ioc_type_id}) {{ edges {{ node {{ iocTypeId }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
 
