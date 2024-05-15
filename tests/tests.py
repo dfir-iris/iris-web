@@ -1001,4 +1001,30 @@ class Tests(TestCase):
         body = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', body)
 
+    def test_graphql_iocs_filter_iocDescription_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                     iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test") {{
+                                   ioc {{ iocDescription }}
+                             }}
+                     }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        payload = {
+            'query': f'''mutation {{
+                                     iocUpdate(iocId:1, caseId: 1, description: "Some description", typeId:1, tlpId:1, value: "test") {{
+                                             ioc {{ iocDescription }}
+                                     }}
+                                 }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        payload = {
+            'query': f'''{{
+                       case(caseId: 1) {{
+                           iocs(iocDescription: "Some description 2") {{ edges {{ node {{ iocDescription }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertNotIn('errors', body)
+
 
