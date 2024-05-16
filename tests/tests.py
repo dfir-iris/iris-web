@@ -1136,4 +1136,32 @@ class Tests(TestCase):
             test_user = ioc['node']['userId']
             self.assertEqual(test_user, user_id)
 
+    def test_graphql_iocs_parameter_totalCount_should_not_fail(self):
+        payload = {
+            'query': f'''{{
+                                     case(caseId: 1) {{
+                                            iocs(userId: 1) {{ totalCount edges {{ node {{ userId }} }} }} }} 
+                                            }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        test_total = body['data']['case']['iocs']['totalCount']
+        payload = {
+            'query': f'''mutation {{
+                                iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test") {{
+                                              ioc {{ totalCount }}
+                                        }}
+                                }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        test_total += 1
+        payload = {
+            'query': f'''{{
+                             case(caseId: 1) {{
+                                    iocs(userId: 1) {{ totalCount edges {{ node {{ userId }} }} }} }} 
+                                    }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        total = body['data']['iocs']['totalCount']
+        self.assertEqual(total, test_total)
+
 
