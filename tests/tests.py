@@ -1082,7 +1082,7 @@ class Tests(TestCase):
                                              }}
                                          }}'''
         }
-        response = self._subject.execute_graphql_query(payload)
+        self._subject.execute_graphql_query(payload)
         payload = {
                'query': f'''{{
                        case(caseId: 1) {{
@@ -1093,5 +1093,26 @@ class Tests(TestCase):
         for ioc in body['data']['case']['iocs']['edges']:
             test_tags = ioc['node']['iocTags']
             self.assertEqual(test_tags, tags)
+
+    def test_graphql_iocs_filter_iocMisp_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                     iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test") {{
+                                   ioc {{ iocMisp }}
+                             }}
+                     }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        misp = "test"
+        payload = {
+            'query': f'''{{
+                       case(caseId: 1) {{
+                           iocs(iocMisp: "{misp}") {{ edges {{ node {{ iocMisp }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        for ioc in body['data']['case']['iocs']['edges']:
+            test_misp = ioc['node']['iocMisp']
+            self.assertNotEqual(test_misp, misp)
 
 
