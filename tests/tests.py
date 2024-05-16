@@ -1073,25 +1073,25 @@ class Tests(TestCase):
                      }}'''
         }
         self._subject.execute_graphql_query(payload)
+        tags ="test"
         payload = {
             'query': f'''mutation {{
                                              iocUpdate(iocId:1, caseId: 1, description: "Some description", typeId:1, 
-                                             tlpId:1, value: "test", tags :"test") {{
+                                             tlpId:1, value: "test", tags :"{tags}") {{
                                                      ioc {{ iocTags }}
                                              }}
                                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        ioc_tags = response['data']['iocUpdate']['ioc']['iocTags']
         payload = {
                'query': f'''{{
                        case(caseId: 1) {{
-                           iocs(iocTags: "{ioc_tags}") {{ edges {{ node {{ iocTags }} }} }} }} 
+                           iocs(iocTags: "{tags}") {{ edges {{ node {{ iocTags }} }} }} }} 
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         for ioc in body['data']['case']['iocs']['edges']:
             test_tags = ioc['node']['iocTags']
-            self.assertEqual(test_tags, ioc_tags)
+            self.assertEqual(test_tags, tags)
 
 
