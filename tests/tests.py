@@ -1115,4 +1115,25 @@ class Tests(TestCase):
             test_misp = ioc['node']['iocMisp']
             self.assertNotEqual(test_misp, misp)
 
+    def test_graphql_iocs_filter_userId_should_not_fail(self):
+        payload = {
+            'query': f'''mutation {{
+                        iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test") {{
+                                      ioc {{ userId }}
+                                }}
+                        }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        user_id = response['data']['iocCreate']['ioc']['userId']
+        payload = {
+            'query': f'''{{
+                          case(caseId: 1) {{
+                              iocs(userId: {user_id}) {{ edges {{ node {{ userId }} }} }} }} 
+                            }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        for ioc in body['data']['case']['iocs']['edges']:
+            test_user = ioc['node']['userId']
+            self.assertEqual(test_user, user_id)
+
 
