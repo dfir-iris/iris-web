@@ -79,8 +79,8 @@ class IOCCreate(Mutation):
 class IOCUpdate(Mutation):
 
     class Arguments:
-        ioc_id = Float()
-        case_id = Float()
+        ioc_id = NonNull(Float)
+        case_id = NonNull(Float)
         type_id = NonNull(Int)
         tlp_id = NonNull(Int)
         value = NonNull(String)
@@ -95,7 +95,8 @@ class IOCUpdate(Mutation):
     ioc = Field(IOCObject)
 
     @staticmethod
-    def mutate(root, info, type_id, tlp_id, value, ioc_id=None, case_id=None, description=None, tags=None, ioc_misp=None, user_id=None, ioc_enrichment=None, modification_history=None):
+    def mutate(root, info, type_id, tlp_id, value, ioc_id, case_id, description=None, tags=None, ioc_misp=None,
+               user_id=None, ioc_enrichment=None, modification_history=None):
         request = {
             'ioc_type_id': type_id,
             'ioc_tlp_id': tlp_id,
