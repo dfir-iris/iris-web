@@ -388,8 +388,8 @@ class Tests(TestCase):
         id_client = 1
         payload = {
             'query': f''' mutation {{
-                             caseCreate(name: "case2", description: "Some description", clientId: {id_client}, socId: "1",
-                             classificationId : 1) {{
+                             caseCreate(name: "case2", description: "Some description", clientId: {id_client}, 
+                             socId: "1", classificationId : 1) {{
                                  case {{ clientId }}
                              }} 
                         }}'''
@@ -1063,5 +1063,35 @@ class Tests(TestCase):
         for ioc in body['data']['case']['iocs']['edges']:
             test_tlp_id = ioc['node']['iocTlpId']
             self.assertEqual(test_tlp_id, ioc_tlp_id)
+
+    def test_graphql_iocs_filter_iocTags_should_not_fail(self):
+        payload = {
+                'query': f'''mutation {{
+                     iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test") {{
+                                   ioc {{ iocTags }}
+                             }}
+                     }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        payload = {
+            'query': f'''mutation {{
+                                             iocUpdate(iocId:1, caseId: 1, description: "Some description", typeId:1, 
+                                             tlpId:1, value: "test", tags :"test") {{
+                                                     ioc {{ iocTags }}
+                                             }}
+                                         }}'''
+        }
+        response = self._subject.execute_graphql_query(payload)
+        ioc_tags = response['data']['iocUpdate']['ioc']['iocTags']
+        payload = {
+               'query': f'''{{
+                       case(caseId: 1) {{
+                           iocs(iocTags: "{ioc_tags}") {{ edges {{ node {{ iocTags }} }} }} }} 
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        for ioc in body['data']['case']['iocs']['edges']:
+            test_tags = ioc['node']['iocTags']
+            self.assertEqual(test_tags, ioc_tags)
 
 

@@ -46,7 +46,7 @@ class CaseObject(SQLAlchemyObjectType):
         interfaces = [Node]
 
     iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Int(), iocUuid=String(), iocValue=String(), iocTypeId=Int(),
-                                     iocDescription=String(), iocTlpId=Int())
+                                     iocDescription=String(), iocTlpId=Int(), iocTags=String())
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
@@ -56,8 +56,10 @@ class CaseObject(SQLAlchemyObjectType):
         ioc_type_id = kwargs.get('iocTypeId')
         ioc_description = kwargs.get('iocDescription')
         ioc_tlp_id = kwargs.get('iocTlpId')
+        ioc_tags = kwargs.get('iocTags')
         query = build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
-                                            ioc_type_id=ioc_type_id, ioc_description=ioc_description, ioc_tlp_id=ioc_tlp_id)
+                                            ioc_type_id=ioc_type_id, ioc_description=ioc_description,
+                                            ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags)
         total = query.count()
 
         first = kwargs.get('first')

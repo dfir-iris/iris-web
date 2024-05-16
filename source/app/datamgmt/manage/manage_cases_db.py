@@ -506,7 +506,8 @@ def build_filter_case_ioc_query(ioc_id: int = None,
                                 ioc_value: str = None,
                                 ioc_type_id: int = None,
                                 ioc_description: str = None,
-                                ioc_tlp_id: int =None
+                                ioc_tlp_id: int = None,
+                                ioc_tags: str = None
                                 ):
     """
     Get a list of iocs from the database, filtered by the given parameters
@@ -524,6 +525,8 @@ def build_filter_case_ioc_query(ioc_id: int = None,
         conditions.append(Ioc.ioc_description == ioc_description)
     if ioc_tlp_id is not None:
         conditions.append(Ioc.ioc_tlp_id == ioc_tlp_id)
+    if ioc_tags is not None:
+        conditions.append(Ioc.ioc_tags == ioc_tags)
 
     query = Ioc.query.filter(*conditions)
     return query
