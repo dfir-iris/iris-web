@@ -112,5 +112,8 @@ class Iris:
     def get_cases(self):
         return self._api.get('/manage/cases/list')
 
+    def get_cases_filter(self):
+        return self._api.get('/manage/cases/filter')
+
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)
