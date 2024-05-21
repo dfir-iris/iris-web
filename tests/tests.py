@@ -336,7 +336,7 @@ class Tests(TestCase):
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertEqual('success', response['status'])
+        self.assertIn('errors', response)
 
     def test_graphql_update_ioc_should_update_optional_parameter_description(self):
         case = self._subject.create_case()
