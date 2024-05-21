@@ -54,6 +54,7 @@ class CaseStatus(enum.Enum):
     true_positive_with_impact = 0x2
     not_applicable = 0x3
     true_positive_without_impact = 0x4
+    legitimate = 0x5
 
 
 class ReviewStatusList:

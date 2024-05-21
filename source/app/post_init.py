@@ -827,6 +827,8 @@ def create_safe_alert_resolution_status():
                 resolution_status_description="The alert is not applicable")
     create_safe(db.session, AlertResolutionStatus, resolution_status_name='Unknown',
                 resolution_status_description="Unknown resolution status")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='Legitimate',
+                resolution_status_description="The alert is acceptable and expected")
 
 
 def create_safe_case_states():

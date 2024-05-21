@@ -232,7 +232,7 @@
     </div>
 </div>
 <div class="modal" id="editAlertModal" tabindex="-1" role="dialog" aria-labelledby="closeAlertModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
+  <div class="modal-dialog modal-xl" role="document">
     <div class="modal-content">
       <div class="modal-header">
           <h5 class="modal-title" id="closeAlertModalLabel"></h5>
@@ -242,7 +242,7 @@
       </div>
       <div class="modal-body">
         <form>
-          <div class="form-group">
+          <div class="form-group ml-auto mr-auto">
               <label class="form-label">Resolution status</label><br>
               <div class="selectgroup ml-auto mr-auto">
                 <label class="selectgroup-item">
@@ -260,6 +260,10 @@
                 <label class="selectgroup-item">
                   <input type="radio" name="resolutionStatus" value="true_positive_with_impact" class="selectgroup-input">
                   <span class="selectgroup-button">True positive with impact</span>
+                </label>
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="legitimate" class="selectgroup-input">
+                  <span class="selectgroup-button">Legitimate</span>
                 </label>
                 <label class="selectgroup-item">
                   <input type="radio" name="resolutionStatus" value="unknown" class="selectgroup-input">

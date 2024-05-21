@@ -818,6 +818,8 @@ function alertResolutionToARC(resolution) {
             return `<span class="badge alert-bade-status badge-pill badge-warning mr-2">True Positive without impact</span>`
         case 'False Positive':
             return `<span class="badge alert-bade-status badge-pill badge-success mr-2">False Positive</span>`
+        case 'Legitimate':
+            return `<span class="badge alert-bade-status badge-pill badge-info mr-2">Legitimate</span>`
         case 'Unknown':
             return `<span class="badge alert-bade-status badge-pill badge-light mr-2">Unknown resolution</span>`
     }

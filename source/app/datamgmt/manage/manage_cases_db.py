@@ -190,6 +190,9 @@ def map_alert_resolution_to_case_status(case_status_id):
     elif case_status_id == CaseStatus.true_positive_without_impact.value:
         ares = search_alert_resolution_by_name('True Positive Without Impact', exact_match=True)
 
+    elif case_status_id == CaseStatus.legitimate.value:
+        ares = search_alert_resolution_by_name('Legitimate', exact_match=True)
+
     elif case_status_id == CaseStatus.unknown.value:
         ares = search_alert_resolution_by_name('Unknown', exact_match=True)
 
