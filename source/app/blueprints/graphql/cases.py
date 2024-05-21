@@ -60,25 +60,10 @@ class CaseObject(SQLAlchemyObjectType):
         ioc_tags = kwargs.get('iocTags')
         ioc_misp = kwargs.get('iocMisp')
         user_id = kwargs.get('userId')
-        query = build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
-                                            ioc_type_id=ioc_type_id, ioc_description=ioc_description,
-                                            ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
-                                            user_id=user_id)
-        total = query.count()
-
-        first = kwargs.get('first')
-        if not first:
-            first = total
-
-        if kwargs.get('after'):
-            after = kwargs.get('after')
-            decode_after = b64decode(after)
-            start = int(decode_after[16:].decode())
-            start += 1
-        else:
-            start = 0
-        query_slice = query.slice(start, start + first).all()
-        return SlicedResult(query_slice, start, total)
+        return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
+                                           ioc_type_id=ioc_type_id, ioc_description=ioc_description,
+                                           ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
+                                           user_id=user_id)
 
 
 class CaseConnection(Connection):

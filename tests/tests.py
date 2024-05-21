@@ -1087,7 +1087,7 @@ class Tests(TestCase):
         self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''mutation {{
-                        iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                        iocCreate(caseId: 1, typeId: 2, tlpId: 1, value: "{ioc_value}") {{
                             ioc {{ iocValue }}
                             }}
                         }}'''
