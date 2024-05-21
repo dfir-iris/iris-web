@@ -1256,7 +1256,7 @@ class Tests(TestCase):
             test_user = ioc['node']['userId']
             self.assertEqual(test_user, user_id)
 
-    def test_graphql_create_case_api_rest_should_fail(self):
+    def test_graphql_manage_case_filter_api_rest_should_fail(self):
         self._subject.create_case()
         response = self._subject.get_cases_filter()
         self.assertEqual('success', response['status'])
