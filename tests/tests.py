@@ -1114,23 +1114,14 @@ class Tests(TestCase):
             self.assertEqual(ioc_value, test_ioc_value)
 
     def test_graphql_iocs_filter_first_should_not_fail(self):
-        ioc_value = 'test'
-        compte = 3
-        cmpt = 0
+        ioc_value = 'IOC value #1'
+        compte = 1
         payload = {
             'query': f'''mutation {{
-                iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test2") {{
                     ioc {{ iocValue }}
                     }}
                 }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''mutation {{
-                        iocCreate(caseId: 1, typeId: 2, tlpId: 1, value: "{ioc_value}") {{
-                            ioc {{ iocValue }}
-                            }}
-                        }}'''
         }
         self._subject.execute_graphql_query(payload)
         payload = {
@@ -1144,12 +1135,13 @@ class Tests(TestCase):
         payload = {
             'query': f'''{{
                case(caseId: 1) {{
-                     iocs(first: {compte}) {{ edges {{ node {{ iocValue iocId }} }} totalCount }} }} 
+                     iocs(first: {compte}) {{ edges {{ node {{ iocValue iocId }} }} }} }} 
                   }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        cmpt = body['data']['case']['iocs']['totalCount']
-        self.assertEqual(cmpt, compte)
+        for ioc in body['data']['case']['iocs']['edges']:
+            value = ioc['node']['iocValue']
+            self.assertEqual(ioc_value, value)
 
     def test_graphql_iocs_filter_iocTypeId_should_not_fail(self):
         payload = {
