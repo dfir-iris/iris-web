@@ -29,15 +29,13 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
-from app.datamgmt.manage.manage_cases_db import build_filter_case_ioc_query
+from app.blueprints.graphql.iocs import build_filter_case_ioc_query
 from app.models.cases import Cases
-from app.blueprints.graphql.iocs import IOCObject
 from app.business.cases import create
 from app.business.cases import delete
 from app.business.cases import update
 
 from app.blueprints.graphql.iocs import IOCConnection
-from app.blueprints.graphql.sliced_result import SlicedResult
 
 
 class CaseObject(SQLAlchemyObjectType):

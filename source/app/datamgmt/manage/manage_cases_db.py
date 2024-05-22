@@ -500,39 +500,3 @@ def get_filtered_cases(current_user_id,
 
     return filtered_cases
 
-
-def build_filter_case_ioc_query(ioc_id: int = None,
-                                ioc_uuid: str = None,
-                                ioc_value: str = None,
-                                ioc_type_id: int = None,
-                                ioc_description: str = None,
-                                ioc_tlp_id: int = None,
-                                ioc_tags: str = None,
-                                ioc_misp: str = None,
-                                user_id: float = None
-                                ):
-    """
-    Get a list of iocs from the database, filtered by the given parameters
-    """
-    conditions = []
-    if ioc_id is not None:
-        conditions.append(Ioc.ioc_id == ioc_id)
-    if ioc_uuid is not None:
-        conditions.append(Ioc.ioc_uuid == ioc_uuid)
-    if ioc_value is not None:
-        conditions.append(Ioc.ioc_value == ioc_value)
-    if ioc_type_id is not None:
-        conditions.append(Ioc.ioc_type_id == ioc_type_id)
-    if ioc_description is not None:
-        conditions.append(Ioc.ioc_description == ioc_description)
-    if ioc_tlp_id is not None:
-        conditions.append(Ioc.ioc_tlp_id == ioc_tlp_id)
-    if ioc_tags is not None:
-        conditions.append(Ioc.ioc_tags == ioc_tags)
-    if ioc_misp is not None:
-        conditions.append(Ioc.ioc_misp == ioc_misp)
-    if user_id is not None:
-        conditions.append(Ioc.user_id == user_id)
-
-    query = Ioc.query.filter(*conditions)
-    return query
