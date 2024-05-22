@@ -20,7 +20,7 @@ from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app import db
-from app.models import Ioc
+from app.models import Ioc, IocLink
 from app.models.authorization import CaseAccessLevel
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
@@ -152,7 +152,8 @@ def build_filter_case_ioc_query(ioc_id: int = None,
                                 ioc_tlp_id: int = None,
                                 ioc_tags: str = None,
                                 ioc_misp: str = None,
-                                user_id: float = None
+                                user_id: float = None,
+                                ioc_link_id: int = None
                                 ):
     """
     Get a list of iocs from the database, filtered by the given parameters
@@ -178,4 +179,19 @@ def build_filter_case_ioc_query(ioc_id: int = None,
         conditions.append(Ioc.user_id == user_id)
 
     query = Ioc.query.filter(*conditions)
+
+    if ioc_link_id is not None:
+        return query.filter(IocLink.ioc_link_id == ioc_link_id)
+
     return query
+
+
+def build_filter_case_ioc_query_link(ioc_link_id: int = None):
+    conditions = []
+    if ioc_link_id is not None:
+        conditions.append(IocLink.ioc_link_id == ioc_link_id)
+
+    query = IocLink.query.filter(*conditions)
+    return query
+
+

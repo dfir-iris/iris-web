@@ -29,7 +29,8 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
-from app.business.iocs import build_filter_case_ioc_query
+from app.business.iocs import build_filter_case_ioc_query, build_filter_case_ioc_query_link
+from app.datamgmt.case.case_iocs_db import get_ioc_links
 from app.models.cases import Cases
 from app.business.cases import create
 from app.business.cases import delete
@@ -45,7 +46,7 @@ class CaseObject(SQLAlchemyObjectType):
 
     iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Int(), iocUuid=String(), iocValue=String(), iocTypeId=Int(),
                                      iocDescription=String(), iocTlpId=Int(), iocTags=String(), iocMisp=String(),
-                                     userId=Float())
+                                     userId=Float(), iocLinkId=Int())
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
@@ -58,10 +59,11 @@ class CaseObject(SQLAlchemyObjectType):
         ioc_tags = kwargs.get('iocTags')
         ioc_misp = kwargs.get('iocMisp')
         user_id = kwargs.get('userId')
+        ioc_link_id = kwargs.get('iocLinkId')
         return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
                                            ioc_type_id=ioc_type_id, ioc_description=ioc_description,
                                            ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
-                                           user_id=user_id)
+                                           user_id=user_id, ioc_link_id=ioc_link_id)
 
 
 class CaseConnection(Connection):
