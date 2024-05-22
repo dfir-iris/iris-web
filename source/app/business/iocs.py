@@ -96,7 +96,7 @@ def update(identifier, request_json, case_identifier):
         # validate before saving
         ioc_schema = IocSchema()
         request_data['ioc_id'] = identifier
-        ioc_sc = ioc_schema.load(request_data, instance=ioc)
+        ioc_sc = ioc_schema.load(request_data, instance=ioc, partial=True)
         ioc_sc.user_id = current_user.id
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):

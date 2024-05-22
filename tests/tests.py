@@ -297,22 +297,23 @@ class Tests(TestCase):
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                ioc {{ iocId }}
+                                ioc {{ iocId iocTlpId }}
                             }}
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        ioc_tlp = response['data']['iocCreate']['ioc']['iocTlpId']
         payload = {
             'query': f'''mutation {{
                              iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier}, typeId:1,
                                   value: "{ioc_value}") {{
-                                     ioc {{ iocTlpId }}
+                                     ioc {{ iocId iocTlpId }}
                              }}
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertIn('errors', response)
+        self.assertEqual(ioc_tlp, response['data']['iocUpdate']['ioc']['iocTlpId'])
 
     def test_graphql_update_ioc_should_not_update_value(self):
         case = self._subject.create_case()
@@ -321,22 +322,23 @@ class Tests(TestCase):
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                ioc {{ iocId }}
+                                ioc {{ iocId iocValue }}
                             }}
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        ioc_value = response['data']['iocCreate']['ioc']['iocValue']
         payload = {
             'query': f'''mutation {{
                              iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier}, typeId:1,
                                   tlpId:1) {{
-                                     ioc {{ iocTlpId }}
+                                     ioc {{ iocValue }}
                              }}
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertIn('errors', response)
+        self.assertEqual(ioc_value, response['data']['iocUpdate']['ioc']['iocValue'])
 
     def test_graphql_update_ioc_should_update_optional_parameter_description(self):
         case = self._subject.create_case()

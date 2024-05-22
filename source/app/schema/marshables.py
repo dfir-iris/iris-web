@@ -905,13 +905,12 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
         if not ioc_type:
             raise marshmallow.exceptions.ValidationError("Invalid ioc type ID", field_name="ioc_type_id")
 
-        assert_type_mml(input_var=data.get('ioc_tlp_id'),
+        if data.get('ioc_tlp_id'):
+            assert_type_mml(input_var=data.get('ioc_tlp_id'),
                         field_name="ioc_tlp_id",
                         type=int)
 
-        tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
-        if not tlp_id:
-            raise marshmallow.exceptions.ValidationError("Invalid TLP ID", field_name="ioc_tlp_id")
+            Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
 
         if ioc_type.type_validation_regex:
             if not re.fullmatch(ioc_type.type_validation_regex, data.get('ioc_value'), re.IGNORECASE):
