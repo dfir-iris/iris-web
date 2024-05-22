@@ -20,6 +20,7 @@ from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app import db
+from app.models import Ioc
 from app.models.authorization import CaseAccessLevel
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
