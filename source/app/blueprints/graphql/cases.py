@@ -29,7 +29,7 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
-from app.blueprints.graphql.iocs import build_filter_case_ioc_query
+from app.business.iocs import build_filter_case_ioc_query
 from app.models.cases import Cases
 from app.business.cases import create
 from app.business.cases import delete
