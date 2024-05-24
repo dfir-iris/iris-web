@@ -34,7 +34,6 @@ from app.models import CaseEventsIoc
 from app.models import CaseReceivedFile
 from app.models import CaseTasks
 from app.models import Cases
-from app.models import Ioc
 from app.models import CasesEvent
 from app.models import Client
 from app.models import DataStoreFile
