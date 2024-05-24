@@ -95,8 +95,8 @@ class IOCUpdate(Mutation):
     ioc = Field(IOCObject)
 
     @staticmethod
-    def mutate(root, info, ioc_id, case_id, type_id=None, tlp_id=None, value=None, description=None, tags=None, ioc_misp=None,
-               user_id=None, ioc_enrichment=None, modification_history=None):
+    def mutate(root, info, ioc_id, case_id, type_id=None, tlp_id=None, value=None, description=None, tags=None,
+               ioc_misp=None, user_id=None, ioc_enrichment=None, modification_history=None):
         request = {}
         if type_id:
             request['ioc_type_id'] = type_id
