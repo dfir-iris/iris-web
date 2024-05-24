@@ -16,8 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from base64 import b64decode
-
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene_sqlalchemy import SQLAlchemyConnectionField
 from graphene.relay import Node
@@ -29,8 +27,7 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
-from app.business.iocs import build_filter_case_ioc_query, build_filter_case_ioc_query_link
-from app.datamgmt.case.case_iocs_db import get_ioc_links
+from app.business.iocs import build_filter_case_ioc_query
 from app.models.cases import Cases
 from app.business.cases import create
 from app.business.cases import delete
