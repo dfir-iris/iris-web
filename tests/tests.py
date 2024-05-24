@@ -507,8 +507,16 @@ class Tests(TestCase):
                                    }}
                                }}'''
         }
-        body = self._subject.execute_graphql_query(payload2)
-        self.assertNotIn('errors', body)
+        self._subject.execute_graphql_query(payload2)
+        payload = {
+            'query': f''' mutation {{
+                             caseUpdate(caseId:  {case_identifier}, name: "test_delete_case") {{
+                                  case {{ name }}
+                             }} 
+                        }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        self.assertIn('errors', body)
 
     def test_graphql_delete_case_should_fail(self):
         payload = {
