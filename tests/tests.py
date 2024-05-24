@@ -277,8 +277,7 @@ class Tests(TestCase):
                             }}
                          }}'''
         }
-        response = self._subject.execute_graphql_query(payload)
-        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
+        self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''mutation {{
                              iocUpdate(caseId: {case_identifier}, typeId:1,
@@ -563,8 +562,8 @@ class Tests(TestCase):
                         }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        clientId = body['data']['caseCreate']['case']['clientId']
-        self.assertEqual(clientId, id_client)
+        client_id = body['data']['caseCreate']['case']['clientId']
+        self.assertEqual(client_id, id_client)
 
     def test_graphql_update_case_should_use_optionals_parameters(self):
         id_case = 1
@@ -577,8 +576,8 @@ class Tests(TestCase):
                      }}'''
         }
         body = self._subject.execute_graphql_query(payload)
-        caseId = body['data']['caseUpdate']['case']['caseId']
-        self.assertEqual(caseId, id_case)
+        case_id = body['data']['caseUpdate']['case']['caseId']
+        self.assertEqual(case_id, id_case)
 
     def test_graphql_cases_should_return_newly_created_case(self):
         payload = {
@@ -630,16 +629,16 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         case_identifier = body['data']['caseCreate']['case']['caseId']
-        socId = '17'
+        soc_id = '17'
         payload = {
             'query': f'''mutation {{
-                             caseUpdate(caseId: {case_identifier}, socId: "{socId}") {{
+                             caseUpdate(caseId: {case_identifier}, socId: "{soc_id}") {{
                                  case {{ socId }}
                              }}
                        }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertEqual(socId, response['data']['caseUpdate']['case']['socId'])
+        self.assertEqual(soc_id, response['data']['caseUpdate']['case']['socId'])
 
     def test_graphql_update_case_should_update_optional_parameter_classificationId(self):
         payload = {
@@ -652,10 +651,10 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         case_identifier = body['data']['caseCreate']['case']['caseId']
-        classificationId = 2
+        classification_id = 2
         payload = {
             'query': f'''mutation {{
-                        caseUpdate(caseId: {case_identifier}, classificationId: {classificationId}) {{
+                        caseUpdate(caseId: {case_identifier}, classificationId: {classification_id}) {{
                             case {{ classificationId }}
                         }}
                   }}'''
@@ -877,8 +876,8 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
-            test_caseId = case['node']['caseId']
-            self.assertEqual(case_id, test_caseId)
+            test_case_id = case['node']['caseId']
+            self.assertEqual(case_id, test_case_id)
 
     def test_graphql_cases_classificationId_should_not_fail(self):
         classification_id = 1
@@ -899,6 +898,7 @@ class Tests(TestCase):
                                                                        }}
                                                                    }}'''
         }
+        self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''mutation {{
                                          caseCreate(name: "case3", description: "Some description", clientId: 1, 
@@ -1033,8 +1033,8 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
-            test_socId = case['node']['socId']
-            self.assertEqual(soc_id, test_socId)
+            test_soc_id = case['node']['socId']
+            self.assertEqual(soc_id, test_soc_id)
 
     def test_graphql_cases_filter_severityId_should_not_fail(self):
         payload = {
