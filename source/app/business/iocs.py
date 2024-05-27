@@ -103,7 +103,7 @@ def update(identifier, request_json, case_identifier):
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
             raise BusinessProcessingError('Not a valid IOC type')
 
-        update_ioc_state(caseid=case_identifier)
+        update_ioc_state(case_identifier)
         db.session.commit()
 
         ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=case_identifier)
