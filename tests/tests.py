@@ -66,7 +66,7 @@ class Tests(TestCase):
         self.assertEqual('success', response['status'])
 
     def test_graphql_endpoint_should_reject_requests_with_wrong_authentication_token(self):
-        graphql_api = GraphQLApi(API_URL + '/graphql', 64 * '0')
+        graphql_api = GraphQLApi(API_URL + '/graphql', 64*'0')
         payload = {
             'query': f'''query {{ cases  {{ edges {{ node {{ name }} }} }} }}'''
         }
