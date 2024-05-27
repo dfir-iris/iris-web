@@ -184,12 +184,3 @@ def build_filter_case_ioc_query(ioc_id: int = None,
         return query.filter(IocLink.ioc_link_id == ioc_link_id)
 
     return query
-
-
-def build_filter_case_ioc_query_link(ioc_link_id: int = None):
-    conditions = []
-    if ioc_link_id is not None:
-        conditions.append(IocLink.ioc_link_id == ioc_link_id)
-
-    query = IocLink.query.filter(*conditions)
-    return query
