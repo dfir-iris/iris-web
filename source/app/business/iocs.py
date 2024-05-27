@@ -86,7 +86,7 @@ def update(identifier, request_json, case_identifier):
     check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
     try:
-        ioc = get_ioc(identifier, case_identifier)
+        ioc = get_ioc(identifier, caseid=case_identifier)
         if not ioc:
             raise BusinessProcessingError('Invalid IOC ID for this case')
 
