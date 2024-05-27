@@ -898,9 +898,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
 
         """
         if data.get('ioc_type_id'):
-            assert_type_mml(input_var=data.get('ioc_type_id'),
-                        field_name="ioc_type_id",
-                        type=int)
+            assert_type_mml(input_var=data.get('ioc_type_id'), field_name="ioc_type_id", type=int)
             ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
             if ioc_type.type_validation_regex:
                 if not re.fullmatch(ioc_type.type_validation_regex, data.get('ioc_value'), re.IGNORECASE):
@@ -909,9 +907,7 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
                     raise marshmallow.exceptions.ValidationError(error, field_name="ioc_ioc_value")
 
         if data.get('ioc_tlp_id'):
-            assert_type_mml(input_var=data.get('ioc_tlp_id'),
-                        field_name="ioc_tlp_id",
-                        type=int)
+            assert_type_mml(input_var=data.get('ioc_tlp_id'), field_name="ioc_tlp_id", type=int)
 
             Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
 
