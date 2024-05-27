@@ -108,7 +108,7 @@ def get_evidences_state(caseid):
 
 
 def update_ioc_state(caseid, userid=None):
-    return update_object_state('ioc', caseid=caseid, userid=userid)
+    return update_object_state('ioc', caseid, userid=userid)
 
 
 def get_ioc_state(caseid):
