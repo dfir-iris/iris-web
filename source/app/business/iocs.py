@@ -181,7 +181,6 @@ def build_filter_case_ioc_query(ioc_id: int = None,
     query = Ioc.query.filter(*conditions)
 
     if linked_cases is not None:
-        query = query.join(IocLink, Ioc.ioc_id == IocLink.ioc_id).filter(IocLink.case_id == linked_cases)
-        return query
+        return query.join(IocLink, Ioc.ioc_id == IocLink.ioc_id).filter(IocLink.case_id == linked_cases)
 
     return query

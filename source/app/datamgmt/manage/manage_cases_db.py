@@ -458,8 +458,7 @@ def build_filter_case_query(current_user_id,
             query = query.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
 
         elif sort_by == 'state':
-            query = query.join(CaseState, Cases.state_id == CaseState.state_id).order_by(
-                order_func(CaseState.state_name))
+            query = query.join(CaseState, Cases.state_id == CaseState.state_id).order_by(order_func(CaseState.state_name))
 
         elif hasattr(Cases, sort_by):
             query = query.order_by(order_func(getattr(Cases, sort_by)))
