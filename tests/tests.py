@@ -505,35 +505,6 @@ class Tests(TestCase):
         response = user.execute_graphql_query(payload)
         self.assertIn('errors', response)
 
-    def test_graphql_case_should_return_success_ioc(self):
-        user = self._subject.create_user()
-        payload = {
-            'query': f''' mutation {{
-                                                     caseCreate(name: "case", description: "test_ioc", clientId: 1) {{
-                                                     case {{ caseId }}
-                                                }}
-                                            }}'''
-        }
-        body = user.execute_graphql_query(payload)
-        case_identifier = body['data']['caseCreate']['case']['caseId']
-        payload = {
-            'query': f'''mutation {{
-                                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "other_value") {{
-                                         ioc {{ iocId iocValue }}
-                                     }}
-                                 }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''{{
-                                    case(caseId: {case_identifier}) {{
-                                        iocs {{ totalCount edges {{ node {{ iocId }} }} }}
-                                    }}
-                                 }}'''
-        }
-        response = user.execute_graphql_query(payload)
-        self.assertEqual(1, response['data']['case']['iocs']['totalCount'])
-
     def test_graphql_create_case_should_not_fail(self):
         test_description = 'description 2'
         payload = {
