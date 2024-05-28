@@ -1,0 +1,23 @@
+
+{% extends "layouts/static-default.html" %}
+
+{% block title %} 404 Error {% endblock title %}
+
+{% block stylesheets %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+  <h2>Setup MFA</h2>
+  <p>Scan the QR code below with your authenticator app and enter the token.</p>
+  <img src="data:image/png;base64,{{ img_data }}">
+  <form method="POST" action="">
+    {{ form.hidden_tag() }}
+    <p>{{ form.token.label }} {{ form.token(size=32) }}</p>
+    <p>{{ form.submit() }}</p>
+  </form>
+{% endblock content %}
+
+{% block javascripts %}
+
+{% endblock javascripts %}
