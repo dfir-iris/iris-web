@@ -86,11 +86,11 @@ class Iris:
         }
         return self._api.post('/case/assets/add', body)
 
-    def create_user(self):
+    def create_user(self, user_name):
         body = {
-            'user_name': 'aa',
-            'user_login': 'aa',
-            'user_email': 'aa@aa.eu',
+            'user_name': user_name,
+            'user_login': user_name,
+            'user_email': f'{user_name}@aa.eu',
             'user_password': 'aA.1234567890'
         }
         user = self._api.post('/manage/users/add', body)

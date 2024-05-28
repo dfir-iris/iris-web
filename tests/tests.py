@@ -26,6 +26,7 @@ from base64 import b64encode
 class Tests(TestCase):
     _subject = None
     _ioc_count = 0
+    _user_count = 0
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -42,6 +43,13 @@ class Tests(TestCase):
     def _generate_new_dummy_ioc_value(cls):
         cls._ioc_count += 1
         return f'IOC value #{cls._ioc_count}'
+
+    # Note: this method is necessary because the state of the database is not reset between each test
+    #       and we want to work with distinct object in each test
+    @classmethod
+    def _generate_new_dummy_user_name(cls):
+        cls._user_count += 1
+        return f'user{cls._user_count}'
 
     def test_create_asset_should_not_fail(self):
         response = self._subject.create_asset()
@@ -463,7 +471,7 @@ class Tests(TestCase):
         self.assertNotIn('errors', response)
 
     def test_graphql_case_should_return_error_log_uuid_when_permission_denied(self):
-        user = self._subject.create_user()
+        user = self._subject.create_user(self._generate_new_dummy_user_name())
         case = self._subject.create_case()
         case_identifier = case['case_id']
         payload = {
@@ -477,7 +485,7 @@ class Tests(TestCase):
         self.assertRegex(response['errors'][0]['message'], r'Permission denied \(EID [0-9a-f-]{36}\)')
 
     def test_graphql_case_should_return_error_ioc_when_permission_denied(self):
-        user = self._subject.create_user()
+        user = self._subject.create_user(self._generate_new_dummy_user_name())
         payload = {
             'query': f''' mutation {{
                                                      caseCreate(name: "case", description: "test_ioc", clientId: 1) {{
@@ -487,9 +495,10 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         case_identifier = body['data']['caseCreate']['case']['caseId']
+        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "other_value") {{
+                                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
                                          ioc {{ iocId iocValue }}
                                      }}
                                  }}'''
@@ -1387,9 +1396,10 @@ class Tests(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         case_identifier_2 = body['data']['caseCreate']['case']['caseId']
+        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "other_value") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
                                  ioc {{ iocId iocValue }}
                              }}
                          }}'''
