@@ -1,0 +1,30 @@
+
+{% extends "layouts/static-default.html" %}
+
+{% block title %} 404 Error {% endblock title %}
+
+{% block stylesheets %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+  <h2>Verify MFA</h2>
+  <form method="POST" action="">
+    {{ form.hidden_tag() }}
+    <p>{{ form.token.label }} {{ form.token(size=32) }}</p>
+    <p>{{ form.submit() }}</p>
+  </form>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+{% endblock content %}
+
+{% block javascripts %}
+
+{% endblock javascripts %}
