@@ -24,6 +24,7 @@ from wtforms import SelectMultipleField
 from wtforms import StringField
 from wtforms import TextAreaField
 from wtforms import widgets
+from wtforms.fields.simple import SubmitField
 from wtforms.validators import DataRequired
 from wtforms.validators import Email
 from wtforms.validators import InputRequired
@@ -32,6 +33,11 @@ from wtforms.validators import InputRequired
 class LoginForm(FlaskForm):
     username = StringField(u'Username', validators=[DataRequired()])
     password = PasswordField(u'Password', validators=[DataRequired()])
+
+
+class MFASetupForm(FlaskForm):
+    token = StringField('Token', validators=[DataRequired()])
+    submit = SubmitField('Verify')
 
 
 class RegisterForm(FlaskForm):

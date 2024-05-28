@@ -751,6 +751,7 @@ class ServerSettings(db.Model):
     password_policy_lower_case = Column(Boolean)
     password_policy_digit = Column(Boolean)
     password_policy_special_chars = Column(Text)
+    enforce_mfa = Column(Boolean)
 
 
 class Comments(db.Model):
