@@ -15,24 +15,30 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import base64
+
+import io
+
+import pyotp
+import qrcode
 from urllib.parse import urlsplit
 
 # IMPORTS ------------------------------------------------
 
-from flask import Blueprint
+from flask import Blueprint, flash
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
-from flask_login import current_user
+from flask_login import current_user, login_required
 from flask_login import login_user
 
 from app import app
 from app import bc
 from app import db
 
-from app.forms import LoginForm
+from app.forms import LoginForm, MFASetupForm
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
@@ -131,6 +137,12 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
 
 
 def wrap_login_user(user):
+
+    session['username'] = user.user
+
+    if "mfa_verified" not in session or session["mfa_verified"] is False:
+        return redirect(url_for('mfa_verify'))
+
     login_user(user)
 
     track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True, display_in_ui=False)
@@ -159,3 +171,64 @@ def wrap_login_user(user):
         next_url = url_for('index.index', cid=user.ctx_case)
 
     return redirect(next_url)
+
+
+@app.route('/auth/mfa-setup', methods=['GET', 'POST'])
+@login_required
+def mfa_setup():
+    user = current_user
+    form = MFASetupForm()
+    if form.submit() and form.validate():
+        if not user.mfa_secrets:
+            user.mfa_secrets = pyotp.random_base32()
+            db.session.commit()
+
+        token = form.token.data
+        totp = pyotp.TOTP(user.mfa_secrets)
+        if totp.verify(token):
+            user.mfa_enabled = True
+            db.session.commit()
+            flash('MFA enabled successfully!', 'success')
+            return wrap_login_user(user)
+        else:
+            flash('Invalid token. Please try again.', 'danger')
+
+    otp_uri = pyotp.TOTP(user.mfa_secrets).provisioning_uri(user.email, issuer_name="IRIS")
+    img = qrcode.make(otp_uri)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    # Encode the image as base64
+    img_str = base64.b64encode(buf.getvalue()).decode()
+
+    return render_template('mfa_setup.html', form=form, img_data=img_str)
+
+
+@app.route('/auth/mfa-verify', methods=['GET', 'POST'])
+def mfa_verify():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    session['mfa_verified'] = False
+
+    user = _retrieve_user_by_username(username=session['username'])
+    if not user.mfa_secrets:
+        flash('MFA is not enabled for this user.', 'danger')
+        login_user(user)
+        return redirect(url_for('mfa_setup'))
+
+    form = MFASetupForm()
+    if form.submit() and form.validate():
+        token = form.token.data
+        if not token:
+            flash('Token is required.', 'danger')
+            return render_template('mfa_verify.html', form=form)
+
+        totp = pyotp.TOTP(user.mfa_secrets)
+        if totp.verify(token):
+            session.pop('username', None)
+            session['mfa_verified'] = True
+            return wrap_login_user(user)
+        else:
+            flash('Invalid token. Please try again.', 'danger')
+
+    return render_template('mfa_verify.html', form=form)

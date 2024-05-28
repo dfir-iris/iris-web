@@ -1662,7 +1662,7 @@ def create_safe_server_settings():
                     prevent_post_objects_repush=False,
                     password_policy_min_length="12", password_policy_upper_case=True,
                     password_policy_lower_case=True, password_policy_digit=True,
-                    password_policy_special_chars="")
+                    password_policy_special_chars="", enforce_mfa=app.config.get("MFA_ENABLED", False))
 
 
 def register_modules_pipelines():

@@ -18,16 +18,17 @@ depends_on = None
 
 
 def upgrade():
+
     if not _table_has_column('user', 'mfa_secrets'):
-        op.add_column('user',
-                      sa.Column('mfa_secrets', sa.Text, nullable=True)
-                      )
+        op.add_column('user', sa.Column('mfa_secrets', sa.Text, nullable=True))
 
     if not _table_has_column('user', 'webauthn_credentials'):
-        op.add_column('user',
-                      sa.Column('webauthn_credentials', sa.JSON, nullable=True)
-                      )
-    pass
+        op.add_column('user', sa.Column('webauthn_credentials', sa.JSON, nullable=True))
+
+    if not _table_has_column('server_settings', 'enforce_mfa'):
+        op.add_column('server_settings', sa.Column('enforce_mfa', sa.Boolean(), default=False))
+
+    return
 
 
 def downgrade():
