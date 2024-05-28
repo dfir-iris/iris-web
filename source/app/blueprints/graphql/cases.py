@@ -43,7 +43,7 @@ class CaseObject(SQLAlchemyObjectType):
 
     iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Int(), iocUuid=String(), iocValue=String(), iocTypeId=Int(),
                                      iocDescription=String(), iocTlpId=Int(), iocTags=String(), iocMisp=String(),
-                                     userId=Float(), iocLinkId=Int())
+                                     userId=Float(), LinkedCases=Float())
 
     @staticmethod
     def resolve_iocs(root, info, **kwargs):
@@ -56,11 +56,11 @@ class CaseObject(SQLAlchemyObjectType):
         ioc_tags = kwargs.get('iocTags')
         ioc_misp = kwargs.get('iocMisp')
         user_id = kwargs.get('userId')
-        ioc_link_id = kwargs.get('iocLinkId')
+        linked_cases = kwargs.get('LinkedCases')
         return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
                                            ioc_type_id=ioc_type_id, ioc_description=ioc_description,
                                            ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
-                                           user_id=user_id, ioc_link_id=ioc_link_id)
+                                           user_id=user_id, linked_cases=linked_cases)
 
 
 class CaseConnection(Connection):

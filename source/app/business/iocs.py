@@ -153,7 +153,7 @@ def build_filter_case_ioc_query(ioc_id: int = None,
                                 ioc_tags: str = None,
                                 ioc_misp: str = None,
                                 user_id: float = None,
-                                ioc_link_id: int = None
+                                linked_cases: float = None
                                 ):
     """
     Get a list of iocs from the database, filtered by the given parameters
@@ -180,7 +180,8 @@ def build_filter_case_ioc_query(ioc_id: int = None,
 
     query = Ioc.query.filter(*conditions)
 
-    if ioc_link_id is not None:
-        return query.filter(IocLink.ioc_link_id == ioc_link_id)
+    if linked_cases is not None:
+        query = query.join(IocLink, Ioc.ioc_id == IocLink.ioc_id).filter(IocLink.case_id == linked_cases)
+        return query
 
     return query

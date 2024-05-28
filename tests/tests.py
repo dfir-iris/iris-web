@@ -455,7 +455,7 @@ class Tests(TestCase):
         payload = {
             'query': f'''{{
                             case(caseId: {case_identifier}) {{
-                                iocs(iocLinkId: 1) {{ edges {{ node {{ iocId }} }} }}
+                                iocs(LinkedCases: 1) {{ edges {{ node {{ iocId }} }} }}
                             }}
                          }}'''
         }
@@ -1337,3 +1337,58 @@ class Tests(TestCase):
         self._subject.create_case()
         response = self._subject.get_cases_filter()
         self.assertEqual('success', response['status'])
+
+    def test_graphql_iocs_should_return_linked_iocs(self):
+        ioc_value = self._generate_new_dummy_ioc_value()
+        payload = {
+            'query': f''' mutation {{ 
+                                     caseCreate(name: "case2", description: "test", clientId: 1) {{
+                                     case {{ caseId }}
+                                }}
+                            }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        case_identifier = body['data']['caseCreate']['case']['caseId']
+        payload = {
+            'query': f''' mutation {{ 
+                                             caseCreate(name: "case3", description: "test", clientId: 1) {{
+                                             case {{ caseId }}
+                                        }}
+                                    }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        case_identifier_2 = body['data']['caseCreate']['case']['caseId']
+        payload = {
+            'query': f'''mutation {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "other_value") {{
+                                 ioc {{ iocId iocValue }}
+                             }}
+                         }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        payload = {
+            'query': f'''mutation {{
+                                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                         ioc {{ iocId iocValue }}
+                                     }}
+                                 }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        payload = {
+            'query': f'''mutation {{
+                                            iocCreate(caseId: {case_identifier_2}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                                ioc {{ iocId iocValue }}
+                                            }}
+                                        }}'''
+        }
+        self._subject.execute_graphql_query(payload)
+        payload = {
+            'query': f'''{{
+                            case(caseId: {case_identifier}) {{
+                                iocs(LinkedCases: {case_identifier_2}) {{ totalCount edges {{ node {{ iocId }} }} }}
+                            }}
+                         }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        total_count = body['data']['case']['iocs']['totalCount']
+        self.assertEqual(1, total_count)
