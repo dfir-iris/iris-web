@@ -188,7 +188,7 @@ def mfa_setup():
         if totp.verify(token):
             user.mfa_enabled = True
             db.session.commit()
-            flash('MFA enabled successfully!', 'success')
+            track_activity(f'MFA setup successful for user {current_user.user}', ctx_less=True, display_in_ui=False)
             return wrap_login_user(user)
         else:
             flash('Invalid token. Please try again.', 'danger')
@@ -197,7 +197,6 @@ def mfa_setup():
     img = qrcode.make(otp_uri)
     buf = io.BytesIO()
     img.save(buf, format='PNG')
-    # Encode the image as base64
     img_str = base64.b64encode(buf.getvalue()).decode()
 
     return render_template('mfa_setup.html', form=form, img_data=img_str)
@@ -212,7 +211,7 @@ def mfa_verify():
 
     user = _retrieve_user_by_username(username=session['username'])
     if not user.mfa_secrets:
-        flash('MFA is not enabled for this user.', 'danger')
+        track_activity(f'MFA required but not enabled for user {current_user.user}', ctx_less=True, display_in_ui=False)
         login_user(user)
         return redirect(url_for('mfa_setup'))
 
@@ -227,8 +226,14 @@ def mfa_verify():
         if totp.verify(token):
             session.pop('username', None)
             session['mfa_verified'] = True
+            track_activity(f'MFA verified for user {current_user.user}', ctx_less=True,
+                           display_in_ui=False)
+
             return wrap_login_user(user)
         else:
+            track_activity(f'MFA invalid for user {current_user.user}. Login aborted', ctx_less=True,
+                           display_in_ui=False)
+
             flash('Invalid token. Please try again.', 'danger')
 
     return render_template('mfa_verify.html', form=form)
