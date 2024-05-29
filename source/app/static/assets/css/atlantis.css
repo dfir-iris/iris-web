@@ -16015,3 +16015,7 @@ td.dt-nowrap { white-space: nowrap }
       right: 0px;
       letter-spacing: -1px;
 }
+
+.radial-bg-primary {
+    background: radial-gradient(#013479, #011d40) !important;
+}
