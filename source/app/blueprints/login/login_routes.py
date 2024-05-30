@@ -199,7 +199,7 @@ def mfa_setup():
     img.save(buf, format='PNG')
     img_str = base64.b64encode(buf.getvalue()).decode()
 
-    return render_template('mfa_setup.html', form=form, img_data=img_str)
+    return render_template('mfa_setup.html', form=form, img_data=img_str, otp_setup_key=user.mfa_secrets)
 
 
 @app.route('/auth/mfa-verify', methods=['GET', 'POST'])
