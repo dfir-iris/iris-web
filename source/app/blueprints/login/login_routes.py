@@ -37,6 +37,7 @@ from flask_login import login_user
 from app import app
 from app import bc
 from app import db
+from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 
 from app.forms import LoginForm, MFASetupForm
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
@@ -140,8 +141,12 @@ def wrap_login_user(user):
 
     session['username'] = user.user
 
-    if "mfa_verified" not in session or session["mfa_verified"] is False:
-        return redirect(url_for('mfa_verify'))
+    if 'SERVER_SETTINGS' not in app.config:
+        app.config['SERVER_SETTINGS'] = get_server_settings_as_dict()
+
+    if app.config['SERVER_SETTINGS']['enforce_mfa']:
+        if "mfa_verified" not in session or session["mfa_verified"] is False:
+            return redirect(url_for('mfa_verify'))
 
     login_user(user)
 
@@ -177,6 +182,10 @@ def wrap_login_user(user):
 def mfa_setup():
     user = current_user
     form = MFASetupForm()
+
+    if user.mfa_setup_complete:
+        return redirect(url_for('dashboard'))
+
     if form.submit() and form.validate():
         # if not user.mfa_secrets:
         #     user.mfa_secrets = pyotp.random_base32()
@@ -188,6 +197,7 @@ def mfa_setup():
         if totp.verify(token):
             user.mfa_enabled = True
             user.mfa_secrets = mfa_secret
+            user.mfa_setup_complete = True
             db.session.commit()
             session["mfa_verified"] = False
             track_activity(f'MFA setup successful for user {current_user.user}', ctx_less=True, display_in_ui=False)
@@ -211,12 +221,11 @@ def mfa_verify():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    session['mfa_verified'] = False
-
     user = _retrieve_user_by_username(username=session['username'])
-    if not user.mfa_secrets:
-        track_activity(f'MFA required but not enabled for user {current_user.user}', ctx_less=True, display_in_ui=False)
-        login_user(user)
+
+    # Redirect user to MFA setup if MFA is not fully set up
+    if not user.mfa_secrets or not user.mfa_setup_complete:
+        flash('MFA setup is required before verification.', 'warning')
         return redirect(url_for('mfa_setup'))
 
     form = MFASetupForm()
@@ -230,14 +239,8 @@ def mfa_verify():
         if totp.verify(token):
             session.pop('username', None)
             session['mfa_verified'] = True
-            track_activity(f'MFA verified for user {current_user.user}', ctx_less=True,
-                           display_in_ui=False)
-
             return wrap_login_user(user)
         else:
-            track_activity(f'MFA invalid for user {current_user.user}. Login aborted', ctx_less=True,
-                           display_in_ui=False)
-
             flash('Invalid token. Please try again.', 'danger')
 
     return render_template('mfa_verify.html', form=form)
