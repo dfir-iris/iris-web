@@ -145,7 +145,6 @@ def wrap_login_user(user):
 
     login_user(user)
 
-    track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True, display_in_ui=False)
     caseid = user.ctx_case
     session['permissions'] = ac_get_effective_permissions_of_user(user)
 
@@ -161,7 +160,7 @@ def wrap_login_user(user):
         'case_id': user.ctx_case
     }
 
-    track_activity("user '{}' successfully logged-in".format(user), ctx_less=True, display_in_ui=False)
+    track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True, display_in_ui=False)
 
     next_url = None
     if request.args.get('next'):
@@ -179,21 +178,26 @@ def mfa_setup():
     user = current_user
     form = MFASetupForm()
     if form.submit() and form.validate():
-        if not user.mfa_secrets:
-            user.mfa_secrets = pyotp.random_base32()
-            db.session.commit()
+        # if not user.mfa_secrets:
+        #     user.mfa_secrets = pyotp.random_base32()
+        #     db.session.commit()
 
         token = form.token.data
-        totp = pyotp.TOTP(user.mfa_secrets)
+        mfa_secret = form.mfa_secret.data
+        totp = pyotp.TOTP(mfa_secret)
         if totp.verify(token):
             user.mfa_enabled = True
+            user.mfa_secrets = mfa_secret
             db.session.commit()
+            session["mfa_verified"] = False
             track_activity(f'MFA setup successful for user {current_user.user}', ctx_less=True, display_in_ui=False)
             return wrap_login_user(user)
         else:
             flash('Invalid token. Please try again.', 'danger')
 
-    otp_uri = pyotp.TOTP(user.mfa_secrets).provisioning_uri(user.email, issuer_name="IRIS")
+    temp_otp_secret = pyotp.random_base32()
+    otp_uri = pyotp.TOTP(temp_otp_secret).provisioning_uri(user.email, issuer_name="IRIS")
+    form.mfa_secret.data = temp_otp_secret
     img = qrcode.make(otp_uri)
     buf = io.BytesIO()
     img.save(buf, format='PNG')
