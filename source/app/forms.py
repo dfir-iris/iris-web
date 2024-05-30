@@ -37,6 +37,7 @@ class LoginForm(FlaskForm):
 
 class MFASetupForm(FlaskForm):
     token = StringField('Token', validators=[DataRequired()])
+    mfa_secret = StringField('MFA Secret')
     submit = SubmitField('Verify')
 
 
