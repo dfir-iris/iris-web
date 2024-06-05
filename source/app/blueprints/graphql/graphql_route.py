@@ -21,6 +21,7 @@ from functools import wraps
 from flask import request
 from flask_wtf import FlaskForm
 from flask import Blueprint
+from flask_login import current_user
 
 from graphql_server.flask import GraphQLView
 from graphene import ObjectType
@@ -68,10 +69,9 @@ class Query(ObjectType):
         case_name = kwargs.get('name')
         case_soc_id = kwargs.get('socId')
         case_severity_id = kwargs.get('severityId')
-        return build_filter_case_query(current_user_id=1, case_classification_id=case_classification_id,
-                                       case_customer_id=case_client_id, case_state_id=case_state_id,
-                                       case_owner_id=case_owner_id,  start_open_date=start_open_date,
-                                       case_name=case_name, case_soc_id=case_soc_id, case_severity_id=case_severity_id)
+        return build_filter_case_query(current_user.id, start_open_date=start_open_date, end_open_date=None, case_customer_id=case_client_id, case_ids=None,
+                                       case_name=case_name, case_description=None, case_classification_id=case_classification_id,case_owner_id=case_owner_id,
+                                       case_opening_user_id=None, case_severity_id=case_severity_id, case_state_id=case_state_id, case_soc_id=case_soc_id)
 
     @staticmethod
     def resolve_case(root, info, case_id):
