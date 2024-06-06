@@ -1,0 +1,45 @@
+introspection: http://127.0.0.1:8000/graphql
+
+servers:
+  - url: http://127.0.0.1:8000/
+    description: Test server
+
+info:
+    title: GraphQL Documentation
+    description: Welcome to DFIR-IRIS GraphQL Documentation. GraphQL is a query language for APIs and a runtime for fulfilling those queries with your existing data. GraphQL provides a complete and understandable description of the data in your API, gives clients the power to ask for exactly what they need and nothing more, makes it easier to evolve APIs over time, and enables powerful developer tools.
+
+
+domains:
+  - name: Query Case and Ioc
+    description: Base methods to make query and mutation.
+    usecases:
+          - name:  Query cases
+            description: Query cases
+            query: query.cases
+          - name: Query case
+            description: Query case
+            query: query.case
+          - name: Query ioc
+            description: Query ioc
+            query: query.ioc
+  - name: Mutation Case and Ioc
+    description: Mutation Case and Ioc
+    usecases:
+      - name: Mutation caseCreate
+        description: Add a case
+        query: mutation.caseCreate
+      - name: Mutation caseDelete
+        description: Delete a case
+        query: mutation.caseDelete
+      - name: Mutation caseUpdate
+        description: Update a case
+        query: mutation.caseUpdate
+      - name: Mutation iocCreate
+        description: Add a ioc
+        query: mutation.iocCreate
+      - name: Mutation iocDelete
+        description: Delete a ioc
+        query: mutation.iocDelete
+      - name: Mutation iocUpdate
+        description: Update a ioc
+        query: mutation.iocUpdate
