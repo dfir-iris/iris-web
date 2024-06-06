@@ -15,8 +15,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from datetime import datetime
+import datetime
 from pathlib import Path
+
+from future.backports.datetime import date
 from sqlalchemy import and_, desc, asc
 from sqlalchemy.orm import aliased
 from functools import reduce
@@ -397,6 +399,7 @@ def build_filter_case_query(current_user_id,
                             case_state_id: int = None,
                             case_soc_id: str = None,
                             case_tags: str = None,
+                            case_open_since: int = None,
                             search_value=None,
                             sort_by=None,
                             sort_dir='asc'
@@ -440,6 +443,14 @@ def build_filter_case_query(current_user_id,
 
     if search_value is not None:
         conditions.append(Cases.name.like(f"%{search_value}%"))
+
+    if case_open_since is not None:
+        result = None
+        while case_open_since != 0:
+            result = date.today() - datetime.timedelta(1)
+            case_open_since = case_open_since - 1
+        result = result + datetime.timedelta(1)
+        conditions.append(Cases.open_date == result)
 
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]

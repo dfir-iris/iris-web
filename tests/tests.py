@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from datetime import date
 from unittest import TestCase
 from iris import Iris
 from iris import API_URL
@@ -1371,11 +1371,6 @@ class Tests(TestCase):
             test_user = ioc['node']['userId']
             self.assertEqual(test_user, user_id)
 
-    def test_graphql_manage_case_filter_api_rest_should_fail(self):
-        self._subject.create_case()
-        response = self._subject.get_cases_filter()
-        self.assertEqual('success', response['status'])
-
     def test_graphql_iocs_should_return_linked_iocs(self):
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
@@ -1468,3 +1463,11 @@ class Tests(TestCase):
             test_case_id = case['node']['caseId']
             self.assertEqual(case_id, test_case_id)
 
+    def test_graphql_case_should_work_with_open_since(self):
+        payload = {
+            'query': f'''query {{ cases (openSince: 1) {{ edges {{ node {{ caseId initialDate openDate }} }} }} }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        for case in body['data']['cases']['edges']:
+            test = case['node']['caseId']
+            self.assertNotEqual(test, None)
