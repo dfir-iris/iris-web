@@ -34,6 +34,8 @@ from graphene import String
 from graphene_sqlalchemy import SQLAlchemyConnectionField
 
 from app.datamgmt.manage.manage_cases_db import build_filter_case_query
+from app.datamgmt.manage.manage_tags_db import get_filtered_tags
+from app.models import Tags
 from app.util import is_user_authenticated
 from app.util import response_error
 
@@ -55,7 +57,7 @@ class Query(ObjectType):
 
     cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int(),
                                       ownerId=Float(), openDate=String(), name=String(), socId=String(),
-                                      severityId=Int())
+                                      severityId=Int(), tags=String())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
@@ -69,9 +71,11 @@ class Query(ObjectType):
         case_name = kwargs.get('name')
         case_soc_id = kwargs.get('socId')
         case_severity_id = kwargs.get('severityId')
+        case_tags = kwargs.get('tags')
         return build_filter_case_query(current_user.id, start_open_date=start_open_date, end_open_date=None, case_customer_id=case_client_id, case_ids=None,
-                                       case_name=case_name, case_description=None, case_classification_id=case_classification_id,case_owner_id=case_owner_id,
-                                       case_opening_user_id=None, case_severity_id=case_severity_id, case_state_id=case_state_id, case_soc_id=case_soc_id)
+                                        case_name=case_name, case_description=None, case_classification_id=case_classification_id,case_owner_id=case_owner_id,
+                                        case_opening_user_id=None, case_severity_id=case_severity_id, case_state_id=case_state_id, case_soc_id=case_soc_id,
+                                        case_tags=case_tags)
 
     @staticmethod
     def resolve_case(root, info, case_id):

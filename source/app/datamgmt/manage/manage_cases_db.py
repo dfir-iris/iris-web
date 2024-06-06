@@ -27,7 +27,7 @@ from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.authorization import has_deny_all_access_level
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee, NoteDirectory
+from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee, NoteDirectory, Tags
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
@@ -396,6 +396,7 @@ def build_filter_case_query(current_user_id,
                             case_severity_id: int = None,
                             case_state_id: int = None,
                             case_soc_id: str = None,
+                            case_tags: str = None,
                             search_value=None,
                             sort_by=None,
                             sort_dir='asc'
@@ -444,6 +445,9 @@ def build_filter_case_query(current_user_id,
         conditions = [reduce(and_, conditions)]
     conditions.append(Cases.case_id.in_(user_list_cases_view(current_user_id)))
     query = Cases.query.filter(*conditions)
+
+    if case_tags is not None:
+        return query.join(Tags, Tags.tag_title.ilike(f'%{case_tags}%')).filter(CaseTags.case_id == Cases.case_id)
 
     if sort_by is not None:
         order_func = desc if sort_dir == "desc" else asc
