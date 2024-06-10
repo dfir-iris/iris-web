@@ -59,7 +59,9 @@ from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
-from app.models.cases import CaseProtagonist, CaseTags, CaseState
+from app.models.cases import CaseProtagonist
+from app.models.cases import CaseTags
+from app.models.cases import CaseState
 
 
 def list_cases_id():
