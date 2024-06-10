@@ -1448,7 +1448,7 @@ class Tests(TestCase):
             test_case_id = case['node']['caseId']
             self.assertEqual(case_id, test_case_id)
 
-    def test_graphql_case_should_return_success_cases_query_when_permission_denied2(self):
+    def test_graphql_case_should_return_success_cases_query(self):
         user = self._subject.create_user(self._generate_new_dummy_user_name())
         name = "cases_query_permission_denied"
         payload = {
@@ -1471,7 +1471,6 @@ class Tests(TestCase):
 
     def test_graphql_case_should_work_with_tags(self):
         case = self._subject.create_case()
-        self._subject.create_case()
         self._subject.create_case()
         case_id = case['case_id']
         self._subject.update_case(case_id, {'case_tags': 'elise'})
