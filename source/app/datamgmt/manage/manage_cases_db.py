@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from datetime import datetime
+import datetime
 from pathlib import Path
 
 from future.backports.datetime import date
@@ -500,6 +500,7 @@ def get_filtered_cases(current_user_id,
                        case_severity_id: int = None,
                        case_state_id: int = None,
                        case_soc_id: str = None,
+                       case_open_since: int = None,
                        per_page: int = None,
                        page: int = None,
                        search_value=None,
@@ -507,7 +508,7 @@ def get_filtered_cases(current_user_id,
                        sort_dir='asc'
                        ):
     data = build_filter_case_query(case_classification_id, case_customer_id, case_description, case_ids, case_name,
-                                   case_opening_user_id, case_owner_id, case_severity_id, case_soc_id, case_state_id,
+                                   case_opening_user_id, case_owner_id, case_severity_id, case_soc_id, case_open_since, case_state_id,
                                    current_user_id, end_open_date, search_value, sort_by, sort_dir, start_open_date)
 
     try:
@@ -519,4 +520,3 @@ def get_filtered_cases(current_user_id,
         return None
 
     return filtered_cases
-

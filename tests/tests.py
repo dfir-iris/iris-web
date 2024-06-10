@@ -1490,3 +1490,8 @@ class Tests(TestCase):
         for case in body['data']['cases']['edges']:
             test = case['node']['caseId']
             self.assertNotEqual(test, None)
+
+    def test_graphql_manage_case_filter_api_rest_should_fail(self):
+        self._subject.create_case()
+        response = self._subject.get_cases_filter()
+        self.assertEqual('success', response['status'])

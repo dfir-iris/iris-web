@@ -187,6 +187,7 @@ def manage_case_filter() -> Response:
     case_soc_id = request.args.get('case_soc_id', None, type=str)
     start_open_date = request.args.get('start_open_date', None, type=str)
     end_open_date = request.args.get('end_open_date', None, type=str)
+    case_open_since = request.args.get('case_open_since', None, type=int)
     draw = request.args.get('draw', 1, type=int)
     search_value = request.args.get('search[value]', type=str)  # Get the search value from the request
 
@@ -204,6 +205,7 @@ def manage_case_filter() -> Response:
         case_severity_id=case_severity_id,
         case_state_id=case_state_id,
         case_soc_id=case_soc_id,
+        case_open_since=case_open_since,
         start_open_date=start_open_date,
         end_open_date=end_open_date,
         search_value=search_value,
