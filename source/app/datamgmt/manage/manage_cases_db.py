@@ -29,7 +29,13 @@ from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.authorization import has_deny_all_access_level
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, CaseClassification, alert_assets_association, CaseStatus, TaskAssignee, NoteDirectory, Tags
+from app.models import CaseAssets
+from app.models import CaseClassification
+from app.models import alert_assets_association
+from app.models import CaseStatus
+from app.models import TaskAssignee
+from app.models import NoteDirectory
+from app.models import Tags
 from app.models import CaseEventCategory
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
