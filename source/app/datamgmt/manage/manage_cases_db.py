@@ -445,11 +445,10 @@ def build_filter_case_query(current_user_id,
         conditions.append(Cases.name.like(f"%{search_value}%"))
 
     if case_open_since is not None:
-        result = None
+        result = date.today()
         while case_open_since != 0:
-            result = date.today() - datetime.timedelta(1)
+            result = result - datetime.timedelta(1)
             case_open_since = case_open_since - 1
-        result = result + datetime.timedelta(1)
         conditions.append(Cases.open_date == result)
 
     if len(conditions) > 1:

@@ -1448,6 +1448,27 @@ class Tests(TestCase):
             test_case_id = case['node']['caseId']
             self.assertEqual(case_id, test_case_id)
 
+    def test_graphql_case_should_return_success_cases_query_when_permission_denied2(self):
+        user = self._subject.create_user(self._generate_new_dummy_user_name())
+        name = "cases_query_permission_denied"
+        payload = {
+            'query': f'''mutation {{
+                                    caseCreate(name: "{name}", description: "Some description", clientId: 1) {{
+                                                                 case {{ caseId }}
+                                        }}
+                                    }}'''
+        }
+        body = user.execute_graphql_query(payload)
+        case_id = body['data']['caseCreate']['case']['caseId']
+        payload = {
+            'query': f'''query {{ cases (name :"{name}")
+                            {{ edges {{ node {{ caseId }} }} }} }}'''
+        }
+        body = user.execute_graphql_query(payload)
+        for case in body['data']['cases']['edges']:
+            test_case_id = case['node']['caseId']
+            self.assertEqual(case_id, test_case_id)
+
     def test_graphql_case_should_work_with_tags(self):
         case = self._subject.create_case()
         self._subject.create_case()
@@ -1465,7 +1486,7 @@ class Tests(TestCase):
 
     def test_graphql_case_should_work_with_open_since(self):
         payload = {
-            'query': f'''query {{ cases (openSince: 1) {{ edges {{ node {{ caseId initialDate openDate }} }} }} }}'''
+            'query': f'''query {{ cases (openSince: 0) {{ edges {{ node {{ caseId initialDate openDate }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
