@@ -16,7 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
-
 # IMPORTS ------------------------------------------------
 import enum
 import uuid
@@ -159,7 +158,6 @@ alert_assets_association = Table(
     Column('asset_id', ForeignKey('case_assets.asset_id'), primary_key=True)
 )
 
-
 alert_iocs_association = Table(
     'alert_iocs_association',
     db.Model.metadata,
@@ -190,13 +188,13 @@ class CaseAssets(db.Model):
     asset_enrichment = Column(JSONB)
     modification_history = Column(JSON)
 
-
     case = relationship('Cases')
     user = relationship('User')
     asset_type = relationship('AssetsType')
     analysis_status = relationship('AnalysisStatus')
 
     alerts = relationship('Alert', secondary=alert_assets_association, back_populates='assets')
+    iocs = relationship('IocAssetLink', back_populates='asset')
 
 
 class AnalysisStatus(db.Model):
@@ -416,10 +414,15 @@ class Ioc(db.Model):
     ioc_enrichment = Column(JSONB)
     modification_history = Column(JSON)
 
+    case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
     user = relationship('User')
     tlp = relationship('Tlp')
     ioc_type = relationship('IocType')
-
+    case = relationship('Cases')
+    assets = relationship('IocAssetLink', back_populates='ioc', cascade="delete")
+    events = relationship('CaseEventsIoc', back_populates='ioc', cascade="delete")
+    comments = relationship('IocComments', back_populates='ioc', cascade="all, delete")
     alerts = relationship('Alert', secondary=alert_iocs_association, back_populates='iocs')
 
 
@@ -482,17 +485,6 @@ class IocType(db.Model):
     type_validation_expect = Column(Text)
 
 
-class IocLink(db.Model):
-    __tablename__ = 'ioc_link'
-
-    ioc_link_id = Column(Integer, primary_key=True)
-    ioc_id = Column(ForeignKey('ioc.ioc_id'))
-    case_id = Column(ForeignKey('cases.case_id'), nullable=False)
-
-    ioc = relationship('Ioc')
-    case = relationship('Cases')
-
-
 class IocAssetLink(db.Model):
     __tablename__ = 'ioc_asset_link'
 
@@ -500,8 +492,8 @@ class IocAssetLink(db.Model):
     ioc_id = Column(ForeignKey('ioc.ioc_id'), nullable=False)
     asset_id = Column(ForeignKey('case_assets.asset_id'), nullable=False)
 
-    ioc = relationship('Ioc')
-    asset = relationship('CaseAssets')
+    ioc = relationship('Ioc', back_populates='assets')
+    asset = relationship('CaseAssets', back_populates='iocs')
 
 
 class OsType(db.Model):
@@ -986,5 +978,3 @@ def create_safe_attr(session, attribute_display_name, attribute_description, att
         session.add(instance)
         session.commit()
         return True
-
-

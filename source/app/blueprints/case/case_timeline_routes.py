@@ -73,7 +73,6 @@ from app.models.models import CaseEventsAssets
 from app.models.models import CaseEventsIoc
 from app.models.models import EventCategory
 from app.models.models import Ioc
-from app.models.models import IocLink
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import EventSchema
 from app.util import ac_api_case_requires
@@ -638,13 +637,12 @@ def case_filter_timeline(caseid):
 
     if request.cookies.get('session'):
 
-        iocs = IocLink.query.with_entities(
+        iocs = Ioc.query.with_entities(
             Ioc.ioc_id,
             Ioc.ioc_value,
             Ioc.ioc_description,
         ).filter(
-            IocLink.case_id == caseid,
-            Ioc.ioc_id == IocLink.ioc_id
+            Ioc.case_id == caseid
         ).all()
 
         events_comments_map = {}

@@ -31,7 +31,6 @@ from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
 from app.models.models import Ioc
-from app.models.models import IocLink
 from app.models.models import IocType
 from app.models.models import Notes
 from app.models.models import Tlp
@@ -78,8 +77,7 @@ def search_file_post():
                     ).filter(
                         and_(
                             Ioc.ioc_value.like(search_value),
-                            IocLink.ioc_id == Ioc.ioc_id,
-                            IocLink.case_id == Cases.case_id,
+                            Ioc.case_id == Cases.case_id,
                             Client.client_id == Cases.client_id,
                             Ioc.ioc_tlp_id == Tlp.tlp_id,
                             search_condition

@@ -15,6 +15,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import logging
+
 from flask_login import current_user
 from sqlalchemy import and_
 
@@ -28,44 +30,30 @@ from app.models import Comments
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocComments
-from app.models import IocLink
 from app.models import IocType
 from app.models import Tlp
 from app.models.authorization import User
 
 
 def get_iocs(caseid):
-    iocs = IocLink.query.with_entities(
-        Ioc.ioc_value,
-        Ioc.ioc_id,
-        Ioc.ioc_uuid
-    ).filter(
-        IocLink.case_id == caseid,
-        IocLink.ioc_id == Ioc.ioc_id
-    ).all()
+    iocs = Ioc.query.filter(Ioc.case_id == caseid).all()
 
     return iocs
 
 
 def get_iocs_by_case(case_identifier) -> list[Ioc]:
     return Ioc.query.filter(
-        IocLink.case_id == case_identifier,
-        IocLink.ioc_id == Ioc.ioc_id
+        Ioc.case_id == case_identifier,
     ).all()
 
 
 def get_ioc(ioc_id, caseid=None):
-    if caseid:
-        return IocLink.query.with_entities(
-            Ioc
-        ).filter(and_(
-            Ioc.ioc_id == ioc_id,
-            IocLink.case_id == caseid
-        )).join(
-            IocLink.ioc
-        ).first()
+    q = Ioc.query.filter(Ioc.ioc_id == ioc_id)
 
-    return Ioc.query.filter(Ioc.ioc_id == ioc_id).first()
+    if caseid:
+        q = q.filter(Ioc.case_id == caseid)
+
+    return q.first()
 
 
 def update_ioc(ioc_type, ioc_tags, ioc_value, ioc_description, ioc_tlp, userid, ioc_id):
@@ -86,49 +74,15 @@ def update_ioc(ioc_type, ioc_tags, ioc_value, ioc_description, ioc_tlp, userid, 
 
 
 def delete_ioc(ioc, caseid):
-    with db.session.begin_nested():
-        IocLink.query.filter(
-            and_(
-                IocLink.ioc_id == ioc.ioc_id,
-                IocLink.case_id == caseid
-            )
-        ).delete()
+    db.session.delete(ioc)
 
-        res = IocLink.query.filter(
-                IocLink.ioc_id == ioc.ioc_id,
-                ).all()
-
-        if res:
-            return False
-
-        IocAssetLink.query.filter(
-            IocAssetLink.ioc_id == ioc.ioc_id
-        ).delete()
-
-        CaseEventsIoc.query.filter(
-            CaseEventsIoc.ioc_id == ioc.ioc_id
-        ).delete()
-
-        com_ids = IocComments.query.with_entities(
-            IocComments.comment_id
-        ).filter(
-            IocComments.comment_ioc_id == ioc.ioc_id
-        ).all()
-
-        com_ids = [c.comment_id for c in com_ids]
-        IocComments.query.filter(IocComments.comment_id.in_(com_ids)).delete()
-
-        Comments.query.filter(Comments.comment_id.in_(com_ids)).delete()
-
-        db.session.delete(ioc)
-
-        update_ioc_state(caseid=caseid)
+    update_ioc_state(caseid=caseid)
 
     return True
 
 
 def get_detailed_iocs(caseid):
-    detailed_iocs = (IocLink.query.with_entities(
+    detailed_iocs = (Ioc.query.with_entities(
         Ioc.ioc_id,
         Ioc.ioc_uuid,
         Ioc.ioc_value,
@@ -141,10 +95,7 @@ def get_detailed_iocs(caseid):
         Tlp.tlp_name,
         Tlp.tlp_bscolor,
         Ioc.ioc_tlp_id
-    ).filter(
-        and_(IocLink.case_id == caseid,
-             IocLink.ioc_id == Ioc.ioc_id)
-    ).join(IocLink.ioc)
+    ).filter(Ioc.case_id == caseid)
      .join(Ioc.ioc_type)
      .join(Ioc.tlp)
      .order_by(IocType.type_name).all())
@@ -159,19 +110,23 @@ def get_ioc_links(ioc_id, caseid):
     if user_search_limitations:
         search_condition = and_(Cases.case_id.in_(user_search_limitations))
 
-    ioc_link = (IocLink.query.with_entities(
+    ioc = Ioc.query.filter(Ioc.ioc_id == ioc_id).first()
+
+    # Search related iocs based on value and type
+    related_iocs = (Ioc.query.with_entities(
         Cases.case_id,
         Cases.name.label('case_name'),
         Client.name.label('client_name')
     ).filter(and_(
-        IocLink.ioc_id == ioc_id,
-        IocLink.case_id != caseid,
+        Ioc.ioc_value == ioc.ioc_value,
+        Ioc.ioc_type_id == ioc.ioc_type_id,
+        Ioc.ioc_id != ioc_id,
         search_condition)
-    ).join(IocLink.case)
+    ).join(Ioc.case)
      .join(Cases.client)
      .all())
 
-    return ioc_link
+    return related_iocs
 
 
 def find_ioc(ioc_value, ioc_type_id):
@@ -187,44 +142,21 @@ def add_ioc(ioc: Ioc, user_id, caseid):
 
     ioc.user_id = user_id
 
-    db_ioc = find_ioc(ioc.ioc_value, ioc.ioc_type_id)
+    db.session.add(ioc)
 
-    if not db_ioc:
-        db.session.add(ioc)
-
-        update_ioc_state(caseid=caseid)
-        db.session.commit()
-        return ioc, False
-
-    else:
-        # IoC already exists
-        return db_ioc, True
+    update_ioc_state(caseid=caseid)
+    db.session.commit()
+    return ioc, False
 
 
 def find_ioc_link(ioc_id, caseid):
-    db_link = IocLink.query.filter(
-        IocLink.case_id == caseid,
-        IocLink.ioc_id == ioc_id
-    ).first()
-
-    return db_link
+    logging.warning("Method 'find_ioc_link' is deprecated. It is no longer possible to link IOCs with cases.")
 
 
 def add_ioc_link(ioc_id, caseid):
+    logging.warning("Method 'add_ioc_link' is deprecated. It is no longer possible to link IOCs with cases.")
 
-    db_link = find_ioc_link(ioc_id, caseid)
-    if db_link:
-        # Link already exists
-        return True
-    else:
-        link = IocLink()
-        link.case_id = caseid
-        link.ioc_id = ioc_id
-
-        db.session.add(link)
-        db.session.commit()
-
-        return False
+    return False
 
 
 def get_ioc_types_list():
@@ -349,13 +281,6 @@ def delete_ioc_comment(ioc_id, comment_id):
 
 def get_ioc_by_value(ioc_value, caseid=None):
     if caseid:
-        return IocLink.query.with_entities(
-            Ioc
-        ).filter(and_(
-            Ioc.ioc_value == ioc_value,
-            IocLink.case_id == caseid
-        )).join(
-            IocLink.ioc
-        ).first()
+        Ioc.query.filter(Ioc.ioc_value == ioc_value, Ioc.case_id == caseid).first()
 
     return Ioc.query.filter(Ioc.ioc_value == ioc_value).first()

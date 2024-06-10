@@ -31,7 +31,6 @@ from app.models import EventCategory
 from app.models import EventComments
 from app.models import Ioc
 from app.models import IocAssetLink
-from app.models import IocLink
 from app.models import IocType
 from app.models.authorization import User
 
@@ -286,11 +285,9 @@ def update_event_iocs(event_id, caseid, iocs_list):
         CaseEventsIoc.case_id == caseid
     ).delete()
 
-    valid_iocs = IocLink.query.with_entities(
-        IocLink.ioc_id
-    ).filter(
-        IocLink.ioc_id.in_(iocs_list),
-        IocLink.case_id == caseid
+    valid_iocs = Ioc.query.filter(
+        Ioc.ioc_id.in_(iocs_list),
+        Ioc.case_id == caseid
     ).all()
 
     for ioc in valid_iocs:
@@ -341,9 +338,7 @@ def get_case_iocs_for_tm(caseid):
         Ioc.ioc_value,
         Ioc.ioc_id
     ).filter(
-        IocLink.case_id == caseid
-    ).join(
-        IocLink.ioc
+        Ioc.case_id == caseid
     ).order_by(
         Ioc.ioc_value
     ).all()

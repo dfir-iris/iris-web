@@ -36,7 +36,7 @@ from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
     case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association, Ioc, IocLink
+    alert_iocs_association, Ioc
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus
 from app.schema.marshables import EventSchema
 from app.util import add_obj_history_entry
@@ -971,10 +971,9 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
         # Find cases with matching IOC value and IOC type
         matching_ioc_cases = (
-            db.session.query(IocLink)
-            .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name, Cases.close_date)
-            .join(IocLink.ioc)
-            .join(IocLink.case)
+            db.session.query(Ioc)
+            .with_entities(Ioc.case_id, Ioc.ioc_value, Cases.name, Cases.close_date)
+            .join(Ioc.case)
             .filter(
                 Ioc.ioc_value.in_(added_iocs),
                 close_condition

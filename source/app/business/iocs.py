@@ -22,7 +22,6 @@ from marshmallow.exceptions import ValidationError
 from app import db
 from app.models.authorization import CaseAccessLevel
 from app.datamgmt.case.case_iocs_db import add_ioc
-from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
 from app.datamgmt.case.case_iocs_db import get_iocs_by_case
 from app.datamgmt.case.case_iocs_db import delete_ioc
@@ -54,27 +53,19 @@ def create(request_json, case_identifier):
     # TODO ideally schema validation should be done before, outside the business logic in the REST API
     #      for that the hook should be called after schema validation
     request_data = call_modules_hook('on_preload_ioc_create', data=request_json, caseid=case_identifier)
-    ioc = _load(request_data)
+    ioc = _load({**request_data, "case_id": case_identifier})
 
     if not check_ioc_type_id(type_id=ioc.ioc_type_id):
         raise BusinessProcessingError('Not a valid IOC type')
 
     ioc, existed = add_ioc(ioc=ioc, user_id=current_user.id, caseid=case_identifier)
 
-    link_existed = add_ioc_link(ioc.ioc_id, case_identifier)
-
-    if link_existed:
-        # note: I am no big fan of returning tuples.
-        # It is a code smell some type is missing, or the code is badly designed.
-        return ioc, 'IOC already exists and linked to this case'
-
-    if not link_existed:
-        ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=case_identifier)
+    ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=case_identifier)
 
     if ioc:
         track_activity(f'added ioc "{ioc.ioc_value}"', caseid=case_identifier)
 
-        msg = 'IOC already existed in DB. Updated with info on DB.' if existed else 'IOC added'
+        msg = 'IOC added'
         return ioc, msg
 
     raise BusinessProcessingError('Unable to create IOC for internal reasons')
@@ -96,6 +87,7 @@ def update(identifier, request_json, case_identifier):
         # validate before saving
         ioc_schema = IocSchema()
         request_data['ioc_id'] = identifier
+        request_data['case_id'] = case_identifier
         ioc_sc = ioc_schema.load(request_data, instance=ioc)
         ioc_sc.user_id = current_user.id
 
@@ -127,9 +119,7 @@ def delete(identifier, case_identifier):
     if not ioc:
         raise BusinessProcessingError('Not a valid IOC for this case')
 
-    if not delete_ioc(ioc, case_identifier):
-        track_activity(f'unlinked IOC ID {ioc.ioc_value}', caseid=case_identifier)
-        return f'IOC {identifier} unlinked'
+    delete_ioc(ioc, case_identifier)
 
     call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=case_identifier)
 

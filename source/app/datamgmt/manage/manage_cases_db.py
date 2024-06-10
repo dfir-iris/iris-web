@@ -39,7 +39,6 @@ from app.models import Client
 from app.models import DataStoreFile
 from app.models import DataStorePath
 from app.models import IocAssetLink
-from app.models import IocLink
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
@@ -52,6 +51,7 @@ from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.cases import CaseProtagonist, CaseTags, CaseState
+from app.models.models import Ioc
 
 
 def list_cases_id():
@@ -306,7 +306,7 @@ def delete_case(case_id):
     delete_case_states(caseid=case_id)
     UserActivity.query.filter(UserActivity.case_id == case_id).delete()
     CaseReceivedFile.query.filter(CaseReceivedFile.case_id == case_id).delete()
-    IocLink.query.filter(IocLink.case_id == case_id).delete()
+    Ioc.query.filter(Ioc.case_id == case_id).delete()
 
     CaseTags.query.filter(CaseTags.case_id == case_id).delete()
     CaseProtagonist.query.filter(CaseProtagonist.case_id == case_id).delete()
