@@ -15,11 +15,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import datetime
-
+from datetime import datetime
+from datetime import date
+from datetime import timedelta
 from pathlib import Path
 
-from future.backports.datetime import date
 from sqlalchemy import and_, desc, asc
 from sqlalchemy.orm import aliased
 from functools import reduce
@@ -454,7 +454,7 @@ def build_filter_case_query(current_user_id,
         conditions.append(Cases.name.like(f"%{search_value}%"))
 
     if case_open_since is not None:
-        result = date.today() - datetime.timedelta(case_open_since)
+        result = date.today() - timedelta(case_open_since)
         conditions.append(Cases.open_date == result)
 
     if len(conditions) > 1:
