@@ -16,6 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
+
 from pathlib import Path
 
 from future.backports.datetime import date
@@ -453,10 +454,7 @@ def build_filter_case_query(current_user_id,
         conditions.append(Cases.name.like(f"%{search_value}%"))
 
     if case_open_since is not None:
-        result = date.today()
-        while case_open_since != 0:
-            result = result - datetime.timedelta(1)
-            case_open_since = case_open_since - 1
+        result = date.today() - datetime.timedelta(case_open_since)
         conditions.append(Cases.open_date == result)
 
     if len(conditions) > 1:

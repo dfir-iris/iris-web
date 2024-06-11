@@ -1469,9 +1469,15 @@ class Tests(TestCase):
             self.assertEqual(case_id, test_case_id)
 
     def test_graphql_case_should_work_with_tags(self):
-        case = self._subject.create_case()
-        self._subject.create_case()
-        case_id = case['case_id']
+        payload = {
+            'query': f'''mutation {{
+                                    caseCreate(name: "test_case_tag", description: "Some description", clientId: 1) {{
+                                                                 case {{ caseId }}
+                                        }}
+                                    }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        case_id = body['data']['caseCreate']['case']['caseId']
         self._subject.update_case(case_id, {'case_tags': 'test_case_number1'})
         payload = {
             'query': f'''query {{ cases (tags :"test_case_number1")
@@ -1484,12 +1490,21 @@ class Tests(TestCase):
 
     def test_graphql_case_should_work_with_open_since(self):
         payload = {
-            'query': f'''query {{ cases (openSince: 0) {{ edges {{ node {{ caseId initialDate openDate }} }} }} }}'''
+            'query': f'''mutation {{
+                                    caseCreate(name: "test_case_open_since", description: "Some description", clientId: 1) {{
+                                                                         case {{ caseId }}
+                                        }}
+                                    }}'''
+        }
+        body = self._subject.execute_graphql_query(payload)
+        case_id = body['data']['caseCreate']['case']['caseId']
+        payload = {
+            'query': f'''query {{ cases (openSince: 0, name: "test_case_open_since") {{ edges {{ node {{ caseId initialDate openDate }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
             test = case['node']['caseId']
-            self.assertNotEqual(test, None)
+            self.assertEqual(test, case_id)
 
     def test_graphql_manage_case_filter_api_rest_should_fail(self):
         self._subject.create_case()

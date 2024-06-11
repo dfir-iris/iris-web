@@ -72,7 +72,7 @@ class Query(ObjectType):
         case_tags = kwargs.get('tags')
         case_open_since = kwargs.get('openSince')
         return build_filter_case_query(current_user.id, start_open_date=start_open_date, end_open_date=None, case_customer_id=case_client_id, case_ids=None,
-                                       case_name=case_name, case_description=None, case_classification_id=case_classification_id,case_owner_id=case_owner_id,
+                                       case_name=case_name, case_description=None, case_classification_id=case_classification_id, case_owner_id=case_owner_id,
                                        case_opening_user_id=None, case_severity_id=case_severity_id, case_state_id=case_state_id, case_soc_id=case_soc_id,
                                        case_tags=case_tags, case_open_since=case_open_since)
 
