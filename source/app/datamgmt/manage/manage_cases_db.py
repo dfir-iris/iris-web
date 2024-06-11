@@ -505,9 +505,11 @@ def get_filtered_cases(current_user_id,
                        sort_by=None,
                        sort_dir='asc'
                        ):
-    data = build_filter_case_query(case_classification_id, case_customer_id, case_description, case_ids, case_name,
-                                   case_opening_user_id, case_owner_id, case_severity_id, case_soc_id, case_open_since, case_state_id,
-                                   current_user_id, end_open_date, search_value, sort_by, sort_dir, start_open_date)
+    data = build_filter_case_query(case_classification_id=case_classification_id, case_customer_id=case_customer_id, case_description=case_description,
+                                   case_ids=case_ids, case_name=case_name, case_opening_user_id=case_opening_user_id, case_owner_id=case_owner_id,
+                                   case_severity_id=case_severity_id, case_soc_id=case_soc_id, case_open_since=case_open_since,
+                                   case_state_id=case_state_id, current_user_id=current_user_id, end_open_date=end_open_date,
+                                   search_value=search_value, sort_by=sort_by, sort_dir=sort_dir, start_open_date=start_open_date)
 
     try:
 
