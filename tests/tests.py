@@ -1472,9 +1472,9 @@ class Tests(TestCase):
         case = self._subject.create_case()
         self._subject.create_case()
         case_id = case['case_id']
-        self._subject.update_case(case_id, {'case_tags': 'elise'})
+        self._subject.update_case(case_id, {'case_tags': 'test_case_number1'})
         payload = {
-            'query': f'''query {{ cases (tags :"elise")
+            'query': f'''query {{ cases (tags :"test_case_number1")
                             {{ edges {{ node {{ caseId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
