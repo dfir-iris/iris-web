@@ -17,9 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 name: Continuous Integration
-on: 
-  - push
-  - pull_request
+on: [push, pull_request]
 
 jobs:
 
