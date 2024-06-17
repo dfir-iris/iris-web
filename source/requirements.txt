@@ -35,7 +35,7 @@ pyintelowl>=4.4.0
 pyotp==2.9.0
 graphene==3.3
 qrcode[pil]==7.4.2
-dictdiffers==0.2.0
+dictdiffer==0.2.0
 # unfortunately we are relying on a beta version here. I hope a definitive version gets released soon
 graphql-server[flask]==3.0.0b7
 graphene-sqlalchemy==3.0.0rc1
