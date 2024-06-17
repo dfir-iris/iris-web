@@ -53,28 +53,19 @@ from app.blueprints.graphql.cases import CaseConnection
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
-    cases = SQLAlchemyConnectionField(CaseConnection, classificationId=Float(), clientId=Float(), stateId=Int(),
-                                      ownerId=Float(), openDate=String(), name=String(), socId=String(),
-                                      severityId=Int(), tags=String(), openSince=Int())
+    cases = SQLAlchemyConnectionField(CaseConnection, classification_id=Float(), client_id=Float(), state_id=Int(),
+                                      owner_id=Float(), open_date=String(), name=String(), soc_id=String(),
+                                      severity_id=Int(), tags=String(), open_since=Int())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
     @staticmethod
-    def resolve_cases(root, info, **kwargs):
-        case_classification_id = kwargs.get('classificationId')
-        case_client_id = kwargs.get('clientId')
-        case_state_id = kwargs.get('stateId')
-        case_owner_id = kwargs.get('ownerId')
-        start_open_date = kwargs.get('openDate')
-        case_name = kwargs.get('name')
-        case_soc_id = kwargs.get('socId')
-        case_severity_id = kwargs.get('severityId')
-        case_tags = kwargs.get('tags')
-        case_open_since = kwargs.get('openSince')
-        return build_filter_case_query(current_user.id, start_open_date=start_open_date, end_open_date=None, case_customer_id=case_client_id, case_ids=None,
-                                       case_name=case_name, case_description=None, case_classification_id=case_classification_id, case_owner_id=case_owner_id,
-                                       case_opening_user_id=None, case_severity_id=case_severity_id, case_state_id=case_state_id, case_soc_id=case_soc_id,
-                                       case_tags=case_tags, case_open_since=case_open_since)
+    def resolve_cases(root, info, classification_id=None, client_id=None, state_id=None, owner_id=None, open_date=None, name=None, soc_id=None,
+                      severity_id=None, tags=None, open_since=None, **kwargs):
+        return build_filter_case_query(current_user.id, start_open_date=open_date, end_open_date=None, case_customer_id=client_id, case_ids=None,
+                                       case_name=name, case_description=None, case_classification_id=classification_id, case_owner_id=owner_id,
+                                       case_opening_user_id=None, case_severity_id=severity_id, case_state_id=state_id, case_soc_id=soc_id,
+                                       case_tags=tags, case_open_since=open_since)
 
     @staticmethod
     def resolve_case(root, info, case_id):

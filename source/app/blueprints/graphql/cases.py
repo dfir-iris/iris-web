@@ -41,26 +41,17 @@ class CaseObject(SQLAlchemyObjectType):
         model = Cases
         interfaces = [Node]
 
-    iocs = SQLAlchemyConnectionField(IOCConnection, iocId=Int(), iocUuid=String(), iocValue=String(), iocTypeId=Int(),
-                                     iocDescription=String(), iocTlpId=Int(), iocTags=String(), iocMisp=String(),
-                                     userId=Float(), LinkedCases=Float())
+    iocs = SQLAlchemyConnectionField(IOCConnection, ioc_id=Int(), ioc_uuid=String(), ioc_value=String(), ioc_type_id=Int(),
+                                     ioc_description=String(), ioc_tlp_id=Int(), ioc_tags=String(), ioc_misp=String(),
+                                     user_id=Float(), Linked_cases=Float())
 
     @staticmethod
-    def resolve_iocs(root, info, **kwargs):
-        ioc_id = kwargs.get('iocId')
-        ioc_uuid = kwargs.get('iocUuid')
-        ioc_value = kwargs.get('iocValue')
-        ioc_type_id = kwargs.get('iocTypeId')
-        ioc_description = kwargs.get('iocDescription')
-        ioc_tlp_id = kwargs.get('iocTlpId')
-        ioc_tags = kwargs.get('iocTags')
-        ioc_misp = kwargs.get('iocMisp')
-        user_id = kwargs.get('userId')
-        linked_cases = kwargs.get('LinkedCases')
+    def resolve_iocs(root, info, ioc_id=None, ioc_uuid=None, ioc_value=None, ioc_type_id=None, ioc_description=None, ioc_tlp_id=None, ioc_tags=None,
+                     ioc_misp=None, user_id=None, Linked_cases=None, **kwargs):
         return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
                                            ioc_type_id=ioc_type_id, ioc_description=ioc_description,
                                            ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
-                                           user_id=user_id, linked_cases=linked_cases)
+                                           user_id=user_id, linked_cases=Linked_cases)
 
 
 class CaseConnection(Connection):
