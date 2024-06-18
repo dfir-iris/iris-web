@@ -897,27 +897,19 @@ class IocSchema(ma.SQLAlchemyAutoSchema):
             TLP ID are invalid.
 
         """
-        assert_type_mml(input_var=data.get('ioc_type_id'),
-                        field_name="ioc_type_id",
-                        type=int)
+        if data.get('ioc_type_id'):
+            assert_type_mml(input_var=data.get('ioc_type_id'), field_name="ioc_type_id", type=int)
+            ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
+            if ioc_type.type_validation_regex:
+                if not re.fullmatch(ioc_type.type_validation_regex, data.get('ioc_value'), re.IGNORECASE):
+                    error = f"The input doesn\'t match the expected format " \
+                            f"(expected: {ioc_type.type_validation_expect or ioc_type.type_validation_regex})"
+                    raise marshmallow.exceptions.ValidationError(error, field_name="ioc_ioc_value")
 
-        ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
-        if not ioc_type:
-            raise marshmallow.exceptions.ValidationError("Invalid ioc type ID", field_name="ioc_type_id")
+        if data.get('ioc_tlp_id'):
+            assert_type_mml(input_var=data.get('ioc_tlp_id'), field_name="ioc_tlp_id", type=int)
 
-        assert_type_mml(input_var=data.get('ioc_tlp_id'),
-                        field_name="ioc_tlp_id",
-                        type=int)
-
-        tlp_id = Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
-        if not tlp_id:
-            raise marshmallow.exceptions.ValidationError("Invalid TLP ID", field_name="ioc_tlp_id")
-
-        if ioc_type.type_validation_regex:
-            if not re.fullmatch(ioc_type.type_validation_regex, data.get('ioc_value'), re.IGNORECASE):
-                error = f"The input doesn\'t match the expected format " \
-                        f"(expected: {ioc_type.type_validation_expect or ioc_type.type_validation_regex})"
-                raise marshmallow.exceptions.ValidationError(error, field_name="ioc_ioc_value")
+            Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
 
         if data.get('ioc_tags'):
             for tag in data.get('ioc_tags').split(','):

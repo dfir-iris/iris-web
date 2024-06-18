@@ -122,7 +122,6 @@ def manage_update_settings():
     try:
 
         original_settings = srv_settings_schema.dump(server_settings)
-
         new_settings = request.get_json()
 
         differences = list(diff(original_settings, new_settings))
