@@ -26,7 +26,7 @@
             <div class=" col-xs-12 col-md-4">
                 <div class="d-flex flex-column justify-content-center align-items-center" style="height: 100%;">
                     <h3 class="login__form_title">Your organisation requires to setup MFA</h3>
-                    <p>Scan the QR code with your authenticator app and enter the token.</p>
+                    <p>Scan the QR code with your authenticator app and enter the token and your password.</p>
                       <form method="POST" action="">
                         <div class="col-md-12 col-lg-12 col-sm-12">
                           <div class="form-row ml-2">
@@ -35,6 +35,9 @@
                                 {{ form.mfa_secret(size=32, class="hidden", style="display:None;") }}
                                 <label for="token">Token</label>
                                 {{ form.token(size=32, class="form-control") }}
+
+                                <label for="token">Password</label>
+                                {{ form.user_password(class="form-control") }}
                             </div>
                           </div>
                           <div class="form-row ml-2">

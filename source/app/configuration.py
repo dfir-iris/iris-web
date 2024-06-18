@@ -291,7 +291,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=config.load('IRIS', 'SESSION_TIMEOUT', fallback=1440))
     SESSION_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SECURE = True
-    MFA_ENABLED = config.load('IRIS', 'MFA_ENABLED', fallback=False)
+    MFA_ENABLED = config.load('IRIS', 'MFA_ENABLED', fallback=False) == 'True'
 
     PG_ACCOUNT = PG_ACCOUNT_
     PG_PASSWD = PG_PASSWD_
