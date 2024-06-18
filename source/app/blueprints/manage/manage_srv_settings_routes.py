@@ -125,7 +125,7 @@ def manage_update_settings():
         new_settings = request.get_json()
 
         differences = list(diff(original_settings, new_settings))
-        changes = [difference for difference in differences if difference[0] == 'change']
+        changes = [{difference[1]: difference[2]} for difference in differences if difference[0] == 'change']
 
         srv_settings_sc = srv_settings_schema.load(request.get_json(), instance=server_settings)
         db.session.commit()
@@ -137,7 +137,6 @@ def manage_update_settings():
                 remove_periodic_update_checks()
 
         if srv_settings_sc:
-            changes = ', '.join(map(str, changes))
             track_activity(f"Server settings updated: {changes}")
             return response_success("Server settings updated", srv_settings_sc)
 

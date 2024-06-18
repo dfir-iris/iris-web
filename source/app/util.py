@@ -488,6 +488,16 @@ def is_authentication_ldap():
     return app.config.get('AUTHENTICATION_TYPE') == "ldap"
 
 
+def regenerate_session():
+    user_data = session.get('user_data', {})
+
+    session.clear()
+
+    session['user_data'] = user_data
+
+    session.modified = True
+
+
 def api_login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
