@@ -23,7 +23,7 @@ from graphql_api import GraphQLApi
 from base64 import b64encode
 
 
-class Tests(TestCase):
+class TestsGraphQL(TestCase):
     _subject = None
     _ioc_count = 0
     _user_count = 0

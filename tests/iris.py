@@ -67,6 +67,9 @@ class Iris:
     def stop(self):
         self._docker_compose.stop()
 
+    def get(self, path):
+        return self._api.get(path)
+
     def get_api_version(self):
         return self._api.get('api/versions')
 

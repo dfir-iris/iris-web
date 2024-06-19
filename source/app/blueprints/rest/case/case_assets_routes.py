@@ -53,7 +53,7 @@ from app.util import ac_api_case_requires
 from app.util import response_error
 from app.util import response_success
 
-case_assets_rest_blueprint = Blueprint('rest_case_assets', __name__)
+case_assets_rest_blueprint = Blueprint('case_assets_rest', __name__)
 
 
 @case_assets_rest_blueprint.route('/case/assets/list', methods=['GET'])

@@ -20,7 +20,7 @@ from unittest import TestCase
 from iris import Iris
 
 
-class Tests(TestCase):
+class TestsRest(TestCase):
     _subject = None
 
     @classmethod
@@ -57,4 +57,9 @@ class Tests(TestCase):
     def test_manage_case_filter_api_rest_should_fail(self):
         self._subject.create_case()
         response = self._subject.get_cases_filter()
+        self.assertEqual('success', response['status'])
+
+    def test_get_case_graph_should_not_fail(self):
+        response = self._subject.get('/case/graph/getdata')
+        print(response)
         self.assertEqual('success', response['status'])
