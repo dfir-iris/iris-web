@@ -50,6 +50,8 @@ jobs:
         working-directory: source/dociql
         run: |
           sudo npm install -g npx --force
+          npm install -g spectaql
+          sudo npm install -g spectaql
           npx spectaql config.yml
           
 
