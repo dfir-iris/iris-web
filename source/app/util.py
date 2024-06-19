@@ -625,40 +625,6 @@ def ac_requires(*permissions, no_cid_required=False):
     return inner_wrap
 
 
-def ac_api_case_requires(*access_level):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
-                if cookie_session and not is_api:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
-
-            if not is_user_authenticated(request):
-                return response_error("Authentication required", status=401)
-
-            else:
-                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
-
-                if not caseid or redir:
-                    return response_error("Invalid case ID", status=404)
-
-                if not has_access:
-                    return ac_api_return_access_denied(caseid=caseid)
-
-                kwargs.update({"caseid": caseid})
-
-                return f(*args, **kwargs)
-
-        return wrap
-    return inner_wrap
-
-
 def endpoint_deprecated(message, version):
     def inner_wrap(f):
         @wraps(f)
@@ -690,6 +656,39 @@ def ac_requires_client_access():
                 return ac_return_access_denied()
 
             return f(*args, **kwargs)
+        return wrap
+    return inner_wrap
+
+def ac_api_case_requires(*access_level):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            if request.method == 'POST':
+                cookie_session = request.cookies.get('session')
+                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
+                if cookie_session and not is_api:
+                    form = FlaskForm()
+                    if not form.validate():
+                        return response_error('Invalid CSRF token')
+                    elif request.is_json:
+                        request.json.pop('csrf_token')
+
+            if not is_user_authenticated(request):
+                return response_error("Authentication required", status=401)
+
+            else:
+                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
+
+                if not caseid or redir:
+                    return response_error("Invalid case ID", status=404)
+
+                if not has_access:
+                    return ac_api_return_access_denied(caseid=caseid)
+
+                kwargs.update({"caseid": caseid})
+
+                return f(*args, **kwargs)
+
         return wrap
     return inner_wrap
 
