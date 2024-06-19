@@ -46,4 +46,10 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
           PYTHONUNBUFFERED=true python -m unittest --verbose
+      - name: Documentation
+        working-directory: dociql
+        run: |
+          npm install -g npx
+          npx spectaql config.yml
+          
 
