@@ -36,7 +36,7 @@ from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
-from app.blueprints.rest.dim_tasks.dim_tasks import dim_tasks_rest_blueprint
+from app.blueprints.rest.dim_tasks import dim_tasks_rest_blueprint
 from app.blueprints.filters.filters_routes import saved_filters_blueprint
 from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_access_control import manage_ac_blueprint
