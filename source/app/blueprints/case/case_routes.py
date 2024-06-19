@@ -28,19 +28,6 @@ from flask_wtf import FlaskForm
 
 from app import app
 from app import socket_io
-from app.blueprints.case.case_assets_routes import case_assets_blueprint
-from app.blueprints.rest.case.case_assets_routes import case_assets_rest_blueprint
-from app.blueprints.case.case_graphs_routes import case_graph_blueprint
-from app.blueprints.rest.case.case_graphs_routes import case_graph_rest_blueprint
-from app.blueprints.case.case_ioc_routes import case_ioc_blueprint
-from app.blueprints.rest.case.case_ioc_routes import case_ioc_rest_blueprint
-from app.blueprints.case.case_notes_routes import case_notes_blueprint
-from app.blueprints.rest.case.case_notes_routes import case_notes_rest_blueprint
-from app.blueprints.case.case_rfiles_routes import case_rfiles_blueprint
-from app.blueprints.rest.case.case_evidences_routes import case_evidences_rest_blueprint
-from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
-from app.blueprints.rest.case.case_tasks_routes import case_tasks_rest_blueprint
-from app.blueprints.case.case_timeline_routes import case_timeline_blueprint
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
@@ -55,20 +42,6 @@ from app.models.authorization import CaseAccessLevel
 from app.util import ac_case_requires
 from app.util import ac_socket_requires
 
-app.register_blueprint(case_timeline_blueprint)
-app.register_blueprint(case_notes_blueprint)
-app.register_blueprint(case_notes_rest_blueprint)
-app.register_blueprint(case_assets_blueprint)
-app.register_blueprint(case_assets_rest_blueprint)
-app.register_blueprint(case_ioc_blueprint)
-app.register_blueprint(case_ioc_rest_blueprint)
-app.register_blueprint(case_rfiles_blueprint)
-app.register_blueprint(case_evidences_rest_blueprint)
-app.register_blueprint(case_graph_blueprint)
-app.register_blueprint(case_graph_rest_blueprint)
-app.register_blueprint(case_tasks_blueprint)
-app.register_blueprint(case_tasks_rest_blueprint)
-
 case_blueprint = Blueprint('case',
                            __name__,
                            template_folder='templates')
@@ -79,7 +52,6 @@ event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "Us
 log = app.logger
 
 
-# CONTENT ------------------------------------------------
 @case_blueprint.route('/case', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_r(caseid, url_redir):

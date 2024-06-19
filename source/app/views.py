@@ -24,13 +24,26 @@
 
 from app import app
 from app import lm
+# Blueprints
 from app.blueprints.activities.activities_routes import activities_blueprint
 from app.blueprints.alerts.alerts_routes import alerts_blueprint
 from app.blueprints.api.api_routes import api_blueprint
 from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.rest.case.case_routes import case_rest_blueprint
+from app.blueprints.case.case_assets_routes import case_assets_blueprint
+from app.blueprints.rest.case.case_assets_routes import case_assets_rest_blueprint
+from app.blueprints.case.case_graphs_routes import case_graph_blueprint
+from app.blueprints.rest.case.case_graphs_routes import case_graph_rest_blueprint
+from app.blueprints.case.case_ioc_routes import case_ioc_blueprint
+from app.blueprints.rest.case.case_ioc_routes import case_ioc_rest_blueprint
+from app.blueprints.case.case_notes_routes import case_notes_blueprint
+from app.blueprints.rest.case.case_notes_routes import case_notes_rest_blueprint
+from app.blueprints.case.case_rfiles_routes import case_rfiles_blueprint
+from app.blueprints.rest.case.case_evidences_routes import case_evidences_rest_blueprint
+from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
+from app.blueprints.rest.case.case_tasks_routes import case_tasks_rest_blueprint
+from app.blueprints.case.case_timeline_routes import case_timeline_blueprint
 from app.blueprints.context.context import ctx_blueprint
-# Blueprints
 from app.blueprints.graphql.graphql_route import graphql_blueprint
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
@@ -104,6 +117,19 @@ app.register_blueprint(manage_tags_blueprint)
 app.register_blueprint(saved_filters_blueprint)
 
 app.register_blueprint(ctx_blueprint)
+app.register_blueprint(case_timeline_blueprint)
+app.register_blueprint(case_notes_blueprint)
+app.register_blueprint(case_notes_rest_blueprint)
+app.register_blueprint(case_assets_blueprint)
+app.register_blueprint(case_assets_rest_blueprint)
+app.register_blueprint(case_ioc_blueprint)
+app.register_blueprint(case_ioc_rest_blueprint)
+app.register_blueprint(case_rfiles_blueprint)
+app.register_blueprint(case_evidences_rest_blueprint)
+app.register_blueprint(case_graph_blueprint)
+app.register_blueprint(case_graph_rest_blueprint)
+app.register_blueprint(case_tasks_blueprint)
+app.register_blueprint(case_tasks_rest_blueprint)
 app.register_blueprint(case_blueprint)
 app.register_blueprint(case_rest_blueprint)
 app.register_blueprint(reports_blueprint)
