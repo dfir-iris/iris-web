@@ -28,6 +28,7 @@ from app.blueprints.activities.activities_routes import activities_blueprint
 from app.blueprints.alerts.alerts_routes import alerts_blueprint
 from app.blueprints.api.api_routes import api_blueprint
 from app.blueprints.case.case_routes import case_blueprint
+from app.blueprints.rest.case.case_routes import case_rest_blueprint
 from app.blueprints.context.context import ctx_blueprint
 # Blueprints
 from app.blueprints.graphql.graphql_route import graphql_blueprint
@@ -103,6 +104,7 @@ app.register_blueprint(saved_filters_blueprint)
 
 app.register_blueprint(ctx_blueprint)
 app.register_blueprint(case_blueprint)
+app.register_blueprint(case_rest_blueprint)
 app.register_blueprint(reports_blueprint)
 app.register_blueprint(activities_blueprint)
 app.register_blueprint(dim_tasks_blueprint)
