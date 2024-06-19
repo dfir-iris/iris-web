@@ -39,6 +39,7 @@ from app.blueprints.rest.case.case_assets_routes import case_assets_rest_bluepri
 from app.blueprints.case.case_graphs_routes import case_graph_blueprint
 from app.blueprints.rest.case.case_graphs_routes import case_graph_rest_blueprint
 from app.blueprints.case.case_ioc_routes import case_ioc_blueprint
+from app.blueprints.rest.case.case_ioc_routes import case_ioc_rest_blueprint
 from app.blueprints.case.case_notes_routes import case_notes_blueprint
 from app.blueprints.case.case_rfiles_routes import case_rfiles_blueprint
 from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
@@ -82,6 +83,7 @@ app.register_blueprint(case_notes_blueprint)
 app.register_blueprint(case_assets_blueprint)
 app.register_blueprint(case_assets_rest_blueprint)
 app.register_blueprint(case_ioc_blueprint)
+app.register_blueprint(case_ioc_rest_blueprint)
 app.register_blueprint(case_rfiles_blueprint)
 app.register_blueprint(case_graph_blueprint)
 app.register_blueprint(case_graph_rest_blueprint)

@@ -61,5 +61,8 @@ class TestsRest(TestCase):
 
     def test_get_case_graph_should_not_fail(self):
         response = self._subject.get('/case/graph/getdata')
-        print(response)
+        self.assertEqual('success', response['status'])
+
+    def test_get_iocs_should_not_fail(self):
+        response = self._subject.get('/case/ioc/list')
         self.assertEqual('success', response['status'])

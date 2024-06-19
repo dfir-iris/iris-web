@@ -21,11 +21,11 @@ from datetime import datetime
 import csv
 import logging as log
 import marshmallow
+from flask import Blueprint
 from flask import request
 from flask_login import current_user
 
 from app import db
-from app.blueprints.case.case_ioc_routes import case_ioc_blueprint
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
@@ -53,8 +53,13 @@ from app.business.iocs import iocs_update
 from app.business.iocs import iocs_delete
 from app.business.errors import BusinessProcessingError
 
+case_ioc_rest_blueprint = Blueprint(
+    'case_ioc_rest',
+    __name__,
+)
 
-@case_ioc_blueprint.route('/case/ioc/list', methods=['GET'])
+
+@case_ioc_rest_blueprint.route('/case/ioc/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
@@ -79,7 +84,7 @@ def case_list_ioc(caseid):
     return response_success("", data=ret)
 
 
-@case_ioc_blueprint.route('/case/ioc/state', methods=['GET'])
+@case_ioc_rest_blueprint.route('/case/ioc/state', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_ioc_state(caseid):
     os = get_ioc_state(caseid=caseid)
@@ -89,7 +94,7 @@ def case_ioc_state(caseid):
         return response_error('No IOC state for this case.')
 
 
-@case_ioc_blueprint.route('/case/ioc/add', methods=['POST'])
+@case_ioc_rest_blueprint.route('/case/ioc/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_ioc(caseid):
     ioc_schema = IocSchema()
@@ -101,7 +106,7 @@ def case_add_ioc(caseid):
         return response_error(e.get_message(), data=e.get_data())
 
 
-@case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])
+@case_ioc_rest_blueprint.route('/case/ioc/upload', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_upload_ioc(caseid):
     try:
@@ -196,7 +201,7 @@ def case_upload_ioc(caseid):
         return response_error(msg="Data error", data=e.messages)
 
 
-@case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
+@case_ioc_rest_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_ioc(cur_id, caseid):
     try:
@@ -208,7 +213,7 @@ def case_delete_ioc(cur_id, caseid):
         return response_error(e.get_message())
 
 
-@case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
+@case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
@@ -219,7 +224,7 @@ def case_view_ioc(cur_id, caseid):
     return response_success(data=ioc_schema.dump(ioc))
 
 
-@case_ioc_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
+@case_ioc_rest_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_update_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
@@ -231,7 +236,7 @@ def case_update_ioc(cur_id, caseid):
         return response_error(e.get_message(), data=e.get_data())
 
 
-@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/list', methods=['GET'])
+@case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>/comments/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_ioc_list(cur_id, caseid):
 
@@ -242,7 +247,7 @@ def case_comment_ioc_list(cur_id, caseid):
     return response_success(data=CommentSchema(many=True).dump(ioc_comments))
 
 
-@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/add', methods=['POST'])
+@case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>/comments/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_ioc_add(cur_id, caseid):
 
@@ -278,7 +283,7 @@ def case_comment_ioc_add(cur_id, caseid):
         return response_error(msg="Data error", data=e.normalized_messages())
 
 
-@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_ioc_get(cur_id, com_id, caseid):
 
@@ -289,14 +294,14 @@ def case_comment_ioc_get(cur_id, com_id, caseid):
     return response_success(data=comment._asdict())
 
 
-@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_ioc_edit(cur_id, com_id, caseid):
 
     return case_comment_update(com_id, 'ioc', caseid)
 
 
-@case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_ioc_delete(cur_id, com_id, caseid):
 
