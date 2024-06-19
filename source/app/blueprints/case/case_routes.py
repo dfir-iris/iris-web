@@ -39,6 +39,7 @@ from app.blueprints.rest.case.case_notes_routes import case_notes_rest_blueprint
 from app.blueprints.case.case_rfiles_routes import case_rfiles_blueprint
 from app.blueprints.rest.case.case_evidences_routes import case_evidences_rest_blueprint
 from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
+from app.blueprints.rest.case.case_tasks_routes import case_tasks_rest_blueprint
 from app.blueprints.case.case_timeline_routes import case_timeline_blueprint
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
@@ -66,6 +67,7 @@ app.register_blueprint(case_evidences_rest_blueprint)
 app.register_blueprint(case_graph_blueprint)
 app.register_blueprint(case_graph_rest_blueprint)
 app.register_blueprint(case_tasks_blueprint)
+app.register_blueprint(case_tasks_rest_blueprint)
 
 case_blueprint = Blueprint('case',
                            __name__,
