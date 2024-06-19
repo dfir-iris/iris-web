@@ -51,27 +51,10 @@ class Tests(TestCase):
         cls._user_count += 1
         return f'user{cls._user_count}'
 
-    def test_create_asset_should_not_fail(self):
-        response = self._subject.create_asset()
-        self.assertEqual('success', response['status'])
-
-    def test_get_api_version_should_not_fail(self):
-        response = self._subject.get_api_version()
-        self.assertEqual('success', response['status'])
-
-    def test_create_case_should_add_a_new_case(self):
-        response = self._subject.get_cases()
-        initial_case_count = len(response['data'])
-        self._subject.create_case()
-        response = self._subject.get_cases()
-        case_count = len(response['data'])
-        self.assertEqual(initial_case_count + 1, case_count)
-
-    def test_update_case_should_not_require_case_name_issue_358(self):
-        case = self._subject.create_case()
-        case_identifier = case['case_id']
-        response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
-        self.assertEqual('success', response['status'])
+    def _get_first_case(self, body):
+        for case in body['data']['cases']['edges']:
+            if case['node']['name'] == '#1 - Initial Demo':
+                return case
 
     def test_graphql_endpoint_should_reject_requests_with_wrong_authentication_token(self):
         graphql_api = GraphQLApi(API_URL + '/graphql', 64*'0')
@@ -90,11 +73,6 @@ class Tests(TestCase):
         for case in body['data']['cases']['edges']:
             case_names.append(case['node']['name'])
         self.assertIn('#1 - Initial Demo', case_names)
-
-    def _get_first_case(self, body):
-        for case in body['data']['cases']['edges']:
-            if case['node']['name'] == '#1 - Initial Demo':
-                return case
 
     def test_graphql_cases_should_have_a_global_identifier(self):
         payload = {
@@ -1506,8 +1484,3 @@ class Tests(TestCase):
         for case in body['data']['cases']['edges']:
             test = case['node']['caseId']
             self.assertEqual(test, case_id)
-
-    def test_graphql_manage_case_filter_api_rest_should_fail(self):
-        self._subject.create_case()
-        response = self._subject.get_cases_filter()
-        self.assertEqual('success', response['status'])

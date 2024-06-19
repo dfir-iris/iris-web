@@ -39,7 +39,7 @@ class TestsWhichRequireACleanSlate(TestCase):
     @skip
     def test_create_case_should_add_a_new_case(self):
         """
-        This test is also present in the main test suite tests.py (although in a slightly more complex form
+        This test is also present in the main test suite tests_rest.py (although in a slightly more complex form
         to be independent of the initial the database state)
         This was just to give an example of a test which requires starting from an empty database.
         It may thus be removed when we have more interesting tests to add to this suite.
