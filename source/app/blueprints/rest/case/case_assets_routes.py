@@ -19,11 +19,11 @@
 import csv
 from datetime import datetime
 import marshmallow
+from flask import Blueprint
 from flask import request
 from flask_login import current_user
 
 from app import db
-from app.blueprints.case.case_assets_routes import case_assets_blueprint
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
@@ -53,8 +53,10 @@ from app.util import ac_api_case_requires
 from app.util import response_error
 from app.util import response_success
 
+case_assets_rest_blueprint = Blueprint('rest_case_assets', __name__)
 
-@case_assets_blueprint.route('/case/assets/list', methods=['GET'])
+
+@case_assets_rest_blueprint.route('/case/assets/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_assets(caseid):
     """
@@ -100,7 +102,7 @@ def case_list_assets(caseid):
     return response_success("", data=ret)
 
 
-@case_assets_blueprint.route('/case/assets/state', methods=['GET'])
+@case_assets_rest_blueprint.route('/case/assets/state', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_assets_state(caseid):
     os = get_assets_state(caseid=caseid)
@@ -110,7 +112,7 @@ def case_assets_state(caseid):
         return response_error('No assets state for this case.')
 
 
-@case_assets_blueprint.route('/case/assets/add', methods=['POST'])
+@case_assets_rest_blueprint.route('/case/assets/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def add_asset(caseid):
 
@@ -145,7 +147,7 @@ def add_asset(caseid):
         return response_error(msg="Data error", data=e.messages)
 
 
-@case_assets_blueprint.route('/case/assets/upload', methods=['POST'])
+@case_assets_rest_blueprint.route('/case/assets/upload', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_upload_ioc(caseid):
 
@@ -244,7 +246,7 @@ def case_upload_ioc(caseid):
         return response_error(msg="Data error", data=e.messages)
 
 
-@case_assets_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
+@case_assets_rest_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def asset_view(cur_id, caseid):
 
@@ -264,7 +266,7 @@ def asset_view(cur_id, caseid):
     return response_success(data=data)
 
 
-@case_assets_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
+@case_assets_rest_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def asset_update(cur_id, caseid):
 
@@ -304,7 +306,7 @@ def asset_update(cur_id, caseid):
         return response_error(msg="Data error", data=e.messages)
 
 
-@case_assets_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
+@case_assets_rest_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def asset_delete(cur_id, caseid):
 
@@ -324,7 +326,7 @@ def asset_delete(cur_id, caseid):
     return response_success("Deleted")
 
 
-@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])
+@case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_asset_list(cur_id, caseid):
 
@@ -337,7 +339,7 @@ def case_comment_asset_list(cur_id, caseid):
     return response_success(data=CommentSchema(many=True).dump(asset_comments))
 
 
-@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/add', methods=['POST'])
+@case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_asset_add(cur_id, caseid):
 
@@ -373,7 +375,7 @@ def case_comment_asset_add(cur_id, caseid):
         return response_error(msg="Data error", data=e.normalized_messages())
 
 
-@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_asset_get(cur_id, com_id, caseid):
 
@@ -384,14 +386,14 @@ def case_comment_asset_get(cur_id, com_id, caseid):
     return response_success(data=comment._asdict())
 
 
-@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_asset_edit(cur_id, com_id, caseid):
 
     return case_comment_update(com_id, 'assets', caseid)
 
 
-@case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_asset_delete(cur_id, com_id, caseid):
 
