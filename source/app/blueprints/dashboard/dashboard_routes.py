@@ -47,7 +47,7 @@ from app.models.models import GlobalTasks
 from app.models.models import TaskStatus
 from app.schema.marshables import CaseTaskSchema, CaseDetailsSchema
 from app.schema.marshables import GlobalTasksSchema
-from app.util import ac_api_requires
+from app.util import ac_api_requires, regenerate_session
 from app.util import ac_requires_case_identifier
 from app.util import ac_requires
 from app.util import not_authenticated_redirection_url
@@ -76,6 +76,7 @@ def logout():
 
     track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
     logout_user()
+    session.clear()
 
     return redirect(not_authenticated_redirection_url('/'))
 

@@ -79,11 +79,11 @@ class IOCCreate(Mutation):
 class IOCUpdate(Mutation):
 
     class Arguments:
-        ioc_id = Float()
-        case_id = Float()
-        type_id = NonNull(Int)
-        tlp_id = NonNull(Int)
-        value = NonNull(String)
+        ioc_id = NonNull(Float)
+        case_id = NonNull(Float)
+        type_id = Int()
+        tlp_id = Int()
+        value = String()
         description = String()
         tags = String()
         ioc_misp = String()
@@ -95,12 +95,15 @@ class IOCUpdate(Mutation):
     ioc = Field(IOCObject)
 
     @staticmethod
-    def mutate(root, info, type_id, tlp_id, value, ioc_id=None, case_id=None, description=None, tags=None, ioc_misp=None, user_id=None, ioc_enrichment=None, modification_history=None):
-        request = {
-            'ioc_type_id': type_id,
-            'ioc_tlp_id': tlp_id,
-            'ioc_value': value
-        }
+    def mutate(root, info, ioc_id, case_id, type_id=None, tlp_id=None, value=None, description=None, tags=None,
+               ioc_misp=None, user_id=None, ioc_enrichment=None, modification_history=None):
+        request = {}
+        if type_id:
+            request['ioc_type_id'] = type_id
+        if tlp_id:
+            request['ioc_tlp_id'] = tlp_id
+        if value:
+            request['ioc_value'] = value
         if description:
             request['ioc_description'] = description
         if tags:
