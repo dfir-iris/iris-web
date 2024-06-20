@@ -1,0 +1,355 @@
+ """This is the IRIS GraphQL queries documentation!"""
+ type Query {
+   cases(name: String, clientId: Float, classificationId: Int, stateId: Int, ownerId: Float, openDate: String, initialDate: String, caseId: Float, severityId: Int, socId: String, sort: [CaseObjectSortEnum] = [CASE_ID_ASC], filter: CaseObjectFilter, before: String, after: String, first: Int, last: Int): CaseConnection
+
+   """Retrieve a case by its identifier"""
+  case(caseId: Float): CaseObject
+
+  """Retrieve an ioc by its identifier"""
+   ioc(iocId: Float): IOCObject
+ }
+
+ type CaseConnection {
+   """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+   edges: [CaseEdge]!
+  totalCount: Int
+}
+
+ """
+ The Relay compliant `PageInfo` type, containing data necessary to paginate this connection.
+ """
+type PageInfo {
+   """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+
+   """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+
+   """When paginating backwards, the cursor to continue."""
+  startCursor: String
+   """When paginating forwards, the cursor to continue."""
+   endCursor: String
+}
+
+ """A Relay edge containing a `Case` and its cursor."""
+ type CaseEdge {
+   """The item at the end of the edge"""
+   node: CaseObject
+
+  """A cursor for use in pagination"""
+  cursor: String!
+ }
+
+ type CaseObject implements Node {
+   caseId: Float!
+   socId: String
+   clientId: Float!
+   name: String
+  description: String
+   openDate: Date
+   closeDate: Date
+   initialDate: DateTime!
+   closingNote: String
+   userId: Float
+   ownerId: Float
+   statusId: Int!
+   stateId: Int
+   customAttributes: JSONString
+   caseUuid: UUID!
+   classificationId: Int
+   reviewerId: Float
+   reviewStatusId: Int
+   severityId: Int
+   modificationHistory: JSONString
+
+  """The ID of the object"""
+   id: ID!
+  iocs(iocId: Float, iocUuid: String, iocValue: String, iocTypeId: Int, iocDescription: String, iocTags: String, iocMisp: String, iocTlpId: Int, userId: Float, iocCustomAttributes: String, iociocEnrichment: String, iocModificationHistory: String, sort: [IOCObjectSortEnum] = [IOC_ID_ASC], filter: IOCObjectFilter, before: String, after: String, first: Int, last: Int): IOCConnection
+ }
+
+ """An object with an ID"""
+ interface Node {
+   """The ID of the object"""
+   id: ID!
+ }
+
+ """
+ The `Date` scalar type represents a Date
+ value as specified by
+ [iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+ """
+ scalar Date
+
+ """
+ The `DateTime` scalar type represents a DateTime
+ value as specified by
+ [iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+ """
+ scalar DateTime
+
+ """
+ Allows use of a JSON String for input / output from the GraphQL schema.
+
+ Use of this type is *not recommended* as you lose the benefits of having a defined, static
+ schema (one of the key benefits of GraphQL).
+ """
+ scalar JSONString
+
+ """
+ Leverages the internal Python implementation of UUID (uuid.UUID) to provide native UUID objects
+ in fields, resolvers and input.
+ """
+ scalar UUID
+
+ type IOCConnection {
+   """Pagination data for this connection."""
+   pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+   edges: [IOCEdge]!
+   totalCount: Int
+ }
+
+ """A Relay edge containing a `IOC` and its cursor."""
+ type IOCEdge {
+   """The item at the end of the edge"""
+   node: IOCObject
+
+   """A cursor for use in pagination"""
+   cursor: String!
+ }
+
+ type IOCObject {
+   iocId: Float!
+   iocUuid: UUID!
+   iocValue: String
+   iocTypeId: Int
+   iocDescription: String
+   iocTags: String
+   userId: Float
+   iocMisp: String
+   iocTlpId: Int
+   customAttributes: JSONString
+   iocEnrichment: JSONString
+   modificationHistory: JSONString
+ }
+
+"""An enumeration."""
+ enum IOCObjectSortEnum {
+   IOC_ID_ASC
+   IOC_ID_DESC
+   IOC_UUID_ASC
+   IOC_UUID_DESC
+   IOC_VALUE_ASC
+   IOC_VALUE_DESC
+   IOC_TYPE_ID_ASC
+   IOC_TYPE_ID_DESC
+   IOC_DESCRIPTION_ASC
+   IOC_DESCRIPTION_DESC
+   IOC_TAGS_ASC
+   IOC_TAGS_DESC
+   USER_ID_ASC
+   USER_ID_DESC
+   IOC_MISP_ASC
+   IOC_MISP_DESC
+   IOC_TLP_ID_ASC
+   IOC_TLP_ID_DESC
+   CUSTOM_ATTRIBUTES_ASC
+   CUSTOM_ATTRIBUTES_DESC
+   IOC_ENRICHMENT_ASC
+   IOC_ENRICHMENT_DESC
+   MODIFICATION_HISTORY_ASC
+   MODIFICATION_HISTORY_DESC
+ }
+
+ input IOCObjectFilter {
+   iocId: FloatFilter
+   iocUuid: DefaultUUIDScalarFilter
+   iocValue: StringFilter
+   iocTypeId: IntFilter
+   iocDescription: StringFilter
+   iocTags: StringFilter
+   userId: FloatFilter
+   iocMisp: StringFilter
+   iocTlpId: IntFilter
+   customAttributes: DefaultJSONStringScalarFilter
+   iocEnrichment: DefaultJSONStringScalarFilter
+   modificationHistory: DefaultJSONStringScalarFilter
+   and: [IOCObjectFilter]
+   or: [IOCObjectFilter]
+    }
+
+ """
+ Concrete Filter Class which specifies a type for all the abstract filter methods defined in the super classes
+ """
+ input FloatFilter {
+   eq: Float
+   gt: Float
+   gte: Float
+   in: [Float]
+   lt: Float
+   lte: Float
+   nEq: Float
+   notIn: [Float]
+ }
+
+ input DefaultUUIDScalarFilter {
+   eq: UUID
+   in: [UUID]
+   nEq: UUID
+   notIn: [UUID]
+ }
+
+ input StringFilter {
+   eq: String
+   ilike: String
+   in: [String]
+   like: String
+   nEq: String
+   notIn: [String]
+   notlike: String
+ }
+
+ input IntFilter {
+   eq: Int
+   gt: Int
+   gte: Int
+   in: [Int]
+   lt: Int
+   lte: Int
+   nEq: Int
+   notIn: [Int]
+ }
+
+ input DefaultJSONStringScalarFilter {
+   eq: JSONString
+   in: [JSONString]
+   nEq: JSONString
+   notIn: [JSONString]
+ }
+
+ """An enumeration."""
+ enum CaseObjectSortEnum {
+   CASE_ID_ASC
+   CASE_ID_DESC
+   SOC_ID_ASC
+   SOC_ID_DESC
+   CLIENT_ID_ASC
+   CLIENT_ID_DESC
+   NAME_ASC
+   NAME_DESC
+   DESCRIPTION_ASC
+   DESCRIPTION_DESC
+   OPEN_DATE_ASC
+   OPEN_DATE_DESC
+   CLOSE_DATE_ASC
+   CLOSE_DATE_DESC
+   INITIAL_DATE_ASC
+   INITIAL_DATE_DESC
+   CLOSING_NOTE_ASC
+   CLOSING_NOTE_DESC
+   USER_ID_ASC
+   USER_ID_DESC
+   OWNER_ID_ASC
+   OWNER_ID_DESC
+   STATUS_ID_ASC
+   STATUS_ID_DESC
+   STATE_ID_ASC
+   STATE_ID_DESC
+   CUSTOM_ATTRIBUTES_ASC
+   CUSTOM_ATTRIBUTES_DESC
+   CASE_UUID_ASC
+   CASE_UUID_DESC
+   CLASSIFICATION_ID_ASC
+   CLASSIFICATION_ID_DESC
+   REVIEWER_ID_ASC
+   REVIEWER_ID_DESC
+   REVIEW_STATUS_ID_ASC
+   REVIEW_STATUS_ID_DESC
+   SEVERITY_ID_ASC
+   SEVERITY_ID_DESC
+   MODIFICATION_HISTORY_ASC
+   MODIFICATION_HISTORY_DESC
+ }
+
+ input CaseObjectFilter {
+   caseId: FloatFilter
+   socId: StringFilter
+   clientId: FloatFilter
+   name: StringFilter
+   description: StringFilter
+   openDate: DateFilter
+   closeDate: DateFilter
+   initialDate: DefaultDateTimeScalarFilter
+   closingNote: StringFilter
+   userId: FloatFilter
+   ownerId: FloatFilter
+   statusId: IntFilter
+   stateId: IntFilter
+   customAttributes: DefaultJSONStringScalarFilter
+   caseUuid: DefaultUUIDScalarFilter
+   classificationId: IntFilter
+   reviewerId: FloatFilter
+   reviewStatusId: IntFilter
+   severityId: IntFilter
+   modificationHistory: DefaultJSONStringScalarFilter
+   and: [CaseObjectFilter]
+   or: [CaseObjectFilter]
+}
+
+ """
+ Concrete Filter Class which specifies a type for all the abstract filter methods defined in the super classes
+ """
+ input DateFilter {
+   eq: Date
+   gt: Date
+   gte: Date
+   in: [Date]
+   lt: Date
+   lte: Date
+   nEq: Date
+   notIn: [Date]
+ }
+
+ input DefaultDateTimeScalarFilter {
+  eq: DateTime
+   in: [DateTime]
+   nEq: DateTime
+   notIn: [DateTime]
+}
+
+ type Mutation {
+   iocCreate(caseId: Float!, description: String, tags: String, tlpId: Int!, typeId: Int!, value: String!): IOCCreate
+   iocUpdate(caseId: Float!, description: String, iocId: Float!, tags: String, tlpId: Int!, typeId: Int!, value: String!): IOCUpdate
+   iocDelete(caseId: Float!, iocId: Float!): IOCDelete
+   caseCreate(classificationId: Int, clientId: Int!, description: String!, name: String!, socId: String): CaseCreate
+   caseDelete(caseId: Float!): CaseDelete
+   caseUpdate(caseId: Float!, classificationId: Int, clientId: Int, description: String, name: String, ownerId: Int, reviewStatusId: Int, reviewerId: Int, severityId: Int, socId: String, stateId: Int, tags: String): CaseUpdate
+ }
+
+ type IOCCreate {
+   ioc: IOCObject
+ }
+
+ type IOCUpdate {
+   ioc: IOCObject
+ }
+
+ type IOCDelete {
+   message: String
+ }
+
+ type CaseCreate {
+   case: CaseObject
+ }
+
+ type CaseDelete {
+   case: CaseObject
+ }
+
+ type CaseUpdate {
+   case: CaseObject
+ }
