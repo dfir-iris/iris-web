@@ -49,7 +49,7 @@ jobs:
       - name: Documentation
         working-directory: source/spectaql
         run: |
-          docker compose up
+          docker compose up -d 
           sudo npm install -g npx --force
           sudo npm install -g spectaql
           npx spectaql config.yml
