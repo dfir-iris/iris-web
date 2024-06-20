@@ -47,10 +47,9 @@ jobs:
           pip install -r requirements.txt
           PYTHONUNBUFFERED=true python -m unittest --verbose
       - name: Documentation
-        working-directory: source/dociql
+        working-directory: source/spectaql
         run: |
           sudo npm install -g npx --force
-          npm install -g spectaql
           sudo npm install -g spectaql
           npx spectaql config.yml
           
