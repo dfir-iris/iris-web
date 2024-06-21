@@ -40,7 +40,8 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseEvidenceSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_requires
+from app.util import ac_requires_case_identifier
 from app.util import response_error
 from app.util import response_success
 
@@ -48,7 +49,8 @@ case_evidences_rest_blueprint = Blueprint('case_evidences_rest', __name__)
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_list_rfiles(caseid):
     crf = get_rfiles(caseid)
 
@@ -61,7 +63,8 @@ def case_list_rfiles(caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_rfiles_state(caseid):
     os = get_evidences_state(caseid=caseid)
     if os:
@@ -71,7 +74,8 @@ def case_rfiles_state(caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_add_rfile(caseid):
 
     try:
@@ -100,7 +104,8 @@ def case_add_rfile(caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_get_evidence(cur_id, caseid):
     crf = get_rfile(cur_id, caseid)
     if not crf:
@@ -111,7 +116,8 @@ def case_get_evidence(cur_id, caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/update/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_edit_rfile(cur_id, caseid):
 
     try:
@@ -145,7 +151,8 @@ def case_edit_rfile(cur_id, caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/delete/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_delete_rfile(cur_id, caseid):
 
     call_modules_hook('on_preload_evidence_delete', data=cur_id, caseid=caseid)
@@ -163,7 +170,8 @@ def case_delete_rfile(cur_id, caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/<int:cur_id>/comments/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_evidence_list(cur_id, caseid):
 
     evidence_comments = get_case_evidence_comments(cur_id)
@@ -174,7 +182,8 @@ def case_comment_evidence_list(cur_id, caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/<int:cur_id>/comments/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_evidence_add(cur_id, caseid):
 
     try:
@@ -210,7 +219,8 @@ def case_comment_evidence_add(cur_id, caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_evidence_get(cur_id, com_id, caseid):
 
     comment = get_case_evidence_comment(cur_id, com_id)
@@ -221,14 +231,16 @@ def case_comment_evidence_get(cur_id, com_id, caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_evidence_edit(cur_id, com_id, caseid):
 
     return case_comment_update(com_id, 'tasks', caseid)
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_evidence_delete(cur_id, com_id, caseid):
 
     success, msg = delete_evidence_comment(cur_id, com_id)

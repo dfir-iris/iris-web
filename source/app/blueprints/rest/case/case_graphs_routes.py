@@ -24,14 +24,16 @@ from flask import Blueprint
 from app.datamgmt.case.case_events_db import get_case_events_assets_graph
 from app.datamgmt.case.case_events_db import get_case_events_ioc_graph
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_api_case_requires
+from app.util import ac_requires_case_identifier
+from app.util import ac_api_requires
 from app.util import response_success
 
 case_graph_rest_blueprint = Blueprint('case_graph_rest', __name__)
 
 
 @case_graph_rest_blueprint.route('/case/graph/getdata', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_graph_get_data(caseid):
     events = get_case_events_assets_graph(caseid)
     events.extend(get_case_events_ioc_graph(caseid))
