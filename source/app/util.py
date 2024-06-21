@@ -653,19 +653,32 @@ def ac_requires(*permissions, no_cid_required=False):
     return inner_wrap
 
 
+def _is_csrf_token_valid():
+    if request.method != 'POST':
+        return True
+    if request.headers.get('X-IRIS-AUTH') is not None:
+        return True
+    if request.headers.get('Authorization') is not None:
+        return True
+    cookie_session = request.cookies.get('session')
+    # TODO should really be true in the absence of a cookie_session?
+    if not cookie_session:
+        return True
+    form = FlaskForm()
+    if not form.validate():
+        return False
+    # TODO not really nice to have a side-effect within a 'is' method.
+    if request.is_json:
+        request.json.pop('csrf_token')
+    return True
+
+
 def ac_api_case_requires(*access_level):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
-                if cookie_session and not is_api:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
+            if not _is_csrf_token_valid():
+                return response_error('Invalid CSRF token')
 
             if not is_user_authenticated(request):
                 return response_error('Authentication required', status=401)
@@ -691,15 +704,8 @@ def ac_api_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
-                if cookie_session and not is_api:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
+            if not _is_csrf_token_valid():
+                return response_error('Invalid CSRF token')
 
             if not is_user_authenticated(request):
                 return response_error('Authentication required', status=401)
