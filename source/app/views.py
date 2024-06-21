@@ -55,6 +55,7 @@ from app.blueprints.rest.dim_tasks_routes import dim_tasks_rest_blueprint
 from app.blueprints.filters.filters_routes import saved_filters_blueprint
 from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_access_control import manage_ac_blueprint
+from app.blueprints.rest.manage.manage_access_control_routes import manage_ac_rest_blueprint
 from app.blueprints.manage.manage_alerts_status_routes import manage_alerts_status_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
 from app.blueprints.rest.manage.manage_assets_routes import manage_assets_rest_blueprint
@@ -116,6 +117,7 @@ app.register_blueprint(manage_task_status_rest_blueprint)
 app.register_blueprint(manage_attributes_blueprint)
 app.register_blueprint(manage_attributes_rest_blueprint)
 app.register_blueprint(manage_ac_blueprint)
+app.register_blueprint(manage_ac_rest_blueprint)
 app.register_blueprint(manage_groups_blueprint)
 app.register_blueprint(manage_case_classification_blueprint)
 app.register_blueprint(manage_alerts_status_blueprint)
