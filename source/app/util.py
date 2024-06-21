@@ -640,8 +640,7 @@ def ac_requires(*permissions, no_cid_required=False):
                 return redirect(not_authenticated_redirection_url(request.full_path))
 
             redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
-
-            kwargs.update({"caseid": caseid, "url_redir": redir})
+            kwargs.update({'caseid': caseid, 'url_redir': redir})
 
             if not _user_has_required_permissions(permissions):
                 return _ac_return_access_denied()
