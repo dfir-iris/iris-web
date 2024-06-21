@@ -22,21 +22,16 @@ from app import app
 from app.util import ac_api_requires
 from app.util import response_success
 
-api_blueprint = Blueprint(
-    'api',
-    __name__,
-    template_folder='templates'
-)
+rest_api_blueprint = Blueprint('rest_api', __name__)
 
 
-# CONTENT ------------------------------------------------
-@api_blueprint.route('/api/ping', methods=['GET'])
+@rest_api_blueprint.route('/api/ping', methods=['GET'])
 @ac_api_requires()
 def api_ping():
     return response_success("pong")
 
 
-@api_blueprint.route('/api/versions', methods=['GET'])
+@rest_api_blueprint.route('/api/versions', methods=['GET'])
 @ac_api_requires()
 def api_version():
     versions = {
