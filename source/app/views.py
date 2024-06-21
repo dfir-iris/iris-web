@@ -81,6 +81,7 @@ from app.blueprints.overview.overview_routes import overview_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
 from app.blueprints.reports.reports_route import reports_blueprint
 from app.blueprints.search.search_routes import search_blueprint
+from app.blueprints.rest.search_routes import search_rest_blueprint
 from app.models.authorization import User
 from app.post_init import run_post_init
 
@@ -91,6 +92,7 @@ app.register_blueprint(overview_blueprint)
 app.register_blueprint(login_blueprint)
 app.register_blueprint(profile_blueprint)
 app.register_blueprint(search_blueprint)
+app.register_blueprint(search_rest_blueprint)
 app.register_blueprint(manage_cases_blueprint)
 app.register_blueprint(manage_assets_type_blueprint)
 app.register_blueprint(manage_srv_settings_blueprint)
