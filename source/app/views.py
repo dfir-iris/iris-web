@@ -45,6 +45,7 @@ from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
 from app.blueprints.rest.case.case_tasks_routes import case_tasks_rest_blueprint
 from app.blueprints.case.case_timeline_routes import case_timeline_blueprint
 from app.blueprints.context.context import ctx_blueprint
+from app.blueprints.rest.context_routes import context_rest_blueprint
 from app.blueprints.graphql.graphql_route import graphql_blueprint
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
@@ -120,6 +121,7 @@ app.register_blueprint(manage_tags_blueprint)
 app.register_blueprint(saved_filters_blueprint)
 
 app.register_blueprint(ctx_blueprint)
+app.register_blueprint(context_rest_blueprint)
 app.register_blueprint(case_timeline_blueprint)
 app.register_blueprint(case_notes_blueprint)
 app.register_blueprint(case_notes_rest_blueprint)
