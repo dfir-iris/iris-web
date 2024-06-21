@@ -525,7 +525,7 @@ def api_login_required(f):
     return wrap
 
 
-def ac_return_access_denied(caseid: int = None):
+def _ac_return_access_denied(caseid: int = None):
     error_uuid = uuid.uuid4()
     log.warning(f"Access denied to case #{caseid} for user ID {current_user.id}. Error {error_uuid}")
     return render_template('pages/error-403.html', user=current_user, caseid=caseid, error_uuid=error_uuid,
@@ -555,7 +555,7 @@ def ac_case_requires(*access_level):
                 redir, caseid, has_access = get_case_access(request, access_level)
 
                 if not has_access:
-                    return ac_return_access_denied(caseid=caseid)
+                    return _ac_return_access_denied(caseid=caseid)
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
@@ -577,11 +577,11 @@ def ac_socket_requires(*access_level):
                 if chan_id:
                     case_id = int(chan_id.replace('case-', '').split('-')[0])
                 else:
-                    return ac_return_access_denied(caseid=0)
+                    return _ac_return_access_denied(caseid=0)
 
                 access = ac_fast_check_user_has_case_access(current_user.id, case_id, access_level)
                 if not access:
-                    return ac_return_access_denied(caseid=case_id)
+                    return _ac_return_access_denied(caseid=case_id)
 
                 return f(*args, **kwargs)
 
@@ -618,7 +618,7 @@ def ac_requires(*permissions, no_cid_required=False):
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
                 if not _user_has_required_permissions(permissions):
-                    return ac_return_access_denied()
+                    return _ac_return_access_denied()
 
                 return f(*args, **kwargs)
         return wrap
@@ -653,7 +653,7 @@ def ac_requires_client_access():
         def wrap(*args, **kwargs):
             client_id = kwargs.get('client_id')
             if not user_has_client_access(current_user.id, client_id):
-                return ac_return_access_denied()
+                return _ac_return_access_denied()
 
             return f(*args, **kwargs)
         return wrap
