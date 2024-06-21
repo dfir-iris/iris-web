@@ -44,7 +44,8 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires
+from app.util import ac_requires_case_identifier
+from app.util import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
@@ -52,7 +53,8 @@ case_tasks_rest_blueprint = Blueprint('case_tasks_rest', __name__)
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_get_tasks(caseid):
     ct = get_tasks_with_assignees(caseid)
 
@@ -71,7 +73,8 @@ def case_get_tasks(caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_get_tasks_state(caseid):
     os = get_tasks_state(caseid=caseid)
     if os:
@@ -81,7 +84,8 @@ def case_get_tasks_state(caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_task_statusupdate(cur_id, caseid):
     task = get_task(task_id=cur_id, caseid=caseid)
     if not task:
@@ -101,7 +105,8 @@ def case_task_statusupdate(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_add_task(caseid):
     try:
         # validate before saving
@@ -134,7 +139,8 @@ def case_add_task(caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_task_view(cur_id, caseid):
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
@@ -146,7 +152,8 @@ def case_task_view(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_edit_task(cur_id, caseid):
     try:
         task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
@@ -189,7 +196,8 @@ def case_edit_task(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_delete_task(cur_id, caseid):
     call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
@@ -208,7 +216,8 @@ def case_delete_task(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_task_list(cur_id, caseid):
 
     task_comments = get_case_task_comments(cur_id)
@@ -219,7 +228,8 @@ def case_comment_task_list(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_task_add(cur_id, caseid):
 
     try:
@@ -255,7 +265,8 @@ def case_comment_task_add(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_task_get(cur_id, com_id, caseid):
 
     comment = get_case_task_comment(cur_id, com_id)
@@ -266,14 +277,16 @@ def case_comment_task_get(cur_id, com_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_task_edit(cur_id, com_id, caseid):
 
     return case_comment_update(com_id, 'tasks', caseid)
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_task_delete(cur_id, com_id, caseid):
 
     success, msg = delete_task_comment(cur_id, com_id)
