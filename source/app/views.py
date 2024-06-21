@@ -73,7 +73,7 @@ from app.blueprints.manage.manage_objects_routes import manage_objects_blueprint
 from app.blueprints.manage.manage_severities_routes import manage_severities_blueprint
 from app.blueprints.manage.manage_srv_settings_routes import manage_srv_settings_blueprint
 from app.blueprints.manage.manage_tags import manage_tags_blueprint
-from app.blueprints.manage.manage_task_status_routes import manage_task_status_blueprint
+from app.blueprints.rest.manage.manage_task_status_routes import manage_task_status_rest_blueprint
 from app.blueprints.manage.manage_templates_routes import manage_templates_blueprint
 from app.blueprints.rest.manage.manage_tlps_routes import manage_tlp_type_rest_blueprint
 from app.blueprints.manage.manage_case_templates_routes import manage_case_templates_blueprint
@@ -109,7 +109,7 @@ app.register_blueprint(manage_event_cat_blueprint)
 app.register_blueprint(manage_objects_blueprint)
 app.register_blueprint(manage_tlp_type_rest_blueprint)
 app.register_blueprint(manage_case_templates_blueprint)
-app.register_blueprint(manage_task_status_blueprint)
+app.register_blueprint(manage_task_status_rest_blueprint)
 app.register_blueprint(manage_attributes_blueprint)
 app.register_blueprint(manage_ac_blueprint)
 app.register_blueprint(manage_groups_blueprint)
