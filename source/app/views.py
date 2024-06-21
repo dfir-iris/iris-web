@@ -81,7 +81,7 @@ from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.overview.overview_routes import overview_blueprint
 from app.blueprints.rest.overview_routes import overview_rest_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
-from app.blueprints.reports.reports_route import reports_blueprint
+from app.blueprints.rest.reports_route import reports_rest_blueprint
 from app.blueprints.search.search_routes import search_blueprint
 from app.blueprints.rest.search_routes import search_rest_blueprint
 from app.models.authorization import User
@@ -139,7 +139,7 @@ app.register_blueprint(case_tasks_blueprint)
 app.register_blueprint(case_tasks_rest_blueprint)
 app.register_blueprint(case_blueprint)
 app.register_blueprint(case_rest_blueprint)
-app.register_blueprint(reports_blueprint)
+app.register_blueprint(reports_rest_blueprint)
 app.register_blueprint(activities_blueprint)
 app.register_blueprint(activities_rest_blueprint)
 app.register_blueprint(dim_tasks_blueprint)
