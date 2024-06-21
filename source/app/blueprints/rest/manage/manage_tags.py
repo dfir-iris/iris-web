@@ -26,12 +26,10 @@ from app.util import ac_api_requires
 from app.util import AlchemyEncoder
 from app.util import response_success
 
-manage_tags_blueprint = Blueprint('manage_tags',
-                                  __name__,
-                                  template_folder='templates')
+manage_tags_rest_blueprint = Blueprint('manage_tags_rest', __name__)
 
 
-@manage_tags_blueprint.route('/manage/tags/filter', methods=['GET'])
+@manage_tags_rest_blueprint.route('/manage/tags/filter', methods=['GET'])
 @ac_api_requires()
 def manage_tags_filter() -> Response:
     """ Returns a list of tags, filtered by the given parameters.
@@ -74,7 +72,7 @@ def manage_tags_filter() -> Response:
     return response_success('', data=tags)
 
 
-@manage_tags_blueprint.route('/manage/tags/suggest', methods=['GET'])
+@manage_tags_rest_blueprint.route('/manage/tags/suggest', methods=['GET'])
 @ac_api_requires()
 def manage_tags_suggest() -> Response:
     tag_title = request.args.get('term', None, type=str)
@@ -89,6 +87,7 @@ def manage_tags_suggest() -> Response:
         "suggestions": [tag.tag_title for tag in filtered_tags.items]
     }
 
+    # TODO why can't we use a response_success here?
     return app.response_class(response=json.dumps(tags, cls=AlchemyEncoder),
                               status=200,
                               mimetype='application/json')
