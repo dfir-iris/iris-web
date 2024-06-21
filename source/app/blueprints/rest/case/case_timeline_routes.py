@@ -73,7 +73,8 @@ from app.models.models import Ioc
 from app.models.models import IocLink
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import EventSchema
-from app.util import ac_api_case_requires
+from app.util import ac_requires_case_identifier
+from app.util import ac_api_requires
 from app.util import add_obj_history_entry
 from app.util import response_error
 from app.util import response_success
@@ -84,7 +85,8 @@ case_timeline_blueprint = Blueprint('case_timeline_rest', __name__)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comments_get(cur_id, caseid):
     event_comments = get_case_event_comments(cur_id, caseid=caseid)
     if event_comments is None:
@@ -94,7 +96,8 @@ def case_comments_get(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_delete(cur_id, com_id, caseid):
     success, msg = delete_event_comment(cur_id, com_id)
     if not success:
@@ -107,7 +110,8 @@ def case_comment_delete(cur_id, com_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_get(cur_id, com_id, caseid):
     comment = get_case_event_comment(cur_id, com_id, caseid=caseid)
     if not comment:
@@ -117,13 +121,15 @@ def case_comment_get(cur_id, com_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_edit(cur_id, com_id, caseid):
     return case_comment_update(com_id, 'events', caseid)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_comment_add(cur_id, caseid):
     try:
         event = get_case_event(event_id=cur_id, caseid=caseid)
@@ -160,7 +166,8 @@ def case_comment_add(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_get_timeline_state(caseid):
     os = get_timeline_state(caseid=caseid)
     if os:
@@ -170,7 +177,8 @@ def case_get_timeline_state(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_getgraph_assets(caseid):
     assets_cache = CaseAssets.query.with_entities(
         CaseEventsAssets.event_id,
@@ -210,7 +218,8 @@ def case_getgraph_assets(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-category', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_getgraph(caseid):
     timeline = CasesEvent.query.filter(and_(
         CasesEvent.case_id == caseid,
@@ -248,13 +257,15 @@ def case_getgraph(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_gettimeline_api_nofilter(caseid):
     return case_gettimeline_api(0)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/list/filter/<int:asset_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_gettimeline_api(asset_id, caseid):
     if asset_id:
         condition = and_(
@@ -340,7 +351,8 @@ def case_gettimeline_api(asset_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/advanced-filter', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_filter_timeline(caseid):
     args = request.args.to_dict()
     query_filter = args.get('q')
@@ -629,7 +641,8 @@ def case_filter_timeline(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/delete/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_delete_event(cur_id, caseid):
     call_modules_hook('on_preload_event_delete', data=cur_id, caseid=caseid)
 
@@ -649,7 +662,8 @@ def case_delete_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/flag/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def event_flag(cur_id, caseid):
     event = get_case_event(cur_id, caseid)
     if not event:
@@ -664,7 +678,8 @@ def event_flag(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def event_view(cur_id, caseid):
     event = get_case_event(cur_id, caseid)
     if not event:
@@ -685,7 +700,8 @@ def event_view(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_edit_event(cur_id, caseid):
     try:
         event = get_case_event(cur_id, caseid)
@@ -745,7 +761,8 @@ def case_edit_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_add_event_modal(caseid):
     event = CasesEvent()
     event.custom_attributes = get_default_custom_attributes('event')
@@ -763,7 +780,8 @@ def case_add_event_modal(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_add_event(caseid):
     try:
 
@@ -817,7 +835,8 @@ def case_add_event(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/duplicate/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_duplicate_event(cur_id, caseid):
     call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
 
@@ -880,7 +899,8 @@ def case_duplicate_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_event_date_convert(caseid):
     jsdata = request.get_json()
 
@@ -904,7 +924,8 @@ def case_event_date_convert(caseid):
 
 # BEGIN_RS_CODE
 @case_timeline_blueprint.route('/case/timeline/events/csv_upload', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_events_upload_csv(caseid):
     event_schema = EventSchema()
 
