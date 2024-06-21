@@ -78,6 +78,7 @@ from app.blueprints.rest.manage.manage_server_settings_routes import manage_serv
 from app.blueprints.rest.manage.manage_tags import manage_tags_rest_blueprint
 from app.blueprints.rest.manage.manage_task_status_routes import manage_task_status_rest_blueprint
 from app.blueprints.manage.manage_templates_routes import manage_templates_blueprint
+from app.blueprints.rest.manage.manage_templates_routes import manage_templates_rest_blueprint
 from app.blueprints.rest.manage.manage_tlps_routes import manage_tlp_type_rest_blueprint
 from app.blueprints.manage.manage_case_templates_routes import manage_case_templates_blueprint
 from app.blueprints.manage.manage_users import manage_users_blueprint
@@ -105,6 +106,7 @@ app.register_blueprint(manage_srv_settings_blueprint)
 app.register_blueprint(manage_server_settings_rest_blueprint)
 app.register_blueprint(manage_users_blueprint)
 app.register_blueprint(manage_templates_blueprint)
+app.register_blueprint(manage_templates_rest_blueprint)
 app.register_blueprint(manage_modules_blueprint)
 app.register_blueprint(manage_customers_blueprint)
 app.register_blueprint(manage_anastatus_blueprint)
