@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from flask import Blueprint
 
 from app.models import Tlp
@@ -22,13 +23,10 @@ from app.util import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
-manage_tlp_type_blueprint = Blueprint('manage_tlp_types',
-                                      __name__,
-                                      template_folder='templates')
+manage_tlp_type_rest_blueprint = Blueprint('manage_tlp_types_rest', __name__)
 
 
-# CONTENT ------------------------------------------------
-@manage_tlp_type_blueprint.route('/manage/tlp/list', methods=['GET'])
+@manage_tlp_type_rest_blueprint.route('/manage/tlp/list', methods=['GET'])
 @ac_api_requires()
 def list_tlp_types():
     lstatus = Tlp.query.all()
@@ -36,7 +34,7 @@ def list_tlp_types():
     return response_success("", data=lstatus)
 
 
-@manage_tlp_type_blueprint.route('/manage/tlp/<int:cur_id>', methods=['GET'])
+@manage_tlp_type_rest_blueprint.route('/manage/tlp/<int:cur_id>', methods=['GET'])
 @ac_api_requires()
 def get_tlp_type(cur_id):
 
@@ -45,5 +43,3 @@ def get_tlp_type(cur_id):
         return response_error("Invalid TLP ID {type_id}".format(type_id=cur_id))
 
     return response_success("", data=tlp_type)
-
-
