@@ -60,6 +60,7 @@ from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus
 from app.blueprints.rest.manage.manage_assets_routes import manage_assets_rest_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_type_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
+from app.blueprints.rest.manage.manage_attributes_routes import manage_attributes_rest_blueprint
 from app.blueprints.manage.manage_case_classifications import manage_case_classification_blueprint
 from app.blueprints.manage.manage_case_state import manage_case_state_blueprint
 from app.blueprints.manage.manage_evidence_types_route import manage_evidence_types_blueprint
@@ -111,6 +112,7 @@ app.register_blueprint(manage_tlp_type_rest_blueprint)
 app.register_blueprint(manage_case_templates_blueprint)
 app.register_blueprint(manage_task_status_rest_blueprint)
 app.register_blueprint(manage_attributes_blueprint)
+app.register_blueprint(manage_attributes_rest_blueprint)
 app.register_blueprint(manage_ac_blueprint)
 app.register_blueprint(manage_groups_blueprint)
 app.register_blueprint(manage_case_classification_blueprint)
