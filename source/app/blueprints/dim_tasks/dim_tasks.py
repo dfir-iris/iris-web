@@ -16,28 +16,19 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import json
 import os
-import pickle
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import url_for
 from flask_wtf import FlaskForm
-from sqlalchemy import desc
 
 import app
-from app.models import CeleryTaskMeta
-from app.models import IrisHook
-from app.models import IrisModule
-from app.models import IrisModuleHook
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
-from app.util import ac_api_requires
 from app.util import ac_case_requires
 from app.util import ac_requires
 from app.util import response_error
-from app.util import response_success
 from iris_interface.IrisInterfaceStatus import IIStatus
 
 dim_tasks_blueprint = Blueprint(
@@ -58,89 +49,6 @@ def dim_index(caseid: int, url_redir):
     form = FlaskForm()
 
     return render_template('dim_tasks.html', form=form)
-
-
-@dim_tasks_blueprint.route('/dim/hooks/options/<hook_type>/list', methods=['GET'])
-@ac_api_requires()
-def list_dim_hook_options_ioc(hook_type):
-    mods_options = (IrisModuleHook.query.with_entities(
-        IrisModuleHook.manual_hook_ui_name,
-        IrisHook.hook_name,
-        IrisModule.module_name
-    ).filter(
-        IrisHook.hook_name == f"on_manual_trigger_{hook_type}",
-        IrisModule.is_active == True
-    )
-    .join(IrisHook, IrisHook.id == IrisModuleHook.hook_id)
-    .join(IrisModule, IrisModule.id == IrisModuleHook.module_id)
-    .all())
-
-    data = [options._asdict() for options in mods_options]
-
-    return response_success("", data=data)
-
-
-@dim_tasks_blueprint.route('/dim/tasks/list/<int:count>', methods=['GET'])
-@ac_api_requires()
-def list_dim_tasks(count):
-    tasks = CeleryTaskMeta.query.filter(
-        ~ CeleryTaskMeta.name.like('app.iris_engine.updater.updater.%')
-    ).order_by(desc(CeleryTaskMeta.date_done)).limit(count).all()
-
-    data = []
-
-    for row in tasks:
-
-        tkp = {}
-        tkp['state'] = row.status
-        tkp['case'] = "Unknown"
-        tkp['module'] = row.name
-        tkp['task_id'] = row.task_id
-        tkp['date_done'] = row.date_done
-        tkp['user'] = "Unknown"
-
-        try:
-            tinfo = row.result
-        except AttributeError:
-            # Legacy task
-            data.append(tkp)
-            continue
-
-        if row.name is not None and 'task_hook_wrapper' in row.name:
-            task_name = f"{row.kwargs}::{row.kwargs}"
-        else:
-            task_name = row.name
-
-        user = None
-        case_name = None
-        if row.kwargs and row.kwargs != b'{}':
-            kwargs = json.loads(row.kwargs.decode('utf-8'))
-            if kwargs:
-                user = kwargs.get('init_user')
-                case_name = f"Case #{kwargs.get('caseid')}"
-                task_name = f"{kwargs.get('module_name')}::{kwargs.get('hook_name')}"
-
-        try:
-            result = pickle.loads(row.result)
-        except:
-            result = None
-
-        if isinstance(result, IIStatus):
-            try:
-                success = result.is_success()
-            except:
-                success = None
-        else:
-            success = None
-
-        tkp['state'] = "success" if success else str(row.result)
-        tkp['user'] = user if user else "Shadow Iris"
-        tkp['module'] = task_name
-        tkp['case'] = case_name if case_name else ""
-
-        data.append(tkp)
-
-    return response_success("", data=data)
 
 
 @dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
