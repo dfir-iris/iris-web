@@ -26,16 +26,22 @@ from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
 from app.datamgmt.case.case_events_db import get_case_events_comments_count
 from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
+from app.datamgmt.case.case_events_db import get_default_cat
 from app.datamgmt.case.case_events_db import get_event_assets_ids
 from app.datamgmt.case.case_events_db import get_event_iocs_ids
 from app.datamgmt.case.case_events_db import get_events_categories
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.forms import CaseEventForm
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.cases import Cases
+from app.models.cases import CasesEvent
 from app.util import ac_case_requires
+from app.util import ac_api_requires
+from app.util import ac_requires_case_identifier
 from app.util import response_error
 
+_EVENT_TAGS = ['Network', 'Server', 'ActiveDirectory', 'Computer', 'Malware', 'User Interaction']
 
 case_timeline_blueprint = Blueprint('case_timeline',
                                     __name__,
@@ -107,7 +113,7 @@ def event_view_modal(cur_id, caseid, url_redir):
 
     usr_name, = User.query.filter(User.id == event.user_id).with_entities(User.name).first()
 
-    return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
+    return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=_EVENT_TAGS,
                            assets=assets, iocs=iocs, comments_map=comments_map,
                            assets_prefill=assets_prefill, iocs_prefill=iocs_prefill,
                            category=event.category, attributes=event.custom_attributes)
@@ -122,3 +128,20 @@ def case_filter_help_modal(caseid, url_redir):
     return render_template("modal_help_filter_tm.html")
 
 
+@case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def case_add_event_modal(caseid):
+    event = CasesEvent()
+    event.custom_attributes = get_default_custom_attributes('event')
+    form = CaseEventForm()
+    assets = get_case_assets_for_tm(caseid)
+    iocs = get_case_iocs_for_tm(caseid)
+    def_cat = get_default_cat()
+    categories = get_events_categories()
+    form.event_category_id.choices = categories
+    form.event_in_graph.data = True
+
+    return render_template("modal_add_case_event.html", form=form, event=event,
+                           tags=_EVENT_TAGS, assets=assets, iocs=iocs, assets_prefill=None, category=def_cat,
+                           attributes=event.custom_attributes)

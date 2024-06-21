@@ -23,7 +23,6 @@ from datetime import datetime
 
 import marshmallow
 from flask import Blueprint
-from flask import render_template
 from flask import request
 from flask_login import current_user
 from sqlalchemy import and_
@@ -37,13 +36,10 @@ from app.datamgmt.case.case_events_db import get_category_by_name
 from app.datamgmt.case.case_events_db import get_default_category
 from app.datamgmt.case.case_events_db import delete_event
 from app.datamgmt.case.case_events_db import delete_event_comment
-from app.datamgmt.case.case_events_db import get_case_assets_for_tm
 from app.datamgmt.case.case_events_db import get_case_event
 from app.datamgmt.case.case_events_db import get_case_event_comment
 from app.datamgmt.case.case_events_db import get_case_event_comments
 from app.datamgmt.case.case_events_db import get_case_events_comments_count
-from app.datamgmt.case.case_events_db import get_case_iocs_for_tm
-from app.datamgmt.case.case_events_db import get_default_cat
 from app.datamgmt.case.case_events_db import get_event_assets_ids
 from app.datamgmt.case.case_events_db import get_event_category
 from app.datamgmt.case.case_events_db import get_event_iocs_ids
@@ -52,10 +48,8 @@ from app.datamgmt.case.case_events_db import save_event_category
 from app.datamgmt.case.case_events_db import update_event_assets
 from app.datamgmt.case.case_events_db import update_event_iocs
 from app.datamgmt.case.case_iocs_db import get_ioc_by_value
-from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_timeline_state
 from app.datamgmt.states import update_timeline_state
-from app.forms import CaseEventForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.collab import collab_notify
 from app.iris_engine.utils.common import parse_bf_date_format
@@ -78,8 +72,6 @@ from app.util import ac_api_requires
 from app.util import add_obj_history_entry
 from app.util import response_error
 from app.util import response_success
-
-_EVENT_TAGS = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
 
 case_timeline_blueprint = Blueprint('case_timeline_rest', __name__)
 
@@ -758,25 +750,6 @@ def case_edit_event(cur_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages())
-
-
-@case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
-@ac_api_requires()
-def case_add_event_modal(caseid):
-    event = CasesEvent()
-    event.custom_attributes = get_default_custom_attributes('event')
-    form = CaseEventForm()
-    assets = get_case_assets_for_tm(caseid)
-    iocs = get_case_iocs_for_tm(caseid)
-    def_cat = get_default_cat()
-    categories = get_events_categories()
-    form.event_category_id.choices = categories
-    form.event_in_graph.data = True
-
-    return render_template("modal_add_case_event.html", form=form, event=event,
-                           tags=_EVENT_TAGS, assets=assets, iocs=iocs, assets_prefill=None, category=def_cat,
-                           attributes=event.custom_attributes)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
