@@ -30,7 +30,8 @@ from app.models import Ioc
 from app.models import Notes
 from app.models.alerts import Alert
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_api_case_requires
+from app.util import ac_api_requires
+from app.util import ac_requires_case_identifier
 from app.util import response_error
 from app.util import response_success
 
@@ -38,7 +39,8 @@ dim_tasks_rest_blueprint = Blueprint('dim_tasks_rest', __name__)
 
 
 @dim_tasks_rest_blueprint.route('/dim/hooks/call', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def dim_hooks_call(caseid):
     logs = []
     js_data = request.json
