@@ -25,13 +25,10 @@ from app.util import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
-manage_event_cat_blueprint = Blueprint('manage_event_cat',
-                                       __name__,
-                                       template_folder='templates')
+manage_event_categories_rest_blueprint = Blueprint('manage_event_categories_rest', __name__)
 
 
-# CONTENT ------------------------------------------------
-@manage_event_cat_blueprint.route('/manage/event-categories/list', methods=['GET'])
+@manage_event_categories_rest_blueprint.route('/manage/event-categories/list', methods=['GET'])
 @ac_api_requires()
 def list_event_categories():
     lcat= EventCategory.query.with_entities(
@@ -44,7 +41,7 @@ def list_event_categories():
     return response_success("", data=data)
 
 
-@manage_event_cat_blueprint.route('/manage/event-categories/<int:cur_id>', methods=['GET'])
+@manage_event_categories_rest_blueprint.route('/manage/event-categories/<int:cur_id>', methods=['GET'])
 @ac_api_requires()
 def get_event_category(cur_id):
     lcat = EventCategory.query.with_entities(
@@ -62,7 +59,7 @@ def get_event_category(cur_id):
     return response_success("", data=data)
 
 
-@manage_event_cat_blueprint.route('/manage/event-categories/search', methods=['POST'])
+@manage_event_categories_rest_blueprint.route('/manage/event-categories/search', methods=['POST'])
 @ac_api_requires()
 def search_event_category():
     if not request.is_json:
@@ -82,4 +79,3 @@ def search_event_category():
     # Serialize the event category and return them in a JSON response
     schema = EventCategorySchema(many=True)
     return response_success("", data=schema.dump(event_category))
-

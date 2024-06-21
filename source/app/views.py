@@ -66,7 +66,7 @@ from app.blueprints.manage.manage_case_state import manage_case_state_blueprint
 from app.blueprints.manage.manage_evidence_types_route import manage_evidence_types_blueprint
 from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.manage.manage_customers_routes import manage_customers_blueprint
-from app.blueprints.manage.manage_event_categories_routes import manage_event_cat_blueprint
+from app.blueprints.rest.manage.manage_event_categories_routes import manage_event_categories_rest_blueprint
 from app.blueprints.manage.manage_groups import manage_groups_blueprint
 from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
 from app.blueprints.manage.manage_modules_routes import manage_modules_blueprint
@@ -108,7 +108,7 @@ app.register_blueprint(manage_modules_blueprint)
 app.register_blueprint(manage_customers_blueprint)
 app.register_blueprint(manage_anastatus_blueprint)
 app.register_blueprint(manage_ioc_type_blueprint)
-app.register_blueprint(manage_event_cat_blueprint)
+app.register_blueprint(manage_event_categories_rest_blueprint)
 app.register_blueprint(manage_objects_blueprint)
 app.register_blueprint(manage_tlp_type_rest_blueprint)
 app.register_blueprint(manage_case_templates_blueprint)
