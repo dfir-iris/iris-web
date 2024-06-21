@@ -683,18 +683,17 @@ def ac_api_case_requires(*access_level):
             if not is_user_authenticated(request):
                 return response_error('Authentication required', status=401)
 
-            else:
-                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
+            redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
 
-                if not caseid or redir:
-                    return response_error("Invalid case ID", status=404)
+            if not caseid or redir:
+                return response_error('Invalid case ID', status=404)
 
-                if not has_access:
-                    return ac_api_return_access_denied(caseid=caseid)
+            if not has_access:
+                return ac_api_return_access_denied(caseid=caseid)
 
-                kwargs.update({'caseid': caseid})
+            kwargs.update({'caseid': caseid})
 
-                return f(*args, **kwargs)
+            return f(*args, **kwargs)
 
         return wrap
     return inner_wrap
