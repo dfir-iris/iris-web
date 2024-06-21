@@ -317,6 +317,7 @@ def update_denied_case(caseid, from_api):
         }
 
 
+# TODO would be nice to remove parameter no_cid_required
 def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
     redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
 
