@@ -27,12 +27,10 @@ from app.util import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
-manage_severities_blueprint = Blueprint('manage_severities',
-                                        __name__,
-                                        template_folder='templates')
+manage_severities_rest_blueprint = Blueprint('manage_severities_rest', __name__)
 
 
-@manage_severities_blueprint.route('/manage/severities/list', methods=['GET'])
+@manage_severities_rest_blueprint.route('/manage/severities/list', methods=['GET'])
 @ac_api_requires()
 def list_severities() -> Response:
     """
@@ -47,7 +45,7 @@ def list_severities() -> Response:
     return response_success("", data=schema.dump(l_cl, many=True))
 
 
-@manage_severities_blueprint.route('/manage/severities/<int:severity_id>', methods=['GET'])
+@manage_severities_rest_blueprint.route('/manage/severities/<int:severity_id>', methods=['GET'])
 @ac_api_requires()
 def get_case_alert_status(severity_id: int) -> Response:
     """
@@ -62,7 +60,7 @@ def get_case_alert_status(severity_id: int) -> Response:
     return response_success("", data=schema.dump(cl))
 
 
-@manage_severities_blueprint.route('/manage/severities/search', methods=['POST'])
+@manage_severities_rest_blueprint.route('/manage/severities/search', methods=['POST'])
 @ac_api_requires()
 def search_analysis_status():
     if not request.is_json:

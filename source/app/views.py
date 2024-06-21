@@ -71,7 +71,7 @@ from app.blueprints.manage.manage_groups import manage_groups_blueprint
 from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
 from app.blueprints.manage.manage_modules_routes import manage_modules_blueprint
 from app.blueprints.manage.manage_objects_routes import manage_objects_blueprint
-from app.blueprints.manage.manage_severities_routes import manage_severities_blueprint
+from app.blueprints.rest.manage.manage_severities_routes import manage_severities_rest_blueprint
 from app.blueprints.manage.manage_srv_settings_routes import manage_srv_settings_blueprint
 from app.blueprints.rest.manage.manage_server_settings_routes import manage_server_settings_rest_blueprint
 from app.blueprints.rest.manage.manage_tags import manage_tags_rest_blueprint
@@ -119,7 +119,7 @@ app.register_blueprint(manage_ac_blueprint)
 app.register_blueprint(manage_groups_blueprint)
 app.register_blueprint(manage_case_classification_blueprint)
 app.register_blueprint(manage_alerts_status_blueprint)
-app.register_blueprint(manage_severities_blueprint)
+app.register_blueprint(manage_severities_rest_blueprint)
 app.register_blueprint(manage_case_state_blueprint)
 app.register_blueprint(manage_evidence_types_blueprint)
 app.register_blueprint(manage_assets_rest_blueprint)
