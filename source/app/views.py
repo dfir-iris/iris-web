@@ -57,7 +57,7 @@ from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_access_control import manage_ac_blueprint
 from app.blueprints.rest.manage.manage_access_control_routes import manage_ac_rest_blueprint
 from app.blueprints.manage.manage_alerts_status_routes import manage_alerts_status_blueprint
-from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
+from app.blueprints.rest.manage.manage_analysis_status_routes import manage_analysis_status_rest_blueprint
 from app.blueprints.rest.manage.manage_assets_routes import manage_assets_rest_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_type_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
@@ -110,7 +110,7 @@ app.register_blueprint(manage_templates_blueprint)
 app.register_blueprint(manage_templates_rest_blueprint)
 app.register_blueprint(manage_modules_blueprint)
 app.register_blueprint(manage_customers_blueprint)
-app.register_blueprint(manage_anastatus_blueprint)
+app.register_blueprint(manage_analysis_status_rest_blueprint)
 app.register_blueprint(manage_ioc_type_blueprint)
 app.register_blueprint(manage_event_categories_rest_blueprint)
 app.register_blueprint(manage_objects_blueprint)
