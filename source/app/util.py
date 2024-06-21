@@ -518,6 +518,8 @@ def ac_api_return_access_denied(caseid: int = None):
     return response_error('Permission denied', data=data, status=403)
 
 
+# TODO try to do as the api access controls:
+#   have this method check only the case access levels and use both this method and ac_requires
 def ac_case_requires(*access_level):
     def inner_wrap(f):
         @wraps(f)
@@ -534,6 +536,25 @@ def ac_case_requires(*access_level):
 
             return f(*args, **kwargs)
 
+        return wrap
+    return inner_wrap
+
+
+# TODO try to remove option no_cid_required
+def ac_requires(*permissions, no_cid_required=False):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            if not is_user_authenticated(request):
+                return redirect(not_authenticated_redirection_url(request.full_path))
+
+            redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
+            kwargs.update({'caseid': caseid, 'url_redir': redir})
+
+            if not _user_has_required_permissions(permissions):
+                return _ac_return_access_denied()
+
+            return f(*args, **kwargs)
         return wrap
     return inner_wrap
 
@@ -634,24 +655,6 @@ def ac_requires_case_identifier(*access_level):
 
         return wrap
     return decorate_with_requires_case_identifier
-
-
-def ac_requires(*permissions, no_cid_required=False):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url(request.full_path))
-
-            redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
-            kwargs.update({'caseid': caseid, 'url_redir': redir})
-
-            if not _user_has_required_permissions(permissions):
-                return _ac_return_access_denied()
-
-            return f(*args, **kwargs)
-        return wrap
-    return inner_wrap
 
 
 def _is_csrf_token_valid():
