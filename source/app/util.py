@@ -636,19 +636,17 @@ def ac_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
-
             if not is_user_authenticated(request):
                 return redirect(not_authenticated_redirection_url(request.full_path))
 
-            else:
-                redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
+            redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
 
-                kwargs.update({"caseid": caseid, "url_redir": redir})
+            kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                if not _user_has_required_permissions(permissions):
-                    return _ac_return_access_denied()
+            if not _user_has_required_permissions(permissions):
+                return _ac_return_access_denied()
 
-                return f(*args, **kwargs)
+            return f(*args, **kwargs)
         return wrap
     return inner_wrap
 
