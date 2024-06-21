@@ -50,7 +50,8 @@ from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema
 from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
-from app.util import ac_api_case_requires
+from app.util import ac_requires_case_identifier
+from app.util import ac_api_requires
 from app.util import add_obj_history_entry
 from app.util import response_error
 from app.util import response_success
@@ -61,7 +62,8 @@ log = app.logger
 
 
 @case_rest_blueprint.route('/case/exists', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_exists_r(caseid):
 
     if case_exists(caseid):
@@ -71,7 +73,8 @@ def case_exists_r(caseid):
 
 
 @case_rest_blueprint.route('/case/summary/update', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def desc_fetch(caseid):
 
     js_data = request.get_json()
@@ -96,7 +99,8 @@ def desc_fetch(caseid):
 
 
 @case_rest_blueprint.route('/case/summary/fetch', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def summary_fetch(caseid):
     desc_crc32, description = case_get_desc_crc(caseid)
 
@@ -104,7 +108,8 @@ def summary_fetch(caseid):
 
 
 @case_rest_blueprint.route('/case/activities/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def activity_fetch(caseid):
     ua = UserActivity.query.with_entities(
         UserActivity.activity_date,
@@ -126,20 +131,23 @@ def activity_fetch(caseid):
 
 
 @case_rest_blueprint.route("/case/export", methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def export_case(caseid):
     return response_success('', data=cases_export_to_json(caseid))
 
 
 @case_rest_blueprint.route("/case/meta", methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def meta_case(caseid):
     case_details = get_case(caseid)
     return response_success('', data= CaseDetailsSchema().dump(case_details))
 
 
 @case_rest_blueprint.route('/case/tasklog/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_add_tasklog(caseid):
 
     log_schema = TaskLogSchema()
@@ -157,7 +165,8 @@ def case_add_tasklog(caseid):
 
 
 @case_rest_blueprint.route('/case/users/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_get_users(caseid):
 
     users = get_users_list_restricted_from_case(caseid)
@@ -166,7 +175,8 @@ def case_get_users(caseid):
 
 
 @case_rest_blueprint.route('/case/access/set-group', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def group_cac_set_case(caseid):
 
     data = request.get_json()
@@ -208,7 +218,8 @@ def group_cac_set_case(caseid):
 
 
 @case_rest_blueprint.route('/case/access/set-user', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def user_cac_set_case(caseid):
 
     data = request.get_json()
@@ -249,7 +260,8 @@ def user_cac_set_case(caseid):
 
 
 @case_rest_blueprint.route('/case/update-status', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_update_status(caseid):
 
     case = get_case(caseid)
@@ -278,7 +290,8 @@ def case_update_status(caseid):
 
 
 @case_rest_blueprint.route('/case/review/update', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
 def case_review(caseid):
 
     case = get_case(caseid)
