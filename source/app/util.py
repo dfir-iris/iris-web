@@ -498,32 +498,6 @@ def regenerate_session():
     session.modified = True
 
 
-def api_login_required(f):
-    @wraps(f)
-    def wrap(*args, **kwargs):
-        if request.method == 'POST':
-            cookie_session = request.cookies.get('session')
-            if cookie_session:
-                form = FlaskForm()
-                if not form.validate():
-                    return response_error('Invalid CSRF token')
-                elif request.is_json:
-                    request.json.pop('csrf_token')
-
-        if not is_user_authenticated(request):
-            return response_error("Authentication required", status=401)
-
-        else:
-            redir, caseid, access = get_case_access(request, [], from_api=True)
-            if not caseid or redir:
-                return response_error("Invalid case ID", status=404)
-            kwargs.update({"caseid": caseid})
-
-            return f(*args, **kwargs)
-
-    return wrap
-
-
 def _ac_return_access_denied(caseid: int = None):
     error_uuid = uuid.uuid4()
     log.warning(f"Access denied to case #{caseid} for user ID {current_user.id}. Error {error_uuid}")
