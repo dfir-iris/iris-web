@@ -677,32 +677,6 @@ def _is_csrf_token_valid():
     return True
 
 
-def ac_api_case_requires(*access_level):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if not _is_csrf_token_valid():
-                return response_error('Invalid CSRF token')
-
-            if not is_user_authenticated(request):
-                return response_error('Authentication required', status=401)
-
-            redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
-
-            if not caseid or redir:
-                return response_error('Invalid case ID', status=404)
-
-            if not has_access:
-                return ac_api_return_access_denied(caseid=caseid)
-
-            kwargs.update({'caseid': caseid})
-
-            return f(*args, **kwargs)
-
-        return wrap
-    return inner_wrap
-
-
 def ac_api_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
