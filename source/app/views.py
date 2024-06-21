@@ -56,7 +56,7 @@ from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_access_control import manage_ac_blueprint
 from app.blueprints.manage.manage_alerts_status_routes import manage_alerts_status_blueprint
 from app.blueprints.manage.manage_analysis_status_routes import manage_anastatus_blueprint
-from app.blueprints.manage.manage_assets import manage_assets_blueprint
+from app.blueprints.rest.manage.manage_assets_routes import manage_assets_rest_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_type_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
 from app.blueprints.manage.manage_case_classifications import manage_case_classification_blueprint
@@ -115,7 +115,7 @@ app.register_blueprint(manage_alerts_status_blueprint)
 app.register_blueprint(manage_severities_blueprint)
 app.register_blueprint(manage_case_state_blueprint)
 app.register_blueprint(manage_evidence_types_blueprint)
-app.register_blueprint(manage_assets_blueprint)
+app.register_blueprint(manage_assets_rest_blueprint)
 app.register_blueprint(manage_tags_blueprint)
 app.register_blueprint(saved_filters_blueprint)
 
