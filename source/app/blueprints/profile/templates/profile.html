@@ -143,8 +143,8 @@
                         </div>
 
                         <div class="col-6 mt-4">
-                        {% if config['MFA_ENABLED'] %}
-                            <a class="btn btn-primary float-right" type="button" href="/auth/mfa-setup">Reset MFA</a>
+                        {% if config['SERVER_SETTINGS']['enforce_mfa'] %}
+                            <a class="btn btn-primary float-right mr-2" type="button" href="/auth/mfa-setup">Reset MFA</a>
                         {% endif %}
                             <button class="btn float-right btn-primary mr-2" type="button" onclick="update_password();">Change password</button>
                         </div>

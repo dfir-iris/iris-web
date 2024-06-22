@@ -138,7 +138,8 @@ def manage_update_settings():
 
         if srv_settings_sc:
             track_activity(f"Server settings updated: {changes}")
-            return response_success("Server settings updated", srv_settings_sc)
+            app.config['SERVER_SETTINGS'] = srv_settings_schema.dump(server_settings)
+            return response_success("Server settings updated", app.config['SERVER_SETTINGS'])
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
