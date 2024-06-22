@@ -20,6 +20,7 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
+from app.business.users import _reset_user_mfa
 from app.iris_engine.access_control.utils import ac_recompute_all_users_effective_ac
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.access_control.utils import ac_trace_effective_user_permissions
@@ -63,6 +64,16 @@ def manage_ac_compute_effective_ac(cur_id):
     ac_recompute_effective_ac(cur_id)
 
     return response_success('Updated')
+
+
+@manage_ac_blueprint.route('/manage/access-control/reset-mfa/<int:cur_id>', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def manage_ac_reset_mfa(cur_id):
+
+    _reset_user_mfa(cur_id)
+
+    return response_success('Updated')
+
 
 
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>', methods=['GET'])

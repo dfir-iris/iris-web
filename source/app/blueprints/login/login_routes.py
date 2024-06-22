@@ -150,14 +150,8 @@ def wrap_login_user(user):
 
     login_user(user)
 
-
-    #regenerate_session()
-    #print(session)
-
     caseid = user.ctx_case
     session['permissions'] = ac_get_effective_permissions_of_user(user)
-
-    print(session)
 
     if caseid is None:
         case = Cases.query.order_by(Cases.case_id).first()
