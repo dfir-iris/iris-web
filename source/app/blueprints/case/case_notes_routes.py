@@ -314,7 +314,7 @@ def case_notes_state(caseid):
         return response_error('No notes state for this case.')
 
 
-@case_notes_blueprint.route('/case/notes/search', methods=['GET'])
+@case_notes_blueprint.route('/case/notes/search', methods=['GET', 'POST'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_search_notes(caseid):
     search_input = request.args.get('search_input')

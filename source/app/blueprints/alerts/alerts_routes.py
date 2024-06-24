@@ -617,7 +617,7 @@ def alerts_escalate_route(alert_id) -> Response:
 
 @alerts_blueprint.route('/alerts/merge/<int:alert_id>', methods=['POST'])
 @ac_api_requires(Permissions.alerts_write)
-def alerts_merge_route(alert_id, caseid) -> Response:
+def alerts_merge_route(alert_id) -> Response:
     """
     Merge an alert into a case
 
@@ -669,7 +669,7 @@ def alerts_merge_route(alert_id, caseid) -> Response:
                             iocs_list=iocs_import_list, assets_list=assets_import_list, note=note,
                             import_as_event=import_as_event, case_tags=case_tags)
         
-        alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=caseid)
+        alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=target_case_id)
 
         track_activity(f"merge alert #{alert_id} into existing case #{target_case_id}", caseid=target_case_id)
         add_obj_history_entry(alert, f"Alert merged into existing case #{target_case_id}")

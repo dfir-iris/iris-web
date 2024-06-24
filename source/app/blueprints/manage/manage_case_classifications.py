@@ -173,9 +173,6 @@ def add_case_classification_modal(caseid: int, url_redir: bool) -> Union[str, Re
 def add_case_classification() -> Response:
     """Add a case classification
 
-    Args:
-        caseid (int): case id
-
     Returns:
         Flask Response object
     """

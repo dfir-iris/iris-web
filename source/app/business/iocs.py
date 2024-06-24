@@ -118,6 +118,9 @@ def update(identifier, request_json, case_identifier):
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
 
+    except Exception as e:
+        raise BusinessProcessingError('Unexpected error server-side', e)
+
 
 def delete(identifier, case_identifier):
     check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
