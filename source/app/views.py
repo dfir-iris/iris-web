@@ -73,6 +73,7 @@ from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.manage.manage_customers_routes import manage_customers_blueprint
 from app.blueprints.rest.manage.manage_event_categories_routes import manage_event_categories_rest_blueprint
 from app.blueprints.manage.manage_groups import manage_groups_blueprint
+from app.blueprints.rest.manage.manage_groups import manage_groups_rest_blueprint
 from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
 from app.blueprints.rest.manage.manage_ioc_types_routes import manage_ioc_type_rest_blueprint
 from app.blueprints.manage.manage_modules_routes import manage_modules_blueprint
@@ -134,6 +135,7 @@ app.register_blueprint(manage_attributes_rest_blueprint)
 app.register_blueprint(manage_ac_blueprint)
 app.register_blueprint(manage_ac_rest_blueprint)
 app.register_blueprint(manage_groups_blueprint)
+app.register_blueprint(manage_groups_rest_blueprint)
 app.register_blueprint(manage_case_classification_blueprint)
 app.register_blueprint(manage_case_classification_rest_blueprint)
 app.register_blueprint(manage_alerts_status_rest_blueprint)
