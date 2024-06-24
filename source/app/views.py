@@ -28,6 +28,7 @@ from app import lm
 from app.blueprints.activities.activities_routes import activities_blueprint
 from app.blueprints.rest.activities_routes import activities_rest_blueprint
 from app.blueprints.alerts.alerts_routes import alerts_blueprint
+from app.blueprints.rest.alerts_routes import alerts_rest_blueprint
 from app.blueprints.rest.api_routes import rest_api_blueprint
 from app.blueprints.case.case_routes import case_blueprint
 from app.blueprints.rest.case.case_routes import case_rest_blueprint
@@ -182,6 +183,7 @@ app.register_blueprint(dim_tasks_rest_blueprint)
 app.register_blueprint(datastore_blueprint)
 app.register_blueprint(datastore_rest_blueprint)
 app.register_blueprint(alerts_blueprint)
+app.register_blueprint(alerts_rest_blueprint)
 
 app.register_blueprint(rest_api_blueprint)
 app.register_blueprint(demo_blueprint)
