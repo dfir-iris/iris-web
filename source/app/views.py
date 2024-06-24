@@ -74,6 +74,7 @@ from app.blueprints.rest.manage.manage_evidence_types_routes import manage_evide
 from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.rest.manage.manage_cases_routes import manage_cases_rest_blueprint
 from app.blueprints.manage.manage_customers_routes import manage_customers_blueprint
+from app.blueprints.rest.manage.manage_customers_routes import manage_customers_rest_blueprint
 from app.blueprints.rest.manage.manage_event_categories_routes import manage_event_categories_rest_blueprint
 from app.blueprints.manage.manage_groups import manage_groups_blueprint
 from app.blueprints.rest.manage.manage_groups import manage_groups_rest_blueprint
@@ -93,6 +94,7 @@ from app.blueprints.rest.manage.manage_tlps_routes import manage_tlp_type_rest_b
 from app.blueprints.manage.manage_case_templates_routes import manage_case_templates_blueprint
 from app.blueprints.rest.manage.manage_case_templates_routes import manage_case_templates_rest_blueprint
 from app.blueprints.manage.manage_users import manage_users_blueprint
+from app.blueprints.rest.manage.manage_users import manage_users_rest_blueprint
 from app.blueprints.overview.overview_routes import overview_blueprint
 from app.blueprints.rest.overview_routes import overview_rest_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
@@ -121,11 +123,13 @@ app.register_blueprint(manage_assets_type_rest_blueprint)
 app.register_blueprint(manage_srv_settings_blueprint)
 app.register_blueprint(manage_server_settings_rest_blueprint)
 app.register_blueprint(manage_users_blueprint)
+app.register_blueprint(manage_users_rest_blueprint)
 app.register_blueprint(manage_templates_blueprint)
 app.register_blueprint(manage_templates_rest_blueprint)
 app.register_blueprint(manage_modules_blueprint)
 app.register_blueprint(manage_modules_rest_blueprint)
 app.register_blueprint(manage_customers_blueprint)
+app.register_blueprint(manage_customers_rest_blueprint)
 app.register_blueprint(manage_analysis_status_rest_blueprint)
 app.register_blueprint(manage_ioc_type_blueprint)
 app.register_blueprint(manage_ioc_type_rest_blueprint)
