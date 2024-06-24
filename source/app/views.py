@@ -56,7 +56,7 @@ from app.blueprints.rest.filters_routes import saved_filters_rest_blueprint
 from app.blueprints.login.login_routes import login_blueprint
 from app.blueprints.manage.manage_access_control import manage_ac_blueprint
 from app.blueprints.rest.manage.manage_access_control_routes import manage_ac_rest_blueprint
-from app.blueprints.manage.manage_alerts_status_routes import manage_alerts_status_blueprint
+from app.blueprints.rest.manage.manage_alerts_status_routes import manage_alerts_status_rest_blueprint
 from app.blueprints.rest.manage.manage_analysis_status_routes import manage_analysis_status_rest_blueprint
 from app.blueprints.rest.manage.manage_assets_routes import manage_assets_rest_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_type_blueprint
@@ -132,7 +132,7 @@ app.register_blueprint(manage_ac_rest_blueprint)
 app.register_blueprint(manage_groups_blueprint)
 app.register_blueprint(manage_case_classification_blueprint)
 app.register_blueprint(manage_case_classification_rest_blueprint)
-app.register_blueprint(manage_alerts_status_blueprint)
+app.register_blueprint(manage_alerts_status_rest_blueprint)
 app.register_blueprint(manage_severities_rest_blueprint)
 app.register_blueprint(manage_case_state_blueprint)
 app.register_blueprint(manage_case_state_rest_blueprint)

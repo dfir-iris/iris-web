@@ -29,13 +29,10 @@ from app.util import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
-manage_alerts_status_blueprint = Blueprint('manage_alerts_status',
-                                           __name__,
-                                           template_folder='templates')
+manage_alerts_status_rest_blueprint = Blueprint('manage_alerts_status_rest', __name__)
 
 
-# CONTENT ------------------------------------------------
-@manage_alerts_status_blueprint.route('/manage/alert-status/list', methods=['GET'])
+@manage_alerts_status_rest_blueprint.route('/manage/alert-status/list', methods=['GET'])
 @ac_api_requires()
 def list_alert_status() -> Response:
     """
@@ -53,7 +50,7 @@ def list_alert_status() -> Response:
     return response_success("", data=schema.dump(l_cl, many=True))
 
 
-@manage_alerts_status_blueprint.route('/manage/alert-status/<int:classification_id>', methods=['GET'])
+@manage_alerts_status_rest_blueprint.route('/manage/alert-status/<int:classification_id>', methods=['GET'])
 @ac_api_requires()
 def get_case_alert_status(classification_id: int) -> Response:
     """
@@ -69,7 +66,7 @@ def get_case_alert_status(classification_id: int) -> Response:
     return response_success("", data=schema.dump(cl))
 
 
-@manage_alerts_status_blueprint.route('/manage/alert-status/search', methods=['POST'])
+@manage_alerts_status_rest_blueprint.route('/manage/alert-status/search', methods=['POST'])
 @ac_api_requires()
 def search_alert_status():
     if not request.is_json:
@@ -91,7 +88,7 @@ def search_alert_status():
     return response_success("", data=schema.dump(alert_status))
 
 
-@manage_alerts_status_blueprint.route('/manage/alert-resolutions/list', methods=['GET'])
+@manage_alerts_status_rest_blueprint.route('/manage/alert-resolutions/list', methods=['GET'])
 @ac_api_requires()
 def list_alert_resolution() -> Response:
     """
@@ -109,7 +106,7 @@ def list_alert_resolution() -> Response:
     return response_success("", data=schema.dump(l_cl, many=True))
 
 
-@manage_alerts_status_blueprint.route('/manage/alert-resolutions/<int:resolution_id>', methods=['GET'])
+@manage_alerts_status_rest_blueprint.route('/manage/alert-resolutions/<int:resolution_id>', methods=['GET'])
 @ac_api_requires()
 def get_case_alert_resolution(resolution_id: int) -> Response:
     """
@@ -125,7 +122,7 @@ def get_case_alert_resolution(resolution_id: int) -> Response:
     return response_success("", data=schema.dump(cl))
 
 
-@manage_alerts_status_blueprint.route('/manage/alert-resolutions/search', methods=['POST'])
+@manage_alerts_status_rest_blueprint.route('/manage/alert-resolutions/search', methods=['POST'])
 @ac_api_requires()
 def search_alert_resolution():
     if not request.is_json:
