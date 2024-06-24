@@ -91,6 +91,7 @@ from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.overview.overview_routes import overview_blueprint
 from app.blueprints.rest.overview_routes import overview_rest_blueprint
 from app.blueprints.profile.profile_routes import profile_blueprint
+from app.blueprints.rest.profile_routes import profile_rest_blueprint
 from app.blueprints.rest.reports_route import reports_rest_blueprint
 from app.blueprints.search.search_routes import search_blueprint
 from app.blueprints.rest.search_routes import search_rest_blueprint
@@ -104,6 +105,7 @@ app.register_blueprint(overview_blueprint)
 app.register_blueprint(overview_rest_blueprint)
 app.register_blueprint(login_blueprint)
 app.register_blueprint(profile_blueprint)
+app.register_blueprint(profile_rest_blueprint)
 app.register_blueprint(search_blueprint)
 app.register_blueprint(search_rest_blueprint)
 app.register_blueprint(manage_cases_blueprint)
