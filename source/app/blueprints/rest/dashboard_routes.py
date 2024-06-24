@@ -1,4 +1,5 @@
 #  IRIS Source Code
+#  Copyright (C) 2024 - DFIR-IRIS
 #  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or

@@ -50,6 +50,7 @@ from app.blueprints.graphql.graphql_route import graphql_blueprint
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.rest.dashboard_routes import dashboard_rest_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
+from app.blueprints.rest.datastore_routes import datastore_rest_blueprint
 from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 from app.blueprints.rest.dim_tasks_routes import dim_tasks_rest_blueprint
@@ -175,6 +176,7 @@ app.register_blueprint(activities_rest_blueprint)
 app.register_blueprint(dim_tasks_blueprint)
 app.register_blueprint(dim_tasks_rest_blueprint)
 app.register_blueprint(datastore_blueprint)
+app.register_blueprint(datastore_rest_blueprint)
 app.register_blueprint(alerts_blueprint)
 
 app.register_blueprint(rest_api_blueprint)
