@@ -66,6 +66,7 @@ from app.blueprints.manage.manage_case_classifications import manage_case_classi
 from app.blueprints.manage.manage_case_state import manage_case_state_blueprint
 from app.blueprints.rest.manage.manage_case_state import manage_case_state_rest_blueprint
 from app.blueprints.manage.manage_evidence_types_route import manage_evidence_types_blueprint
+from app.blueprints.rest.manage.manage_evidence_types_routes import manage_evidence_types_rest_blueprint
 from app.blueprints.manage.manage_cases_routes import manage_cases_blueprint
 from app.blueprints.manage.manage_customers_routes import manage_customers_blueprint
 from app.blueprints.rest.manage.manage_event_categories_routes import manage_event_categories_rest_blueprint
@@ -130,6 +131,7 @@ app.register_blueprint(manage_severities_rest_blueprint)
 app.register_blueprint(manage_case_state_blueprint)
 app.register_blueprint(manage_case_state_rest_blueprint)
 app.register_blueprint(manage_evidence_types_blueprint)
+app.register_blueprint(manage_evidence_types_rest_blueprint)
 app.register_blueprint(manage_assets_rest_blueprint)
 app.register_blueprint(manage_tags_rest_blueprint)
 app.register_blueprint(saved_filters_rest_blueprint)
