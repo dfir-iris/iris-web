@@ -22,7 +22,8 @@ import traceback
 from flask import Blueprint
 from flask import request
 
-from app.datamgmt.iris_engine.modules_db import delete_module_from_id, parse_module_parameter
+from app.datamgmt.iris_engine.modules_db import delete_module_from_id
+from app.datamgmt.iris_engine.modules_db import parse_module_parameter
 from app.datamgmt.iris_engine.modules_db import get_module_config_from_id
 from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
 from app.datamgmt.iris_engine.modules_db import iris_module_enable_by_id
