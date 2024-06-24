@@ -60,6 +60,7 @@ from app.blueprints.manage.manage_alerts_status_routes import manage_alerts_stat
 from app.blueprints.rest.manage.manage_analysis_status_routes import manage_analysis_status_rest_blueprint
 from app.blueprints.rest.manage.manage_assets_routes import manage_assets_rest_blueprint
 from app.blueprints.manage.manage_assets_type_routes import manage_assets_type_blueprint
+from app.blueprints.rest.manage.manage_assets_type_routes import manage_assets_type_rest_blueprint
 from app.blueprints.manage.manage_attributes_routes import manage_attributes_blueprint
 from app.blueprints.rest.manage.manage_attributes_routes import manage_attributes_rest_blueprint
 from app.blueprints.manage.manage_case_classifications import manage_case_classification_blueprint
@@ -107,6 +108,7 @@ app.register_blueprint(search_blueprint)
 app.register_blueprint(search_rest_blueprint)
 app.register_blueprint(manage_cases_blueprint)
 app.register_blueprint(manage_assets_type_blueprint)
+app.register_blueprint(manage_assets_type_rest_blueprint)
 app.register_blueprint(manage_srv_settings_blueprint)
 app.register_blueprint(manage_server_settings_rest_blueprint)
 app.register_blueprint(manage_users_blueprint)
