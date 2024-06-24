@@ -48,6 +48,7 @@ from app.blueprints.context.context import ctx_blueprint
 from app.blueprints.rest.context_routes import context_rest_blueprint
 from app.blueprints.graphql.graphql_route import graphql_blueprint
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
+from app.blueprints.rest.dashboard_routes import dashboard_rest_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
@@ -104,6 +105,7 @@ from app.post_init import run_post_init
 
 app.register_blueprint(graphql_blueprint)
 app.register_blueprint(dashboard_blueprint)
+app.register_blueprint(dashboard_rest_blueprint)
 app.register_blueprint(overview_blueprint)
 app.register_blueprint(overview_rest_blueprint)
 app.register_blueprint(login_blueprint)
