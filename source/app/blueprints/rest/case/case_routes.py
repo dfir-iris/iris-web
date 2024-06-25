@@ -181,14 +181,14 @@ def group_cac_set_case(caseid):
 
     data = request.get_json()
     if not data:
-        return response_error("Invalid request")
+        return response_error('Invalid request')
 
     if data.get('case_id') != caseid:
-        return response_error("Inconsistent case ID")
+        return response_error('Inconsistent case ID')
 
     case = get_case(caseid)
     if not case:
-        return response_error("Invalid case ID")
+        return response_error('Invalid case ID')
 
     group_id = data.get('group_id')
     access_level = data.get('access_level')
