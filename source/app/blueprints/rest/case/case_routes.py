@@ -130,19 +130,19 @@ def activity_fetch(caseid):
     return response_success("", data=output)
 
 
-@case_rest_blueprint.route("/case/export", methods=['GET'])
+@case_rest_blueprint.route('/case/export', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def export_case(caseid):
     return response_success('', data=cases_export_to_json(caseid))
 
 
-@case_rest_blueprint.route("/case/meta", methods=['GET'])
+@case_rest_blueprint.route('/case/meta', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def meta_case(caseid):
     case_details = get_case(caseid)
-    return response_success('', data= CaseDetailsSchema().dump(case_details))
+    return response_success('', data=CaseDetailsSchema().dump(case_details))
 
 
 @case_rest_blueprint.route('/case/tasklog/add', methods=['POST'])
