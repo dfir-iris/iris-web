@@ -63,6 +63,7 @@ from app.models import Ioc
 from app.models import IocType
 from app.models import IrisModule
 from app.models import Notes
+from app.models import NoteVersions
 from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
@@ -385,6 +386,18 @@ class CommentSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = Comments
+        load_instance = True
+        include_fk = True
+        unknown = EXCLUDE
+
+
+class CaseNoteVersionSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing CaseNoteVersion objects.
+    """
+    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+
+    class Meta:
+        model = NoteVersions
         load_instance = True
         include_fk = True
         unknown = EXCLUDE

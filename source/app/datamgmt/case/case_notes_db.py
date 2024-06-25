@@ -25,6 +25,7 @@ from app.datamgmt.states import update_notes_state
 from app.models import Comments, NoteDirectory
 from app.models import Notes
 from app.models import NotesComments
+from app.models import NoteVersions
 from app.models import NotesGroup
 from app.models import NotesGroupLink
 from app.models.authorization import User
@@ -91,6 +92,8 @@ def delete_note(note_id, caseid):
 
         com_ids = [c.comment_id for c in com_ids]
         NotesComments.query.filter(NotesComments.comment_id.in_(com_ids)).delete()
+
+        NoteVersions.query.filter(NoteVersions.note_id == note_id).delete()
 
         Comments.query.filter(Comments.comment_id.in_(com_ids)).delete()
 

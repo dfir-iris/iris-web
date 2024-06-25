@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import app
 
 
 class BusinessProcessingError(Exception):
@@ -28,6 +29,14 @@ class BusinessProcessingError(Exception):
 
     def get_data(self):
         return self._data
+
+
+class UnhandledBusinessError(BusinessProcessingError):
+    def __init__(self, message, data=None):
+        self._message = message
+        self._data = data
+        app.logger.exception(message)
+        app.logger.exception(data)
 
 
 class PermissionDeniedError(Exception):

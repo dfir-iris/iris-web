@@ -31,6 +31,8 @@ from sqlalchemy import or_, and_
 
 from app import db, socket_io, app
 from app.blueprints.case.case_comments import case_comment_update
+from app.business.errors import BusinessProcessingError, UnhandledBusinessError
+from app.business.notes import update, create, list_note_revisions
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count, get_directory, \
@@ -43,9 +45,9 @@ from app.datamgmt.case.case_notes_db import get_note
 from app.datamgmt.states import get_notes_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Notes
+from app.models import Notes, NoteVersions
 from app.models.authorization import CaseAccessLevel
-from app.schema.marshables import CaseNoteDirectorySchema
+from app.schema.marshables import CaseNoteDirectorySchema, CaseNoteVersionSchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires, ac_socket_requires, endpoint_deprecated, add_obj_history_entry
@@ -152,69 +154,50 @@ def case_note_delete(cur_id, caseid):
 @case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_note_save(cur_id, caseid):
+    addnote_schema = CaseNoteSchema()
 
     try:
-        # validate before saving
-        addnote_schema = CaseNoteSchema()
 
-        note = get_note(cur_id, caseid=caseid)
-        if not note:
-            return response_error("Invalid note ID for this case")
+        note = update(identifier=cur_id,
+                      request_json=request.get_json(),
+                      case_identifier=caseid)
 
-        request_data = call_modules_hook('on_preload_note_update', data=request.get_json(), caseid=caseid)
+        return response_success(f"Note ID {cur_id} saved", data=addnote_schema.dump(note))
 
-        request_data['note_id'] = cur_id
-        addnote_schema.load(request_data, partial=True, instance=note)
-        note.update_date = datetime.utcnow()
-        note.user_id = current_user.id
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
-        add_obj_history_entry(note, 'updated note', commit=True)
-        note = call_modules_hook('on_postload_note_update', data=note, caseid=caseid)
 
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/revisions/list', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_note_list_history(cur_id, caseid):
+    note_version_sc = CaseNoteVersionSchema(many=True)
 
-    track_activity(f"updated note \"{note.note_title}\"", caseid=caseid)
-    return response_success(f"Note ID {cur_id} saved", data=addnote_schema.dump(note))
+    try:
+
+        note_version = list_note_revisions(identifier=cur_id,
+                                           case_identifier=caseid)
+
+        return response_success(f"ok", data=note_version_sc.dump(note_version))
+
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @case_notes_blueprint.route('/case/notes/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_note_add(caseid):
+    addnote_schema = CaseNoteSchema()
+
     try:
-        # validate before saving
-        addnote_schema = CaseNoteSchema()
-        request_data = request.get_json()
 
-        if request_data.get('group_id'):
-            return response_error('Group ID is deprecated, please use directory_id instead')
+        note = create(request_json=request.get_json(),
+                      case_identifier=caseid)
 
-        request_data = call_modules_hook('on_preload_note_create', data=request.get_json(), caseid=caseid)
+        return response_success(f"Note ID {note.note_id} created", data=addnote_schema.dump(note))
 
-        addnote_schema.verify_directory_id(request_data, caseid=caseid)
-
-        new_note = addnote_schema.load(request_data)
-
-        new_note.note_creationdate = datetime.utcnow()
-        new_note.note_lastupdate = datetime.utcnow()
-        new_note.note_user = current_user.id
-        new_note.note_case_id = caseid
-
-        db.session.add(new_note)
-        db.session.commit()
-
-        add_obj_history_entry(new_note, 'created note', commit=True)
-
-        new_note = call_modules_hook('on_postload_note_create', data=new_note, caseid=caseid)
-
-        if new_note:
-            track_activity(f"added note \"{new_note.note_title}\"", caseid=caseid)
-            return response_success('Note added', data=addnote_schema.dump(new_note))
-
-        return response_error("Unable to create note for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @case_notes_blueprint.route('/case/notes/directories/add', methods=['POST'])
