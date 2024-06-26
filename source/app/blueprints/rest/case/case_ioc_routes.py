@@ -27,6 +27,7 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
@@ -95,6 +96,20 @@ def case_ioc_state(caseid):
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/cases/{identifier}/iocs')
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def deprecated_case_add_ioc(caseid):
+    ioc_schema = IocSchema()
+
+    try:
+        ioc, msg = create(request.get_json(), caseid)
+        return response_success(msg, data=ioc_schema.dump(ioc))
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
+
+
+@case_ioc_rest_blueprint.route('/api/v2/cases/<int:caseid>/iocs', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_add_ioc(caseid):
@@ -245,7 +260,6 @@ def case_update_ioc(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_ioc_list(cur_id, caseid):
-
     ioc_comments = get_case_ioc_comments(cur_id)
     if ioc_comments is None:
         return response_error('Invalid ioc ID')
@@ -257,7 +271,6 @@ def case_comment_ioc_list(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_ioc_add(cur_id, caseid):
-
     try:
         ioc = get_ioc(cur_id, caseid=caseid)
         if not ioc:
@@ -294,7 +307,6 @@ def case_comment_ioc_add(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_ioc_get(cur_id, com_id, caseid):
-
     comment = get_case_ioc_comment(cur_id, com_id)
     if not comment:
         return response_error("Invalid comment ID")
@@ -306,7 +318,6 @@ def case_comment_ioc_get(cur_id, com_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_ioc_edit(cur_id, com_id, caseid):
-
     return case_comment_update(com_id, 'ioc', caseid)
 
 
@@ -314,7 +325,6 @@ def case_comment_ioc_edit(cur_id, com_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_ioc_delete(cur_id, com_id, caseid):
-
     success, msg = delete_ioc_comment(cur_id, com_id)
     if not success:
         return response_error(msg)
