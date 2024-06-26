@@ -53,6 +53,7 @@ from app.util import add_obj_history_entry
 from app.util import ac_api_requires
 from app.util import ac_requires_case_identifier
 from app.util import ac_api_return_access_denied
+from app.util import endpoint_deprecated
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import cases_delete
@@ -250,6 +251,7 @@ def api_case_close(cur_id):
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/add', methods=['POST'])
+@endpoint_deprecated('Use /api/v2/cases', 'v2.5.0')
 @ac_api_requires(Permissions.standard_user)
 def api_add_case():
     case_schema = CaseSchema()
