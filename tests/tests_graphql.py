@@ -1349,7 +1349,6 @@ class TestsGraphQL(TestCase):
             self.assertEqual(test_user, user_id)
 
     def test_graphql_iocs_should_return_linked_iocs(self):
-        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f''' mutation {{ 
                                      caseCreate(name: "case2", description: "test", clientId: 1) {{
