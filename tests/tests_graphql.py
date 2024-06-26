@@ -1176,7 +1176,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_iocs_filter_first_should_not_fail(self):
         ioc_value = 'IOC value #1'
-        compte = 1
+        counting = 1
         payload = {
             'query': f'''mutation {{
                 iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test2") {{
@@ -1196,7 +1196,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': f'''{{
                case(caseId: 1) {{
-                     iocs(first: {compte}) {{ edges {{ node {{ iocValue iocId }} }} }} }} 
+                     iocs(first: {counting}) {{ edges {{ node {{ iocValue iocId }} }} }} }} 
                   }}'''
         }
         body = self._subject.execute_graphql_query(payload)
