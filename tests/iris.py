@@ -80,14 +80,16 @@ class Iris:
             'alert_status_id': 3,
             'alert_customer_id': 1
         }
-        return self._api.post('/alerts/add', body)
+        response = self._api.post('/alerts/add', body)
+        return response.json()
 
     def create_asset(self):
         body = {
             'asset_type_id': '9',
             'asset_name': 'admin_laptop',
         }
-        return self._api.post('/case/assets/add', body)
+        response = self._api.post('/case/assets/add', body)
+        return response.json()
 
     def create_user(self, user_name):
         body = {
@@ -96,21 +98,25 @@ class Iris:
             'user_email': f'{user_name}@aa.eu',
             'user_password': 'aA.1234567890'
         }
-        user = self._api.post('/manage/users/add', body)
+        user = self._api.post('/manage/users/add', body).json()
         return User(API_URL, user['data']['user_api_key'])
 
-    def create_case(self):
+    def create_case_deprecated(self):
         body = {
             'case_name': 'case name',
             'case_description': 'description',
             'case_customer': 1,
             'case_soc_id': ''
         }
-        response = self._api.post('/manage/cases/add', body)
+        response = self._api.post('/manage/cases/add', body).json()
         return response['data']
 
+    def create_case(self, body):
+        return self._api.post('/api/v2/cases', body)
+
     def update_case(self, case_identifier, data):
-        return self._api.post(f'/manage/cases/update/{case_identifier}', data)
+        response = self._api.post(f'/manage/cases/update/{case_identifier}', data)
+        return response.json()
 
     def get_cases(self):
         return self._api.get('/manage/cases/list')

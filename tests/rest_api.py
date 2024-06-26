@@ -42,7 +42,7 @@ class RestApi:
         response = requests.post(url, headers=self._headers, params=query_parameters, json=payload)
         body = response.json()
         print(f'POST {url} {payload} => {response.status_code} {body}')
-        return body
+        return response
 
     def is_ready(self):
         try:

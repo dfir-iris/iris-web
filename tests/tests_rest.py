@@ -40,22 +40,39 @@ class TestsRest(TestCase):
         response = self._subject.get_api_version()
         self.assertEqual('success', response['status'])
 
+    def test_create_case_should_return_201(self):
+        response = self._subject.create_case({
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        })
+        self.assertEqual(201, response.status_code)
+
+    def test_create_case_with_missing_name_should_return_400(self):
+        response = self._subject.create_case({
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        })
+        self.assertEqual(400, response.status_code)
+
     def test_create_case_should_add_a_new_case(self):
         response = self._subject.get_cases()
         initial_case_count = len(response['data'])
-        self._subject.create_case()
+        self._subject.create_case_deprecated()
         response = self._subject.get_cases()
         case_count = len(response['data'])
         self.assertEqual(initial_case_count + 1, case_count)
 
     def test_update_case_should_not_require_case_name_issue_358(self):
-        case = self._subject.create_case()
+        case = self._subject.create_case_deprecated()
         case_identifier = case['case_id']
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
 
     def test_manage_case_filter_api_rest_should_fail(self):
-        self._subject.create_case()
+        self._subject.create_case_deprecated()
         response = self._subject.get_cases_filter()
         self.assertEqual('success', response['status'])
 

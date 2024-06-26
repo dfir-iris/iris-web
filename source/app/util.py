@@ -66,37 +66,28 @@ from app.models import Cases
 from app.models.authorization import CaseAccessLevel
 
 
-def response(msg, data):
-    rsp = {
-        "status": "success",
-        "message": msg,
-        "data": data if data is not None else []
-    }
-    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
-                              status=200,
-                              mimetype='application/json')
-
-
-def response_error(msg, data=None, status=400):
-    rsp = {
-        "status": "error",
-        "message": msg,
-        "data": data if data is not None else []
-    }
-    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
+def response(data, status):
+    return app.response_class(response=json.dumps(data, cls=AlchemyEncoder),
                               status=status,
                               mimetype='application/json')
 
 
+def response_error(msg, data=None, status=400):
+    content = {
+        "status": "error",
+        "message": msg,
+        "data": data if data is not None else []
+    }
+    return response(content, status)
+
+
 def response_success(msg='', data=None):
-    rsp = {
+    content = {
         "status": "success",
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
-                              status=200,
-                              mimetype='application/json')
+    return response(content, 200)
 
 
 def g_db_commit():
