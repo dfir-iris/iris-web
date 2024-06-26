@@ -27,7 +27,9 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import endpoint_deprecated, response_created, response_failed
+from app.blueprints.rest.endpoints import response_created
+from app.blueprints.rest.endpoints import response_failed
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
