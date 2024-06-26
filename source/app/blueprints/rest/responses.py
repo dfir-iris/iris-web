@@ -16,7 +16,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from functools import wraps
+from app import app
 from app.util import response
+
+logger = app.logger
 
 
 def response_created(data):
@@ -25,3 +29,16 @@ def response_created(data):
 
 def response_failed(message):
     return response(message, 400)
+
+
+def endpoint_deprecated(alternative_verb, alternative_url):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            result = f(*args, **kwargs)
+            logger.warning(f'Endpoint deprecated, use {alternative_verb} {alternative_url} instead')
+            result.headers['Link'] = f'<{alternative_url}>; rel="alternate"'
+            result.headers['Deprecation'] = True
+            return result
+        return wrap
+    return inner_wrap

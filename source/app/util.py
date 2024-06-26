@@ -589,7 +589,7 @@ def _user_has_required_permissions(permissions):
     return False
 
 
-def endpoint_deprecated(message, version):
+def endpoint_removed(message, version):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):

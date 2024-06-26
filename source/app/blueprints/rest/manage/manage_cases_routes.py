@@ -29,6 +29,7 @@ from werkzeug.utils import secure_filename
 from app import db
 from app.blueprints.rest.responses import response_created
 from app.blueprints.rest.responses import response_failed
+from app.blueprints.rest.responses import endpoint_deprecated
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
@@ -53,7 +54,6 @@ from app.util import add_obj_history_entry
 from app.util import ac_api_requires
 from app.util import ac_requires_case_identifier
 from app.util import ac_api_return_access_denied
-from app.util import endpoint_deprecated
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import cases_delete
@@ -251,7 +251,7 @@ def api_case_close(cur_id):
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/add', methods=['POST'])
-@endpoint_deprecated('Use /api/v2/cases', 'v2.5.0')
+@endpoint_deprecated('POST', '/api/v2/cases')
 @ac_api_requires(Permissions.standard_user)
 def api_add_case():
     case_schema = CaseSchema()
