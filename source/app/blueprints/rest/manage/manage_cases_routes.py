@@ -27,9 +27,9 @@ from werkzeug import Response
 from werkzeug.utils import secure_filename
 
 from app import db
-from app.blueprints.rest.responses import response_created
-from app.blueprints.rest.responses import response_failed
-from app.blueprints.rest.responses import endpoint_deprecated
+from app.blueprints.rest.endpoints import response_created
+from app.blueprints.rest.endpoints import response_failed
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
