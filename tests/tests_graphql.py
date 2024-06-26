@@ -866,7 +866,6 @@ class TestsGraphQL(TestCase):
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        print(response)
         self.assertEqual('"test"', response['data']['iocUpdate']['ioc']['modificationHistory'])
 
     def test_cursor_first_after(self):
