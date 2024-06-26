@@ -238,15 +238,14 @@ function notify_auto_api(data, silent_success, silent_failure) {
             notify_success(data.message);
         }
         return true;
-    } else {
-        if (data.message.length === 0) {
-            data.message = 'Operation failed';
-        }
-        if (silent_failure === undefined || silent_failure === false) {
-            notify_error(data.message);
-        }
-        return false;
     }
+    if (data.message.length === 0) {
+        data.message = 'Operation failed';
+    }
+    if (silent_failure === undefined || silent_failure === false) {
+        notify_error(data.message);
+    }
+    return false;
 }
 
 function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
@@ -349,13 +348,13 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
         },
         error: function(jqXHR) {
             if (propagate_api_error) {
-                if(jqXHR.responseJSON && jqXHR.status == 400) {
+                if (jqXHR.responseJSON && jqXHR.status == 400) {
                     propagate_form_api_errors(jqXHR.responseJSON.data);
                 } else {
                     ajax_notify_error(jqXHR, this.url);
                 }
             } else {
-                if(jqXHR.responseJSON) {
+                if (jqXHR.responseJSON) {
                     notify_error(jqXHR.responseJSON.message);
                 } else {
                     ajax_notify_error(jqXHR, this.url);
@@ -754,7 +753,7 @@ function init_module_processing(rows, hook_name, hook_ui_name, module_name, data
 function load_menu_mod_options_modal(element_id, data_type, anchor) {
     get_request_api('/dim/hooks/options/'+ data_type +'/list')
     .done(function (data){
-        if(notify_auto_api(data, true)) {
+        if (notify_auto_api(data, true)) {
             if (data.data != null) {
                 let jsdata = data.data;
                 if (jsdata.length !== 0 && anchor.children().length !== 0){
@@ -1481,7 +1480,7 @@ function load_context_switcher() {
 }
 
 function context_data_parser(data, fire_modal = true) {
-    if(notify_auto_api(data, true)) {
+    if (notify_auto_api(data, true)) {
         $('#user_context').empty();
 
         $('#user_context').append('<optgroup label="Open" id="switch_case_opened_opt"></optgroup>');
@@ -1764,7 +1763,7 @@ $(document).ready(function(){
     data_sent.ctx_h = $("#user_context option:selected").text();
     post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
     .done((data) => {
-            if(notify_auto_api(data, true)) {
+            if (notify_auto_api(data, true)) {
                 $('#modal_switch_context').modal('hide');
                 swal({
                     title: 'Context changed successfully',
@@ -1807,7 +1806,7 @@ $(document).ready(function(){
 
         post_request_api('/case/tasklog/add', JSON.stringify(data), true)
         .done(function (data){
-            if(notify_auto_api(data)){
+            if (notify_auto_api(data)){
                 $('#modal_add_tasklog').modal('hide');
             }
         });
