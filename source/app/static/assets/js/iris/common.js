@@ -1397,15 +1397,15 @@ function set_suggest_tags(anchor_id) {
 
 function send_add_case(data_sent) {
 
-    post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {
+    post_request_api('/api/v2/cases', JSON.stringify(data_sent), true, function () {
         $('#submit_new_case_btn').text('Checking data..')
             .attr("disabled", true)
             .removeClass('bt-outline-success')
             .addClass('btn-success', 'text-dark');
     })
-    .done((data) => {
-        if (notify_auto_api(data, true)) {
-            let case_id = data.data.case_id;
+    .done((data, textStatus) => {
+        if (textStatus === 'success') {
+            let case_id = data.case_id;
             swal("That's done !",
                 "Case has been successfully created",
                 "success",
