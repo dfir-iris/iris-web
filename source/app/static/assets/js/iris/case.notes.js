@@ -573,12 +573,14 @@ function save_note() {
         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
     })
     .done((data) => {
-        if (data.status == 'success') {
+        if (notify_auto_api(data, true)) {
             $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
-             $("#content_last_saved_by").text('Last saved by you');
+            $("#content_last_saved_by").text('Last saved by you');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
             collaborator.save(n_id);
+
             if (previousNoteTitle !== currentNoteTitle) {
                 load_directories().then(function() {
                     $('.note').removeClass('note-highlight');
@@ -1194,19 +1196,17 @@ $(document).ready(function(){
         $('#currentNoteTitleInput').focus();
     });
 
-    $(document).on('blur keyup', '#currentNoteTitleInput', function(e) {
-        if (e.type === 'blur' || e.key === 'Enter') {
-            let title = $(this).val();
+    $(document).on('blur', '#currentNoteTitleInput', function(e) {
+        let title = $(this).val();
 
-            let h4 = $('<h4>');
-            h4.attr('id', 'currentNoteTitle');
-            h4.addClass('page-title mb-0');
-            h4.text(title);
+        let h4 = $('<h4>');
+        h4.attr('id', 'currentNoteTitle');
+        h4.addClass('page-title mb-0');
+        h4.text(title);
 
-            $(this).replaceWith(h4);
+        $(this).replaceWith(h4);
 
-            save_note();
-        }
+        save_note();
     });
 
     $('#search-input').keyup(function() {
