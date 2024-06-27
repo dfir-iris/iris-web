@@ -73,7 +73,7 @@ function add_ioc() {
                     }
 
                     data['ioc_value'] = iocs_list[index];
-                    post_request_api('iocs', JSON.stringify(data), true, function () {
+                    post_request_api('/api/v2/cases/'+ get_caseid() +'/iocs', JSON.stringify(data), true, function () {
                         $('#submit_new_ioc').text('Saving data..')
                             .attr("disabled", true)
                             .removeClass('bt-outline-success')
@@ -101,7 +101,7 @@ function add_ioc() {
             }
 
             else {
-                post_request_api('iocs', JSON.stringify(data), true, function () {
+                post_request_api('ioc/add', JSON.stringify(data), true, function () {
                         $('#submit_new_ioc').text('Saving data..')
                             .attr("disabled", true)
                             .removeClass('bt-outline-success')
@@ -292,7 +292,7 @@ function delete_ioc(ioc_id) {
     do_deletion_prompt("You are about to delete IOC #" + ioc_id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api('ioc/delete/' + ioc_id)
+            post_request_api('/api/v2/cases/'+ get_caseid() +'/iocs/'+ ioc_id)
             .done((data) => {
                 if (data.status == 'success') {
                     reload_iocs();
